@@ -1,0 +1,8 @@
+my-env/
+.env
+__pycache__/
+*.pyc
+*.log
+jwt_private.pem
+jwt_public.pem
+.secrets/
