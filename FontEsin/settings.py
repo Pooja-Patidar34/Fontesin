@@ -18,7 +18,6 @@ ALLOWED_HOSTS = config(
     default="localhost",
 )
 
-
 # Application definition
 
 INSTALLED_APPS = [
