@@ -12,7 +12,6 @@ def company_list(request):
     companies = Company.objects.filter(
         tenant=request.user.tenant
     )
-
     return render(
         request,
         "dashboard/companies.html",

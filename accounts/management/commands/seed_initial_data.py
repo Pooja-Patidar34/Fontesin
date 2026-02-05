@@ -1,6 +1,12 @@
+import random
+import uuid
+
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.contrib.auth.hashers import make_password
+from django.utils.text import slugify
+
+from faker import Faker
 
 from accounts.models import (
     Tenant,
@@ -11,123 +17,167 @@ from accounts.models import (
     RolePermission,
     UserRole,
     Classification,
+    AuditLog,
 )
+
+fake = Faker()
 
 
 class Command(BaseCommand):
-    help = "Seed initial data for admin panel"
+    help = "Seed full system data with 20 tenants and mixed behavior"
 
     @transaction.atomic
     def handle(self, *args, **options):
-        self.stdout.write(self.style.WARNING("Seeding initial data..."))
+        self.stdout.write(self.style.WARNING("🌱 Seeding initial data..."))
 
-        # --------------------------------------------------
-        # 1. Tenant
-        # --------------------------------------------------
-        tenant, _ = Tenant.objects.get_or_create(
-            slug="default",
-            defaults={
-                "name": "Default Tenant",
-                "is_active": True,
-            },
-        )
+        self.seed_permissions()
+        self.seed_tenants()
 
-        # --------------------------------------------------
-        # 2. Company
-        # --------------------------------------------------
-        company, _ = Company.objects.get_or_create(
-            tenant=tenant,
-            name="Default Company",
-            defaults={
-                "registration_id": "REG-001",
-                "is_active": True,
-            },
-        )
+        self.stdout.write(self.style.SUCCESS("✅ All data seeded successfully"))
 
-        # --------------------------------------------------
-        # 3. Permissions
-        # --------------------------------------------------
-        permission_codes = [
+    # --------------------------------------------------
+    # Permissions (global)
+    # --------------------------------------------------
+    def seed_permissions(self):
+        self.permissions = {}
+
+        permission_list = [
             ("tenant.view", "View tenants"),
             ("company.view", "View companies"),
-            ("company.manage", "Create/update companies"),
+            ("company.manage", "Manage companies"),
             ("user.view", "View users"),
-            ("user.manage", "Create/update users"),
+            ("user.manage", "Manage users"),
             ("role.view", "View roles"),
-            ("role.manage", "Create/update roles"),
+            ("role.manage", "Manage roles"),
             ("audit.view", "View audit logs"),
         ]
 
-        permissions = {}
-        for code, description in permission_codes:
+        for code, description in permission_list:
             perm, _ = Permission.objects.get_or_create(
                 code=code,
                 defaults={"description": description},
             )
-            permissions[code] = perm
+            self.permissions[code] = perm
 
-        # --------------------------------------------------
-        # 4. Admin Role (system role)
-        # --------------------------------------------------
-        admin_role, _ = Role.objects.get_or_create(
-            tenant=tenant,
-            name="Admin",
-            defaults={
-                "is_system_role": True,
-            },
-        )
-
-        # Attach all permissions to Admin role
-        for perm in permissions.values():
-            RolePermission.objects.get_or_create(
-                role=admin_role,
-                permission=perm,
+    # --------------------------------------------------
+    # Tenants (20 with active/inactive mix)
+    # --------------------------------------------------
+    def seed_tenants(self):
+        for i in range(1, 21):
+            tenant, _ = Tenant.objects.get_or_create(
+                slug=f"tenant-{i}",
+                defaults={
+                    "name": f"Tenant {i}",
+                    "is_active": i % 5 != 0,  # every 5th inactive
+                },
             )
 
-        # --------------------------------------------------
-        # 5. Admin User
-        # --------------------------------------------------
-        admin_email = "admin@example.com"
+            self.seed_companies(tenant)
+            self.seed_roles(tenant)
+            self.seed_users(tenant)
+            self.seed_classifications(tenant)
 
-        admin_user, created = User.objects.get_or_create(
-            email=admin_email,
-            tenant=tenant,
-            defaults={
-                "full_name": "System Admin",
-                "is_active": True,
-                "is_staff": True,
-                "password": make_password("admin123"),
-            },
-        )
+    # --------------------------------------------------
+    # Companies (per tenant)
+    # --------------------------------------------------
+    def seed_companies(self, tenant):
+        for i in range(1, 6):
+            Company.objects.get_or_create(
+                tenant=tenant,
+                name=f"{tenant.name} Company {i}",
+                defaults={
+                    "registration_id": f"{tenant.slug.upper()}-{i}",
+                    "is_active": i % 2 == 1,
+                },
+            )
 
-        if not created:
-            # Ensure flags are correct if user already exists
-            admin_user.is_staff = True
-            admin_user.is_active = True
-            admin_user.save(update_fields=["is_staff", "is_active"])
+    # --------------------------------------------------
+    # Roles + permissions (per tenant)
+    # --------------------------------------------------
+    def seed_roles(self, tenant):
+        role_permission_map = {
+            "Admin": list(self.permissions.values()),
+            "Manager": [
+                self.permissions["company.view"],
+                self.permissions["company.manage"],
+                self.permissions["user.view"],
+            ],
+            "Viewer": [
+                self.permissions["company.view"],
+                self.permissions["user.view"],
+            ],
+        }
 
-        # --------------------------------------------------
-        # 6. Assign role to admin user
-        # --------------------------------------------------
-        UserRole.objects.get_or_create(
-            user=admin_user,
-            role=admin_role,
-        )
+        self.roles = []
 
-        # --------------------------------------------------
-        # 7. Sample classifications (optional)
-        # --------------------------------------------------
-        classifications = [
+        for role_name, perms in role_permission_map.items():
+            role, _ = Role.objects.get_or_create(
+                tenant=tenant,
+                name=role_name,
+                defaults={
+                    "is_system_role": role_name == "Admin",
+                },
+            )
+
+            RolePermission.objects.filter(role=role).delete()
+
+            for perm in perms:
+                RolePermission.objects.get_or_create(
+                    role=role,
+                    permission=perm,
+                )
+
+            self.roles.append(role)
+
+    # --------------------------------------------------
+    # Users + role assignments + audit logs
+    # --------------------------------------------------
+    def seed_users(self, tenant):
+        for i in range(1, 11):  # 10 users per tenant
+            user, _ = User.objects.get_or_create(
+                tenant=tenant,
+                email=f"user{i}@{tenant.slug}.com",
+                defaults={
+                    "full_name": fake.name(),
+                    "password": make_password("password123"),
+                    "is_active": i % 4 != 0,  # every 4th inactive
+                    "is_staff": i == 1,
+                },
+            )
+
+            # Assign 1–2 roles
+            for role in random.sample(self.roles, random.randint(1, 2)):
+                UserRole.objects.get_or_create(
+                    user=user,
+                    role=role,
+                )
+
+            # Immutable audit log
+            AuditLog.objects.create(
+                tenant=tenant,
+                actor=user,
+                action="user.created",
+                entity_type="User",
+                entity_id=user.id,
+                metadata={"seeded": True},
+                ip_address="127.0.0.1",
+            )
+
+    # --------------------------------------------------
+    # Classifications (per tenant)
+    # --------------------------------------------------
+    def seed_classifications(self, tenant):
+        classification_data = [
             ("STATUS_ACTIVE", "Active"),
             ("STATUS_INACTIVE", "Inactive"),
+            ("STATUS_SUSPENDED", "Suspended"),
+            ("LEVEL_BASIC", "Basic"),
+            ("LEVEL_PREMIUM", "Premium"),
         ]
 
-        for key, label in classifications:
+        for key, label in classification_data:
             Classification.objects.get_or_create(
                 tenant=tenant,
                 key=key,
                 defaults={"label": label},
             )
-
-        self.stdout.write(self.style.SUCCESS("✅ Initial data seeded successfully"))
-        self.stdout.write(self.style.SUCCESS("Admin login: admin@example.com / admin123"))
