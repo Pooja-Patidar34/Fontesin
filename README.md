@@ -1,4 +1,4 @@
-# 🏗️ Multi-Tenant Admin Panel  
+# Multi-Tenant Admin Panel  
 ## Role-Based Access Control (RBAC) – Implementation Documentation
 
 ---
