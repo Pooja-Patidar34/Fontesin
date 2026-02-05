@@ -1,16 +1,17 @@
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404, redirect
 
 from accounts.models import User,UserRole,Role,AuditLog
 from accounts.utils.permissions import has_permission
 from django.core.paginator import Paginator
+from django.core.exceptions import PermissionDenied
+
 
 
 @login_required
 def user_list(request):
     if not has_permission(request.user, "user.view"):
-        return HttpResponseForbidden()
+        raise PermissionDenied()
 
     qs = User.objects.filter(
         tenant=request.user.tenant
@@ -33,7 +34,7 @@ def user_list(request):
 @login_required
 def toggle_user(request, user_id):
     if not has_permission(request.user, "user.manage"):
-        return HttpResponseForbidden()
+        raise PermissionDenied()
 
     user = get_object_or_404(
         User,
@@ -50,7 +51,7 @@ def toggle_user(request, user_id):
 @login_required
 def assign_roles(request, user_id):
     if not has_permission(request.user, "role.manage"):
-        return HttpResponseForbidden()
+        raise PermissionDenied()
 
     user = get_object_or_404(
         User,
@@ -72,23 +73,6 @@ def assign_roles(request, user_id):
         {"user": user, "roles": roles},
     )
 
-
-@login_required
-def audit_logs(request):
-    if not has_permission(request.user, "audit.view"):
-        return HttpResponseForbidden()
-
-    logs = AuditLog.objects.filter(
-        tenant=request.user.tenant
-    )[:200]
-
-    return render(
-        request,
-        "dashboard/audit_logs.html",
-        {"logs": logs},
-    )
-
-from django.core.exceptions import PermissionDenied
 
 @login_required
 def role_list(request):
