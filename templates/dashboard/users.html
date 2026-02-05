@@ -2,13 +2,14 @@
 {% block title %}Users{% endblock %}
 
 {% block content %}
-<div class="card">
+<div class="card d-flex flex-column">
+
   <div class="card-header">
     <h3 class="card-title">Users</h3>
   </div>
 
   <div class="card-body table-responsive p-0">
-    <table class="table table-hover text-nowrap">
+    <table class="table table-hover text-nowrap mb-0">
       <thead>
         <tr>
           <th>Email</th>
@@ -20,7 +21,6 @@
         {% for user in users %}
         <tr>
           <td>{{ user.email }}</td>
-
           <td>
             {% if user.is_active %}
               <span class="badge badge-success">Active</span>
@@ -28,17 +28,11 @@
               <span class="badge badge-danger">Inactive</span>
             {% endif %}
           </td>
-
           <td>
-            <!-- Toggle User -->
-            <a href="{% url 'admin:user-toggle' user.id %}"
-               class="btn btn-sm btn-warning">
+            <a href="{% url 'admin:user-toggle' user.id %}" class="btn btn-sm btn-warning">
               {% if user.is_active %}Disable{% else %}Enable{% endif %}
             </a>
-
-            <!-- Assign Roles -->
-            <a href="{% url 'admin:assign-roles' user.id %}"
-               class="btn btn-sm btn-primary">
+            <a href="{% url 'admin:assign-roles' user.id %}" class="btn btn-sm btn-primary">
               Assign Roles
             </a>
           </td>
@@ -51,5 +45,36 @@
       </tbody>
     </table>
   </div>
+
+  {% if page_obj.paginator.num_pages > 1 %}
+  <div class="card-footer mt-auto position-sticky" style="bottom: 0; background: #fff;">
+    <ul class="pagination pagination-sm m-0 justify-content-end">
+      {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo;</a>
+        </li>
+      {% endif %}
+
+      {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+          <li class="page-item active">
+            <span class="page-link">{{ num }}</span>
+          </li>
+        {% else %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+          </li>
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}">&raquo;</a>
+        </li>
+      {% endif %}
+    </ul>
+  </div>
+  {% endif %}
+
 </div>
 {% endblock %}

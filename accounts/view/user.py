@@ -4,6 +4,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 
 from accounts.models import User,UserRole,Role,AuditLog
 from accounts.utils.permissions import has_permission
+from django.core.paginator import Paginator
 
 
 @login_required
@@ -11,14 +12,21 @@ def user_list(request):
     if not has_permission(request.user, "user.view"):
         return HttpResponseForbidden()
 
-    users = User.objects.filter(
+    qs = User.objects.filter(
         tenant=request.user.tenant
-    )
+    ).order_by("-created_at")
+
+    paginator = Paginator(qs, 7)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
 
     return render(
         request,
         "dashboard/users.html",
-        {"users": users},
+        {
+            "users": page_obj,
+            "page_obj": page_obj,
+        },
     )
 
 
@@ -80,10 +88,11 @@ def audit_logs(request):
         {"logs": logs},
     )
 
+from django.core.exceptions import PermissionDenied
+
 @login_required
 def role_list(request):
     if not has_permission(request.user, "role.view"):
-        return HttpResponseForbidden()
-
+        raise PermissionDenied
     roles = Role.objects.filter(tenant=request.user.tenant)
     return render(request, "dashboard/roles.html", {"roles": roles})
