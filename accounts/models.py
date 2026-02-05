@@ -1,7 +1,7 @@
 from django.db import models
 import uuid
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
-
+from django.contrib.auth.base_user import BaseUserManager
 
 class Tenant(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -36,6 +36,27 @@ class Company(models.Model):
         unique_together = ("tenant", "name")
 
 
+class UserManager(BaseUserManager):
+    def get_by_natural_key(self, email):
+        return self.get(email__iexact=email)
+
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError("Email is required")
+
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+        extra_fields.setdefault("is_active", True)
+
+        return self.create_user(email, password, **extra_fields)
+
 class User(AbstractBaseUser, PermissionsMixin):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
@@ -54,11 +75,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    objects = UserManager() 
+
     USERNAME_FIELD = "email"
 
     class Meta:
         unique_together = ("tenant", "email")
-
 
 
 class Classification(models.Model):

@@ -1,0 +1,109 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}Admin Panel{% endblock %}</title>
+
+  <link rel="stylesheet" href="{% static 'adminlte/plugins/fontawesome-free/css/all.min.css' %}">
+  <link rel="stylesheet" href="{% static 'adminlte/css/adminlte.min.css' %}">
+</head>
+
+<body class="hold-transition sidebar-mini">
+<div class="wrapper">
+
+  <!-- ================= HEADER ================= -->
+  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <span class="nav-link">
+          {{ request.user.email }}
+        </span>
+      </li>
+      <li class="nav-item">
+        <a href="{% url 'admin:login' %}" class="nav-link">
+          Logout
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <a href="{% url 'admin:dashboard' %}" class="brand-link">
+      <span class="brand-text font-weight-light">Admin Panel</span>
+    </a>
+
+    <div class="sidebar">
+      <nav>
+        <ul class="nav nav-pills nav-sidebar flex-column">
+
+          <!-- Dashboard -->
+          <li class="nav-item">
+            <a href="{% url 'admin:dashboard' %}" class="nav-link">
+              <i class="nav-icon fas fa-chart-pie"></i>
+              <p>Dashboard</p>
+            </a>
+          </li>
+
+          <!-- Company Management -->
+          {% if request.user.is_staff %}
+          <li class="nav-item">
+            <a href="{% url 'admin:companies' %}" class="nav-link">
+              <i class="nav-icon fas fa-building"></i>
+              <p>Companies</p>
+            </a>
+          </li>
+          {% endif %}
+
+          <!-- User Management -->
+          {% if request.user.is_staff %}
+          <li class="nav-item">
+            <a href="{% url 'admin:users' %}" class="nav-link">
+              <i class="nav-icon fas fa-users"></i>
+              <p>Users</p>
+            </a>
+          </li>
+          {% endif %}
+
+          <!-- Role Management -->
+          {% if request.user.is_staff %}
+          <li class="nav-item">
+            <a href="{% url 'admin:roles' %}" class="nav-link">
+              <i class="nav-icon fas fa-user-shield"></i>
+              <p>Roles</p>
+            </a>
+          </li>
+          {% endif %}
+
+          <!-- Audit Logs -->
+          {% if request.user.is_staff %}
+          <li class="nav-item">
+            <a href="{% url 'admin:audit-logs' %}" class="nav-link">
+              <i class="nav-icon fas fa-clipboard-list"></i>
+              <p>Audit Logs</p>
+            </a>
+          </li>
+          {% endif %}
+
+        </ul>
+      </nav>
+    </div>
+  </aside>
+
+  <!-- ================= CONTENT ================= -->
+  <div class="content-wrapper">
+    <section class="content pt-3">
+      <div class="container-fluid">
+        {% block content %}{% endblock %}
+      </div>
+    </section>
+  </div>
+
+</div>
+
+<script src="{% static 'adminlte/plugins/jquery/jquery.min.js' %}"></script>
+<script src="{% static 'adminlte/plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'adminlte/js/adminlte.min.js' %}"></script>
+</body>
+</html>

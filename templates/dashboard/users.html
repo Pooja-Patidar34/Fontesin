@@ -1,0 +1,55 @@
+{% extends "base/base.html" %}
+{% block title %}Users{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Users</h3>
+  </div>
+
+  <div class="card-body table-responsive p-0">
+    <table class="table table-hover text-nowrap">
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+        <tr>
+          <td>{{ user.email }}</td>
+
+          <td>
+            {% if user.is_active %}
+              <span class="badge badge-success">Active</span>
+            {% else %}
+              <span class="badge badge-danger">Inactive</span>
+            {% endif %}
+          </td>
+
+          <td>
+            <!-- Toggle User -->
+            <a href="{% url 'admin:user-toggle' user.id %}"
+               class="btn btn-sm btn-warning">
+              {% if user.is_active %}Disable{% else %}Enable{% endif %}
+            </a>
+
+            <!-- Assign Roles -->
+            <a href="{% url 'admin:assign-roles' user.id %}"
+               class="btn btn-sm btn-primary">
+              Assign Roles
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="3" class="text-center">No users found</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
