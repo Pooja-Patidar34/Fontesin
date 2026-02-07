@@ -210,6 +210,7 @@ class AuditLog(models.Model):
 
 
     def save(self, *args, **kwargs):
-        if self.pk:
+        # ❗ Allow only INSERT, block UPDATE
+        if not self._state.adding:
             raise RuntimeError("Audit logs are immutable")
         super().save(*args, **kwargs)

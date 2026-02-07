@@ -2,50 +2,102 @@
 {% block title %}Tenants{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+<div class="card d-flex flex-column">
 
-  <div class="row mb-3">
-    <div class="col-sm-6">
-      <h1 class="m-0">Tenants</h1>
-    </div>
+  <!-- HEADER -->
+  <div class="card-header">
+    <h3 class="card-title mb-0">Tenants</h3>
   </div>
 
-  <div class="card">
-    <div class="card-body table-responsive p-0">
-      <table class="table table-hover text-nowrap">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Slug</th>
-            <th>Status</th>
-            <th>Created At</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for tenant in tenants %}
-          <tr>
-            <td>{{ tenant.name }}</td>
-            <td>{{ tenant.slug }}</td>
-            <td>
-              {% if tenant.is_active %}
-                <span class="badge badge-success">Active</span>
-              {% else %}
-                <span class="badge badge-danger">Inactive</span>
-              {% endif %}
-            </td>
-            <td>{{ tenant.created_at|date:"Y-m-d" }}</td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="4" class="text-center text-muted">
-              No tenants found
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+  <!-- TABLE -->
+  <div class="card-body table-responsive p-0">
+    <table class="table table-hover text-nowrap mb-0">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Slug</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th style="width: 140px;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tenant in tenants %}
+        <tr>
+          <td>{{ tenant.name }}</td>
+          <td>{{ tenant.slug }}</td>
+          <td>
+            {% if tenant.is_active %}
+              <span class="badge badge-success">Active</span>
+            {% else %}
+              <span class="badge badge-danger">Inactive</span>
+            {% endif %}
+          </td>
+          <td>{{ tenant.created_at|date:"Y-m-d" }}</td>
+          <td>
+            {% if tenant.is_active %}
+              <a href="{% url 'admin:tenant-toggle' tenant.id %}"
+                 class="btn btn-sm btn-warning">
+                Deactivate
+              </a>
+            {% else %}
+              <a href="{% url 'admin:tenant-toggle' tenant.id %}"
+                 class="btn btn-sm btn-success">
+                Activate
+              </a>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="text-center text-muted">
+            No tenants found
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
+
+  {% if page_obj.paginator.num_pages > 1 %}
+  <div class="card-footer clearfix">
+    <ul class="pagination pagination-sm m-0 float-right">
+
+      {% if page_obj.has_previous %}
+      <li class="page-item">
+        <a class="page-link"
+           href="?page={{ page_obj.previous_page_number }}">
+          Previous
+        </a>
+      </li>
+      {% endif %}
+
+      {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+          <li class="page-item active">
+            <span class="page-link">{{ num }}</span>
+          </li>
+        {% else %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ num }}">
+              {{ num }}
+            </a>
+          </li>
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+      <li class="page-item">
+        <a class="page-link"
+           href="?page={{ page_obj.next_page_number }}">
+          Next
+        </a>
+      </li>
+      {% endif %}
+
+    </ul>
+  </div>
+  {% endif %}
 
 </div>
 {% endblock %}

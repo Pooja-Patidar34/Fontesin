@@ -41,8 +41,10 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 
-from accounts.models import Company, Tenant
+from accounts.models import Company, Tenant,AuditLog
 from accounts.utils.permissions import has_permission
+from accounts.utils.ip import get_client_ip
+
 
 
 @login_required
@@ -93,6 +95,7 @@ def company_list(request):
     )
 
 
+
 @login_required
 def toggle_company(request, company_id):
     if not has_permission(request.user, "company.manage"):
@@ -107,7 +110,27 @@ def toggle_company(request, company_id):
             tenant=request.user.tenant,
         )
 
+    old_status = company.is_active
+
+    # Toggle status
     company.is_active = not company.is_active
     company.save(update_fields=["is_active"])
+
+    # Decide audit action (IMPORTANT)
+    action = "company.activated" if company.is_active else "company.deactivated"
+
+    AuditLog.objects.create(
+        tenant=company.tenant,
+        actor=request.user,
+        action=action,
+        entity_type="Company",
+        entity_id=company.id,
+        metadata={
+            "company_name": company.name,
+            "old_status": old_status,
+            "new_status": company.is_active,
+        },
+        ip_address=get_client_ip(request),
+    )
 
     return redirect(request.META.get("HTTP_REFERER", "admin:companies"))

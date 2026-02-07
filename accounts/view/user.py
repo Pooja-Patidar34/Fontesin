@@ -3,8 +3,9 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.exceptions import PermissionDenied
 
-from accounts.models import User, UserRole, Role, Tenant, Company
+from accounts.models import User, UserRole, Role, Tenant, Company,AuditLog
 from accounts.utils.permissions import has_permission
+from accounts.utils.ip import get_client_ip
 
 @login_required
 def user_list(request):
@@ -58,12 +59,14 @@ def user_list(request):
         },
     )
 
-
 @login_required
 def toggle_user(request, user_id):
     if not has_permission(request.user, "user.manage"):
         raise PermissionDenied()
 
+    # -------------------------
+    # FETCH USER (SCOPE SAFE)
+    # -------------------------
     if request.user.is_superuser:
         user = get_object_or_404(User, id=user_id)
     else:
@@ -73,11 +76,34 @@ def toggle_user(request, user_id):
             tenant=request.user.tenant,
         )
 
+    old_status = user.is_active
+
+    # -------------------------
+    # TOGGLE STATUS
+    # -------------------------
     user.is_active = not user.is_active
     user.save(update_fields=["is_active"])
 
-    return redirect("admin:users")
+    # -------------------------
+    # AUDIT ACTION (EXPLICIT)
+    # -------------------------
+    action = "user.activated" if user.is_active else "user.deactivated"
 
+    AuditLog.objects.create(
+        tenant=user.tenant,
+        actor=request.user,
+        action=action,
+        entity_type="User",
+        entity_id=user.id,
+        metadata={
+            "user_email": user.email,
+            "old_status": old_status,
+            "new_status": user.is_active,
+        },
+        ip_address=get_client_ip(request),
+    )
+
+    return redirect("admin:users")
 
 @login_required
 def assign_roles(request, user_id):
