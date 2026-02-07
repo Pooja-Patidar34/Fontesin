@@ -31,7 +31,9 @@ def audit_logs(request):
         request,
         "dashboard/audit_logs.html",
         {
-            "logs": page_obj,      # ← MUST be Page
+            "logs": page_obj,    
             "page_obj": page_obj,
+            "active_menu": "audit"
+
         },
     )

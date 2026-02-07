@@ -56,10 +56,19 @@
       </td>
 
       <td>
-        <a href="{% url 'admin:company-toggle' company.id %}"
-           class="btn btn-sm btn-warning">
-          Toggle
-        </a>
+        {% if company.is_active %}
+          <a href="{% url 'admin:company-toggle' company.id %}"
+             class="btn btn-sm btn-danger"
+             title="Deactivate company">
+            Deactivate
+          </a>
+        {% else %}
+          <a href="{% url 'admin:company-toggle' company.id %}"
+             class="btn btn-sm btn-success"
+             title="Activate company">
+            Activate
+          </a>
+        {% endif %}
       </td>
     </tr>
     {% empty %}
@@ -72,12 +81,10 @@
   </tbody>
 </table>
 
-<!-- ================= PAGINATION (BOTTOM RIGHT) ================= -->
 {% if companies.paginator.num_pages > 1 %}
 <nav aria-label="Company pagination">
   <ul class="pagination justify-content-end mt-3">
 
-    <!-- Previous -->
     {% if companies.has_previous %}
     <li class="page-item">
       <a class="page-link"
@@ -91,7 +98,6 @@
     </li>
     {% endif %}
 
-    <!-- Page numbers -->
     {% for num in companies.paginator.page_range %}
       {% if num == companies.number %}
         <li class="page-item active">
@@ -107,7 +113,6 @@
       {% endif %}
     {% endfor %}
 
-    <!-- Next -->
     {% if companies.has_next %}
     <li class="page-item">
       <a class="page-link"

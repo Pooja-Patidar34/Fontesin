@@ -7,8 +7,8 @@
   <!-- ================= KPI STRIP ================= -->
   <div class="row mb-4">
 
-    <div class="col-md-4">
-      <div class="info-box shadow-sm">
+    <div class="col-md-4 d-flex">
+      <div class="info-box shadow-sm w-100">
         <span class="info-box-icon bg-info">
           <i class="fas fa-building"></i>
         </span>
@@ -20,8 +20,8 @@
       </div>
     </div>
 
-    <div class="col-md-4">
-      <div class="info-box shadow-sm">
+    <div class="col-md-4 d-flex">
+      <div class="info-box shadow-sm w-100">
         <span class="info-box-icon bg-warning">
           <i class="fas fa-users"></i>
         </span>
@@ -34,8 +34,8 @@
     </div>
 
     {% if request.user.is_superuser %}
-    <div class="col-md-4">
-      <div class="info-box shadow-sm">
+    <div class="col-md-4 d-flex">
+      <div class="info-box shadow-sm w-100">
         <span class="info-box-icon bg-primary">
           <i class="fas fa-sitemap"></i>
         </span>
@@ -50,48 +50,54 @@
 
   </div>
 
-  <!-- ================= MAIN INTERACTIVE AREA ================= -->
+  <!-- ================= MAIN AREA ================= -->
   <div class="row">
 
-    <div class="col-lg-8">
-      <div class="card shadow-sm">
+    <!-- LEFT : DONUT -->
+    <div class="col-lg-8 d-flex">
+      <div class="card shadow-sm w-100">
         <div class="card-header d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">User Health</h5>
+          <h5 class="mb-0" id="healthTitle">User Health</h5>
 
-          <!-- Toggle -->
           <div class="btn-group btn-group-sm">
-            <button class="btn btn-outline-secondary active" onclick="showUsers()">Users</button>
-            <button class="btn btn-outline-secondary" onclick="showCompanies()">Companies</button>
+            <button id="btnUsers"
+                    type="button"
+                    class="btn btn-primary"
+                    onclick="showUsers()">
+              Users
+            </button>
+            <button id="btnCompanies"
+                    type="button"
+                    class="btn btn-outline-primary"
+                    onclick="showCompanies()">
+              Companies
+            </button>
           </div>
         </div>
 
-        <div class="card-body">
-          <canvas id="healthChart" height="120"></canvas>
+        <div class="card-body d-flex justify-content-center align-items-center">
+          <!-- IMPORTANT: wrapper for responsive donut -->
+          <div style="height:220px; width:100%;">
+            <canvas id="healthChart"></canvas>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- ================= RIGHT INSIGHT ================= -->
-    <div class="col-lg-4">
-      <div class="card shadow-sm h-100">
+    <!-- RIGHT : INSIGHT -->
+    <div class="col-lg-4 d-flex">
+      <div class="card shadow-sm w-100">
         <div class="card-header">
           <h6 class="mb-0">Quick Insight</h6>
         </div>
         <div class="card-body">
-          <p class="mb-2">
-            <strong>{{ active_users }}</strong> of
-            <strong>{{ total_users }}</strong> users are active.
-          </p>
+          <p class="mb-2" id="insightText"></p>
 
           <div class="progress mb-3">
-            <div class="progress-bar bg-success"
-                 style="width: {{ active_users|floatformat:0 }}%">
-            </div>
+            <div id="insightBar" class="progress-bar bg-success"></div>
           </div>
 
-          <p class="text-muted small mb-0">
-            System usage is currently stable.
-          </p>
+          <p class="text-muted small mb-0" id="insightNote"></p>
         </div>
       </div>
     </div>
@@ -103,11 +109,20 @@
 <!-- ================= CHART SCRIPT ================= -->
 <script>
 const ctx = document.getElementById("healthChart").getContext("2d");
+let chart = null;
 
-let chart;
+function setActive(activeBtn, inactiveBtn) {
+  activeBtn.classList.add("btn-primary");
+  activeBtn.classList.remove("btn-outline-primary");
+
+  inactiveBtn.classList.remove("btn-primary");
+  inactiveBtn.classList.add("btn-outline-primary");
+}
 
 function renderChart(labels, data) {
-  if (chart) chart.destroy();
+  if (chart instanceof Chart) {
+    chart.destroy();
+  }
 
   chart = new Chart(ctx, {
     type: "doughnut",
@@ -120,20 +135,33 @@ function renderChart(labels, data) {
       }]
     },
     options: {
+      responsive: true,
+      maintainAspectRatio: false,
       cutout: "70%",
       plugins: {
-        legend: {
-          position: "bottom"
-        },
-        tooltip: {
-          enabled: true
-        }
+        legend: { position: "bottom" }
       }
     }
   });
 }
 
 function showUsers() {
+  setActive(
+    document.getElementById("btnUsers"),
+    document.getElementById("btnCompanies")
+  );
+
+  document.getElementById("healthTitle").innerText = "User Health";
+
+  document.getElementById("insightText").innerHTML =
+    "<strong>{{ active_users }}</strong> of <strong>{{ total_users }}</strong> users are active.";
+
+  document.getElementById("insightBar").style.width =
+    "{{ active_users|floatformat:0 }}%";
+
+  document.getElementById("insightNote").innerText =
+    "User activity is stable.";
+
   renderChart(
     ["Active Users", "Inactive Users"],
     [{{ active_users }}, {{ inactive_users }}]
@@ -141,14 +169,31 @@ function showUsers() {
 }
 
 function showCompanies() {
+  setActive(
+    document.getElementById("btnCompanies"),
+    document.getElementById("btnUsers")
+  );
+
+  document.getElementById("healthTitle").innerText = "Company Health";
+
+  document.getElementById("insightText").innerHTML =
+    "<strong>{{ active_companies }}</strong> of <strong>{{ total_companies }}</strong> companies are active.";
+
+  document.getElementById("insightBar").style.width =
+    "{{ active_companies|floatformat:0 }}%";
+
+  document.getElementById("insightNote").innerText =
+    "Company operations are stable.";
+
   renderChart(
     ["Active Companies", "Inactive Companies"],
     [{{ active_companies }}, {{ inactive_companies }}]
   );
 }
 
-// Default
-showUsers();
+/* DEFAULT LOAD */
+document.addEventListener("DOMContentLoaded", function () {
+  showUsers();
+});
 </script>
-
 {% endblock %}

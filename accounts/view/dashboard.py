@@ -8,9 +8,6 @@ def dashboard(request):
 
     context = {}
 
-    # -----------------------------------
-    # SUPER ADMIN (system-wide dashboard)
-    # -----------------------------------
     if user.is_superuser:
         context.update({
             # Tenant metrics
@@ -29,9 +26,7 @@ def dashboard(request):
             "inactive_users": User.objects.filter(is_active=False).count(),
         })
 
-    # -----------------------------------
-    # TENANT ADMIN / COMPANY USER
-    # -----------------------------------
+
     else:
         tenant = user.tenant
 
@@ -51,5 +46,5 @@ def dashboard(request):
                 tenant=tenant, is_active=False
             ).count(),
         })
-
+    context["active_menu"] = "dashboard"
     return render(request, "dashboard/index.html", context)

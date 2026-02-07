@@ -12,23 +12,19 @@
 <body class="hold-transition sidebar-mini">
 <div class="wrapper">
 
-  <!-- ================= HEADER ================= -->
+  <!-- HEADER -->
   <nav class="main-header navbar navbar-expand navbar-white navbar-light">
     <ul class="navbar-nav ml-auto">
       <li class="nav-item">
-        <span class="nav-link">
-          {{ request.user.email }}
-        </span>
+        <span class="nav-link">{{ request.user.email }}</span>
       </li>
       <li class="nav-item">
-        <a href="{% url 'admin:logout' %}" class="nav-link">
-          Logout
-        </a>
+        <a href="{% url 'admin:logout' %}" class="nav-link">Logout</a>
       </li>
     </ul>
   </nav>
 
-  <!-- ================= SIDEBAR ================= -->
+  <!-- SIDEBAR -->
   <aside class="main-sidebar sidebar-dark-primary elevation-4">
     <a href="{% url 'admin:dashboard' %}" class="brand-link">
       <span class="brand-text font-weight-light">Admin Panel</span>
@@ -36,55 +32,58 @@
 
     <div class="sidebar">
       <nav>
-        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview">
+        <ul class="nav nav-pills nav-sidebar flex-column">
 
-          <!-- Dashboard (ALL USERS) -->
+          <!-- Dashboard -->
           <li class="nav-item">
-            <a href="{% url 'admin:dashboard' %}" class="nav-link">
+            <a href="{% url 'admin:dashboard' %}"
+               class="nav-link {% if active_menu == 'dashboard' %}active{% endif %}">
               <i class="nav-icon fas fa-chart-pie"></i>
               <p>Dashboard</p>
             </a>
           </li>
 
-          <!-- ================= SYSTEM ================= -->
           {% if request.user.is_superuser %}
           <li class="nav-header">SYSTEM</li>
-
           <li class="nav-item">
-            <a href="{% url 'admin:tenants' %}" class="nav-link">
+            <a href="{% url 'admin:tenants' %}"
+               class="nav-link {% if active_menu == 'tenants' %}active{% endif %}">
               <i class="nav-icon fas fa-sitemap"></i>
               <p>Tenants</p>
             </a>
           </li>
           {% endif %}
 
-          <!-- ================= MANAGEMENT ================= -->
           {% if request.user.is_superuser or request.user.is_staff %}
           <li class="nav-header">MANAGEMENT</li>
 
           <li class="nav-item">
-            <a href="{% url 'admin:companies' %}" class="nav-link">
+            <a href="{% url 'admin:companies' %}"
+               class="nav-link {% if active_menu == 'companies' %}active{% endif %}">
               <i class="nav-icon fas fa-building"></i>
               <p>Companies</p>
             </a>
           </li>
 
           <li class="nav-item">
-            <a href="{% url 'admin:users' %}" class="nav-link">
+            <a href="{% url 'admin:users' %}"
+               class="nav-link {% if active_menu == 'users' %}active{% endif %}">
               <i class="nav-icon fas fa-users"></i>
               <p>Users</p>
             </a>
           </li>
 
           <li class="nav-item">
-            <a href="{% url 'admin:roles' %}" class="nav-link">
+            <a href="{% url 'admin:roles' %}"
+               class="nav-link {% if active_menu == 'roles' %}active{% endif %}">
               <i class="nav-icon fas fa-user-shield"></i>
               <p>Roles</p>
             </a>
           </li>
 
           <li class="nav-item">
-            <a href="{% url 'admin:audit-logs' %}" class="nav-link">
+            <a href="{% url 'admin:audit-logs' %}"
+               class="nav-link {% if active_menu == 'audit' %}active{% endif %}">
               <i class="nav-icon fas fa-clipboard-list"></i>
               <p>Audit Logs</p>
             </a>
@@ -96,7 +95,7 @@
     </div>
   </aside>
 
-  <!-- ================= CONTENT ================= -->
+  <!-- CONTENT -->
   <div class="content-wrapper">
     <section class="content pt-3">
       <div class="container-fluid">

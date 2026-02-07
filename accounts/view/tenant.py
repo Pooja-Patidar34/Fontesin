@@ -1,5 +1,3 @@
-# accounts/views/tenants.py
-
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -31,6 +29,8 @@ def tenant_list(request):
         {
             "tenants": page_obj,
             "page_obj": page_obj,
+            "active_menu": "tenants",
+
         },
     )
 

@@ -4,7 +4,6 @@ from django.contrib import messages
 
 def admin_login(request):
     if request.user.is_authenticated:
-        # return redirect("dashboard")            
         return redirect("admin:dashboard")
 
     
