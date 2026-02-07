@@ -4,86 +4,94 @@
 {% block content %}
 <div class="container-fluid">
 
-  <div class="row">
+  <!-- ================= KPI STRIP ================= -->
+  <div class="row mb-4">
 
-    <!-- Total Companies -->
-    <div class="col-lg-3 col-6">
-      <div class="small-box bg-info">
-        <div class="inner">
-          <h3>{{ total_companies }}</h3>
-          <p>Total Companies</p>
-        </div>
-        <div class="icon">
+    <div class="col-md-4">
+      <div class="info-box shadow-sm">
+        <span class="info-box-icon bg-info">
           <i class="fas fa-building"></i>
+        </span>
+        <div class="info-box-content">
+          <span class="info-box-text">Companies</span>
+          <span class="info-box-number">{{ total_companies }}</span>
+          <span class="text-muted small">{{ active_companies }} active</span>
         </div>
       </div>
     </div>
 
-    <!-- Active Companies -->
-    <div class="col-lg-3 col-6">
-      <div class="small-box bg-success">
-        <div class="inner">
-          <h3>{{ active_companies }}</h3>
-          <p>Active Companies</p>
-        </div>
-        <div class="icon">
-          <i class="fas fa-check-circle"></i>
-        </div>
-      </div>
-    </div>
-
-    <!-- Inactive Companies -->
-    <div class="col-lg-3 col-6">
-      <div class="small-box bg-danger">
-        <div class="inner">
-          <h3>{{ inactive_companies }}</h3>
-          <p>Inactive Companies</p>
-        </div>
-        <div class="icon">
-          <i class="fas fa-times-circle"></i>
-        </div>
-      </div>
-    </div>
-
-    <!-- Total Users -->
-    <div class="col-lg-3 col-6">
-      <div class="small-box bg-warning">
-        <div class="inner">
-          <h3>{{ total_users }}</h3>
-          <p>Total Users</p>
-        </div>
-        <div class="icon">
+    <div class="col-md-4">
+      <div class="info-box shadow-sm">
+        <span class="info-box-icon bg-warning">
           <i class="fas fa-users"></i>
+        </span>
+        <div class="info-box-content">
+          <span class="info-box-text">Users</span>
+          <span class="info-box-number">{{ total_users }}</span>
+          <span class="text-muted small">{{ active_users }} active</span>
         </div>
       </div>
     </div>
+
+    {% if request.user.is_superuser %}
+    <div class="col-md-4">
+      <div class="info-box shadow-sm">
+        <span class="info-box-icon bg-primary">
+          <i class="fas fa-sitemap"></i>
+        </span>
+        <div class="info-box-content">
+          <span class="info-box-text">Tenants</span>
+          <span class="info-box-number">{{ total_tenants }}</span>
+          <span class="text-muted small">{{ active_tenants }} active</span>
+        </div>
+      </div>
+    </div>
+    {% endif %}
 
   </div>
 
+  <!-- ================= MAIN INTERACTIVE AREA ================= -->
   <div class="row">
 
-    <!-- Active Users -->
-    <div class="col-lg-6 col-6">
-      <div class="small-box bg-success">
-        <div class="inner">
-          <h3>{{ active_users }}</h3>
-          <p>Active Users</p>
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">User Health</h5>
+
+          <!-- Toggle -->
+          <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-secondary active" onclick="showUsers()">Users</button>
+            <button class="btn btn-outline-secondary" onclick="showCompanies()">Companies</button>
+          </div>
         </div>
-        <div class="icon">
-          <i class="fas fa-user-check"></i>
+
+        <div class="card-body">
+          <canvas id="healthChart" height="120"></canvas>
         </div>
       </div>
     </div>
 
-    <!-- Inactive Users -->
-    <div class="col-lg-6 col-6">
-      <div class="small-box bg-danger">
-        <div class="inner">
-          <h3>{{ inactive_users }}</h3>
-          <p>Inactive Users</p>
+    <!-- ================= RIGHT INSIGHT ================= -->
+    <div class="col-lg-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-header">
+          <h6 class="mb-0">Quick Insight</h6>
         </div>
-        <div class="icon">
-          <i class="fas fa-user-slash"></i>
+        <div class="card-body">
+          <p class="mb-2">
+            <strong>{{ active_users }}</strong> of
+            <strong>{{ total_users }}</strong> users are active.
+          </p>
+
+          <div class="progress mb-3">
+            <div class="progress-bar bg-success"
+                 style="width: {{ active_users|floatformat:0 }}%">
+            </div>
+          </div>
+
+          <p class="text-muted small mb-0">
+            System usage is currently stable.
+          </p>
         </div>
       </div>
     </div>
@@ -91,4 +99,56 @@
   </div>
 
 </div>
+
+<!-- ================= CHART SCRIPT ================= -->
+<script>
+const ctx = document.getElementById("healthChart").getContext("2d");
+
+let chart;
+
+function renderChart(labels, data) {
+  if (chart) chart.destroy();
+
+  chart = new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      labels: labels,
+      datasets: [{
+        data: data,
+        backgroundColor: ["#28a745", "#dc3545"],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      cutout: "70%",
+      plugins: {
+        legend: {
+          position: "bottom"
+        },
+        tooltip: {
+          enabled: true
+        }
+      }
+    }
+  });
+}
+
+function showUsers() {
+  renderChart(
+    ["Active Users", "Inactive Users"],
+    [{{ active_users }}, {{ inactive_users }}]
+  );
+}
+
+function showCompanies() {
+  renderChart(
+    ["Active Companies", "Inactive Companies"],
+    [{{ active_companies }}, {{ inactive_companies }}]
+  );
+}
+
+// Default
+showUsers();
+</script>
+
 {% endblock %}

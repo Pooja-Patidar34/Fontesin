@@ -1,25 +1,49 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
-
-from accounts.models import User,UserRole,Role,AuditLog
-from accounts.utils.permissions import has_permission
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.exceptions import PermissionDenied
 
-
+from accounts.models import User, UserRole, Role, Tenant, Company
+from accounts.utils.permissions import has_permission
 
 @login_required
 def user_list(request):
     if not has_permission(request.user, "user.view"):
         raise PermissionDenied()
 
-    qs = User.objects.filter(
-        tenant=request.user.tenant
-    ).order_by("-created_at")
+    tenant_id = request.GET.get("tenant") or None
+    company_id = request.GET.get("company") or None
+    page_number = request.GET.get("page", 1)
+
+    if request.user.is_superuser:
+        qs = User.objects.select_related("tenant")
+        tenants = Tenant.objects.order_by("name")
+
+        if tenant_id:
+            qs = qs.filter(tenant_id=tenant_id)
+            companies = Company.objects.filter(tenant_id=tenant_id)
+
+            if company_id:
+                qs = qs.filter(usercompany__company_id=company_id).distinct()
+        else:
+            companies = Company.objects.none()
+            company_id = None
+    else:
+        qs = User.objects.filter(tenant=request.user.tenant)
+        tenants = None
+        companies = Company.objects.filter(tenant=request.user.tenant)
+
+        if company_id:
+            qs = qs.filter(usercompany__company_id=company_id).distinct()
+
+    qs = qs.order_by("-created_at")
 
     paginator = Paginator(qs, 7)
-    page_number = request.GET.get("page")
-    page_obj = paginator.get_page(page_number)
+
+    try:
+        page_obj = paginator.page(page_number)
+    except (EmptyPage, PageNotAnInteger):
+        page_obj = paginator.page(1)
 
     return render(
         request,
@@ -27,6 +51,10 @@ def user_list(request):
         {
             "users": page_obj,
             "page_obj": page_obj,
+            "tenants": tenants,
+            "companies": companies,
+            "selected_tenant": tenant_id,
+            "selected_company": company_id,
         },
     )
 
@@ -36,11 +64,14 @@ def toggle_user(request, user_id):
     if not has_permission(request.user, "user.manage"):
         raise PermissionDenied()
 
-    user = get_object_or_404(
-        User,
-        id=user_id,
-        tenant=request.user.tenant,
-    )
+    if request.user.is_superuser:
+        user = get_object_or_404(User, id=user_id)
+    else:
+        user = get_object_or_404(
+            User,
+            id=user_id,
+            tenant=request.user.tenant,
+        )
 
     user.is_active = not user.is_active
     user.save(update_fields=["is_active"])

@@ -4,12 +4,45 @@
 {% block content %}
 <div class="card d-flex flex-column">
 
-  <div class="card-header">
-    <h3 class="card-title">Users</h3>
+  <!-- HEADER + FILTERS -->
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h3 class="card-title mb-0">Users</h3>
+
+    <form method="get" class="form-inline">
+
+      {% if request.user.is_superuser %}
+      <select name="tenant"
+              class="form-control form-control-sm mr-2"
+              onchange="this.form.submit()">
+        <option value="">All Tenants</option>
+        {% for tenant in tenants %}
+          <option value="{{ tenant.id }}"
+            {% if tenant.id|stringformat:'s' == selected_tenant %}selected{% endif %}>
+            {{ tenant.name }}
+          </option>
+        {% endfor %}
+      </select>
+      {% endif %}
+
+      <select name="company"
+              class="form-control form-control-sm"
+              onchange="this.form.submit()"
+              {% if request.user.is_superuser and not selected_tenant %}disabled{% endif %}>
+        <option value="">All Companies</option>
+        {% for company in companies %}
+          <option value="{{ company.id }}"
+            {% if company.id|stringformat:'s' == selected_company %}selected{% endif %}>
+            {{ company.name }}
+          </option>
+        {% endfor %}
+      </select>
+
+    </form>
   </div>
 
+  <!-- TABLE -->
   <div class="card-body table-responsive p-0">
-    <table class="table table-hover text-nowrap mb-0">
+    <table class="table table-hover mb-0">
       <thead>
         <tr>
           <th>Email</th>
@@ -29,10 +62,12 @@
             {% endif %}
           </td>
           <td>
-            <a href="{% url 'admin:user-toggle' user.id %}" class="btn btn-sm btn-warning">
+            <a href="{% url 'admin:user-toggle' user.id %}"
+               class="btn btn-sm btn-warning">
               {% if user.is_active %}Disable{% else %}Enable{% endif %}
             </a>
-            <a href="{% url 'admin:assign-roles' user.id %}" class="btn btn-sm btn-primary">
+            <a href="{% url 'admin:assign-roles' user.id %}"
+               class="btn btn-sm btn-primary">
               Assign Roles
             </a>
           </td>
@@ -46,32 +81,58 @@
     </table>
   </div>
 
+  <!-- PAGINATION (AdminLTE-consistent) -->
   {% if page_obj.paginator.num_pages > 1 %}
-  <div class="card-footer mt-auto position-sticky" style="bottom: 0; background: #fff;">
-    <ul class="pagination pagination-sm m-0 justify-content-end">
+  <div class="card-footer">
+    <ul class="pagination pagination-sm justify-content-end mb-0">
+
+      {% with request.GET.urlencode as query %}
+
       {% if page_obj.has_previous %}
-        <li class="page-item">
-          <a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo;</a>
-        </li>
+      <li class="page-item">
+        <a class="page-link"
+           href="?{{ query|cut:'page='|cut:'&page=' }}&page={{ page_obj.previous_page_number }}">
+          Previous
+        </a>
+      </li>
+      {% else %}
+      <li class="page-item disabled">
+        <span class="page-link">Previous</span>
+      </li>
       {% endif %}
 
       {% for num in page_obj.paginator.page_range %}
-        {% if page_obj.number == num %}
+        {% if num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+          {% if page_obj.number == num %}
           <li class="page-item active">
             <span class="page-link">{{ num }}</span>
           </li>
-        {% else %}
+          {% else %}
           <li class="page-item">
-            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+            <a class="page-link"
+               href="?{{ query|cut:'page='|cut:'&page=' }}&page={{ num }}">
+              {{ num }}
+            </a>
           </li>
+          {% endif %}
         {% endif %}
       {% endfor %}
 
       {% if page_obj.has_next %}
-        <li class="page-item">
-          <a class="page-link" href="?page={{ page_obj.next_page_number }}">&raquo;</a>
-        </li>
+      <li class="page-item">
+        <a class="page-link"
+           href="?{{ query|cut:'page='|cut:'&page=' }}&page={{ page_obj.next_page_number }}">
+          Next
+        </a>
+      </li>
+      {% else %}
+      <li class="page-item disabled">
+        <span class="page-link">Next</span>
+      </li>
       {% endif %}
+
+      {% endwith %}
+
     </ul>
   </div>
   {% endif %}

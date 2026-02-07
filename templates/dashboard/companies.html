@@ -1,34 +1,128 @@
 {% extends "base/base.html" %}
-
 {% block title %}Companies{% endblock %}
 
 {% block content %}
-<h3>Companies</h3>
 
-<table class="table table-bordered">
-  <tr>
-    <th>Name</th>
-    <th>Status</th>
-    <th>Action</th>
-  </tr>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0">Companies</h3>
 
-  {% for company in companies %}
-  <tr>
-    <td>{{ company.name }}</td>
-    <td>
-      {% if company.is_active %}
-        <span class="badge badge-success">Active</span>
-      {% else %}
-        <span class="badge badge-danger">Inactive</span>
+  {% if request.user.is_superuser %}
+  <form method="get" class="form-inline">
+    <select name="tenant"
+            class="form-control form-control-sm"
+            onchange="this.form.submit()">
+      <option value="">All Tenants</option>
+      {% for tenant in tenants %}
+        <option value="{{ tenant.id }}"
+          {% if tenant.id|stringformat:"s" == selected_tenant_id %}
+            selected
+          {% endif %}
+        >
+          {{ tenant.name }}
+        </option>
+      {% endfor %}
+    </select>
+  </form>
+  {% endif %}
+</div>
+
+<table class="table table-bordered table-hover">
+  <thead>
+    <tr>
+      <th>Name</th>
+      {% if request.user.is_superuser %}
+      <th>Tenant</th>
       {% endif %}
-    </td>
-    <td>
-      <a href="{% url 'admin:company-toggle' company.id %}"
-         class="btn btn-sm btn-warning">
-        Toggle
-      </a>
-    </td>
-  </tr>
-  {% endfor %}
+      <th>Status</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {% for company in companies %}
+    <tr>
+      <td>{{ company.name }}</td>
+
+      {% if request.user.is_superuser %}
+      <td>{{ company.tenant.name }}</td>
+      {% endif %}
+
+      <td>
+        {% if company.is_active %}
+          <span class="badge badge-success">Active</span>
+        {% else %}
+          <span class="badge badge-danger">Inactive</span>
+        {% endif %}
+      </td>
+
+      <td>
+        <a href="{% url 'admin:company-toggle' company.id %}"
+           class="btn btn-sm btn-warning">
+          Toggle
+        </a>
+      </td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="4" class="text-center text-muted">
+        No companies found
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
 </table>
+
+<!-- ================= PAGINATION (BOTTOM RIGHT) ================= -->
+{% if companies.paginator.num_pages > 1 %}
+<nav aria-label="Company pagination">
+  <ul class="pagination justify-content-end mt-3">
+
+    <!-- Previous -->
+    {% if companies.has_previous %}
+    <li class="page-item">
+      <a class="page-link"
+         href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ companies.previous_page_number }}">
+        Previous
+      </a>
+    </li>
+    {% else %}
+    <li class="page-item disabled">
+      <span class="page-link">Previous</span>
+    </li>
+    {% endif %}
+
+    <!-- Page numbers -->
+    {% for num in companies.paginator.page_range %}
+      {% if num == companies.number %}
+        <li class="page-item active">
+          <span class="page-link">{{ num }}</span>
+        </li>
+      {% elif num >= companies.number|add:-2 and num <= companies.number|add:2 %}
+        <li class="page-item">
+          <a class="page-link"
+             href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ num }}">
+            {{ num }}
+          </a>
+        </li>
+      {% endif %}
+    {% endfor %}
+
+    <!-- Next -->
+    {% if companies.has_next %}
+    <li class="page-item">
+      <a class="page-link"
+         href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ companies.next_page_number }}">
+        Next
+      </a>
+    </li>
+    {% else %}
+    <li class="page-item disabled">
+      <span class="page-link">Next</span>
+    </li>
+    {% endif %}
+
+  </ul>
+</nav>
+{% endif %}
+
 {% endblock %}

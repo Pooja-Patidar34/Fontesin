@@ -1,4 +1,4 @@
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render, redirect
 from django.contrib import messages
 
@@ -24,3 +24,9 @@ def admin_login(request):
             return redirect("admin:dashboard")
 
     return render(request, "auth/login.html")
+
+
+
+def admin_logout(request):
+    logout(request)
+    return redirect("admin:login")

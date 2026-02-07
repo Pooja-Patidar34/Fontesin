@@ -21,7 +21,7 @@
         </span>
       </li>
       <li class="nav-item">
-        <a href="{% url 'admin:login' %}" class="nav-link">
+        <a href="{% url 'admin:logout' %}" class="nav-link">
           Logout
         </a>
       </li>
@@ -36,9 +36,9 @@
 
     <div class="sidebar">
       <nav>
-        <ul class="nav nav-pills nav-sidebar flex-column">
+        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview">
 
-          <!-- Dashboard -->
+          <!-- Dashboard (ALL USERS) -->
           <li class="nav-item">
             <a href="{% url 'admin:dashboard' %}" class="nav-link">
               <i class="nav-icon fas fa-chart-pie"></i>
@@ -46,38 +46,43 @@
             </a>
           </li>
 
-          <!-- Company Management -->
-          {% if request.user.is_staff %}
+          <!-- ================= SYSTEM ================= -->
+          {% if request.user.is_superuser %}
+          <li class="nav-header">SYSTEM</li>
+
+          <li class="nav-item">
+            <a href="{% url 'admin:tenants' %}" class="nav-link">
+              <i class="nav-icon fas fa-sitemap"></i>
+              <p>Tenants</p>
+            </a>
+          </li>
+          {% endif %}
+
+          <!-- ================= MANAGEMENT ================= -->
+          {% if request.user.is_superuser or request.user.is_staff %}
+          <li class="nav-header">MANAGEMENT</li>
+
           <li class="nav-item">
             <a href="{% url 'admin:companies' %}" class="nav-link">
               <i class="nav-icon fas fa-building"></i>
               <p>Companies</p>
             </a>
           </li>
-          {% endif %}
 
-          <!-- User Management -->
-          {% if request.user.is_staff %}
           <li class="nav-item">
             <a href="{% url 'admin:users' %}" class="nav-link">
               <i class="nav-icon fas fa-users"></i>
               <p>Users</p>
             </a>
           </li>
-          {% endif %}
 
-          <!-- Role Management -->
-          {% if request.user.is_staff %}
           <li class="nav-item">
             <a href="{% url 'admin:roles' %}" class="nav-link">
               <i class="nav-icon fas fa-user-shield"></i>
               <p>Roles</p>
             </a>
           </li>
-          {% endif %}
 
-          <!-- Audit Logs -->
-          {% if request.user.is_staff %}
           <li class="nav-item">
             <a href="{% url 'admin:audit-logs' %}" class="nav-link">
               <i class="nav-icon fas fa-clipboard-list"></i>
@@ -105,5 +110,6 @@
 <script src="{% static 'adminlte/plugins/jquery/jquery.min.js' %}"></script>
 <script src="{% static 'adminlte/plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'adminlte/js/adminlte.min.js' %}"></script>
+<script src="{% static 'adminlte/plugins/chart.js/Chart.min.js' %}"></script>
 </body>
 </html>

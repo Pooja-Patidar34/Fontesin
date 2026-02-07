@@ -65,6 +65,14 @@ class User(AbstractBaseUser, PermissionsMixin):
         on_delete=models.PROTECT,
         related_name="users"
     )
+    
+    primary_company = models.ForeignKey(
+        Company,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="primary_users"
+    )
 
     email = models.EmailField(unique=True)
     full_name = models.CharField(max_length=255)
@@ -83,22 +91,22 @@ class User(AbstractBaseUser, PermissionsMixin):
         unique_together = ("tenant", "email")
 
 
-class Classification(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+# class Classification(models.Model):
+#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    tenant = models.ForeignKey(
-        Tenant,
-        on_delete=models.PROTECT,
-        related_name="classifications"
-    )
+#     tenant = models.ForeignKey(
+#         Tenant,
+#         on_delete=models.PROTECT,
+#         related_name="classifications"
+#     )
 
-    key = models.CharField(max_length=100)
-    label = models.CharField(max_length=255)
+#     key = models.CharField(max_length=100)
+#     label = models.CharField(max_length=255)
 
-    created_at = models.DateTimeField(auto_now_add=True)
+#     created_at = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        unique_together = ("tenant", "key")
+#     class Meta:
+#         unique_together = ("tenant", "key")
 
 
 
@@ -128,8 +136,6 @@ class Role(models.Model):
         through="RolePermission"
     )
 
-    is_system_role = models.BooleanField(default=False)
-
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -152,6 +158,26 @@ class UserRole(models.Model):
 
     class Meta:
         unique_together = ("user", "role")
+
+
+class UserCompany(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+
+    is_primary = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ("user", "company")
+        default_permissions = ()
+
+class UserCompanyRole(models.Model):
+    user_company = models.ForeignKey(UserCompany, on_delete=models.CASCADE)
+    role = models.ForeignKey(Role, on_delete=models.PROTECT)
+
+    class Meta:
+        unique_together = ("user_company", "role")
+        default_permissions = ()
+
 
 class AuditLog(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
