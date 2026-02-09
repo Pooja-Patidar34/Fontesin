@@ -6,6 +6,7 @@ from .view.user import user_list, toggle_user, assign_roles,role_list
 from .view.audit import audit_logs
 from .view.tenant import tenant_list,toggle_tenant
 
+
 urlpatterns = [
     path("login/", admin_login, name="login"),
     path("logout/", admin_logout, name="logout"),
@@ -20,3 +21,4 @@ urlpatterns = [
     path("tenants/", tenant_list, name="tenants"),
     path("tenants/<uuid:tenant_id>/toggle/",toggle_tenant,name="tenant-toggle",),
 ]
+

@@ -1,6 +1,9 @@
+from accounts.models import RolePermission
+
+
 def has_permission(user, permission_code: str) -> bool:
     """
-    Tenant-scoped RBAC permission check.
+    Tenant + company scoped RBAC permission check.
     """
 
     if not user or not user.is_authenticated:
@@ -9,12 +12,11 @@ def has_permission(user, permission_code: str) -> bool:
     if not user.is_active:
         return False
 
-    # System-level super admin
     if user.is_superuser:
         return True
 
-    # Tenant-scoped RBAC
-    return user.userrole_set.filter(
+    return RolePermission.objects.filter(
+        role__usercompanyrole__user_company__user=user,
         role__tenant=user.tenant,
-        role__permissions__code=permission_code,
+        permission__code=permission_code,
     ).exists()

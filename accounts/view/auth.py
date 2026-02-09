@@ -13,6 +13,8 @@ def admin_login(request):
         password = request.POST.get("password")
 
         user = authenticate(request, email=email, password=password)
+        
+        print(user)
 
         if user is None:
             messages.error(request, "Invalid credentials")
