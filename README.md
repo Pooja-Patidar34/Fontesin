@@ -1,22 +1,23 @@
-# Multi-Tenant Admin Panel  
+# Multi-Tenant Admin Panel
 ## Role-Based Access Control (RBAC) – Implementation Documentation
 
 ---
 
 ## 1. Project Overview
 
-This project implements a **custom multi-tenant admin panel** using Django, designed to follow **real-world backend engineering practices** instead of relying on Django Admin or DRF.
+This project implements a custom multi-tenant admin panel using Django, designed to follow real-world backend engineering practices instead of relying on Django Admin or DRF.
 
 The system demonstrates:
 
-- Multi-tenant data isolation  
-- Role-based access control (RBAC)  
-- Permission-driven authorization  
-- Immutable audit logging  
-- Centralized error handling (403 Forbidden)  
-- Template-based admin UI (AdminLTE)  
+- Multi-tenant data isolation
+- Multi-company user management
+- Role-based access control (RBAC)
+- Permission-driven authorization
+- Immutable audit logging
+- Centralized error handling (403 Forbidden)
+- Template-based admin UI (AdminLTE)
 
-The implementation is intentionally explicit and backend-focused to reflect **production-grade architecture**.
+The implementation is intentionally explicit and backend-focused to reflect production-grade architecture.
 
 ---
 
@@ -24,22 +25,25 @@ The implementation is intentionally explicit and backend-focused to reflect **pr
 
 The system is built around the following core principles:
 
-1. **Tenant Isolation by Default**  
+1. Tenant Isolation by Default  
    All business data is scoped to a tenant.
 
-2. **RBAC (Role-Based Access Control)**  
+2. Multi-Company Support  
+   Users may belong to multiple companies under the same tenant.
+
+3. RBAC (Role-Based Access Control)  
    Permissions are assigned to roles, not directly to users.
 
-3. **Explicit Authorization**  
+4. Explicit Authorization  
    Every protected action checks permissions explicitly.
 
-4. **Fail-Secure Defaults**  
+5. Fail-Secure Defaults  
    Access is denied unless explicitly allowed.
 
-5. **Immutability for Security Logs**  
+6. Immutability for Security Logs  
    Audit logs cannot be modified after creation.
 
-6. **Separation of Concerns**  
+7. Separation of Concerns  
    Models, permissions, views, error handling, and UI are clearly separated.
 
 ---
@@ -48,14 +52,13 @@ The system is built around the following core principles:
 
 ### Conceptual Relationship
 
-```
 Tenant
 ├── Companies
 ├── Users
-│   └── UserRoles ──> Roles ──> Permissions
-├── Classifications
+│   ├── UserRoles ───────────> Roles ──> Permissions
+│   └── UserCompanies
+│       └── UserCompanyRoles ─> Roles ──> Permissions
 └── AuditLogs
-```
 
 ---
 
@@ -63,91 +66,128 @@ Tenant
 
 ### 4.1 Tenant
 
-**Purpose**  
+Purpose  
 Represents an isolated organization or customer.
 
-**Key Design Decisions**
-- UUID primary key for security and scalability  
-- `slug` for URL-safe identification  
-- `is_active` flag to disable tenants without deleting data  
+Key Design Decisions
+- UUID primary key for security and scalability
+- Slug for URL-safe identification
+- is_active flag to disable tenants without deleting data
 
-**Why this is good practice**
-- Prevents cross-tenant data leakage  
-- Supports horizontal scaling  
-- Matches enterprise SaaS architecture  
+Why this is good practice
+- Prevents cross-tenant data leakage
+- Supports horizontal scaling
+- Matches enterprise SaaS architecture
 
 ---
 
 ### 4.2 Company
 
-**Purpose**  
+Purpose  
 Represents business entities under a tenant.
 
-**Key Design Decisions**
-- Strict tenant foreign key  
-- `unique_together (tenant, name)` to avoid duplicates  
-- `on_delete=PROTECT` to prevent accidental data loss  
+Key Design Decisions
+- Strict tenant foreign key
+- Unique constraint on (tenant, name)
+- on_delete=PROTECT to prevent accidental data loss
 
 ---
 
 ### 4.3 Custom User Model
 
-**Purpose**  
+Purpose  
 Custom authentication model using email instead of username.
 
-**Key Design Decisions**
-- One user belongs to exactly one tenant  
-- Email-based login  
-- `is_staff` used as a super-permission shortcut  
-- `PermissionsMixin` retained for Django compatibility  
+Key Design Decisions
+- Each user belongs to exactly one tenant
+- Users may belong to multiple companies under the same tenant
+- primary_company provides a default company context
+- Email-based authentication
+- is_staff may be used as a super-access shortcut
+- PermissionsMixin retained for Django compatibility
 
 ---
 
-### 4.4 Classification
+### 4.4 UserCompany
 
-**Purpose**  
-Tenant-specific lookup/configuration values (e.g. statuses, labels).
+Purpose  
+Defines the association between users and companies.
+
+Key Characteristics
+- Many-to-many relationship between users and companies
+- One company can be marked as primary per user
+- Enforced uniqueness per (user, company)
+
+Why this matters
+- Enables multi-company access
+- Supports company-scoped permissions
+- Matches real-world enterprise access models
 
 ---
 
 ### 4.5 Permission
 
-**Purpose**  
-Atomic permission unit (e.g. `user.view`, `company.manage`).
+Purpose  
+Atomic permission unit (e.g. user.view, company.manage).
+
+Design Notes
+- Permissions are global and reusable across tenants
+- Assigned only through roles
 
 ---
 
 ### 4.6 Role
 
-**Purpose**  
+Purpose  
 Logical grouping of permissions.
+
+Design Notes
+- Roles are tenant-scoped
+- Reusable across companies
+- Do not belong directly to companies
 
 ---
 
-### 4.7 UserRole
+### 4.7 Role Assignment Strategy
 
-**Purpose**  
-Assigns roles to users.
+The system supports role assignment at two levels:
+
+Tenant-Level Roles (UserRole)
+- Apply globally across the tenant
+- Used for tenant admins, auditors, or operators
+
+Company-Level Roles (UserCompanyRole)
+- Apply only within a specific company
+- Used for operational and business access control
+
+This enables:
+- Least-privilege enforcement
+- Fine-grained authorization
+- Clean separation of tenant vs company concerns
 
 ---
 
 ### 4.8 AuditLog (Security-Critical)
 
-**Purpose**  
+Purpose  
 Tracks all sensitive or important actions.
 
-**Critical Design Decision: Immutability**
+Key Characteristics
+- Tenant-scoped
+- Actor-aware (nullable for system actions)
+- Stores metadata and IP address
 
-```python
+Critical Design Decision: Immutability
+
 def save(self, *args, **kwargs):
-    if self.pk:
+    if not self._state.adding:
         raise RuntimeError("Audit logs are immutable")
-```
+    super().save(*args, **kwargs)
 
-**Why this matters**
-- Prevents tampering  
-- Supports compliance and forensic analysis  
-- Guarantees integrity of security logs  
+Why this matters
+- Prevents tampering
+- Supports compliance and forensic analysis
+- Guarantees integrity of security logs
 
 ---
 
@@ -155,8 +195,9 @@ def save(self, *args, **kwargs):
 
 - Permissions are checked explicitly in views
 - Authorization is role-based, not user-based
-- Staff users can be treated as super-access users if required
-- Unauthorized access raises `PermissionDenied`
+- Permissions may be evaluated at tenant or company scope
+- Staff users may be treated as super-access users if required
+- Unauthorized access raises PermissionDenied
 
 This ensures predictable and auditable access control.
 
@@ -164,24 +205,24 @@ This ensures predictable and auditable access control.
 
 ## 6. Error Handling (403 Forbidden)
 
-- Unauthorized access raises `PermissionDenied`
-- Django renders a custom `403.html`
-- Centralized handling using `handler403`
+- Unauthorized access raises PermissionDenied
+- Django renders a custom 403.html
+- Centralized handling using handler403
 - Clean UX without exposing internal details
 
-This approach is preferred over returning `HttpResponseForbidden()`.
+This approach is preferred over returning HttpResponseForbidden().
 
 ---
 
 ## 7. Final Summary
 
-This project demonstrates a **production-ready Django backend architecture** with:
+This project demonstrates a production-ready Django backend architecture with:
 
-- Strong security guarantees  
-- Explicit authorization  
-- Scalable RBAC design  
-- Tenant-isolated data model  
-- Immutable audit logging  
-- Clean error handling  
+- Strict tenant isolation
+- Multi-company user associations
+- Hierarchical RBAC (tenant + company level)
+- Explicit permission enforcement
+- Immutable audit logging
+- Clean error handling
 
-The implementation reflects **real-world enterprise backend practices.
+The design mirrors real-world enterprise SaaS authorization systems rather than simplified framework defaults.
