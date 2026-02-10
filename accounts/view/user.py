@@ -165,6 +165,6 @@ def assign_roles(request, user_id):
 @login_required
 def role_list(request):
     if not has_permission(request.user, "role.view"):
-        raise PermissionDenied
+        raise PermissionDenied()
     roles = Role.objects.filter(tenant=request.user.tenant)
     return render(request, "dashboard/roles.html", {"roles": roles,"active_menu": "roles"})

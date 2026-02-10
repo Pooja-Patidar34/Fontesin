@@ -6,7 +6,7 @@ from django.core.paginator import Paginator
 from accounts.models import Company, Tenant,AuditLog
 from accounts.utils.permissions import has_permission
 from accounts.utils.ip import get_client_ip
-
+from django.urls import reverse
 
 
 @login_required
@@ -57,7 +57,6 @@ def company_list(request):
     )
 
 
-
 @login_required
 def toggle_company(request, company_id):
     if not has_permission(request.user, "company.manage"):
@@ -73,11 +72,9 @@ def toggle_company(request, company_id):
         )
 
     old_status = company.is_active
-
     company.is_active = not company.is_active
     company.save(update_fields=["is_active"])
 
-    # Decide audit action based on new status
     action = "company.activated" if company.is_active else "company.deactivated"
 
     AuditLog.objects.create(
@@ -94,4 +91,9 @@ def toggle_company(request, company_id):
         ip_address=get_client_ip(request),
     )
 
-    return redirect(request.META.get("HTTP_REFERER", "admin:companies"))
+    referer = request.META.get("HTTP_REFERER")
+
+    if referer:
+        return redirect(referer)
+
+    return redirect(reverse("admin:companies"))
