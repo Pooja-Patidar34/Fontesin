@@ -17,6 +17,7 @@
           <th>User</th>
           <th>Action</th>
           <th>Date</th>
+          <th>View</th>
         </tr>
       </thead>
       <tbody>
@@ -25,10 +26,16 @@
           <td>{{ log.actor.email|default:"System" }}</td>
           <td>{{ log.action }}</td>
           <td>{{ log.created_at|date:"Y-m-d H:i" }}</td>
+          <td>
+            <button class="btn btn-sm btn-primary view-log-btn"
+                    data-id="{{ log.id }}">
+              View
+            </button>
+          </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="3" class="text-center text-muted">
+          <td colspan="4" class="text-center text-muted">
             No logs found
           </td>
         </tr>
@@ -40,7 +47,6 @@
   {% if page_obj.paginator.num_pages > 1 %}
   <div class="card-footer clearfix">
     <ul class="pagination pagination-sm m-0 float-right">
-
       {% if page_obj.has_previous %}
       <li class="page-item">
         <a class="page-link"
@@ -72,10 +78,87 @@
         </a>
       </li>
       {% endif %}
-
     </ul>
   </div>
   {% endif %}
-
 </div>
+
+<!-- LOG DETAIL MODAL -->
+<div class="modal fade" id="logDetailModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Audit Log Detail</h5>
+        <button type="button" class="close" data-dismiss="modal">
+          &times;
+        </button>
+      </div>
+      <div class="modal-body">
+        <table class="table table-bordered">
+          <tr><th>Actor</th><td id="detail-actor"></td></tr>
+          <tr><th>Action</th><td id="detail-action"></td></tr>
+          <tr><th>Entity Type</th><td id="detail-entity-type"></td></tr>
+          <tr><th>Entity ID</th><td id="detail-entity-id"></td></tr>
+          <tr><th>IP Address</th><td id="detail-ip"></td></tr>
+          <tr><th>Created At</th><td id="detail-created"></td></tr>
+          <tr>
+            <th>Metadata</th>
+            <td>
+              <pre id="detail-metadata" class="mb-0"></pre>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AJAX SCRIPT -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  document.querySelectorAll(".view-log-btn").forEach(function (button) {
+
+    button.addEventListener("click", function () {
+
+      const logId = this.getAttribute("data-id");
+
+      fetch(`/admin/audit/logs/${logId}/detail/`, {
+        headers: {
+          "X-Requested-With": "XMLHttpRequest"
+        }
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error("Status Code: " + response.status);
+        }
+        return response.json();
+      })
+      .then(data => {
+
+        document.getElementById("detail-actor").innerText = data.actor;
+        document.getElementById("detail-action").innerText = data.action;
+        document.getElementById("detail-entity-type").innerText = data.entity_type;
+        document.getElementById("detail-entity-id").innerText = data.entity_id;
+        document.getElementById("detail-ip").innerText = data.ip_address;
+        document.getElementById("detail-created").innerText = data.created_at;
+
+        document.getElementById("detail-metadata").innerText =
+            JSON.stringify(data.metadata, null, 2);
+
+        $('#logDetailModal').modal('show');
+      })
+      .catch(error => {
+        console.error(error);
+        alert("Failed to load log details. Check console for error.");
+      });
+
+    });
+
+  });
+
+});
+</script>
+
+
 {% endblock %}

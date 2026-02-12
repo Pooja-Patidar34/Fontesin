@@ -17,7 +17,7 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **options):
-        self.stdout.write("🌱 Seeding bulk RBAC data...")
+        self.stdout.write("Seeding bulk RBAC data...")
 
         # -------------------------------------------------
         # PERMISSIONS (GLOBAL)
@@ -141,5 +141,5 @@ class Command(BaseCommand):
                         role=company_user_role,
                     )
 
-        self.stdout.write(self.style.SUCCESS("✅ Bulk seed completed successfully"))
-        self.stdout.write("🔑 Super Admin → superadmin@system.com / Test@123")
+        self.stdout.write(self.style.SUCCESS("Bulk seed completed successfully"))
+        self.stdout.write("Super Admin → superadmin@system.com / Test@123")

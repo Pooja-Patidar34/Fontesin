@@ -3,7 +3,7 @@ from .view.auth import admin_login, admin_logout
 from .view.dashboard import dashboard
 from accounts.view.company import company_list, toggle_company
 from .view.user import user_list, toggle_user, assign_roles,role_list
-from .view.audit import audit_logs
+from .view.audit import audit_logs,audit_log_detail_ajax
 from .view.tenant import tenant_list,toggle_tenant
 
 
@@ -20,5 +20,7 @@ urlpatterns = [
     path("roles/", role_list, name="roles"),
     path("tenants/", tenant_list, name="tenants"),
     path("tenants/<uuid:tenant_id>/toggle/",toggle_tenant,name="tenant-toggle",),
+    path("audit/logs/<uuid:log_id>/detail/",audit_log_detail_ajax,name="audit_log_detail_ajax",),
+
 ]
 
