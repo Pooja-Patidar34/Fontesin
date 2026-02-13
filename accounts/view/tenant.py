@@ -6,16 +6,57 @@ from django.shortcuts import render, get_object_or_404, redirect
 from accounts.models import Tenant, AuditLog
 from accounts.utils.permissions import has_permission
 from accounts.utils.ip import get_client_ip
-
+from accounts.forms.tenant_form import TenantForm
+from django.contrib import messages
+from django.db.models import Count
+from django.http import JsonResponse
 
 @login_required
 def tenant_list(request):
     if not request.user.is_superuser:
         raise PermissionDenied()
 
-    qs = Tenant.objects.order_by("name")
+    if request.method == "POST":
 
-    paginator = Paginator(qs, 9)
+        tenant_id = request.POST.get("tenant_id")
+
+        if tenant_id:
+            tenant = get_object_or_404(Tenant, id=tenant_id)
+            form = TenantForm(request.POST, instance=tenant)
+            action = "tenant.updated"
+            message = "Tenant updated successfully."
+        else:
+            form = TenantForm(request.POST)
+            action = "tenant.created"
+            message = "Tenant created successfully."
+
+        if form.is_valid():
+            tenant = form.save()
+
+            AuditLog.objects.create(
+                tenant=tenant,
+                actor=request.user,
+                action=action,
+                entity_type="Tenant",
+                entity_id=tenant.id,
+                metadata={
+                    "name": tenant.name,
+                    "is_active": tenant.is_active,
+                },
+                ip_address=get_client_ip(request),
+            )
+
+            messages.success(request, message)
+            return redirect("admin:tenants")
+    else:
+        form = TenantForm()
+
+    qs = Tenant.objects.annotate(
+        company_count=Count("companies", distinct=True),
+        user_count=Count("users", distinct=True)
+    ).order_by("name")
+
+    paginator = Paginator(qs, 10)
     page_number = request.GET.get("page", 1)
 
     try:
@@ -29,8 +70,8 @@ def tenant_list(request):
         {
             "tenants": page_obj,
             "page_obj": page_obj,
+            "form": form,
             "active_menu": "tenants",
-
         },
     )
 
@@ -66,3 +107,20 @@ def toggle_tenant(request, tenant_id):
     )
 
     return redirect(request.META.get("HTTP_REFERER", "admin:tenants"))
+
+
+@login_required
+def tenant_detail_ajax(request, tenant_id):
+    if not request.user.is_superuser:
+        raise PermissionDenied()
+
+    tenant = get_object_or_404(Tenant, id=tenant_id)
+
+    return JsonResponse({
+        "id": str(tenant.id),
+        "name": tenant.name,
+        "slug": tenant.slug,
+        "is_active": tenant.is_active,
+        "created_at": tenant.created_at.strftime("%Y-%m-%d %H:%M"),
+    })
+ 

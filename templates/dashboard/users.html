@@ -2,11 +2,51 @@
 {% block title %}Users{% endblock %}
 
 {% block content %}
-<div class="card d-flex flex-column">
+
+<style>
+/* Ensure alignment consistency */
+.table td,
+.table th {
+    vertical-align: middle !important;
+}
+
+/* Header styling */
+.table thead th {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    font-weight: 600;
+}
+
+/* Hover effect */
+.table-hover tbody tr:hover {
+    background-color: #f4f6f9;
+}
+
+/* Status badge */
+.status-badge {
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Action buttons */
+.action-btn {
+    min-width: 90px;
+    padding: 4px 14px;
+    font-size: 13px;
+}
+</style>
+
+
+<div class="card card-outline card-primary shadow-sm">
 
   <!-- HEADER + FILTERS -->
   <div class="card-header d-flex justify-content-between align-items-center">
-    <h3 class="card-title mb-0">Users</h3>
+    <h3 class="card-title font-weight-bold mb-0">
+      Users
+    </h3>
 
     <form method="get" class="form-inline">
 
@@ -40,62 +80,84 @@
     </form>
   </div>
 
+
   <!-- TABLE -->
-  <div class="card-body table-responsive p-0">
-    <table class="table table-hover mb-0">
-      <thead>
-        <tr>
-          <th>Email</th>
-          <th>Status</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for user in users %}
-        <tr>
-          <td>{{ user.email }}</td>
-          <td>
-            {% if user.is_active %}
-              <span class="badge badge-success">Active</span>
-            {% else %}
-              <span class="badge badge-danger">Inactive</span>
-            {% endif %}
-          </td>
-          <td class="text-nowrap">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover table-sm mb-0">
 
-            {% if user.is_active %}
-              <a href="{% url 'admin:user-toggle' user.id %}"
-                 class="btn btn-sm btn-danger"
-                 title="Deactivate user">
-                Deactivate
+        <thead class="bg-light">
+          <tr>
+            <th>Email</th>
+            <th>Status</th>
+            <th class="text-right">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for user in users %}
+          <tr>
+
+            <!-- Email -->
+            <td>
+              {{ user.email }}
+            </td>
+
+            <!-- Status -->
+            <td>
+              {% if user.is_active %}
+                <span class="badge badge-success status-badge">
+                  Active
+                </span>
+              {% else %}
+                <span class="badge badge-danger status-badge">
+                  Inactive
+                </span>
+              {% endif %}
+            </td>
+
+            <!-- Actions -->
+            <td class="text-right text-nowrap">
+
+              {% if user.is_active %}
+                <a href="{% url 'admin:user-toggle' user.id %}"
+                   class="btn btn-sm btn-outline-warning action-btn">
+                  Deactivate
+                </a>
+              {% else %}
+                <a href="{% url 'admin:user-toggle' user.id %}"
+                   class="btn btn-sm btn-outline-success action-btn">
+                  Activate
+                </a>
+              {% endif %}
+
+              <a href="{% url 'admin:assign-roles' user.id %}"
+                 class="btn btn-sm btn-outline-primary action-btn ml-1">
+                Roles
               </a>
-            {% else %}
-              <a href="{% url 'admin:user-toggle' user.id %}"
-                 class="btn btn-sm btn-success"
-                 title="Activate user">
-                Activate
-              </a>
-            {% endif %}
 
-            <a href="{% url 'admin:assign-roles' user.id %}"
-               class="btn btn-sm btn-primary ml-1">
-              Assign Roles
-            </a>
+            </td>
 
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="3" class="text-center">No users found</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+          </tr>
+
+          {% empty %}
+          <tr>
+            <td colspan="3" class="text-center text-muted py-4">
+              No users found
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+
+      </table>
+    </div>
   </div>
 
+
+  <!-- PAGINATION -->
   {% if page_obj.paginator.num_pages > 1 %}
-  <div class="card-footer">
-    <ul class="pagination pagination-sm justify-content-end mb-0">
+  <div class="card-footer clearfix">
+    <ul class="pagination pagination-sm m-0 float-right">
 
       {% with request.GET.urlencode as query %}
 
@@ -115,16 +177,16 @@
       {% for num in page_obj.paginator.page_range %}
         {% if num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
           {% if page_obj.number == num %}
-          <li class="page-item active">
-            <span class="page-link">{{ num }}</span>
-          </li>
+            <li class="page-item active">
+              <span class="page-link">{{ num }}</span>
+            </li>
           {% else %}
-          <li class="page-item">
-            <a class="page-link"
-               href="?{{ query|cut:'page='|cut:'&page=' }}&page={{ num }}">
-              {{ num }}
-            </a>
-          </li>
+            <li class="page-item">
+              <a class="page-link"
+                 href="?{{ query|cut:'page='|cut:'&page=' }}&page={{ num }}">
+                {{ num }}
+              </a>
+            </li>
           {% endif %}
         {% endif %}
       {% endfor %}
@@ -149,4 +211,5 @@
   {% endif %}
 
 </div>
+
 {% endblock %}

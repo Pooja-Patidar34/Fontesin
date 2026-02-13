@@ -3,131 +3,303 @@
 
 {% block content %}
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h3 class="mb-0">Companies</h3>
+<div class="card card-outline card-primary shadow-sm">
 
-  {% if request.user.is_superuser %}
-  <form method="get" class="form-inline">
-    <select name="tenant"
-            class="form-control form-control-sm"
-            onchange="this.form.submit()">
-      <option value="">All Tenants</option>
-      {% for tenant in tenants %}
-        <option value="{{ tenant.id }}"
-          {% if tenant.id|stringformat:"s" == selected_tenant_id %}
-            selected
-          {% endif %}
-        >
-          {{ tenant.name }}
-        </option>
-      {% endfor %}
-    </select>
-  </form>
-  {% endif %}
-</div>
+  <!-- Header -->
+  <div class="card-header">
+    <div class="d-flex justify-content-between align-items-center">
 
-<table class="table table-bordered table-hover">
-  <thead>
-    <tr>
-      <th>Name</th>
-      {% if request.user.is_superuser %}
-      <th>Tenant</th>
-      {% endif %}
-      <th>Status</th>
-      <th>Action</th>
-    </tr>
-  </thead>
+      <h3 class="card-title font-weight-bold mb-0">
+        Companies
+      </h3>
 
-  <tbody>
-    {% for company in companies %}
-    <tr>
-      <td>{{ company.name }}</td>
+      <div class="d-flex align-items-center">
 
-      {% if request.user.is_superuser %}
-      <td>{{ company.tenant.name }}</td>
-      {% endif %}
-
-      <td>
-        {% if company.is_active %}
-          <span class="badge badge-success">Active</span>
-        {% else %}
-          <span class="badge badge-danger">Inactive</span>
+        {% if request.user.is_superuser %}
+        <form method="get" class="mr-3 mb-0">
+          <select name="tenant"
+                  class="form-control form-control-sm"
+                  onchange="this.form.submit()">
+            <option value="">All Tenants</option>
+            {% for tenant in tenants %}
+              <option value="{{ tenant.id }}"
+                {% if tenant.id|stringformat:"s" == selected_tenant_id %}selected{% endif %}>
+                {{ tenant.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </form>
         {% endif %}
-      </td>
 
-      <td>
-        {% if company.is_active %}
-          <a href="{% url 'admin:company-toggle' company.id %}"
-             class="btn btn-sm btn-danger"
-             title="Deactivate company">
-            Deactivate
-          </a>
-        {% else %}
-          <a href="{% url 'admin:company-toggle' company.id %}"
-             class="btn btn-sm btn-success"
-             title="Activate company">
-            Activate
-          </a>
+        {% if can_manage %}
+        <button class="btn btn-primary btn-sm" id="add-company-btn">
+          <i class="fas fa-plus mr-1"></i> Add Company
+        </button>
         {% endif %}
-      </td>
-    </tr>
-    {% empty %}
-    <tr>
-      <td colspan="4" class="text-center text-muted">
-        No companies found
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
 
-{% if companies.paginator.num_pages > 1 %}
-<nav aria-label="Company pagination">
-  <ul class="pagination justify-content-end mt-3">
+      </div>
+    </div>
+  </div>
 
-    {% if companies.has_previous %}
-    <li class="page-item">
-      <a class="page-link"
-         href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ companies.previous_page_number }}">
-        Previous
-      </a>
-    </li>
-    {% else %}
-    <li class="page-item disabled">
-      <span class="page-link">Previous</span>
-    </li>
-    {% endif %}
 
-    {% for num in companies.paginator.page_range %}
-      {% if num == companies.number %}
-        <li class="page-item active">
-          <span class="page-link">{{ num }}</span>
-        </li>
-      {% elif num >= companies.number|add:-2 and num <= companies.number|add:2 %}
+  <!-- Table -->
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+
+        <thead class="bg-light">
+          <tr>
+            <th>Name</th>
+            {% if request.user.is_superuser %}
+            <th>Tenant</th>
+            {% endif %}
+            <th>Status</th>
+            <th class="text-right pr-4">Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for company in companies %}
+          <tr>
+
+            <td><strong>{{ company.name }}</strong></td>
+
+            {% if request.user.is_superuser %}
+            <td class="text-muted">{{ company.tenant.name }}</td>
+            {% endif %}
+
+            <td>
+              {% if company.is_active %}
+                <span class="badge badge-success">Active</span>
+              {% else %}
+                <span class="badge badge-danger">Inactive</span>
+              {% endif %}
+            </td>
+
+            <td class="text-right pr-4">
+
+              {% if can_view %}
+              <button class="btn btn-sm btn-outline-primary view-company-btn"
+                      data-url="{% url 'admin:company-detail' company.id %}">
+                View
+              </button>
+              {% endif %}
+
+              {% if can_manage %}
+                {% if company.is_active %}
+                  <a href="{% url 'admin:company-toggle' company.id %}"
+                     class="btn btn-sm btn-outline-warning ml-1">
+                    Deactivate
+                  </a>
+                {% else %}
+                  <a href="{% url 'admin:company-toggle' company.id %}"
+                     class="btn btn-sm btn-outline-success ml-1">
+                    Activate
+                  </a>
+                {% endif %}
+              {% endif %}
+
+            </td>
+
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="{% if request.user.is_superuser %}4{% else %}3{% endif %}"
+                class="text-center text-muted py-4">
+              No companies found
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+
+      </table>
+    </div>
+  </div>
+
+
+  <!-- Pagination -->
+  {% if companies.paginator.num_pages > 1 %}
+  <div class="card-footer clearfix">
+    <ul class="pagination pagination-sm m-0 float-right">
+
+      {% if companies.has_previous %}
         <li class="page-item">
+          <a class="page-link"
+             href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ companies.previous_page_number }}">
+            Previous
+          </a>
+        </li>
+      {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">Previous</span>
+        </li>
+      {% endif %}
+
+      {% for num in companies.paginator.page_range %}
+        <li class="page-item {% if companies.number == num %}active{% endif %}">
           <a class="page-link"
              href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ num }}">
             {{ num }}
           </a>
         </li>
+      {% endfor %}
+
+      {% if companies.has_next %}
+        <li class="page-item">
+          <a class="page-link"
+             href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ companies.next_page_number }}">
+            Next
+          </a>
+        </li>
+      {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">Next</span>
+        </li>
       {% endif %}
-    {% endfor %}
 
-    {% if companies.has_next %}
-    <li class="page-item">
-      <a class="page-link"
-         href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ companies.next_page_number }}">
-        Next
-      </a>
-    </li>
-    {% else %}
-    <li class="page-item disabled">
-      <span class="page-link">Next</span>
-    </li>
-    {% endif %}
+    </ul>
+  </div>
+  {% endif %}
 
-  </ul>
-</nav>
-{% endif %}
+</div>
+
+
+<!-- Modal -->
+<div class="modal fade" id="companyModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="company_id" id="company-id-field">
+
+        <div class="modal-header">
+          <h5 class="modal-title font-weight-bold">Company</h5>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+
+        <div class="modal-body">
+
+          {% if request.user.is_superuser %}
+          <div class="form-group">
+            <label>Tenant</label>
+            {{ form.tenant }}
+          </div>
+          {% else %}
+            {{ form.tenant }}
+          {% endif %}
+
+          <div class="form-group">
+            <label>Name</label>
+            {{ form.name }}
+          </div>
+
+          <div class="form-group">
+            <label>Registration ID</label>
+            {{ form.registration_id }}
+          </div>
+
+          <div class="form-check">
+            {{ form.is_active }}
+            <label class="form-check-label ml-1">Active</label>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+
+          <button type="button"
+                  id="edit-btn"
+                  class="btn btn-secondary btn-sm"
+                  style="display:none;">
+            Edit
+          </button>
+
+          {% if can_manage %}
+          <button type="submit"
+                  id="save-btn"
+                  class="btn btn-primary btn-sm">
+            Save
+          </button>
+          {% endif %}
+
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- JS -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  const modal = $('#companyModal');
+  const title = document.querySelector(".modal-title");
+  const saveBtn = document.getElementById("save-btn");
+  const editBtn = document.getElementById("edit-btn");
+
+  const idField = document.getElementById("company-id-field");
+  const tenantField = document.getElementById("id_tenant");
+  const nameField = document.getElementById("id_name");
+  const regField = document.getElementById("id_registration_id");
+  const activeField = document.getElementById("id_is_active");
+
+  function setReadonly(state) {
+      if (tenantField) tenantField.disabled = state;
+      nameField.readOnly = state;
+      regField.readOnly = state;
+      activeField.disabled = state;
+
+      if (saveBtn) saveBtn.style.display = state ? "none" : "inline-block";
+      if (editBtn) editBtn.style.display = state ? "inline-block" : "none";
+  }
+
+  // ADD
+  document.getElementById("add-company-btn")?.addEventListener("click", function () {
+
+      idField.value = "";
+      title.innerText = "Add Company";
+
+      if (tenantField) tenantField.disabled = false;
+      nameField.value = "";
+      regField.value = "";
+      activeField.checked = true;
+
+      setReadonly(false);
+      modal.modal('show');
+  });
+
+  // VIEW
+  document.querySelectorAll(".view-company-btn").forEach(btn => {
+    btn.addEventListener("click", function () {
+
+      fetch(this.dataset.url)
+        .then(res => res.json())
+        .then(data => {
+
+          idField.value = data.id;
+          if (tenantField) tenantField.value = data.tenant;
+          nameField.value = data.name;
+          regField.value = data.registration_id || "";
+          activeField.checked = data.is_active;
+
+          title.innerText = "Company Details";
+          setReadonly(true);
+          modal.modal('show');
+      });
+    });
+  });
+
+  // Enable edit inside modal
+  editBtn?.addEventListener("click", function () {
+      title.innerText = "Edit Company";
+      setReadonly(false);
+  });
+
+});
+</script>
 
 {% endblock %}

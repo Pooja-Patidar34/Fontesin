@@ -6,6 +6,11 @@ from django.core.exceptions import PermissionDenied
 from accounts.models import User, UserRole, Role, Tenant, Company,AuditLog
 from accounts.utils.permissions import has_permission
 from accounts.utils.ip import get_client_ip
+from django.http import JsonResponse
+from accounts.models import Role,Permission
+from accounts.forms.certificate_form import RoleForm,PermissionForm
+from django.contrib import messages
+
 
 @login_required
 def user_list(request):
@@ -39,7 +44,7 @@ def user_list(request):
 
     qs = qs.order_by("-created_at")
 
-    paginator = Paginator(qs, 9)
+    paginator = Paginator(qs, 10)
 
     try:
         page_obj = paginator.page(page_number)
@@ -163,8 +168,133 @@ def assign_roles(request, user_id):
 
 
 @login_required
-def role_list(request):
+def certificate_list(request):
+
     if not has_permission(request.user, "role.view"):
         raise PermissionDenied()
-    roles = Role.objects.filter(tenant=request.user.tenant)
-    return render(request, "dashboard/roles.html", {"roles": roles,"active_menu": "roles"})
+
+    selected_tenant_id = request.GET.get("tenant")
+
+    # SUPERADMIN
+    if request.user.is_superuser:
+        roles = Role.objects.select_related("tenant").prefetch_related("permissions")
+
+        if selected_tenant_id:
+            roles = roles.filter(tenant_id=selected_tenant_id)
+
+        tenants = Tenant.objects.order_by("name")
+
+    # TENANT ADMIN
+    else:
+        roles = Role.objects.filter(
+            tenant=request.user.tenant
+        ).prefetch_related("permissions")
+
+        tenants = None
+        selected_tenant_id = None
+
+    permissions = Permission.objects.order_by("code")
+
+    return render(
+        request,
+        "dashboard/certificates.html",
+        {
+            "roles": roles,
+            "permissions": permissions,
+            "tenants": tenants,
+            "selected_tenant_id": selected_tenant_id,
+            "active_menu": "certificates",
+            "can_manage": has_permission(request.user, "role.manage"),
+            "can_view": has_permission(request.user, "role.view"),
+        },
+    )
+
+
+@login_required
+def save_certificate(request):
+
+    if not has_permission(request.user, "role.manage"):
+        raise PermissionDenied()
+
+    role_id = request.POST.get("role_id")
+
+    if role_id:
+        role = get_object_or_404(Role, id=role_id)
+        form = RoleForm(request.POST, instance=role)
+    else:
+        form = RoleForm(request.POST)
+
+    if form.is_valid():
+        role = form.save(commit=False)
+
+        if not request.user.is_superuser:
+            role.tenant = request.user.tenant
+
+        role.save()
+        form.save_m2m()
+
+        messages.success(request, "Certificate saved successfully.")
+        return redirect("admin:certificates")
+
+
+
+@login_required
+def certificate_detail_ajax(request, role_id):
+
+    if not has_permission(request.user, "role.view"):
+        raise PermissionDenied()
+
+    if request.user.is_superuser:
+        role = get_object_or_404(Role, id=role_id)
+    else:
+        role = get_object_or_404(
+            Role,
+            id=role_id,
+            tenant=request.user.tenant
+        )
+
+    permissions = list(
+        role.permissions.values_list("id", flat=True)
+    )
+
+    return JsonResponse({
+        "id": str(role.id),
+        "name": role.name,
+        "permissions": [str(p) for p in permissions],
+    })
+
+
+@login_required
+def permission_list(request):
+
+    if not request.user.is_superuser:
+        raise PermissionDenied()
+
+    if request.method == "POST":
+        permission_id = request.POST.get("permission_id")
+
+        if permission_id:
+            permission = get_object_or_404(Permission, id=permission_id)
+            form = PermissionForm(request.POST, instance=permission)
+        else:
+            form = PermissionForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Permission saved successfully.")
+            return redirect("admin:permissions")
+
+    else:
+        form = PermissionForm()
+
+    permissions = Permission.objects.order_by("code")
+
+    return render(
+        request,
+        "dashboard/permissions.html",
+        {
+            "permissions": permissions,
+            "form": form,
+            "active_menu": "permissions",
+        },
+    )
