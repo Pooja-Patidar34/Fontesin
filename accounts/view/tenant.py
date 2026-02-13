@@ -15,7 +15,7 @@ def tenant_list(request):
 
     qs = Tenant.objects.order_by("name")
 
-    paginator = Paginator(qs, 7)
+    paginator = Paginator(qs, 9)
     page_number = request.GET.get("page", 1)
 
     try:

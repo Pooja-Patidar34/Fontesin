@@ -22,7 +22,7 @@ def audit_logs(request):
     else:
         raise PermissionDenied()
 
-    paginator = Paginator(qs, 7)
+    paginator = Paginator(qs, 9)
     page_number = request.GET.get("page", 1)
 
     try:

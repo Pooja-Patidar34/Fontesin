@@ -39,7 +39,7 @@ def user_list(request):
 
     qs = qs.order_by("-created_at")
 
-    paginator = Paginator(qs, 7)
+    paginator = Paginator(qs, 9)
 
     try:
         page_obj = paginator.page(page_number)

@@ -40,7 +40,7 @@ def company_list(request):
     # -------------------------
     # PAGINATION
     # -------------------------
-    paginator = Paginator(queryset.order_by("name"), 7)  # 10 per page
+    paginator = Paginator(queryset.order_by("name"), 9)  # 10 per page
     page_obj = paginator.get_page(page_number)
 
     context = {
