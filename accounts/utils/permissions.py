@@ -20,3 +20,15 @@ def has_permission(user, permission_code: str) -> bool:
         role__tenant=user.tenant,
         permission__code=permission_code,
     ).exists()
+
+
+
+
+def get_effective_permissions(role):
+    permissions = set()
+
+    while role:
+        permissions.update(role.permissions.all())
+        role = role.base_role
+
+    return permissions

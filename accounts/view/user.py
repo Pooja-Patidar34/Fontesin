@@ -7,7 +7,7 @@ from accounts.models import User, UserRole, Role, Tenant, Company,AuditLog
 from accounts.utils.permissions import has_permission
 from accounts.utils.ip import get_client_ip
 from django.http import JsonResponse
-from accounts.models import Role,Permission
+from accounts.models import Role,Permission,RolePermission
 from accounts.forms.certificate_form import RoleForm,PermissionForm
 from django.contrib import messages
 
@@ -167,79 +167,193 @@ def assign_roles(request, user_id):
     )
 
 
+# @login_required
+# def role_list(request):
+#     if not has_permission(request.user, "role.view"):
+#         raise PermissionDenied()
+
+#     selected_tenant_id = request.GET.get("tenant")
+
+#     if request.user.is_superuser:
+#         roles = Role.objects.select_related("tenant").exclude(name="super_admin").prefetch_related("permissions")
+#         if selected_tenant_id:
+#             roles = roles.filter(tenant_id=selected_tenant_id)
+#         tenants = Tenant.objects.order_by("name")
+#     else:
+#         roles = Role.objects.filter(
+#             tenant=request.user.tenant
+#         ).prefetch_related("permissions")
+#         tenants = None
+#         selected_tenant_id = None
+
+#     permissions = Permission.objects.order_by("code")
+
+#     return render(
+#         request,
+#         "dashboard/roles.html",
+#         {
+#             "roles": roles,
+#             "permissions": permissions,
+#             "tenants": tenants,
+#             "selected_tenant_id": selected_tenant_id,
+
+#             "active_menu": "access-control",
+#             "active_submenu": "roles",
+
+#             "can_manage": has_permission(request.user, "role.manage"),
+#             "can_view": has_permission(request.user, "role.view"),
+#         },
+#     )
+
+
+
+
+import logging
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
+
+from accounts.models import Role, Permission, Tenant
+from accounts.utils.permissions import has_permission, get_effective_permissions
+
+logger = logging.getLogger(__name__)
+
+
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
 @login_required
-def certificate_list(request):
+def role_list(request):
+    logger.info("ROLE LIST VIEW CALLED")
 
     if not has_permission(request.user, "role.view"):
         raise PermissionDenied()
 
     selected_tenant_id = request.GET.get("tenant")
+    page_number = request.GET.get("page", 1)
 
-    # SUPERADMIN
+    # ----------------------------
+    # Fetch roles
+    # ----------------------------
     if request.user.is_superuser:
-        roles = Role.objects.select_related("tenant").prefetch_related("permissions")
+        roles_qs = (
+            Role.objects
+            .select_related("tenant", "base_role")
+            .exclude(name="super_admin")
+            .prefetch_related("permissions")
+        )
 
         if selected_tenant_id:
-            roles = roles.filter(tenant_id=selected_tenant_id)
+            roles_qs = roles_qs.filter(tenant_id=selected_tenant_id)
 
         tenants = Tenant.objects.order_by("name")
 
-    # TENANT ADMIN
     else:
-        roles = Role.objects.filter(
-            tenant=request.user.tenant
-        ).prefetch_related("permissions")
+        roles_qs = (
+            Role.objects
+            .filter(tenant=request.user.tenant)
+            .select_related("base_role")
+            .prefetch_related("permissions")
+        )
 
         tenants = None
         selected_tenant_id = None
 
+    # ----------------------------
+    # Pagination (IMPORTANT)
+    # ----------------------------
+    paginator = Paginator(roles_qs, 8)  
+
+    try:
+        roles = paginator.page(page_number)
+    except PageNotAnInteger:
+        roles = paginator.page(1)
+    except EmptyPage:
+        roles = paginator.page(paginator.num_pages)
+
+    # ----------------------------
+    # Attach effective permission count
+    # ----------------------------
+    for role in roles:
+        role.effective_permission_count = len(
+            get_effective_permissions(role)
+        )
+
     permissions = Permission.objects.order_by("code")
+
+    can_view = has_permission(request.user, "role.view")
+    can_manage = has_permission(request.user, "role.manage")
 
     return render(
         request,
-        "dashboard/certificates.html",
+        "dashboard/roles.html",
         {
-            "roles": roles,
+            "roles": roles,                 # paginated roles
+            "page_obj": roles,              # standard Django naming
+            "paginator": paginator,
+
             "permissions": permissions,
             "tenants": tenants,
             "selected_tenant_id": selected_tenant_id,
-            "active_menu": "certificates",
-            "can_manage": has_permission(request.user, "role.manage"),
-            "can_view": has_permission(request.user, "role.view"),
+
+            "active_menu": "access-control",
+            "active_submenu": "roles",
+            "can_manage": can_manage,
+            "can_view": can_view,
         },
     )
 
 
+
+from django.db import transaction
+from django.shortcuts import redirect, get_object_or_404
+from django.core.exceptions import PermissionDenied
+
 @login_required
-def save_certificate(request):
+@transaction.atomic
+def save_role(request):
+    if request.method != "POST":
+        raise PermissionDenied()
 
     if not has_permission(request.user, "role.manage"):
         raise PermissionDenied()
 
     role_id = request.POST.get("role_id")
+    name = request.POST.get("name")
+    permission_ids = request.POST.getlist("permissions")
+
+    # ✅ Tenant handling
+    if request.user.is_superuser:
+        tenant_id = request.POST.get("tenant")
+        if not tenant_id:
+            messages.error(request, "Tenant is required.")
+            return redirect("admin:roles")
+        tenant = get_object_or_404(Tenant, id=tenant_id)
+    else:
+        tenant = request.user.tenant
 
     if role_id:
-        role = get_object_or_404(Role, id=role_id)
-        form = RoleForm(request.POST, instance=role)
+        role = get_object_or_404(Role, id=role_id, tenant=tenant)
     else:
-        form = RoleForm(request.POST)
+        role = Role.objects.create(
+            tenant=tenant,
+            name=name,
+        )
 
-    if form.is_valid():
-        role = form.save(commit=False)
+    role.name = name
+    role.save()
 
-        if not request.user.is_superuser:
-            role.tenant = request.user.tenant
+    # Reset permissions safely
+    RolePermission.objects.filter(role=role).delete()
+    RolePermission.objects.bulk_create([
+        RolePermission(role=role, permission_id=pid)
+        for pid in permission_ids
+    ])
 
-        role.save()
-        form.save_m2m()
-
-        messages.success(request, "Certificate saved successfully.")
-        return redirect("admin:certificates")
+    return redirect("admin:roles")
 
 
 
 @login_required
-def certificate_detail_ajax(request, role_id):
+def role_detail_ajax(request, role_id):
 
     if not has_permission(request.user, "role.view"):
         raise PermissionDenied()
@@ -260,13 +374,20 @@ def certificate_detail_ajax(request, role_id):
     return JsonResponse({
         "id": str(role.id),
         "name": role.name,
+        "tenant": {
+            "id": str(role.tenant.id),
+            "name": role.tenant.name,
+        },
         "permissions": [str(p) for p in permissions],
     })
 
 
+
+
+
+
 @login_required
 def permission_list(request):
-
     if not request.user.is_superuser:
         raise PermissionDenied()
 
@@ -295,6 +416,10 @@ def permission_list(request):
         {
             "permissions": permissions,
             "form": form,
-            "active_menu": "permissions",
+
+            # 🔑 THIS IS THE FIX
+            "active_menu": "access-control",
+            "active_submenu": "permissions",
         },
     )
+

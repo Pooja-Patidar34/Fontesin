@@ -8,30 +8,55 @@
   <link rel="stylesheet" href="{% static 'adminlte/plugins/fontawesome-free/css/all.min.css' %}">
   <link rel="stylesheet" href="{% static 'adminlte/css/adminlte.min.css' %}">
 
+  <style>
+    /* Compact UI */
+    .content-wrapper .table td,
+    .content-wrapper .table th {
+      padding: 0.6rem 0.85rem;
+      vertical-align: middle;
+    }
 
+    .content-wrapper .badge {
+      padding: 4px 12px;
+      font-size: 12px;
+    }
 
-<style>
-/* Global table compact adjustment */
-.content-wrapper .table td,
-.content-wrapper .table th {
-    padding: 0.6rem 0.85rem;
-    vertical-align: middle;
-}
+    .content-wrapper .btn-sm {
+      padding: 4px 14px;
+      font-size: 13px;
+    }
 
-/* Slightly compact badges */
-.content-wrapper .badge {
-    padding: 4px 12px;
-    font-size: 12px;
-}
+    /* ===== SIDEBAR ACTIVE STATES (SAFE & SCOPED) ===== */
 
-/* Compact small buttons */
-.content-wrapper .btn-sm {
-    padding: 4px 14px;
-    font-size: 13px;
-}
-</style>
+    /* Parent: Access Control */
+    .nav-item.has-treeview.access-control.menu-open > .nav-link.active {
+      background-color: #007bff !important;
+      color: #fff !important;
+      font-weight: 600;
+    }
 
-  
+    /* Child active (Roles / Permissions) */
+    .nav-treeview .nav-link.active {
+      background-color: rgba(0, 123, 255, 0.18) !important;
+      color: #fff !important;
+      position: relative;
+    }
+
+    /* Left indicator for active child */
+    .nav-treeview .nav-link.active::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 4px;
+      background-color: #4da3ff;
+    }
+
+    .nav-treeview {
+      padding-left: 12px;
+    }
+  </style>
 </head>
 
 <body class="hold-transition sidebar-mini">
@@ -56,8 +81,10 @@
     </a>
 
     <div class="sidebar">
-      <nav>
-        <ul class="nav nav-pills nav-sidebar flex-column">
+      <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar flex-column"
+            data-widget="treeview"
+            data-accordion="false">
 
           <!-- Dashboard -->
           <li class="nav-item">
@@ -98,11 +125,36 @@
             </a>
           </li>
 
-          <li class="nav-item">
-            <a href="{% url 'admin:certificates' %}" class="nav-link {% if active_menu == 'certificates' %}active{% endif %}">
-              <i class="nav-icon fas fa-user-shield"></i>
-              <p>Certificates</p>
+          <li class="nav-header">SECURITY</li>
+
+          <!-- Access Control (FIXED) -->
+          <li class="nav-item has-treeview access-control {% if active_menu == 'access-control' %}menu-open{% endif %}">
+            <a href="#"
+               class="nav-link {% if active_menu == 'access-control' %}active{% endif %}">
+              <i class="nav-icon fas fa-shield-alt"></i>
+              <p>
+                Access Control
+                <i class="right fas fa-angle-left"></i>
+              </p>
             </a>
+
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="{% url 'admin:roles' %}"
+                   class="nav-link {% if active_submenu == 'roles' %}active{% endif %}">
+                  <i class="fas fa-user-tag nav-icon"></i>
+                  <p>Roles</p>
+                </a>
+              </li>
+
+              <li class="nav-item">
+                <a href="{% url 'admin:permissions' %}"
+                   class="nav-link {% if active_submenu == 'permissions' %}active{% endif %}">
+                  <i class="fas fa-key nav-icon"></i>
+                  <p>Permissions</p>
+                </a>
+              </li>
+            </ul>
           </li>
 
           <li class="nav-item">
@@ -130,6 +182,7 @@
 
 </div>
 
+<!-- SCRIPTS (LOAD ONCE) -->
 <script src="{% static 'adminlte/plugins/jquery/jquery.min.js' %}"></script>
 <script src="{% static 'adminlte/plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'adminlte/js/adminlte.min.js' %}"></script>

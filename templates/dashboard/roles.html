@@ -1,0 +1,315 @@
+{% extends "base/base.html" %}
+{% block title %}Roles{% endblock %}
+
+{% block content %}
+
+
+<div class="card card-outline card-primary shadow-sm">
+
+  <!-- HEADER -->
+  <div class="card-header">
+    <div class="d-flex justify-content-between align-items-center">
+      <h3 class="card-title font-weight-bold mb-0">Roles</h3>
+
+      <div class="d-flex align-items-center">
+
+        {% if request.user.is_superuser %}
+        <form method="get" class="mr-3 mb-0">
+          <select name="tenant"
+                  class="form-control form-control-sm"
+                  onchange="this.form.submit()">
+            <option value="">All Tenants</option>
+            {% for tenant in tenants %}
+              <option value="{{ tenant.id }}"
+                {% if tenant.id|stringformat:"s" == selected_tenant_id %}selected{% endif %}>
+                {{ tenant.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </form>
+        {% endif %}
+
+        {% if can_manage %}
+        <button class="btn btn-primary btn-sm" id="add-role-btn">
+          <i class="fas fa-user-tag mr-1"></i> Add Role
+        </button>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="card-body p-0">
+    <!-- ⚠️ IMPORTANT: NO table-responsive (prevents scroll) -->
+    <div>
+      <table class="table table-hover mb-0">
+
+        <thead class="bg-light">
+          <tr>
+            <th>Name</th>
+            {% if request.user.is_superuser %}
+            <th>Tenant</th>
+            {% endif %}
+            <th>Permissions</th>
+            <th class="text-right pr-4">Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for role in roles %}
+          <tr>
+
+            <td>
+              <strong>{{ role.name }}</strong>
+              {% if role.base_role %}
+                <div class="text-muted small">
+                  Inherits from: {{ role.base_role.name }}
+                </div>
+              {% else %}
+                <div class="text-muted small">Root Role</div>
+              {% endif %}
+            </td>
+
+            {% if request.user.is_superuser %}
+            <td class="text-muted">{{ role.tenant.name }}</td>
+            {% endif %}
+
+            <td>
+              <span class="badge badge-info">
+                {{ role.permissions.count }} direct
+              </span>
+              {% if role.base_role %}
+              <span class="badge badge-secondary ml-1">
+                {{ role.effective_permission_count }} effective
+              </span>
+              {% endif %}
+            </td>
+
+            <td class="text-right pr-4">
+              {% if can_view %}
+              <button class="btn btn-sm btn-outline-primary view-role-btn"
+                      data-url="{% url 'admin:role-detail' role.id %}">
+                View
+              </button>
+              {% endif %}
+
+              {% if can_manage %}
+              <button class="btn btn-sm btn-outline-secondary edit-role-btn ml-1"
+                      data-url="{% url 'admin:role-detail' role.id %}">
+                Edit
+              </button>
+              {% endif %}
+            </td>
+
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="{% if request.user.is_superuser %}4{% else %}3{% endif %}"
+                class="text-center text-muted py-4">
+              No roles found
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+
+      </table>
+    </div>
+  </div>
+
+  <!-- PAGINATION -->
+  {% if page_obj.has_other_pages %}
+  <div class="card-footer clearfix">
+    <ul class="pagination pagination-sm m-0 float-right">
+
+      {% if page_obj.has_previous %}
+      <li class="page-item">
+        <a class="page-link"
+           href="?page={{ page_obj.previous_page_number }}{% if selected_tenant_id %}&tenant={{ selected_tenant_id }}{% endif %}">
+          «
+        </a>
+      </li>
+      {% else %}
+      <li class="page-item disabled">
+        <span class="page-link">«</span>
+      </li>
+      {% endif %}
+
+      {% for num in page_obj.paginator.page_range %}
+        {% if num == page_obj.number %}
+        <li class="page-item active">
+          <span class="page-link">{{ num }}</span>
+        </li>
+        {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+        <li class="page-item">
+          <a class="page-link"
+             href="?page={{ num }}{% if selected_tenant_id %}&tenant={{ selected_tenant_id }}{% endif %}">
+            {{ num }}
+          </a>
+        </li>
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+      <li class="page-item">
+        <a class="page-link"
+           href="?page={{ page_obj.next_page_number }}{% if selected_tenant_id %}&tenant={{ selected_tenant_id }}{% endif %}">
+          »
+        </a>
+      </li>
+      {% else %}
+      <li class="page-item disabled">
+        <span class="page-link">»</span>
+      </li>
+      {% endif %}
+
+    </ul>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- ================= MODAL ================= -->
+<div class="modal fade" id="roleModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+
+      <form method="post" action="{% url 'admin:role-save' %}">
+        {% csrf_token %}
+        <input type="hidden" name="role_id" id="role-id-field">
+
+        <div class="modal-header">
+          <h5 class="modal-title font-weight-bold">Role</h5>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+
+        <div class="modal-body">
+
+          {% if request.user.is_superuser %}
+          <div class="form-group">
+            <label>Tenant</label>
+            <select name="tenant" id="tenant-field" class="form-control">
+              <option value="">Select tenant</option>
+              {% for tenant in tenants %}
+                <option value="{{ tenant.id }}">{{ tenant.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          {% else %}
+          <input type="hidden" name="tenant" value="{{ request.user.tenant.id }}">
+          {% endif %}
+
+          <div class="form-group">
+            <label>Role Name</label>
+            <input type="text" name="name" id="role-name-field" class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label>Permissions</label>
+            <div class="row">
+              {% for permission in permissions %}
+              <div class="col-md-4 mb-2">
+                <div class="form-check">
+                  <input type="checkbox"
+                         class="form-check-input permission-checkbox"
+                         name="permissions"
+                         value="{{ permission.id }}"
+                         id="perm_{{ permission.id }}">
+                  <label class="form-check-label">
+                    {{ permission.code }}
+                  </label>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+            Cancel
+          </button>
+          {% if can_manage %}
+          <button type="submit" id="save-role-btn" class="btn btn-primary btn-sm">
+            Save Role
+          </button>
+          {% endif %}
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<!-- ================= JS ================= -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  const modal = $('#roleModal');
+  const title = document.querySelector(".modal-title");
+  const idField = document.getElementById("role-id-field");
+  const nameField = document.getElementById("role-name-field");
+  const tenantField = document.getElementById("tenant-field");
+  const saveBtn = document.getElementById("save-role-btn");
+  const checkboxes = document.querySelectorAll(".permission-checkbox");
+
+  function resetForm() {
+      idField.value = "";
+      nameField.value = "";
+      if (tenantField) {
+          tenantField.value = "";
+          tenantField.disabled = false;
+      }
+      checkboxes.forEach(cb => {
+          cb.checked = false;
+          cb.disabled = false;
+      });
+      nameField.readOnly = false;
+      if (saveBtn) saveBtn.style.display = "inline-block";
+  }
+
+  function setReadonly(state) {
+      nameField.readOnly = state;
+      checkboxes.forEach(cb => cb.disabled = state);
+      if (tenantField) tenantField.disabled = true;
+      if (saveBtn) saveBtn.style.display = state ? "none" : "inline-block";
+  }
+
+  document.getElementById("add-role-btn")?.addEventListener("click", function () {
+      resetForm();
+      title.innerText = "Add Role";
+      modal.modal("show");
+  });
+
+  function loadRole(btn, readonly=false) {
+    fetch(btn.dataset.url)
+      .then(res => res.json())
+      .then(data => {
+        resetForm();
+        idField.value = data.id;
+        nameField.value = data.name;
+        if (tenantField && data.tenant) tenantField.value = data.tenant.id;
+        data.permissions.forEach(pid => {
+            const cb = document.getElementById("perm_" + pid);
+            if (cb) cb.checked = true;
+        });
+        title.innerText = readonly ? "View Role" : "Edit Role";
+        if (readonly) setReadonly(true);
+        modal.modal("show");
+      });
+  }
+
+  document.querySelectorAll(".view-role-btn").forEach(btn => {
+    btn.addEventListener("click", () => loadRole(btn, true));
+  });
+
+  document.querySelectorAll(".edit-role-btn").forEach(btn => {
+    btn.addEventListener("click", () => loadRole(btn, false));
+  });
+
+});
+</script>
+
+{% endblock %}

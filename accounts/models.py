@@ -141,6 +141,33 @@ class Permission(models.Model):
 
 
 
+# class Role(models.Model):
+#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+#     tenant = models.ForeignKey(
+#         Tenant,
+#         on_delete=models.PROTECT,
+#         related_name="roles"
+#     )
+
+#     name = models.CharField(max_length=100)
+
+#     permissions = models.ManyToManyField(
+#         Permission,
+#         through="RolePermission"
+#     )
+
+#     created_at = models.DateTimeField(auto_now_add=True)
+
+#     class Meta:
+#         unique_together = ("tenant", "name")
+
+
+
+import uuid
+from django.db import models
+
+
 class Role(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
@@ -152,15 +179,30 @@ class Role(models.Model):
 
     name = models.CharField(max_length=100)
 
+    # Base role (null = base role itself)
+    base_role = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="derived_roles"
+    )
+
     permissions = models.ManyToManyField(
         Permission,
-        through="RolePermission"
+        through="RolePermission",
+        related_name="roles"
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ("tenant", "name")
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
 
 
 class RolePermission(models.Model):
