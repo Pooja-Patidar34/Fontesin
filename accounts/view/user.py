@@ -1,15 +1,28 @@
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, get_object_or_404, redirect
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.core.exceptions import PermissionDenied
+import logging
 
-from accounts.models import User, UserRole, Role, Tenant, Company,AuditLog
-from accounts.utils.permissions import has_permission
-from accounts.utils.ip import get_client_ip
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.db import transaction
 from django.http import JsonResponse
-from accounts.models import Role,Permission,RolePermission
-from accounts.forms.certificate_form import RoleForm,PermissionForm
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
+
+from accounts.models import (
+    User,
+    UserRole,
+    Role,
+    RolePermission,
+    Tenant,
+    Company,
+    AuditLog,
+    Permission,
+)
+from accounts.utils.permissions import has_permission, get_effective_permissions
+from accounts.utils.ip import get_client_ip
+from accounts.forms.certificate_form import RoleForm, PermissionForm
+
+logger = logging.getLogger(__name__)
 
 
 @login_required
@@ -122,7 +135,6 @@ def assign_roles(request, user_id):
 
     if request.method == "POST":
 
-        # Old roles (UUID → str)
         old_role_ids = list(
             UserRole.objects.filter(user=user)
             .values_list("role_id", flat=True)
@@ -130,7 +142,6 @@ def assign_roles(request, user_id):
 
         old_roles_str = [str(rid) for rid in old_role_ids]
 
-        # New roles (already strings, but normalize)
         new_role_ids = request.POST.getlist("roles")
         new_roles_str = [str(rid) for rid in new_role_ids]
 
@@ -167,59 +178,6 @@ def assign_roles(request, user_id):
     )
 
 
-# @login_required
-# def role_list(request):
-#     if not has_permission(request.user, "role.view"):
-#         raise PermissionDenied()
-
-#     selected_tenant_id = request.GET.get("tenant")
-
-#     if request.user.is_superuser:
-#         roles = Role.objects.select_related("tenant").exclude(name="super_admin").prefetch_related("permissions")
-#         if selected_tenant_id:
-#             roles = roles.filter(tenant_id=selected_tenant_id)
-#         tenants = Tenant.objects.order_by("name")
-#     else:
-#         roles = Role.objects.filter(
-#             tenant=request.user.tenant
-#         ).prefetch_related("permissions")
-#         tenants = None
-#         selected_tenant_id = None
-
-#     permissions = Permission.objects.order_by("code")
-
-#     return render(
-#         request,
-#         "dashboard/roles.html",
-#         {
-#             "roles": roles,
-#             "permissions": permissions,
-#             "tenants": tenants,
-#             "selected_tenant_id": selected_tenant_id,
-
-#             "active_menu": "access-control",
-#             "active_submenu": "roles",
-
-#             "can_manage": has_permission(request.user, "role.manage"),
-#             "can_view": has_permission(request.user, "role.view"),
-#         },
-#     )
-
-
-
-
-import logging
-from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
-
-from accounts.models import Role, Permission, Tenant
-from accounts.utils.permissions import has_permission, get_effective_permissions
-
-logger = logging.getLogger(__name__)
-
-
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-
 @login_required
 def role_list(request):
     logger.info("ROLE LIST VIEW CALLED")
@@ -230,9 +188,6 @@ def role_list(request):
     selected_tenant_id = request.GET.get("tenant")
     page_number = request.GET.get("page", 1)
 
-    # ----------------------------
-    # Fetch roles
-    # ----------------------------
     if request.user.is_superuser:
         roles_qs = (
             Role.objects
@@ -257,9 +212,6 @@ def role_list(request):
         tenants = None
         selected_tenant_id = None
 
-    # ----------------------------
-    # Pagination (IMPORTANT)
-    # ----------------------------
     paginator = Paginator(roles_qs, 8)  
 
     try:
@@ -269,9 +221,6 @@ def role_list(request):
     except EmptyPage:
         roles = paginator.page(paginator.num_pages)
 
-    # ----------------------------
-    # Attach effective permission count
-    # ----------------------------
     for role in roles:
         role.effective_permission_count = len(
             get_effective_permissions(role)
@@ -286,8 +235,8 @@ def role_list(request):
         request,
         "dashboard/roles.html",
         {
-            "roles": roles,                 # paginated roles
-            "page_obj": roles,              # standard Django naming
+            "roles": roles,                 
+            "page_obj": roles,             
             "paginator": paginator,
 
             "permissions": permissions,
@@ -303,10 +252,6 @@ def role_list(request):
 
 
 
-from django.db import transaction
-from django.shortcuts import redirect, get_object_or_404
-from django.core.exceptions import PermissionDenied
-
 @login_required
 @transaction.atomic
 def save_role(request):
@@ -320,7 +265,6 @@ def save_role(request):
     name = request.POST.get("name")
     permission_ids = request.POST.getlist("permissions")
 
-    # ✅ Tenant handling
     if request.user.is_superuser:
         tenant_id = request.POST.get("tenant")
         if not tenant_id:
@@ -383,9 +327,6 @@ def role_detail_ajax(request, role_id):
 
 
 
-
-
-
 @login_required
 def permission_list(request):
     if not request.user.is_superuser:
@@ -416,8 +357,6 @@ def permission_list(request):
         {
             "permissions": permissions,
             "form": form,
-
-            # 🔑 THIS IS THE FIX
             "active_menu": "access-control",
             "active_submenu": "permissions",
         },
