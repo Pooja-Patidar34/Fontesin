@@ -1,59 +1,52 @@
 {% extends "base/base.html" %}
 {% block title %}Users{% endblock %}
-
 {% block content %}
 
 <style>
-/* Ensure alignment consistency */
-.table td,
-.table th {
-    vertical-align: middle !important;
-}
-
-/* Header styling */
+.table td, .table th { vertical-align: middle !important; }
 .table thead th {
     font-size: 12px;
     text-transform: uppercase;
     letter-spacing: .5px;
     font-weight: 600;
 }
-
-/* Hover effect */
-.table-hover tbody tr:hover {
-    background-color: #f4f6f9;
-}
-
-/* Status badge */
+.table-hover tbody tr:hover { background-color: #f4f6f9; }
 .status-badge {
     padding: 4px 14px;
     border-radius: 20px;
     font-size: 12px;
     font-weight: 600;
 }
-
-/* Action buttons */
-.action-btn {
-    min-width: 90px;
-    padding: 4px 14px;
-    font-size: 13px;
-}
 </style>
-
 
 <div class="card card-outline card-primary shadow-sm">
 
-  <!-- HEADER + FILTERS -->
+  <!-- HEADER -->
   <div class="card-header d-flex justify-content-between align-items-center">
-    <h3 class="card-title font-weight-bold mb-0">
-      Users
-    </h3>
+    <h3 class="card-title font-weight-bold mb-0">Users</h3>
 
     <form method="get" class="form-inline">
-
       {% if request.user.is_superuser %}
-      <select name="tenant"
-              class="form-control form-control-sm mr-2"
-              onchange="this.form.submit()">
+      <select name="tenant" class="form-control form-control-sm mr-2"
+              onchange="
+                const params = new URLSearchParams(window.location.search);
+
+                if (this.value) {
+                  params.set('tenant', this.value);
+                } else {
+                  params.delete('tenant');
+                }
+
+                // ✅ RESET company to 'All Companies'
+                params.delete('company');
+
+                // ✅ RESET pagination
+                params.delete('page');
+
+                window.location = window.location.pathname + '?' + params.toString();
+              ">
+
+
         <option value="">All Tenants</option>
         {% for tenant in tenants %}
           <option value="{{ tenant.id }}"
@@ -64,8 +57,7 @@
       </select>
       {% endif %}
 
-      <select name="company"
-              class="form-control form-control-sm"
+      <select name="company" class="form-control form-control-sm"
               onchange="this.form.submit()"
               {% if request.user.is_superuser and not selected_tenant %}disabled{% endif %}>
         <option value="">All Companies</option>
@@ -76,16 +68,13 @@
           </option>
         {% endfor %}
       </select>
-
     </form>
   </div>
-
 
   <!-- TABLE -->
   <div class="card-body p-0">
     <div class="table-responsive">
       <table class="table table-hover table-sm mb-0">
-
         <thead class="bg-light">
           <tr>
             <th>Email</th>
@@ -97,49 +86,58 @@
         <tbody>
           {% for user in users %}
           <tr>
-
-            <!-- Email -->
-            <td>
-              {{ user.email }}
-            </td>
-
-            <!-- Status -->
+            <td>{{ user.email }}</td>
             <td>
               {% if user.is_active %}
-                <span class="badge badge-success status-badge">
-                  Active
-                </span>
+                <span class="badge badge-success status-badge">Active</span>
               {% else %}
-                <span class="badge badge-danger status-badge">
-                  Inactive
-                </span>
+                <span class="badge badge-danger status-badge">Inactive</span>
               {% endif %}
             </td>
 
-            <!-- Actions -->
-            <td class="text-right text-nowrap">
+            <td class="text-right">
+              <div class="btn-group">
+                <button class="btn btn-sm btn-primary dropdown-toggle"
+                        data-toggle="dropdown">
+                  <i class="fas fa-ellipsis-v"></i>
+                </button>
 
-              {% if user.is_active %}
-                <a href="{% url 'admin:user-toggle' user.id %}"
-                   class="btn btn-sm btn-outline-warning action-btn">
-                  Deactivate
-                </a>
-              {% else %}
-                <a href="{% url 'admin:user-toggle' user.id %}"
-                   class="btn btn-sm btn-outline-success action-btn">
-                  Activate
-                </a>
-              {% endif %}
+                <div class="dropdown-menu dropdown-menu-right shadow-sm">
+                  <a class="dropdown-item"
+                     href="#"
+                     onclick="viewUser('{{ user.id }}'); return false;">
+                    <i class="fas fa-eye mr-2 text-info"></i> View
+                  </a>
 
-              <a href="{% url 'admin:assign-roles' user.id %}"
-                 class="btn btn-sm btn-outline-primary action-btn ml-1">
-                Roles
-              </a>
+                  <a class="dropdown-item"
+                     href="#"
+                     onclick="editUser('{{ user.id }}'); return false;">
+                    <i class="fas fa-edit mr-2 text-warning"></i> Edit
+                  </a>
 
+                  <div class="dropdown-divider"></div>
+
+                  {% if user.is_active %}
+                    <a class="dropdown-item text-danger"
+                      href="{% url 'admin:user-toggle' user.id %}?next={{ request.get_full_path|urlencode }}">
+                      <i class="fas fa-user-slash mr-2"></i> Deactivate
+                    </a>
+                  {% else %}
+                    <a class="dropdown-item text-success"
+                      href="{% url 'admin:user-toggle' user.id %}?next={{ request.get_full_path|urlencode }}">
+                      <i class="fas fa-user-check mr-2"></i> Activate
+                    </a>
+                  {% endif %}
+
+                    <a class="dropdown-item"
+                      href="{% url 'admin:assign-roles' user.id %}?next={{ request.get_full_path|urlencode }}">
+                      <i class="fas fa-user-tag mr-2 text-secondary"></i> Roles
+                    </a>
+
+                </div>
+              </div>
             </td>
-
           </tr>
-
           {% empty %}
           <tr>
             <td colspan="3" class="text-center text-muted py-4">
@@ -148,68 +146,233 @@
           </tr>
           {% endfor %}
         </tbody>
-
       </table>
     </div>
   </div>
 
-
   <!-- PAGINATION -->
-  {% if page_obj.paginator.num_pages > 1 %}
-  <div class="card-footer clearfix">
-    <ul class="pagination pagination-sm m-0 float-right">
+  {% if page_obj.has_other_pages %}
+<div class="card-footer d-flex justify-content-end">
+  <nav>
+    <ul class="pagination pagination-sm mb-0">
 
-      {% with request.GET.urlencode as query %}
-
+      {# PREVIOUS BUTTON #}
       {% if page_obj.has_previous %}
-      <li class="page-item">
-        <a class="page-link"
-           href="?{{ query|cut:'page='|cut:'&page=' }}&page={{ page_obj.previous_page_number }}">
-          Previous
-        </a>
-      </li>
+        <li class="page-item">
+          <a class="page-link"
+             href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">
+            Previous
+          </a>
+        </li>
       {% else %}
-      <li class="page-item disabled">
-        <span class="page-link">Previous</span>
-      </li>
+        <li class="page-item disabled">
+          <span class="page-link">Previous</span>
+        </li>
       {% endif %}
 
-      {% for num in page_obj.paginator.page_range %}
-        {% if num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
-          {% if page_obj.number == num %}
-            <li class="page-item active">
-              <span class="page-link">{{ num }}</span>
-            </li>
-          {% else %}
-            <li class="page-item">
-              <a class="page-link"
-                 href="?{{ query|cut:'page='|cut:'&page=' }}&page={{ num }}">
-                {{ num }}
-              </a>
-            </li>
+      {# PAGE NUMBERS (MAX 5) #}
+      {% with start=page_obj.number|add:-2 end=page_obj.number|add:2 %}
+        {% for num in page_obj.paginator.page_range %}
+          {% if num >= start and num <= end %}
+            {% if num == page_obj.number %}
+              <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+              </li>
+            {% else %}
+              <li class="page-item">
+                <a class="page-link"
+                   href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ num }}">
+                  {{ num }}
+                </a>
+              </li>
+            {% endif %}
           {% endif %}
-        {% endif %}
-      {% endfor %}
-
-      {% if page_obj.has_next %}
-      <li class="page-item">
-        <a class="page-link"
-           href="?{{ query|cut:'page='|cut:'&page=' }}&page={{ page_obj.next_page_number }}">
-          Next
-        </a>
-      </li>
-      {% else %}
-      <li class="page-item disabled">
-        <span class="page-link">Next</span>
-      </li>
-      {% endif %}
-
+        {% endfor %}
       {% endwith %}
 
+      {# NEXT BUTTON #}
+      {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link"
+             href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">
+            Next
+          </a>
+        </li>
+      {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">Next</span>
+        </li>
+      {% endif %}
+
     </ul>
-  </div>
-  {% endif %}
+  </nav>
+</div>
+{% endif %}
 
 </div>
+
+<!-- VIEW MODAL -->
+<div class="modal fade" id="userDetailModal" tabindex="-1">
+  <div class="modal-dialog modal-md modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">User Details</h5>
+        <button type="button" class="close" data-dismiss="modal">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <table class="table table-sm table-borderless mb-0">
+          <tr><th>Email</th><td id="ud-email"></td></tr>
+          <tr><th>Full Name</th><td id="ud-name"></td></tr>
+          <tr><th>Status</th><td id="ud-status"></td></tr>
+          <tr><th>Tenant</th><td id="ud-tenant"></td></tr>
+          <tr><th>Company</th><td id="ud-company"></td></tr>
+          <tr><th>Role</th><td id="ud-role"></td></tr>
+          <tr><th>Created</th><td id="ud-created"></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<!-- EDIT MODAL -->
+<div class="modal fade" id="userEditModal" tabindex="-1">
+  <div class="modal-dialog modal-md modal-dialog-centered">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Edit User</h5>
+        <button type="button" class="close" data-dismiss="modal">
+          <span>&times;</span>
+        </button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- Tenant (read-only) -->
+        <div class="form-group">
+          <label>Tenant</label>
+          <input type="text" class="form-control" id="eu-tenant" readonly>
+        </div>
+
+        <!-- Full Name -->
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" class="form-control" id="eu-name">
+        </div>
+
+        <!-- Status -->
+        <div class="form-group">
+          <label>Status</label>
+          <select class="form-control" id="eu-active">
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+
+        <!-- Company -->
+        <div class="form-group">
+          <label>Company</label>
+          <select class="form-control" id="eu-company"></select>
+        </div>
+
+        <!-- Role -->
+        <div class="form-group">
+          <label>Role</label>
+          <select class="form-control" id="eu-role"></select>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary btn-sm" onclick="saveUserEdit()">Save</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<script>
+let editUserId = null;
+
+function viewUser(userId) {
+  fetch(`/admin/users/${userId}/view/`)
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById("ud-email").innerText = data.email;
+      document.getElementById("ud-name").innerText = data.full_name;
+      document.getElementById("ud-status").innerText = data.is_active ? "Active" : "Inactive";
+      document.getElementById("ud-tenant").innerText = data.tenant;
+      document.getElementById("ud-company").innerText = data.primary_company || "-";
+      document.getElementById("ud-role").innerText = data.role || "-";
+      document.getElementById("ud-created").innerText = new Date(data.created_at).toLocaleString();
+      $('#userDetailModal').modal('show');
+    });
+}
+
+function editUser(userId) {
+  editUserId = userId;
+
+  fetch(`/admin/users/${userId}/view/`)
+    .then(res => res.json())
+    .then(data => {
+
+      // basic fields
+      document.getElementById("eu-name").value = data.full_name;
+      document.getElementById("eu-active").value = data.is_active ? "true" : "false";
+      document.getElementById("eu-tenant").value = data.tenant;
+
+      // populate companies
+      const companySelect = document.getElementById("eu-company");
+      companySelect.innerHTML = "";
+      data.companies.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c.id;
+        opt.textContent = c.name;
+        if (c.id === data.company_id) opt.selected = true;
+        companySelect.appendChild(opt);
+      });
+
+      // populate roles
+      const roleSelect = document.getElementById("eu-role");
+      roleSelect.innerHTML = "";
+      data.roles.forEach(r => {
+        const opt = document.createElement("option");
+        opt.value = r.id;
+        opt.textContent = r.name;
+        if (r.id === data.role_id) opt.selected = true;
+        roleSelect.appendChild(opt);
+      });
+
+      $('#userEditModal').modal('show');
+    });
+}
+
+
+function saveUserEdit() {
+  fetch(`/admin/users/${editUserId}/edit/`, {
+    method: "POST",
+    headers: {
+      "X-CSRFToken": "{{ csrf_token }}",
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: new URLSearchParams({
+      full_name: document.getElementById("eu-name").value,
+      is_active: document.getElementById("eu-active").value,
+      company_id: document.getElementById("eu-company").value,
+      role_id: document.getElementById("eu-role").value
+    })
+  }).then(() => {
+    // ✅ THIS LINE FIXES FILTER RESET
+    window.location.href = window.location.pathname + window.location.search;
+  });
+}
+
+
+</script>
 
 {% endblock %}

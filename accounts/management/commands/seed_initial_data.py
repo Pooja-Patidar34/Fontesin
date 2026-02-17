@@ -1,145 +1,116 @@
-import random
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from django.contrib.auth.hashers import make_password
-
 from accounts.models import (
-    Tenant, Company, User,
-    Permission, Role, RolePermission,
-    UserCompany, UserCompanyRole,
+    Tenant, Company, User, Role, Permission,
+    UserCompany, UserCompanyRole
 )
 
-PASSWORD = "Test@123"
+SUPERUSER_EMAIL = "admin@test.com"
+SUPERUSER_PASSWORD = "admin123"
 
 
 class Command(BaseCommand):
-    help = "Seed large, clean RBAC data for dashboard testing"
+    help = "Seed tenants, companies, users, roles, permissions"
 
     @transaction.atomic
     def handle(self, *args, **options):
-        self.stdout.write("Seeding bulk RBAC data...")
+        self.stdout.write("🌱 Seeding data...")
 
         # -------------------------------------------------
-        # PERMISSIONS (GLOBAL)
+        # Permissions
         # -------------------------------------------------
-        permission_defs = [
-            ("company.manage", "Manage companies"),
-            ("user.manage", "Manage users"),
-            ("role.manage", "Manage roles"),
-            ("audit.view", "View audit logs"),
-            ("dashboard.view", "View dashboard"),
+        permissions = [
+            "tenant.view", "tenant.manage",
+            "company.view", "company.manage",
+            "user.view", "user.manage",
+            "role.view", "role.manage",
+            "audit.view",
         ]
 
-        permissions = {}
-        for code, desc in permission_defs:
-            perm, _ = Permission.objects.get_or_create(
+        permission_objs = {}
+        for code in permissions:
+            permission_objs[code], _ = Permission.objects.get_or_create(
                 code=code,
-                defaults={"description": desc}
+                defaults={"description": code.replace(".", " ").title()}
             )
-            permissions[code] = perm
 
         # -------------------------------------------------
-        # SUPER ADMIN (SYSTEM USER)
+        # Global tenant (for superuser)
         # -------------------------------------------------
-        system_tenant, _ = Tenant.objects.get_or_create(
-            name="System Tenant",
-            slug="system",
-            defaults={"is_active": True}
+        global_tenant, _ = Tenant.objects.get_or_create(
+            name="Global Tenant"
         )
 
-        super_admin, _ = User.objects.get_or_create(
-            email="superadmin@system.com",
+        # -------------------------------------------------
+        # Superuser
+        # -------------------------------------------------
+        superuser, created = User.objects.get_or_create(
+            email=SUPERUSER_EMAIL,
             defaults={
-                "full_name": "System Super Admin",
-                "password": make_password(PASSWORD),
-                "tenant": system_tenant,
-                "is_superuser": True,
+                "tenant": global_tenant,
+                "full_name": "Global Admin",
                 "is_staff": True,
+                "is_superuser": True,
+                "is_active": True,
             }
         )
 
+        if created:
+            superuser.set_password(SUPERUSER_PASSWORD)
+            superuser.save()
+
         # -------------------------------------------------
-        # TENANTS, ROLES, COMPANIES, USERS
+        # Seed tenants
         # -------------------------------------------------
-        for t in range(1, 6):  # 5 tenants
-            tenant = Tenant.objects.create(
-                name=f"Tenant {t}",
-                slug=f"tenant-{t}",
-                is_active=True,
+        for t in range(1, 11):
+            tenant, _ = Tenant.objects.get_or_create(
+                name=f"Tenant {t}"
             )
 
-            # Tenant-scoped roles
+            # Tenant admin role
             tenant_admin_role, _ = Role.objects.get_or_create(
                 tenant=tenant,
                 name="tenant_admin",
             )
+            tenant_admin_role.permissions.set(permission_objs.values())
 
-            company_user_role, _ = Role.objects.get_or_create(
-                tenant=tenant,
-                name="company_user",
-            )
-
-            # Role permissions
-            for code in ["company.manage", "user.manage", "audit.view", "dashboard.view"]:
-                RolePermission.objects.get_or_create(
-                    role=tenant_admin_role,
-                    permission=permissions[code],
-                )
-
-            RolePermission.objects.get_or_create(
-                role=company_user_role,
-                permission=permissions["dashboard.view"],
-            )
-
-            # Tenant admin user
-            tenant_admin = User.objects.create_user(
-                email=f"tenant{t}_admin@test.com",
-                password=PASSWORD,
-                full_name=f"Tenant {t} Admin",
-                tenant=tenant,
-                is_staff=True,
-            )
-
+            # -------------------------------------------------
             # Companies
-            for c in range(1, 11):  # 10 companies per tenant
-                company = Company.objects.create(
+            # -------------------------------------------------
+            for c in range(1, 6):
+                company, _ = Company.objects.get_or_create(
                     tenant=tenant,
-                    name=f"Company {t}-{c}",
-                    is_active=True,
+                    name=f"Tenant {t} Company {c}"
                 )
 
-                # Attach tenant admin to company
-                admin_uc = UserCompany.objects.create(
-                    user=tenant_admin,
-                    company=company,
-                    is_primary=(c == 1),
-                )
+                # -------------------------------------------------
+                # Users
+                # -------------------------------------------------
+                for u in range(1, 6):
+                    email = f"user{u}_c{c}_t{t}@test.com"
 
-                UserCompanyRole.objects.create(
-                    user_company=admin_uc,
-                    role=tenant_admin_role,
-                )
-
-                # Company users
-                for u in range(1, 11):  # 10 users per company
-                    user = User.objects.create_user(
-                        email=f"user{t}{c}{u}@test.com",
-                        password=PASSWORD,
-                        full_name=f"User {t}-{c}-{u}",
-                        tenant=tenant,
-                        is_staff=False,
+                    user, created = User.objects.get_or_create(
+                        email=email,
+                        defaults={
+                            "tenant": tenant,
+                            "full_name": f"User {u} T{t} C{c}",
+                            "is_active": True,
+                        }
                     )
 
-                    uc = UserCompany.objects.create(
+                    if created:
+                        user.set_password("test123")
+                        user.save()
+
+                    user_company, _ = UserCompany.objects.get_or_create(
                         user=user,
                         company=company,
-                        is_primary=True,
+                        defaults={"is_primary": True}
                     )
 
-                    UserCompanyRole.objects.create(
-                        user_company=uc,
-                        role=company_user_role,
+                    UserCompanyRole.objects.get_or_create(
+                        user_company=user_company,
+                        role=tenant_admin_role
                     )
 
-        self.stdout.write(self.style.SUCCESS("Bulk seed completed successfully"))
-        self.stdout.write("Super Admin → superadmin@system.com / Test@123")
+        self.stdout.write(self.style.SUCCESS("✅ Seeding completed"))

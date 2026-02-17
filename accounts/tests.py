@@ -10,7 +10,6 @@ from accounts.models import (
     User,
     Role,
     Permission,
-    RolePermission,
     UserCompany,
     UserCompanyRole,
     AuditLog,
@@ -51,10 +50,8 @@ class BaseIAMTestCase(TestCase):
             name="Admin",
         )
 
-        RolePermission.objects.create(
-            role=self.role,
-            permission=self.permission_view,
-        )
+        # Attach permissions directly to role (M2M)
+        self.role.permissions.add(self.permission_view)
 
         # Tenant user
         self.user = User.objects.create_user(
@@ -64,13 +61,14 @@ class BaseIAMTestCase(TestCase):
             is_active=True,
         )
 
-        # User - Company - Role mapping
+        # User - Company mapping
         user_company = UserCompany.objects.create(
             user=self.user,
             company=self.company,
             is_primary=True,
         )
 
+        # Assign role to user at company level
         UserCompanyRole.objects.create(
             user_company=user_company,
             role=self.role,
@@ -82,7 +80,6 @@ class BaseIAMTestCase(TestCase):
             password="admin123",
             tenant=self.tenant,
         )
-
 
 #permission logic tests
 class PermissionLogicTests(BaseIAMTestCase):
@@ -211,16 +208,16 @@ class AuditLogViewTests(BaseIAMTestCase):
     def setUp(self):
         super().setUp()
 
-        audit_permission = Permission.objects.create(
+        # Create audit permission
+        self.audit_permission = Permission.objects.create(
             code="audit.view",
             description="View audit logs",
         )
 
-        RolePermission.objects.create(
-            role=self.role,
-            permission=audit_permission,
-        )
+        # Attach permission directly to role (M2M)
+        self.role.permissions.add(self.audit_permission)
 
+        # Create an audit log entry
         AuditLog.objects.create(
             tenant=self.tenant,
             actor=self.superadmin,
@@ -235,12 +232,20 @@ class AuditLogViewTests(BaseIAMTestCase):
         self.assertEqual(response.status_code, 302)
 
     def test_user_without_permission_is_denied(self):
-        RolePermission.objects.all().delete()
+        # Remove permission from role
+        self.role.permissions.clear()
 
         self.client.login(email="user@test.com", password="test123")
         response = self.client.get(reverse("admin:audit-logs"))
 
         self.assertEqual(response.status_code, 403)
+
+    def test_user_with_permission_can_view_logs(self):
+        self.client.login(email="user@test.com", password="test123")
+        response = self.client.get(reverse("admin:audit-logs"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "test.action")
 
     def test_superadmin_sees_all_logs(self):
         self.client.login(email="admin@test.com", password="admin123")
@@ -443,14 +448,15 @@ class UserListViewTests(BaseIAMTestCase):
             code="user.view",
             description="View users",
         )
-        RolePermission.objects.create(role=self.role, permission=permission)
+        self.role.permissions.add(permission)
 
     def test_user_list_requires_login(self):
         response = self.client.get(reverse("admin:users"))
         self.assertEqual(response.status_code, 302)
 
     def test_user_list_permission_denied(self):
-        RolePermission.objects.filter(permission__code="user.view").delete()
+        # Remove permission
+        self.role.permissions.clear()
 
         self.client.login(email="user@test.com", password="test123")
         response = self.client.get(reverse("admin:users"))
@@ -469,7 +475,10 @@ class UserListViewTests(BaseIAMTestCase):
             {"tenant": str(self.tenant.id)},
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context["selected_tenant"], str(self.tenant.id))
+        self.assertEqual(
+            response.context["selected_tenant"],
+            str(self.tenant.id)
+        )
 
     def test_superadmin_with_tenant_and_company_filter(self):
         self.client.login(email="admin@test.com", password="admin123")
@@ -481,7 +490,10 @@ class UserListViewTests(BaseIAMTestCase):
             },
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context["selected_company"], str(self.company.id))
+        self.assertEqual(
+            response.context["selected_company"],
+            str(self.company.id)
+        )
 
     def test_tenant_user_with_company_filter(self):
         self.client.login(email="user@test.com", password="test123")
@@ -498,27 +510,32 @@ class UserListViewTests(BaseIAMTestCase):
         )
         self.assertEqual(response.status_code, 200)
 
+
+
+
 class ToggleUserTests(BaseIAMTestCase):
 
     def setUp(self):
         super().setUp()
 
+        # Create manage permission
         self.manage_permission = Permission.objects.create(
             code="user.manage",
             description="Manage users",
         )
-        RolePermission.objects.create(
-            role=self.role,
-            permission=self.manage_permission,
-        )
+
+        # Attach permission directly to role (M2M)
+        self.role.permissions.add(self.manage_permission)
 
     def test_toggle_user_permission_denied(self):
-        RolePermission.objects.filter(permission=self.manage_permission).delete()
+        # Remove permission from role
+        self.role.permissions.remove(self.manage_permission)
 
         self.client.login(email="user@test.com", password="test123")
         response = self.client.get(
             reverse("admin:user-toggle", args=[self.user.id])
         )
+
         self.assertEqual(response.status_code, 403)
 
     def test_superadmin_toggle_user(self):
@@ -534,14 +551,17 @@ class ToggleUserTests(BaseIAMTestCase):
 
     def test_tenant_admin_toggle_own_user(self):
         self.client.login(email="user@test.com", password="test123")
-
         self.client.get(reverse("admin:user-toggle", args=[self.user.id]))
 
         self.user.refresh_from_db()
         self.assertFalse(self.user.is_active)
 
     def test_tenant_admin_cannot_toggle_other_tenant_user(self):
-        other_tenant = Tenant.objects.create(name="Tenant B", slug="tenant-b")
+        other_tenant = Tenant.objects.create(
+            name="Tenant B",
+            slug="tenant-b"
+        )
+
         other_user = User.objects.create_user(
             email="other@test.com",
             password="test123",
@@ -553,6 +573,7 @@ class ToggleUserTests(BaseIAMTestCase):
             reverse("admin:user-toggle", args=[other_user.id])
         )
 
+        # Must not leak existence of other-tenant users
         self.assertEqual(response.status_code, 404)
 
 
@@ -563,29 +584,34 @@ class AssignRolesViewTests(BaseIAMTestCase):
     def setUp(self):
         super().setUp()
 
+        # Create role.manage permission
         self.manage_permission = Permission.objects.create(
             code="role.manage",
             description="Manage roles",
         )
-        RolePermission.objects.create(
-            role=self.role,
-            permission=self.manage_permission,
-        )
+
+        # Attach permission directly to role (M2M)
+        self.role.permissions.add(self.manage_permission)
 
     def test_assign_roles_get(self):
         self.client.login(email="admin@test.com", password="admin123")
+
         response = self.client.get(
             reverse("admin:assign-roles", args=[self.user.id])
         )
+
         self.assertEqual(response.status_code, 200)
 
     def test_assign_roles_permission_denied(self):
-        RolePermission.objects.filter(permission=self.manage_permission).delete()
+        # Remove permission from role
+        self.role.permissions.remove(self.manage_permission)
 
         self.client.login(email="user@test.com", password="test123")
+
         response = self.client.get(
             reverse("admin:assign-roles", args=[self.user.id])
         )
+
         self.assertEqual(response.status_code, 403)
 
     def test_assign_roles_post_success(self):
@@ -622,29 +648,33 @@ class RoleListViewTests(BaseIAMTestCase):
     def setUp(self):
         super().setUp()
 
+        # Create role.view permission
         self.view_permission = Permission.objects.create(
             code="role.view",
             description="View roles",
         )
-        RolePermission.objects.create(
-            role=self.role,
-            permission=self.view_permission,
-        )
+
+        # Attach permission directly to role (M2M)
+        self.role.permissions.add(self.view_permission)
 
     def test_role_list_permission_denied(self):
-        RolePermission.objects.filter(permission=self.view_permission).delete()
+        # Remove permission from role
+        self.role.permissions.remove(self.view_permission)
 
         self.client.login(email="user@test.com", password="test123")
+
         response = self.client.get(reverse("admin:roles"))
         self.assertEqual(response.status_code, 403)
 
     def test_role_list_success(self):
         self.client.login(email="user@test.com", password="test123")
+
         response = self.client.get(reverse("admin:roles"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Admin")
 
     def test_role_list_superadmin(self):
         self.client.login(email="admin@test.com", password="admin123")
+
         response = self.client.get(reverse("admin:roles"))
         self.assertEqual(response.status_code, 200)

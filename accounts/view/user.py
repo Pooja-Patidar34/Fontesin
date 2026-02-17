@@ -12,7 +12,6 @@ from accounts.models import (
     User,
     UserRole,
     Role,
-    RolePermission,
     Tenant,
     Company,
     AuditLog,
@@ -114,13 +113,114 @@ def toggle_user(request, user_id):
         ip_address=get_client_ip(request),
     )
 
-    return redirect("admin:users")
+    next_url = request.GET.get("next")
+    return redirect(next_url or "admin:user-list")
+
+@login_required
+def user_detail_ajax(request, user_id):
+    if not request.user.is_superuser and not has_permission(request.user, "user.view"):
+        raise PermissionDenied()
+
+    can_manage = (
+        request.user.is_superuser
+        or has_permission(request.user, "user.manage")
+    )
+
+    user = get_object_or_404(
+        User.objects.select_related(
+            "tenant",
+            "primary_company",
+            "userrole__role",
+        ),
+        id=user_id,
+    )
+
+    tenant = user.tenant
+
+    roles = list(
+        Role.objects.filter(tenant=tenant)
+        .values("id", "name")
+        .order_by("name")
+    )
+
+    companies = list(
+        Company.objects.filter(tenant=tenant)
+        .values("id", "name")
+        .order_by("name")
+    )
+
+    return JsonResponse({
+        "id": str(user.id),
+        "email": user.email,
+        "full_name": user.full_name,
+        "is_active": user.is_active,
+
+        # tenant (read-only)
+        "tenant": tenant.name,
+        "tenant_id": str(tenant.id),
+
+        # current selections
+        "role_id": user.userrole.role.id if hasattr(user, "userrole") else None,
+        "company_id": user.primary_company.id if user.primary_company else None,
+
+        # dropdown data
+        "roles": roles,
+        "companies": companies,
+
+        # capabilities
+        "can_manage": can_manage,
+    })
+
+
+@login_required
+def user_edit(request, user_id):
+    if not (
+        request.user.is_superuser
+        or has_permission(request.user, "user.manage")
+    ):
+        raise PermissionDenied()
+
+    if request.method != "POST":
+        return JsonResponse({"error": "POST only"}, status=405)
+
+    user = get_object_or_404(User, id=user_id)
+    tenant = user.tenant
+
+    # update user fields
+    user.full_name = request.POST.get("full_name", user.full_name)
+    user.email = request.POST.get("email", user.email)
+    user.is_active = request.POST.get("is_active") == "true"
+
+    # company (tenant scoped)
+    company_id = request.POST.get("company_id")
+    if company_id:
+        user.primary_company = get_object_or_404(
+            Company, id=company_id, tenant=tenant
+        )
+
+    user.save()
+
+    # role (tenant scoped)
+    role_id = request.POST.get("role_id")
+    if role_id:
+        role = get_object_or_404(Role, id=role_id, tenant=tenant)
+        UserRole.objects.update_or_create(
+            user=user,
+            defaults={"role": role}
+        )
+
+    return JsonResponse({
+        "success": True,
+        "message": "User updated successfully"
+    })
 
 
 @login_required
 def assign_roles(request, user_id):
     if not has_permission(request.user, "role.manage"):
         raise PermissionDenied()
+
+    next_url = request.GET.get("next") or request.POST.get("next")
 
     if request.user.is_superuser:
         user = get_object_or_404(User, id=user_id)
@@ -165,7 +265,7 @@ def assign_roles(request, user_id):
             ip_address=get_client_ip(request),
         )
 
-        return redirect("admin:users")
+        return redirect(next_url or "admin:users")
 
     return render(
         request,
@@ -173,9 +273,11 @@ def assign_roles(request, user_id):
         {
             "user": user,
             "roles": roles,
-            "active_menu": "users"
+            "active_menu": "users",
+            "next": next_url, 
         },
     )
+
 
 
 @login_required
@@ -284,15 +386,9 @@ def save_role(request):
 
     role.name = name
     role.save()
-
-    # Reset permissions safely
-    RolePermission.objects.filter(role=role).delete()
-    RolePermission.objects.bulk_create([
-        RolePermission(role=role, permission_id=pid)
-        for pid in permission_ids
-    ])
-
-    return redirect("admin:roles")
+    role.permissions.set(permission_ids)
+    next_url = request.POST.get("next") or reverse("admin:roles")
+    return redirect(next_url)
 
 
 
@@ -324,7 +420,6 @@ def role_detail_ajax(request, role_id):
         },
         "permissions": [str(p) for p in permissions],
     })
-
 
 
 @login_required
@@ -361,4 +456,6 @@ def permission_list(request):
             "active_submenu": "permissions",
         },
     )
+
+
 

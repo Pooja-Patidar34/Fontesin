@@ -190,7 +190,6 @@ class Role(models.Model):
 
     permissions = models.ManyToManyField(
         Permission,
-        through="RolePermission",
         related_name="roles"
     )
 
@@ -205,17 +204,9 @@ class Role(models.Model):
 
 
 
-class RolePermission(models.Model):
-    role = models.ForeignKey(Role, on_delete=models.CASCADE)
-    permission = models.ForeignKey(Permission, on_delete=models.CASCADE)
-
-    class Meta:
-        unique_together = ("role", "permission")
-
-
 class UserRole(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    role = models.ForeignKey(Role, on_delete=models.PROTECT)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    role = models.ForeignKey(Role, on_delete=models.CASCADE)
 
     assigned_at = models.DateTimeField(auto_now_add=True)
 
@@ -235,7 +226,7 @@ class UserCompany(models.Model):
 
 class UserCompanyRole(models.Model):
     user_company = models.ForeignKey(UserCompany, on_delete=models.CASCADE)
-    role = models.ForeignKey(Role, on_delete=models.PROTECT)
+    role = models.ForeignKey(Role, on_delete=models.CASCADE)
 
     class Meta:
         unique_together = ("user_company", "role")

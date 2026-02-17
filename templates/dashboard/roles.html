@@ -3,7 +3,6 @@
 
 {% block content %}
 
-
 <div class="card card-outline card-primary shadow-sm">
 
   <div class="card-header">
@@ -57,7 +56,6 @@
         <tbody>
           {% for role in roles %}
           <tr>
-
             <td>
               <strong>{{ role.name }}</strong>
               {% if role.base_role %}
@@ -99,7 +97,6 @@
               </button>
               {% endif %}
             </td>
-
           </tr>
           {% empty %}
           <tr>
@@ -174,6 +171,10 @@
 
       <form method="post" action="{% url 'admin:role-save' %}">
         {% csrf_token %}
+
+        <!-- ✅ ONLY ADDITION -->
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+
         <input type="hidden" name="role_id" id="role-id-field">
 
         <div class="modal-header">
