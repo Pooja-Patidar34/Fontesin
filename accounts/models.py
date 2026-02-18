@@ -3,6 +3,7 @@ import uuid
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.auth.base_user import BaseUserManager
 from django.utils.text import slugify
+from accounts.constants import CompanyClassificationChoices
 
 
 class Tenant(models.Model):
@@ -43,7 +44,12 @@ class Company(models.Model):
         on_delete=models.PROTECT,
         related_name="companies"
     )
-
+    classification = models.CharField(
+        max_length=50,
+        choices=CompanyClassificationChoices.CHOICES,
+        null=True,
+        blank=True,
+    )
     name = models.CharField(max_length=255)
     registration_id = models.CharField(max_length=100, null=True, blank=True)
 
@@ -103,6 +109,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
 
     objects = UserManager() 
 
@@ -110,24 +117,6 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     class Meta:
         unique_together = ("tenant", "email")
-
-
-# class Classification(models.Model):
-#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
-#     tenant = models.ForeignKey(
-#         Tenant,
-#         on_delete=models.PROTECT,
-#         related_name="classifications"
-#     )
-
-#     key = models.CharField(max_length=100)
-#     label = models.CharField(max_length=255)
-
-#     created_at = models.DateTimeField(auto_now_add=True)
-
-#     class Meta:
-#         unique_together = ("tenant", "key")
 
 
 
@@ -138,29 +127,6 @@ class Permission(models.Model):
     description = models.TextField()
 
     created_at = models.DateTimeField(auto_now_add=True)
-
-
-
-# class Role(models.Model):
-#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
-#     tenant = models.ForeignKey(
-#         Tenant,
-#         on_delete=models.PROTECT,
-#         related_name="roles"
-#     )
-
-#     name = models.CharField(max_length=100)
-
-#     permissions = models.ManyToManyField(
-#         Permission,
-#         through="RolePermission"
-#     )
-
-#     created_at = models.DateTimeField(auto_now_add=True)
-
-#     class Meta:
-#         unique_together = ("tenant", "name")
 
 
 

@@ -187,6 +187,8 @@
 
       <form method="post">
         {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+
         <input type="hidden" name="company_id" id="company-id-field">
 
         <div class="modal-header">

@@ -183,37 +183,101 @@ def user_edit(request, user_id):
     if request.method != "POST":
         return JsonResponse({"error": "POST only"}, status=405)
 
-    user = get_object_or_404(User, id=user_id)
-    tenant = user.tenant
+    try:
+        # Tenant scoping for non-superusers
+        if request.user.is_superuser:
+            user = get_object_or_404(User, id=user_id)
+        else:
+            user = get_object_or_404(User,id=user_id,tenant=request.user.tenant,)
 
-    # update user fields
-    user.full_name = request.POST.get("full_name", user.full_name)
-    user.email = request.POST.get("email", user.email)
-    user.is_active = request.POST.get("is_active") == "true"
+        tenant = user.tenant
 
-    # company (tenant scoped)
-    company_id = request.POST.get("company_id")
-    if company_id:
-        user.primary_company = get_object_or_404(
-            Company, id=company_id, tenant=tenant
+        with transaction.atomic():
+            # --- capture old values ---
+            old_data = {
+                "full_name": user.full_name,
+                "email": user.email,
+                "is_active": user.is_active,
+                "primary_company_id": (
+                    str(user.primary_company_id)
+                    if user.primary_company_id else None
+                ),
+            }
+            # --- update fields ---
+            user.full_name = request.POST.get("full_name", user.full_name)
+            user.email = request.POST.get("email", user.email)
+            user.is_active = request.POST.get("is_active") == "true"
+
+            # --- company (tenant scoped) ---
+            company_id = request.POST.get("company_id")
+            if company_id:
+                user.primary_company = get_object_or_404(Company,id=company_id,tenant=tenant,)
+
+            user.full_clean()
+            user.save()
+
+            # --- role (tenant scoped) ---
+            role_id = request.POST.get("role_id")
+            if role_id:
+                role = get_object_or_404(Role, id=role_id, tenant=tenant)
+                UserRole.objects.update_or_create(user=user,defaults={"role": role},)
+
+        # --- audit log (non-blocking) ---
+        try:
+            AuditLog.objects.create(
+                tenant=tenant,
+                actor=request.user,
+                action="user.updated",
+                entity_type="User",
+                entity_id=user.id,
+                metadata={
+                    "old": old_data,
+                    "new": {
+                        "full_name": user.full_name,
+                        "email": user.email,
+                        "is_active": user.is_active,
+                        "primary_company_id": (
+                            str(user.primary_company_id)
+                            if user.primary_company_id else None
+                        ),
+                        "role_id": role_id,
+                    },
+                },
+                ip_address=get_client_ip(request),
+            )
+        except Exception:
+            pass  # audit must never break the action
+
+        return JsonResponse(
+            {
+                "success": True,
+                "message": "User updated successfully",
+            }
         )
 
-    user.save()
-
-    # role (tenant scoped)
-    role_id = request.POST.get("role_id")
-    if role_id:
-        role = get_object_or_404(Role, id=role_id, tenant=tenant)
-        UserRole.objects.update_or_create(
-            user=user,
-            defaults={"role": role}
+    except IntegrityError:
+        return JsonResponse(
+            {"success": False, "message": "Email already exists"},
+            status=400,
         )
 
-    return JsonResponse({
-        "success": True,
-        "message": "User updated successfully"
-    })
+    except ValidationError as e:
+        return JsonResponse(
+            {"success": False, "message": e.message_dict},
+            status=400,
+        )
 
+    except PermissionDenied:
+        raise
+
+    except Exception:
+        return JsonResponse(
+            {
+                "success": False,
+                "message": "Unable to update user at the moment",
+            },
+            status=500,
+        )
 
 @login_required
 def assign_roles(request, user_id):
@@ -277,7 +341,6 @@ def assign_roles(request, user_id):
             "next": next_url, 
         },
     )
-
 
 
 @login_required
@@ -363,33 +426,86 @@ def save_role(request):
     if not has_permission(request.user, "role.manage"):
         raise PermissionDenied()
 
-    role_id = request.POST.get("role_id")
-    name = request.POST.get("name")
-    permission_ids = request.POST.getlist("permissions")
+    try:
+        role_id = request.POST.get("role_id")
+        name = request.POST.get("name")
+        permission_ids = request.POST.getlist("permissions")
 
-    if request.user.is_superuser:
-        tenant_id = request.POST.get("tenant")
-        if not tenant_id:
-            messages.error(request, "Tenant is required.")
+        if not name:
+            messages.error(request, "Role name is required.")
             return redirect("admin:roles")
-        tenant = get_object_or_404(Tenant, id=tenant_id)
-    else:
-        tenant = request.user.tenant
 
-    if role_id:
-        role = get_object_or_404(Role, id=role_id, tenant=tenant)
-    else:
-        role = Role.objects.create(
-            tenant=tenant,
-            name=name,
-        )
+        # --- tenant resolution ---
+        if request.user.is_superuser:
+            tenant_id = request.POST.get("tenant")
+            if not tenant_id:
+                messages.error(request, "Tenant is required.")
+                return redirect("admin:roles")
 
-    role.name = name
-    role.save()
-    role.permissions.set(permission_ids)
-    next_url = request.POST.get("next") or reverse("admin:roles")
-    return redirect(next_url)
+            tenant = get_object_or_404(Tenant, id=tenant_id)
+        else:
+            tenant = request.user.tenant
 
+        if role_id:
+            role = get_object_or_404(Role, id=role_id, tenant=tenant)
+            action = "role.updated"
+            old_data = {
+                "name": role.name,
+                "permissions": list(
+                    role.permissions.values_list("id", flat=True)
+                ),
+            }
+        else:
+            role = Role.objects.create(
+                tenant=tenant,
+                name=name,
+            )
+            action = "role.created"
+            old_data = None
+
+        role.name = name
+        role.full_clean()
+        role.save()
+
+        role.permissions.set(permission_ids)
+
+        # --- audit (non-blocking) ---
+        try:
+            AuditLog.objects.create(
+                tenant=tenant,
+                actor=request.user,
+                action=action,
+                entity_type="Role",
+                entity_id=role.id,
+                metadata={
+                    "old": old_data,
+                    "new": {
+                        "name": role.name,
+                        "permissions": permission_ids,
+                    },
+                },
+                ip_address=get_client_ip(request),
+            )
+        except Exception:
+            pass
+
+        next_url = request.POST.get("next") or reverse("admin:roles")
+        return redirect(next_url)
+
+    except IntegrityError:
+        messages.error(request, "Role with this name already exists.")
+        return redirect("admin:roles")
+
+    except ValidationError as e:
+        messages.error(request, e.message_dict)
+        return redirect("admin:roles")
+
+    except PermissionDenied:
+        raise
+
+    except Exception:
+        messages.error(request, "Unable to save role at the moment.")
+        return redirect("admin:roles")
 
 
 @login_required

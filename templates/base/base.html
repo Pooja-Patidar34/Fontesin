@@ -9,7 +9,6 @@
   <link rel="stylesheet" href="{% static 'adminlte/css/adminlte.min.css' %}">
 
   <style>
-    /* Compact UI */
     .content-wrapper .table td,
     .content-wrapper .table th {
       padding: 0.6rem 0.85rem;
@@ -26,23 +25,18 @@
       font-size: 13px;
     }
 
-    /* ===== SIDEBAR ACTIVE STATES (SAFE & SCOPED) ===== */
-
-    /* Parent: Access Control */
     .nav-item.has-treeview.access-control.menu-open > .nav-link.active {
       background-color: #007bff !important;
       color: #fff !important;
       font-weight: 600;
     }
 
-    /* Child active (Roles / Permissions) */
     .nav-treeview .nav-link.active {
       background-color: rgba(0, 123, 255, 0.18) !important;
       color: #fff !important;
       position: relative;
     }
 
-    /* Left indicator for active child */
     .nav-treeview .nav-link.active::before {
       content: "";
       position: absolute;
@@ -82,9 +76,7 @@
 
     <div class="sidebar">
       <nav class="mt-2">
-        <ul class="nav nav-pills nav-sidebar flex-column"
-            data-widget="treeview"
-            data-accordion="false">
+        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview">
 
           <!-- Dashboard -->
           <li class="nav-item">
@@ -95,6 +87,7 @@
             </a>
           </li>
 
+          <!-- TENANTS (SUPERUSER ONLY) -->
           {% if request.user.is_superuser %}
           <li class="nav-header">SYSTEM</li>
           <li class="nav-item">
@@ -106,7 +99,8 @@
           </li>
           {% endif %}
 
-          {% if request.user.is_superuser or request.user.is_staff %}
+          <!-- MANAGEMENT (SUPERUSER + TENANT ADMIN) -->
+          {% if request.user.is_superuser or is_tenant_admin %}
           <li class="nav-header">MANAGEMENT</li>
 
           <li class="nav-item">
@@ -127,7 +121,6 @@
 
           <li class="nav-header">SECURITY</li>
 
-          <!-- Access Control (FIXED) -->
           <li class="nav-item has-treeview access-control {% if active_menu == 'access-control' %}menu-open{% endif %}">
             <a href="#"
                class="nav-link {% if active_menu == 'access-control' %}active{% endif %}">
@@ -182,7 +175,6 @@
 
 </div>
 
-<!-- SCRIPTS (LOAD ONCE) -->
 <script src="{% static 'adminlte/plugins/jquery/jquery.min.js' %}"></script>
 <script src="{% static 'adminlte/plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'adminlte/js/adminlte.min.js' %}"></script>

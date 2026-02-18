@@ -9,30 +9,26 @@ from accounts.utils.ip import get_client_ip
 from django.urls import reverse
 from django.contrib import messages
 from django.http import JsonResponse
+from django.db import transaction
 
 from accounts.forms.company_form import CompanyForm
 
 @login_required
+@transaction.atomic
 def company_list(request):
 
-    # VIEW permission required to access page
     if not has_permission(request.user, "company.view"):
         raise PermissionDenied()
 
-    # -----------------------------
-    # HANDLE CREATE / UPDATE
-    # -----------------------------
+    next_url = request.POST.get("next") or request.GET.get("next")
+
     if request.method == "POST":
 
-        # MANAGE permission required for create/update
         if not has_permission(request.user, "company.manage"):
             raise PermissionDenied()
 
         company_id = request.POST.get("company_id")
 
-        # -----------------------------
-        # UPDATE
-        # -----------------------------
         if company_id:
             if request.user.is_superuser:
                 company = get_object_or_404(Company, id=company_id)
@@ -43,13 +39,20 @@ def company_list(request):
                     tenant=request.user.tenant
                 )
 
-            form = CompanyForm(request.POST, instance=company, user=request.user)
+            old_data = {
+                "name": company.name,
+                "registration_id": company.registration_id,
+                "is_active": company.is_active,
+                "classification": company.classification,
+            }
 
-        # -----------------------------
-        # CREATE
-        # -----------------------------
+            form = CompanyForm(request.POST, instance=company, user=request.user)
+            action = "company.updated"
+
         else:
             form = CompanyForm(request.POST, user=request.user)
+            old_data = None
+            action = "company.created"
 
         if form.is_valid():
             company = form.save(commit=False)
@@ -60,20 +63,38 @@ def company_list(request):
 
             company.save()
 
+            try:
+                AuditLog.objects.create(
+                    tenant=company.tenant,
+                    actor=request.user,
+                    action=action,
+                    entity_type="Company",
+                    entity_id=company.id,
+                    metadata={
+                        "old": old_data,
+                        "new": {
+                            "name": company.name,
+                            "registration_id": company.registration_id,
+                            "is_active": company.is_active,
+                            "classification": company.classification,
+                        },
+                    },
+                    ip_address=get_client_ip(request),
+                )
+            except Exception:
+                pass
+
             messages.success(request, "Company saved successfully.")
-            return redirect("admin:companies")
+
+            return redirect(next_url or "admin:companies")
 
     else:
-        # GET request
         form = CompanyForm(user=request.user)
 
-    # -----------------------------
-    # FILTERING
-    # -----------------------------
+
     selected_tenant_id = request.GET.get("tenant")
     page_number = request.GET.get("page", 1)
 
-    # SUPERUSER
     if request.user.is_superuser:
         queryset = Company.objects.select_related("tenant")
 
@@ -82,14 +103,11 @@ def company_list(request):
 
         tenants = Tenant.objects.order_by("name")
 
-    # TENANT ADMIN
     else:
         queryset = Company.objects.filter(tenant=request.user.tenant)
         tenants = Tenant.objects.filter(id=request.user.tenant_id)
 
-    # -----------------------------
-    # PAGINATION
-    # -----------------------------
+
     paginator = Paginator(queryset.order_by("name"), 10)
     page_obj = paginator.get_page(page_number)
 
@@ -103,11 +121,11 @@ def company_list(request):
             "selected_tenant_id": selected_tenant_id,
             "form": form,
             "can_manage": has_permission(request.user, "company.manage"),
-            "can_view": has_permission(request.user, "company.view"), 
+            "can_view": has_permission(request.user, "company.view"),
             "active_menu": "companies",
+            "next": request.get_full_path(),
         },
     )
-
 
 
 
@@ -151,7 +169,6 @@ def toggle_company(request, company_id):
         return redirect(referer)
 
     return redirect(reverse("admin:companies"))
-
 
 
 

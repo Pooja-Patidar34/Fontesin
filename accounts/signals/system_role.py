@@ -11,7 +11,6 @@ def create_default_tenant_roles(sender, instance, created, **kwargs):
     if not created:
         return
 
-    # Create tenant_admin role
     role, created = Role.objects.get_or_create(
         tenant=instance,
         name="tenant_admin",
@@ -20,7 +19,6 @@ def create_default_tenant_roles(sender, instance, created, **kwargs):
     if not created:
         return
 
-    # Assign ALL permissions
     permissions = Permission.objects.all()
 
     RolePermission.objects.bulk_create([
