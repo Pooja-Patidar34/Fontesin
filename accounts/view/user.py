@@ -150,26 +150,200 @@ def user_detail_ajax(request, user_id):
     )
 
     return JsonResponse({
-        "id": str(user.id),
-        "email": user.email,
-        "full_name": user.full_name,
-        "is_active": user.is_active,
+    # --------------------
+    # Core Identity
+    # --------------------
+    "id": str(user.id),
+    "email": user.email,
+    "first_name": user.first_name,
+    "last_name": user.last_name,
+    "is_active": user.is_active,
 
-        # tenant (read-only)
-        "tenant": tenant.name,
-        "tenant_id": str(tenant.id),
+    # --------------------
+    # Tenant (read-only)
+    # --------------------
+    "tenant": tenant.name,
+    "tenant_id": str(tenant.id),
 
-        # current selections
-        "role_id": user.userrole.role.id if hasattr(user, "userrole") else None,
-        "company_id": user.primary_company.id if user.primary_company else None,
+    # --------------------
+    # Company & Role
+    # --------------------
+    "company_id": (
+        str(user.primary_company_id)
+        if user.primary_company_id else None
+    ),
+    "company_name": (
+        user.primary_company.name
+        if user.primary_company else None
+    ),
+    "role_id": (
+        user.userrole.role.id
+        if hasattr(user, "userrole") else None
+    ),
+    "role_name": (
+        user.userrole.role.name
+        if hasattr(user, "userrole") else None
+    ),
 
-        # dropdown data
-        "roles": roles,
-        "companies": companies,
+    # --------------------
+    # Contact
+    # --------------------
+    "phone": user.phone,
+    "national_prefix": user.national_prefix,
 
-        # capabilities
-        "can_manage": can_manage,
-    })
+    # --------------------
+    # Personal
+    # --------------------
+    "birth_date": (
+        user.birth_date.isoformat()
+        if user.birth_date else None
+    ),
+    "ethnicity": user.ethnicity,
+    "gender": user.gender,
+
+    # --------------------
+    # Profile
+    # --------------------
+    "preferred_language": user.preferred_language,
+    "bio": user.bio,
+    "notes": user.notes,
+    "photo_url": user.photo_url,
+
+    # --------------------
+    # Address
+    # --------------------
+    "address_line1": user.address_line1,
+    "address_line2": user.address_line2,
+    "city": user.city,
+    "state_region": user.state_region,
+    "postal_code": user.postal_code,
+    "country": user.country,
+
+    # --------------------
+    # Meta (read-only)
+    # --------------------
+    "created_at": user.created_at.isoformat(),
+    "updated_at": user.updated_at.isoformat(),
+
+    # --------------------
+    # Dropdown Data
+    # --------------------
+    "roles": roles,
+    "companies": companies,
+
+    # --------------------
+    # Capabilities
+    # --------------------
+    "can_manage": can_manage,
+})
+
+
+# @login_required
+# def user_edit(request, user_id):
+#     if not (
+#         request.user.is_superuser
+#         or has_permission(request.user, "user.manage")
+#     ):
+#         raise PermissionDenied()
+
+#     if request.method != "POST":
+#         return JsonResponse({"error": "POST only"}, status=405)
+
+#     try:
+#         # Tenant scoping for non-superusers
+#         if request.user.is_superuser:
+#             user = get_object_or_404(User, id=user_id)
+#         else:
+#             user = get_object_or_404(User,id=user_id,tenant=request.user.tenant,)
+
+#         tenant = user.tenant
+
+#         with transaction.atomic():
+#             # --- capture old values ---
+#             old_data = {
+#                 "full_name": user.full_name,
+#                 "email": user.email,
+#                 "is_active": user.is_active,
+#                 "primary_company_id": (
+#                     str(user.primary_company_id)
+#                     if user.primary_company_id else None
+#                 ),
+#             }
+#             # --- update fields ---
+#             user.full_name = request.POST.get("full_name", user.full_name)
+#             user.email = request.POST.get("email", user.email)
+#             user.is_active = request.POST.get("is_active") == "true"
+
+#             # --- company (tenant scoped) ---
+#             company_id = request.POST.get("company_id")
+#             if company_id:
+#                 user.primary_company = get_object_or_404(Company,id=company_id,tenant=tenant,)
+
+#             user.full_clean()
+#             user.save()
+
+#             # --- role (tenant scoped) ---
+#             role_id = request.POST.get("role_id")
+#             if role_id:
+#                 role = get_object_or_404(Role, id=role_id, tenant=tenant)
+#                 UserRole.objects.update_or_create(user=user,defaults={"role": role},)
+
+#         # --- audit log (non-blocking) ---
+#         try:
+#             AuditLog.objects.create(
+#                 tenant=tenant,
+#                 actor=request.user,
+#                 action="user.updated",
+#                 entity_type="User",
+#                 entity_id=user.id,
+#                 metadata={
+#                     "old": old_data,
+#                     "new": {
+#                         "full_name": user.full_name,
+#                         "email": user.email,
+#                         "is_active": user.is_active,
+#                         "primary_company_id": (
+#                             str(user.primary_company_id)
+#                             if user.primary_company_id else None
+#                         ),
+#                         "role_id": role_id,
+#                     },
+#                 },
+#                 ip_address=get_client_ip(request),
+#             )
+#         except Exception:
+#             pass  # audit must never break the action
+
+#         return JsonResponse(
+#             {
+#                 "success": True,
+#                 "message": "User updated successfully",
+#             }
+#         )
+
+#     except IntegrityError:
+#         return JsonResponse(
+#             {"success": False, "message": "Email already exists"},
+#             status=400,
+#         )
+
+#     except ValidationError as e:
+#         return JsonResponse(
+#             {"success": False, "message": e.message_dict},
+#             status=400,
+#         )
+
+#     except PermissionDenied:
+#         raise
+
+#     except Exception:
+#         return JsonResponse(
+#             {
+#                 "success": False,
+#                 "message": "Unable to update user at the moment",
+#             },
+#             status=500,
+#         )
 
 
 @login_required
@@ -184,45 +358,144 @@ def user_edit(request, user_id):
         return JsonResponse({"error": "POST only"}, status=405)
 
     try:
-        # Tenant scoping for non-superusers
+        # -------------------------------
+        # Tenant scoping
+        # -------------------------------
         if request.user.is_superuser:
             user = get_object_or_404(User, id=user_id)
         else:
-            user = get_object_or_404(User,id=user_id,tenant=request.user.tenant,)
+            user = get_object_or_404(
+                User,
+                id=user_id,
+                tenant=request.user.tenant,
+            )
 
         tenant = user.tenant
 
         with transaction.atomic():
-            # --- capture old values ---
+
+            # -------------------------------
+            # Capture old values (extended)
+            # -------------------------------
             old_data = {
-                "full_name": user.full_name,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
                 "email": user.email,
                 "is_active": user.is_active,
+                "phone": user.phone,
                 "primary_company_id": (
                     str(user.primary_company_id)
                     if user.primary_company_id else None
                 ),
             }
-            # --- update fields ---
-            user.full_name = request.POST.get("full_name", user.full_name)
-            user.email = request.POST.get("email", user.email)
+
+            # -------------------------------
+            # Update core identity
+            # -------------------------------
+            user.first_name = request.POST.get(
+                "first_name", user.first_name
+            )
+            user.last_name = request.POST.get(
+                "last_name", user.last_name
+            )
+            user.email = request.POST.get(
+                "email", user.email
+            )
             user.is_active = request.POST.get("is_active") == "true"
 
-            # --- company (tenant scoped) ---
+            # -------------------------------
+            # Contact
+            # -------------------------------
+            user.phone = request.POST.get(
+                "phone", user.phone
+            )
+            user.national_prefix = request.POST.get(
+                "national_prefix", user.national_prefix
+            )
+
+            # -------------------------------
+            # Personal
+            # -------------------------------
+            user.birth_date = request.POST.get(
+                "birth_date", user.birth_date
+            ) or user.birth_date
+            user.ethnicity = request.POST.get(
+                "ethnicity", user.ethnicity
+            )
+            user.gender = request.POST.get(
+                "gender", user.gender
+            )
+
+            # -------------------------------
+            # Profile
+            # -------------------------------
+            user.preferred_language = request.POST.get(
+                "preferred_language", user.preferred_language
+            )
+            user.bio = request.POST.get(
+                "bio", user.bio
+            )
+            user.notes = request.POST.get(
+                "notes", user.notes
+            )
+            user.photo_url = request.POST.get(
+                "photo_url", user.photo_url
+            )
+
+            # -------------------------------
+            # Address
+            # -------------------------------
+            user.address_line1 = request.POST.get(
+                "address_line1", user.address_line1
+            )
+            user.address_line2 = request.POST.get(
+                "address_line2", user.address_line2
+            )
+            user.city = request.POST.get(
+                "city", user.city
+            )
+            user.state_region = request.POST.get(
+                "state_region", user.state_region
+            )
+            user.postal_code = request.POST.get(
+                "postal_code", user.postal_code
+            )
+            user.country = request.POST.get(
+                "country", user.country
+            )
+
+            # -------------------------------
+            # Company (tenant scoped)
+            # -------------------------------
             company_id = request.POST.get("company_id")
             if company_id:
-                user.primary_company = get_object_or_404(Company,id=company_id,tenant=tenant,)
+                user.primary_company = get_object_or_404(
+                    Company,
+                    id=company_id,
+                    tenant=tenant,
+                )
 
             user.full_clean()
             user.save()
 
-            # --- role (tenant scoped) ---
+            # -------------------------------
+            # Role (tenant scoped)
+            # -------------------------------
             role_id = request.POST.get("role_id")
             if role_id:
-                role = get_object_or_404(Role, id=role_id, tenant=tenant)
-                UserRole.objects.update_or_create(user=user,defaults={"role": role},)
+                role = get_object_or_404(
+                    Role,
+                    id=role_id,
+                    tenant=tenant,
+                )
+                UserRole.objects.update_or_create(
+                    user=user,
+                    defaults={"role": role},
+                )
 
-        # --- audit log (non-blocking) ---
+        # -------------------------------
+        # Audit log (non-blocking)
+        # -------------------------------
         try:
             AuditLog.objects.create(
                 tenant=tenant,
@@ -233,9 +506,11 @@ def user_edit(request, user_id):
                 metadata={
                     "old": old_data,
                     "new": {
-                        "full_name": user.full_name,
+                        "first_name": user.first_name,
+                        "last_name": user.last_name,
                         "email": user.email,
                         "is_active": user.is_active,
+                        "phone": user.phone,
                         "primary_company_id": (
                             str(user.primary_company_id)
                             if user.primary_company_id else None
@@ -278,6 +553,7 @@ def user_edit(request, user_id):
             },
             status=500,
         )
+
 
 @login_required
 def assign_roles(request, user_id):

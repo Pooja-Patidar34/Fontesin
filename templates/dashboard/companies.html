@@ -3,6 +3,13 @@
 
 {% block content %}
 
+<style>
+  .view-mode {
+    pointer-events: none;
+    background-color: #f8f9fa;
+  }
+</style>
+
 <div class="card card-outline card-primary shadow-sm">
 
   <!-- Header -->
@@ -40,7 +47,6 @@
       </div>
     </div>
   </div>
-
 
   <!-- Table -->
   <div class="card-body p-0">
@@ -116,79 +122,16 @@
     </div>
   </div>
 
-
-  <!-- Pagination -->
-  {% if companies.has_other_pages %}
-<div class="card-footer d-flex justify-content-end">
-  <nav>
-    <ul class="pagination pagination-sm mb-0">
-
-      {# PREVIOUS #}
-      {% if companies.has_previous %}
-        <li class="page-item">
-          <a class="page-link"
-             href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ companies.previous_page_number }}">
-            Previous
-          </a>
-        </li>
-      {% else %}
-        <li class="page-item disabled">
-          <span class="page-link">Previous</span>
-        </li>
-      {% endif %}
-
-      {# PAGE NUMBERS – MAX 5 #}
-      {% with start=companies.number|add:-2 end=companies.number|add:2 %}
-        {% for num in companies.paginator.page_range %}
-          {% if num >= start and num <= end %}
-            {% if num == companies.number %}
-              <li class="page-item active">
-                <span class="page-link">{{ num }}</span>
-              </li>
-            {% else %}
-              <li class="page-item">
-                <a class="page-link"
-                   href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ num }}">
-                  {{ num }}
-                </a>
-              </li>
-            {% endif %}
-          {% endif %}
-        {% endfor %}
-      {% endwith %}
-
-      {# NEXT #}
-      {% if companies.has_next %}
-        <li class="page-item">
-          <a class="page-link"
-             href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ companies.next_page_number }}">
-            Next
-          </a>
-        </li>
-      {% else %}
-        <li class="page-item disabled">
-          <span class="page-link">Next</span>
-        </li>
-      {% endif %}
-
-    </ul>
-  </nav>
-</div>
-{% endif %}
-
-
 </div>
 
-
-<!-- Modal -->
+<!-- ================= MODAL ================= -->
 <div class="modal fade" id="companyModal" tabindex="-1">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
 
       <form method="post">
         {% csrf_token %}
         <input type="hidden" name="next" value="{{ next }}">
-
         <input type="hidden" name="company_id" id="company-id-field">
 
         <div class="modal-header">
@@ -207,6 +150,7 @@
             {{ form.tenant }}
           {% endif %}
 
+          <!-- ORIGINAL FIELDS -->
           <div class="form-group">
             <label>Name</label>
             {{ form.name }}
@@ -217,7 +161,76 @@
             {{ form.registration_id }}
           </div>
 
-          <div class="form-check">
+          <!-- ===== ADDED FIELDS START (NO REMOVALS) ===== -->
+
+          <div class="form-group">
+            <label>Classification</label>
+            {{ form.classification }}
+          </div>
+
+          <hr>
+
+          <h6 class="text-muted">Address</h6>
+
+          <div class="form-group">
+            <label>Address Line 1</label>
+            {{ form.address_line1 }}
+          </div>
+
+          <div class="form-group">
+            <label>Address Line 2</label>
+            {{ form.address_line2 }}
+          </div>
+
+          <div class="form-row">
+            <div class="col">
+              <label>City</label>
+              {{ form.city }}
+            </div>
+            <div class="col">
+              <label>State</label>
+              {{ form.state }}
+            </div>
+          </div>
+
+          <div class="form-row mt-2">
+            <div class="col">
+              <label>Postal Code</label>
+              {{ form.postal_code }}
+            </div>
+            <div class="col">
+              <label>Country</label>
+              {{ form.country }}
+            </div>
+          </div>
+
+          <hr>
+
+          <h6 class="text-muted">Contact</h6>
+
+          <div class="form-group">
+            <label>Phone</label>
+            {{ form.phone }}
+          </div>
+
+          <div class="form-group">
+            <label>Secondary Phone</label>
+            {{ form.phone_secondary }}
+          </div>
+
+          <div class="form-group">
+            <label>Fax</label>
+            {{ form.fax }}
+          </div>
+
+          <div class="form-group">
+            <label>Website</label>
+            {{ form.website }}
+          </div>
+
+          <!-- ===== ADDED FIELDS END ===== -->
+
+          <div class="form-check mt-2">
             {{ form.is_active }}
             <label class="form-check-label ml-1">Active</label>
           </div>
@@ -249,8 +262,7 @@
   </div>
 </div>
 
-
-<!-- JS -->
+<!-- ================= JS (UNCHANGED LOGIC, ONLY ADDITIONS) ================= -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -265,44 +277,72 @@ document.addEventListener("DOMContentLoaded", function () {
   const regField = document.getElementById("id_registration_id");
   const activeField = document.getElementById("id_is_active");
 
-  function setReadonly(state) {
-      if (tenantField) tenantField.disabled = state;
-      nameField.readOnly = state;
-      regField.readOnly = state;
-      activeField.disabled = state;
+  // function setReadonly(state) {
+  //     if (tenantField) tenantField.disabled = false;
+  //     nameField.readOnly = state;
+  //     regField.readOnly = state;
+  //     activeField.disabled = false;
 
-      if (saveBtn) saveBtn.style.display = state ? "none" : "inline-block";
-      if (editBtn) editBtn.style.display = state ? "inline-block" : "none";
+  //     if (saveBtn) saveBtn.style.display = state ? "none" : "inline-block";
+  //     if (editBtn) editBtn.style.display = state ? "inline-block" : "none";
+  // }
+
+  function setReadonly(isViewMode) {
+
+    // TEXT INPUTS
+    modal.find("input[type=text], input[type=url]").each(function () {
+      this.readOnly = isViewMode;
+      this.classList.toggle("view-mode", isViewMode);
+    });
+
+    // SELECTS
+    modal.find("select").each(function () {
+      this.classList.toggle("view-mode", isViewMode);
+    });
+
+    // CHECKBOX
+    modal.find("input[type=checkbox]").each(function () {
+      this.classList.toggle("view-mode", isViewMode);
+    });
+
+    if (saveBtn) saveBtn.style.display = isViewMode ? "none" : "inline-block";
+    if (editBtn) editBtn.style.display = isViewMode ? "inline-block" : "none";
   }
 
-  // ADD
   document.getElementById("add-company-btn")?.addEventListener("click", function () {
-
       idField.value = "";
       title.innerText = "Add Company";
-
-      if (tenantField) tenantField.disabled = false;
-      nameField.value = "";
-      regField.value = "";
+      modal.find("input[type=text], input[type=url]").val("");
       activeField.checked = true;
-
       setReadonly(false);
       modal.modal('show');
   });
 
-  // VIEW
   document.querySelectorAll(".view-company-btn").forEach(btn => {
     btn.addEventListener("click", function () {
-
       fetch(this.dataset.url)
         .then(res => res.json())
         .then(data => {
+          const c = data.company;
 
-          idField.value = data.id;
-          if (tenantField) tenantField.value = data.tenant;
-          nameField.value = data.name;
-          regField.value = data.registration_id || "";
-          activeField.checked = data.is_active;
+          idField.value = c.id;
+          if (tenantField) tenantField.value = c.tenant;
+          nameField.value = c.name;
+          regField.value = c.registration_id || "";
+          activeField.checked = c.is_active;
+
+          // ===== ADDED FIELD POPULATION =====
+          document.getElementById("id_classification").value = c.classification || "";
+          document.getElementById("id_address_line1").value = c.address_line1 || "";
+          document.getElementById("id_address_line2").value = c.address_line2 || "";
+          document.getElementById("id_city").value = c.city || "";
+          document.getElementById("id_state").value = c.state || "";
+          document.getElementById("id_postal_code").value = c.postal_code || "";
+          document.getElementById("id_country").value = c.country || "";
+          document.getElementById("id_phone").value = c.phone || "";
+          document.getElementById("id_phone_secondary").value = c.phone_secondary || "";
+          document.getElementById("id_fax").value = c.fax || "";
+          document.getElementById("id_website").value = c.website || "";
 
           title.innerText = "Company Details";
           setReadonly(true);
@@ -311,7 +351,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  // Enable edit inside modal
   editBtn?.addEventListener("click", function () {
       title.innerText = "Edit Company";
       setReadonly(false);

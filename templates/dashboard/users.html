@@ -30,23 +30,12 @@
       <select name="tenant" class="form-control form-control-sm mr-2"
               onchange="
                 const params = new URLSearchParams(window.location.search);
-
-                if (this.value) {
-                  params.set('tenant', this.value);
-                } else {
-                  params.delete('tenant');
-                }
-
-                // ✅ RESET company to 'All Companies'
+                if (this.value) params.set('tenant', this.value);
+                else params.delete('tenant');
                 params.delete('company');
-
-                // ✅ RESET pagination
                 params.delete('page');
-
                 window.location = window.location.pathname + '?' + params.toString();
               ">
-
-
         <option value="">All Tenants</option>
         {% for tenant in tenants %}
           <option value="{{ tenant.id }}"
@@ -82,7 +71,6 @@
             <th class="text-right">Actions</th>
           </tr>
         </thead>
-
         <tbody>
           {% for user in users %}
           <tr>
@@ -94,123 +82,52 @@
                 <span class="badge badge-danger status-badge">Inactive</span>
               {% endif %}
             </td>
-
             <td class="text-right">
               <div class="btn-group">
-                <button class="btn btn-sm btn-primary dropdown-toggle"
-                        data-toggle="dropdown">
+                <button class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown">
                   <i class="fas fa-ellipsis-v"></i>
                 </button>
-
                 <div class="dropdown-menu dropdown-menu-right shadow-sm">
-                  <a class="dropdown-item"
-                     href="#"
-                     onclick="viewUser('{{ user.id }}'); return false;">
+                  <a class="dropdown-item" href="#" onclick="viewUser('{{ user.id }}'); return false;">
                     <i class="fas fa-eye mr-2 text-info"></i> View
                   </a>
-
-                  <a class="dropdown-item"
-                     href="#"
-                     onclick="editUser('{{ user.id }}'); return false;">
+                  <a class="dropdown-item" href="#" onclick="editUser('{{ user.id }}'); return false;">
                     <i class="fas fa-edit mr-2 text-warning"></i> Edit
                   </a>
-
                   <div class="dropdown-divider"></div>
 
                   {% if user.is_active %}
-                    <a class="dropdown-item text-danger"
-                      href="{% url 'admin:user-toggle' user.id %}?next={{ request.get_full_path|urlencode }}">
-                      <i class="fas fa-user-slash mr-2"></i> Deactivate
-                    </a>
+                  <a class="dropdown-item text-danger"
+                     href="{% url 'admin:user-toggle' user.id %}?next={{ request.get_full_path|urlencode }}">
+                    <i class="fas fa-user-slash mr-2"></i> Deactivate
+                  </a>
                   {% else %}
-                    <a class="dropdown-item text-success"
-                      href="{% url 'admin:user-toggle' user.id %}?next={{ request.get_full_path|urlencode }}">
-                      <i class="fas fa-user-check mr-2"></i> Activate
-                    </a>
+                  <a class="dropdown-item text-success"
+                     href="{% url 'admin:user-toggle' user.id %}?next={{ request.get_full_path|urlencode }}">
+                    <i class="fas fa-user-check mr-2"></i> Activate
+                  </a>
                   {% endif %}
 
-                    <a class="dropdown-item"
-                      href="{% url 'admin:assign-roles' user.id %}?next={{ request.get_full_path|urlencode }}">
-                      <i class="fas fa-user-tag mr-2 text-secondary"></i> Roles
-                    </a>
-
+                  <a class="dropdown-item"
+                     href="{% url 'admin:assign-roles' user.id %}?next={{ request.get_full_path|urlencode }}">
+                    <i class="fas fa-user-tag mr-2 text-secondary"></i> Roles
+                  </a>
                 </div>
               </div>
             </td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="3" class="text-center text-muted py-4">
-              No users found
-            </td>
+            <td colspan="3" class="text-center text-muted py-4">No users found</td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   </div>
-
-  <!-- PAGINATION -->
-  {% if page_obj.has_other_pages %}
-<div class="card-footer d-flex justify-content-end">
-  <nav>
-    <ul class="pagination pagination-sm mb-0">
-
-      {# PREVIOUS BUTTON #}
-      {% if page_obj.has_previous %}
-        <li class="page-item">
-          <a class="page-link"
-             href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">
-            Previous
-          </a>
-        </li>
-      {% else %}
-        <li class="page-item disabled">
-          <span class="page-link">Previous</span>
-        </li>
-      {% endif %}
-
-      {# PAGE NUMBERS (MAX 5) #}
-      {% with start=page_obj.number|add:-2 end=page_obj.number|add:2 %}
-        {% for num in page_obj.paginator.page_range %}
-          {% if num >= start and num <= end %}
-            {% if num == page_obj.number %}
-              <li class="page-item active">
-                <span class="page-link">{{ num }}</span>
-              </li>
-            {% else %}
-              <li class="page-item">
-                <a class="page-link"
-                   href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ num }}">
-                  {{ num }}
-                </a>
-              </li>
-            {% endif %}
-          {% endif %}
-        {% endfor %}
-      {% endwith %}
-
-      {# NEXT BUTTON #}
-      {% if page_obj.has_next %}
-        <li class="page-item">
-          <a class="page-link"
-             href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">
-            Next
-          </a>
-        </li>
-      {% else %}
-        <li class="page-item disabled">
-          <span class="page-link">Next</span>
-        </li>
-      {% endif %}
-
-    </ul>
-  </nav>
-</div>
-{% endif %}
-
 </div>
 
+<!-- VIEW MODAL -->
 <!-- VIEW MODAL -->
 <div class="modal fade" id="userDetailModal" tabindex="-1">
   <div class="modal-dialog modal-md modal-dialog-centered">
@@ -221,25 +138,50 @@
           <span>&times;</span>
         </button>
       </div>
+
       <div class="modal-body">
         <table class="table table-sm table-borderless mb-0">
+
+          <!-- Identity -->
           <tr><th>Email</th><td id="ud-email"></td></tr>
-          <tr><th>Full Name</th><td id="ud-name"></td></tr>
+          <tr><th>Name</th><td id="ud-name"></td></tr>
           <tr><th>Status</th><td id="ud-status"></td></tr>
+
+          <!-- Organisation -->
           <tr><th>Tenant</th><td id="ud-tenant"></td></tr>
           <tr><th>Company</th><td id="ud-company"></td></tr>
           <tr><th>Role</th><td id="ud-role"></td></tr>
+
+          <!-- Contact -->
+          <tr><th>Phone</th><td id="ud-phone"></td></tr>
+
+          <!-- Personal -->
+          <tr><th>Date of Birth</th><td id="ud-dob"></td></tr>
+          <tr><th>Gender</th><td id="ud-gender"></td></tr>
+          <tr><th>Ethnicity</th><td id="ud-ethnicity"></td></tr>
+
+          <!-- Profile -->
+          <tr><th>Preferred Language</th><td id="ud-language"></td></tr>
+          <tr><th>Bio</th><td id="ud-bio"></td></tr>
+          <tr><th>Notes</th><td id="ud-notes"></td></tr>
+
+          <!-- Address -->
+          <tr>
+            <th>Address</th>
+            <td id="ud-address"></td>
+          </tr>
+
+          <!-- Meta -->
           <tr><th>Created</th><td id="ud-created"></td></tr>
+
         </table>
       </div>
     </div>
   </div>
 </div>
-
-<!-- EDIT MODAL -->
 <!-- EDIT MODAL -->
 <div class="modal fade" id="userEditModal" tabindex="-1">
-  <div class="modal-dialog modal-md modal-dialog-centered">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
 
       <div class="modal-header">
@@ -257,10 +199,111 @@
           <input type="text" class="form-control" id="eu-tenant" readonly>
         </div>
 
-        <!-- Full Name -->
+        <!-- Full Name (kept for backward compatibility) -->
         <div class="form-group">
           <label>Full Name</label>
           <input type="text" class="form-control" id="eu-name">
+        </div>
+
+        <!-- Contact -->
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="text" class="form-control" id="eu-phone">
+        </div>
+
+        <!-- Personal -->
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label>Date of Birth</label>
+            <input type="date" class="form-control" id="eu-dob">
+          </div>
+
+          <div class="form-group col-md-6">
+            <label>Gender</label>
+            <select class="form-control" id="eu-gender">
+              <option value="">-- Select Gender --</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+              <option value="prefer_not_to_say">Prefer not to say</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Ethnicity</label>
+          <select class="form-control" id="eu-ethnicity">
+            <option value="">-- Select Ethnicity --</option>
+            <option value="asian">Asian</option>
+            <option value="black">Black / African descent</option>
+            <option value="hispanic">Hispanic / Latino</option>
+            <option value="white">White</option>
+            <option value="mixed">Mixed</option>
+            <option value="other">Other</option>
+            <option value="prefer_not_to_say">Prefer not to say</option>
+          </select>
+        </div>
+
+        <!-- Profile -->
+        <div class="form-group">
+          <label>Preferred Language</label>
+          <select class="form-control" id="eu-language">
+            <option value="">-- Select Language --</option>
+            <option value="en">English</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="ar">Arabic</option>
+            <option value="hi">Hindi</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Bio</label>
+          <textarea class="form-control" id="eu-bio" rows="2"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea class="form-control" id="eu-notes" rows="2"></textarea>
+        </div>
+
+        <!-- Address -->
+        <div class="form-group">
+          <label>Address Line 1</label>
+          <input type="text" class="form-control" id="eu-address1">
+        </div>
+
+        <div class="form-group">
+          <label>Address Line 2</label>
+          <input type="text" class="form-control" id="eu-address2">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-md-4">
+            <label>City</label>
+            <input type="text" class="form-control" id="eu-city">
+          </div>
+          <div class="form-group col-md-4">
+            <label>State / Region</label>
+            <input type="text" class="form-control" id="eu-state">
+          </div>
+          <div class="form-group col-md-4">
+            <label>Postal Code</label>
+            <input type="text" class="form-control" id="eu-postal">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Country</label>
+          <select class="form-control" id="eu-country">
+            <option value="">-- Select Country --</option>
+            <option value="US">United States</option>
+            <option value="IN">India</option>
+            <option value="UK">United Kingdom</option>
+            <option value="CA">Canada</option>
+            <option value="AU">Australia</option>
+          </select>
         </div>
 
         <!-- Status -->
@@ -294,24 +337,64 @@
     </div>
   </div>
 </div>
-
-
 <script>
 let editUserId = null;
-
 function viewUser(userId) {
   fetch(`/admin/users/${userId}/view/`)
     .then(r => r.json())
     .then(data => {
+
+      // Identity
       document.getElementById("ud-email").innerText = data.email;
-      document.getElementById("ud-name").innerText = data.full_name;
-      document.getElementById("ud-status").innerText = data.is_active ? "Active" : "Inactive";
+      document.getElementById("ud-name").innerText =
+        `${data.first_name || ""} ${data.last_name || ""}`.trim() || "-";
+      document.getElementById("ud-status").innerText =
+        data.is_active ? "Active" : "Inactive";
+
+      // Org
       document.getElementById("ud-tenant").innerText = data.tenant;
-      document.getElementById("ud-company").innerText = data.primary_company || "-";
-      document.getElementById("ud-role").innerText = data.role || "-";
-      document.getElementById("ud-created").innerText = new Date(data.created_at).toLocaleString();
+      document.getElementById("ud-company").innerText =
+        data.company_name || "-";
+      document.getElementById("ud-role").innerText =
+        data.role_name || "-";
+
+      // Contact
+      document.getElementById("ud-phone").innerText =
+        data.phone || "-";
+
+      // Personal
+      document.getElementById("ud-dob").innerText =
+        data.birth_date || "-";
+      document.getElementById("ud-gender").innerText =
+        data.gender || "-";
+      document.getElementById("ud-ethnicity").innerText =
+        data.ethnicity || "-";
+
+      // Profile
+      document.getElementById("ud-language").innerText =
+        data.preferred_language || "-";
+      document.getElementById("ud-bio").innerText =
+        data.bio || "-";
+      document.getElementById("ud-notes").innerText =
+        data.notes || "-";
+
+      // Address (merged)
+      document.getElementById("ud-address").innerText = [
+        data.address_line1,
+        data.address_line2,
+        data.city,
+        data.state_region,
+        data.postal_code,
+        data.country
+      ].filter(Boolean).join(", ") || "-";
+
+      // Meta
+      document.getElementById("ud-created").innerText =
+        new Date(data.created_at).toLocaleString();
+
       $('#userDetailModal').modal('show');
-    });
+    })
+    .catch(err => console.error("View user failed:", err));
 }
 
 function editUser(userId) {
@@ -321,12 +404,37 @@ function editUser(userId) {
     .then(res => res.json())
     .then(data => {
 
-      // basic fields
-      document.getElementById("eu-name").value = data.full_name;
-      document.getElementById("eu-active").value = data.is_active ? "true" : "false";
+      // Tenant
       document.getElementById("eu-tenant").value = data.tenant;
 
-      // populate companies
+      // Full name (kept)
+      document.getElementById("eu-name").value =
+        `${data.first_name || ""} ${data.last_name || ""}`.trim();
+
+      // Contact & personal
+      document.getElementById("eu-phone").value = data.phone || "";
+      document.getElementById("eu-dob").value = data.birth_date || "";
+      document.getElementById("eu-gender").value = data.gender || "";
+      document.getElementById("eu-ethnicity").value = data.ethnicity || "";
+
+      // Profile
+      document.getElementById("eu-language").value = data.preferred_language || "";
+      document.getElementById("eu-bio").value = data.bio || "";
+      document.getElementById("eu-notes").value = data.notes || "";
+
+      // Address
+      document.getElementById("eu-address1").value = data.address_line1 || "";
+      document.getElementById("eu-address2").value = data.address_line2 || "";
+      document.getElementById("eu-city").value = data.city || "";
+      document.getElementById("eu-state").value = data.state_region || "";
+      document.getElementById("eu-postal").value = data.postal_code || "";
+      document.getElementById("eu-country").value = data.country || "";
+
+      // Status
+      document.getElementById("eu-active").value =
+        data.is_active ? "true" : "false";
+
+      // Company
       const companySelect = document.getElementById("eu-company");
       companySelect.innerHTML = "";
       data.companies.forEach(c => {
@@ -337,7 +445,7 @@ function editUser(userId) {
         companySelect.appendChild(opt);
       });
 
-      // populate roles
+      // Role
       const roleSelect = document.getElementById("eu-role");
       roleSelect.innerHTML = "";
       data.roles.forEach(r => {
@@ -352,8 +460,10 @@ function editUser(userId) {
     });
 }
 
-
 function saveUserEdit() {
+  const fullName = document.getElementById("eu-name").value.trim();
+  const parts = fullName.split(" ");
+
   fetch(`/admin/users/${editUserId}/edit/`, {
     method: "POST",
     headers: {
@@ -361,18 +471,45 @@ function saveUserEdit() {
       "Content-Type": "application/x-www-form-urlencoded"
     },
     body: new URLSearchParams({
-      full_name: document.getElementById("eu-name").value,
+
+      // Identity
+      first_name: parts[0] || "",
+      last_name: parts.slice(1).join(" ") || "",
+
+      // Contact
+      phone: document.getElementById("eu-phone").value,
+
+      // Personal
+      birth_date: document.getElementById("eu-dob").value,
+      gender: document.getElementById("eu-gender").value,
+      ethnicity: document.getElementById("eu-ethnicity").value,
+
+      // Profile
+      preferred_language: document.getElementById("eu-language").value,
+      bio: document.getElementById("eu-bio").value,
+      notes: document.getElementById("eu-notes").value,
+
+      // Address
+      address_line1: document.getElementById("eu-address1").value,
+      address_line2: document.getElementById("eu-address2").value,
+      city: document.getElementById("eu-city").value,
+      state_region: document.getElementById("eu-state").value,
+      postal_code: document.getElementById("eu-postal").value,
+      country: document.getElementById("eu-country").value,
+
+      // System
       is_active: document.getElementById("eu-active").value,
       company_id: document.getElementById("eu-company").value,
       role_id: document.getElementById("eu-role").value
     })
-  }).then(() => {
-    // ✅ THIS LINE FIXES FILTER RESET
+  })
+  .then(res => res.json())
+  .then(() => {
+    // refresh list, keep filters
     window.location.href = window.location.pathname + window.location.search;
-  });
+  })
+  .catch(err => console.error("Save failed:", err));
 }
-
-
 </script>
 
 {% endblock %}
