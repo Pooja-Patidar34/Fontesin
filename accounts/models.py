@@ -281,6 +281,13 @@ class User(AbstractBaseUser, PermissionsMixin):
         related_name="users"
     )
 
+    role = models.ForeignKey(
+        "Role",
+        on_delete=models.PROTECT,
+        related_name="users",
+        null=True,
+        blank=True,
+    )
     primary_company = models.ForeignKey(
         Company,
         on_delete=models.SET_NULL,
@@ -359,22 +366,22 @@ from django.db import models
 class Role(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    tenant = models.ForeignKey(
-        Tenant,
-        on_delete=models.PROTECT,
-        related_name="roles"
-    )
+    # tenant = models.ForeignKey(
+    #     Tenant,
+    #     on_delete=models.PROTECT,
+    #     related_name="roles"
+    # )
 
     name = models.CharField(max_length=100)
 
     # Base role (null = base role itself)
-    base_role = models.ForeignKey(
-        "self",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="derived_roles"
-    )
+    # base_role = models.ForeignKey(
+    #     "self",
+    #     on_delete=models.SET_NULL,
+    #     null=True,
+    #     blank=True,
+    #     related_name="derived_roles"
+    # )
 
     permissions = models.ManyToManyField(
         Permission,
@@ -383,9 +390,9 @@ class Role(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        unique_together = ("tenant", "name")
-        ordering = ["name"]
+    # class Meta:
+    #     unique_together = ("tenant", "name")
+    #     ordering = ["name"]
 
     def __str__(self):
         return self.name

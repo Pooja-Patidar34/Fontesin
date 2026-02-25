@@ -24,6 +24,10 @@
   <!-- HEADER -->
   <div class="card-header d-flex justify-content-between align-items-center">
     <h3 class="card-title font-weight-bold mb-0">Users</h3>
+      <button class="btn btn-sm btn-primary"
+          onclick="openAddUserModal()">
+        <i class="fas fa-user-plus mr-1"></i> Add User
+      </button>
 
     <form method="get" class="form-inline">
       {% if request.user.is_superuser %}
@@ -186,8 +190,110 @@
 {% endif %}
 
 </div>
+<!-- ADD USER MODAL -->
+<!-- ADD USER MODAL -->
+<div class="modal fade" id="addUserModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
 
-<!-- VIEW MODAL -->
+      <div class="modal-header">
+        <h5 class="modal-title">Add User</h5>
+        <button type="button" class="close" data-dismiss="modal">
+          <span>&times;</span>
+        </button>
+      </div>
+
+      <form id="addUserForm">
+        <div class="modal-body">
+
+          {% if request.user.is_superuser %}
+          <div class="form-group">
+            <label>Tenant *</label>
+            <select class="form-control" name="tenant" id="au-tenant" required>
+              <option value="">Select Tenant</option>
+              {% for tenant in tenants %}
+                <option value="{{ tenant.id }}">{{ tenant.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          {% endif %}
+
+          <!-- Identity -->
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label>Email *</label>
+              <input type="email" class="form-control" name="email" required>
+            </div>
+            <div class="form-group col-md-6">
+              <label>Password *</label>
+              <input type="password" class="form-control" name="password" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label>First Name *</label>
+              <input type="text" class="form-control" name="first_name" required>
+            </div>
+            <div class="form-group col-md-6">
+              <label>Last Name *</label>
+              <input type="text" class="form-control" name="last_name" required>
+            </div>
+          </div>
+
+          <!-- Company -->
+          <div class="form-group">
+            <label>Company</label>
+            <select class="form-control" name="primary_company" id="au-company">
+              <option value="">Select Company</option>
+              {% if not request.user.is_superuser %}
+                {% for company in companies %}
+                  <option value="{{ company.id }}">{{ company.name }}</option>
+                {% endfor %}
+              {% endif %}
+            </select>
+          </div>
+
+          <!-- ENUM: Personal -->
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label>Gender</label>
+              <select class="form-control" name="gender" id="au-gender"></select>
+            </div>
+
+            <div class="form-group col-md-6">
+              <label>Ethnicity</label>
+              <select class="form-control" name="ethnicity" id="au-ethnicity"></select>
+            </div>
+          </div>
+
+          <!-- ENUM: Language -->
+          <div class="form-group">
+            <label>Preferred Language</label>
+            <select class="form-control" name="preferred_language" id="au-language"></select>
+          </div>
+
+          <!-- Status -->
+          <div class="form-group">
+            <label>Status</label>
+            <select class="form-control" name="is_active" id="au-status"></select>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary btn-sm">
+            Create User
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
 <!-- VIEW MODAL -->
 <div class="modal fade" id="userDetailModal" tabindex="-1">
   <div class="modal-dialog modal-md modal-dialog-centered">
@@ -570,6 +676,144 @@ function saveUserEdit() {
   })
   .catch(err => console.error("Save failed:", err));
 }
+
+
+document.addEventListener("DOMContentLoaded", function () {
+
+  /* ========= ENUM DEFINITIONS ========= */
+
+  const ENUMS = {
+    gender: [
+      { value: "male", label: "Male" },
+      { value: "female", label: "Female" },
+      { value: "other", label: "Other" },
+      { value: "prefer_not_to_say", label: "Prefer not to say" }
+    ],
+
+    ethnicity: [
+      { value: "asian", label: "Asian" },
+      { value: "black", label: "Black / African descent" },
+      { value: "hispanic", label: "Hispanic / Latino" },
+      { value: "white", label: "White" },
+      { value: "mixed", label: "Mixed" },
+      { value: "other", label: "Other" },
+      { value: "prefer_not_to_say", label: "Prefer not to say" }
+    ],
+
+    language: [
+      { value: "en", label: "English" },
+      { value: "es", label: "Spanish" },
+      { value: "fr", label: "French" },
+      { value: "de", label: "German" },
+      { value: "ar", label: "Arabic" },
+      { value: "hi", label: "Hindi" }
+    ],
+
+    status: [
+      { value: "true", label: "Active" },
+      { value: "false", label: "Inactive" }
+    ]
+  };
+
+  /* ========= HELPERS ========= */
+
+  function fillSelect(selectEl, options) {
+    if (!selectEl) return;
+    selectEl.innerHTML = "<option value=''>-- Select --</option>";
+    options.forEach(o => {
+      const opt = document.createElement("option");
+      opt.value = o.value;
+      opt.textContent = o.label;
+      selectEl.appendChild(opt);
+    });
+  }
+
+  /* ========= INIT CREATE MODAL ========= */
+
+  window.openAddUserModal = function () {
+    const form = document.getElementById("addUserForm");
+    if (form) form.reset();
+
+    fillSelect(document.getElementById("au-gender"), ENUMS.gender);
+    fillSelect(document.getElementById("au-ethnicity"), ENUMS.ethnicity);
+    fillSelect(document.getElementById("au-language"), ENUMS.language);
+    fillSelect(document.getElementById("au-status"), ENUMS.status);
+
+    $('#addUserModal').modal('show');
+  };
+
+  /* ========= SUBMIT CREATE USER (SAFE) ========= */
+
+  document.addEventListener("submit", function (e) {
+    if (e.target && e.target.id === "addUserForm") {
+      e.preventDefault();
+
+      fetch("/admin/users/add/", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": "{{ csrf_token }}",
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams(new FormData(e.target))
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status) {
+          window.location.reload();
+        } else {
+          alert(data.message || "Failed to create user");
+        }
+      })
+      .catch(err => {
+        console.error("Add user failed:", err);
+        alert("Unexpected error. Check console.");
+      });
+    }
+  });
+
+  /* ========= SUPERUSER: TENANT → COMPANY ========= */
+
+  const isSuperuser =
+    document.body.dataset.isSuperuser === "true";
+
+  if (isSuperuser) {
+    const tenantSelect = document.getElementById("au-tenant");
+    const companySelect = document.getElementById("au-company");
+
+    if (tenantSelect && companySelect) {
+      tenantSelect.addEventListener("change", function () {
+        const tenantId = this.value;
+
+        companySelect.innerHTML =
+          "<option value=''>Select Company</option>";
+
+        if (!tenantId) return;
+
+        fetch(`/api/companies/?tenant_id=${tenantId}`)
+          .then(res => res.json())
+          .then(resp => {
+            if (!resp.status || !Array.isArray(resp.data)) {
+              console.error("Invalid company response", resp);
+              return;
+            }
+
+            resp.data.forEach(c => {
+              const opt = document.createElement("option");
+              opt.value = c.id;
+              opt.textContent = c.name;
+              companySelect.appendChild(opt);
+            });
+          })
+          .catch(err => {
+            console.error("Company load failed", err);
+            companySelect.innerHTML =
+              "<option value=''>Failed to load companies</option>";
+          });
+      });
+    }
+  }
+
+});
 </script>
 
 {% endblock %}

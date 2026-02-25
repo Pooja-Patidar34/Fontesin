@@ -23,6 +23,101 @@ from accounts.forms.certificate_form import RoleForm, PermissionForm
 
 logger = logging.getLogger(__name__)
 
+@login_required
+def add_user(request):
+    if request.method != "POST":
+        return JsonResponse({"status": False, "message": "Invalid request"})
+
+    try:
+        data = request.POST
+
+        # --------------------
+        # Required fields
+        # --------------------
+        email = data.get("email")
+        password = data.get("password")
+        first_name = data.get("first_name")
+        last_name = data.get("last_name")
+
+        if not all([email, password, first_name, last_name]):
+            return JsonResponse({
+                "status": False,
+                "message": "Required fields missing"
+            })
+
+        # --------------------
+        # Tenant resolution
+        # --------------------
+        if request.user.is_superuser:
+            tenant_id = data.get("tenant")
+            if not tenant_id:
+                return JsonResponse({
+                    "status": False,
+                    "message": "Tenant is required"
+                })
+            tenant = Tenant.objects.get(id=tenant_id)
+        else:
+            tenant = request.user.tenant
+
+        # --------------------
+        # Company (tenant scoped)
+        # --------------------
+        company = None
+        company_id = data.get("primary_company")
+        if company_id:
+            company = Company.objects.get(id=company_id, tenant=tenant)
+
+        # --------------------
+        # Create User
+        # --------------------
+        user = User.objects.create_user(
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+            tenant=tenant,
+            primary_company=company,
+            is_active=data.get("is_active") == "true",
+
+            # Contact
+            phone=data.get("phone"),
+            national_prefix=data.get("national_prefix"),
+
+            # Personal
+            birth_date=data.get("birth_date") or None,
+            ethnicity=data.get("ethnicity"),
+            gender=data.get("gender"),
+
+            # Profile
+            preferred_language=data.get("preferred_language"),
+            bio=data.get("bio"),
+            notes=data.get("notes"),
+            photo_url=data.get("photo_url"),
+
+            # Address
+            address_line1=data.get("address_line1"),
+            address_line2=data.get("address_line2"),
+            city=data.get("city"),
+            state_region=data.get("state_region"),
+            postal_code=data.get("postal_code"),
+            country=data.get("country"),
+        )
+
+        # --------------------
+        # Role assignment
+        # --------------------
+        role_id = data.get("role")
+        if role_id:
+            role = Role.objects.get(id=role_id, tenant=tenant)
+            UserRole.objects.create(user=user, role=role)
+
+        return JsonResponse({"status": True, "user_id": str(user.id)})
+
+    except Exception as e:
+        return JsonResponse({
+            "status": False,
+            "message": str(e)
+        })
 
 @login_required
 def user_list(request):
@@ -130,221 +225,102 @@ def user_detail_ajax(request, user_id):
         User.objects.select_related(
             "tenant",
             "primary_company",
-            "userrole__role",
+            "role",          # 🔹 direct FK
         ),
         id=user_id,
     )
 
     tenant = user.tenant
 
+    # 🔹 GLOBAL roles (only 3)
     roles = list(
-        Role.objects.filter(tenant=tenant)
+        Role.objects
         .values("id", "name")
         .order_by("name")
     )
 
+    # 🔹 Companies remain tenant-scoped
     companies = list(
-        Company.objects.filter(tenant=tenant)
+        Company.objects
+        .filter(tenant=tenant)
         .values("id", "name")
         .order_by("name")
     )
 
     return JsonResponse({
-    # --------------------
-    # Core Identity
-    # --------------------
-    "id": str(user.id),
-    "email": user.email,
-    "first_name": user.first_name,
-    "last_name": user.last_name,
-    "is_active": user.is_active,
 
-    # --------------------
-    # Tenant (read-only)
-    # --------------------
-    "tenant": tenant.name,
-    "tenant_id": str(tenant.id),
+        # --------------------
+        # Core Identity
+        # --------------------
+        "id": str(user.id),
+        "email": user.email,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "is_active": user.is_active,
 
-    # --------------------
-    # Company & Role
-    # --------------------
-    "company_id": (
-        str(user.primary_company_id)
-        if user.primary_company_id else None
-    ),
-    "company_name": (
-        user.primary_company.name
-        if user.primary_company else None
-    ),
-    "role_id": (
-        user.userrole.role.id
-        if hasattr(user, "userrole") else None
-    ),
-    "role_name": (
-        user.userrole.role.name
-        if hasattr(user, "userrole") else None
-    ),
+        # --------------------
+        # Tenant (read-only)
+        # --------------------
+        "tenant": tenant.name,
+        "tenant_id": str(tenant.id),
 
-    # --------------------
-    # Contact
-    # --------------------
-    "phone": user.phone,
-    "national_prefix": user.national_prefix,
+        # --------------------
+        # Company & Role
+        # --------------------
+        "company_id": str(user.primary_company_id) if user.primary_company_id else None,
+        "company_name": user.primary_company.name if user.primary_company else None,
 
-    # --------------------
-    # Personal
-    # --------------------
-    "birth_date": (
-        user.birth_date.isoformat()
-        if user.birth_date else None
-    ),
-    "ethnicity": user.ethnicity,
-    "gender": user.gender,
+        "role_id": str(user.role_id) if user.role else None,
+        "role_name": user.role.name if user.role else None,
 
-    # --------------------
-    # Profile
-    # --------------------
-    "preferred_language": user.preferred_language,
-    "bio": user.bio,
-    "notes": user.notes,
-    "photo_url": user.photo_url,
+        # --------------------
+        # Contact
+        # --------------------
+        "phone": user.phone,
+        "national_prefix": user.national_prefix,
 
-    # --------------------
-    # Address
-    # --------------------
-    "address_line1": user.address_line1,
-    "address_line2": user.address_line2,
-    "city": user.city,
-    "state_region": user.state_region,
-    "postal_code": user.postal_code,
-    "country": user.country,
+        # --------------------
+        # Personal
+        # --------------------
+        "birth_date": user.birth_date.isoformat() if user.birth_date else None,
+        "ethnicity": user.ethnicity,
+        "gender": user.gender,
 
-    # --------------------
-    # Meta (read-only)
-    # --------------------
-    "created_at": user.created_at.isoformat(),
-    "updated_at": user.updated_at.isoformat(),
+        # --------------------
+        # Profile
+        # --------------------
+        "preferred_language": user.preferred_language,
+        "bio": user.bio,
+        "notes": user.notes,
+        "photo_url": user.photo_url,
 
-    # --------------------
-    # Dropdown Data
-    # --------------------
-    "roles": roles,
-    "companies": companies,
+        # --------------------
+        # Address
+        # --------------------
+        "address_line1": user.address_line1,
+        "address_line2": user.address_line2,
+        "city": user.city,
+        "state_region": user.state_region,
+        "postal_code": user.postal_code,
+        "country": user.country,
 
-    # --------------------
-    # Capabilities
-    # --------------------
-    "can_manage": can_manage,
-})
+        # --------------------
+        # Meta
+        # --------------------
+        "created_at": user.created_at.isoformat(),
+        "updated_at": user.updated_at.isoformat(),
 
+        # --------------------
+        # Dropdown Data
+        # --------------------
+        "roles": roles,
+        "companies": companies,
 
-# @login_required
-# def user_edit(request, user_id):
-#     if not (
-#         request.user.is_superuser
-#         or has_permission(request.user, "user.manage")
-#     ):
-#         raise PermissionDenied()
-
-#     if request.method != "POST":
-#         return JsonResponse({"error": "POST only"}, status=405)
-
-#     try:
-#         # Tenant scoping for non-superusers
-#         if request.user.is_superuser:
-#             user = get_object_or_404(User, id=user_id)
-#         else:
-#             user = get_object_or_404(User,id=user_id,tenant=request.user.tenant,)
-
-#         tenant = user.tenant
-
-#         with transaction.atomic():
-#             # --- capture old values ---
-#             old_data = {
-#                 "full_name": user.full_name,
-#                 "email": user.email,
-#                 "is_active": user.is_active,
-#                 "primary_company_id": (
-#                     str(user.primary_company_id)
-#                     if user.primary_company_id else None
-#                 ),
-#             }
-#             # --- update fields ---
-#             user.full_name = request.POST.get("full_name", user.full_name)
-#             user.email = request.POST.get("email", user.email)
-#             user.is_active = request.POST.get("is_active") == "true"
-
-#             # --- company (tenant scoped) ---
-#             company_id = request.POST.get("company_id")
-#             if company_id:
-#                 user.primary_company = get_object_or_404(Company,id=company_id,tenant=tenant,)
-
-#             user.full_clean()
-#             user.save()
-
-#             # --- role (tenant scoped) ---
-#             role_id = request.POST.get("role_id")
-#             if role_id:
-#                 role = get_object_or_404(Role, id=role_id, tenant=tenant)
-#                 UserRole.objects.update_or_create(user=user,defaults={"role": role},)
-
-#         # --- audit log (non-blocking) ---
-#         try:
-#             AuditLog.objects.create(
-#                 tenant=tenant,
-#                 actor=request.user,
-#                 action="user.updated",
-#                 entity_type="User",
-#                 entity_id=user.id,
-#                 metadata={
-#                     "old": old_data,
-#                     "new": {
-#                         "full_name": user.full_name,
-#                         "email": user.email,
-#                         "is_active": user.is_active,
-#                         "primary_company_id": (
-#                             str(user.primary_company_id)
-#                             if user.primary_company_id else None
-#                         ),
-#                         "role_id": role_id,
-#                     },
-#                 },
-#                 ip_address=get_client_ip(request),
-#             )
-#         except Exception:
-#             pass  # audit must never break the action
-
-#         return JsonResponse(
-#             {
-#                 "success": True,
-#                 "message": "User updated successfully",
-#             }
-#         )
-
-#     except IntegrityError:
-#         return JsonResponse(
-#             {"success": False, "message": "Email already exists"},
-#             status=400,
-#         )
-
-#     except ValidationError as e:
-#         return JsonResponse(
-#             {"success": False, "message": e.message_dict},
-#             status=400,
-#         )
-
-#     except PermissionDenied:
-#         raise
-
-#     except Exception:
-#         return JsonResponse(
-#             {
-#                 "success": False,
-#                 "message": "Unable to update user at the moment",
-#             },
-#             status=500,
-#         )
-
+        # --------------------
+        # Capabilities
+        # --------------------
+        "can_manage": can_manage,
+    })
 
 @login_required
 def user_edit(request, user_id):
@@ -375,7 +351,7 @@ def user_edit(request, user_id):
         with transaction.atomic():
 
             # -------------------------------
-            # Capture old values (extended)
+            # Capture old values (audit)
             # -------------------------------
             old_data = {
                 "first_name": user.first_name,
@@ -387,28 +363,21 @@ def user_edit(request, user_id):
                     str(user.primary_company_id)
                     if user.primary_company_id else None
                 ),
+                "role_id": str(user.role_id) if user.role_id else None,
             }
 
             # -------------------------------
-            # Update core identity
+            # Core Identity
             # -------------------------------
-            user.first_name = request.POST.get(
-                "first_name", user.first_name
-            )
-            user.last_name = request.POST.get(
-                "last_name", user.last_name
-            )
-            user.email = request.POST.get(
-                "email", user.email
-            )
+            user.first_name = request.POST.get("first_name", user.first_name)
+            user.last_name = request.POST.get("last_name", user.last_name)
+            user.email = request.POST.get("email", user.email)
             user.is_active = request.POST.get("is_active") == "true"
 
             # -------------------------------
             # Contact
             # -------------------------------
-            user.phone = request.POST.get(
-                "phone", user.phone
-            )
+            user.phone = request.POST.get("phone", user.phone)
             user.national_prefix = request.POST.get(
                 "national_prefix", user.national_prefix
             )
@@ -416,15 +385,11 @@ def user_edit(request, user_id):
             # -------------------------------
             # Personal
             # -------------------------------
-            user.birth_date = request.POST.get(
-                "birth_date", user.birth_date
-            ) or user.birth_date
-            user.ethnicity = request.POST.get(
-                "ethnicity", user.ethnicity
+            user.birth_date = (
+                request.POST.get("birth_date") or user.birth_date
             )
-            user.gender = request.POST.get(
-                "gender", user.gender
-            )
+            user.ethnicity = request.POST.get("ethnicity", user.ethnicity)
+            user.gender = request.POST.get("gender", user.gender)
 
             # -------------------------------
             # Profile
@@ -432,15 +397,9 @@ def user_edit(request, user_id):
             user.preferred_language = request.POST.get(
                 "preferred_language", user.preferred_language
             )
-            user.bio = request.POST.get(
-                "bio", user.bio
-            )
-            user.notes = request.POST.get(
-                "notes", user.notes
-            )
-            user.photo_url = request.POST.get(
-                "photo_url", user.photo_url
-            )
+            user.bio = request.POST.get("bio", user.bio)
+            user.notes = request.POST.get("notes", user.notes)
+            user.photo_url = request.POST.get("photo_url", user.photo_url)
 
             # -------------------------------
             # Address
@@ -451,21 +410,17 @@ def user_edit(request, user_id):
             user.address_line2 = request.POST.get(
                 "address_line2", user.address_line2
             )
-            user.city = request.POST.get(
-                "city", user.city
-            )
+            user.city = request.POST.get("city", user.city)
             user.state_region = request.POST.get(
                 "state_region", user.state_region
             )
             user.postal_code = request.POST.get(
                 "postal_code", user.postal_code
             )
-            user.country = request.POST.get(
-                "country", user.country
-            )
+            user.country = request.POST.get("country", user.country)
 
             # -------------------------------
-            # Company (tenant scoped)
+            # Company (tenant-scoped)
             # -------------------------------
             company_id = request.POST.get("company_id")
             if company_id:
@@ -475,26 +430,19 @@ def user_edit(request, user_id):
                     tenant=tenant,
                 )
 
-            user.full_clean()
-            user.save()
-
             # -------------------------------
-            # Role (tenant scoped)
+            # Role (GLOBAL)
             # -------------------------------
             role_id = request.POST.get("role_id")
             if role_id:
-                role = get_object_or_404(
-                    Role,
-                    id=role_id,
-                    tenant=tenant,
-                )
-                UserRole.objects.update_or_create(
-                    user=user,
-                    defaults={"role": role},
-                )
+                role = get_object_or_404(Role, id=role_id)
+                user.role = role
+
+            user.full_clean()
+            user.save()
 
         # -------------------------------
-        # Audit log (non-blocking)
+        # Audit Log (non-blocking)
         # -------------------------------
         try:
             AuditLog.objects.create(
@@ -515,13 +463,13 @@ def user_edit(request, user_id):
                             str(user.primary_company_id)
                             if user.primary_company_id else None
                         ),
-                        "role_id": role_id,
+                        "role_id": str(user.role_id) if user.role_id else None,
                     },
                 },
                 ip_address=get_client_ip(request),
             )
         except Exception:
-            pass  # audit must never break the action
+            pass  # audit must never block the action
 
         return JsonResponse(
             {
@@ -553,7 +501,6 @@ def user_edit(request, user_id):
             },
             status=500,
         )
-
 
 @login_required
 def assign_roles(request, user_id):
@@ -618,6 +565,80 @@ def assign_roles(request, user_id):
     )
 
 
+# @login_required
+# def role_list(request):
+#     logger.info("ROLE LIST VIEW CALLED")
+
+#     if not has_permission(request.user, "role.view"):
+#         raise PermissionDenied()
+
+#     selected_tenant_id = request.GET.get("tenant")
+#     page_number = request.GET.get("page", 1)
+
+#     if request.user.is_superuser:
+#         roles_qs = (
+#             Role.objects
+#             .select_related("tenant", "base_role")
+#             .exclude(name="super_admin")
+#             .prefetch_related("permissions")
+#         )
+
+#         if selected_tenant_id:
+#             roles_qs = roles_qs.filter(tenant_id=selected_tenant_id)
+
+#         tenants = Tenant.objects.order_by("name")
+
+#     else:
+#         roles_qs = (
+#             Role.objects
+#             .filter(tenant=request.user.tenant)
+#             .select_related("base_role")
+#             .prefetch_related("permissions")
+#         )
+
+#         tenants = None
+#         selected_tenant_id = None
+
+#     paginator = Paginator(roles_qs, 8)  
+
+#     try:
+#         roles = paginator.page(page_number)
+#     except PageNotAnInteger:
+#         roles = paginator.page(1)
+#     except EmptyPage:
+#         roles = paginator.page(paginator.num_pages)
+
+#     for role in roles:
+#         role.effective_permission_count = len(
+#             get_effective_permissions(role)
+#         )
+
+#     permissions = Permission.objects.order_by("code")
+
+#     can_view = has_permission(request.user, "role.view")
+#     can_manage = has_permission(request.user, "role.manage")
+
+#     return render(
+#         request,
+#         "dashboard/roles.html",
+#         {
+#             "roles": roles,                 
+#             "page_obj": roles,             
+#             "paginator": paginator,
+
+#             "permissions": permissions,
+#             "tenants": tenants,
+#             "selected_tenant_id": selected_tenant_id,
+
+#             "active_menu": "access-control",
+#             "active_submenu": "roles",
+#             "can_manage": can_manage,
+#             "can_view": can_view,
+#         },
+#     )
+
+
+
 @login_required
 def role_list(request):
     logger.info("ROLE LIST VIEW CALLED")
@@ -625,34 +646,16 @@ def role_list(request):
     if not has_permission(request.user, "role.view"):
         raise PermissionDenied()
 
-    selected_tenant_id = request.GET.get("tenant")
     page_number = request.GET.get("page", 1)
 
-    if request.user.is_superuser:
-        roles_qs = (
-            Role.objects
-            .select_related("tenant", "base_role")
-            .exclude(name="super_admin")
-            .prefetch_related("permissions")
-        )
+    # Roles are GLOBAL now
+    roles_qs = (
+        Role.objects
+        .exclude(name="super_admin")  # optional
+        .prefetch_related("permissions")
+    )
 
-        if selected_tenant_id:
-            roles_qs = roles_qs.filter(tenant_id=selected_tenant_id)
-
-        tenants = Tenant.objects.order_by("name")
-
-    else:
-        roles_qs = (
-            Role.objects
-            .filter(tenant=request.user.tenant)
-            .select_related("base_role")
-            .prefetch_related("permissions")
-        )
-
-        tenants = None
-        selected_tenant_id = None
-
-    paginator = Paginator(roles_qs, 8)  
+    paginator = Paginator(roles_qs, 8)
 
     try:
         roles = paginator.page(page_number)
@@ -662,34 +665,27 @@ def role_list(request):
         roles = paginator.page(paginator.num_pages)
 
     for role in roles:
-        role.effective_permission_count = len(
-            get_effective_permissions(role)
-        )
+        role.effective_permission_count = role.permissions.count()
 
     permissions = Permission.objects.order_by("code")
-
-    can_view = has_permission(request.user, "role.view")
-    can_manage = has_permission(request.user, "role.manage")
 
     return render(
         request,
         "dashboard/roles.html",
         {
-            "roles": roles,                 
-            "page_obj": roles,             
+            "roles": roles,
+            "page_obj": roles,
             "paginator": paginator,
 
             "permissions": permissions,
-            "tenants": tenants,
-            "selected_tenant_id": selected_tenant_id,
 
             "active_menu": "access-control",
             "active_submenu": "roles",
-            "can_manage": can_manage,
-            "can_view": can_view,
+
+            "can_manage": has_permission(request.user, "role.manage"),
+            "can_view": True,
         },
     )
-
 
 
 @login_required
@@ -703,85 +699,44 @@ def save_role(request):
 
     try:
         role_id = request.POST.get("role_id")
-        name = request.POST.get("name")
         permission_ids = request.POST.getlist("permissions")
 
-        if not name:
-            messages.error(request, "Role name is required.")
+        if not role_id:
+            messages.error(request, "Role is required.")
             return redirect("admin:roles")
 
-        # --- tenant resolution ---
-        if request.user.is_superuser:
-            tenant_id = request.POST.get("tenant")
-            if not tenant_id:
-                messages.error(request, "Tenant is required.")
-                return redirect("admin:roles")
+        # ✅ GLOBAL ROLE (no tenant)
+        role = get_object_or_404(Role, id=role_id)
 
-            tenant = get_object_or_404(Tenant, id=tenant_id)
-        else:
-            tenant = request.user.tenant
-
-        if role_id:
-            role = get_object_or_404(Role, id=role_id, tenant=tenant)
-            action = "role.updated"
-            old_data = {
-                "name": role.name,
-                "permissions": list(
-                    role.permissions.values_list("id", flat=True)
-                ),
-            }
-        else:
-            role = Role.objects.create(
-                tenant=tenant,
-                name=name,
-            )
-            action = "role.created"
-            old_data = None
-
-        role.name = name
-        role.full_clean()
-        role.save()
+        old_permissions = list(
+            role.permissions.values_list("id", flat=True)
+        )
 
         role.permissions.set(permission_ids)
 
-        # --- audit (non-blocking) ---
+        # Audit (safe)
         try:
             AuditLog.objects.create(
-                tenant=tenant,
+                tenant=request.user.tenant,
                 actor=request.user,
-                action=action,
+                action="role.permissions_updated",
                 entity_type="Role",
                 entity_id=role.id,
                 metadata={
-                    "old": old_data,
-                    "new": {
-                        "name": role.name,
-                        "permissions": permission_ids,
-                    },
+                    "old_permissions": old_permissions,
+                    "new_permissions": permission_ids,
                 },
                 ip_address=get_client_ip(request),
             )
         except Exception:
             pass
 
-        next_url = request.POST.get("next") or reverse("admin:roles")
-        return redirect(next_url)
-
-    except IntegrityError:
-        messages.error(request, "Role with this name already exists.")
-        return redirect("admin:roles")
-
-    except ValidationError as e:
-        messages.error(request, e.message_dict)
-        return redirect("admin:roles")
-
-    except PermissionDenied:
-        raise
+        messages.success(request, "Role permissions updated successfully.")
+        return redirect(request.POST.get("next") or "admin:roles")
 
     except Exception:
-        messages.error(request, "Unable to save role at the moment.")
+        messages.error(request, "Unable to update role.")
         return redirect("admin:roles")
-
 
 @login_required
 def role_detail_ajax(request, role_id):
@@ -789,14 +744,8 @@ def role_detail_ajax(request, role_id):
     if not has_permission(request.user, "role.view"):
         raise PermissionDenied()
 
-    if request.user.is_superuser:
-        role = get_object_or_404(Role, id=role_id)
-    else:
-        role = get_object_or_404(
-            Role,
-            id=role_id,
-            tenant=request.user.tenant
-        )
+    # Roles are GLOBAL now
+    role = get_object_or_404(Role, id=role_id)
 
     permissions = list(
         role.permissions.values_list("id", flat=True)
@@ -805,10 +754,6 @@ def role_detail_ajax(request, role_id):
     return JsonResponse({
         "id": str(role.id),
         "name": role.name,
-        "tenant": {
-            "id": str(role.tenant.id),
-            "name": role.tenant.name,
-        },
         "permissions": [str(p) for p in permissions],
     })
 
