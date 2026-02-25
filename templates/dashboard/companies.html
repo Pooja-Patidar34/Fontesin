@@ -122,6 +122,65 @@
     </div>
   </div>
 
+  <!-- Pagination -->
+  {% if companies.has_other_pages %}
+<div class="card-footer d-flex justify-content-end">
+  <nav>
+    <ul class="pagination pagination-sm mb-0">
+
+      {# PREVIOUS #}
+      {% if companies.has_previous %}
+        <li class="page-item">
+          <a class="page-link"
+             href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ companies.previous_page_number }}">
+            Previous
+          </a>
+        </li>
+      {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">Previous</span>
+        </li>
+      {% endif %}
+
+      {# PAGE NUMBERS – MAX 5 #}
+      {% with start=companies.number|add:-2 end=companies.number|add:2 %}
+        {% for num in companies.paginator.page_range %}
+          {% if num >= start and num <= end %}
+            {% if num == companies.number %}
+              <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+              </li>
+            {% else %}
+              <li class="page-item">
+                <a class="page-link"
+                   href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ num }}">
+                  {{ num }}
+                </a>
+              </li>
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+      {% endwith %}
+
+      {# NEXT #}
+      {% if companies.has_next %}
+        <li class="page-item">
+          <a class="page-link"
+             href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ companies.next_page_number }}">
+            Next
+          </a>
+        </li>
+      {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">Next</span>
+        </li>
+      {% endif %}
+
+    </ul>
+  </nav>
+</div>
+{% endif %}
+
 </div>
 
 <!-- ================= MODAL ================= -->

@@ -604,7 +604,6 @@ def assign_roles(request, user_id):
             },
             ip_address=get_client_ip(request),
         )
-
         return redirect(next_url or "admin:users")
 
     return render(
