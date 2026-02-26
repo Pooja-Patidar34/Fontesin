@@ -7,6 +7,7 @@ from accounts_api.view.profile import UserProfileAPIView
 from accounts_api.view.companies import (
     CompanyUpdateAPIView,
     CompanyListAPIView,
+    CompanyDetailAPIView,
 )
 
 urlpatterns = [
@@ -15,6 +16,7 @@ urlpatterns = [
     path("profile/", UserProfileAPIView.as_view()),
     path("companies/", CompanyListAPIView.as_view()),
     path("companies/<uuid:company_id>/", CompanyUpdateAPIView.as_view(), name="company-update"),
+    path("companies/<uuid:company_id>/detail/", CompanyDetailAPIView.as_view(), name="company-detail"),
 ]
 
 
