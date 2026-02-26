@@ -177,7 +177,7 @@
 
         <div class="modal-body">
 
-          {% if request.user.is_superuser %}
+          <!-- {% if request.user.is_superuser %}
           <div class="form-group">
             <label>Tenant</label>
             <select name="tenant" id="tenant-field" class="form-control">
@@ -189,7 +189,7 @@
           </div>
           {% else %}
           <input type="hidden" name="tenant" value="{{ request.user.tenant.id }}">
-          {% endif %}
+          {% endif %} -->
 
           <div class="form-group">
             <label>Role Name</label>
