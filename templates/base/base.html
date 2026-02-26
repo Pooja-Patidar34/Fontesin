@@ -100,7 +100,7 @@
           {% endif %}
 
           <!-- MANAGEMENT (SUPERUSER + TENANT ADMIN) -->
-          {% if request.user.is_superuser or is_tenant_admin %}
+          {% if request.user.is_superuser or request.user.role.name == "tenant_admin" %}
           <li class="nav-header">MANAGEMENT</li>
 
           <li class="nav-item">

@@ -6,8 +6,8 @@ from accounts.models import UserCompanyRole, Role
 
 def has_permission(user, permission_code: str) -> bool:
     """
-    Tenant + company scoped RBAC permission check.
-    Uses Role.permissions (ManyToMany) ONLY.
+    Simple RBAC permission check based on:
+    User -> Role -> Permissions
     """
 
     if not user or not user.is_authenticated:
@@ -19,27 +19,10 @@ def has_permission(user, permission_code: str) -> bool:
     if user.is_superuser:
         return True
 
-    roles = (
-        Role.objects
-        .filter(
-            usercompanyrole__user_company__user=user,
-            tenant=user.tenant,
-        )
-        .select_related("base_role")
-        .prefetch_related("permissions", "base_role__permissions")
-        .distinct()
-    )
-
-    if not roles.exists():
+    if not user.role:
         return False
 
-    for role in roles:
-        if role_has_permission(role, permission_code):
-            return True
-
-    return False
-
-
+    return user.role.permissions.filter(code=permission_code).exists()
 
 def role_has_permission(role, permission_code: str) -> bool:
     """

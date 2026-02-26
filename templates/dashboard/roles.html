@@ -9,7 +9,7 @@
     <div class="d-flex justify-content-between align-items-center">
       <h3 class="card-title font-weight-bold mb-0">Roles</h3>
 
-      <div class="d-flex align-items-center">
+      <!-- <div class="d-flex align-items-center">
 
         {% if request.user.is_superuser %}
         <form method="get" class="mr-3 mb-0">
@@ -27,11 +27,11 @@
         </form>
         {% endif %}
 
-        {% if can_manage %}
+        <!-- {% if can_manage %}
         <button class="btn btn-primary btn-sm" id="add-role-btn">
           <i class="fas fa-user-tag mr-1"></i> Add Role
         </button>
-        {% endif %}
+        {% endif %} -->
 
       </div>
     </div>
@@ -45,9 +45,9 @@
         <thead class="bg-light">
           <tr>
             <th>Name</th>
-            {% if request.user.is_superuser %}
+            <!-- {% if request.user.is_superuser %}
             <th>Tenant</th>
-            {% endif %}
+            {% endif %} -->
             <th>Permissions</th>
             <th class="text-right pr-4">Action</th>
           </tr>
@@ -58,18 +58,11 @@
           <tr>
             <td>
               <strong>{{ role.name }}</strong>
-              {% if role.base_role %}
-                <div class="text-muted small">
-                  Inherits from: {{ role.base_role.name }}
-                </div>
-              {% else %}
-                <div class="text-muted small">Root Role</div>
-              {% endif %}
             </td>
 
-            {% if request.user.is_superuser %}
+            <!-- {% if request.user.is_superuser %}
             <td class="text-muted">{{ role.tenant.name }}</td>
-            {% endif %}
+            {% endif %} -->
 
             <td>
               <span class="badge badge-info">
@@ -90,7 +83,7 @@
               </button>
               {% endif %}
 
-              {% if can_manage %}
+              {% if request.user.is_superuser %}
               <button class="btn btn-sm btn-outline-secondary edit-role-btn ml-1"
                       data-url="{% url 'admin:role-detail' role.id %}">
                 Edit

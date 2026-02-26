@@ -655,6 +655,9 @@ def role_list(request):
         .prefetch_related("permissions")
     )
 
+    if request.user.role and request.user.role.name == "tenant_admin":
+        roles_qs = roles_qs.exclude(name="tenant_admin")
+
     paginator = Paginator(roles_qs, 8)
 
     try:
@@ -688,55 +691,52 @@ def role_list(request):
     )
 
 
+
 @login_required
 @transaction.atomic
 def save_role(request):
     if request.method != "POST":
         raise PermissionDenied()
 
-    if not has_permission(request.user, "role.manage"):
+    if not (request.user.is_superuser or has_permission(request.user, "role.manage")):
         raise PermissionDenied()
 
-    try:
-        role_id = request.POST.get("role_id")
-        permission_ids = request.POST.getlist("permissions")
+    role_id = request.POST.get("role_id")
+    permission_ids = request.POST.getlist("permissions")
 
-        if not role_id:
-            messages.error(request, "Role is required.")
-            return redirect("admin:roles")
+    print("Received permission IDs:", permission_ids)
 
-        # ✅ GLOBAL ROLE (no tenant)
-        role = get_object_or_404(Role, id=role_id)
-
-        old_permissions = list(
-            role.permissions.values_list("id", flat=True)
-        )
-
-        role.permissions.set(permission_ids)
-
-        # Audit (safe)
-        try:
-            AuditLog.objects.create(
-                tenant=request.user.tenant,
-                actor=request.user,
-                action="role.permissions_updated",
-                entity_type="Role",
-                entity_id=role.id,
-                metadata={
-                    "old_permissions": old_permissions,
-                    "new_permissions": permission_ids,
-                },
-                ip_address=get_client_ip(request),
-            )
-        except Exception:
-            pass
-
-        messages.success(request, "Role permissions updated successfully.")
-        return redirect(request.POST.get("next") or "admin:roles")
-
-    except Exception:
-        messages.error(request, "Unable to update role.")
+    if not role_id:
+        messages.error(request, "Role is required.")
         return redirect("admin:roles")
+
+    role = get_object_or_404(Role, id=role_id)
+
+    print("Before count:", role.permissions.count())
+
+    old_permissions = list(
+        role.permissions.values_list("id", flat=True)
+    )
+
+    role.permissions.set(permission_ids)
+
+    # Convert UUIDs → strings for JSONField
+    AuditLog.objects.create(
+        tenant=request.user.tenant,
+        actor=request.user,
+        action="role.permissions_updated",
+        entity_type="Role",
+        entity_id=str(role.id),
+        metadata={
+            "old_permissions": [str(pid) for pid in old_permissions],
+            "new_permissions": [str(pid) for pid in permission_ids],
+        },
+        ip_address=get_client_ip(request),
+    )
+
+    messages.success(request, "Role permissions updated successfully.")
+    return redirect(request.POST.get("next") or "admin:roles")
+
 
 @login_required
 def role_detail_ajax(request, role_id):
