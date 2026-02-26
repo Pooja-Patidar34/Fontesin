@@ -7,7 +7,24 @@ class CompanySerializer(serializers.ModelSerializer):
         model = Company
         fields = ["id", "name"]
         
+from rest_framework import serializers
+from accounts.models import Company, Tenant
 
+from rest_framework import serializers
+from accounts.models import Company
+
+
+class CompanySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Company
+        fields = [
+            "id",
+            "name",
+            "classification",
+            "city",
+            "country",
+        ]
+        
 class CompanyCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
@@ -16,36 +33,27 @@ class CompanyCreateUpdateSerializer(serializers.ModelSerializer):
             "tenant",
             "name",
             "registration_id",
-            "is_active",
+            "classification",
+            "address_line1",
+            "address_line2",
+            "city",
+            "state",
+            "postal_code",
+            "country",
+            "latitude",
+            "longitude",
+            "phone",
+            "phone_secondary",
+            "fax",
+            "website",
         ]
         read_only_fields = ["id"]
 
-    def validate(self, attrs):
+    def validate_tenant(self, value):
         request = self.context.get("request")
-        user = request.user if request else None
-
-        tenant = attrs.get("tenant") or getattr(self.instance, "tenant", None)
-        name = attrs.get("name") or getattr(self.instance, "name", None)
-
-        if user and not user.is_superuser:
-            if tenant != user.tenant:
+        if request and not request.user.is_superuser:
+            if value != request.user.tenant:
                 raise serializers.ValidationError(
-                    {"tenant": "You cannot manage companies outside your tenant"}
+                    "You cannot assign a company outside your tenant"
                 )
-
-        if tenant and name:
-            qs = Company.objects.filter(
-                tenant=tenant,
-                name__iexact=name
-            )
-            if self.instance:
-                qs = qs.exclude(id=self.instance.id)
-
-            if qs.exists():
-                raise serializers.ValidationError(
-                    {"name": "Company with this name already exists in tenant"}
-                )
-
-        return attrs
-
-
+        return value

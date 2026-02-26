@@ -63,12 +63,10 @@ def admin_login(request):
             messages.error(request, "Your account is inactive")
             return render(request, "auth/login.html")
 
-        # ✅ Superuser → always allowed
         if user.is_superuser:
             login(request, user)
             return redirect("admin:dashboard")
 
-        # 🔴 Must have a role
         if not user.role:
             messages.error(
                 request,
@@ -76,12 +74,10 @@ def admin_login(request):
             )
             return render(request, "auth/login.html")
 
-        # ✅ Tenant admin role check
         if user.role.name == "tenant_admin":
             login(request, user)
             return redirect("admin:dashboard")
 
-        # ❌ All others denied
         messages.error(
             request,
             "You are not allowed to access the admin panel"

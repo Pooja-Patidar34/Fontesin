@@ -1,65 +1,60 @@
-from accounts.models import User, Tenant, Role, UserRole, UserCompany, UserCompanyRole,Company
 from rest_framework import serializers
+from accounts.models import User
 from accounts_api.serializers.company_serializers import CompanySerializer
-
-class TenantSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Tenant
-        fields = ["id", "name"]
-
-
-class RoleSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Role
-        fields = ["id", "name"]
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    tenant = TenantSerializer(read_only=True)
-    role = serializers.SerializerMethodField()
-    companies = serializers.SerializerMethodField()
+    tenant_id = serializers.UUIDField(source="tenant.id", read_only=True)
+    role = serializers.CharField(source="role.name", read_only=True)
+
+    companies = CompanySerializer(
+        many=True,
+        read_only=True,
+        source="companies_through_user",
+    )
 
     class Meta:
         model = User
         fields = [
             "id",
+
+            # Identity
             "email",
-            "full_name",
-            "tenant",
+            "first_name",
+            "last_name",
+
+            # Tenant & Role
+            "tenant_id",
             "role",
+
+            # Contact
+            "phone",
+            "national_prefix",
+
+            # Personal
+            "birth_date",
+            "gender",
+            "ethnicity",
+            "preferred_language",
+
+            # Address
+            "address_line1",
+            "address_line2",
+            "city",
+            "state_region",
+            "postal_code",
+            "country",
+
+            # Profile
+            "bio",
+            "notes",
+            "photo_url",
+
+            # Companies (flattened)
             "companies",
-            "is_active",
+
+            # Metadata
             "created_at",
         ]
+
         read_only_fields = fields
-
-    def get_role(self, obj):
-        try:
-            user_role = (
-                UserRole.objects
-                .select_related("role")
-                .get(user=obj)
-            )
-            return RoleSerializer(user_role.role).data
-        except UserRole.DoesNotExist:
-            return None
-
-    def get_companies(self, obj):
-        user_companies = (
-            UserCompany.objects
-            .filter(user=obj)
-            .select_related("company")
-        )
-
-        result = []
-        for uc in user_companies:
-            result.append(
-                CompanySerializer({
-                    "id": uc.company.id,
-                    "name": uc.company.name,
-                    "is_primary": uc.is_primary,
-                }).data
-            )
-
-        return result
-
