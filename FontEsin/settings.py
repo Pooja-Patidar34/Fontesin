@@ -13,7 +13,7 @@ print(f"DEBUG mode is {'ON' if DEBUG else 'OFF'}")
 
 
 if DEBUG:
-    ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1","52.53.204.127"]
 else:
     ALLOWED_HOSTS = config(
         "ALLOWED_HOSTS",
@@ -163,9 +163,7 @@ USE_TZ = True
 
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
