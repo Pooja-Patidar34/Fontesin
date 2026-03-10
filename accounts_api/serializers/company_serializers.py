@@ -1,15 +1,6 @@
 from rest_framework import serializers
 from accounts.models import Company, Tenant
 
-
-class CompanySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Company
-        fields = ["id", "name"]
-        
-from rest_framework import serializers
-from accounts.models import Company, Tenant
-
 from rest_framework import serializers
 from accounts.models import Company
 

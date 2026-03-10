@@ -335,6 +335,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const nameField = document.getElementById("id_name");
   const regField = document.getElementById("id_registration_id");
   const activeField = document.getElementById("id_is_active");
+  const selectedTenantId = "{{ selected_tenant_id|default:'' }}";
 
   // function setReadonly(state) {
   //     if (tenantField) tenantField.disabled = false;
@@ -369,10 +370,18 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   document.getElementById("add-company-btn")?.addEventListener("click", function () {
+
       idField.value = "";
       title.innerText = "Add Company";
+
       modal.find("input[type=text], input[type=url]").val("");
       activeField.checked = true;
+
+      // ✅ Auto select tenant if page filtered
+      if (tenantField && selectedTenantId) {
+          tenantField.value = selectedTenantId;
+      }
+
       setReadonly(false);
       modal.modal('show');
   });
