@@ -11,12 +11,30 @@
       Tenants
     </h3>
 
-    <div class="ml-auto">
-      <button class="btn btn-primary btn-sm shadow-sm"
-              id="add-tenant-btn">
-        <i class="fas fa-plus mr-1"></i> Add Tenant
-      </button>
-    </div>
+  <div class="ml-auto d-flex align-items-center">
+
+    <form method="get" class="mr-2">
+      <div class="input-group input-group-sm" style="width:220px;">
+        <input type="text"
+              name="q"
+              value="{{ request.GET.q }}"
+              class="form-control"
+              placeholder="Search tenant...">
+
+        <div class="input-group-append">
+          <button class="btn btn-outline-secondary">
+            <i class="fas fa-search"></i>
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <button class="btn btn-primary btn-sm shadow-sm"
+            id="add-tenant-btn">
+      <i class="fas fa-plus mr-1"></i> Add Tenant
+    </button>
+
+  </div>
   </div>
 
   <!-- Table -->
@@ -69,25 +87,55 @@
             </td>
 
             <!-- Properly aligned action column -->
-            <td class="text-center align-middle" style="white-space: nowrap;">
+            <td class="text-center align-middle">
 
-              <button class="btn btn-sm btn-outline-primary view-tenant-btn"
-                      data-url="{% url 'admin:tenant-detail' tenant.id %}">
-                View
-              </button>
+              <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                        type="button"
+                        data-toggle="dropdown">
+                  Action
+                </button>
+                <div class="dropdown-menu dropdown-menu-right">
 
-              {% if tenant.is_active %}
-                <a href="{% url 'admin:tenant-toggle' tenant.id %}"
-                   class="btn btn-sm btn-outline-warning ml-1">
-                  Deactivate
-                </a>
-              {% else %}
-                <a href="{% url 'admin:tenant-toggle' tenant.id %}"
-                   class="btn btn-sm btn-outline-success ml-1">
-                  Activate
-                </a>
-              {% endif %}
+                  <!-- VIEW -->
+                  <button class="dropdown-item view-tenant-btn"
+                          data-url="{% url 'admin:tenant-detail' tenant.id %}">
+                    <i class="fas fa-eye mr-2"></i> View
+                  </button>
 
+                  <!-- EDIT -->
+                  <button class="dropdown-item edit-tenant-btn"
+                          data-url="{% url 'admin:tenant-detail' tenant.id %}">
+                    <i class="fas fa-edit mr-2"></i> Edit
+                  </button>
+
+                  <div class="dropdown-divider"></div>
+
+                  {% if tenant.is_active %}
+                    <a class="dropdown-item text-warning"
+                      href="{% url 'admin:tenant-toggle' tenant.id %}">
+                      <i class="fas fa-ban mr-2"></i> Deactivate
+                    </a>
+                  {% else %}
+                    <a class="dropdown-item text-success"
+                      href="{% url 'admin:tenant-toggle' tenant.id %}">
+                      <i class="fas fa-check mr-2"></i> Activate
+                    </a>
+                  {% endif %}
+
+                  <div class="dropdown-divider"></div>
+
+                  <form method="post"
+                        action="{% url 'admin:tenant-delete' tenant.id %}"
+                        onsubmit="return confirm('Are you sure you want to delete this tenant?');">
+                    {% csrf_token %}
+                    <button type="submit" class="dropdown-item text-danger">
+                      <i class="fas fa-trash mr-2"></i> Delete
+                    </button>
+                  </form>
+
+                </div>
+              </div>
             </td>
 
           </tr>
@@ -123,6 +171,20 @@
       </li>
     {% endif %}
 
+    <!-- FIRST PAGE -->
+    {% if page_obj.number > 3 %}
+      <li class="page-item">
+        <a class="page-link" href="?page=1">1</a>
+      </li>
+
+      {% if page_obj.number > 4 %}
+      <li class="page-item disabled">
+        <span class="page-link">...</span>
+      </li>
+      {% endif %}
+    {% endif %}
+
+    <!-- CURRENT RANGE -->
     {% for num in page_obj.paginator.page_range %}
       {% if num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
         {% if num == page_obj.number %}
@@ -140,6 +202,22 @@
       {% endif %}
     {% endfor %}
 
+    <!-- LAST PAGE -->
+    {% if page_obj.number < page_obj.paginator.num_pages|add:-2 %}
+      {% if page_obj.number < page_obj.paginator.num_pages|add:-3 %}
+      <li class="page-item disabled">
+        <span class="page-link">...</span>
+      </li>
+      {% endif %}
+
+      <li class="page-item">
+        <a class="page-link"
+           href="?page={{ page_obj.paginator.num_pages }}">
+          {{ page_obj.paginator.num_pages }}
+        </a>
+      </li>
+    {% endif %}
+
     {% if page_obj.has_next %}
       <li class="page-item">
         <a class="page-link"
@@ -156,7 +234,6 @@
   </ul>
 </div>
 {% endif %}
-
 
 </div>
 
@@ -217,20 +294,48 @@
 
 <!-- JS -->
 <script>
-document.addEventListener("DOMContentLoaded", function () {
 
-  const modal = $('#tenantModal');
+  function setReadonly(state) {
 
-  // Add Tenant
+      const nameField = document.getElementById("id_name");
+      const activeField = document.getElementById("id_is_active");
+      const saveBtn = document.querySelector(".modal-footer .btn-primary");
+
+      if (state) {
+          nameField.readOnly = true;
+          nameField.blur();                 // remove cursor
+          nameField.style.pointerEvents = "none";
+
+          activeField.disabled = true;
+      } else {
+          nameField.readOnly = false;
+          nameField.style.pointerEvents = "auto";
+
+          activeField.disabled = false;
+      }
+
+      if (saveBtn) {
+          saveBtn.style.display = state ? "none" : "inline-block";
+      }
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+
+    const modal = $('#tenantModal');
+
   document.getElementById("add-tenant-btn").addEventListener("click", function () {
+
       document.getElementById("tenant-id-field").value = "";
       document.getElementById("id_name").value = "";
       document.getElementById("id_is_active").checked = true;
+
       document.querySelector(".modal-title").innerText = "Add Tenant";
+
+      setReadonly(false);
+
       modal.modal('show');
   });
 
-  // View / Edit
   document.querySelectorAll(".view-tenant-btn").forEach(button => {
 
       button.addEventListener("click", function () {
@@ -243,7 +348,9 @@ document.addEventListener("DOMContentLoaded", function () {
                   document.getElementById("id_name").value = data.name;
                   document.getElementById("id_is_active").checked = data.is_active;
 
-                  document.querySelector(".modal-title").innerText = "Update Tenant";
+                  document.querySelector(".modal-title").innerText = "Tenant Details";
+
+                  setReadonly(true);
 
                   modal.modal('show');
               });
@@ -252,7 +359,36 @@ document.addEventListener("DOMContentLoaded", function () {
 
   });
 
-});
+  document.querySelectorAll(".edit-tenant-btn").forEach(button => {
+
+      button.addEventListener("click", function () {
+
+          fetch(this.dataset.url)
+              .then(response => response.json())
+              .then(data => {
+
+                  document.getElementById("tenant-id-field").value = data.id;
+                  document.getElementById("id_name").value = data.name;
+                  document.getElementById("id_is_active").checked = data.is_active;
+
+                  document.querySelector(".modal-title").innerText = "Edit Tenant";
+
+                  setReadonly(false);
+
+                  modal.modal('show');
+              });
+
+      });
+
+  });
+  });
+
+  document.querySelector("#tenantModal form").addEventListener("submit", function(e) {
+      if (this.dataset.readonly === "true") {
+          e.preventDefault();
+      }
+  });
+
 </script>
 
 {% endblock %}
