@@ -17,6 +17,7 @@
       <div class="input-group input-group-sm" style="width:220px;">
         <input type="text"
               name="q"
+              id="tenant-search"
               value="{{ request.GET.q }}"
               class="form-control"
               placeholder="Search tenant...">
@@ -194,7 +195,7 @@
         {% else %}
           <li class="page-item">
             <a class="page-link"
-               href="?page={{ num }}">
+               href="?q={{ request.GET.q }}&page={{ num }}">
               {{ num }}
             </a>
           </li>
@@ -389,6 +390,31 @@
       }
   });
 
+  function debounce(func, delay) {
+      let timer;
+      return function () {
+          const context = this;
+          const args = arguments;
+
+          clearTimeout(timer);
+          timer = setTimeout(() => {
+              func.apply(context, args);
+          }, delay);
+      };
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+
+      const searchInput = document.getElementById("tenant-search");
+      const form = searchInput.closest("form");
+
+      const debouncedSearch = debounce(function () {
+          form.submit();
+      }, 1000); // 500ms delay
+
+      searchInput.addEventListener("input", debouncedSearch);
+
+  });
 </script>
 
 {% endblock %}

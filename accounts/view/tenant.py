@@ -10,6 +10,10 @@ from accounts.forms.tenant_form import TenantForm
 from django.contrib import messages
 from django.db.models import Count
 from django.http import JsonResponse
+import logging
+
+business_logger = logging.getLogger("business")
+technical_logger = logging.getLogger("technical")
 
 # @login_required
 # def tenant_list(request):
