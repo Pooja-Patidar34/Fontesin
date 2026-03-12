@@ -8,3 +8,6 @@ keys/
 .coverage
 htmlcov/
 .coverage.*
+venv/
+deploy.sh
+staticfiles/
