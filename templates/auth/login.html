@@ -5,20 +5,57 @@
   <meta charset="utf-8">
   <title>Admin Login</title>
 
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <link rel="stylesheet"
         href="{% static 'adminlte/plugins/fontawesome-free/css/all.min.css' %}">
   <link rel="stylesheet"
         href="{% static 'adminlte/css/adminlte.min.css' %}">
+
+  <style>
+    /* Increase login box size */
+    .login-box {
+      width: 420px;
+    }
+
+    /* Improve mobile layout */
+    @media (max-width: 576px) {
+      .login-box {
+        width: 95%;
+        margin-top: 20px;
+      }
+    }
+
+    /* Bigger input fields */
+    .login-card-body .form-control {
+      height: 45px;
+      font-size: 16px;
+    }
+
+    /* Better button */
+    .btn-primary {
+      height: 45px;
+      font-size: 16px;
+    }
+
+    /* Cursor for eye icon */
+    #toggle-password {
+      cursor: pointer;
+    }
+  </style>
 </head>
 
 <body class="hold-transition login-page">
+
 <div class="login-box">
+
   <div class="login-logo">
     <b>Admin</b>Panel
   </div>
 
   <div class="card">
     <div class="card-body login-card-body">
+
       <p class="login-box-msg">Sign in to start your session</p>
 
       {% if messages %}
@@ -30,9 +67,14 @@
       <form method="post">
         {% csrf_token %}
 
+        <!-- Email -->
         <div class="input-group mb-3">
-          <input type="email" name="email" class="form-control"
-                 placeholder="Email" required>
+          <input type="email"
+                 name="email"
+                 class="form-control"
+                 placeholder="Email"
+                 required>
+
           <div class="input-group-append">
             <div class="input-group-text">
               <span class="fas fa-envelope"></span>
@@ -40,16 +82,23 @@
           </div>
         </div>
 
+        <!-- Password -->
         <div class="input-group mb-3">
-          <input type="password" name="password" class="form-control"
-                 placeholder="Password" required>
+          <input type="password"
+                 name="password"
+                 id="password-field"
+                 class="form-control"
+                 placeholder="Password"
+                 required>
+
           <div class="input-group-append">
-            <div class="input-group-text">
-              <span class="fas fa-lock"></span>
-            </div>
+            <span class="input-group-text" id="toggle-password">
+              <i class="fas fa-eye"></i>
+            </span>
           </div>
         </div>
 
+        <!-- Submit -->
         <div class="row">
           <div class="col-12">
             <button type="submit" class="btn btn-primary btn-block">
@@ -57,14 +106,39 @@
             </button>
           </div>
         </div>
+
       </form>
 
     </div>
   </div>
+
 </div>
 
 <script src="{% static 'adminlte/plugins/jquery/jquery.min.js' %}"></script>
 <script src="{% static 'adminlte/plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'adminlte/js/adminlte.min.js' %}"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  const togglePassword = document.getElementById("toggle-password");
+  const passwordField = document.getElementById("password-field");
+
+  togglePassword.addEventListener("click", function () {
+
+    const type = passwordField.getAttribute("type") === "password"
+      ? "text"
+      : "password";
+
+    passwordField.setAttribute("type", type);
+
+    const icon = this.querySelector("i");
+    icon.classList.toggle("fa-eye");
+    icon.classList.toggle("fa-eye-slash");
+  });
+
+});
+</script>
+
 </body>
 </html>

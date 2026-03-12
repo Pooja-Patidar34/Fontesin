@@ -82,7 +82,7 @@
               {% endif %}
             </td>
 
-            <td class="text-right pr-4">
+            <!-- <td class="text-right pr-4">
 
               {% if can_view %}
               <button class="btn btn-sm btn-outline-primary view-company-btn"
@@ -104,6 +104,77 @@
                   </a>
                 {% endif %}
               {% endif %}
+
+            </td> -->
+
+            <td class="text-right pr-4">
+
+              <div class="dropdown d-inline">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                        type="button"
+                        data-toggle="dropdown">
+                  Action
+                </button>
+
+                <!-- <div class="dropdown-menu dropdown-menu-right">
+
+                  {% if can_view %}
+                  <button class="dropdown-item view-company-btn"
+                          data-url="{% url 'admin:company-detail' company.id %}">
+                    <i class="fas fa-eye mr-2"></i> View
+                  </button>
+                  {% endif %}
+
+                  {% if can_manage %}
+                    <div class="dropdown-divider"></div>
+
+                    {% if company.is_active %}
+                      <a class="dropdown-item text-warning"
+                        href="{% url 'admin:company-toggle' company.id %}">
+                        <i class="fas fa-ban mr-2"></i> Deactivate
+                      </a>
+                    {% else %}
+                      <a class="dropdown-item text-success"
+                        href="{% url 'admin:company-toggle' company.id %}">
+                        <i class="fas fa-check mr-2"></i> Activate
+                      </a>
+                    {% endif %}
+
+                  {% endif %}
+
+                </div> -->
+              <div class="dropdown-menu dropdown-menu-right">
+
+                {% if can_view %}
+                <button class="dropdown-item view-company-btn"
+                        data-url="{% url 'admin:company-detail' company.id %}">
+                  <i class="fas fa-eye mr-2"></i> View
+                </button>
+                {% endif %}
+
+                {% if can_manage %}
+                <button class="dropdown-item edit-company-btn"
+                        data-url="{% url 'admin:company-detail' company.id %}">
+                  <i class="fas fa-edit mr-2"></i> Edit
+                </button>
+                {% endif %}
+
+                <div class="dropdown-divider"></div>
+
+                {% if company.is_active %}
+                  <a class="dropdown-item text-warning"
+                    href="{% url 'admin:company-toggle' company.id %}">
+                    <i class="fas fa-ban mr-2"></i> Deactivate
+                  </a>
+                {% else %}
+                  <a class="dropdown-item text-success"
+                    href="{% url 'admin:company-toggle' company.id %}">
+                    <i class="fas fa-check mr-2"></i> Activate
+                  </a>
+                {% endif %}
+
+              </div>
+              </div>
 
             </td>
 
@@ -297,14 +368,6 @@
         </div>
 
         <div class="modal-footer">
-
-          <button type="button"
-                  id="edit-btn"
-                  class="btn btn-secondary btn-sm"
-                  style="display:none;">
-            Edit
-          </button>
-
           {% if can_manage %}
           <button type="submit"
                   id="save-btn"
@@ -335,6 +398,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const nameField = document.getElementById("id_name");
   const regField = document.getElementById("id_registration_id");
   const activeField = document.getElementById("id_is_active");
+  const selectedTenantId = "{{ selected_tenant_id|default:'' }}";
 
   // function setReadonly(state) {
   //     if (tenantField) tenantField.disabled = false;
@@ -369,10 +433,18 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   document.getElementById("add-company-btn")?.addEventListener("click", function () {
+
       idField.value = "";
       title.innerText = "Add Company";
+
       modal.find("input[type=text], input[type=url]").val("");
       activeField.checked = true;
+
+      // ✅ Auto select tenant if page filtered
+      if (tenantField && selectedTenantId) {
+          tenantField.value = selectedTenantId;
+      }
+
       setReadonly(false);
       modal.modal('show');
   });
@@ -407,6 +479,43 @@ document.addEventListener("DOMContentLoaded", function () {
           setReadonly(true);
           modal.modal('show');
       });
+    });
+  });
+
+  document.querySelectorAll(".edit-company-btn").forEach(btn => {
+    btn.addEventListener("click", function () {
+
+      fetch(this.dataset.url)
+        .then(res => res.json())
+        .then(data => {
+
+          const c = data.company;
+
+          idField.value = c.id;
+          if (tenantField) tenantField.value = c.tenant;
+          nameField.value = c.name;
+          regField.value = c.registration_id || "";
+          activeField.checked = c.is_active;
+
+          document.getElementById("id_classification").value = c.classification || "";
+          document.getElementById("id_address_line1").value = c.address_line1 || "";
+          document.getElementById("id_address_line2").value = c.address_line2 || "";
+          document.getElementById("id_city").value = c.city || "";
+          document.getElementById("id_state").value = c.state || "";
+          document.getElementById("id_postal_code").value = c.postal_code || "";
+          document.getElementById("id_country").value = c.country || "";
+          document.getElementById("id_phone").value = c.phone || "";
+          document.getElementById("id_phone_secondary").value = c.phone_secondary || "";
+          document.getElementById("id_fax").value = c.fax || "";
+          document.getElementById("id_website").value = c.website || "";
+
+          title.innerText = "Edit Company";
+
+          setReadonly(false);
+
+          modal.modal('show');
+        });
+
     });
   });
 

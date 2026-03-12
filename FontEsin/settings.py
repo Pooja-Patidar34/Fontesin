@@ -46,6 +46,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "FontEsin.middleware.correlation_id.CorrelationIDMiddleware",
+    "FontEsin.middleware.request_logging.RequestLoggingMiddleware",
 ]
 
 ROOT_URLCONF = 'FontEsin.urls'
@@ -66,7 +68,6 @@ TEMPLATES = [
         },
     },
 ]
-
 
 
 WSGI_APPLICATION = 'FontEsin.wsgi.application'
@@ -177,8 +178,7 @@ USE_I18N = True
 
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
+ Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 
@@ -191,3 +191,62 @@ MEDIA_ROOT = BASE_DIR / 'media'
 LOGIN_URL = "/admin/login/"
 LOGIN_REDIRECT_URL = "/admin/"
 LOGOUT_REDIRECT_URL = "/admin/login/"
+
+import os
+
+LOGGING = {
+
+    "version": 1,
+    "disable_existing_loggers": False,
+
+    "filters": {
+        "correlation_id": {
+            "()": "FontEsin.logging.correlation_filter.CorrelationIdFilter",
+        }
+    },
+
+    "formatters": {
+        "json": {
+            "()": "FontEsin.logging.json_formatter.JSONFormatter",
+        }
+    },
+
+    "handlers": {
+
+        "technical_file": {
+            "class": "logging.FileHandler",
+            "filename": os.path.join(BASE_DIR, "logs/technical.log"),
+            "formatter": "json",
+            "filters": ["correlation_id"],
+        },
+
+        "business_file": {
+            "class": "logging.FileHandler",
+            "filename": os.path.join(BASE_DIR, "logs/business.log"),
+            "formatter": "json",
+            "filters": ["correlation_id"],
+        },
+
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "json",
+            "filters": ["correlation_id"],
+        },
+    },
+
+    "loggers": {
+
+        "technical": {
+            "handlers": ["technical_file", "console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+
+        "business": {
+            "handlers": ["business_file", "console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+
+    },
+}

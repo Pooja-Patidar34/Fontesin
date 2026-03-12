@@ -4,7 +4,7 @@ from .view.dashboard import dashboard
 from accounts.view.company import company_list, toggle_company,company_detail_ajax
 from .view.user import user_list, toggle_user, assign_roles,role_list,role_detail_ajax,permission_list,save_role,user_detail_ajax,user_edit,add_user
 from .view.audit import audit_logs,audit_log_detail_ajax
-from .view.tenant import tenant_list,toggle_tenant,tenant_detail_ajax
+from .view.tenant import tenant_list,toggle_tenant,tenant_detail_ajax,tenant_delete
 
 
 urlpatterns = [
@@ -20,6 +20,7 @@ urlpatterns = [
     path("roles/", role_list, name="roles"),
     path("tenants/", tenant_list, name="tenants"),
     path("tenants/<uuid:tenant_id>/toggle/",toggle_tenant,name="tenant-toggle",),
+    path("tenants/<uuid:tenant_id>/delete/",tenant_delete, name="tenant-delete"),
     path("audit/logs/<uuid:log_id>/detail/",audit_log_detail_ajax,name="audit_log_detail_ajax",),
     path("tenants/<uuid:tenant_id>/detail/",tenant_detail_ajax,name="tenant-detail",),
     path("companies/<uuid:company_id>/detail/",company_detail_ajax,name="company-detail",),

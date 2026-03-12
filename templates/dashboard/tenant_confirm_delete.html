@@ -1,0 +1,54 @@
+{% extends "base/base.html" %}
+
+{% block title %}Delete Tenant{% endblock %}
+
+{% block content %}
+
+<div class="card card-outline card-danger shadow-sm">
+
+  <div class="card-header">
+    <h3 class="card-title font-weight-bold">
+      Delete Tenant
+    </h3>
+  </div>
+
+  <div class="card-body">
+
+```
+<div class="alert alert-danger">
+  <h5>
+    <i class="icon fas fa-exclamation-triangle"></i>
+    Warning
+  </h5>
+  You are about to delete the tenant:
+  <strong>{{ tenant.name }}</strong>.
+  <br><br>
+  This action cannot be undone.
+</div>
+
+<form method="post">
+  {% csrf_token %}
+
+  <div class="d-flex justify-content-end">
+
+    <a href="{% url 'admin:tenants' %}"
+       class="btn btn-secondary mr-2">
+      Cancel
+    </a>
+
+    <button type="submit"
+            class="btn btn-danger">
+      <i class="fas fa-trash mr-1"></i>
+      Delete Tenant
+    </button>
+
+  </div>
+
+</form>
+```
+
+  </div>
+
+</div>
+
+{% endblock %}
