@@ -14,32 +14,39 @@ class RequestLoggingMiddleware:
 
     def __call__(self, request):
 
+        # Skip static files
+        if request.path.startswith("/static") or request.path == "/favicon.ico":
+            return self.get_response(request)
+
         start_time = time.time()
-
-        response = self.get_response(request)
-
-        duration = round((time.time() - start_time) * 1000, 2)
 
         user_id = None
         tenant_id = None
+        status_code = 500
 
-        if request.user.is_authenticated:
-            user_id = request.user.id
-            tenant_id = getattr(request.user, "tenant_id", None)
+        try:
+            response = self.get_response(request)
+            status_code = response.status_code
+            return response
 
-        technical_logger.info(
-            "api_request",
-            extra={
-                "correlation_id": get_correlation_id(),
-                "actor": user_id,
-                "tenant": tenant_id,
-                "endpoint": request.path,
-                "method": request.method,
-                "status": response.status_code,
-                "metadata": {
-                    "duration_ms": duration
+        finally:
+            duration = round((time.time() - start_time) * 1000, 2)
+
+            if request.user.is_authenticated:
+                user_id = request.user.id
+                tenant_id = getattr(request.user, "tenant_id", None)
+
+            technical_logger.info(
+                "api_request",
+                extra={
+                    "correlation_id": get_correlation_id(),
+                    "actor": user_id,
+                    "tenant": tenant_id,
+                    "endpoint": request.path,
+                    "method": request.method,
+                    "status": status_code,
+                    "metadata": {
+                        "duration_ms": duration
+                    }
                 }
-            }
-        )
-
-        return response
+            )

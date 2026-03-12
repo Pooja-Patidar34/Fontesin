@@ -27,4 +27,4 @@ class JSONFormatter(logging.Formatter):
         if hasattr(record, "metadata"):
             log_record["metadata"] = record.metadata
 
-        return json.dumps(log_record)
+        return json.dumps(log_record, default=str)
