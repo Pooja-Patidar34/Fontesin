@@ -8,6 +8,19 @@
     pointer-events: none;
     background-color: #f8f9fa;
   }
+
+  /* FIX DROPDOWN CUTTING */
+  .card-body {
+    overflow: visible !important;
+  }
+
+  .table-responsive {
+    overflow: visible !important;
+  }
+
+  .dropdown-menu {
+    z-index: 2000;
+  }
 </style>
 
 <div class="card card-outline card-primary shadow-sm">
@@ -116,33 +129,6 @@
                   Action
                 </button>
 
-                <!-- <div class="dropdown-menu dropdown-menu-right">
-
-                  {% if can_view %}
-                  <button class="dropdown-item view-company-btn"
-                          data-url="{% url 'admin:company-detail' company.id %}">
-                    <i class="fas fa-eye mr-2"></i> View
-                  </button>
-                  {% endif %}
-
-                  {% if can_manage %}
-                    <div class="dropdown-divider"></div>
-
-                    {% if company.is_active %}
-                      <a class="dropdown-item text-warning"
-                        href="{% url 'admin:company-toggle' company.id %}">
-                        <i class="fas fa-ban mr-2"></i> Deactivate
-                      </a>
-                    {% else %}
-                      <a class="dropdown-item text-success"
-                        href="{% url 'admin:company-toggle' company.id %}">
-                        <i class="fas fa-check mr-2"></i> Activate
-                      </a>
-                    {% endif %}
-
-                  {% endif %}
-
-                </div> -->
               <div class="dropdown-menu dropdown-menu-right">
 
                 {% if can_view %}
@@ -161,16 +147,31 @@
 
                 <div class="dropdown-divider"></div>
 
-                {% if company.is_active %}
-                  <a class="dropdown-item text-warning"
-                    href="{% url 'admin:company-toggle' company.id %}">
-                    <i class="fas fa-ban mr-2"></i> Deactivate
-                  </a>
-                {% else %}
-                  <a class="dropdown-item text-success"
-                    href="{% url 'admin:company-toggle' company.id %}">
-                    <i class="fas fa-check mr-2"></i> Activate
-                  </a>
+                {% if can_manage %}
+                  {% if company.is_active %}
+                    <a class="dropdown-item text-warning"
+                      href="{% url 'admin:company-toggle' company.id %}">
+                      <i class="fas fa-ban mr-2"></i> Deactivate
+                    </a>
+                  {% else %}
+                    <a class="dropdown-item text-success"
+                      href="{% url 'admin:company-toggle' company.id %}">
+                      <i class="fas fa-check mr-2"></i> Activate
+                    </a>
+                  {% endif %}
+                {% endif %}
+
+                {% if can_manage %}
+                <div class="dropdown-divider"></div>
+
+                <form method="post"
+                      action="{% url 'admin:company-delete' company.id %}"
+                      onsubmit="return confirm('Delete this company permanently?');">
+                  {% csrf_token %}
+                  <button type="submit" class="dropdown-item text-danger">
+                    <i class="fas fa-trash mr-2"></i> Delete
+                  </button>
+                </form>
                 {% endif %}
 
               </div>
@@ -194,61 +195,87 @@
   </div>
 
   <!-- Pagination -->
-  {% if companies.has_other_pages %}
-<div class="card-footer d-flex justify-content-end">
-  <nav>
-    <ul class="pagination pagination-sm mb-0">
+{% if companies.paginator.num_pages > 1 %}
+<div class="card-footer">
+  <ul class="pagination pagination-sm justify-content-end mb-0">
 
-      {# PREVIOUS #}
-      {% if companies.has_previous %}
-        <li class="page-item">
-          <a class="page-link"
-             href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ companies.previous_page_number }}">
-            Previous
-          </a>
-        </li>
-      {% else %}
-        <li class="page-item disabled">
-          <span class="page-link">Previous</span>
-        </li>
+    {% if companies.has_previous %}
+      <li class="page-item">
+        <a class="page-link"
+           href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ companies.previous_page_number }}">
+          Previous
+        </a>
+      </li>
+    {% else %}
+      <li class="page-item disabled">
+        <span class="page-link">Previous</span>
+      </li>
+    {% endif %}
+
+    <!-- FIRST PAGE -->
+    {% if companies.number > 3 %}
+      <li class="page-item">
+        <a class="page-link"
+           href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page=1">
+          1
+        </a>
+      </li>
+
+      {% if companies.number > 4 %}
+      <li class="page-item disabled">
+        <span class="page-link">...</span>
+      </li>
+      {% endif %}
+    {% endif %}
+
+    <!-- CURRENT RANGE -->
+    {% for num in companies.paginator.page_range %}
+      {% if num >= companies.number|add:-2 and num <= companies.number|add:2 %}
+        {% if num == companies.number %}
+          <li class="page-item active">
+            <span class="page-link">{{ num }}</span>
+          </li>
+        {% else %}
+          <li class="page-item">
+            <a class="page-link"
+               href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ num }}">
+              {{ num }}
+            </a>
+          </li>
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+
+    <!-- LAST PAGE -->
+    {% if companies.number < companies.paginator.num_pages|add:-2 %}
+      {% if companies.number < companies.paginator.num_pages|add:-3 %}
+      <li class="page-item disabled">
+        <span class="page-link">...</span>
+      </li>
       {% endif %}
 
-      {# PAGE NUMBERS – MAX 5 #}
-      {% with start=companies.number|add:-2 end=companies.number|add:2 %}
-        {% for num in companies.paginator.page_range %}
-          {% if num >= start and num <= end %}
-            {% if num == companies.number %}
-              <li class="page-item active">
-                <span class="page-link">{{ num }}</span>
-              </li>
-            {% else %}
-              <li class="page-item">
-                <a class="page-link"
-                   href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ num }}">
-                  {{ num }}
-                </a>
-              </li>
-            {% endif %}
-          {% endif %}
-        {% endfor %}
-      {% endwith %}
+      <li class="page-item">
+        <a class="page-link"
+           href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ companies.paginator.num_pages }}">
+          {{ companies.paginator.num_pages }}
+        </a>
+      </li>
+    {% endif %}
 
-      {# NEXT #}
-      {% if companies.has_next %}
-        <li class="page-item">
-          <a class="page-link"
-             href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ companies.next_page_number }}">
-            Next
-          </a>
-        </li>
-      {% else %}
-        <li class="page-item disabled">
-          <span class="page-link">Next</span>
-        </li>
-      {% endif %}
+    {% if companies.has_next %}
+      <li class="page-item">
+        <a class="page-link"
+           href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ companies.next_page_number }}">
+          Next
+        </a>
+      </li>
+    {% else %}
+      <li class="page-item disabled">
+        <span class="page-link">Next</span>
+      </li>
+    {% endif %}
 
-    </ul>
-  </nav>
+  </ul>
 </div>
 {% endif %}
 

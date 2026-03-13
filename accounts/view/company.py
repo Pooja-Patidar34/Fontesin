@@ -287,6 +287,66 @@ def company_list(request):
 #     )
 
 
+@login_required
+@transaction.atomic
+def company_delete(request, company_id):
+
+    # -------------------------------
+    # PERMISSION CHECK
+    # -------------------------------
+    if not has_permission(request.user, "company.manage"):
+        raise PermissionDenied()
+
+    if request.method != "POST":
+        raise PermissionDenied()
+
+    # -------------------------------
+    # FETCH COMPANY (TENANT SAFE)
+    # -------------------------------
+    if request.user.is_superuser:
+        company = get_object_or_404(Company, id=company_id)
+    else:
+        company = get_object_or_404(
+            Company,
+            id=company_id,
+            tenant=request.user.tenant,
+        )
+
+    company_name = company.name
+    tenant = company.tenant
+
+    # -------------------------------
+    # DELETE
+    # -------------------------------
+    company.delete()
+
+    # -------------------------------
+    # AUDIT LOG
+    # -------------------------------
+    try:
+        AuditLog.objects.create(
+            tenant=tenant,
+            actor=request.user,
+            action="company.deleted",
+            entity_type="Company",
+            entity_id=company_id,
+            metadata={
+                "company_name": company_name,
+            },
+            ip_address=get_client_ip(request),
+        )
+    except Exception:
+        pass
+
+    messages.success(request, "Company deleted successfully.")
+
+    referer = request.META.get("HTTP_REFERER")
+
+    if referer:
+        return redirect(referer)
+
+    return redirect(reverse("admin:companies"))
+
 
 @login_required
 def toggle_company(request, company_id):

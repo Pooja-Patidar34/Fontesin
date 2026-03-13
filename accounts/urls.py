@@ -1,7 +1,7 @@
 from django.urls import path
 from .view.auth import admin_login, admin_logout
 from .view.dashboard import dashboard
-from accounts.view.company import company_list, toggle_company,company_detail_ajax
+from accounts.view.company import company_list, toggle_company,company_detail_ajax,company_delete
 from .view.user import user_list, toggle_user, assign_roles,role_list,role_detail_ajax,permission_list,save_role,user_detail_ajax,user_edit,add_user
 from .view.audit import audit_logs,audit_log_detail_ajax
 from .view.tenant import tenant_list,toggle_tenant,tenant_detail_ajax,tenant_delete
@@ -31,6 +31,6 @@ urlpatterns = [
     path("users/<uuid:user_id>/view/", user_detail_ajax, name="user-detail"),
     path("users/<uuid:user_id>/edit/", user_edit, name="user-edit"),
     path("users/add/", add_user, name="add-user"),
-
+    path("companies/<uuid:company_id>/delete/", company_delete, name="company-delete"),
 ]
 

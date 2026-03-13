@@ -2,6 +2,8 @@
 from pathlib import Path
 from decouple import config
 from datetime import timedelta
+import os
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -48,6 +50,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "FontEsin.middleware.correlation_id.CorrelationIDMiddleware",
     "FontEsin.middleware.request_logging.RequestLoggingMiddleware",
+    "FontEsin.middleware.error_logging.ErrorLoggingMiddleware",
 ]
 
 ROOT_URLCONF = 'FontEsin.urls'
@@ -118,12 +121,23 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
+
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",
     ),
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-}
 
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+
+    "DEFAULT_THROTTLE_CLASSES": (
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ),
+
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "60/min",
+        "user": "120/min",
+    },
+}
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "FontEsin API",
@@ -178,7 +192,7 @@ USE_I18N = True
 
 USE_TZ = True
 
- Static files (CSS, JavaScript, Images)
+#Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 
@@ -192,7 +206,14 @@ LOGIN_URL = "/admin/login/"
 LOGIN_REDIRECT_URL = "/admin/"
 LOGOUT_REDIRECT_URL = "/admin/login/"
 
-import os
+
+STATIC_URL = '/static/'
+
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 LOGGING = {
 

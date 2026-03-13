@@ -3,7 +3,6 @@ import logging
 
 from FontEsin.middleware.correlation_id import get_correlation_id
 
-
 technical_logger = logging.getLogger("technical")
 
 
@@ -43,10 +42,10 @@ class RequestLoggingMiddleware:
                     "actor": user_id,
                     "tenant": tenant_id,
                     "endpoint": request.path,
-                    "method": request.method,
                     "status": status_code,
                     "metadata": {
-                        "duration_ms": duration
-                    }
-                }
+                        "method": request.method,
+                        "duration_ms": duration,
+                    },
+                },
             )

@@ -24,6 +24,10 @@ class JSONFormatter(logging.Formatter):
         if hasattr(record, "actor"):
             log_record["actor"] = record.actor
 
+        # NEW: status code
+        if hasattr(record, "status"):
+            log_record["status"] = record.status
+
         if hasattr(record, "metadata"):
             log_record["metadata"] = record.metadata
 
