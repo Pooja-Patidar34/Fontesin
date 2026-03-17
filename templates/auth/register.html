@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Register</title>
+
+{% load static %}
+
+<link rel="stylesheet" href="{% static 'plugins/fontawesome-free/css/all.min.css' %}">
+<link rel="stylesheet" href="{% static 'adminlte/css/adminlte.min.css' %}">
+
+<style>
+
+.fontesin-register{
+background:#233a50;
+background-image: radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px);
+background-size:28px 28px;
+min-height:100vh;
+display:flex;
+flex-direction:column;
+align-items:center;
+padding-top:40px;
+font-family:system-ui;
+}
+
+.fontesin-register .logo{
+text-align:center;
+color:white;
+margin-bottom:25px;
+}
+
+.fontesin-register .logo h2{
+letter-spacing:4px;
+font-weight:600;
+}
+
+.fontesin-register .register-card{
+width:560px;
+background:#f3f4f6;
+border-radius:14px;
+padding:40px;
+box-shadow:0 15px 40px rgba(0,0,0,0.25);
+}
+
+.fontesin-register .stepper{
+display:flex;
+justify-content:center;
+align-items:center;
+margin-bottom:30px;
+}
+
+.fontesin-register .step{
+width:36px;
+height:36px;
+border-radius:50%;
+background:#d1d5db;
+display:flex;
+align-items:center;
+justify-content:center;
+font-weight:600;
+}
+
+.fontesin-register .step.active{
+background:#2f4d66;
+color:white;
+}
+
+.fontesin-register .line{
+height:2px;
+width:60px;
+background:#cbd5e1;
+}
+
+.fontesin-register .form-control{
+height:44px;
+border-radius:8px;
+}
+
+.role-card{
+border:1px solid #dcdcdc;
+border-radius:10px;
+padding:15px;
+cursor:pointer;
+margin-bottom:10px;
+}
+
+.role-card:hover{
+border-color:#2f4d66;
+}
+
+</style>
+
+</head>
+
+<body class="hold-transition fontesin-register">
+
+<div class="logo">
+<h2>FONTESIN</h2>
+<p>Create your account and join the global business platform</p>
+</div>
+
+<div class="register-card">
+
+<div class="stepper">
+<div class="step active" data-step="1">1</div>
+<div class="line"></div>
+<div class="step" data-step="2">2</div>
+<div class="line"></div>
+<div class="step" data-step="3">3</div>
+</div>
+
+<form method="POST">
+{% csrf_token %}
+
+<!-- STEP 1 -->
+
+<div class="form-step" id="step1">
+
+<h4>Create Your Account</h4>
+
+<div class="row">
+
+<div class="col-md-6 form-group">
+<label>First Name *</label>
+<input name="first_name" class="form-control" required>
+</div>
+
+<div class="col-md-6 form-group">
+<label>Last Name *</label>
+<input name="last_name" class="form-control" required>
+</div>
+
+</div>
+
+<div class="form-group">
+<label>Email *</label>
+<input name="email" type="email" class="form-control" required>
+</div>
+
+<div class="form-group">
+<label>Phone</label>
+<input name="phone" class="form-control">
+</div>
+
+<div class="form-group">
+<label>Country</label>
+<input name="country" class="form-control">
+</div>
+
+<div class="form-group">
+<label>Preferred Language</label>
+<select name="preferred_language" class="form-control">
+<option value="en">English</option>
+</select>
+</div>
+
+<div class="form-group">
+<label>Password *</label>
+<input name="password" type="password" class="form-control" required>
+</div>
+
+<button type="button" class="btn btn-primary btn-block next">
+Continue →
+</button>
+
+</div>
+
+<!-- STEP 2 -->
+
+<div class="form-step d-none" id="step2">
+
+<h4>Your Role</h4>
+
+<label class="role-card">
+<input type="radio" name="role" value="business_user" required>
+<strong>Business User</strong><br>
+Register & certify my company
+</label>
+
+<label class="role-card">
+<input type="radio" name="role" value="consultant">
+<strong>Consultant</strong><br>
+Advise companies
+</label>
+
+<label class="role-card">
+<input type="radio" name="role" value="coordinator">
+<strong>Coordinator</strong><br>
+Regional operations
+</label>
+
+<label class="role-card">
+<input type="radio" name="role" value="partner">
+<strong>Franchise Partner</strong><br>
+Master / National / Local
+</label>
+
+<div class="form-group mt-3">
+<label>Company Name</label>
+<input name="company_name" class="form-control">
+</div>
+
+<div class="form-group">
+<label>Tell us about your interest</label>
+<textarea name="bio" class="form-control"></textarea>
+</div>
+
+<div class="d-flex justify-content-between">
+<button type="button" class="btn btn-secondary prev">Back</button>
+<button type="button" class="btn btn-primary next">Continue</button>
+</div>
+
+</div>
+
+<!-- STEP 3 -->
+
+<div class="form-step d-none" id="step3">
+
+<h4>Confirm Registration</h4>
+
+<p>Please confirm your details.</p>
+
+<div class="d-flex justify-content-between">
+<button type="button" class="btn btn-secondary prev">Back</button>
+<button type="submit" class="btn btn-success">Register</button>
+</div>
+
+</div>
+
+</form>
+
+</div>
+
+<script src="{% static 'plugins/jquery/jquery.min.js' %}"></script>
+
+<script src="{% static 'plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+
+<script src="{% static 'adminlte/js/adminlte.min.js' %}"></script>
+
+<script>
+
+(function(){
+
+let currentStep = 1
+
+function showStep(step){
+
+document.querySelectorAll(".form-step")
+.forEach(el=>el.classList.add("d-none"))
+
+document
+.getElementById("step"+step)
+.classList.remove("d-none")
+
+document.querySelectorAll(".step")
+.forEach(el=>el.classList.remove("active"))
+
+document
+.querySelector(".step[data-step='"+step+"']")
+.classList.add("active")
+
+}
+
+document.querySelectorAll(".next").forEach(btn=>{
+btn.onclick=()=>{
+currentStep++
+showStep(currentStep)
+}
+})
+
+document.querySelectorAll(".prev").forEach(btn=>{
+btn.onclick=()=>{
+currentStep--
+showStep(currentStep)
+}
+})
+
+})();
+
+</script>
+
+</body>
+</html>
