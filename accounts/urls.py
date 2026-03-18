@@ -10,7 +10,7 @@ from .view.tenant import tenant_list,toggle_tenant,tenant_detail_ajax,tenant_del
 urlpatterns = [
     path("login/", admin_login, name="login"),
     path("logout/", admin_logout, name="logout"),
-    path("",dashboard, name="dashboard"),
+    path("dashboard/",dashboard, name="dashboard"),
     path("companies/", company_list, name="companies"),
     path("companies/<uuid:company_id>/toggle/", toggle_company, name="company-toggle"),
     path("users/", user_list, name="users"),
@@ -32,6 +32,6 @@ urlpatterns = [
     path("users/<uuid:user_id>/edit/", user_edit, name="user-edit"),
     path("users/add/", add_user, name="add-user"),
     path("companies/<uuid:company_id>/delete/", company_delete, name="company-delete"),
-    path("register/", register_view, name="register"),
+    path("", register_view, name="register"),
 ]
 

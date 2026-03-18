@@ -91,116 +91,87 @@ def admin_logout(request):
     return redirect("admin:login")
 
 
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.contrib.auth import get_user_model
+from accounts.models import Tenant, Company, Role, UserCompany
+
+User = get_user_model()
 
 def register_view(request):
-    return render(request, "auth/register.html")
 
+    # ✅ send companies to template (GET + POST fallback)
+    companies = Company.objects.filter(is_active=True)
 
+    if request.method == "POST":
 
-from django.views import View
-from django.shortcuts import render, redirect
-from django.contrib.auth import login
-from django.db import transaction
+        # -------------------------
+        # PHASE 1 DATA
+        # -------------------------
+        first_name = request.POST.get("first_name")
+        last_name = request.POST.get("last_name")
+        email = request.POST.get("email")
+        phone = request.POST.get("phone")
+        country = request.POST.get("country")
+        password = request.POST.get("password")
 
-from accounts.models import User, Role, UserRole, UserCompany, UserCompanyRole, Tenant, Company
+        # -------------------------
+        # PHASE 2 DATA
+        # -------------------------
+        role_name = request.POST.get("role")
+        company_id = request.POST.get("company_id")  # ✅ NEW
 
-class RegisterView(View):
+        # -------------------------
+        # VALIDATION
+        # -------------------------
+        if User.objects.filter(email=email).exists():
+            messages.error(request, "Email already exists")
+            return render(request, "auth/register.html", {"companies": companies})
 
-    template_name = "auth/register.html"
+        # -------------------------
+        # TENANT
+        # -------------------------
+        tenant, _ = Tenant.objects.get_or_create(name="Default")
 
-def get(self, request):
-    return render(request, self.template_name)
+        # -------------------------
+        # ROLE (better: no auto create)
+        # -------------------------
+        role = Role.objects.filter(name__iexact=role_name).first()
 
-
-@transaction.atomic
-def post(self, request):
-
-    first_name = request.POST.get("first_name")
-    last_name = request.POST.get("last_name")
-    email = request.POST.get("email")
-    phone = request.POST.get("phone")
-    country = request.POST.get("country")
-    preferred_language = request.POST.get("preferred_language")
-    password = request.POST.get("password")
-
-    role_type = request.POST.get("role")
-    company_name = request.POST.get("company_name")
-    bio = request.POST.get("bio")
-
-
-    role_map = {
-        "business_user": "company_admin",
-        "consultant": "consultant",
-        "coordinator": "coordinator",
-        "partner": "partner"
-    }
-
-    role = Role.objects.get(name=role_map[role_type])
-
-
-    tenant = None
-    company = None
-
-
-    # BUSINESS USER → CREATE TENANT + COMPANY
-    if role_type == "business_user":
-
-        tenant = Tenant.objects.create(
-            name=company_name
-        )
-
-        company = Company.objects.create(
+        # -------------------------
+        # CREATE USER
+        # -------------------------
+        user = User.objects.create_user(
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
             tenant=tenant,
-            name=company_name
+            role=role,
+            phone=phone,
+            country=country,
         )
 
+        # -------------------------
+        # COMPANY LINK (UPDATED)
+        # -------------------------
+        if company_id:
+            company = Company.objects.filter(id=company_id).first()
 
-    # OTHER ROLES → PLATFORM TENANT
-    else:
+            if company:
+                user.primary_company = company
+                user.save()
 
-        tenant = Tenant.objects.first()
+                UserCompany.objects.create(
+                    user=user,
+                    company=company,
+                    is_primary=True
+                )
 
+        # -------------------------
+        # SUCCESS
+        # -------------------------
+        messages.success(request, "Account created successfully")
+        return redirect("admin:login")
 
-    user = User.objects.create(
-        tenant=tenant,
-        role=role,
-        primary_company=company,
-        email=email,
-        first_name=first_name,
-        last_name=last_name,
-        phone=phone,
-        country=country,
-        preferred_language=preferred_language,
-        bio=bio
-    )
-
-    user.set_password(password)
-    user.save()
-
-
-    # GLOBAL USER ROLE
-    UserRole.objects.create(
-        user=user,
-        role=role
-    )
-
-
-    # COMPANY RELATION
-    if company:
-
-        uc = UserCompany.objects.create(
-            user=user,
-            company=company,
-            is_primary=True
-        )
-
-        UserCompanyRole.objects.create(
-            user_company=uc,
-            role=role
-        )
-
-
-    login(request, user)
-
-    return redirect("/dashboard/")
-
+    return render(request, "auth/register.html", {"companies": companies})

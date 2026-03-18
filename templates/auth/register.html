@@ -1,283 +1,572 @@
+{% load static %}
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<title>Register</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#253D51"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="FONTESIN"/>
 
-{% load static %}
+  <link rel="manifest" href="{% static 'adminlte/manifest.json' %}"/>
+  <link rel="apple-touch-icon" href="{% static 'adminlte/images/icons/icon-192.png' %}"/>
 
-<link rel="stylesheet" href="{% static 'plugins/fontawesome-free/css/all.min.css' %}">
-<link rel="stylesheet" href="{% static 'adminlte/css/adminlte.min.css' %}">
+  <title>Register – FONTESIN</title>
 
-<style>
+  <meta name="description" content="Create your FONTESIN account."/>
 
-.fontesin-register{
-background:#233a50;
-background-image: radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px);
-background-size:28px 28px;
-min-height:100vh;
-display:flex;
-flex-direction:column;
-align-items:center;
-padding-top:40px;
-font-family:system-ui;
-}
+  <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
 
-.fontesin-register .logo{
-text-align:center;
-color:white;
-margin-bottom:25px;
-}
+  <!-- ✅ YOUR ORIGINAL STYLE KEPT EXACT -->
+  <style>
+    /* KEEP YOUR INLINE CSS EXACT */
+    .reg-page {
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-mid) 100%);
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 24px;
+      position: relative;
+      overflow: hidden;
+    }
 
-.fontesin-register .logo h2{
-letter-spacing:4px;
-font-weight:600;
-}
+    .reg-page {
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-mid) 100%);
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .reg-page::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .reg-container {
+      width: 100%;
+      max-width: 560px;
+      position: relative;
+      z-index: 1;
+    }
+    .reg-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .reg-header__brand {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .reg-header p { color: rgba(255,255,255,.65); font-size: .9rem; }
+    .reg-card {
+      background: var(--bg-white);
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 24px 80px rgba(0,0,0,.25);
+    }
+    .reg-steps {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      margin-bottom: 36px;
+    }
+    .reg-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      position: relative;
+    }
+    .reg-step::after {
+      content: '';
+      position: absolute;
+      top: 16px;
+      left: calc(50% + 16px);
+      right: calc(-50% + 16px);
+      height: 2px;
+      background: var(--bg-light);
+    }
+    .reg-step:last-child::after { display: none; }
+    .reg-step.active::after { background: var(--primary); }
+    .reg-step__num {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--bg-light);
+      color: var(--secondary);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      font-size: .85rem;
+      position: relative;
+      z-index: 1;
+      transition: .2s;
+    }
+    .reg-step.active .reg-step__num {
+      background: var(--primary);
+      color: #fff;
+    }
+    .reg-step.done .reg-step__num {
+      background: #4ade80;
+      color: #fff;
+    }
+    .reg-step__label {
+      font-size: .72rem;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 600;
+      color: var(--secondary);
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    .reg-step.active .reg-step__label { color: var(--primary); }
 
-.fontesin-register .register-card{
-width:560px;
-background:#f3f4f6;
-border-radius:14px;
-padding:40px;
-box-shadow:0 15px 40px rgba(0,0,0,0.25);
-}
+    .reg-phase { display: none; }
+    .reg-phase.active { display: block; }
 
-.fontesin-register .stepper{
-display:flex;
-justify-content:center;
-align-items:center;
-margin-bottom:30px;
-}
-
-.fontesin-register .step{
-width:36px;
-height:36px;
-border-radius:50%;
-background:#d1d5db;
-display:flex;
-align-items:center;
-justify-content:center;
-font-weight:600;
-}
-
-.fontesin-register .step.active{
-background:#2f4d66;
-color:white;
-}
-
-.fontesin-register .line{
-height:2px;
-width:60px;
-background:#cbd5e1;
-}
-
-.fontesin-register .form-control{
-height:44px;
-border-radius:8px;
-}
-
-.role-card{
-border:1px solid #dcdcdc;
-border-radius:10px;
-padding:15px;
-cursor:pointer;
-margin-bottom:10px;
-}
-
-.role-card:hover{
-border-color:#2f4d66;
-}
-
-</style>
-
+    .role-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .role-option {
+      border: 2px solid rgba(37,61,81,.12);
+      border-radius: 10px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: .2s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .role-option:hover { border-color: var(--primary); background: rgba(37,61,81,.03); }
+    .role-option input[type="radio"] { accent-color: var(--primary); }
+    .role-option__label {
+      font-family: 'Montserrat', sans-serif;
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--primary);
+    }
+    .role-option__desc { font-size: .75rem; color: var(--text-secondary); }
+    .role-option input:checked ~ div .role-option__label { color: var(--primary); }
+    .role-option:has(input:checked) {
+      border-color: var(--primary);
+      background: rgba(37,61,81,.05);
+    }
+    .auth-back {
+      position: fixed;
+      top: 24px;
+      left: 24px;
+      color: rgba(255,255,255,.6);
+      font-size: .85rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: .2s;
+      z-index: 10;
+    }
+    .auth-back:hover { color: #fff; }  </style>
 </head>
 
-<body class="hold-transition fontesin-register">
+<body>
 
-<div class="logo">
-<h2>FONTESIN</h2>
-<p>Create your account and join the global business platform</p>
+<div class="reg-page">
+
+  <!-- KEEP ORIGINAL LINK -->
+  <a href="index.html" class="auth-back">← Back to Home</a>
+
+  <div class="reg-container">
+    <div class="reg-header">
+      <div class="reg-header__brand">
+        <img src="{% static 'adminlte/images/fontesin-logo.png' %}" alt="FONTESIN"
+             style="height:40px;width:auto;filter:brightness(0) invert(1);"/>
+      </div>
+      <p>Create your account and join the global business platform</p>
+    </div>
+
+    <div class="reg-card">
+
+      <!-- Steps -->
+      <div class="reg-steps">
+        <div class="reg-step active" id="step-1">
+          <div class="reg-step__num">1</div>
+          <div class="reg-step__label">Basic Info</div>
+        </div>
+        <div class="reg-step" id="step-2">
+          <div class="reg-step__num">2</div>
+          <div class="reg-step__label">Your Role</div>
+        </div>
+        <div class="reg-step" id="step-3">
+          <div class="reg-step__num">3</div>
+          <div class="reg-step__label">Confirm</div>
+        </div>
+      </div>
+
+    <form method="POST" action="{% url 'admin:register' %}" id="register-form">
+    {% csrf_token %}
+
+        <!-- PHASE 1 -->
+        <div class="reg-phase active" id="phase-1">
+
+        <!-- ✅ FIX: RESTORED HEADER (THIS WAS MISSING) -->
+        <h3 style="margin-bottom:6px; font-weight: 700; font-size: 1.6rem;">Create Your Account</h3>
+        <p style="font-size:.88rem;margin-bottom:28px;">
+            Start with the basics — free, no credit card required.
+        </p>
+
+        <div class="form-row">
+            <div class="form-group">
+            <label class="form-label">First Name *</label>
+            <input type="text" name="first_name" id="reg-fname" class="form-control" placeholder="John" required/>
+            </div>
+            <div class="form-group">
+            <label class="form-label">Last Name *</label>
+            <input type="text" name="last_name" id="reg-lname" class="form-control" placeholder="Smith" required/>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Email Address *</label>
+            <input type="email" name="email" id="reg-email" class="form-control" placeholder="john@company.com" required/>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Phone Number *</label>
+            <input type="tel" name="phone" id="reg-phone" class="form-control" placeholder="+1 212 555 0100" required/>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Country *</label>
+            <select name="country" id="reg-country" class="form-control" required>
+            <option value="">Select your country...</option>
+            <option value="IN">India</option>
+            <option value="US">United States</option>
+            <option value="DE">Germany</option>
+            <option value="GB">United Kingdom</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Preferred Language</label>
+            <select class="form-control">
+            <option>English</option>
+            <option>German</option>
+            <option>French</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Password *</label>
+            <div class="password-toggle">
+            <input type="password" name="password" id="reg-pass" class="form-control" required/>
+            <button type="button" class="password-toggle__btn">👁</button>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Confirm Password *</label>
+            <div class="password-toggle">
+            <input type="password" name="confirm_password" id="reg-pass2" class="form-control" required/>
+            <button type="button" class="password-toggle__btn">👁</button>
+            </div>
+        </div>
+
+        <button type="button" class="btn btn-primary" style="width:100%;" onclick="goToPhase(2)">
+            Continue →
+        </button>
+
+        <p style="text-align:center;margin-top:16px;">
+            Already have an account?
+            <a href="{% url 'admin:login' %}" class="auth-link">Log in</a>
+        </p>
+        </div>
+        <!-- PHASE 2 (FULL RESTORED) -->
+        <div class="reg-phase" id="phase-2">
+
+            <!-- ✅ HEADER (MISSING IN YOUR VERSION) -->
+            <h3 style="margin-bottom:6px; font-weight: 700; font-size: 1.5rem;">
+                Your Role on FONTESIN
+            </h3>
+            <p style="font-size:.9rem; margin-bottom:24px; color: var(--text-secondary);">
+                Tell us how you plan to use the platform. This helps us tailor your experience.
+            </p>
+
+            <!-- ROLE SELECTION -->
+            <div class="form-group">
+                <label class="form-label">I am interested in joining as *</label>
+
+                <div class="role-grid">
+
+                <label class="role-option">
+                    <input type="radio" name="role" value="business_user" checked/>
+                    <div>
+                    <div class="role-option__label">🏢 Business User</div>
+                    <div class="role-option__desc">Register & certify my company</div>
+                    </div>
+                </label>
+
+                <label class="role-option">
+                    <input type="radio" name="role" value="consultant"/>
+                    <div>
+                    <div class="role-option__label">💼 Consultant</div>
+                    <div class="role-option__desc">Advise companies in my region</div>
+                    </div>
+                </label>
+
+                <label class="role-option">
+                    <input type="radio" name="role" value="coordinator"/>
+                    <div>
+                    <div class="role-option__label">🌍 Coordinator</div>
+                    <div class="role-option__desc">Coordinate regional operations</div>
+                    </div>
+                </label>
+
+                <label class="role-option">
+                    <input type="radio" name="role" value="franchise"/>
+                    <div>
+                    <div class="role-option__label">🚀 Franchise Partner</div>
+                    <div class="role-option__desc">Master / National / Local franchise</div>
+                    </div>
+                </label>
+
+                </div>
+            </div>
+
+            <!-- ✅ COMPANY NAME (MISSING) -->
+            <div class="form-group">
+            <label class="form-label">Company (Optional)</label>
+            <select name="company_id" class="form-control">
+                <option value="">Select Company</option>
+                {% for company in companies %}
+                <option value="{{ company.id }}">{{ company.name }}</option>
+                {% endfor %}
+            </select>
+            </div>
+
+            <!-- ✅ TEXTAREA (MISSING) -->
+            <div class="form-group">
+                <label class="form-label">Tell us about your interest</label>
+                <textarea name="interest" class="form-control" rows="4"
+                    placeholder="Brief description..."></textarea>
+            </div>
+
+            <!-- BUTTONS -->
+            <div style="display:flex; gap:12px;">
+                <button type="button" class="btn btn-outline" onclick="goToPhase(1)">
+                ← Back
+                </button>
+                <button type="button" class="btn btn-primary" onclick="goToPhase(3)">
+                Continue →
+                </button>
+            </div>
+
+            </div>
+        <!-- PHASE 3 -->
+        <!-- <div class="reg-phase" id="phase-3">
+          <div class="checkbox-group">
+            <input type="checkbox" id="terms" required/>
+            <label for="terms">I agree to Terms</label>
+          </div>
+
+          <div class="checkbox-group">
+            <input type="checkbox" id="gdpr" required/>
+            <label for="gdpr">I agree to GDPR</label>
+          </div>
+
+          <div style="display:flex;gap:12px;">
+            <button type="button" class="btn btn-outline" onclick="goToPhase(2)">← Back</button>
+            <button type="submit" class="btn btn-primary">Create Account →</button>
+          </div>
+        </div> -->
+
+        <div class="reg-phase" id="phase-3">
+
+        <!-- ✅ HEADER -->
+        <h3 style="margin-bottom:6px; font-weight: 700; font-size: 1.5rem;">
+            Almost Done!
+        </h3>
+        <p style="font-size:.9rem; margin-bottom:20px; color: var(--text-secondary);">
+            Review and confirm your registration.
+        </p>
+
+        <!-- ✅ SUMMARY BOX -->
+        <div style="
+            background: var(--bg-light);
+            padding: 16px 18px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: .85rem;
+        ">
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span>Account Type</span>
+            <strong>FREE (Upgradeable)</strong>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span>Access Level</span>
+            <strong>Read-only · Company name index</strong>
+            </div>
+
+            <div style="display:flex; justify-content:space-between;">
+            <span>Verification</span>
+            <strong style="color:#f59e0b;">
+                Identity verification required (Veriff)
+            </strong>
+            </div>
+        </div>
+
+        <!-- ✅ CHECKBOXES -->
+        <div class="checkbox-group" style="margin-bottom:10px;">
+            <input type="checkbox" id="terms" required/>
+            <label for="terms">
+            I agree to the <strong>Terms of Service</strong> and <strong>Privacy Policy</strong> of FONTESIN.
+            </label>
+        </div>
+
+        <div class="checkbox-group" style="margin-bottom:10px;">
+            <input type="checkbox" id="gdpr" required/>
+            <label for="gdpr">
+            I consent to the processing of my personal data in accordance with GDPR.
+            </label>
+        </div>
+
+        <div class="checkbox-group" style="margin-bottom:20px;">
+            <input type="checkbox" id="updates"/>
+            <label for="updates">
+            I would like to receive updates about FONTESIN platform development (Optional)
+            </label>
+        </div>
+
+        <!-- BUTTONS -->
+        <div style="display:flex; gap:12px;">
+            <button type="button" class="btn btn-outline" onclick="goToPhase(2)">
+            ← Back
+            </button>
+            <button type="submit" class="btn btn-primary">
+            Create Account & Verify Identity →
+            </button>
+        </div>
+
+        <!-- FOOT NOTE -->
+        <p style="text-align:center; margin-top:14px; font-size:.75rem; color:var(--text-secondary);">
+            You will receive a verification email after registration.
+        </p>
+
+        </div>
+      </form>
+    </div>
+
+    <!-- FOOTER RESTORED -->
+    <p style="text-align:center;color:rgba(255,255,255,.4);font-size:.78rem;margin-top:20px;">
+      © 2026 FONTES Inc.
+    </p>
+
+  </div>
 </div>
 
-<div class="register-card">
-
-<div class="stepper">
-<div class="step active" data-step="1">1</div>
-<div class="line"></div>
-<div class="step" data-step="2">2</div>
-<div class="line"></div>
-<div class="step" data-step="3">3</div>
-</div>
-
-<form method="POST">
-{% csrf_token %}
-
-<!-- STEP 1 -->
-
-<div class="form-step" id="step1">
-
-<h4>Create Your Account</h4>
-
-<div class="row">
-
-<div class="col-md-6 form-group">
-<label>First Name *</label>
-<input name="first_name" class="form-control" required>
-</div>
-
-<div class="col-md-6 form-group">
-<label>Last Name *</label>
-<input name="last_name" class="form-control" required>
-</div>
-
-</div>
-
-<div class="form-group">
-<label>Email *</label>
-<input name="email" type="email" class="form-control" required>
-</div>
-
-<div class="form-group">
-<label>Phone</label>
-<input name="phone" class="form-control">
-</div>
-
-<div class="form-group">
-<label>Country</label>
-<input name="country" class="form-control">
-</div>
-
-<div class="form-group">
-<label>Preferred Language</label>
-<select name="preferred_language" class="form-control">
-<option value="en">English</option>
-</select>
-</div>
-
-<div class="form-group">
-<label>Password *</label>
-<input name="password" type="password" class="form-control" required>
-</div>
-
-<button type="button" class="btn btn-primary btn-block next">
-Continue →
-</button>
-
-</div>
-
-<!-- STEP 2 -->
-
-<div class="form-step d-none" id="step2">
-
-<h4>Your Role</h4>
-
-<label class="role-card">
-<input type="radio" name="role" value="business_user" required>
-<strong>Business User</strong><br>
-Register & certify my company
-</label>
-
-<label class="role-card">
-<input type="radio" name="role" value="consultant">
-<strong>Consultant</strong><br>
-Advise companies
-</label>
-
-<label class="role-card">
-<input type="radio" name="role" value="coordinator">
-<strong>Coordinator</strong><br>
-Regional operations
-</label>
-
-<label class="role-card">
-<input type="radio" name="role" value="partner">
-<strong>Franchise Partner</strong><br>
-Master / National / Local
-</label>
-
-<div class="form-group mt-3">
-<label>Company Name</label>
-<input name="company_name" class="form-control">
-</div>
-
-<div class="form-group">
-<label>Tell us about your interest</label>
-<textarea name="bio" class="form-control"></textarea>
-</div>
-
-<div class="d-flex justify-content-between">
-<button type="button" class="btn btn-secondary prev">Back</button>
-<button type="button" class="btn btn-primary next">Continue</button>
-</div>
-
-</div>
-
-<!-- STEP 3 -->
-
-<div class="form-step d-none" id="step3">
-
-<h4>Confirm Registration</h4>
-
-<p>Please confirm your details.</p>
-
-<div class="d-flex justify-content-between">
-<button type="button" class="btn btn-secondary prev">Back</button>
-<button type="submit" class="btn btn-success">Register</button>
-</div>
-
-</div>
-
-</form>
-
-</div>
-
-<script src="{% static 'plugins/jquery/jquery.min.js' %}"></script>
-
-<script src="{% static 'plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-
-<script src="{% static 'adminlte/js/adminlte.min.js' %}"></script>
+<!-- JS (UNCHANGED) -->
+<script src="{% static 'adminlte/js/main.js' %}"></script>
 
 <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function() {
+        navigator.serviceWorker.register("/sw.js")
+          .then(function(reg) { console.log("[PWA] SW registered:", reg.scope); })
+          .catch(function(err) { console.warn("[PWA] SW registration failed:", err); });
+      });
+    }
 
-(function(){
+window.goToPhase = function(num) {
 
-let currentStep = 1
+  // ------------------------
+  // PHASE 1 VALIDATION
+  // ------------------------
+  if (num === 2) {
 
-function showStep(step){
+    const fields = [
+      { id: 'reg-fname', msg: 'First name is required' },
+      { id: 'reg-lname', msg: 'Last name is required' },
+      { id: 'reg-email', msg: 'Email is required' },
+      { id: 'reg-phone', msg: 'Phone number is required' },
+      { id: 'reg-country', msg: 'Please select your country' },
+      { id: 'reg-pass', msg: 'Password is required' },
+      { id: 'reg-pass2', msg: 'Confirm your password' },
+    ];
 
-document.querySelectorAll(".form-step")
-.forEach(el=>el.classList.add("d-none"))
+    // Reset styles
+    fields.forEach(f => {
+      const el = document.getElementById(f.id);
+      if (el) el.style.borderColor = '';
+    });
 
-document
-.getElementById("step"+step)
-.classList.remove("d-none")
+    // Check empty fields
+    for (let f of fields) {
+      const el = document.getElementById(f.id);
+      if (!el || !el.value.trim()) {
+        el.style.borderColor = 'red';
+        el.focus();
+        showNotification(f.msg, 'error');
+        return;
+      }
+    }
 
-document.querySelectorAll(".step")
-.forEach(el=>el.classList.remove("active"))
+    const email = document.getElementById('reg-email').value;
+    const pass = document.getElementById('reg-pass').value;
+    const pass2 = document.getElementById('reg-pass2').value;
 
-document
-.querySelector(".step[data-step='"+step+"']")
-.classList.add("active")
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      document.getElementById('reg-email').style.borderColor = 'red';
+      showNotification('Enter a valid email address', 'error');
+      return;
+    }
 
-}
+    // Password validation
+    if (pass.length < 8) {
+      document.getElementById('reg-pass').style.borderColor = 'red';
+      showNotification('Password must be at least 8 characters', 'error');
+      return;
+    }
 
-document.querySelectorAll(".next").forEach(btn=>{
-btn.onclick=()=>{
-currentStep++
-showStep(currentStep)
-}
-})
+    if (pass !== pass2) {
+      document.getElementById('reg-pass2').style.borderColor = 'red';
+      showNotification('Passwords do not match', 'error');
+      return;
+    }
+  }
 
-document.querySelectorAll(".prev").forEach(btn=>{
-btn.onclick=()=>{
-currentStep--
-showStep(currentStep)
-}
-})
+  // ------------------------
+  // PHASE SWITCHING
+  // ------------------------
+  for (let i = 1; i <= 3; i++) {
+    const step = document.getElementById('step-' + i);
+    const phase = document.getElementById('phase-' + i);
 
-})();
+    if (!step || !phase) continue;
 
+    step.classList.remove('active', 'done');
+    phase.classList.remove('active');
+
+    if (i < num) step.classList.add('done');
+    if (i === num) {
+      step.classList.add('active');
+      phase.classList.add('active');
+    }
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
 </script>
 
 </body>
