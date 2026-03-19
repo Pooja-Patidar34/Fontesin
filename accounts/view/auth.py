@@ -174,4 +174,4 @@ def register_view(request):
         messages.success(request, "Account created successfully")
         return redirect("admin:login")
 
-    return render(request, "auth/register.html", {"companies": companies})
+    return render(request, "website/register.html", {"companies": companies})

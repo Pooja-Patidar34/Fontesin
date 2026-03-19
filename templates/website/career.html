@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#253D51"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="FONTESIN"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="apple-touch-icon" href="images/icons/icon-192.png"/>
+  <title>Careers – FONTESIN</title>
+  <meta name="description" content="Join the FONTESIN team. We are looking for engineers, product managers, regional coordinators, and business development professionals."/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    .job-detail-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.5);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .job-detail-modal.open { display: flex; }
+    .job-detail-box {
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+    }
+    .job-detail-close {
+      position: absolute;
+      top: 16px; right: 16px;
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      color: var(--secondary);
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="navbar__inner">
+    <a href="index.html" class="navbar__logo"><img src="images/logo_full.png" alt="FONTESIN" height="38"/></a>
+    <div class="navbar__nav">
+      <a href="index.html">Home</a>
+      <a href="world-map.html">World Map</a>
+      <a href="about.html">About</a>
+      <a href="careers.html" class="active">Careers</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
+    <div class="navbar__actions">
+      <a href="login.html" class="btn btn-outline btn-sm">Log In</a>
+      <a href="register.html" class="btn btn-primary btn-sm">Get Started</a>
+    </div>
+  </div>
+</nav>
+
+<!-- PAGE HEADER -->
+<section class="page-header">
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="index.html">Home</a>
+      <span>/</span>
+      <span>Careers</span>
+    </div>
+    <h1>Join Our Team</h1>
+    <p>We are not looking for employees — we are looking for partners. Join the team building the global infrastructure for trusted business collaboration.</p>
+  </div>
+</section>
+
+<!-- WHY JOIN -->
+<section class="section section--light">
+  <div class="container">
+    <div class="grid-3">
+      <div class="card">
+        <div class="card__icon">🌍</div>
+        <h4 class="card__title">Global Impact</h4>
+        <p class="card__text">Work on a platform that will connect millions of companies and professionals across 177+ countries. Your work has real, measurable global reach.</p>
+      </div>
+      <div class="card">
+        <div class="card__icon">🚀</div>
+        <h4 class="card__title">Pre-MVP Stage</h4>
+        <p class="card__text">Join at the ground floor. Shape the product, the culture, and the direction of a deep-tech platform from day one. Pioneer equity available.</p>
+      </div>
+      <div class="card">
+        <div class="card__icon">🤝</div>
+        <h4 class="card__title">Remote-First</h4>
+        <p class="card__text">Work from anywhere in the world. We are a globally distributed team with async-first communication and flexible working arrangements.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- OPEN POSITIONS -->
+<section class="section">
+  <div class="container">
+    <span class="section-label">Open Positions</span>
+    <h2 class="section-title">Current Opportunities</h2>
+    <p class="section-subtitle">We are actively hiring across engineering, product, business development, and regional operations. All positions are remote-friendly.</p>
+
+    <!-- Engineering -->
+    <h3 style="margin-bottom:16px;margin-top:40px;font-size:1.1rem;color:var(--secondary);font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-family:'Montserrat',sans-serif;">Engineering</h3>
+    <div class="job-list">
+
+      <div class="job-card">
+        <div class="job-card__left">
+          <h4 class="job-card__title">Senior Backend Engineer (FastAPI / Python)</h4>
+          <div class="job-card__tags">
+            <span class="tag tag--primary">Engineering</span>
+            <span class="tag tag--green">Full-time</span>
+            <span class="tag">Remote</span>
+            <span class="tag">Python · FastAPI · PostgreSQL</span>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openJob('backend')">View Details</button>
+      </div>
+
+      <div class="job-card">
+        <div class="job-card__left">
+          <h4 class="job-card__title">Frontend Engineer (React / TypeScript)</h4>
+          <div class="job-card__tags">
+            <span class="tag tag--primary">Engineering</span>
+            <span class="tag tag--green">Full-time</span>
+            <span class="tag">Remote</span>
+            <span class="tag">React · TypeScript · TailwindCSS</span>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openJob('frontend')">View Details</button>
+      </div>
+
+      <div class="job-card">
+        <div class="job-card__left">
+          <h4 class="job-card__title">DevOps / Infrastructure Engineer</h4>
+          <div class="job-card__tags">
+            <span class="tag tag--primary">Engineering</span>
+            <span class="tag tag--green">Full-time</span>
+            <span class="tag">Remote</span>
+            <span class="tag">Kubernetes · AWS · CI/CD</span>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openJob('devops')">View Details</button>
+      </div>
+
+      <div class="job-card">
+        <div class="job-card__left">
+          <h4 class="job-card__title">AI / ML Engineer</h4>
+          <div class="job-card__tags">
+            <span class="tag tag--primary">Engineering</span>
+            <span class="tag tag--yellow">Contract</span>
+            <span class="tag">Remote</span>
+            <span class="tag">LLM · Python · NLP</span>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openJob('ai')">View Details</button>
+      </div>
+
+    </div>
+
+    <!-- Product & Design -->
+    <h3 style="margin-bottom:16px;margin-top:40px;font-size:1.1rem;color:var(--secondary);font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-family:'Montserrat',sans-serif;">Product &amp; Design</h3>
+    <div class="job-list">
+
+      <div class="job-card">
+        <div class="job-card__left">
+          <h4 class="job-card__title">Product Manager – Platform Core</h4>
+          <div class="job-card__tags">
+            <span class="tag tag--primary">Product</span>
+            <span class="tag tag--green">Full-time</span>
+            <span class="tag">Remote</span>
+            <span class="tag">B2B SaaS · Agile · Jira</span>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openJob('pm')">View Details</button>
+      </div>
+
+      <div class="job-card">
+        <div class="job-card__left">
+          <h4 class="job-card__title">UX/UI Designer</h4>
+          <div class="job-card__tags">
+            <span class="tag tag--primary">Design</span>
+            <span class="tag tag--yellow">Contract</span>
+            <span class="tag">Remote</span>
+            <span class="tag">Figma · Design Systems</span>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openJob('ux')">View Details</button>
+      </div>
+
+    </div>
+
+    <!-- Business & Regional -->
+    <h3 style="margin-bottom:16px;margin-top:40px;font-size:1.1rem;color:var(--secondary);font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-family:'Montserrat',sans-serif;">Business &amp; Regional</h3>
+    <div class="job-list">
+
+      <div class="job-card">
+        <div class="job-card__left">
+          <h4 class="job-card__title">Regional Coordinator – Central Europe</h4>
+          <div class="job-card__tags">
+            <span class="tag tag--primary">Business</span>
+            <span class="tag tag--green">Full-time</span>
+            <span class="tag">Prague / Remote</span>
+            <span class="tag">CZ · SK · AT · PL</span>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openJob('regional-ce')">View Details</button>
+      </div>
+
+      <div class="job-card">
+        <div class="job-card__left">
+          <h4 class="job-card__title">Regional Coordinator – Middle East</h4>
+          <div class="job-card__tags">
+            <span class="tag tag--primary">Business</span>
+            <span class="tag tag--yellow">Contract</span>
+            <span class="tag">Dubai / Remote</span>
+            <span class="tag">UAE · KSA · QA</span>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openJob('regional-me')">View Details</button>
+      </div>
+
+      <div class="job-card">
+        <div class="job-card__left">
+          <h4 class="job-card__title">Business Development Manager – Franchise</h4>
+          <div class="job-card__tags">
+            <span class="tag tag--primary">Business</span>
+            <span class="tag tag--green">Full-time</span>
+            <span class="tag">Remote</span>
+            <span class="tag">Franchise · B2B · Sales</span>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openJob('biz-dev')">View Details</button>
+      </div>
+
+      <div class="job-card">
+        <div class="job-card__left">
+          <h4 class="job-card__title">Business Consultant (Freelance Network)</h4>
+          <div class="job-card__tags">
+            <span class="tag tag--primary">Consulting</span>
+            <span class="tag tag--yellow">Freelance</span>
+            <span class="tag">Remote</span>
+            <span class="tag">Multiple Regions</span>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openJob('consultant')">View Details</button>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- APPLY CTA -->
+<section class="section section--dark">
+  <div class="container text-center">
+    <h2 class="section-title text-white">Don't See Your Role?</h2>
+    <p style="color:rgba(199,204,209,.7);max-width:520px;margin:0 auto 32px;">We are always looking for exceptional people. Send us your profile and tell us how you can contribute to the FONTESIN mission.</p>
+    <a href="contact.html" class="btn btn--white btn-lg">Send Open Application</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer__grid">
+      <div>
+        <div class="footer__logo"><img src="images/logo_full.png" alt="FONTESIN" style="height:32px;width:auto;filter:brightness(0) invert(1);margin-bottom:12px;"/></div>
+        <p class="footer__brand-desc">A deep-tech global business infrastructure platform connecting companies, professionals, and markets across languages, borders, and systems.</p>
+      </div>
+      <div>
+        <p class="footer__heading">Platform</p>
+        <div class="footer__links">
+          <a href="world-map.html">World Map</a>
+          <a href="register.html">Get Started</a>
+          <a href="login.html">Log In</a>
+        </div>
+      </div>
+      <div>
+        <p class="footer__heading">Company</p>
+        <div class="footer__links">
+          <a href="about.html">About Us</a>
+          <a href="careers.html">Careers</a>
+          <a href="contact.html">Contact</a>
+        </div>
+      </div>
+      <div>
+        <p class="footer__heading">Regions</p>
+        <div class="footer__links">
+          <a href="region-us.html">United States</a>
+          <a href="region-de.html">Germany</a>
+          <a href="region-cz.html">Czech Republic</a>
+          <a href="region-ae.html">UAE</a>
+          <a href="region-jp.html">Japan</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span>© 2026 FONTES Inc. All rights reserved.</span>
+      <span>Design by Memento Mori Digital LLC</span>
+    </div>
+  </div>
+</footer>
+
+<!-- JOB DETAIL MODAL -->
+<div class="job-detail-modal" id="job-modal">
+  <div class="job-detail-box">
+    <button class="job-detail-close" onclick="closeJob()">✕</button>
+    <div id="job-modal-content"></div>
+  </div>
+</div>
+
+<script>
+const JOB_DETAILS = {
+  backend: {
+    title: 'Senior Backend Engineer (FastAPI / Python)',
+    type: 'Full-time · Remote',
+    desc: 'We are looking for a senior backend engineer to build and maintain the core API infrastructure of the FONTESIN platform. You will work on tenant-isolated data architecture, billing integrations, and real-time data ingestion pipelines.',
+    requirements: ['5+ years Python experience', 'FastAPI or similar async framework', 'PostgreSQL, Redis', 'Microservices architecture', 'REST API design', 'Docker / Kubernetes'],
+    nice: ['Experience with multi-tenant SaaS', 'Knowledge of ABAC security models', 'German or Czech language a plus'],
+  },
+  frontend: {
+    title: 'Frontend Engineer (React / TypeScript)',
+    type: 'Full-time · Remote',
+    desc: 'Build the user-facing platform including the interactive world map, company database UI, onboarding flows, and admin dashboards. You will work closely with the product and design team.',
+    requirements: ['4+ years React experience', 'TypeScript proficiency', 'TailwindCSS or similar', 'REST API integration', 'Responsive design', 'Performance optimization'],
+    nice: ['Next.js experience', 'SVG / D3.js for data visualization', 'i18n / multilingual apps'],
+  },
+  devops: {
+    title: 'DevOps / Infrastructure Engineer',
+    type: 'Full-time · Remote',
+    desc: 'Own the infrastructure, CI/CD pipelines, monitoring, and deployment of the FONTESIN platform across multiple regions. Ensure high availability and security compliance.',
+    requirements: ['Kubernetes (EKS/GKE)', 'Terraform / IaC', 'AWS or GCP', 'CI/CD (GitHub Actions / GitLab)', 'Monitoring (Prometheus / Grafana)', 'Security best practices'],
+    nice: ['SOC2 compliance experience', 'Multi-region deployment', 'Database replication'],
+  },
+  ai: {
+    title: 'AI / ML Engineer',
+    type: 'Contract · Remote',
+    desc: 'Develop and integrate AI features including intelligent company matching, multilingual content translation, and business potential scoring algorithms.',
+    requirements: ['Python ML stack (PyTorch / HuggingFace)', 'LLM integration (OpenAI / Anthropic)', 'NLP and text classification', 'API design for AI services', 'Data pipeline experience'],
+    nice: ['Multilingual NLP', 'Recommendation systems', 'RAG architectures'],
+  },
+  pm: {
+    title: 'Product Manager – Platform Core',
+    type: 'Full-time · Remote',
+    desc: 'Own the product roadmap for the core platform including company registration, certification, licensing, and the world map module. Work directly with engineering and the founding team.',
+    requirements: ['3+ years B2B SaaS PM experience', 'Agile / Scrum methodology', 'Jira proficiency', 'Data-driven decision making', 'Strong written communication'],
+    nice: ['Experience with marketplace or network products', 'International market experience'],
+  },
+  ux: {
+    title: 'UX/UI Designer',
+    type: 'Contract · Remote',
+    desc: 'Design and refine the FONTESIN user experience across web and mobile. Work within the established brand guidelines to create clear, minimal, and globally usable interfaces.',
+    requirements: ['Figma proficiency', 'Design systems experience', 'UX research skills', 'Responsive design', 'Accessibility standards'],
+    nice: ['B2B platform design experience', 'Data visualization design', 'Motion design'],
+  },
+  'regional-ce': {
+    title: 'Regional Coordinator – Central Europe',
+    type: 'Full-time · Prague / Remote',
+    desc: 'Lead FONTESIN\'s market activation and franchise development across Czech Republic, Slovakia, Austria, and Poland. Build and manage the local consultant network.',
+    requirements: ['Business development experience', 'Czech or Slovak language (native)', 'B2B sales experience', 'Network in Central European business community', 'English proficiency'],
+    nice: ['Franchise industry knowledge', 'Legal entity registration experience'],
+  },
+  'regional-me': {
+    title: 'Regional Coordinator – Middle East',
+    type: 'Contract · Dubai / Remote',
+    desc: 'Drive FONTESIN\'s expansion into UAE, Saudi Arabia, and Qatar. Establish local partnerships, manage franchise inquiries, and coordinate with HQ on regional activation.',
+    requirements: ['5+ years business experience in the Gulf region', 'Arabic language (preferred)', 'Strong local business network', 'English proficiency', 'Understanding of UAE/KSA business regulations'],
+    nice: ['Free zone company setup experience', 'Fintech or tech industry background'],
+  },
+  'biz-dev': {
+    title: 'Business Development Manager – Franchise',
+    type: 'Full-time · Remote',
+    desc: 'Identify, qualify, and onboard Master Franchise partners across target regions. Manage the full franchise sales cycle from initial inquiry to contract signing.',
+    requirements: ['3+ years franchise or B2B sales experience', 'CRM proficiency', 'Excellent presentation skills', 'International business experience', 'English proficiency'],
+    nice: ['Second language (German, French, Arabic, or Japanese)', 'Legal background a plus'],
+  },
+  consultant: {
+    title: 'Business Consultant (Freelance Network)',
+    type: 'Freelance · Remote · Multiple Regions',
+    desc: 'Join the FONTESIN consultant network as an independent business advisor. Help local companies get verified, certified, and connected to the global platform.',
+    requirements: ['Business consulting experience', 'Local market knowledge', 'Professional certification or credentials', 'English proficiency', 'Entrepreneurial mindset'],
+    nice: ['Legal or financial advisory background', 'International business experience'],
+  },
+};
+
+function openJob(id) {
+  const job = JOB_DETAILS[id];
+  if (!job) return;
+  const req = job.requirements.map(r => `<li style="padding:4px 0;font-size:.88rem;color:var(--text-secondary);">• ${r}</li>`).join('');
+  const nice = job.nice ? job.nice.map(r => `<li style="padding:4px 0;font-size:.88rem;color:var(--text-secondary);">• ${r}</li>`).join('') : '';
+  document.getElementById('job-modal-content').innerHTML = `
+    <div style="margin-bottom:24px;">
+      <h3 style="margin-bottom:8px;">${job.title}</h3>
+      <span class="tag tag--green" style="font-size:.78rem;">${job.type}</span>
+    </div>
+    <p style="margin-bottom:24px;">${job.desc}</p>
+    <h4 style="margin-bottom:12px;">Requirements</h4>
+    <ul style="list-style:none;margin-bottom:24px;">${req}</ul>
+    ${nice ? `<h4 style="margin-bottom:12px;">Nice to Have</h4><ul style="list-style:none;margin-bottom:24px;">${nice}</ul>` : ''}
+    <a href="contact.html" class="btn btn-primary w-full" style="display:block;text-align:center;">Apply for This Position</a>
+  `;
+  document.getElementById('job-modal').classList.add('open');
+}
+
+function closeJob() {
+  document.getElementById('job-modal').classList.remove('open');
+}
+
+document.getElementById('job-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeJob();
+});
+</script>
+<script src="js/main.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function() {
+        navigator.serviceWorker.register("/sw.js")
+          .then(function(reg) { console.log("[PWA] SW registered:", reg.scope); })
+          .catch(function(err) { console.warn("[PWA] SW registration failed:", err); });
+      });
+    }
+  </script>
+</body>
+</html>

@@ -2,13 +2,12 @@
    FONTESIN – Main JavaScript
    ============================================================ */
 
+// ---- Active nav link ----
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('FONTESIN Admin JS Loaded');
-  // Active nav link
-  const currentPage = window.location.pathname.split('/').pop() || '';
+  const currentPage = window.location.pathname.split('/').pop() || 'index.html';
   document.querySelectorAll('.navbar__nav a').forEach(link => {
     const href = link.getAttribute('href');
-    if (href === currentPage) {
+    if (href === currentPage || (currentPage === '' && href === 'index.html')) {
       link.classList.add('active');
     }
   });
@@ -23,8 +22,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }, { threshold: 0.1 });
 
-  document.querySelectorAll('.card, .data-card, .job-card, .team-card, .value-item')
-    .forEach(el => observer.observe(el));
+  document.querySelectorAll('.card, .data-card, .job-card, .team-card, .value-item').forEach(el => {
+    observer.observe(el);
+  });
 
   // Progress bars
   document.querySelectorAll('.progress-bar-fill').forEach(bar => {
@@ -46,40 +46,35 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Contact form
+  // Form submit handlers
   const contactForm = document.getElementById('contact-form');
   if (contactForm) {
     contactForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      showNotification('Your message has been sent.', 'success');
+      showNotification('Your message has been sent. We will get back to you shortly.', 'success');
       contactForm.reset();
     });
   }
 
-  // Login form
   const loginForm = document.getElementById('login-form');
   if (loginForm) {
     loginForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      showNotification('Login coming soon.', 'info');
+      showNotification('Login functionality coming soon. Platform is in Pre-MVP phase.', 'info');
     });
   }
 
-  // Register form (IMPORTANT: remove duplicate handling if Django handles POST)
   const registerForm = document.getElementById('register-form');
   if (registerForm) {
     registerForm.addEventListener('submit', (e) => {
-      // ❗ COMMENT THIS if using Django backend submit
-      // e.preventDefault();
-      // showNotification('Registration submitted!', 'success');
-      // registerForm.reset();
+      e.preventDefault();
+      showNotification('Registration submitted! We will review your application shortly.', 'success');
+      registerForm.reset();
     });
   }
-
 });
 
-
-// Notification
+// ---- Notification ----
 function showNotification(message, type = 'info') {
   const existing = document.querySelector('.notification');
   if (existing) existing.remove();
@@ -87,53 +82,28 @@ function showNotification(message, type = 'info') {
   const n = document.createElement('div');
   n.className = `notification notification--${type}`;
   n.innerHTML = `<span>${message}</span><button onclick="this.parentElement.remove()">✕</button>`;
-
   n.style.cssText = `
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    z-index: 9999;
+    position: fixed; bottom: 24px; right: 24px; z-index: 9999;
     background: ${type === 'success' ? '#16a34a' : '#253D51'};
-    color: #fff;
-    padding: 14px 20px;
-    border-radius: 8px;
+    color: #fff; padding: 14px 20px; border-radius: 8px;
     box-shadow: 0 8px 32px rgba(0,0,0,.2);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-family: 'Inter', sans-serif;
-    font-size: .9rem;
-    max-width: 380px;
+    display: flex; align-items: center; gap: 12px;
+    font-family: 'Inter', sans-serif; font-size: .9rem;
+    max-width: 380px; animation: fadeInUp .3s ease;
   `;
-
-  n.querySelector('button').style.cssText = `
-    background:none;
-    border:none;
-    color:#fff;
-    cursor:pointer;
-    font-size:1rem;
-    opacity:.7;
-  `;
-
+  n.querySelector('button').style.cssText = 'background:none;border:none;color:#fff;cursor:pointer;font-size:1rem;opacity:.7;';
   document.body.appendChild(n);
-
-  setTimeout(() => {
-    if (n.parentElement) n.remove();
-  }, 5000);
+  setTimeout(() => { if (n.parentElement) n.remove(); }, 5000);
 }
 
-
-// Mobile navbar toggle
+// ── Mobile navbar toggle ──────────────────────────────────────────
 function toggleMobileNav() {
   const nav = document.querySelector('.navbar__nav');
   const btn = document.querySelector('.navbar__hamburger');
-
   if (!nav) return;
-
   const isOpen = nav.classList.toggle('mobile-open');
-
   if (btn) btn.textContent = isOpen ? '✕' : '☰';
-
+  // Close on outside click
   if (isOpen) {
     document.addEventListener('click', function handler(e) {
       if (!nav.contains(e.target) && !e.target.closest('.navbar__hamburger')) {
@@ -144,15 +114,12 @@ function toggleMobileNav() {
     });
   }
 }
-
-
 // Close mobile nav on link click
 document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('.navbar__nav a').forEach(function(a) {
     a.addEventListener('click', function() {
       const nav = document.querySelector('.navbar__nav');
       const btn = document.querySelector('.navbar__hamburger');
-
       if (nav) nav.classList.remove('mobile-open');
       if (btn) btn.textContent = '☰';
     });

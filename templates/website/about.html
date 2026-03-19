@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#253D51"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="FONTESIN"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="apple-touch-icon" href="images/icons/icon-192.png"/>
+  <title>About Us – FONTESIN</title>
+  <meta name="description" content="Learn about FONTESIN – our mission, team, values, and vision for global business infrastructure."/>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="navbar__inner">
+    <a href="index.html" class="navbar__logo"><img src="images/logo_full.png" alt="FONTESIN" height="38"/></a>
+    <div class="navbar__nav">
+      <a href="index.html">Home</a>
+      <a href="world-map.html">World Map</a>
+      <a href="about.html" class="active">About</a>
+      <a href="careers.html">Careers</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
+    <div class="navbar__actions">
+      <a href="login.html" class="btn btn-outline btn-sm">Log In</a>
+      <a href="register.html" class="btn btn-primary btn-sm">Get Started</a>
+    </div>
+  </div>
+</nav>
+
+<!-- PAGE HEADER -->
+<section class="page-header">
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="index.html">Home</a>
+      <span>/</span>
+      <span>About Us</span>
+    </div>
+    <h1>About FONTESIN</h1>
+    <p>We are building the global infrastructure for trusted business communication, certification, and collaboration — without borders.</p>
+  </div>
+</section>
+
+<!-- MISSION -->
+<section class="section">
+  <div class="container">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;">
+      <div>
+        <span class="section-label">Our Mission</span>
+        <h2 class="section-title">Trusted Infrastructure for Global Business</h2>
+        <p style="margin-bottom:20px;">FONTESIN is a deep-tech communication and certification platform designed to create a trusted, decentralized infrastructure for business. We connect companies, professionals, and markets across languages, borders, and systems.</p>
+        <p style="margin-bottom:20px;">Our platform is not just a marketplace — it is a structured ecosystem where every participant is verified, every interaction is traceable, and every market is accessible through a single, unified interface.</p>
+        <p>We are currently in our Pre-MVP phase, onboarding pioneer members, franchise partners, and regional coordinators who will shape the foundation of the platform.</p>
+      </div>
+      <div>
+        <div style="background:linear-gradient(135deg,var(--primary-dark),var(--primary-mid));border-radius:16px;padding:40px;color:#fff;">
+          <div style="font-family:'Montserrat',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:24px;color:var(--accent);">Platform Vision</div>
+          <div style="display:flex;flex-direction:column;gap:20px;">
+            <div style="display:flex;gap:16px;">
+              <span style="font-size:1.5rem;">🌍</span>
+              <div>
+                <div style="font-family:'Montserrat',sans-serif;font-weight:600;margin-bottom:4px;">Global Reach</div>
+                <div style="font-size:.85rem;color:rgba(199,204,209,.7);">177+ countries mapped, 10 active regions, expanding annually.</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:16px;">
+              <span style="font-size:1.5rem;">🔐</span>
+              <div>
+                <div style="font-family:'Montserrat',sans-serif;font-weight:600;margin-bottom:4px;">Verified Trust</div>
+                <div style="font-size:.85rem;color:rgba(199,204,209,.7);">KYC-verified users, certified companies, auditable data.</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:16px;">
+              <span style="font-size:1.5rem;">⚡</span>
+              <div>
+                <div style="font-family:'Montserrat',sans-serif;font-weight:600;margin-bottom:4px;">Scalable Architecture</div>
+                <div style="font-size:.85rem;color:rgba(199,204,209,.7);">Tenant-isolated, license-controlled, enterprise-grade infrastructure.</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:16px;">
+              <span style="font-size:1.5rem;">🤖</span>
+              <div>
+                <div style="font-family:'Montserrat',sans-serif;font-weight:600;margin-bottom:4px;">AI-Powered</div>
+                <div style="font-size:.85rem;color:rgba(199,204,209,.7);">Intelligent matching, multilingual support, automated data ingestion.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VALUES -->
+<section class="section section--light">
+  <div class="container">
+    <span class="section-label">Our Principles</span>
+    <h2 class="section-title">Four Pillars of FONTESIN</h2>
+    <p class="section-subtitle">Our visual identity and product philosophy are built on four core principles that guide every decision we make.</p>
+    <div class="values-grid">
+      <div class="value-item">
+        <div class="value-item__icon">🛡️</div>
+        <div>
+          <h4 class="value-item__title">Trust</h4>
+          <p class="value-item__text">Visual clarity and consistency reinforce the perception of reliability. Every interaction on FONTESIN is backed by verified data and auditable processes.</p>
+        </div>
+      </div>
+      <div class="value-item">
+        <div class="value-item__icon">🏗️</div>
+        <div>
+          <h4 class="value-item__title">Infrastructure</h4>
+          <p class="value-item__text">The design feels structured and systematic rather than decorative. We are building the backbone of global business communication, not a consumer app.</p>
+        </div>
+      </div>
+      <div class="value-item">
+        <div class="value-item__icon">✂️</div>
+        <div>
+          <h4 class="value-item__title">Simplicity</h4>
+          <p class="value-item__text">Minimalism supports scalability and global usability. Complex systems should feel simple to use — that is the hardest engineering challenge we embrace.</p>
+        </div>
+      </div>
+      <div class="value-item">
+        <div class="value-item__icon">🌐</div>
+        <div>
+          <h4 class="value-item__title">Global Neutrality</h4>
+          <p class="value-item__text">The brand functions across cultures and markets without visual bias. FONTESIN is designed for the world — not for a single region or demographic.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TIMELINE -->
+<section class="section section--dark">
+  <div class="container">
+    <span class="section-label text-accent">Development Roadmap</span>
+    <h2 class="section-title text-white">Where We Are Heading</h2>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:40px;">
+      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:28px;">
+        <div style="font-family:'Montserrat',sans-serif;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#4ade80;margin-bottom:12px;">Phase 1 · Q4 2025</div>
+        <h4 style="color:#fff;margin-bottom:12px;">MVP Launch</h4>
+        <p style="font-size:.88rem;color:rgba(199,204,209,.7);">Core communication, company registration, certification system, world map, and basic licensing model.</p>
+      </div>
+      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:28px;">
+        <div style="font-family:'Montserrat',sans-serif;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#fbbf24;margin-bottom:12px;">Phase 2 · Q2 2026</div>
+        <h4 style="color:#fff;margin-bottom:12px;">AI Integration</h4>
+        <p style="font-size:.88rem;color:rgba(199,204,209,.7);">AI-powered matching, multilingual platform, partnership network, billing engine, and regional expansion.</p>
+      </div>
+      <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:28px;">
+        <div style="font-family:'Montserrat',sans-serif;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:12px;">Phase 3 · Q4 2026</div>
+        <h4 style="color:#fff;margin-bottom:12px;">Global Rollout</h4>
+        <p style="font-size:.88rem;color:rgba(199,204,209,.7);">Full global deployment, tokenized rewards, franchise ecosystem, and decentralized certification layer.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TEAM -->
+<section class="section">
+  <div class="container">
+    <span class="section-label">Our Team</span>
+    <h2 class="section-title">The People Behind FONTESIN</h2>
+    <p class="section-subtitle">A cross-functional team of business leaders, strategists, and regional experts united by a common vision of global business freedom.</p>
+
+    <style>
+      .team-grid-real {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 32px;
+        margin-top: 48px;
+      }
+      .team-card-real {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,.08);
+        overflow: hidden;
+        transition: transform .25s, box-shadow .25s;
+      }
+      .team-card-real:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 32px rgba(0,0,0,.13);
+      }
+      .team-card-real__photo {
+        width: 100%;
+        aspect-ratio: 3/4;
+        object-fit: cover;
+        object-position: top center;
+        display: block;
+      }
+      .team-card-real__body {
+        padding: 20px 22px 24px;
+      }
+      .team-card-real__name {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 4px;
+      }
+      .team-card-real__role {
+        font-size: .8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: var(--secondary);
+        margin-bottom: 10px;
+      }
+      .team-card-real__bio {
+        font-size: .82rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+      }
+      .team-card-real__badge {
+        display: inline-block;
+        font-size: .7rem;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 20px;
+        background: var(--bg-light);
+        color: var(--primary);
+        margin-top: 12px;
+        border: 1px solid var(--accent);
+      }
+    </style>
+
+    <div class="team-grid-real">
+
+      <!-- Scott Kuttos – CEO -->
+      <div class="team-card-real">
+        <img class="team-card-real__photo" src="images/team_scott_kuttos_enhanced.png" alt="Scott Kuttos – CEO"/>
+        <div class="team-card-real__body">
+          <div class="team-card-real__name">Scott Kuttos</div>
+          <div class="team-card-real__role">Chief Executive Officer</div>
+          <p class="team-card-real__bio">Drives the overall vision and strategic direction of FONTESIN. Brings extensive experience in global business development and executive leadership across international markets.</p>
+          <span class="team-card-real__badge">Leadership</span>
+        </div>
+      </div>
+
+      <!-- Ondrej Kazmar – COO & Co-founder -->
+      <div class="team-card-real">
+        <img class="team-card-real__photo" src="images/team_ondrej_kazmar.jpg" alt="Ondřej Kazmar – COO &amp; Co-founder"/>
+        <div class="team-card-real__body">
+          <div class="team-card-real__name">Ondřej Kazmar</div>
+          <div class="team-card-real__role">COO &amp; Co-Founder</div>
+          <p class="team-card-real__bio">Oversees operational excellence and platform rollout strategy. Co-architect of the FONTESIN business model and franchise infrastructure across Central Europe and beyond.</p>
+          <span class="team-card-real__badge">Operations &middot; Co-Founder</span>
+        </div>
+      </div>
+
+      <!-- Jakub Ramajz – Co-founder -->
+      <div class="team-card-real">
+        <img class="team-card-real__photo" src="images/team_jakub_ramajz_enhanced.png" alt="Jakub Ramajz – Co-founder"/>
+        <div class="team-card-real__body">
+          <div class="team-card-real__name">Jakub Ramajz</div>
+          <div class="team-card-real__role">Co-Founder</div>
+          <p class="team-card-real__bio">One of the founding pillars of FONTESIN. Contributes to the platform's strategic development, partner network, and long-term growth architecture.</p>
+          <span class="team-card-real__badge">Co-Founder</span>
+        </div>
+      </div>
+
+      <!-- Krystof Ramajz – Co-founder -->
+      <div class="team-card-real">
+        <img class="team-card-real__photo" src="images/team_krystof_ramajz_enhanced.png" alt="Kryštof Ramajz – Co-founder"/>
+        <div class="team-card-real__body">
+          <div class="team-card-real__name">Kryštof Ramajz</div>
+          <div class="team-card-real__role">Co-Founder</div>
+          <p class="team-card-real__bio">Shapes the product vision and technological direction of FONTESIN. Focused on building scalable, user-centric solutions for global business collaboration.</p>
+          <span class="team-card-real__badge">Co-Founder</span>
+        </div>
+      </div>
+
+      <!-- Karel Ramajzl – Strategy Idealist -->
+      <div class="team-card-real">
+        <img class="team-card-real__photo" src="images/team_karel_ramajzl_enhanced.png" alt="Karel Ramajzl – Strategy Idealist"/>
+        <div class="team-card-real__body">
+          <div class="team-card-real__name">Karel Ramajzl</div>
+          <div class="team-card-real__role">Strategy Idealist</div>
+          <p class="team-card-real__bio">The visionary strategist behind FONTESIN's long-term philosophy. Brings decades of experience in business strategy, market analysis, and ideation for transformative global platforms.</p>
+          <span class="team-card-real__badge">Strategy</span>
+        </div>
+      </div>
+
+      <!-- Ekrem Auinger – Coordinator for Germany -->
+      <div class="team-card-real">
+        <img class="team-card-real__photo" src="images/team_ekrem_auinger_enhanced.png" alt="Ekrem Auinger – Coordinator for Germany"/>
+        <div class="team-card-real__body">
+          <div class="team-card-real__name">Ekrem Auinger</div>
+          <div class="team-card-real__role">Regional Coordinator &ndash; Germany</div>
+          <p class="team-card-real__bio">Leads FONTESIN's regional expansion and partner activation in Germany. Bridges the Central European business community with the global FONTESIN network.</p>
+          <span class="team-card-real__badge">Germany Region</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="section section--light">
+  <div class="container">
+    <div class="grid-4" style="text-align:center;">
+      <div>
+        <div style="font-family:'Montserrat',sans-serif;font-size:2.8rem;font-weight:800;color:var(--primary);">177+</div>
+        <div style="font-size:.85rem;color:var(--secondary);font-weight:500;margin-top:4px;">Countries Mapped</div>
+      </div>
+      <div>
+        <div style="font-family:'Montserrat',sans-serif;font-size:2.8rem;font-weight:800;color:var(--primary);">10</div>
+        <div style="font-size:.85rem;color:var(--secondary);font-weight:500;margin-top:4px;">Active Regions</div>
+      </div>
+      <div>
+        <div style="font-family:'Montserrat',sans-serif;font-size:2.8rem;font-weight:800;color:var(--primary);">200</div>
+        <div style="font-size:.85rem;color:var(--secondary);font-weight:500;margin-top:4px;">Pioneer Members</div>
+      </div>
+      <div>
+        <div style="font-family:'Montserrat',sans-serif;font-size:2.8rem;font-weight:800;color:var(--primary);">4</div>
+        <div style="font-size:.85rem;color:var(--secondary);font-weight:500;margin-top:4px;">License Tiers</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="section">
+  <div class="container text-center">
+    <h2 class="section-title">Join the FONTESIN Movement</h2>
+    <p style="max-width:520px;margin:0 auto 32px;">Be among the first 200 founding members co-creating the future of global business infrastructure.</p>
+    <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+      <a href="register.html" class="btn btn-primary btn-lg">Apply Now</a>
+      <a href="careers.html" class="btn btn-outline btn-lg" style="color:var(--primary);border-color:var(--primary);">View Open Positions</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer__grid">
+      <div>
+        <div class="footer__logo"><img src="images/logo_full.png" alt="FONTESIN" style="height:32px;width:auto;filter:brightness(0) invert(1);margin-bottom:12px;"/></div>
+        <p class="footer__brand-desc">A deep-tech global business infrastructure platform connecting companies, professionals, and markets across languages, borders, and systems.</p>
+      </div>
+      <div>
+        <p class="footer__heading">Platform</p>
+        <div class="footer__links">
+          <a href="world-map.html">World Map</a>
+          <a href="register.html">Get Started</a>
+          <a href="login.html">Log In</a>
+        </div>
+      </div>
+      <div>
+        <p class="footer__heading">Company</p>
+        <div class="footer__links">
+          <a href="about.html">About Us</a>
+          <a href="careers.html">Careers</a>
+          <a href="contact.html">Contact</a>
+        </div>
+      </div>
+      <div>
+        <p class="footer__heading">Regions</p>
+        <div class="footer__links">
+          <a href="region-us.html">United States</a>
+          <a href="region-de.html">Germany</a>
+          <a href="region-cz.html">Czech Republic</a>
+          <a href="region-ae.html">UAE</a>
+          <a href="region-jp.html">Japan</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span>© 2026 FONTES Inc. All rights reserved.</span>
+      <span>Design by Memento Mori Digital LLC</span>
+    </div>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function() {
+        navigator.serviceWorker.register("/sw.js")
+          .then(function(reg) { console.log("[PWA] SW registered:", reg.scope); })
+          .catch(function(err) { console.warn("[PWA] SW registration failed:", err); });
+      });
+    }
+  </script>
+</body>
+</html>

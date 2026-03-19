@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#253D51"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="FONTESIN"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="apple-touch-icon" href="images/icons/icon-192.png"/>
+  <title>World Map – FONTESIN Global Region Control</title>
+  <meta name="description" content="Interactive world map showing FONTESIN active, planned, and inactive regions across the globe."/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    .map-page-wrapper {
+      background: #f0f5f8;
+      min-height: calc(100vh - 68px);
+      padding-top: 68px;
+    }
+    .map-full-header {
+      padding: 40px 0 24px;
+      border-bottom: 1px solid #d4e2ec;
+    }
+    .map-full-header h1 { color: #253D51; font-size: 1.8rem; margin-bottom: 6px; }
+    .map-full-header p  { color: #5F7383; font-size: .9rem; }
+    .map-stats-bar {
+      display: flex;
+      gap: 32px;
+      padding: 20px 0;
+      border-bottom: 1px solid #d4e2ec;
+      flex-wrap: wrap;
+    }
+    .map-stat {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .map-stat__dot {
+      width: 10px; height: 10px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .map-stat__count {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #253D51;
+    }
+    .map-stat__label {
+      font-size: .78rem;
+      color: #5F7383;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      font-family: 'Montserrat', sans-serif;
+    }
+    .map-main {
+      padding: 32px 0;
+    }
+    #world-map-svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 12px;
+      background: #f0f5f8;
+    }
+    .region-cards {
+      margin-top: 48px;
+    }
+    .region-cards h2 {
+      color: #253D51;
+      margin-bottom: 24px;
+      font-size: 1.3rem;
+    }
+    .region-card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .region-card-item {
+      background: #ffffff;
+      border: 1px solid #d4e2ec;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: .2s ease;
+      text-decoration: none;
+      color: inherit;
+      box-shadow: 0 2px 8px rgba(37,61,81,.06);
+    }
+    .region-card-item:hover {
+      background: #f0f5f8;
+      border-color: #5F8FAA;
+      box-shadow: 0 4px 16px rgba(37,61,81,.12);
+    }
+    .region-card-item__flag { font-size: 2.2rem; }
+    .region-card-item__name {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 600;
+      color: #253D51;
+      font-size: .95rem;
+      margin-bottom: 4px;
+    }
+    .region-card-item__info { font-size: .78rem; color: #5F7383; }
+    .region-card-item--inactive { opacity: .6; cursor: default; }
+    .region-card-item--inactive:hover { background: #ffffff; border-color: #d4e2ec; box-shadow: 0 2px 8px rgba(37,61,81,.06); }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="navbar__inner">
+    <a href="index.html" class="navbar__logo"><img src="images/logo_full.png" alt="FONTESIN" height="38"/></a>
+    <div class="navbar__nav">
+      <a href="index.html">Home</a>
+      <a href="world-map.html" class="active">World Map</a>
+      <a href="about.html">About</a>
+      <a href="careers.html">Careers</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
+    <div class="navbar__actions">
+      <a href="login.html" class="btn btn-outline btn-sm">Log In</a>
+      <a href="register.html" class="btn btn-primary btn-sm">Get Started</a>
+    </div>
+  </div>
+</nav>
+
+<!-- MAP PAGE -->
+<div class="map-page-wrapper">
+  <div class="container">
+
+    <div class="map-full-header">
+      <div class="breadcrumb">
+        <a href="index.html">Home</a>
+        <span>/</span>
+        <span>World Map</span>
+      </div>
+      <h1>Region Control &amp; Global Entry Map</h1>
+      <p>The world map is our regional control layer — a live interface for global rollout, licensing, and franchise activation.</p>
+    </div>
+
+    <div class="map-stats-bar">
+      <div class="map-stat">
+        <span class="map-stat__dot" style="background:#253D51;"></span>
+        <span class="map-stat__count">10</span>
+        <span class="map-stat__label">Active Regions</span>
+      </div>
+      <div class="map-stat">
+        <span class="map-stat__dot" style="background:#5F8FAA;"></span>
+        <span class="map-stat__count">10</span>
+        <span class="map-stat__label">Planned Expansion</span>
+      </div>
+      <div class="map-stat">
+        <span class="map-stat__dot" style="background:#D8E4EC;border:1px solid #b8cdd9;"></span>
+        <span class="map-stat__count">157+</span>
+        <span class="map-stat__label">Not Yet Available</span>
+      </div>
+      <div class="map-stat" style="margin-left:auto;">
+        <span class="map-stat__label" style="color:#5F7383;">Click a highlighted country for details</span>
+      </div>
+    </div>
+
+    <div class="map-main">
+      <div style="position:relative;">
+        <!-- Inline SVG world map loaded via JavaScript -->
+        <div id="svg-map-container" style="border-radius:12px;overflow:hidden;background:#f0f5f8;border:1px solid #d4e2ec;"></div>
+        <div class="map-tooltip" id="map-tooltip"></div>
+      </div>
+    </div>
+
+    <!-- Region Cards -->
+    <div class="region-cards">
+      <h2>Active &amp; Planned Regions</h2>
+      <div class="region-card-grid">
+
+        <a href="region-us.html" class="region-card-item">
+          <span class="region-card-item__flag">🇺🇸</span>
+          <div>
+            <div class="region-card-item__name">United States</div>
+            <div class="region-card-item__info">
+              <span class="status-badge status-badge--active" style="font-size:.7rem;padding:2px 8px;">Active · Year 1</span>
+            </div>
+          </div>
+        </a>
+
+        <a href="region-de.html" class="region-card-item">
+          <span class="region-card-item__flag">🇩🇪</span>
+          <div>
+            <div class="region-card-item__name">Germany</div>
+            <div class="region-card-item__info">
+              <span class="status-badge status-badge--active" style="font-size:.7rem;padding:2px 8px;">Active · Year 1</span>
+            </div>
+          </div>
+        </a>
+
+        <a href="region-cz.html" class="region-card-item">
+          <span class="region-card-item__flag">🇨🇿</span>
+          <div>
+            <div class="region-card-item__name">Czech Republic</div>
+            <div class="region-card-item__info">
+              <span class="status-badge status-badge--active" style="font-size:.7rem;padding:2px 8px;">Active · Year 1</span>
+            </div>
+          </div>
+        </a>
+
+        <div class="region-card-item" style="cursor:default;">
+          <span class="region-card-item__flag">🇬🇧</span>
+          <div>
+            <div class="region-card-item__name">United Kingdom</div>
+            <div class="region-card-item__info">
+              <span class="status-badge status-badge--active" style="font-size:.7rem;padding:2px 8px;">Active · Year 1</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="region-card-item" style="cursor:default;">
+          <span class="region-card-item__flag">🇫🇷</span>
+          <div>
+            <div class="region-card-item__name">France</div>
+            <div class="region-card-item__info">
+              <span class="status-badge status-badge--active" style="font-size:.7rem;padding:2px 8px;">Active · Year 1</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="region-card-item" style="cursor:default;">
+          <span class="region-card-item__flag">🇳🇱</span>
+          <div>
+            <div class="region-card-item__name">Netherlands</div>
+            <div class="region-card-item__info">
+              <span class="status-badge status-badge--active" style="font-size:.7rem;padding:2px 8px;">Active · Year 1</span>
+            </div>
+          </div>
+        </div>
+
+        <a href="region-ae.html" class="region-card-item">
+          <span class="region-card-item__flag">🇦🇪</span>
+          <div>
+            <div class="region-card-item__name">United Arab Emirates</div>
+            <div class="region-card-item__info">
+              <span class="status-badge status-badge--planned" style="font-size:.7rem;padding:2px 8px;">Planned · Year 2</span>
+            </div>
+          </div>
+        </a>
+
+        <div class="region-card-item" style="cursor:default;">
+          <span class="region-card-item__flag">🇸🇬</span>
+          <div>
+            <div class="region-card-item__name">Singapore</div>
+            <div class="region-card-item__info">
+              <span class="status-badge status-badge--planned" style="font-size:.7rem;padding:2px 8px;">Planned · Year 2</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="region-card-item" style="cursor:default;">
+          <span class="region-card-item__flag">🇨🇦</span>
+          <div>
+            <div class="region-card-item__name">Canada</div>
+            <div class="region-card-item__info">
+              <span class="status-badge status-badge--planned" style="font-size:.7rem;padding:2px 8px;">Planned · Year 2</span>
+            </div>
+          </div>
+        </div>
+
+        <a href="region-jp.html" class="region-card-item">
+          <span class="region-card-item__flag">🇯🇵</span>
+          <div>
+            <div class="region-card-item__name">Japan</div>
+            <div class="region-card-item__info">
+              <span class="status-badge status-badge--planned" style="font-size:.7rem;padding:2px 8px;">Planned · Year 3</span>
+            </div>
+          </div>
+        </a>
+
+        <div class="region-card-item" style="cursor:default;">
+          <span class="region-card-item__flag">🇧🇷</span>
+          <div>
+            <div class="region-card-item__name">Brazil</div>
+            <div class="region-card-item__info">
+              <span class="status-badge status-badge--planned" style="font-size:.7rem;padding:2px 8px;">Planned · Year 3</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="region-card-item" style="cursor:default;">
+          <span class="region-card-item__flag">🇮🇳</span>
+          <div>
+            <div class="region-card-item__name">India</div>
+            <div class="region-card-item__info">
+              <span class="status-badge status-badge--planned" style="font-size:.7rem;padding:2px 8px;">Planned · Year 3</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div style="padding:40px 0 60px;text-align:center;">
+      <p style="color:#5F7383;font-size:.85rem;margin-bottom:16px;">Interested in activating your region?</p>
+      <a href="contact.html" class="btn btn-primary">Request Region Activation</a>
+    </div>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer__grid">
+      <div>
+        <div class="footer__logo"><img src="images/logo_full.png" alt="FONTESIN" style="height:32px;width:auto;filter:brightness(0) invert(1);margin-bottom:12px;"/></div>
+        <p class="footer__brand-desc">A deep-tech global business infrastructure platform connecting companies, professionals, and markets across languages, borders, and systems.</p>
+      </div>
+      <div>
+        <p class="footer__heading">Platform</p>
+        <div class="footer__links">
+          <a href="world-map.html">World Map</a>
+          <a href="register.html">Get Started</a>
+          <a href="login.html">Log In</a>
+        </div>
+      </div>
+      <div>
+        <p class="footer__heading">Company</p>
+        <div class="footer__links">
+          <a href="about.html">About Us</a>
+          <a href="careers.html">Careers</a>
+          <a href="contact.html">Contact</a>
+        </div>
+      </div>
+      <div>
+        <p class="footer__heading">Regions</p>
+        <div class="footer__links">
+          <a href="region-us.html">United States</a>
+          <a href="region-de.html">Germany</a>
+          <a href="region-cz.html">Czech Republic</a>
+          <a href="region-ae.html">UAE</a>
+          <a href="region-jp.html">Japan</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span>© 2026 FONTES Inc. All rights reserved.</span>
+      <span>Design by Memento Mori Digital LLC</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+// Load SVG inline for interactivity
+fetch('images/world-map.svg?v=7')
+  .then(r => r.text())
+  .then(svgText => {
+    document.getElementById('svg-map-container').innerHTML = svgText;
+    // Force SVG background transparent
+    const svgEl = document.getElementById('world-map-svg');
+    if (svgEl) {
+      svgEl.style.background = 'transparent';
+      // Set all inactive countries to light color
+      svgEl.querySelectorAll('.country-path').forEach(p => {
+        if (!p.style.fill || p.style.fill === '' || p.style.fill === 'rgb(27, 46, 63)' || p.style.fill === '#1B2E3F') {
+          p.style.fill = '#D8E4EC';
+          p.style.stroke = '#b8cdd9';
+        }
+      });
+    }
+    // Now initialize the map
+    initMap();
+  })
+  .catch(() => {
+    document.getElementById('svg-map-container').innerHTML = '<p style="color:#253D51;padding:40px;text-align:center;">Map loading...</p>';
+  });
+
+const COUNTRY_STATUS = {
+  'US': { status: 'active',  year: 1, name: 'United States',         page: 'region-us.html' },
+  'DE': { status: 'active',  year: 1, name: 'Germany',               page: 'region-de.html' },
+  'CZ': { status: 'active',  year: 1, name: 'Czech Republic',        page: 'region-cz.html' },
+  'GB': { status: 'active',  year: 1, name: 'United Kingdom',        page: null },
+  'FR': { status: 'active',  year: 1, name: 'France',                page: null },
+  'NL': { status: 'active',  year: 1, name: 'Netherlands',           page: null },
+  'PL': { status: 'active',  year: 1, name: 'Poland',                page: null },
+  'AT': { status: 'active',  year: 1, name: 'Austria',               page: null },
+  'CH': { status: 'active',  year: 1, name: 'Switzerland',           page: null },
+  'SE': { status: 'active',  year: 1, name: 'Sweden',                page: null },
+  'AE': { status: 'planned', year: 2, name: 'United Arab Emirates',  page: 'region-ae.html' },
+  'JP': { status: 'planned', year: 3, name: 'Japan',                 page: 'region-jp.html' },
+  'SG': { status: 'planned', year: 2, name: 'Singapore',             page: null },
+  'CA': { status: 'planned', year: 2, name: 'Canada',                page: null },
+  'AU': { status: 'planned', year: 2, name: 'Australia',             page: null },
+  'BR': { status: 'planned', year: 3, name: 'Brazil',                page: null },
+  'IN': { status: 'planned', year: 3, name: 'India',                 page: null },
+  'ZA': { status: 'planned', year: 4, name: 'South Africa',          page: null },
+  'MX': { status: 'planned', year: 3, name: 'Mexico',                page: null },
+  'KR': { status: 'planned', year: 3, name: 'South Korea',           page: null },
+};
+
+function initMap() {
+  const svg = document.getElementById('world-map-svg');
+  if (!svg) return;
+  const tooltip = document.getElementById('map-tooltip');
+
+  svg.querySelectorAll('[data-iso]').forEach(path => {
+    const iso = path.getAttribute('data-iso');
+    const info = COUNTRY_STATUS[iso];
+
+    if (info) {
+      if (info.status === 'active') {
+        path.style.fill = '#253D51';
+        path.style.stroke = '#1B2E3F';
+        path.style.strokeWidth = '0.5';
+        path.style.strokeDasharray = 'none';
+        path.style.cursor = 'pointer';
+      } else if (info.status === 'planned') {
+        path.style.fill = '#5F8FAA';
+        path.style.stroke = '#4a7a96';
+        path.style.strokeWidth = '0.5';
+        path.style.strokeDasharray = 'none';
+        path.style.cursor = 'pointer';
+      }
+
+      const fillActive  = '#1B2E3F';
+      const fillPlanned = '#4a7a96';
+      const fillRestoreActive  = '#253D51';
+      const fillRestorePlanned = '#5F8FAA';
+
+      path.addEventListener('mouseenter', (e) => {
+        path.style.fill = info.status === 'active' ? fillActive : fillPlanned;
+        if (tooltip) {
+          const statusLabel = info.status === 'active' ? '● Active' : `◌ Planned – Year ${info.year}`;
+          const statusColor = info.status === 'active' ? '#253D51' : '#5F8FAA';
+          tooltip.innerHTML = `
+            <div class="map-tooltip__name">${info.name}</div>
+            <div style="color:${statusColor};font-size:.75rem;">${statusLabel}</div>
+            ${info.page ? '<div style="font-size:.7rem;color:rgba(199,204,209,.6);margin-top:4px;">Click for details →</div>' : ''}
+          `;
+          tooltip.classList.add('visible');
+        }
+      });
+
+      path.addEventListener('mousemove', (e) => {
+        if (tooltip) {
+          tooltip.style.left = Math.min(e.clientX + 14, window.innerWidth - 200) + 'px';
+          tooltip.style.top  = Math.max(e.clientY - 10, 10) + 'px';
+        }
+      });
+
+      path.addEventListener('mouseleave', () => {
+        path.style.fill = info.status === 'active' ? fillRestoreActive : fillRestorePlanned;
+        if (tooltip) tooltip.classList.remove('visible');
+      });
+
+      path.addEventListener('click', () => {
+        if (info.page) window.location.href = info.page;
+      });
+    }
+  });
+}
+</script>
+<script src="js/main.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function() {
+        navigator.serviceWorker.register("/sw.js")
+          .then(function(reg) { console.log("[PWA] SW registered:", reg.scope); })
+          .catch(function(err) { console.warn("[PWA] SW registration failed:", err); });
+      });
+    }
+  </script>
+</body>
+</html>

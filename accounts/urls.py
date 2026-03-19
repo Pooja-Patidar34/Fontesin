@@ -5,6 +5,7 @@ from accounts.view.company import company_list, toggle_company,company_detail_aj
 from .view.user import user_list, toggle_user, assign_roles,role_list,role_detail_ajax,permission_list,save_role,user_detail_ajax,user_edit,add_user
 from .view.audit import audit_logs,audit_log_detail_ajax
 from .view.tenant import tenant_list,toggle_tenant,tenant_detail_ajax,tenant_delete
+from .view.website import home, about, worldmap, career, contact
 
 
 urlpatterns = [
@@ -33,5 +34,12 @@ urlpatterns = [
     path("users/add/", add_user, name="add-user"),
     path("companies/<uuid:company_id>/delete/", company_delete, name="company-delete"),
     path("", register_view, name="register"),
+
+    #static pages
+    path('home/', home, name='home'),  # default landing page
+    path('about/', about, name='about'),
+    path('worldmap/', worldmap, name='worldmap'),
+    path('career/', career, name='career'),
+    path('contact/', contact, name='contact'),
 ]
 

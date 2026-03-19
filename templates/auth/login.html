@@ -2,142 +2,133 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Admin Login</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#253D51"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="FONTESIN"/>
 
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="{% static 'manifest.json' %}"/>
+  <link rel="apple-touch-icon" href="{% static 'adminlte/images/icons/icon-192.png' %}"/>
 
-  <link rel="stylesheet"
-        href="{% static 'adminlte/plugins/fontawesome-free/css/all.min.css' %}">
-  <link rel="stylesheet"
-        href="{% static 'adminlte/css/adminlte.min.css' %}">
+  <title>Log In – FONTESIN</title>
+
+  <!-- ✅ YOUR CSS -->
+  <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
+
+  <!-- OPTIONAL (for better input styling, no UI change) -->
+  <link rel="stylesheet" href="{% static 'adminlte/plugins/fontawesome-free/css/all.min.css' %}">
+  <link rel="stylesheet" href="{% static 'adminlte/css/adminlte.min.css' %}">
 
   <style>
-    /* Increase login box size */
-    .login-box {
-      width: 420px;
+    .auth-page-bg {
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-mid) 60%, #2D4A63 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
     }
-
-    /* Improve mobile layout */
-    @media (max-width: 576px) {
-      .login-box {
-        width: 95%;
-        margin-top: 20px;
-      }
+    .auth-page-bg::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: url("data:image/svg+xml,%3Csvg...");
     }
-
-    /* Bigger input fields */
-    .login-card-body .form-control {
-      height: 45px;
-      font-size: 16px;
+    .auth-back {
+      position: absolute;
+      top: 24px;
+      left: 24px;
+      color: rgba(255,255,255,.6);
+      font-size: .85rem;
     }
-
-    /* Better button */
-    .btn-primary {
-      height: 45px;
-      font-size: 16px;
+    .auth-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      max-width: 900px;
+      width: 100%;
+      border-radius: 20px;
+      overflow: hidden;
     }
+    .auth-left { background: var(--primary-dark); padding: 56px 48px; }
+    .auth-right { background: var(--bg-white); padding: 56px 48px; }
 
-    /* Cursor for eye icon */
-    #toggle-password {
-      cursor: pointer;
+    @media (max-width: 700px) {
+      .auth-split { grid-template-columns: 1fr; }
+      .auth-left { display: none; }
     }
   </style>
 </head>
 
-<body class="hold-transition login-page">
+<body>
 
-<div class="login-box">
+<div class="auth-page-bg">
 
-  <div class="login-logo">
-    <b>Admin</b>Panel
-  </div>
+  <!-- ✅ Django URL -->
+  <a href="{% url 'admin:home' %}" class="auth-back">
+    ← Back to Home
+  </a>
 
-  <div class="card">
-    <div class="card-body login-card-body">
+  <div class="auth-split">
 
-      <p class="login-box-msg">Sign in to start your session</p>
+    <!-- LEFT -->
+    <div class="auth-left">
+      <img src="{% static 'adminlte/images/fontesin-logo.png' %}" style="height:36px;filter:brightness(0) invert(1);"/>
+      <h3 style="color:#fff;margin-top:20px;">Welcome back</h3>
+    </div>
 
+    <!-- RIGHT -->
+    <div class="auth-right">
+
+      <h2>Log In</h2>
+
+      <!-- ✅ Messages -->
       {% if messages %}
         {% for message in messages %}
           <div class="alert alert-danger">{{ message }}</div>
         {% endfor %}
       {% endif %}
 
-      <form method="post">
+      <!-- ✅ FORM -->
+      <form id="login-form" method="post">
         {% csrf_token %}
 
-        <!-- Email -->
-        <div class="input-group mb-3">
-          <input type="email"
-                 name="email"
-                 class="form-control"
-                 placeholder="Email"
-                 required>
-
-          <div class="input-group-append">
-            <div class="input-group-text">
-              <span class="fas fa-envelope"></span>
-            </div>
-          </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" name="email" class="form-control" required/>
         </div>
 
-        <!-- Password -->
-        <div class="input-group mb-3">
-          <input type="password"
-                 name="password"
-                 id="password-field"
-                 class="form-control"
-                 placeholder="Password"
-                 required>
-
-          <div class="input-group-append">
-            <span class="input-group-text" id="toggle-password">
-              <i class="fas fa-eye"></i>
-            </span>
-          </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" name="password" id="password-field" class="form-control" required/>
         </div>
 
-        <!-- Submit -->
-        <div class="row">
-          <div class="col-12">
-            <button type="submit" class="btn btn-primary btn-block">
-              Sign In
-            </button>
-          </div>
-        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;">
+          Log In
+        </button>
 
       </form>
 
     </div>
   </div>
-
 </div>
 
-<script src="{% static 'adminlte/plugins/jquery/jquery.min.js' %}"></script>
-<script src="{% static 'adminlte/plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-<script src="{% static 'adminlte/js/adminlte.min.js' %}"></script>
+<!-- ✅ FIXED STATIC JS -->
+<script src="{% static 'js/main.js' %}"></script>
 
+<!-- ❌ REMOVED FAKE LOGIN JS -->
+
+<!-- ✅ SERVICE WORKER -->
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-
-  const togglePassword = document.getElementById("toggle-password");
-  const passwordField = document.getElementById("password-field");
-
-  togglePassword.addEventListener("click", function () {
-
-    const type = passwordField.getAttribute("type") === "password"
-      ? "text"
-      : "password";
-
-    passwordField.setAttribute("type", type);
-
-    const icon = this.querySelector("i");
-    icon.classList.toggle("fa-eye");
-    icon.classList.toggle("fa-eye-slash");
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function() {
+    navigator.serviceWorker.register("{% static 'sw.js' %}");
   });
-
-});
+}
 </script>
 
 </body>
