@@ -6,6 +6,7 @@ from .view.user import user_list, toggle_user, assign_roles,role_list,role_detai
 from .view.audit import audit_logs,audit_log_detail_ajax
 from .view.tenant import tenant_list,toggle_tenant,tenant_detail_ajax,tenant_delete
 from .view.website import home, about, worldmap, career, contact
+from .view.regions import region_us, region_de, region_cz, region_ae, region_jp
 
 
 urlpatterns = [
@@ -41,5 +42,12 @@ urlpatterns = [
     path('worldmap/', worldmap, name='worldmap'),
     path('career/', career, name='career'),
     path('contact/', contact, name='contact'),
+
+    #region specific pages
+    path('region/us/', region_us, name='region_us'),
+    path('region/de/', region_de, name='region_de'),
+    path('region/cz/', region_cz, name='region_cz'),
+    path('region/ae/', region_ae, name='region_ae'),
+    path('region/jp/', region_jp, name='region_jp'),
 ]
 

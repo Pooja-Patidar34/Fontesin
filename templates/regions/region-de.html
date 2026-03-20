@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#253D51"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="FONTESIN"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="apple-touch-icon" href="images/icons/icon-192.png"/>
+  <title>Germany – FONTESIN Region</title>
+  <meta name="description" content="FONTESIN region profile for Germany: GDP, population, legal forms, credit rating, and business potential."/>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar__inner">
+    <a href="index.html" class="navbar__logo"><img src="images/logo_full.png" alt="FONTESIN" height="38"/></a>
+    <div class="navbar__nav">
+      <a href="index.html">Home</a>
+      <a href="world-map.html">World Map</a>
+      <a href="about.html">About</a>
+      <a href="careers.html">Careers</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
+    <div class="navbar__actions">
+      <a href="login.html" class="btn btn-outline btn-sm">Log In</a>
+      <a href="register.html" class="btn btn-primary btn-sm">Get Started</a>
+    </div>
+  </div>
+</nav>
+
+<!-- COUNTRY HERO -->
+<section class="country-hero">
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="index.html">Home</a>
+      <span>/</span>
+      <a href="world-map.html">World Map</a>
+      <span>/</span>
+      <span>Germany</span>
+    </div>
+    <div class="country-hero__flag">🇩🇪</div>
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:8px;">
+      <h1>Germany</h1>
+      <span class="status-badge status-badge--active">Active · Year 1</span>
+    </div>
+    <div class="country-hero__meta">
+      <div class="country-hero__meta-item">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        Berlin, Europe
+      </div>
+      <div class="country-hero__meta-item">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        German · EUR – Euro
+      </div>
+      <div class="country-hero__meta-item">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        84,607,016 people
+      </div>
+      <div class="country-hero__meta-item">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        GDP: $4.46 trillion
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MAIN CONTENT -->
+<section class="section section--light">
+  <div class="container">
+
+    <!-- Description -->
+    <div style="background:#fff;border-radius:12px;padding:28px 32px;margin-bottom:32px;border:1px solid rgba(37,61,81,.06);box-shadow:0 2px 8px rgba(0,0,0,.05);">
+      <h3 style="margin-bottom:12px;">About Germany</h3>
+      <p>Germany is Europe's largest economy and a global leader in engineering, automotive, and manufacturing. With a highly skilled workforce, strong export orientation, and stable regulatory environment, Germany offers excellent conditions for B2B operations.</p>
+    </div>
+
+    <!-- Business Potential Score -->
+    <div style="background:#fff;border-radius:12px;padding:28px 32px;margin-bottom:32px;border:1px solid rgba(37,61,81,.06);box-shadow:0 2px 8px rgba(0,0,0,.05);">
+      <h3 style="margin-bottom:20px;">Business Potential Score</h3>
+      <div style="display:flex;align-items:center;gap:24px;">
+        <div style="font-family:'Montserrat',sans-serif;font-size:3rem;font-weight:800;color:var(--primary);">88<span style="font-size:1.5rem;color:var(--secondary);">/100</span></div>
+        <div style="flex:1;">
+          <div style="font-size:.82rem;color:var(--secondary);margin-bottom:8px;font-family:'Montserrat',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Overall Score</div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" data-width="88" style="width:0%;"></div>
+          </div>
+          <div style="font-size:.78rem;color:var(--text-secondary);margin-top:6px;">Based on GDP, market size, ease of doing business, digital infrastructure, and regulatory environment.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Key Economic Data -->
+    <h3 style="margin-bottom:20px;">Key Economic Indicators</h3>
+    <div class="data-grid">
+      <div class="data-card">
+        <div class="data-card__label">GDP (Nominal)</div>
+        <div class="data-card__value">$4.46 trillion</div>
+        <div class="data-card__sub">Rank #3 globally</div>
+      </div>
+      <div class="data-card">
+        <div class="data-card__label">GDP per Capita</div>
+        <div class="data-card__value">$52,824</div>
+        <div class="data-card__sub">USD, nominal</div>
+      </div>
+      <div class="data-card">
+        <div class="data-card__label">Population</div>
+        <div class="data-card__value">84,607,016</div>
+        <div class="data-card__sub">English speakers: 56%</div>
+      </div>
+      <div class="data-card">
+        <div class="data-card__label">Credit Rating</div>
+        <div class="data-card__value">AAA</div>
+        <div class="data-card__sub">Moody's sovereign rating</div>
+      </div>
+      <div class="data-card">
+        <div class="data-card__label">Inflation Rate</div>
+        <div class="data-card__value">2.2%</div>
+        <div class="data-card__sub">Year-over-year</div>
+      </div>
+      <div class="data-card">
+        <div class="data-card__label">Corporate Tax</div>
+        <div class="data-card__value">29.9%</div>
+        <div class="data-card__sub">Standard rate</div>
+      </div>
+      <div class="data-card">
+        <div class="data-card__label">Minimum Wage</div>
+        <div class="data-card__value" style="font-size:.95rem;">€2,054 / month</div>
+        <div class="data-card__sub">Monthly equivalent</div>
+      </div>
+      <div class="data-card">
+        <div class="data-card__label">State Debt</div>
+        <div class="data-card__value" style="font-size:.95rem;">$2.87 trillion</div>
+        <div class="data-card__sub">Debt-to-GDP: 63.6%</div>
+      </div>
+      <div class="data-card">
+        <div class="data-card__label">Internet Penetration</div>
+        <div class="data-card__value">91%</div>
+        <div class="data-card__sub">4G/5G widespread</div>
+      </div>
+      <div class="data-card">
+        <div class="data-card__label">Registered Businesses</div>
+        <div class="data-card__value" style="font-size:.95rem;">~3.5 million</div>
+        <div class="data-card__sub">Estimated total</div>
+      </div>
+      <div class="data-card">
+        <div class="data-card__label">Currency</div>
+        <div class="data-card__value" style="font-size:.95rem;">EUR – Euro</div>
+        <div class="data-card__sub">Official currency</div>
+      </div>
+      <div class="data-card">
+        <div class="data-card__label">Official Language</div>
+        <div class="data-card__value" style="font-size:.95rem;">German</div>
+        <div class="data-card__sub">Primary language</div>
+      </div>
+    </div>
+
+    <!-- Legal Forms -->
+    <h3 style="margin-top:48px;margin-bottom:20px;">Legal Business Forms</h3>
+    <p style="margin-bottom:24px;max-width:640px;">The following legal structures are available for business registration in Germany. Each form has distinct liability, taxation, and governance characteristics.</p>
+    <div class="legal-forms-list">
+
+        <div class="legal-form-item">
+          <div class="legal-form-item__num">1</div>
+          <div>
+            <div class="legal-form-item__name">GmbH (Gesellschaft mit beschränkter Haftung)</div>
+            <div class="legal-form-item__desc">Most common form; equivalent to LLC; min. €25,000 share capital.</div>
+          </div>
+        </div>
+
+        <div class="legal-form-item">
+          <div class="legal-form-item__num">2</div>
+          <div>
+            <div class="legal-form-item__name">AG (Aktiengesellschaft)</div>
+            <div class="legal-form-item__desc">Joint-stock company; suitable for large enterprises and IPOs.</div>
+          </div>
+        </div>
+
+        <div class="legal-form-item">
+          <div class="legal-form-item__num">3</div>
+          <div>
+            <div class="legal-form-item__name">UG (haftungsbeschränkt)</div>
+            <div class="legal-form-item__desc">Mini-GmbH; min. €1 share capital; popular for startups.</div>
+          </div>
+        </div>
+
+        <div class="legal-form-item">
+          <div class="legal-form-item__num">4</div>
+          <div>
+            <div class="legal-form-item__name">OHG / KG</div>
+            <div class="legal-form-item__desc">General/limited partnerships; common in family businesses.</div>
+          </div>
+        </div>
+
+        <div class="legal-form-item">
+          <div class="legal-form-item__num">5</div>
+          <div>
+            <div class="legal-form-item__name">Einzelunternehmen</div>
+            <div class="legal-form-item__desc">Sole proprietorship; simplest and most common for freelancers.</div>
+          </div>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div style="background:var(--primary-dark);border-radius:16px;padding:40px;margin-top:48px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;">
+      <div>
+        <h3 style="color:#fff;margin-bottom:8px;">Ready to Enter Germany?</h3>
+        <p style="color:rgba(199,204,209,.7);max-width:480px;">Apply for franchise, request activation, or contact our regional team to explore opportunities in Germany.</p>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <a href="register.html" class="btn btn--white">Apply for Franchise</a>
+        <a href="contact.html" class="btn btn-outline">Contact HQ</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer__grid">
+      <div>
+        <div class="footer__logo"><img src="images/logo_full.png" alt="FONTESIN" style="height:32px;width:auto;filter:brightness(0) invert(1);margin-bottom:12px;"/></div>
+        <p class="footer__brand-desc">A deep-tech global business infrastructure platform connecting companies, professionals, and markets across languages, borders, and systems.</p>
+      </div>
+      <div>
+        <p class="footer__heading">Platform</p>
+        <div class="footer__links">
+          <a href="world-map.html">World Map</a>
+          <a href="register.html">Get Started</a>
+          <a href="login.html">Log In</a>
+        </div>
+      </div>
+      <div>
+        <p class="footer__heading">Company</p>
+        <div class="footer__links">
+          <a href="about.html">About Us</a>
+          <a href="careers.html">Careers</a>
+          <a href="contact.html">Contact</a>
+        </div>
+      </div>
+      <div>
+        <p class="footer__heading">Regions</p>
+        <div class="footer__links">
+          <a href="region-us.html">United States</a>
+          <a href="region-de.html">Germany</a>
+          <a href="region-cz.html">Czech Republic</a>
+          <a href="region-ae.html">UAE</a>
+          <a href="region-jp.html">Japan</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span>© 2026 FONTES Inc. All rights reserved.</span>
+      <span>Design by Memento Mori Digital LLC</span>
+    </div>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function() {
+        navigator.serviceWorker.register("/sw.js")
+          .then(function(reg) { console.log("[PWA] SW registered:", reg.scope); })
+          .catch(function(err) { console.warn("[PWA] SW registration failed:", err); });
+      });
+    }
+  </script>
+</body>
+</html>
