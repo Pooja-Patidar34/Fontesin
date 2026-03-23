@@ -1,0 +1,675 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#253D51"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="FONTESIN"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="apple-touch-icon" href="images/icons/icon-192.png"/>
+  <title>Choose Your Plan – FONTESIN</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    body { background: #f0f5f8; }
+
+    /* ── Progress bar ── */
+    .reg-progress { background: #fff; border-bottom: 1px solid #d4e2ec; }
+    .reg-progress__inner {
+      max-width: 900px; margin: 0 auto; padding: 0 24px;
+      display: flex; align-items: center; gap: 0;
+    }
+    .reg-step { display: flex; align-items: center; gap: 10px; padding: 18px 0; flex: 1; position: relative; }
+    .reg-step:not(:last-child)::after {
+      content: ''; position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+      width: 1px; height: 24px; background: #d4e2ec;
+    }
+    .reg-step__num {
+      width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: .78rem; flex-shrink: 0;
+    }
+    .reg-step--done .reg-step__num { background: #22c55e; color: #fff; }
+    .reg-step--active .reg-step__num { background: #253D51; color: #fff; }
+    .reg-step--pending .reg-step__num { background: #d4e2ec; color: #5F7383; }
+    .reg-step__label {
+      font-family: 'Montserrat', sans-serif; font-size: .75rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .05em;
+    }
+    .reg-step--done .reg-step__label { color: #22c55e; }
+    .reg-step--active .reg-step__label { color: #253D51; }
+    .reg-step--pending .reg-step__label { color: #8fa5b5; }
+
+    /* ── Page layout ── */
+    .membership-page { max-width: 1100px; margin: 0 auto; padding: 48px 24px 80px; }
+    .membership-header { text-align: center; margin-bottom: 48px; }
+    .membership-header h1 {
+      font-family: 'Montserrat', sans-serif; font-size: 2rem; font-weight: 800;
+      color: #253D51; margin-bottom: 12px;
+    }
+    .membership-header p { color: #5F7383; font-size: 1rem; max-width: 560px; margin: 0 auto; }
+
+    /* ── Annual badge ── */
+    .billing-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #f0fdf4; border: 1px solid #bbf7d0;
+      border-radius: 100px; padding: 6px 16px;
+      font-family: 'Montserrat', sans-serif; font-size: .78rem; font-weight: 700;
+      color: #15803d; margin-bottom: 36px;
+    }
+
+    /* ── Plans grid ── */
+    .plans-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-bottom: 48px;
+    }
+    @media (max-width: 900px) { .plans-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 560px) { .plans-grid { grid-template-columns: 1fr; } }
+
+    .plan-card {
+      background: #fff;
+      border: 2px solid #d4e2ec;
+      border-radius: 16px;
+      padding: 28px 24px;
+      cursor: pointer;
+      transition: .25s ease;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .plan-card:hover { border-color: #5F8FAA; box-shadow: 0 8px 32px rgba(37,61,81,.12); transform: translateY(-2px); }
+    .plan-card.selected { border-color: #253D51; box-shadow: 0 8px 32px rgba(37,61,81,.2); }
+    .plan-card.popular { border-color: #253D51; }
+
+    .plan-badge {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: linear-gradient(135deg, #253D51, #5F8FAA);
+      color: #fff; border-radius: 100px; padding: 4px 16px;
+      font-family: 'Montserrat', sans-serif; font-size: .7rem; font-weight: 700;
+      letter-spacing: .06em; white-space: nowrap;
+    }
+    .plan-badge--save {
+      background: linear-gradient(135deg, #16a34a, #22c55e);
+    }
+
+    .plan-icon { font-size: 2rem; margin-bottom: 12px; }
+    .plan-name {
+      font-family: 'Montserrat', sans-serif; font-weight: 800;
+      font-size: 1.1rem; color: #253D51; margin-bottom: 4px;
+    }
+    .plan-tagline { font-size: .78rem; color: #5F7383; margin-bottom: 20px; }
+
+    .plan-price { margin-bottom: 8px; }
+    .plan-price__amount {
+      font-family: 'Montserrat', sans-serif; font-weight: 800;
+      font-size: 2rem; color: #253D51;
+    }
+    .plan-price__currency { font-size: 1rem; font-weight: 600; vertical-align: super; }
+    .plan-price__period { font-size: .78rem; color: #5F7383; }
+    .plan-price__monthly { font-size: .78rem; color: #5F7383; margin-bottom: 4px; }
+    .plan-price__save {
+      display: inline-block; background: #f0fdf4; color: #15803d;
+      border-radius: 6px; padding: 2px 8px; font-size: .72rem; font-weight: 700;
+      margin-bottom: 16px;
+    }
+    .plan-price--free .plan-price__amount { color: #5F7383; }
+
+    .plan-divider { border: none; border-top: 1px solid #e8f0f5; margin: 16px 0; }
+
+    .plan-features { list-style: none; padding: 0; margin: 0 0 20px; flex: 1; }
+    .plan-features li {
+      display: flex; align-items: flex-start; gap: 8px;
+      font-size: .82rem; color: #374151; margin-bottom: 8px; line-height: 1.4;
+    }
+    .plan-features li .icon { flex-shrink: 0; margin-top: 1px; }
+    .plan-features li .icon--check { color: #22c55e; }
+    .plan-features li .icon--x { color: #d1d5db; }
+
+    .plan-select-btn {
+      width: 100%; padding: 12px;
+      border-radius: 10px; border: 2px solid #253D51;
+      font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: .85rem;
+      cursor: pointer; transition: .2s ease;
+      background: transparent; color: #253D51;
+    }
+    .plan-card.popular .plan-select-btn,
+    .plan-card.selected .plan-select-btn {
+      background: linear-gradient(135deg, #253D51, #5F8FAA);
+      color: #fff; border-color: transparent;
+    }
+    .plan-select-btn:hover { opacity: .85; }
+
+    /* ── Expandable details ── */
+    .plan-details {
+      display: none;
+      background: #fff;
+      border: 1px solid #d4e2ec;
+      border-radius: 16px;
+      margin-bottom: 20px;
+      overflow: hidden;
+      animation: slideDown .3s ease;
+    }
+    .plan-details.open { display: block; }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .plan-details__header {
+      background: linear-gradient(135deg, #253D51 0%, #1B2E3F 100%);
+      padding: 24px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .plan-details__header h3 {
+      font-family: 'Montserrat', sans-serif; font-weight: 800;
+      color: #fff; font-size: 1.2rem;
+    }
+    .plan-details__header .price-tag {
+      font-family: 'Montserrat', sans-serif; font-weight: 800;
+      color: #C7CCD1; font-size: 1.5rem;
+    }
+    .plan-details__body { padding: 32px; }
+    .plan-details__grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 24px; margin-bottom: 24px;
+    }
+    @media (max-width: 600px) { .plan-details__grid { grid-template-columns: 1fr; } }
+    .plan-details__section h4 {
+      font-family: 'Montserrat', sans-serif; font-weight: 700;
+      color: #253D51; font-size: .85rem; text-transform: uppercase;
+      letter-spacing: .06em; margin-bottom: 12px;
+      padding-bottom: 8px; border-bottom: 2px solid #d4e2ec;
+    }
+    .detail-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 0; border-bottom: 1px solid #f0f5f8;
+      font-size: .83rem;
+    }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-row__label { color: #5F7383; }
+    .detail-row__value { font-weight: 600; color: #253D51; }
+    .detail-row__value--yes { color: #22c55e; }
+    .detail-row__value--no { color: #d1d5db; }
+
+    /* ── Comparison table ── */
+    .comparison-section { margin-bottom: 48px; }
+    .comparison-section h2 {
+      font-family: 'Montserrat', sans-serif; font-weight: 800;
+      color: #253D51; font-size: 1.4rem; margin-bottom: 24px; text-align: center;
+    }
+    .comparison-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 16px rgba(37,61,81,.08); }
+    .comparison-table th {
+      background: #253D51; color: #fff;
+      font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: .82rem;
+      padding: 16px 20px; text-align: center;
+    }
+    .comparison-table th:first-child { text-align: left; background: #1B2E3F; }
+    .comparison-table td {
+      padding: 12px 20px; border-bottom: 1px solid #f0f5f8;
+      font-size: .83rem; text-align: center; color: #374151;
+    }
+    .comparison-table td:first-child { text-align: left; color: #5F7383; font-weight: 500; }
+    .comparison-table tr:last-child td { border-bottom: none; }
+    .comparison-table tr:hover td { background: #f8fbfd; }
+    .check { color: #22c55e; font-size: 1rem; }
+    .cross { color: #d1d5db; font-size: 1rem; }
+    .comparison-table .highlight { background: #f0f8ff !important; }
+
+    /* ── CTA ── */
+    .membership-cta {
+      text-align: center; padding: 40px;
+      background: #fff; border-radius: 16px;
+      border: 1px solid #d4e2ec;
+    }
+    .membership-cta p { color: #5F7383; margin-bottom: 20px; }
+    .btn-proceed {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: linear-gradient(135deg, #253D51, #5F8FAA);
+      color: #fff; border: none; border-radius: 10px;
+      padding: 16px 40px;
+      font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1rem;
+      cursor: pointer; transition: .2s ease;
+      box-shadow: 0 4px 16px rgba(37,61,81,.25);
+    }
+    .btn-proceed:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37,61,81,.35); }
+    .btn-proceed:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+    .selected-plan-info {
+      display: none; background: #f0f8ff; border: 1px solid #bfdbfe;
+      border-radius: 10px; padding: 12px 20px; margin-bottom: 20px;
+      font-size: .85rem; color: #1e40af;
+      font-family: 'Montserrat', sans-serif; font-weight: 600;
+    }
+    .selected-plan-info.visible { display: block; }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="navbar__inner">
+    <a href="index.html" class="navbar__logo">
+      <img src="images/logo_full.png" alt="FONTESIN" height="38" style="filter:brightness(0) invert(1);"/>
+    </a>
+    <div class="navbar__nav">
+      <a href="index.html">Home</a>
+      <a href="world-map.html">World Map</a>
+      <a href="about.html">About</a>
+      <a href="careers.html">Careers</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
+    <div class="navbar__actions">
+      <a href="login.html" class="btn btn-outline btn-sm">Log In</a>
+    </div>
+  </div>
+</nav>
+
+<!-- PROGRESS BAR -->
+<div class="reg-progress">
+  <div class="reg-progress__inner">
+    <div class="reg-step reg-step--done">
+      <div class="reg-step__num">✓</div>
+      <div class="reg-step__label">Account Info</div>
+    </div>
+    <div class="reg-step reg-step--done">
+      <div class="reg-step__num">✓</div>
+      <div class="reg-step__label">Identity Verified</div>
+    </div>
+    <div class="reg-step reg-step--active">
+      <div class="reg-step__num">3</div>
+      <div class="reg-step__label">Choose Plan</div>
+    </div>
+    <div class="reg-step reg-step--pending">
+      <div class="reg-step__num">4</div>
+      <div class="reg-step__label">Confirmation</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="membership-page">
+  <div class="membership-header">
+    <h1>Choose Your Membership Plan</h1>
+    <p>Select the plan that best fits your business needs. All plans include annual billing with significant savings.</p>
+    <div style="text-align:center;">
+      <span class="billing-badge">🎉 Annual billing — Save up to 25% vs monthly</span>
+    </div>
+  </div>
+
+  <!-- PLAN CARDS -->
+  <div class="plans-grid">
+
+    <!-- FREE -->
+    <div class="plan-card" id="card-free" onclick="selectPlan('free')">
+      <div class="plan-icon">🌱</div>
+      <div class="plan-name">FREE</div>
+      <div class="plan-tagline">Explore the platform</div>
+      <div class="plan-price plan-price--free">
+        <div><span class="plan-price__amount">$0</span></div>
+        <div class="plan-price__period">Forever free</div>
+      </div>
+      <hr class="plan-divider"/>
+      <ul class="plan-features">
+        <li><span class="icon icon--check">✓</span> Basic world map access</li>
+        <li><span class="icon icon--check">✓</span> 1 country profile view/day</li>
+        <li><span class="icon icon--check">✓</span> Public company data</li>
+        <li><span class="icon icon--x">✗</span> No advanced analytics</li>
+        <li><span class="icon icon--x">✗</span> No export features</li>
+        <li><span class="icon icon--x">✗</span> No API access</li>
+        <li><span class="icon icon--x">✗</span> No multilicense</li>
+      </ul>
+      <button class="plan-select-btn">Select Free Plan</button>
+    </div>
+
+    <!-- BASIC -->
+    <div class="plan-card" id="card-basic" onclick="selectPlan('basic')">
+      <div class="plan-icon">🚀</div>
+      <div class="plan-name">BASIC</div>
+      <div class="plan-tagline">For small businesses</div>
+      <div class="plan-price">
+        <div style="display:flex;align-items:baseline;gap:10px;">
+          <span style="font-size:1rem;color:#9CA3AF;text-decoration:line-through;font-weight:500;">$200</span>
+          <span class="plan-price__currency">$</span><span class="plan-price__amount">150</span>
+          <span style="background:#16a34a;color:#fff;font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:20px;letter-spacing:.5px;vertical-align:middle;">25% OFF</span>
+        </div>
+        <div class="plan-price__period">per year · billed annually</div>
+        <div class="plan-price__monthly">≈ $12.50 / month</div>
+        <span class="plan-price__save">Save $50 on regular price · Limited offer</span>
+      </div>
+      <hr class="plan-divider"/>
+      <ul class="plan-features">
+        <li><span class="icon icon--check">✓</span> Full world map access</li>
+        <li><span class="icon icon--check">✓</span> 5 country profiles/day</li>
+        <li><span class="icon icon--check">✓</span> Company registry data</li>
+        <li><span class="icon icon--check">✓</span> Basic analytics dashboard</li>
+        <li><span class="icon icon--check">✓</span> CSV export</li>
+        <li><span class="icon icon--x">✗</span> No API access</li>
+        <li><span class="icon icon--x">✗</span> No multilicense</li>
+      </ul>
+      <button class="plan-select-btn">Select Basic Plan</button>
+    </div>
+
+    <!-- PRO -->
+    <div class="plan-card popular" id="card-pro" onclick="selectPlan('pro')">
+      <div class="plan-badge">⭐ Most Popular</div>
+      <div class="plan-icon">💼</div>
+      <div class="plan-name">PRO</div>
+      <div class="plan-tagline">For growing companies</div>
+      <div class="plan-price">
+        <div><span class="plan-price__currency">$</span><span class="plan-price__amount">1,000</span></div>
+        <div class="plan-price__period">per year · billed annually</div>
+        <div class="plan-price__monthly">≈ $83.33 / month</div>
+        <span class="plan-price__save">Save $200 vs monthly ($1,200/yr)</span>
+      </div>
+      <hr class="plan-divider"/>
+      <ul class="plan-features">
+        <li><span class="icon icon--check">✓</span> Everything in Basic</li>
+        <li><span class="icon icon--check">✓</span> Unlimited country profiles</li>
+        <li><span class="icon icon--check">✓</span> Advanced analytics &amp; reports</li>
+        <li><span class="icon icon--check">✓</span> Full API access</li>
+        <li><span class="icon icon--check">✓</span> Priority support</li>
+        <li><span class="icon icon--check">✓</span> Multilicense (+$100/user/yr)</li>
+        <li><span class="icon icon--check">✓</span> Select Country access</li>
+      </ul>
+      <button class="plan-select-btn">Select Pro Plan</button>
+    </div>
+
+    <!-- GLOBAL -->
+    <div class="plan-card" id="card-global" onclick="selectPlan('global')">
+      <div class="plan-badge plan-badge--save">🌍 Best Value</div>
+      <div class="plan-icon">🌐</div>
+      <div class="plan-name">GLOBAL</div>
+      <div class="plan-tagline">For enterprises &amp; franchises</div>
+      <div class="plan-price">
+        <div><span class="plan-price__currency">$</span><span class="plan-price__amount">2,000</span></div>
+        <div class="plan-price__period">per year · billed annually</div>
+        <div class="plan-price__monthly">≈ $166.67 / month</div>
+        <span class="plan-price__save">Save $400 vs monthly ($2,400/yr)</span>
+      </div>
+      <hr class="plan-divider"/>
+      <ul class="plan-features">
+        <li><span class="icon icon--check">✓</span> Everything in Pro</li>
+        <li><span class="icon icon--check">✓</span> Select Region access</li>
+        <li><span class="icon icon--check">✓</span> Franchise management</li>
+        <li><span class="icon icon--check">✓</span> Multi-currency billing</li>
+        <li><span class="icon icon--check">✓</span> Dedicated account manager</li>
+        <li><span class="icon icon--check">✓</span> Multilicense (+$100/user/yr)</li>
+        <li><span class="icon icon--check">✓</span> Custom SLA &amp; contracts</li>
+      </ul>
+      <button class="plan-select-btn">Select Global Plan</button>
+    </div>
+  </div>
+
+  <!-- EXPANDABLE PLAN DETAILS -->
+  <div class="plan-details" id="details-free">
+    <div class="plan-details__header">
+      <h3>🌱 FREE Plan — Full Details</h3>
+      <span class="price-tag">$0 / year</span>
+    </div>
+    <div class="plan-details__body">
+      <div class="plan-details__grid">
+        <div class="plan-details__section">
+          <h4>Access &amp; Limits</h4>
+          <div class="detail-row"><span class="detail-row__label">World Map Access</span><span class="detail-row__value detail-row__value--yes">Basic</span></div>
+          <div class="detail-row"><span class="detail-row__label">Country Profiles / Day</span><span class="detail-row__value">1</span></div>
+          <div class="detail-row"><span class="detail-row__label">Company Data</span><span class="detail-row__value">Public only</span></div>
+          <div class="detail-row"><span class="detail-row__label">Data Export</span><span class="detail-row__value detail-row__value--no">✗ Not included</span></div>
+          <div class="detail-row"><span class="detail-row__label">API Access</span><span class="detail-row__value detail-row__value--no">✗ Not included</span></div>
+        </div>
+        <div class="plan-details__section">
+          <h4>Support &amp; Billing</h4>
+          <div class="detail-row"><span class="detail-row__label">Support</span><span class="detail-row__value">Community</span></div>
+          <div class="detail-row"><span class="detail-row__label">Multilicense</span><span class="detail-row__value detail-row__value--no">✗ Not available</span></div>
+          <div class="detail-row"><span class="detail-row__label">Invoice</span><span class="detail-row__value detail-row__value--no">✗ Not issued</span></div>
+          <div class="detail-row"><span class="detail-row__label">Billing Profile</span><span class="detail-row__value detail-row__value--no">✗ Not required</span></div>
+          <div class="detail-row"><span class="detail-row__label">Contract</span><span class="detail-row__value detail-row__value--no">✗ Not included</span></div>
+        </div>
+      </div>
+      <p style="color:#5F7383;font-size:.82rem;text-align:center;">The Free plan is ideal for exploring the FONTESIN platform before committing to a paid subscription.</p>
+    </div>
+  </div>
+
+  <div class="plan-details" id="details-basic">
+    <div class="plan-details__header">
+      <h3>🚀 BASIC Plan — Full Details</h3>
+      <span class="price-tag">$150 / year</span>
+    </div>
+    <div class="plan-details__body">
+      <div class="plan-details__grid">
+        <div class="plan-details__section">
+          <h4>Access &amp; Limits</h4>
+          <div class="detail-row"><span class="detail-row__label">World Map Access</span><span class="detail-row__value detail-row__value--yes">Full</span></div>
+          <div class="detail-row"><span class="detail-row__label">Country Profiles / Day</span><span class="detail-row__value">5</span></div>
+          <div class="detail-row"><span class="detail-row__label">Company Data</span><span class="detail-row__value">Registry level</span></div>
+          <div class="detail-row"><span class="detail-row__label">Analytics</span><span class="detail-row__value">Basic dashboard</span></div>
+          <div class="detail-row"><span class="detail-row__label">Data Export</span><span class="detail-row__value detail-row__value--yes">CSV</span></div>
+          <div class="detail-row"><span class="detail-row__label">API Access</span><span class="detail-row__value detail-row__value--no">✗ Not included</span></div>
+        </div>
+        <div class="plan-details__section">
+          <h4>Billing &amp; Support</h4>
+          <div class="detail-row"><span class="detail-row__label">Annual Price</span><span class="detail-row__value">$150 / year</span></div>
+          <div class="detail-row"><span class="detail-row__label">Monthly Equivalent</span><span class="detail-row__value">≈ $12.50 / mo</span></div>
+          <div class="detail-row"><span class="detail-row__label">Savings vs Monthly</span><span class="detail-row__value detail-row__value--yes">$90 saved</span></div>
+          <div class="detail-row"><span class="detail-row__label">Multilicense</span><span class="detail-row__value detail-row__value--no">✗ Not available</span></div>
+          <div class="detail-row"><span class="detail-row__label">Support</span><span class="detail-row__value">Email support</span></div>
+          <div class="detail-row"><span class="detail-row__label">Pro Forma Invoice</span><span class="detail-row__value detail-row__value--yes">✓ Included</span></div>
+        </div>
+      </div>
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:16px;text-align:center;">
+        <strong style="color:#92400e;font-family:'Montserrat',sans-serif;font-size:.85rem;">💡 Best for:</strong>
+        <span style="color:#78350f;font-size:.82rem;"> Freelancers, startups, and small businesses exploring international markets.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="plan-details" id="details-pro">
+    <div class="plan-details__header">
+      <h3>💼 PRO Plan — Full Details</h3>
+      <span class="price-tag">$1,000 / year</span>
+    </div>
+    <div class="plan-details__body">
+      <div class="plan-details__grid">
+        <div class="plan-details__section">
+          <h4>Access &amp; Features</h4>
+          <div class="detail-row"><span class="detail-row__label">World Map Access</span><span class="detail-row__value detail-row__value--yes">Full + Select Country</span></div>
+          <div class="detail-row"><span class="detail-row__label">Country Profiles</span><span class="detail-row__value">Unlimited</span></div>
+          <div class="detail-row"><span class="detail-row__label">Company Data</span><span class="detail-row__value">Full registry + analytics</span></div>
+          <div class="detail-row"><span class="detail-row__label">Analytics</span><span class="detail-row__value detail-row__value--yes">Advanced + Reports</span></div>
+          <div class="detail-row"><span class="detail-row__label">Data Export</span><span class="detail-row__value detail-row__value--yes">CSV, Excel, PDF</span></div>
+          <div class="detail-row"><span class="detail-row__label">API Access</span><span class="detail-row__value detail-row__value--yes">✓ Full REST API</span></div>
+        </div>
+        <div class="plan-details__section">
+          <h4>Billing &amp; Multilicense</h4>
+          <div class="detail-row"><span class="detail-row__label">Annual Price</span><span class="detail-row__value">$1,000 / year</span></div>
+          <div class="detail-row"><span class="detail-row__label">Monthly Equivalent</span><span class="detail-row__value">≈ $83.33 / mo</span></div>
+          <div class="detail-row"><span class="detail-row__label">Savings vs Monthly</span><span class="detail-row__value detail-row__value--yes">$200 saved</span></div>
+          <div class="detail-row"><span class="detail-row__label">Multilicense Price</span><span class="detail-row__value">+$100 / user / year</span></div>
+          <div class="detail-row"><span class="detail-row__label">Support</span><span class="detail-row__value">Priority email &amp; chat</span></div>
+          <div class="detail-row"><span class="detail-row__label">Pro Forma + Final Invoice</span><span class="detail-row__value detail-row__value--yes">✓ Included</span></div>
+        </div>
+      </div>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px;text-align:center;">
+        <strong style="color:#15803d;font-family:'Montserrat',sans-serif;font-size:.85rem;">💡 Best for:</strong>
+        <span style="color:#166534;font-size:.82rem;"> Growing SMEs, law firms, accounting offices, and business consultants.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="plan-details" id="details-global">
+    <div class="plan-details__header">
+      <h3>🌐 GLOBAL Plan — Full Details</h3>
+      <span class="price-tag">$2,000 / year</span>
+    </div>
+    <div class="plan-details__body">
+      <div class="plan-details__grid">
+        <div class="plan-details__section">
+          <h4>Access &amp; Features</h4>
+          <div class="detail-row"><span class="detail-row__label">World Map Access</span><span class="detail-row__value detail-row__value--yes">Full + Select Region</span></div>
+          <div class="detail-row"><span class="detail-row__label">Country Profiles</span><span class="detail-row__value">Unlimited</span></div>
+          <div class="detail-row"><span class="detail-row__label">Franchise Management</span><span class="detail-row__value detail-row__value--yes">✓ Included</span></div>
+          <div class="detail-row"><span class="detail-row__label">Multi-Currency Billing</span><span class="detail-row__value detail-row__value--yes">✓ USD, EUR, GBP, CZK…</span></div>
+          <div class="detail-row"><span class="detail-row__label">Custom SLA</span><span class="detail-row__value detail-row__value--yes">✓ Negotiable</span></div>
+          <div class="detail-row"><span class="detail-row__label">Dedicated Account Manager</span><span class="detail-row__value detail-row__value--yes">✓ Included</span></div>
+        </div>
+        <div class="plan-details__section">
+          <h4>Billing &amp; Multilicense</h4>
+          <div class="detail-row"><span class="detail-row__label">Annual Price</span><span class="detail-row__value">$2,000 / year</span></div>
+          <div class="detail-row"><span class="detail-row__label">Monthly Equivalent</span><span class="detail-row__value">≈ $166.67 / mo</span></div>
+          <div class="detail-row"><span class="detail-row__label">Savings vs Monthly</span><span class="detail-row__value detail-row__value--yes">$400 saved</span></div>
+          <div class="detail-row"><span class="detail-row__label">Multilicense Price</span><span class="detail-row__value">+$100 / user / year</span></div>
+          <div class="detail-row"><span class="detail-row__label">Support</span><span class="detail-row__value">24/7 dedicated</span></div>
+          <div class="detail-row"><span class="detail-row__label">Revenue Sharing</span><span class="detail-row__value detail-row__value--yes">✓ Franchise model</span></div>
+        </div>
+      </div>
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:16px;text-align:center;">
+        <strong style="color:#1e40af;font-family:'Montserrat',sans-serif;font-size:.85rem;">💡 Best for:</strong>
+        <span style="color:#1e3a8a;font-size:.82rem;"> Enterprises, franchise networks, investment groups, and regional operators.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPARISON TABLE -->
+  <div class="comparison-section">
+    <h2>Plan Comparison</h2>
+    <div style="overflow-x:auto;">
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>FREE</th>
+            <th>BASIC<br/><small style="font-weight:400;opacity:.7;">$150/yr</small></th>
+            <th style="background:#1B2E3F;">PRO ⭐<br/><small style="font-weight:400;opacity:.7;">$1,000/yr</small></th>
+            <th>GLOBAL<br/><small style="font-weight:400;opacity:.7;">$2,000/yr</small></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>World Map Access</td><td>Basic</td><td>Full</td><td class="highlight">Full</td><td>Full</td></tr>
+          <tr><td>Country Profiles / Day</td><td>1</td><td>5</td><td class="highlight">Unlimited</td><td>Unlimited</td></tr>
+          <tr><td>Company Registry Data</td><td><span class="cross">✗</span></td><td><span class="check">✓</span></td><td class="highlight"><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+          <tr><td>Advanced Analytics</td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td class="highlight"><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+          <tr><td>Data Export (CSV/Excel/PDF)</td><td><span class="cross">✗</span></td><td>CSV only</td><td class="highlight">All formats</td><td>All formats</td></tr>
+          <tr><td>API Access</td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td class="highlight"><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+          <tr><td>Multilicense</td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td class="highlight">+$100/user/yr</td><td>+$100/user/yr</td></tr>
+          <tr><td>Select Country / Region</td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td class="highlight">Country</td><td>Region</td></tr>
+          <tr><td>Franchise Management</td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td class="highlight"><span class="cross">✗</span></td><td><span class="check">✓</span></td></tr>
+          <tr><td>Multi-Currency Billing</td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td class="highlight"><span class="cross">✗</span></td><td><span class="check">✓</span></td></tr>
+          <tr><td>Dedicated Account Manager</td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td class="highlight"><span class="cross">✗</span></td><td><span class="check">✓</span></td></tr>
+          <tr><td>Pro Forma Invoice</td><td><span class="cross">✗</span></td><td><span class="check">✓</span></td><td class="highlight"><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+          <tr><td>Support Level</td><td>Community</td><td>Email</td><td class="highlight">Priority</td><td>24/7 Dedicated</td></tr>
+          <tr>
+            <td><strong>Annual Price</strong></td>
+            <td><strong>$0</strong></td>
+            <td><strong>$150</strong></td>
+            <td class="highlight"><strong>$1,000</strong></td>
+            <td><strong>$2,000</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="membership-cta">
+    <div class="selected-plan-info" id="selectedPlanInfo"></div>
+    <p>Select a plan above to continue. You will receive a Pro Forma Invoice with payment instructions.</p>
+    <button class="btn-proceed" id="btnProceed" disabled onclick="proceedToCheckout()">
+      Continue to Payment →
+    </button>
+    <div style="margin-top:16px;font-size:.75rem;color:#8fa5b5;">
+      🔒 Secure checkout · Bank transfer via Pro Forma Invoice · No credit card required upfront
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer__grid">
+      <div class="footer__col footer__col--brand">
+        <a href="index.html" class="footer__logo">
+          <img src="images/logo_full.png" alt="FONTESIN" height="36" style="filter:brightness(0) invert(1);"/>
+        </a>
+        <p class="footer__tagline">Global Business Intelligence Platform</p>
+      </div>
+      <div class="footer__col">
+        <h4>Platform</h4>
+        <a href="world-map.html">World Map</a>
+        <a href="register.html">Get Started</a>
+        <a href="login.html">Log In</a>
+      </div>
+      <div class="footer__col">
+        <h4>Company</h4>
+        <a href="about.html">About Us</a>
+        <a href="careers.html">Careers</a>
+        <a href="contact.html">Contact</a>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span>© 2026 FONTES Inc. All rights reserved.</span>
+      <span>Design by Memento Mori Digital LLC</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+const PLANS = {
+  free:   { name: 'FREE',   price: 0,    label: 'Free Plan — $0/year' },
+  basic:  { name: 'BASIC',  price: 150,  label: 'Basic Plan — $150/year' },
+  pro:    { name: 'PRO',    price: 1000, label: 'Pro Plan — $1,000/year' },
+  global: { name: 'GLOBAL', price: 2000, label: 'Global Plan — $2,000/year' },
+};
+
+let currentPlan = null;
+
+function selectPlan(planKey) {
+  // Deselect all
+  document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.plan-details').forEach(d => d.classList.remove('open'));
+
+  // Select clicked
+  document.getElementById('card-' + planKey).classList.add('selected');
+
+  // Toggle details
+  const details = document.getElementById('details-' + planKey);
+  details.classList.add('open');
+  details.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  // Update CTA
+  currentPlan = planKey;
+  const plan = PLANS[planKey];
+  const info = document.getElementById('selectedPlanInfo');
+  info.textContent = '✓ Selected: ' + plan.label;
+  info.classList.add('visible');
+
+  const btn = document.getElementById('btnProceed');
+  btn.disabled = false;
+  btn.textContent = planKey === 'free' ? 'Activate Free Account →' : 'Continue to Payment →';
+
+  // Store in sessionStorage for thank-you page
+  sessionStorage.setItem('selectedPlan', planKey);
+  sessionStorage.setItem('selectedPlanName', plan.name);
+  sessionStorage.setItem('selectedPlanPrice', plan.price);
+}
+
+function proceedToCheckout() {
+  if (!currentPlan) return;
+  window.location.href = 'thank-you.html';
+}
+</script>
+<script src="js/main.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function() {
+        navigator.serviceWorker.register("/sw.js")
+          .then(function(reg) { console.log("[PWA] SW registered:", reg.scope); })
+          .catch(function(err) { console.warn("[PWA] SW registration failed:", err); });
+      });
+    }
+  </script>
+</body>
+</html>

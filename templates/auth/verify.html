@@ -1,0 +1,651 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#253D51"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="FONTESIN"/>
+
+  <link rel="manifest" href="{% static 'manifest.json' %}"/>
+  <link rel="apple-touch-icon" href="{% static 'adminlte/images/icons/icon-192.png' %}"/>
+
+  <title>Identity Verification – FONTESIN</title>
+
+  <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
+
+  <!-- Veriff SDK -->
+  <script src="https://cdn.veriff.me/sdk/js/1.5/veriff.min.js"></script>
+
+  <style>
+    body { background: #f0f5f8; }
+
+    /* ── Progress bar ── */
+    .reg-progress {
+      background: #fff;
+      border-bottom: 1px solid #d4e2ec;
+      padding: 0;
+    }
+    .reg-progress__inner {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+    .reg-step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 18px 0;
+      flex: 1;
+      position: relative;
+    }
+    .reg-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 1px;
+      height: 24px;
+      background: #d4e2ec;
+    }
+    .reg-step__num {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700;
+      font-size: .78rem;
+      flex-shrink: 0;
+    }
+    .reg-step--done .reg-step__num   { background: #22c55e; color: #fff; }
+    .reg-step--active .reg-step__num { background: #253D51; color: #fff; }
+    .reg-step--pending .reg-step__num{ background: #d4e2ec; color: #5F7383; }
+    .reg-step__label {
+      font-size: .75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    .reg-step--done .reg-step__label    { color: #22c55e; }
+    .reg-step--active .reg-step__label  { color: #253D51; }
+    .reg-step--pending .reg-step__label { color: #8fa5b5; }
+
+    /* ── Main content ── */
+    .verify-page {
+      max-width: 640px;
+      margin: 60px auto;
+      padding: 0 24px;
+    }
+    .verify-card {
+      background: #fff;
+      border-radius: 16px;
+      border: 1px solid #d4e2ec;
+      box-shadow: 0 4px 24px rgba(37,61,81,.08);
+      padding: 48px;
+      text-align: center;
+    }
+    .verify-card__icon {
+      width: 80px; height: 80px;
+      background: linear-gradient(135deg, #253D51, #5F8FAA);
+      border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 28px;
+      font-size: 2.4rem;
+    }
+    .verify-card__title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #253D51;
+      margin-bottom: 12px;
+    }
+    .verify-card__subtitle {
+      color: #5F7383;
+      font-size: .95rem;
+      line-height: 1.7;
+      margin-bottom: 36px;
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* ── 3-step preview ── */
+    .verify-steps {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 36px;
+      text-align: left;
+    }
+    .verify-step-item {
+      flex: 1;
+      background: #f0f5f8;
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .verify-step-item__num {
+      width: 28px; height: 28px;
+      background: #253D51;
+      color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700;
+      font-size: .75rem;
+      margin-bottom: 10px;
+    }
+    .verify-step-item__title {
+      font-weight: 600;
+      font-size: .82rem;
+      color: #253D51;
+      margin-bottom: 4px;
+    }
+    .verify-step-item__desc {
+      font-size: .75rem;
+      color: #5F7383;
+      line-height: 1.5;
+    }
+
+    /* ── CTA button ── */
+    .btn-verify {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, #253D51, #5F8FAA);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 16px 40px;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: .2s ease;
+      text-decoration: none;
+      box-shadow: 0 4px 16px rgba(37,61,81,.25);
+    }
+    .btn-verify:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37,61,81,.35); }
+
+    .verify-note {
+      margin-top: 20px;
+      font-size: .78rem;
+      color: #8fa5b5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    /* ── Veriff Modal overlay ── */
+    .veriff-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15,25,35,.65);
+      backdrop-filter: blur(6px);
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+    }
+    .veriff-modal-overlay.open { display: flex; }
+
+    .veriff-modal {
+      background: #fff;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 520px;
+      margin: 24px;
+      overflow: hidden;
+      box-shadow: 0 24px 80px rgba(0,0,0,.3);
+      animation: modalIn .3s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(24px) scale(.97); }
+      to   { opacity: 1; transform: translateY(0)   scale(1); }
+    }
+
+    .veriff-modal__header {
+      background: linear-gradient(135deg, #253D51 0%, #1B2E3F 100%);
+      padding: 28px 32px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .veriff-modal__header-logo {
+      background: rgba(255,255,255,.12);
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-weight: 800;
+      color: #fff;
+      font-size: .85rem;
+      letter-spacing: .08em;
+    }
+    .veriff-modal__header-text h3 {
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+    .veriff-modal__header-text p { color: rgba(255,255,255,.65); font-size: .78rem; }
+
+    .veriff-modal__body { padding: 32px; }
+
+    /* ── Scan / progress state ── */
+    .veriff-modal__status { text-align: center; padding: 24px 0; }
+
+    .veriff-modal__status--scanning .veriff-scan-icon {
+      width: 100px; height: 100px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f0f5f8, #d4e2ec);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 3rem;
+      position: relative;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { box-shadow: 0 0 0 0   rgba(37,61,81,.2); }
+      50%      { box-shadow: 0 0 0 16px rgba(37,61,81,0); }
+    }
+
+    .veriff-modal__status--success .veriff-scan-icon {
+      width: 100px; height: 100px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 3rem;
+      box-shadow: 0 8px 32px rgba(34,197,94,.3);
+    }
+
+    .veriff-modal__status h4 {
+      font-weight: 700;
+      font-size: 1.15rem;
+      color: #253D51;
+      margin-bottom: 8px;
+    }
+    .veriff-modal__status p { color: #5F7383; font-size: .88rem; line-height: 1.6; }
+
+    .veriff-scan-bar {
+      margin: 24px 0;
+      background: #f0f5f8;
+      border-radius: 100px;
+      height: 6px;
+      overflow: hidden;
+    }
+    .veriff-scan-bar__fill {
+      height: 100%;
+      background: linear-gradient(90deg, #253D51, #5F8FAA);
+      border-radius: 100px;
+      width: 0%;
+      transition: width .4s ease;
+    }
+
+    .veriff-scan-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 20px 0;
+      text-align: left;
+    }
+    .veriff-scan-step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: .82rem;
+      color: #5F7383;
+    }
+    .veriff-scan-step__dot {
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      border: 2px solid #d4e2ec;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .6rem;
+      transition: .3s ease;
+    }
+    .veriff-scan-step.done .veriff-scan-step__dot { background: #22c55e; border-color: #22c55e; color: #fff; }
+    .veriff-scan-step.done { color: #253D51; font-weight: 500; }
+
+    /* ── Modal buttons ── */
+    .veriff-modal__actions { display: flex; gap: 12px; margin-top: 24px; }
+
+    .btn-modal-primary {
+      flex: 1;
+      background: linear-gradient(135deg, #253D51, #5F8FAA);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 14px 24px;
+      font-weight: 700;
+      font-size: .9rem;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+    .btn-modal-primary:hover    { opacity: .9; }
+    .btn-modal-primary:disabled { opacity: .4; cursor: not-allowed; }
+
+    .btn-modal-secondary {
+      background: transparent;
+      color: #5F7383;
+      border: 1px solid #d4e2ec;
+      border-radius: 10px;
+      padding: 14px 20px;
+      font-weight: 600;
+      font-size: .85rem;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+    .btn-modal-secondary:hover { background: #f0f5f8; }
+
+    .veriff-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 16px;
+      font-size: .72rem;
+      color: #8fa5b5;
+    }
+
+    /* ── Veriff SDK iframe container ── */
+    #veriff-root { min-height: 300px; }
+    #veriff-root iframe { width: 100% !important; border: none !important; border-radius: 10px; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="navbar__inner">
+    <a href="{% url 'admin:home' %}" class="navbar__logo">
+      <img src="{% static 'adminlte/images/logo_full.png' %}" alt="FONTESIN" height="38" style="filter:brightness(0) invert(1);"/>
+    </a>
+    <div class="navbar__nav">
+      <a href="{% url 'admin:home' %}">Home</a>
+      <a href="{% url 'admin:worldmap' %}">World Map</a>
+      <a href="{% url 'admin:about' %}">About</a>
+      <a href="{% url 'admin:career' %}">Careers</a>
+      <a href="{% url 'admin:contact' %}">Contact</a>
+    </div>
+    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
+    <div class="navbar__actions">
+      <a href="{% url 'admin:login' %}" class="btn btn-outline btn-sm">Log In</a>
+    </div>
+  </div>
+</nav>
+
+<!-- PROGRESS BAR -->
+<div class="reg-progress">
+  <div class="reg-progress__inner">
+    <div class="reg-step reg-step--done">
+      <div class="reg-step__num">✓</div>
+      <div class="reg-step__label">Account Info</div>
+    </div>
+    <div class="reg-step reg-step--active">
+      <div class="reg-step__num">2</div>
+      <div class="reg-step__label">Identity Verification</div>
+    </div>
+    <div class="reg-step reg-step--pending">
+      <div class="reg-step__num">3</div>
+      <div class="reg-step__label">Choose Plan</div>
+    </div>
+    <div class="reg-step reg-step--pending">
+      <div class="reg-step__num">4</div>
+      <div class="reg-step__label">Confirmation</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="verify-page">
+  <div class="verify-card">
+    <div class="verify-card__icon">🛡️</div>
+    <h1 class="verify-card__title">Identity Verification Required</h1>
+    <p class="verify-card__subtitle">
+      To comply with financial regulations and protect our platform,
+      we require identity verification before activating your FONTESIN account.
+      The process takes less than 2 minutes.
+    </p>
+
+    <div class="verify-steps">
+      <div class="verify-step-item">
+        <div class="verify-step-item__num">1</div>
+        <div class="verify-step-item__title">Prepare ID</div>
+        <div class="verify-step-item__desc">Passport, national ID card or driver's license</div>
+      </div>
+      <div class="verify-step-item">
+        <div class="verify-step-item__num">2</div>
+        <div class="verify-step-item__title">Take a Selfie</div>
+        <div class="verify-step-item__desc">Live photo for biometric matching</div>
+      </div>
+      <div class="verify-step-item">
+        <div class="verify-step-item__num">3</div>
+        <div class="verify-step-item__title">Instant Result</div>
+        <div class="verify-step-item__desc">AI-powered verification in seconds</div>
+      </div>
+    </div>
+
+    <button class="btn-verify" onclick="startVerification()">
+      <span>🔍</span>
+      <span>Start Identity Verification</span>
+    </button>
+
+    <div class="verify-note">
+      🔒 Secured by Veriff · Your data is encrypted and never stored
+    </div>
+  </div>
+</div>
+
+<!-- VERIFF MODAL -->
+<div class="veriff-modal-overlay" id="veriffOverlay">
+  <div class="veriff-modal">
+
+    <div class="veriff-modal__header">
+      <div class="veriff-modal__header-logo">VERIFF</div>
+      <div class="veriff-modal__header-text">
+        <h3>Identity Verification</h3>
+        <p>Powered by Veriff · End-to-end encrypted</p>
+      </div>
+    </div>
+
+    <div class="veriff-modal__body">
+
+      <!-- SCANNING / PROGRESS STATE -->
+      <div id="stateScan" class="veriff-modal__status veriff-modal__status--scanning">
+        <div class="veriff-scan-icon">📷</div>
+        <h4>Verifying your identity…</h4>
+        <p>Please wait while we securely process your documents and biometric data.</p>
+
+        <div class="veriff-scan-bar">
+          <div class="veriff-scan-bar__fill" id="scanBar"></div>
+        </div>
+
+        <div class="veriff-scan-steps">
+          <div class="veriff-scan-step" id="step1">
+            <div class="veriff-scan-step__dot" id="dot1">1</div>
+            <span>Document scan &amp; OCR extraction</span>
+          </div>
+          <div class="veriff-scan-step" id="step2">
+            <div class="veriff-scan-step__dot" id="dot2">2</div>
+            <span>Biometric face matching</span>
+          </div>
+          <div class="veriff-scan-step" id="step3">
+            <div class="veriff-scan-step__dot" id="dot3">3</div>
+            <span>AML &amp; watchlist screening</span>
+          </div>
+          <div class="veriff-scan-step" id="step4">
+            <div class="veriff-scan-step__dot" id="dot4">4</div>
+            <span>Identity confirmed</span>
+          </div>
+        </div>
+
+        <!-- Veriff SDK mounts here -->
+        <div id="veriff-root"></div>
+
+        <div class="veriff-modal__actions">
+          <button class="btn-modal-secondary" onclick="closeVeriffModal()">Cancel</button>
+          <button class="btn-modal-primary" id="btnConfirm" onclick="confirmVerification()">
+            ✓ Confirm Identification
+          </button>
+        </div>
+      </div>
+
+      <!-- SUCCESS STATE -->
+      <div id="stateSuccess" class="veriff-modal__status veriff-modal__status--success hidden">
+        <div class="veriff-scan-icon">✓</div>
+        <h4>Identity Verified Successfully!</h4>
+        <p>Your identity has been confirmed. You can now proceed to choose your membership plan.</p>
+        <div style="margin-top:24px;">
+          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px;text-align:left;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+              <span style="font-size:1.2rem;">✅</span>
+              <span style="font-weight:700;color:#15803d;font-size:.9rem;">Verification Complete</span>
+            </div>
+            <div style="font-size:.8rem;color:#166534;line-height:1.6;">
+              Document authenticity: <strong>Verified</strong><br/>
+              Biometric match: <strong>Confirmed</strong><br/>
+              AML screening: <strong>Clear</strong>
+            </div>
+          </div>
+        </div>
+        <div class="veriff-modal__actions" style="margin-top:24px;">
+          <a href="/admin/membership/" class="btn-modal-primary" style="text-align:center;text-decoration:none;">
+            Continue to Choose Plan →
+          </a>
+        </div>
+      </div>
+
+      <div class="veriff-badge">
+        🔒 256-bit SSL · GDPR Compliant · ISO 27001 Certified
+      </div>
+
+    </div><!-- /.veriff-modal__body -->
+  </div><!-- /.veriff-modal -->
+</div><!-- /.veriff-modal-overlay -->
+
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer__grid">
+      <div class="footer__col footer__col--brand">
+        <a href="{% url 'admin:home' %}" class="footer__logo">
+          <img src="{% static 'adminlte/images/logo_full.png' %}" height="36" style="filter:brightness(0) invert(1);"/>
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+<script>
+/* ─────────────────────────────────────────────
+   Veriff integration
+   ───────────────────────────────────────────── */
+async function startVerification() {
+  // Open modal and start the visual progress animation immediately
+  document.getElementById('veriffOverlay').classList.add('open');
+  startScanAnimation();
+
+  try {
+    // Fetch session URL from Django backend
+    const response = await fetch("{% url 'admin:veriff-session' %}");
+    if (!response.ok) throw new Error('Session fetch failed: ' + response.status);
+    const data = await response.json();
+
+    // Mount Veriff SDK inside #veriff-root
+    const veriff = Veriff({
+      host: 'https://stationapi.veriff.com',
+      apiKey: '{{ VERIFF_PUBLIC_KEY }}',
+      parentId: 'veriff-root',
+      onSession: function(err, response) {
+        // Called when SDK creates/receives the session — pass our pre-created URL
+        if (err) { console.error('Veriff session error', err); return; }
+      }
+    });
+
+    veriff.setParams({ sessionUrl: data.session_url });
+
+    // Listen for Veriff events
+    veriff.mount({
+      submitBtnText: 'Verify My Identity'
+    });
+
+    // Veriff fires custom DOM events for status changes
+    document.getElementById('veriff-root').addEventListener('veriff-event', function(e) {
+      if (e.detail && (e.detail.status === 'FINISHED' || e.detail.status === 'SUBMITTED')) {
+        confirmVerification();
+      }
+    });
+
+  } catch (error) {
+    console.error('Verification failed:', error);
+    alert('Unable to start verification session. Please try again.');
+    closeVeriffModal();
+  }
+}
+
+/* ─────────────────────────────────────────────
+   Modal helpers
+   ───────────────────────────────────────────── */
+function closeVeriffModal() {
+  document.getElementById('veriffOverlay').classList.remove('open');
+  resetScan();
+}
+
+function resetScan() {
+  document.getElementById('scanBar').style.width = '0%';
+  document.getElementById('stateScan').classList.remove('hidden');
+  document.getElementById('stateSuccess').classList.add('hidden');
+  ['step1','step2','step3','step4'].forEach(id => document.getElementById(id).classList.remove('done'));
+  ['dot1','dot2','dot3','dot4'].forEach((id, i) => { document.getElementById(id).textContent = i + 1; });
+  // Clear any previously mounted Veriff iframe
+  document.getElementById('veriff-root').innerHTML = '';
+}
+
+function startScanAnimation() {
+  const bar = document.getElementById('scanBar');
+  const steps = [
+    { id: 'step1', dot: 'dot1', delay: 600,  progress: 25 },
+    { id: 'step2', dot: 'dot2', delay: 1400, progress: 55 },
+    { id: 'step3', dot: 'dot3', delay: 2200, progress: 80 },
+    { id: 'step4', dot: 'dot4', delay: 3000, progress: 100 },
+  ];
+  steps.forEach(({ id, dot, delay, progress }) => {
+    setTimeout(() => {
+      bar.style.width = progress + '%';
+      document.getElementById(id).classList.add('done');
+      document.getElementById(dot).textContent = '✓';
+    }, delay);
+  });
+}
+
+function confirmVerification() {
+  document.getElementById('stateScan').classList.add('hidden');
+  document.getElementById('stateSuccess').classList.remove('hidden');
+}
+
+// Close modal when clicking the dark overlay
+document.getElementById('veriffOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeVeriffModal();
+});
+</script>
+
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register("{% static 'adminlte/js/sw.js' %}")
+      .then(reg => console.log('[PWA] SW registered:', reg.scope))
+      .catch(err => console.warn('[PWA] SW registration failed:', err));
+  });
+}
+</script>
+
+</body>
+</html>

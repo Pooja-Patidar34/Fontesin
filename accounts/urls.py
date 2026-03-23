@@ -1,12 +1,14 @@
 from django.urls import path
-from .view.auth import admin_login, admin_logout,register_view
+from .view.auth import admin_login, admin_logout,register_view,identity_verification_view
 from .view.dashboard import dashboard
 from accounts.view.company import company_list, toggle_company,company_detail_ajax,company_delete
 from .view.user import user_list, toggle_user, assign_roles,role_list,role_detail_ajax,permission_list,save_role,user_detail_ajax,user_edit,add_user
 from .view.audit import audit_logs,audit_log_detail_ajax
 from .view.tenant import tenant_list,toggle_tenant,tenant_detail_ajax,tenant_delete
-from .view.website import home, about, worldmap, career, contact
+from .view.website import home, about, worldmap, career, contact,membership
 from .view.regions import region_us, region_de, region_cz, region_ae, region_jp
+from .view.veriff import CreateVeriffSessionAPIView
+
 
 
 urlpatterns = [
@@ -34,14 +36,15 @@ urlpatterns = [
     path("users/<uuid:user_id>/edit/", user_edit, name="user-edit"),
     path("users/add/", add_user, name="add-user"),
     path("companies/<uuid:company_id>/delete/", company_delete, name="company-delete"),
-    path("", register_view, name="register"),
+    path("register/", register_view, name="register"),
 
     #static pages
-    path('home/', home, name='home'),  # default landing page
+    path('home', home, name='home'),  # default landing page
     path('about/', about, name='about'),
     path('worldmap/', worldmap, name='worldmap'),
     path('career/', career, name='career'),
     path('contact/', contact, name='contact'),
+    path('membership/', membership, name='membership'),
 
     #region specific pages
     path('region/us/', region_us, name='region_us'),
@@ -49,5 +52,10 @@ urlpatterns = [
     path('region/cz/', region_cz, name='region_cz'),
     path('region/ae/', region_ae, name='region_ae'),
     path('region/jp/', region_jp, name='region_jp'),
+
+
+    #veriff
+    path("veriff/session/", CreateVeriffSessionAPIView.as_view(),name="veriff-session",),
+    path("verify/", identity_verification_view, name="identity-verification"),
 ]
 

@@ -93,54 +93,47 @@ def admin_logout(request):
 
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, login
 from accounts.models import Tenant, Company, Role, UserCompany
+from accounts.models import User
 
-User = get_user_model()
 
 def register_view(request):
 
-    # ✅ send companies to template (GET + POST fallback)
     companies = Company.objects.filter(is_active=True)
 
     if request.method == "POST":
 
-        # -------------------------
-        # PHASE 1 DATA
-        # -------------------------
         first_name = request.POST.get("first_name")
         last_name = request.POST.get("last_name")
         email = request.POST.get("email")
         phone = request.POST.get("phone")
         country = request.POST.get("country")
         password = request.POST.get("password")
+        confirm_password = request.POST.get("confirm_password")
 
-        # -------------------------
-        # PHASE 2 DATA
-        # -------------------------
         role_name = request.POST.get("role")
-        company_id = request.POST.get("company_id")  # ✅ NEW
+        company_id = request.POST.get("company_id")
 
-        # -------------------------
-        # VALIDATION
-        # -------------------------
+        # email exists check
         if User.objects.filter(email=email).exists():
             messages.error(request, "Email already exists")
             return render(request, "auth/register.html", {"companies": companies})
 
-        # -------------------------
-        # TENANT
-        # -------------------------
+        # password match check
+        if password != confirm_password:
+            messages.error(request, "Passwords do not match")
+            return render(request, "auth/register.html", {"companies": companies})
+
         tenant, _ = Tenant.objects.get_or_create(name="Default")
 
-        # -------------------------
-        # ROLE (better: no auto create)
-        # -------------------------
         role = Role.objects.filter(name__iexact=role_name).first()
 
-        # -------------------------
-        # CREATE USER
-        # -------------------------
+        if not role:
+            messages.error(request, "Invalid role selected")
+            return render(request, "auth/register.html", {"companies": companies})
+
+        # create user
         user = User.objects.create_user(
             email=email,
             password=password,
@@ -152,12 +145,9 @@ def register_view(request):
             country=country,
         )
 
-        # -------------------------
-        # COMPANY LINK (UPDATED)
-        # -------------------------
+        # link company
         if company_id:
             company = Company.objects.filter(id=company_id).first()
-
             if company:
                 user.primary_company = company
                 user.save()
@@ -168,10 +158,26 @@ def register_view(request):
                     is_primary=True
                 )
 
-        # -------------------------
-        # SUCCESS
-        # -------------------------
-        messages.success(request, "Account created successfully")
-        return redirect("admin:login")
+        # ✅ THIS IS REQUIRED
+        login(request, user)
 
-    return render(request, "website/register.html", {"companies": companies})
+        # redirect to verification step
+        return redirect("/admin/verify/")
+
+    return render(request, "auth/register.html", {"companies": companies})
+
+from django.conf import settings
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+
+
+@login_required
+def identity_verification_view(request):
+
+    return render(
+        request,
+        "auth/verify.html",
+        {
+            "VERIFF_PUBLIC_KEY": settings.VERIFF_API_KEY
+        }
+    )

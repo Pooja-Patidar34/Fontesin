@@ -14,3 +14,6 @@ def career(request):
 
 def contact(request):
     return render(request, 'website/contact.html')
+
+def membership(request):
+    return render(request, 'website/membership.html')

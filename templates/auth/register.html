@@ -18,20 +18,7 @@
 
   <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
 
-  <!-- ✅ YOUR ORIGINAL STYLE KEPT EXACT -->
   <style>
-    /* KEEP YOUR INLINE CSS EXACT */
-    .reg-page {
-      min-height: 100vh;
-      background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-mid) 100%);
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      padding: 40px 24px;
-      position: relative;
-      overflow: hidden;
-    }
-
     .reg-page {
       min-height: 100vh;
       background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-mid) 100%);
@@ -175,15 +162,15 @@
       transition: .2s;
       z-index: 10;
     }
-    .auth-back:hover { color: #fff; }  </style>
+    .auth-back:hover { color: #fff; }
+  </style>
 </head>
 
 <body>
 
 <div class="reg-page">
 
-  <!-- KEEP ORIGINAL LINK -->
-  <a href="index.html" class="auth-back">← Back to Home</a>
+  <a href="{% url 'admin:home' %}" class="auth-back">← Back to Home</a>
 
   <div class="reg-container">
     <div class="reg-header">
@@ -212,261 +199,233 @@
         </div>
       </div>
 
-    <form method="POST" action="{% url 'admin:register' %}" id="register-form">
-    {% csrf_token %}
+      <form method="POST" action="{% url 'admin:register' %}" id="register-form" novalidate>
+        {% csrf_token %}
 
         <!-- PHASE 1 -->
         <div class="reg-phase active" id="phase-1">
 
-        <!-- ✅ FIX: RESTORED HEADER (THIS WAS MISSING) -->
-        <h3 style="margin-bottom:6px; font-weight: 700; font-size: 1.6rem;">Create Your Account</h3>
-        <p style="font-size:.88rem;margin-bottom:28px;">
+          <h3 style="margin-bottom:6px; font-weight: 700; font-size: 1.6rem;">Create Your Account</h3>
+          <p style="font-size:.88rem;margin-bottom:28px;">
             Start with the basics — free, no credit card required.
-        </p>
+          </p>
 
-        <div class="form-row">
+          <div class="form-row">
             <div class="form-group">
-            <label class="form-label">First Name *</label>
-            <input type="text" name="first_name" id="reg-fname" class="form-control" placeholder="John" required/>
+              <label class="form-label">First Name *</label>
+              <input type="text" name="first_name" id="reg-fname" class="form-control" placeholder="John"/>
             </div>
             <div class="form-group">
-            <label class="form-label">Last Name *</label>
-            <input type="text" name="last_name" id="reg-lname" class="form-control" placeholder="Smith" required/>
+              <label class="form-label">Last Name *</label>
+              <input type="text" name="last_name" id="reg-lname" class="form-control" placeholder="Smith"/>
             </div>
-        </div>
+          </div>
 
-        <div class="form-group">
+          <div class="form-group">
             <label class="form-label">Email Address *</label>
-            <input type="email" name="email" id="reg-email" class="form-control" placeholder="john@company.com" required/>
-        </div>
+            <input type="email" name="email" id="reg-email" class="form-control" placeholder="john@company.com"/>
+          </div>
 
-        <div class="form-group">
+          <div class="form-group">
             <label class="form-label">Phone Number *</label>
-            <input type="tel" name="phone" id="reg-phone" class="form-control" placeholder="+1 212 555 0100" required/>
-        </div>
+            <input type="tel" name="phone" id="reg-phone" class="form-control" placeholder="+1 212 555 0100"/>
+          </div>
 
-        <div class="form-group">
+          <div class="form-group">
             <label class="form-label">Country *</label>
-            <select name="country" id="reg-country" class="form-control" required>
-            <option value="">Select your country...</option>
-            <option value="IN">India</option>
-            <option value="US">United States</option>
-            <option value="DE">Germany</option>
-            <option value="GB">United Kingdom</option>
+            <select name="country" id="reg-country" class="form-control">
+              <option value="">Select your country...</option>
+              <option value="IN">India</option>
+              <option value="US">United States</option>
+              <option value="DE">Germany</option>
+              <option value="GB">United Kingdom</option>
             </select>
-        </div>
+          </div>
 
-        <div class="form-group">
+          <div class="form-group">
             <label class="form-label">Preferred Language</label>
-            <select class="form-control">
-            <option>English</option>
-            <option>German</option>
-            <option>French</option>
+            <select name="language" class="form-control">
+              <option value="en">English</option>
+              <option value="de">German</option>
+              <option value="fr">French</option>
             </select>
-        </div>
+          </div>
 
-        <div class="form-group">
+          <div class="form-group">
             <label class="form-label">Password *</label>
             <div class="password-toggle">
-            <input type="password" name="password" id="reg-pass" class="form-control" required/>
-            <button type="button" class="password-toggle__btn">👁</button>
+              <input type="password" name="password" id="reg-pass" class="form-control"/>
+              <button type="button" class="password-toggle__btn">👁</button>
             </div>
-        </div>
+          </div>
 
-        <div class="form-group">
+          <div class="form-group">
             <label class="form-label">Confirm Password *</label>
             <div class="password-toggle">
-            <input type="password" name="confirm_password" id="reg-pass2" class="form-control" required/>
-            <button type="button" class="password-toggle__btn">👁</button>
+              <input type="password" name="confirm_password" id="reg-pass2" class="form-control"/>
+              <button type="button" class="password-toggle__btn">👁</button>
             </div>
-        </div>
+          </div>
 
-        <button type="button" class="btn btn-primary" style="width:100%;" onclick="goToPhase(2)">
+          <button type="button" class="btn btn-primary" style="width:100%;" onclick="goToPhase(2)">
             Continue →
-        </button>
+          </button>
 
-        <p style="text-align:center;margin-top:16px;">
+          <p style="text-align:center;margin-top:16px;">
             Already have an account?
             <a href="{% url 'admin:login' %}" class="auth-link">Log in</a>
-        </p>
+          </p>
         </div>
-        <!-- PHASE 2 (FULL RESTORED) -->
+
+        <!-- PHASE 2 -->
         <div class="reg-phase" id="phase-2">
 
-            <!-- ✅ HEADER (MISSING IN YOUR VERSION) -->
-            <h3 style="margin-bottom:6px; font-weight: 700; font-size: 1.5rem;">
-                Your Role on FONTESIN
-            </h3>
-            <p style="font-size:.9rem; margin-bottom:24px; color: var(--text-secondary);">
-                Tell us how you plan to use the platform. This helps us tailor your experience.
-            </p>
+          <h3 style="margin-bottom:6px; font-weight: 700; font-size: 1.5rem;">
+            Your Role on FONTESIN
+          </h3>
+          <p style="font-size:.9rem; margin-bottom:24px; color: var(--text-secondary);">
+            Tell us how you plan to use the platform. This helps us tailor your experience.
+          </p>
 
-            <!-- ROLE SELECTION -->
-            <div class="form-group">
-                <label class="form-label">I am interested in joining as *</label>
+          <div class="form-group">
+            <label class="form-label">I am interested in joining as *</label>
+            <div class="role-grid">
 
-                <div class="role-grid">
-
-                <label class="role-option">
-                    <input type="radio" name="role" value="business_user" checked/>
-                    <div>
-                    <div class="role-option__label">🏢 Business User</div>
-                    <div class="role-option__desc">Register & certify my company</div>
-                    </div>
-                </label>
-
-                <label class="role-option">
-                    <input type="radio" name="role" value="consultant"/>
-                    <div>
-                    <div class="role-option__label">💼 Consultant</div>
-                    <div class="role-option__desc">Advise companies in my region</div>
-                    </div>
-                </label>
-
-                <label class="role-option">
-                    <input type="radio" name="role" value="coordinator"/>
-                    <div>
-                    <div class="role-option__label">🌍 Coordinator</div>
-                    <div class="role-option__desc">Coordinate regional operations</div>
-                    </div>
-                </label>
-
-                <label class="role-option">
-                    <input type="radio" name="role" value="franchise"/>
-                    <div>
-                    <div class="role-option__label">🚀 Franchise Partner</div>
-                    <div class="role-option__desc">Master / National / Local franchise</div>
-                    </div>
-                </label>
-
+              <label class="role-option">
+                <input type="radio" name="role" value="business_user" checked/>
+                <div>
+                  <div class="role-option__label">🏢 Business User</div>
+                  <div class="role-option__desc">Register & certify my company</div>
                 </div>
-            </div>
+              </label>
 
-            <!-- ✅ COMPANY NAME (MISSING) -->
-            <div class="form-group">
+              <label class="role-option">
+                <input type="radio" name="role" value="consultant"/>
+                <div>
+                  <div class="role-option__label">💼 Consultant</div>
+                  <div class="role-option__desc">Advise companies in my region</div>
+                </div>
+              </label>
+
+              <label class="role-option">
+                <input type="radio" name="role" value="coordinator"/>
+                <div>
+                  <div class="role-option__label">🌍 Coordinator</div>
+                  <div class="role-option__desc">Coordinate regional operations</div>
+                </div>
+              </label>
+
+              <label class="role-option">
+                <input type="radio" name="role" value="franchise"/>
+                <div>
+                  <div class="role-option__label">🚀 Franchise Partner</div>
+                  <div class="role-option__desc">Master / National / Local franchise</div>
+                </div>
+              </label>
+
+            </div>
+          </div>
+
+          <div class="form-group">
             <label class="form-label">Company (Optional)</label>
             <select name="company_id" class="form-control">
-                <option value="">Select Company</option>
-                {% for company in companies %}
-                <option value="{{ company.id }}">{{ company.name }}</option>
-                {% endfor %}
+              <option value="">Select Company</option>
+              {% for company in companies %}
+              <option value="{{ company.id }}">{{ company.name }}</option>
+              {% endfor %}
             </select>
-            </div>
+          </div>
 
-            <!-- ✅ TEXTAREA (MISSING) -->
-            <div class="form-group">
-                <label class="form-label">Tell us about your interest</label>
-                <textarea name="interest" class="form-control" rows="4"
-                    placeholder="Brief description..."></textarea>
-            </div>
+          <div class="form-group">
+            <label class="form-label">Tell us about your interest</label>
+            <textarea name="interest" class="form-control" rows="4"
+              placeholder="Brief description..."></textarea>
+          </div>
 
-            <!-- BUTTONS -->
-            <div style="display:flex; gap:12px;">
-                <button type="button" class="btn btn-outline" onclick="goToPhase(1)">
-                ← Back
-                </button>
-                <button type="button" class="btn btn-primary" onclick="goToPhase(3)">
-                Continue →
-                </button>
-            </div>
+          <div style="display:flex; gap:12px;">
+            <button type="button" class="btn btn-outline" onclick="goToPhase(1)">
+              ← Back
+            </button>
+            <button type="button" class="btn btn-primary" onclick="goToPhase(3)">
+              Continue →
+            </button>
+          </div>
 
-            </div>
+        </div>
+
         <!-- PHASE 3 -->
-        <!-- <div class="reg-phase" id="phase-3">
-          <div class="checkbox-group">
-            <input type="checkbox" id="terms" required/>
-            <label for="terms">I agree to Terms</label>
-          </div>
-
-          <div class="checkbox-group">
-            <input type="checkbox" id="gdpr" required/>
-            <label for="gdpr">I agree to GDPR</label>
-          </div>
-
-          <div style="display:flex;gap:12px;">
-            <button type="button" class="btn btn-outline" onclick="goToPhase(2)">← Back</button>
-            <button type="submit" class="btn btn-primary">Create Account →</button>
-          </div>
-        </div> -->
-
         <div class="reg-phase" id="phase-3">
 
-        <!-- ✅ HEADER -->
-        <h3 style="margin-bottom:6px; font-weight: 700; font-size: 1.5rem;">
+          <h3 style="margin-bottom:6px; font-weight: 700; font-size: 1.5rem;">
             Almost Done!
-        </h3>
-        <p style="font-size:.9rem; margin-bottom:20px; color: var(--text-secondary);">
+          </h3>
+          <p style="font-size:.9rem; margin-bottom:20px; color: var(--text-secondary);">
             Review and confirm your registration.
-        </p>
+          </p>
 
-        <!-- ✅ SUMMARY BOX -->
-        <div style="
+          <div style="
             background: var(--bg-light);
             padding: 16px 18px;
             border-radius: 10px;
             margin-bottom: 20px;
             font-size: .85rem;
-        ">
+          ">
             <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-            <span>Account Type</span>
-            <strong>FREE (Upgradeable)</strong>
+              <span>Account Type</span>
+              <strong>FREE (Upgradeable)</strong>
             </div>
-
             <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-            <span>Access Level</span>
-            <strong>Read-only · Company name index</strong>
+              <span>Access Level</span>
+              <strong>Read-only · Company name index</strong>
             </div>
-
             <div style="display:flex; justify-content:space-between;">
-            <span>Verification</span>
-            <strong style="color:#f59e0b;">
+              <span>Verification</span>
+              <strong style="color:#f59e0b;">
                 Identity verification required (Veriff)
-            </strong>
+              </strong>
             </div>
-        </div>
+          </div>
 
-        <!-- ✅ CHECKBOXES -->
-        <div class="checkbox-group" style="margin-bottom:10px;">
-            <input type="checkbox" id="terms" required/>
+          <!-- ✅ NO required attribute — validated manually in JS -->
+          <div class="checkbox-group" style="margin-bottom:10px;">
+            <input type="checkbox" id="terms" name="terms"/>
             <label for="terms">
-            I agree to the <strong>Terms of Service</strong> and <strong>Privacy Policy</strong> of FONTESIN.
+              I agree to the <strong>Terms of Service</strong> and <strong>Privacy Policy</strong> of FONTESIN.
             </label>
-        </div>
+          </div>
 
-        <div class="checkbox-group" style="margin-bottom:10px;">
-            <input type="checkbox" id="gdpr" required/>
+          <div class="checkbox-group" style="margin-bottom:10px;">
+            <input type="checkbox" id="gdpr" name="gdpr"/>
             <label for="gdpr">
-            I consent to the processing of my personal data in accordance with GDPR.
+              I consent to the processing of my personal data in accordance with GDPR.
             </label>
-        </div>
+          </div>
 
-        <div class="checkbox-group" style="margin-bottom:20px;">
-            <input type="checkbox" id="updates"/>
+          <div class="checkbox-group" style="margin-bottom:20px;">
+            <input type="checkbox" id="updates" name="updates"/>
             <label for="updates">
-            I would like to receive updates about FONTESIN platform development (Optional)
+              I would like to receive updates about FONTESIN platform development (Optional)
             </label>
-        </div>
+          </div>
 
-        <!-- BUTTONS -->
-        <div style="display:flex; gap:12px;">
+          <div style="display:flex; gap:12px;">
             <button type="button" class="btn btn-outline" onclick="goToPhase(2)">
-            ← Back
+              ← Back
             </button>
-            <button type="submit" class="btn btn-primary">
-            Create Account & Verify Identity →
+            <button type="button" class="btn btn-primary" id="submit-btn">
+              Create Account & Verify Identity →
             </button>
-        </div>
+          </div>
 
-        <!-- FOOT NOTE -->
-        <p style="text-align:center; margin-top:14px; font-size:.75rem; color:var(--text-secondary);">
+          <p style="text-align:center; margin-top:14px; font-size:.75rem; color:var(--text-secondary);">
             You will receive a verification email after registration.
-        </p>
+          </p>
 
         </div>
+
       </form>
     </div>
 
-    <!-- FOOTER RESTORED -->
     <p style="text-align:center;color:rgba(255,255,255,.4);font-size:.78rem;margin-top:20px;">
       © 2026 FONTES Inc.
     </p>
@@ -474,99 +433,68 @@
   </div>
 </div>
 
-<!-- JS (UNCHANGED) -->
 <script src="{% static 'adminlte/js/main.js' %}"></script>
 
 <script>
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", function() {
-        navigator.serviceWorker.register("/sw.js")
-          .then(function(reg) { console.log("[PWA] SW registered:", reg.scope); })
-          .catch(function(err) { console.warn("[PWA] SW registration failed:", err); });
-      });
-    }
-
-window.goToPhase = function(num) {
-
-  // ------------------------
-  // PHASE 1 VALIDATION
-  // ------------------------
-  if (num === 2) {
-
-    const fields = [
-      { id: 'reg-fname', msg: 'First name is required' },
-      { id: 'reg-lname', msg: 'Last name is required' },
-      { id: 'reg-email', msg: 'Email is required' },
-      { id: 'reg-phone', msg: 'Phone number is required' },
-      { id: 'reg-country', msg: 'Please select your country' },
-      { id: 'reg-pass', msg: 'Password is required' },
-      { id: 'reg-pass2', msg: 'Confirm your password' },
-    ];
-
-    // Reset styles
-    fields.forEach(f => {
-      const el = document.getElementById(f.id);
-      if (el) el.style.borderColor = '';
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function() {
+      navigator.serviceWorker.register("/sw.js")
+        .then(function(reg) { console.log("[PWA] SW registered:", reg.scope); })
+        .catch(function(err) { console.warn("[PWA] SW registration failed:", err); });
     });
+  }
 
-    // Check empty fields
-    for (let f of fields) {
-      const el = document.getElementById(f.id);
-      if (!el || !el.value.trim()) {
-        el.style.borderColor = 'red';
-        el.focus();
-        showNotification(f.msg, 'error');
+  window.goToPhase = function(num) {
+    if (num === 2) {
+      const requiredFields = ['reg-fname','reg-lname','reg-email','reg-phone','reg-country','reg-pass','reg-pass2'];
+      for (let id of requiredFields) {
+        const el = document.getElementById(id);
+        if (!el.value.trim()) {
+          el.focus();
+          alert("Please complete all required fields before continuing.");
+          return;
+        }
+      }
+      const email = document.getElementById('reg-email').value;
+      const pass  = document.getElementById('reg-pass').value;
+      const pass2 = document.getElementById('reg-pass2').value;
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        alert("Enter a valid email address.");
+        return;
+      }
+      if (pass.length < 8) {
+        alert("Password must be at least 8 characters.");
+        return;
+      }
+      if (pass !== pass2) {
+        alert("Passwords do not match.");
         return;
       }
     }
 
-    const email = document.getElementById('reg-email').value;
-    const pass = document.getElementById('reg-pass').value;
-    const pass2 = document.getElementById('reg-pass2').value;
+    for (let i = 1; i <= 3; i++) {
+      const step  = document.getElementById('step-'  + i);
+      const phase = document.getElementById('phase-' + i);
+      if (!step || !phase) continue;
+      step.classList.remove('active', 'done');
+      phase.classList.remove('active');
+      if (i < num)  step.classList.add('done');
+      if (i === num) { step.classList.add('active'); phase.classList.add('active'); }
+    }
+  };
 
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      document.getElementById('reg-email').style.borderColor = 'red';
-      showNotification('Enter a valid email address', 'error');
+  // ✅ KEY FIX: submit button is type="button", manually submit after validation
+  document.getElementById('submit-btn').addEventListener('click', function() {
+    if (!document.getElementById('terms').checked) {
+      alert("You must agree to the Terms of Service.");
       return;
     }
-
-    // Password validation
-    if (pass.length < 8) {
-      document.getElementById('reg-pass').style.borderColor = 'red';
-      showNotification('Password must be at least 8 characters', 'error');
+    if (!document.getElementById('gdpr').checked) {
+      alert("You must consent to GDPR data processing.");
       return;
     }
-
-    if (pass !== pass2) {
-      document.getElementById('reg-pass2').style.borderColor = 'red';
-      showNotification('Passwords do not match', 'error');
-      return;
-    }
-  }
-
-  // ------------------------
-  // PHASE SWITCHING
-  // ------------------------
-  for (let i = 1; i <= 3; i++) {
-    const step = document.getElementById('step-' + i);
-    const phase = document.getElementById('phase-' + i);
-
-    if (!step || !phase) continue;
-
-    step.classList.remove('active', 'done');
-    phase.classList.remove('active');
-
-    if (i < num) step.classList.add('done');
-    if (i === num) {
-      step.classList.add('active');
-      phase.classList.add('active');
-    }
-  }
-
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-};
+    document.getElementById('register-form').submit();
+  });
 </script>
 
 </body>

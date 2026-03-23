@@ -272,3 +272,10 @@ LOGGING = {
 
     },
 }
+
+#varriff
+
+
+VERIFF_API_KEY = config("VERIFF_API_KEY")
+VERIFF_MASTER_SECRET = config("VERIFF_MASTER_SECRET")
+VERIFF_BASE_URL = "https://stationapi.veriff.com"

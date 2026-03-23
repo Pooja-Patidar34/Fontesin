@@ -31,8 +31,8 @@
     </div>
     <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
     <div class="navbar__actions">
-      <a href="login.html" class="btn btn-outline btn-sm">Log In</a>
-      <a href="register.html" class="btn btn-primary btn-sm">Get Started</a>
+      <a href="{% url 'admin:login' %}" class="btn btn-outline btn-sm">Log In</a>
+      <a href="{% url 'admin:register' %}" class="btn btn-primary btn-sm">Get Started</a>
     </div>
   </div>
 </nav>
