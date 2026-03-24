@@ -547,46 +547,61 @@
 /* ─────────────────────────────────────────────
    Veriff integration
    ───────────────────────────────────────────── */
-async function startVerification() {
-  // Open modal and start the visual progress animation immediately
-  document.getElementById('veriffOverlay').classList.add('open');
-  startScanAnimation();
+// async function startVerification() {
+//   // Open modal and start the visual progress animation immediately
+//   document.getElementById('veriffOverlay').classList.add('open');
+//   startScanAnimation();
 
+//   try {
+//     // Fetch session URL from Django backend
+//     const response = await fetch("{% url 'admin:veriff-session' %}");
+//     if (!response.ok) throw new Error('Session fetch failed: ' + response.status);
+//     const data = await response.json();
+
+//     // Mount Veriff SDK inside #veriff-root
+//     const veriff = Veriff({
+//       host: 'https://stationapi.veriff.com',
+//       apiKey: '{{ VERIFF_PUBLIC_KEY }}',
+//       parentId: 'veriff-root',
+//       onSession: function(err, response) {
+//         // Called when SDK creates/receives the session — pass our pre-created URL
+//         if (err) { console.error('Veriff session error', err); return; }
+//       }
+//     });
+
+//     veriff.setParams({ sessionUrl: data.session_url });
+
+//     // Listen for Veriff events
+//     veriff.mount({
+//       submitBtnText: 'Verify My Identity'
+//     });
+
+//     // Veriff fires custom DOM events for status changes
+//     document.getElementById('veriff-root').addEventListener('veriff-event', function(e) {
+//       if (e.detail && (e.detail.status === 'FINISHED' || e.detail.status === 'SUBMITTED')) {
+//         confirmVerification();
+//       }
+//     });
+
+//   } catch (error) {
+//     console.error('Verification failed:', error);
+//     alert('Unable to start verification session. Please try again.');
+//     closeVeriffModal();
+//   }
+// }
+
+async function startVerification() {
   try {
-    // Fetch session URL from Django backend
     const response = await fetch("{% url 'admin:veriff-session' %}");
-    if (!response.ok) throw new Error('Session fetch failed: ' + response.status);
+    if (!response.ok) throw new Error('Session fetch failed');
+
     const data = await response.json();
 
-    // Mount Veriff SDK inside #veriff-root
-    const veriff = Veriff({
-      host: 'https://stationapi.veriff.com',
-      apiKey: '{{ VERIFF_PUBLIC_KEY }}',
-      parentId: 'veriff-root',
-      onSession: function(err, response) {
-        // Called when SDK creates/receives the session — pass our pre-created URL
-        if (err) { console.error('Veriff session error', err); return; }
-      }
-    });
-
-    veriff.setParams({ sessionUrl: data.session_url });
-
-    // Listen for Veriff events
-    veriff.mount({
-      submitBtnText: 'Verify My Identity'
-    });
-
-    // Veriff fires custom DOM events for status changes
-    document.getElementById('veriff-root').addEventListener('veriff-event', function(e) {
-      if (e.detail && (e.detail.status === 'FINISHED' || e.detail.status === 'SUBMITTED')) {
-        confirmVerification();
-      }
-    });
+    window.location.href = data.session_url;
 
   } catch (error) {
-    console.error('Verification failed:', error);
-    alert('Unable to start verification session. Please try again.');
-    closeVeriffModal();
+    console.error(error);
+    alert("Unable to start verification session.");
   }
 }
 

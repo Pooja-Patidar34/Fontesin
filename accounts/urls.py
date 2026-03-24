@@ -8,7 +8,7 @@ from .view.tenant import tenant_list,toggle_tenant,tenant_detail_ajax,tenant_del
 from .view.website import home, about, worldmap, career, contact,membership
 from .view.regions import region_us, region_de, region_cz, region_ae, region_jp
 from .view.veriff import CreateVeriffSessionAPIView
-
+from .view.webhook import veriff_webhook
 
 
 urlpatterns = [
@@ -52,6 +52,9 @@ urlpatterns = [
     path('region/cz/', region_cz, name='region_cz'),
     path('region/ae/', region_ae, name='region_ae'),
     path('region/jp/', region_jp, name='region_jp'),
+
+    #webhook
+    path("veriff/webhook/", veriff_webhook),
 
 
     #veriff
