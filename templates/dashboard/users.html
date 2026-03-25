@@ -102,18 +102,18 @@
 
                   {% if user.is_active %}
                   <a class="dropdown-item text-danger"
-                     href="{% url 'admin:user-toggle' user.id %}?next={{ request.get_full_path|urlencode }}">
+                     href="{% url 'user-toggle' user.id %}?next={{ request.get_full_path|urlencode }}">
                     <i class="fas fa-user-slash mr-2"></i> Deactivate
                   </a>
                   {% else %}
                   <a class="dropdown-item text-success"
-                     href="{% url 'admin:user-toggle' user.id %}?next={{ request.get_full_path|urlencode }}">
+                     href="{% url 'user-toggle' user.id %}?next={{ request.get_full_path|urlencode }}">
                     <i class="fas fa-user-check mr-2"></i> Activate
                   </a>
                   {% endif %}
 
                   <a class="dropdown-item"
-                     href="{% url 'admin:assign-roles' user.id %}?next={{ request.get_full_path|urlencode }}">
+                     href="{% url 'assign-roles' user.id %}?next={{ request.get_full_path|urlencode }}">
                     <i class="fas fa-user-tag mr-2 text-secondary"></i> Roles
                   </a>
                 </div>

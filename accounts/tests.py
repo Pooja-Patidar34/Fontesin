@@ -112,26 +112,26 @@ class PermissionEdgeCaseTests(TestCase):
 class CompanyViewTests(BaseIAMTestCase):
 
     def test_company_list_requires_login(self):
-        response = self.client.get(reverse("admin:companies"))
+        response = self.client.get(reverse("companies"))
         self.assertEqual(response.status_code, 302)
 
     def test_company_list_with_permission(self):
         self.client.login(email="user@test.com", password="test123")
-        response = self.client.get(reverse("admin:companies"))
+        response = self.client.get(reverse("companies"))
         self.assertEqual(response.status_code, 200)
 
     def test_company_list_without_permission(self):
         UserCompanyRole.objects.all().delete()
 
         self.client.login(email="user@test.com", password="test123")
-        response = self.client.get(reverse("admin:companies"))
+        response = self.client.get(reverse("companies"))
         self.assertEqual(response.status_code, 403)
 
     def test_superadmin_company_list_with_tenant_filter(self):
         self.client.login(email="admin@test.com", password="admin123")
 
         response = self.client.get(
-            reverse("admin:companies"),
+            reverse("companies"),
             {"tenant": str(self.tenant.id)},
         )
 
@@ -146,7 +146,7 @@ class CompanyToggleTests(BaseIAMTestCase):
         self.client.login(email="admin@test.com", password="admin123")
 
         self.client.get(
-            reverse("admin:company-toggle", args=[self.company.id])
+            reverse("company-toggle", args=[self.company.id])
         )
 
         self.company.refresh_from_db()
@@ -169,7 +169,7 @@ class CompanyToggleTests(BaseIAMTestCase):
 
         self.client.login(email="user@test.com", password="test123")
         response = self.client.get(
-            reverse("admin:company-toggle", args=[other_company.id])
+            reverse("company-toggle", args=[other_company.id])
         )
 
         self.assertEqual(response.status_code, 403)
@@ -178,7 +178,7 @@ class CompanyToggleTests(BaseIAMTestCase):
         self.client.login(email="admin@test.com", password="admin123")
 
         response = self.client.get(
-            reverse("admin:company-toggle", args=[self.company.id]),
+            reverse("company-toggle", args=[self.company.id]),
             HTTP_REFERER="",
         )
 
@@ -228,7 +228,7 @@ class AuditLogViewTests(BaseIAMTestCase):
         )
 
     def test_audit_logs_requires_login(self):
-        response = self.client.get(reverse("admin:audit-logs"))
+        response = self.client.get(reverse("audit-logs"))
         self.assertEqual(response.status_code, 302)
 
     def test_user_without_permission_is_denied(self):
@@ -236,20 +236,20 @@ class AuditLogViewTests(BaseIAMTestCase):
         self.role.permissions.clear()
 
         self.client.login(email="user@test.com", password="test123")
-        response = self.client.get(reverse("admin:audit-logs"))
+        response = self.client.get(reverse("audit-logs"))
 
         self.assertEqual(response.status_code, 403)
 
     def test_user_with_permission_can_view_logs(self):
         self.client.login(email="user@test.com", password="test123")
-        response = self.client.get(reverse("admin:audit-logs"))
+        response = self.client.get(reverse("audit-logs"))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "test.action")
 
     def test_superadmin_sees_all_logs(self):
         self.client.login(email="admin@test.com", password="admin123")
-        response = self.client.get(reverse("admin:audit-logs"))
+        response = self.client.get(reverse("audit-logs"))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "test.action")
@@ -257,7 +257,7 @@ class AuditLogViewTests(BaseIAMTestCase):
     def test_invalid_page_falls_back_to_page_1(self):
         self.client.login(email="admin@test.com", password="admin123")
         response = self.client.get(
-            reverse("admin:audit-logs") + "?page=invalid"
+            reverse("audit-logs") + "?page=invalid"
         )
         self.assertEqual(response.status_code, 200)
 
@@ -269,7 +269,7 @@ class RoleAssignmentTests(BaseIAMTestCase):
         self.client.login(email="admin@test.com", password="admin123")
 
         response = self.client.post(
-            reverse("admin:assign-roles", args=[self.user.id]),
+            reverse("assign-roles", args=[self.user.id]),
             {"roles": [str(self.role.id)]},
         )
 
@@ -297,7 +297,7 @@ class TenantIsolationTests(BaseIAMTestCase):
 
         self.client.login(email="user@test.com", password="test123")
         response = self.client.get(
-            reverse("admin:assign-roles", args=[other_user.id])
+            reverse("assign-roles", args=[other_user.id])
         )
 
         self.assertEqual(response.status_code, 403)
@@ -328,17 +328,17 @@ class ClientIPTests(TestCase):
 class AdminAuthViewTests(BaseIAMTestCase):
 
     def test_login_page_loads(self):
-        response = self.client.get(reverse("admin:login"))
+        response = self.client.get(reverse("login"))
         self.assertEqual(response.status_code, 200)
 
     def test_authenticated_user_redirected_from_login(self):
         self.client.login(email="admin@test.com", password="admin123")
-        response = self.client.get(reverse("admin:login"))
-        self.assertRedirects(response, reverse("admin:dashboard"))
+        response = self.client.get(reverse("login"))
+        self.assertRedirects(response, reverse("dashboard"))
 
     def test_login_with_invalid_credentials(self):
         response = self.client.post(
-            reverse("admin:login"),
+            reverse("login"),
             {"email": "wrong@test.com", "password": "wrongpass"},
             follow=True,
         )
@@ -348,7 +348,7 @@ class AdminAuthViewTests(BaseIAMTestCase):
 
     def test_login_with_non_staff_user_denied(self):
         response = self.client.post(
-            reverse("admin:login"),
+            reverse("login"),
             {"email": "user@test.com", "password": "test123"},
             follow=True,
         )
@@ -358,28 +358,28 @@ class AdminAuthViewTests(BaseIAMTestCase):
 
     def test_login_with_staff_user_success(self):
         response = self.client.post(
-            reverse("admin:login"),
+            reverse("login"),
             {"email": "admin@test.com", "password": "admin123"},
         )
 
-        self.assertRedirects(response, reverse("admin:dashboard"))
+        self.assertRedirects(response, reverse("dashboard"))
 
     def test_admin_logout(self):
         self.client.login(email="admin@test.com", password="admin123")
-        response = self.client.get(reverse("admin:logout"))
-        self.assertRedirects(response, reverse("admin:login"))
+        response = self.client.get(reverse("logout"))
+        self.assertRedirects(response, reverse("login"))
 
 
 # Dashboard view tests
 class DashboardViewTests(BaseIAMTestCase):
 
     def test_dashboard_requires_login(self):
-        response = self.client.get(reverse("admin:dashboard"))
+        response = self.client.get(reverse("dashboard"))
         self.assertEqual(response.status_code, 302)
 
     def test_superadmin_dashboard_metrics(self):
         self.client.login(email="admin@test.com", password="admin123")
-        response = self.client.get(reverse("admin:dashboard"))
+        response = self.client.get(reverse("dashboard"))
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("total_tenants", response.context)
@@ -389,7 +389,7 @@ class DashboardViewTests(BaseIAMTestCase):
 
     def test_tenant_user_dashboard_metrics(self):
         self.client.login(email="user@test.com", password="test123")
-        response = self.client.get(reverse("admin:dashboard"))
+        response = self.client.get(reverse("dashboard"))
 
         self.assertEqual(response.status_code, 200)
         self.assertNotIn("total_tenants", response.context)
@@ -400,17 +400,17 @@ class DashboardViewTests(BaseIAMTestCase):
 class TenantViewTests(BaseIAMTestCase):
 
     def test_tenant_list_requires_login(self):
-        response = self.client.get(reverse("admin:tenants"))
+        response = self.client.get(reverse("tenants"))
         self.assertEqual(response.status_code, 302)
 
     def test_tenant_list_denied_for_non_superadmin(self):
         self.client.login(email="user@test.com", password="test123")
-        response = self.client.get(reverse("admin:tenants"))
+        response = self.client.get(reverse("tenants"))
         self.assertEqual(response.status_code, 403)
 
     def test_tenant_list_superadmin_success(self):
         self.client.login(email="admin@test.com", password="admin123")
-        response = self.client.get(reverse("admin:tenants"))
+        response = self.client.get(reverse("tenants"))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Tenant A")
@@ -421,13 +421,13 @@ class TenantToggleTests(BaseIAMTestCase):
     def test_toggle_tenant_denied_for_non_superadmin(self):
         self.client.login(email="user@test.com", password="test123")
         response = self.client.get(
-            reverse("admin:tenant-toggle", args=[self.tenant.id])
+            reverse("tenant-toggle", args=[self.tenant.id])
         )
         self.assertEqual(response.status_code, 403)
 
     def test_toggle_tenant_creates_audit_log(self):
         self.client.login(email="admin@test.com", password="admin123")
-        self.client.get(reverse("admin:tenant-toggle", args=[self.tenant.id]))
+        self.client.get(reverse("tenant-toggle", args=[self.tenant.id]))
 
         self.tenant.refresh_from_db()
         self.assertFalse(self.tenant.is_active)
@@ -451,7 +451,7 @@ class UserListViewTests(BaseIAMTestCase):
         self.role.permissions.add(permission)
 
     def test_user_list_requires_login(self):
-        response = self.client.get(reverse("admin:users"))
+        response = self.client.get(reverse("users"))
         self.assertEqual(response.status_code, 302)
 
     def test_user_list_permission_denied(self):
@@ -459,19 +459,19 @@ class UserListViewTests(BaseIAMTestCase):
         self.role.permissions.clear()
 
         self.client.login(email="user@test.com", password="test123")
-        response = self.client.get(reverse("admin:users"))
+        response = self.client.get(reverse("users"))
         self.assertEqual(response.status_code, 403)
 
     def test_superadmin_user_list(self):
         self.client.login(email="admin@test.com", password="admin123")
-        response = self.client.get(reverse("admin:users"))
+        response = self.client.get(reverse("users"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "user@test.com")
 
     def test_superadmin_with_tenant_filter(self):
         self.client.login(email="admin@test.com", password="admin123")
         response = self.client.get(
-            reverse("admin:users"),
+            reverse("users"),
             {"tenant": str(self.tenant.id)},
         )
         self.assertEqual(response.status_code, 200)
@@ -483,7 +483,7 @@ class UserListViewTests(BaseIAMTestCase):
     def test_superadmin_with_tenant_and_company_filter(self):
         self.client.login(email="admin@test.com", password="admin123")
         response = self.client.get(
-            reverse("admin:users"),
+            reverse("users"),
             {
                 "tenant": str(self.tenant.id),
                 "company": str(self.company.id),
@@ -498,7 +498,7 @@ class UserListViewTests(BaseIAMTestCase):
     def test_tenant_user_with_company_filter(self):
         self.client.login(email="user@test.com", password="test123")
         response = self.client.get(
-            reverse("admin:users"),
+            reverse("users"),
             {"company": str(self.company.id)},
         )
         self.assertEqual(response.status_code, 200)
@@ -506,7 +506,7 @@ class UserListViewTests(BaseIAMTestCase):
     def test_invalid_page_fallback(self):
         self.client.login(email="admin@test.com", password="admin123")
         response = self.client.get(
-            reverse("admin:users") + "?page=invalid"
+            reverse("users") + "?page=invalid"
         )
         self.assertEqual(response.status_code, 200)
 
@@ -533,14 +533,14 @@ class ToggleUserTests(BaseIAMTestCase):
 
         self.client.login(email="user@test.com", password="test123")
         response = self.client.get(
-            reverse("admin:user-toggle", args=[self.user.id])
+            reverse("user-toggle", args=[self.user.id])
         )
 
         self.assertEqual(response.status_code, 403)
 
     def test_superadmin_toggle_user(self):
         self.client.login(email="admin@test.com", password="admin123")
-        self.client.get(reverse("admin:user-toggle", args=[self.user.id]))
+        self.client.get(reverse("user-toggle", args=[self.user.id]))
 
         self.user.refresh_from_db()
         self.assertFalse(self.user.is_active)
@@ -551,7 +551,7 @@ class ToggleUserTests(BaseIAMTestCase):
 
     def test_tenant_admin_toggle_own_user(self):
         self.client.login(email="user@test.com", password="test123")
-        self.client.get(reverse("admin:user-toggle", args=[self.user.id]))
+        self.client.get(reverse("user-toggle", args=[self.user.id]))
 
         self.user.refresh_from_db()
         self.assertFalse(self.user.is_active)
@@ -570,7 +570,7 @@ class ToggleUserTests(BaseIAMTestCase):
 
         self.client.login(email="user@test.com", password="test123")
         response = self.client.get(
-            reverse("admin:user-toggle", args=[other_user.id])
+            reverse("user-toggle", args=[other_user.id])
         )
 
         # Must not leak existence of other-tenant users
@@ -597,7 +597,7 @@ class AssignRolesViewTests(BaseIAMTestCase):
         self.client.login(email="admin@test.com", password="admin123")
 
         response = self.client.get(
-            reverse("admin:assign-roles", args=[self.user.id])
+            reverse("assign-roles", args=[self.user.id])
         )
 
         self.assertEqual(response.status_code, 200)
@@ -609,7 +609,7 @@ class AssignRolesViewTests(BaseIAMTestCase):
         self.client.login(email="user@test.com", password="test123")
 
         response = self.client.get(
-            reverse("admin:assign-roles", args=[self.user.id])
+            reverse("assign-roles", args=[self.user.id])
         )
 
         self.assertEqual(response.status_code, 403)
@@ -618,7 +618,7 @@ class AssignRolesViewTests(BaseIAMTestCase):
         self.client.login(email="admin@test.com", password="admin123")
 
         response = self.client.post(
-            reverse("admin:assign-roles", args=[self.user.id]),
+            reverse("assign-roles", args=[self.user.id]),
             {"roles": [str(self.role.id)]},
         )
 
@@ -632,7 +632,7 @@ class AssignRolesViewTests(BaseIAMTestCase):
         self.client.login(email="admin@test.com", password="admin123")
 
         response = self.client.post(
-            reverse("admin:assign-roles", args=[self.user.id]),
+            reverse("assign-roles", args=[self.user.id]),
             {"roles": []},
         )
 
@@ -663,18 +663,18 @@ class RoleListViewTests(BaseIAMTestCase):
 
         self.client.login(email="user@test.com", password="test123")
 
-        response = self.client.get(reverse("admin:roles"))
+        response = self.client.get(reverse("roles"))
         self.assertEqual(response.status_code, 403)
 
     def test_role_list_success(self):
         self.client.login(email="user@test.com", password="test123")
 
-        response = self.client.get(reverse("admin:roles"))
+        response = self.client.get(reverse("roles"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Admin")
 
     def test_role_list_superadmin(self):
         self.client.login(email="admin@test.com", password="admin123")
 
-        response = self.client.get(reverse("admin:roles"))
+        response = self.client.get(reverse("roles"))
         self.assertEqual(response.status_code, 200)

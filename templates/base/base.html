@@ -75,14 +75,14 @@
         <span class="nav-link">{{ request.user.email }}</span>
       </li>
       <li class="nav-item">
-        <a href="{% url 'admin:logout' %}" class="nav-link">Logout</a>
+        <a href="{% url 'logout' %}" class="nav-link">Logout</a>
       </li>
     </ul>
   </nav>
 
   <!-- SIDEBAR -->
   <aside class="main-sidebar sidebar-dark-primary elevation-4">
-    <a href="{% url 'admin:dashboard' %}" class="brand-link">
+    <a href="{% url 'dashboard' %}" class="brand-link">
       <span class="brand-text font-weight-light">Admin Panel</span>
     </a>
 
@@ -92,7 +92,7 @@
 
           <!-- Dashboard -->
           <li class="nav-item">
-            <a href="{% url 'admin:dashboard' %}"
+            <a href="{% url 'dashboard' %}"
                class="nav-link {% if active_menu == 'dashboard' %}active{% endif %}">
               <i class="nav-icon fas fa-chart-pie"></i>
               <p>Dashboard</p>
@@ -103,7 +103,7 @@
           {% if request.user.is_superuser %}
           <li class="nav-header">SYSTEM</li>
           <li class="nav-item">
-            <a href="{% url 'admin:tenants' %}"
+            <a href="{% url 'tenants' %}"
                class="nav-link {% if active_menu == 'tenants' %}active{% endif %}">
               <i class="nav-icon fas fa-sitemap"></i>
               <p>Tenants</p>
@@ -116,7 +116,7 @@
           <li class="nav-header">MANAGEMENT</li>
 
           <li class="nav-item">
-            <a href="{% url 'admin:companies' %}"
+            <a href="{% url 'companies' %}"
                class="nav-link {% if active_menu == 'companies' %}active{% endif %}">
               <i class="nav-icon fas fa-building"></i>
               <p>Companies</p>
@@ -124,7 +124,7 @@
           </li>
 
           <li class="nav-item">
-            <a href="{% url 'admin:users' %}"
+            <a href="{% url 'users' %}"
                class="nav-link {% if active_menu == 'users' %}active{% endif %}">
               <i class="nav-icon fas fa-users"></i>
               <p>Users</p>
@@ -145,7 +145,7 @@
 
             <ul class="nav nav-treeview">
               <li class="nav-item">
-                <a href="{% url 'admin:roles' %}"
+                <a href="{% url 'roles' %}"
                    class="nav-link {% if active_submenu == 'roles' %}active{% endif %}">
                   <i class="fas fa-user-tag nav-icon"></i>
                   <p>Roles</p>
@@ -153,7 +153,7 @@
               </li>
 
               <li class="nav-item">
-                <a href="{% url 'admin:permissions' %}"
+                <a href="{% url 'permissions' %}"
                    class="nav-link {% if active_submenu == 'permissions' %}active{% endif %}">
                   <i class="fas fa-key nav-icon"></i>
                   <p>Permissions</p>
@@ -163,7 +163,7 @@
           </li>
 
           <li class="nav-item">
-            <a href="{% url 'admin:audit-logs' %}"
+            <a href="{% url 'audit-logs' %}"
                class="nav-link {% if active_menu == 'audit' %}active{% endif %}">
               <i class="nav-icon fas fa-clipboard-list"></i>
               <p>Audit Logs</p>

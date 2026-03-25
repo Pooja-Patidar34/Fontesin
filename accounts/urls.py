@@ -39,7 +39,7 @@ urlpatterns = [
     path("register/", register_view, name="register"),
 
     #static pages
-    path('', home, name='home'),  # default landing page
+    path('home/', home, name='home'),  # default landing page
     path('about/', about, name='about'),
     path('worldmap/', worldmap, name='worldmap'),
     path('career/', career, name='career'),

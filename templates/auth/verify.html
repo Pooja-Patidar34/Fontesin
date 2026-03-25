@@ -362,19 +362,19 @@
 <!-- NAVBAR -->
 <nav class="navbar">
   <div class="navbar__inner">
-    <a href="{% url 'admin:home' %}" class="navbar__logo">
+    <a href="{% url 'home' %}" class="navbar__logo">
       <img src="{% static 'adminlte/images/logo_full.png' %}" alt="FONTESIN" height="38" style="filter:brightness(0) invert(1);"/>
     </a>
     <div class="navbar__nav">
-      <a href="{% url 'admin:home' %}">Home</a>
-      <a href="{% url 'admin:worldmap' %}">World Map</a>
-      <a href="{% url 'admin:about' %}">About</a>
-      <a href="{% url 'admin:career' %}">Careers</a>
-      <a href="{% url 'admin:contact' %}">Contact</a>
+      <a href="{% url 'home' %}">Home</a>
+      <a href="{% url 'worldmap' %}">World Map</a>
+      <a href="{% url 'about' %}">About</a>
+      <a href="{% url 'career' %}">Careers</a>
+      <a href="{% url 'contact' %}">Contact</a>
     </div>
     <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
     <div class="navbar__actions">
-      <a href="{% url 'admin:login' %}" class="btn btn-outline btn-sm">Log In</a>
+      <a href="{% url 'login' %}" class="btn btn-outline btn-sm">Log In</a>
     </div>
   </div>
 </nav>
@@ -534,7 +534,7 @@
   <div class="container">
     <div class="footer__grid">
       <div class="footer__col footer__col--brand">
-        <a href="{% url 'admin:home' %}" class="footer__logo">
+        <a href="{% url 'home' %}" class="footer__logo">
           <img src="{% static 'adminlte/images/logo_full.png' %}" height="36" style="filter:brightness(0) invert(1);"/>
         </a>
       </div>
@@ -550,7 +550,7 @@
 
 // async function startVerification() {
 //   try {
-//     const response = await fetch("{% url 'admin:veriff-session' %}");
+//     const response = await fetch("{% url 'veriff-session' %}");
 //     if (!response.ok) throw new Error('Session fetch failed');
 
 //     const data = await response.json();
@@ -567,7 +567,7 @@ async function startVerification() {
 
     console.log("Starting verification...");
 
-    const response = await fetch("{% url 'admin:veriff-session' %}", {
+    const response = await fetch("{% url 'veriff-session' %}", {
       method: "GET",
       credentials: "same-origin"
     });

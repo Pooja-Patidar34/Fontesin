@@ -99,19 +99,19 @@
 
               {% if can_view %}
               <button class="btn btn-sm btn-outline-primary view-company-btn"
-                      data-url="{% url 'admin:company-detail' company.id %}">
+                      data-url="{% url 'company-detail' company.id %}">
                 View
               </button>
               {% endif %}
 
               {% if can_manage %}
                 {% if company.is_active %}
-                  <a href="{% url 'admin:company-toggle' company.id %}"
+                  <a href="{% url 'company-toggle' company.id %}"
                      class="btn btn-sm btn-outline-warning ml-1">
                     Deactivate
                   </a>
                 {% else %}
-                  <a href="{% url 'admin:company-toggle' company.id %}"
+                  <a href="{% url 'company-toggle' company.id %}"
                      class="btn btn-sm btn-outline-success ml-1">
                     Activate
                   </a>
@@ -133,14 +133,14 @@
 
                 {% if can_view %}
                 <button class="dropdown-item view-company-btn"
-                        data-url="{% url 'admin:company-detail' company.id %}">
+                        data-url="{% url 'company-detail' company.id %}">
                   <i class="fas fa-eye mr-2"></i> View
                 </button>
                 {% endif %}
 
                 {% if can_manage %}
                 <button class="dropdown-item edit-company-btn"
-                        data-url="{% url 'admin:company-detail' company.id %}">
+                        data-url="{% url 'company-detail' company.id %}">
                   <i class="fas fa-edit mr-2"></i> Edit
                 </button>
                 {% endif %}
@@ -150,12 +150,12 @@
                 {% if can_manage %}
                   {% if company.is_active %}
                     <a class="dropdown-item text-warning"
-                      href="{% url 'admin:company-toggle' company.id %}">
+                      href="{% url 'company-toggle' company.id %}">
                       <i class="fas fa-ban mr-2"></i> Deactivate
                     </a>
                   {% else %}
                     <a class="dropdown-item text-success"
-                      href="{% url 'admin:company-toggle' company.id %}">
+                      href="{% url 'company-toggle' company.id %}">
                       <i class="fas fa-check mr-2"></i> Activate
                     </a>
                   {% endif %}
@@ -165,7 +165,7 @@
                 <div class="dropdown-divider"></div>
 
                 <form method="post"
-                      action="{% url 'admin:company-delete' company.id %}"
+                      action="{% url 'company-delete' company.id %}"
                       onsubmit="return confirm('Delete this company permanently?');">
                   {% csrf_token %}
                   <button type="submit" class="dropdown-item text-danger">

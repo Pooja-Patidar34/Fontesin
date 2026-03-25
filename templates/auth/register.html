@@ -170,7 +170,7 @@
 
 <div class="reg-page">
 
-  <a href="{% url 'admin:home' %}" class="auth-back">← Back to Home</a>
+  <a href="{% url 'home' %}" class="auth-back">← Back to Home</a>
 
   <div class="reg-container">
     <div class="reg-header">
@@ -199,7 +199,7 @@
         </div>
       </div>
 
-      <form method="POST" action="{% url 'admin:register' %}" id="register-form" novalidate>
+      <form method="POST" action="{% url 'register' %}" id="register-form" novalidate>
         {% csrf_token %}
 
         <!-- PHASE 1 -->
@@ -273,7 +273,7 @@
 
           <p style="text-align:center;margin-top:16px;">
             Already have an account?
-            <a href="{% url 'admin:login' %}" class="auth-link">Log in</a>
+            <a href="{% url 'login' %}" class="auth-link">Log in</a>
           </p>
         </div>
 
