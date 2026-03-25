@@ -15,12 +15,13 @@ print(f"DEBUG mode is {'ON' if DEBUG else 'OFF'}")
 
 
 if DEBUG:
-    ALLOWED_HOSTS = ["localhost", "127.0.0.1","52.53.204.127"]
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1","52.53.204.127","*"]
 else:
     ALLOWED_HOSTS = config(
         "ALLOWED_HOSTS",
         cast=lambda v: [s.strip() for s in v.split(",")],
     )
+
 
 
 # Application definition
@@ -120,6 +121,7 @@ PASSWORD_HASHERS = [
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework.authentication.SessionAuthentication",
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
 
@@ -279,3 +281,4 @@ LOGGING = {
 VERIFF_API_KEY = config("VERIFF_API_KEY")
 VERIFF_MASTER_SECRET = config("VERIFF_MASTER_SECRET")
 VERIFF_BASE_URL = "https://stationapi.veriff.com"
+VERIFF_WEBHOOK_SECRET = config("VERIFF_WEBHOOK_SECRET")
