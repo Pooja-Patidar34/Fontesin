@@ -9,6 +9,21 @@
   <link rel="stylesheet" href="{% static 'adminlte/css/adminlte.min.css' %}">
 
   <style>
+    .main-sidebar {
+    background-color: #253D51 !important;
+    }
+
+    .main-sidebar .nav-link.active {
+        background-color: #1b2e40 !important;
+    }
+
+    .main-sidebar .nav-link:hover {
+        background-color: #2f4f68 !important;
+    }
+
+    .brand-link {
+        background-color: #253D51 !important;
+    }
     .content-wrapper .table td,
     .content-wrapper .table th {
       padding: 0.6rem 0.85rem;
@@ -83,7 +98,7 @@
   <!-- SIDEBAR -->
   <aside class="main-sidebar sidebar-dark-primary elevation-4">
     <a href="{% url 'dashboard' %}" class="brand-link">
-      <span class="brand-text font-weight-light">Admin Panel</span>
+      <span class="brand-text font-weight-light">Fontesin</span>
     </a>
 
     <div class="sidebar">

@@ -73,6 +73,13 @@ class Company(models.Model):
     fax = models.CharField(max_length=50, null=True, blank=True)
     website = models.URLField(max_length=500, null=True, blank=True)
 
+    owner_user = models.ForeignKey("User",null=True,blank=True,related_name="owned_companies",on_delete=models.SET_NULL)
+    consultant = models.ForeignKey("User",null=True,blank=True,related_name="consulting_companies",on_delete=models.SET_NULL)
+    certification_status = models.CharField(max_length=50,default="uncertified")
+    certified_by = models.ForeignKey("User",null=True,blank=True,related_name="certified_companies",on_delete=models.SET_NULL)
+
+    certified_at = models.DateTimeField(null=True,blank=True)
+
     # ---- Status ----
     is_active = models.BooleanField(default=True)
 
@@ -237,6 +244,18 @@ class User(AbstractBaseUser, PermissionsMixin):
     postal_code = models.CharField(max_length=20, null=True, blank=True)
     country = models.CharField(max_length=100, null=True, blank=True)
 
+    owner = models.ForeignKey("self",null=True,blank=True,related_name="commercial_children",on_delete=models.SET_NULL)
+
+    coordinator = models.ForeignKey("self",null=True,blank=True,related_name="management_children",on_delete=models.SET_NULL)
+
+    territory_country = models.CharField(max_length=2, null=True, blank=True)
+    territory_region = models.CharField(max_length=100, null=True, blank=True)
+    territory_city = models.CharField(max_length=100, null=True, blank=True)
+
+    consultant_sub_role = models.CharField(max_length=20,null=True,blank=True)
+
+    subscription_plan = models.CharField(max_length=20,null=True,blank=True)
+
     # ---- Security / KYC ----
     kyc_id_hash = models.CharField(max_length=255, null=True, blank=True)
 
@@ -272,35 +291,30 @@ class Permission(models.Model):
 
 
 class Role(models.Model):
+    ADMIN = "ADMIN"
+    COMPANY = "COMPANY"
+    USER = "USER"
+
+    ROLE_CHOICES = (
+        (ADMIN, "Admin"),
+        (COMPANY, "Company"),
+        (USER, "User"),
+    )
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    # tenant = models.ForeignKey(
-    #     Tenant,
-    #     on_delete=models.PROTECT,
-    #     related_name="roles"
-    # )
-
     name = models.CharField(max_length=100)
-
-    # Base role (null = base role itself)
-    # base_role = models.ForeignKey(
-    #     "self",
-    #     on_delete=models.SET_NULL,
-    #     null=True,
-    #     blank=True,
-    #     related_name="derived_roles"
-    # )
-
     permissions = models.ManyToManyField(
         Permission,
         related_name="roles"
     )
-
     created_at = models.DateTimeField(auto_now_add=True)
 
-    # class Meta:
-    #     unique_together = ("tenant", "name")
-    #     ordering = ["name"]
+    code = models.CharField(max_length=50, blank=True, null=True)
+
+    tier_level = models.IntegerField()
+
+    is_franchise = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -373,4 +387,20 @@ class AuditLog(models.Model):
         super().save(*args, **kwargs)
         
         
-        
+class CertificationLog(models.Model):
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    company = models.ForeignKey(
+        "Company",
+        on_delete=models.CASCADE
+    )
+
+    action = models.CharField(max_length=50)
+
+    performed_by = models.ForeignKey(
+        "User",
+        on_delete=models.CASCADE
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)

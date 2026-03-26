@@ -638,7 +638,6 @@ def assign_roles(request, user_id):
 #     )
 
 
-
 @login_required
 def role_list(request):
     logger.info("ROLE LIST VIEW CALLED")
@@ -689,7 +688,6 @@ def role_list(request):
             "can_view": True,
         },
     )
-
 
 
 @login_required

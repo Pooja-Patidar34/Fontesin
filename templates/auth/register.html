@@ -445,29 +445,120 @@
   }
 
   window.goToPhase = function(num) {
+    // if (num === 2) {
+    //   const requiredFields = ['reg-fname','reg-lname','reg-email','reg-phone','reg-country','reg-pass','reg-pass2'];
+    //   for (let id of requiredFields) {
+    //     const el = document.getElementById(id);
+    //     if (!el.value.trim()) {
+    //       el.focus();
+    //       alert("Please complete all required fields before continuing.");
+    //       return;
+    //     }
+    //   }
+    //   const email = document.getElementById('reg-email').value;
+    //   const pass  = document.getElementById('reg-pass').value;
+    //   const pass2 = document.getElementById('reg-pass2').value;
+    //   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    //     alert("Enter a valid email address.");
+    //     return;
+    //   }
+    //   if (pass.length < 8) {
+    //     alert("Password must be at least 8 characters.");
+    //     return;
+    //   }
+    //   if (pass !== pass2) {
+    //     alert("Passwords do not match.");
+    //     return;
+    //   }
+    // }
+
     if (num === 2) {
-      const requiredFields = ['reg-fname','reg-lname','reg-email','reg-phone','reg-country','reg-pass','reg-pass2'];
-      for (let id of requiredFields) {
-        const el = document.getElementById(id);
-        if (!el.value.trim()) {
-          el.focus();
-          alert("Please complete all required fields before continuing.");
+
+      const fname = document.getElementById('reg-fname');
+      const lname = document.getElementById('reg-lname');
+      const email = document.getElementById('reg-email');
+      const phone = document.getElementById('reg-phone');
+      const country = document.getElementById('reg-country');
+      const pass  = document.getElementById('reg-pass');
+      const pass2 = document.getElementById('reg-pass2');
+
+      // Trim values
+      fname.value = fname.value.trim();
+      lname.value = lname.value.trim();
+      email.value = email.value.trim();
+      phone.value = phone.value.trim();
+
+      // Required fields check
+      const requiredFields = [fname, lname, email, phone, country, pass, pass2];
+
+      for (let field of requiredFields) {
+        if (!field.value) {
+          field.focus();
+          alert("Please complete all required fields.");
           return;
         }
       }
-      const email = document.getElementById('reg-email').value;
-      const pass  = document.getElementById('reg-pass').value;
-      const pass2 = document.getElementById('reg-pass2').value;
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+
+      // Name validation (letters only)
+      const nameRegex = /^[A-Za-z\s'-]+$/;
+
+      if (!nameRegex.test(fname.value)) {
+        alert("First name must contain only letters.");
+        fname.focus();
+        return;
+      }
+
+      if (!nameRegex.test(lname.value)) {
+        alert("Last name must contain only letters.");
+        lname.focus();
+        return;
+      }
+
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      if (!emailRegex.test(email.value)) {
         alert("Enter a valid email address.");
+        email.focus();
         return;
       }
-      if (pass.length < 8) {
+
+      // Phone validation (international friendly)
+      const phoneRegex = /^[+]?[0-9\s\-()]{7,20}$/;
+
+      if (!phoneRegex.test(phone.value)) {
+        alert("Enter a valid phone number.");
+        phone.focus();
+        return;
+      }
+
+      // Country validation
+      if (!country.value) {
+        alert("Please select your country.");
+        country.focus();
+        return;
+      }
+
+      // Password length
+      if (pass.value.length < 8) {
         alert("Password must be at least 8 characters.");
+        pass.focus();
         return;
       }
-      if (pass !== pass2) {
+
+      // Password strength (at least 1 letter + 1 number)
+      const strongPassword = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+
+      if (!strongPassword.test(pass.value)) {
+        alert("Password must include at least one letter and one number.");
+        pass.focus();
+        return;
+      }
+
+      // Password match
+      if (pass.value !== pass2.value) {
         alert("Passwords do not match.");
+        pass2.focus();
         return;
       }
     }

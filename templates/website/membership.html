@@ -8,14 +8,16 @@
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <meta name="apple-mobile-web-app-title" content="FONTESIN"/>
-  <link rel="manifest" href="manifest.json"/>
-  <link rel="apple-touch-icon" href="images/icons/icon-192.png"/>
+  <link rel="manifest" href="{% static 'manifest.json' %}"/>
+  <link rel="apple-touch-icon" href="{% static 'adminlte/images/icons/icon-192.png' %}"/>
   <title>Choose Your Plan – FONTESIN</title>
-  <link rel="stylesheet" href="css/style.css"/>
+  <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
   <style>
-    body { background: #f0f5f8; }
+    body { background: #f0f5f8; 
+      padding-top: 70px; /* Account for fixed navbar height */
+    }
 
     /* ── Progress bar ── */
     .reg-progress { background: #fff; border-bottom: 1px solid #d4e2ec; }

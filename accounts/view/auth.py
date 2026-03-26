@@ -162,7 +162,7 @@ def register_view(request):
         login(request, user)
 
         # redirect to verification step
-        return redirect("/admin/verify/")
+        return redirect("/verify/")
 
     return render(request, "auth/register.html", {"companies": companies})
 
