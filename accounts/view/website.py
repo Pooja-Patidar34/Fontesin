@@ -33,6 +33,14 @@ def contact(request):
 
 
 def membership(request):
+    # Block if user already has an active subscription
+    if request.user.is_authenticated:
+        from billing.utils import get_active_subscription
+        active_sub = get_active_subscription(request.user)
+        if active_sub and active_sub.end_date and active_sub.end_date > timezone.now():
+            messages.info(request, f"You already have an active {active_sub.plan.name} plan (expires {active_sub.end_date.strftime('%B %d, %Y')}). You can change your plan after it expires.")
+            return redirect("dashboard")
+
     plans = CommercialPlan.objects.filter(is_active=True)
 
     comparison_rows = [
@@ -68,6 +76,15 @@ def select_plan(request):
     if request.method != "POST":
         return redirect("membership")
 
+    user = request.user
+
+    # Block if user already has an active subscription
+    from billing.utils import get_active_subscription
+    active_sub = get_active_subscription(user)
+    if active_sub and active_sub.end_date and active_sub.end_date > timezone.now():
+        messages.info(request, f"You already have an active {active_sub.plan.name} plan. You can change your plan after it expires.")
+        return redirect("dashboard")
+
     plan_code = request.POST.get("plan_code")
     plan = CommercialPlan.objects.filter(code=plan_code, is_active=True).first()
 
@@ -75,16 +92,8 @@ def select_plan(request):
         messages.error(request, "Invalid plan selected")
         return redirect("membership")
 
-    user = request.user
-
-    # Cancel any existing active subscription
-    Subscription.objects.filter(
-        user=user,
-        status__in=["active", "trial", "created"]
-    ).update(status="cancelled")
-
     now = timezone.now()
-    end_date = now + timedelta(days=365)
+    end_date = now + timedelta(days=30)
 
     # Create subscription
     subscription = Subscription.objects.create(

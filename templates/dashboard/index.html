@@ -50,6 +50,47 @@
 
   </div>
 
+  <!-- ================= PLAN INFO (non-superuser) ================= -->
+  {% if user_plan %}
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm" style="border-left: 4px solid #253D51;">
+        <div class="card-body d-flex justify-content-between align-items-center flex-wrap" style="gap: 16px;">
+          <div>
+            <h5 class="mb-1" style="font-weight: 700; color: #253D51;">
+              {{ user_plan.icon }} {{ user_plan.name }} Plan
+            </h5>
+            <p class="mb-0 text-muted small">
+              {% if subscription %}
+                Active since {{ subscription.start_date|date:"M d, Y" }}
+                &middot; Expires {{ subscription.end_date|date:"M d, Y" }}
+                &middot; Status: <span style="color: #15803d; font-weight: 600;">{{ subscription.get_status_display }}</span>
+              {% endif %}
+            </p>
+          </div>
+          <div class="d-flex align-items-center" style="gap: 12px;">
+            {% if has_company_registry %}
+              <span class="badge bg-success">Company Registry</span>
+            {% endif %}
+            {% if has_advanced_analytics %}
+              <span class="badge bg-success">Analytics</span>
+            {% endif %}
+            {% if has_api_access %}
+              <span class="badge bg-success">API Access</span>
+            {% endif %}
+            {% if has_data_export %}
+              <span class="badge bg-success">Export</span>
+            {% endif %}
+            {% if has_franchise_management %}
+              <span class="badge bg-success">Franchise</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- ================= MAIN AREA ================= -->
   <div class="row">
 
