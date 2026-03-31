@@ -183,6 +183,27 @@
 
     <div class="reg-card">
 
+      <!-- Error Messages -->
+      {% if messages %}
+      <div style="margin-bottom: 20px;">
+        {% for message in messages %}
+        <div style="
+          padding: 12px 16px;
+          border-radius: 8px;
+          font-size: .88rem;
+          font-weight: 500;
+          {% if message.tags == 'error' %}
+            background: #fef2f2; color: #dc2626; border: 1px solid #fecaca;
+          {% else %}
+            background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0;
+          {% endif %}
+        ">
+          {{ message }}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
       <!-- Steps -->
       <div class="reg-steps">
         <div class="reg-step active" id="step-1">

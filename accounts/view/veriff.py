@@ -15,7 +15,7 @@ class CreateVeriffSessionAPIView(APIView):
         payload = {
             "verification": {
                 "vendorData": str(request.user.id),
-                "callback": "https://354d-2401-4900-8820-9d0b-29b9-4c58-1d5a-da2b.ngrok-free.app/admin/",
+                "callback": "https://960f-2401-4900-8820-177e-cc75-6884-ef7a-4eab.ngrok-free.app/membership/",
                 "person": {
                     "firstName": request.user.first_name or "Test",
                     "lastName": request.user.last_name or "User",

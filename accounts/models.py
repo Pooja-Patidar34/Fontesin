@@ -292,13 +292,17 @@ class Permission(models.Model):
 
 class Role(models.Model):
     ADMIN = "ADMIN"
-    COMPANY = "COMPANY"
-    USER = "USER"
+    BUSINESS_USER = "BUSINESS_USER"
+    CONSULTANT = "CONSULTANT"
+    COORDINATOR = "COORDINATOR"
+    FRANCHISE = "FRANCHISE"
 
     ROLE_CHOICES = (
         (ADMIN, "Admin"),
-        (COMPANY, "Company"),
-        (USER, "User"),
+        (BUSINESS_USER, "Business User"),
+        (CONSULTANT, "Consultant"),
+        (COORDINATOR, "Coordinator"),
+        (FRANCHISE, "Franchise Partner"),
     )
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

@@ -1,0 +1,114 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Upgrade Required – FONTESIN</title>
+  <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    body { background: #f0f5f8; padding-top: 70px; }
+    .upgrade-page {
+      max-width: 600px; margin: 80px auto; padding: 0 24px; text-align: center;
+    }
+    .upgrade-card {
+      background: #fff; border-radius: 16px;
+      box-shadow: 0 2px 16px rgba(37,61,81,.08);
+      padding: 48px 40px; margin-bottom: 24px;
+    }
+    .upgrade-icon { font-size: 4rem; margin-bottom: 16px; }
+    .upgrade-card h1 {
+      font-family: 'Montserrat', sans-serif; font-weight: 800;
+      color: #253D51; font-size: 1.6rem; margin-bottom: 12px;
+    }
+    .upgrade-card p {
+      color: #5F7383; font-size: .95rem; line-height: 1.6; margin-bottom: 24px;
+    }
+    .current-plan {
+      display: inline-block; background: #f0f5f8; border: 1px solid #d4e2ec;
+      border-radius: 8px; padding: 8px 20px; margin-bottom: 24px;
+      font-family: 'Montserrat', sans-serif; font-size: .85rem; color: #5F7383;
+    }
+    .current-plan strong { color: #253D51; }
+    .btn-upgrade {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: linear-gradient(135deg, #253D51, #5F8FAA);
+      color: #fff; border: none; border-radius: 10px;
+      padding: 14px 36px; text-decoration: none;
+      font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: .95rem;
+      cursor: pointer; transition: .2s ease;
+      box-shadow: 0 4px 16px rgba(37,61,81,.25);
+    }
+    .btn-upgrade:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37,61,81,.35); }
+    .btn-back {
+      display: inline-flex; align-items: center; gap: 8px;
+      color: #5F7383; text-decoration: none; font-size: .85rem;
+      font-family: 'Montserrat', sans-serif; font-weight: 600;
+      margin-top: 16px;
+    }
+    .btn-back:hover { color: #253D51; }
+
+    .feature-name {
+      display: inline-block; background: #fef3c7; border: 1px solid #fde68a;
+      border-radius: 6px; padding: 4px 12px; margin-bottom: 16px;
+      font-family: 'Montserrat', sans-serif; font-size: .8rem;
+      font-weight: 700; color: #92400e; text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="navbar__inner">
+    <a href="{% url 'home' %}" class="navbar__logo">
+      <img src="{% static 'adminlte/images/logo_full.png' %}" alt="FONTESIN" height="38" style="filter:brightness(0) invert(1);"/>
+    </a>
+    <div class="navbar__nav">
+      <a href="{% url 'home' %}">Home</a>
+      <a href="{% url 'worldmap' %}">World Map</a>
+      <a href="{% url 'about' %}">About</a>
+      <a href="{% url 'career' %}">Careers</a>
+      <a href="{% url 'contact' %}">Contact</a>
+    </div>
+  </div>
+</nav>
+
+<div class="upgrade-page">
+  <div class="upgrade-card">
+    <div class="upgrade-icon">&#128274;</div>
+    <h1>Upgrade Your Plan</h1>
+
+    {% if feature %}
+    <div class="feature-name">{{ feature|cut:"_" }}</div>
+    {% endif %}
+
+    <p>
+      This feature is not available on your current plan.
+      Upgrade to
+      {% if required_plan %}
+        <strong>{{ required_plan|upper }}</strong> or higher
+      {% else %}
+        a higher plan
+      {% endif %}
+      to unlock this feature.
+    </p>
+
+    <div class="current-plan">
+      Your current plan: <strong>{{ current_plan.name|default:"No Plan" }}</strong>
+    </div>
+
+    <br/><br/>
+
+    <a href="{% url 'membership' %}" class="btn-upgrade">
+      View Plans &amp; Upgrade &rarr;
+    </a>
+
+    <br/>
+    <a href="javascript:history.back()" class="btn-back">&larr; Go Back</a>
+  </div>
+</div>
+
+</body>
+</html>

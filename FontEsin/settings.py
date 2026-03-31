@@ -205,9 +205,9 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-LOGIN_URL = "/admin/login/"
-LOGIN_REDIRECT_URL = "/admin/"
-LOGOUT_REDIRECT_URL = "/admin/login/"
+LOGIN_URL = "/login/"
+LOGIN_REDIRECT_URL = "/dashboard/"
+LOGOUT_REDIRECT_URL = "/login/"
 
 
 STATIC_URL = '/static/'
@@ -282,3 +282,4 @@ VERIFF_API_KEY = config("VERIFF_API_KEY")
 VERIFF_MASTER_SECRET = config("VERIFF_MASTER_SECRET")
 VERIFF_BASE_URL = "https://stationapi.veriff.com"
 VERIFF_WEBHOOK_SECRET = config("VERIFF_WEBHOOK_SECRET")
+VERIFF_CALLBACK_URL = config("VERIFF_CALLBACK_URL", default="http://127.0.0.1:8000/membership/")

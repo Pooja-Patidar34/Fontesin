@@ -15,8 +15,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
   <style>
-    body { background: #f0f5f8; 
-      padding-top: 70px; /* Account for fixed navbar height */
+    body { background: #f0f5f8;
+      padding-top: 70px;
     }
 
     /* ── Progress bar ── */
@@ -140,7 +140,6 @@
       cursor: pointer; transition: .2s ease;
       background: transparent; color: #253D51;
     }
-    .plan-card.popular .plan-select-btn,
     .plan-card.selected .plan-select-btn {
       background: linear-gradient(135deg, #253D51, #5F8FAA);
       color: #fff; border-color: transparent;
@@ -211,6 +210,7 @@
       padding: 16px 20px; text-align: center;
     }
     .comparison-table th:first-child { text-align: left; background: #1B2E3F; }
+    .comparison-table th.highlight-col { background: #1B2E3F; }
     .comparison-table td {
       padding: 12px 20px; border-bottom: 1px solid #f0f5f8;
       font-size: .83rem; text-align: center; color: #374151;
@@ -247,6 +247,20 @@
       font-family: 'Montserrat', sans-serif; font-weight: 600;
     }
     .selected-plan-info.visible { display: block; }
+
+    /* ── Best for boxes ── */
+    .best-for--warning { background:#fffbeb;border:1px solid #fde68a; }
+    .best-for--warning strong { color:#92400e; }
+    .best-for--warning span { color:#78350f; }
+    .best-for--success { background:#f0fdf4;border:1px solid #bbf7d0; }
+    .best-for--success strong { color:#15803d; }
+    .best-for--success span { color:#166534; }
+    .best-for--info { background:#eff6ff;border:1px solid #bfdbfe; }
+    .best-for--info strong { color:#1e40af; }
+    .best-for--info span { color:#1e3a8a; }
+    .best-for--neutral { background:#f8fafc;border:1px solid #e2e8f0; }
+    .best-for--neutral strong { color:#475569; }
+    .best-for--neutral span { color:#64748b; }
   </style>
 </head>
 <body>
@@ -254,19 +268,19 @@
 <!-- NAVBAR -->
 <nav class="navbar">
   <div class="navbar__inner">
-    <a href="index.html" class="navbar__logo">
-      <img src="images/logo_full.png" alt="FONTESIN" height="38" style="filter:brightness(0) invert(1);"/>
+    <a href="{% url 'home' %}" class="navbar__logo">
+      <img src="{% static 'adminlte/images/logo_full.png' %}" alt="FONTESIN" height="38" style="filter:brightness(0) invert(1);"/>
     </a>
     <div class="navbar__nav">
-      <a href="index.html">Home</a>
-      <a href="world-map.html">World Map</a>
-      <a href="about.html">About</a>
-      <a href="careers.html">Careers</a>
-      <a href="contact.html">Contact</a>
+      <a href="{% url 'home' %}">Home</a>
+      <a href="{% url 'worldmap' %}">World Map</a>
+      <a href="{% url 'about' %}">About</a>
+      <a href="{% url 'career' %}">Careers</a>
+      <a href="{% url 'contact' %}">Contact</a>
     </div>
-    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
+    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="Menu">&#9776;</button>
     <div class="navbar__actions">
-      <a href="login.html" class="btn btn-outline btn-sm">Log In</a>
+      <a href="{% url 'login' %}" class="btn btn-outline btn-sm">Log In</a>
     </div>
   </div>
 </nav>
@@ -275,11 +289,11 @@
 <div class="reg-progress">
   <div class="reg-progress__inner">
     <div class="reg-step reg-step--done">
-      <div class="reg-step__num">✓</div>
+      <div class="reg-step__num">&#10003;</div>
       <div class="reg-step__label">Account Info</div>
     </div>
     <div class="reg-step reg-step--done">
-      <div class="reg-step__num">✓</div>
+      <div class="reg-step__num">&#10003;</div>
       <div class="reg-step__label">Identity Verified</div>
     </div>
     <div class="reg-step reg-step--active">
@@ -299,241 +313,101 @@
     <h1>Choose Your Membership Plan</h1>
     <p>Select the plan that best fits your business needs. All plans include annual billing with significant savings.</p>
     <div style="text-align:center;">
-      <span class="billing-badge">🎉 Annual billing — Save up to 25% vs monthly</span>
+      <span class="billing-badge">&#127881; Annual billing — Save up to 25% vs monthly</span>
     </div>
   </div>
 
   <!-- PLAN CARDS -->
   <div class="plans-grid">
+    {% for plan in plans %}
+    <div class="plan-card{% if plan.is_popular %} popular{% endif %}" id="card-{{ plan.code }}" onclick="selectPlan('{{ plan.code }}')">
 
-    <!-- FREE -->
-    <div class="plan-card" id="card-free" onclick="selectPlan('free')">
-      <div class="plan-icon">🌱</div>
-      <div class="plan-name">FREE</div>
-      <div class="plan-tagline">Explore the platform</div>
-      <div class="plan-price plan-price--free">
-        <div><span class="plan-price__amount">$0</span></div>
-        <div class="plan-price__period">Forever free</div>
-      </div>
-      <hr class="plan-divider"/>
-      <ul class="plan-features">
-        <li><span class="icon icon--check">✓</span> Basic world map access</li>
-        <li><span class="icon icon--check">✓</span> 1 country profile view/day</li>
-        <li><span class="icon icon--check">✓</span> Public company data</li>
-        <li><span class="icon icon--x">✗</span> No advanced analytics</li>
-        <li><span class="icon icon--x">✗</span> No export features</li>
-        <li><span class="icon icon--x">✗</span> No API access</li>
-        <li><span class="icon icon--x">✗</span> No multilicense</li>
-      </ul>
-      <button class="plan-select-btn">Select Free Plan</button>
-    </div>
+      {% if plan.badge_text %}
+        <div class="plan-badge{% if plan.badge_style == 'save' %} plan-badge--save{% endif %}">{{ plan.badge_text }}</div>
+      {% endif %}
 
-    <!-- BASIC -->
-    <div class="plan-card" id="card-basic" onclick="selectPlan('basic')">
-      <div class="plan-icon">🚀</div>
-      <div class="plan-name">BASIC</div>
-      <div class="plan-tagline">For small businesses</div>
-      <div class="plan-price">
+      <div class="plan-icon">{{ plan.icon }}</div>
+      <div class="plan-name">{{ plan.name }}</div>
+      <div class="plan-tagline">{{ plan.tagline }}</div>
+
+      <div class="plan-price{% if plan.code == 'free' %} plan-price--free{% endif %}">
+        {% if plan.original_price %}
         <div style="display:flex;align-items:baseline;gap:10px;">
-          <span style="font-size:1rem;color:#9CA3AF;text-decoration:line-through;font-weight:500;">$200</span>
-          <span class="plan-price__currency">$</span><span class="plan-price__amount">150</span>
-          <span style="background:#16a34a;color:#fff;font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:20px;letter-spacing:.5px;vertical-align:middle;">25% OFF</span>
+          <span style="font-size:1rem;color:#9CA3AF;text-decoration:line-through;font-weight:500;">${{ plan.original_price|floatformat:0 }}</span>
+          <span class="plan-price__currency">$</span><span class="plan-price__amount">{{ plan.price|floatformat:0|default:"0" }}</span>
+          {% if plan.discount_percent %}
+          <span style="background:#16a34a;color:#fff;font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:20px;letter-spacing:.5px;vertical-align:middle;">{{ plan.discount_percent }}% OFF</span>
+          {% endif %}
         </div>
-        <div class="plan-price__period">per year · billed annually</div>
-        <div class="plan-price__monthly">≈ $12.50 / month</div>
-        <span class="plan-price__save">Save $50 on regular price · Limited offer</span>
-      </div>
-      <hr class="plan-divider"/>
-      <ul class="plan-features">
-        <li><span class="icon icon--check">✓</span> Full world map access</li>
-        <li><span class="icon icon--check">✓</span> 5 country profiles/day</li>
-        <li><span class="icon icon--check">✓</span> Company registry data</li>
-        <li><span class="icon icon--check">✓</span> Basic analytics dashboard</li>
-        <li><span class="icon icon--check">✓</span> CSV export</li>
-        <li><span class="icon icon--x">✗</span> No API access</li>
-        <li><span class="icon icon--x">✗</span> No multilicense</li>
-      </ul>
-      <button class="plan-select-btn">Select Basic Plan</button>
-    </div>
+        {% else %}
+        <div><span class="plan-price__amount">${{ plan.price|floatformat:0 }}</span></div>
+        {% endif %}
 
-    <!-- PRO -->
-    <div class="plan-card popular" id="card-pro" onclick="selectPlan('pro')">
-      <div class="plan-badge">⭐ Most Popular</div>
-      <div class="plan-icon">💼</div>
-      <div class="plan-name">PRO</div>
-      <div class="plan-tagline">For growing companies</div>
-      <div class="plan-price">
-        <div><span class="plan-price__currency">$</span><span class="plan-price__amount">1,000</span></div>
-        <div class="plan-price__period">per year · billed annually</div>
-        <div class="plan-price__monthly">≈ $83.33 / month</div>
-        <span class="plan-price__save">Save $200 vs monthly ($1,200/yr)</span>
+        {% if plan.code == 'free' %}
+          <div class="plan-price__period">Forever free</div>
+        {% else %}
+          <div class="plan-price__period">per year &middot; billed annually</div>
+          <div class="plan-price__monthly">&asymp; ${{ plan.monthly_price|floatformat:2 }} / month</div>
+          {% if plan.savings %}
+          <span class="plan-price__save">Save ${{ plan.savings|floatformat:0 }}{% if plan.original_price %} on regular price{% endif %}</span>
+          {% endif %}
+        {% endif %}
       </div>
-      <hr class="plan-divider"/>
-      <ul class="plan-features">
-        <li><span class="icon icon--check">✓</span> Everything in Basic</li>
-        <li><span class="icon icon--check">✓</span> Unlimited country profiles</li>
-        <li><span class="icon icon--check">✓</span> Advanced analytics &amp; reports</li>
-        <li><span class="icon icon--check">✓</span> Full API access</li>
-        <li><span class="icon icon--check">✓</span> Priority support</li>
-        <li><span class="icon icon--check">✓</span> Multilicense (+$100/user/yr)</li>
-        <li><span class="icon icon--check">✓</span> Select Country access</li>
-      </ul>
-      <button class="plan-select-btn">Select Pro Plan</button>
-    </div>
 
-    <!-- GLOBAL -->
-    <div class="plan-card" id="card-global" onclick="selectPlan('global')">
-      <div class="plan-badge plan-badge--save">🌍 Best Value</div>
-      <div class="plan-icon">🌐</div>
-      <div class="plan-name">GLOBAL</div>
-      <div class="plan-tagline">For enterprises &amp; franchises</div>
-      <div class="plan-price">
-        <div><span class="plan-price__currency">$</span><span class="plan-price__amount">2,000</span></div>
-        <div class="plan-price__period">per year · billed annually</div>
-        <div class="plan-price__monthly">≈ $166.67 / month</div>
-        <span class="plan-price__save">Save $400 vs monthly ($2,400/yr)</span>
-      </div>
       <hr class="plan-divider"/>
+
       <ul class="plan-features">
-        <li><span class="icon icon--check">✓</span> Everything in Pro</li>
-        <li><span class="icon icon--check">✓</span> Select Region access</li>
-        <li><span class="icon icon--check">✓</span> Franchise management</li>
-        <li><span class="icon icon--check">✓</span> Multi-currency billing</li>
-        <li><span class="icon icon--check">✓</span> Dedicated account manager</li>
-        <li><span class="icon icon--check">✓</span> Multilicense (+$100/user/yr)</li>
-        <li><span class="icon icon--check">✓</span> Custom SLA &amp; contracts</li>
+        {% for feat in plan.features %}
+        <li>
+          {% if feat.included %}
+            <span class="icon icon--check">&#10003;</span>
+          {% else %}
+            <span class="icon icon--x">&#10007;</span>
+          {% endif %}
+          {{ feat.text }}
+        </li>
+        {% endfor %}
       </ul>
-      <button class="plan-select-btn">Select Global Plan</button>
+
+      <button class="plan-select-btn">Select {{ plan.name }} Plan</button>
     </div>
+    {% endfor %}
   </div>
 
   <!-- EXPANDABLE PLAN DETAILS -->
-  <div class="plan-details" id="details-free">
+  {% for plan in plans %}
+  <div class="plan-details" id="details-{{ plan.code }}">
     <div class="plan-details__header">
-      <h3>🌱 FREE Plan — Full Details</h3>
-      <span class="price-tag">$0 / year</span>
+      <h3>{{ plan.icon }} {{ plan.name }} Plan — Full Details</h3>
+      <span class="price-tag">${{ plan.price|floatformat:0 }} / year</span>
     </div>
     <div class="plan-details__body">
       <div class="plan-details__grid">
+        {% for section_key, section_rows in plan.details.items %}
         <div class="plan-details__section">
-          <h4>Access &amp; Limits</h4>
-          <div class="detail-row"><span class="detail-row__label">World Map Access</span><span class="detail-row__value detail-row__value--yes">Basic</span></div>
-          <div class="detail-row"><span class="detail-row__label">Country Profiles / Day</span><span class="detail-row__value">1</span></div>
-          <div class="detail-row"><span class="detail-row__label">Company Data</span><span class="detail-row__value">Public only</span></div>
-          <div class="detail-row"><span class="detail-row__label">Data Export</span><span class="detail-row__value detail-row__value--no">✗ Not included</span></div>
-          <div class="detail-row"><span class="detail-row__label">API Access</span><span class="detail-row__value detail-row__value--no">✗ Not included</span></div>
+          <h4>{{ section_key|title }}</h4>
+          {% for row in section_rows %}
+          <div class="detail-row">
+            <span class="detail-row__label">{{ row.label }}</span>
+            <span class="detail-row__value{% if row.positive == True %} detail-row__value--yes{% elif row.positive == False %} detail-row__value--no{% endif %}">
+              {% if row.positive == False %}&#10007; {% endif %}
+              {% if row.positive == True %}&#10003; {% endif %}
+              {{ row.value }}
+            </span>
+          </div>
+          {% endfor %}
         </div>
-        <div class="plan-details__section">
-          <h4>Support &amp; Billing</h4>
-          <div class="detail-row"><span class="detail-row__label">Support</span><span class="detail-row__value">Community</span></div>
-          <div class="detail-row"><span class="detail-row__label">Multilicense</span><span class="detail-row__value detail-row__value--no">✗ Not available</span></div>
-          <div class="detail-row"><span class="detail-row__label">Invoice</span><span class="detail-row__value detail-row__value--no">✗ Not issued</span></div>
-          <div class="detail-row"><span class="detail-row__label">Billing Profile</span><span class="detail-row__value detail-row__value--no">✗ Not required</span></div>
-          <div class="detail-row"><span class="detail-row__label">Contract</span><span class="detail-row__value detail-row__value--no">✗ Not included</span></div>
-        </div>
+        {% endfor %}
       </div>
-      <p style="color:#5F7383;font-size:.82rem;text-align:center;">The Free plan is ideal for exploring the FONTESIN platform before committing to a paid subscription.</p>
+      {% if plan.best_for %}
+      <div style="border-radius:10px;padding:16px;text-align:center;" class="best-for--{{ plan.best_for_style }}">
+        <strong style="font-family:'Montserrat',sans-serif;font-size:.85rem;">&#128161; Best for:</strong>
+        <span style="font-size:.82rem;"> {{ plan.best_for }}</span>
+      </div>
+      {% endif %}
     </div>
   </div>
-
-  <div class="plan-details" id="details-basic">
-    <div class="plan-details__header">
-      <h3>🚀 BASIC Plan — Full Details</h3>
-      <span class="price-tag">$150 / year</span>
-    </div>
-    <div class="plan-details__body">
-      <div class="plan-details__grid">
-        <div class="plan-details__section">
-          <h4>Access &amp; Limits</h4>
-          <div class="detail-row"><span class="detail-row__label">World Map Access</span><span class="detail-row__value detail-row__value--yes">Full</span></div>
-          <div class="detail-row"><span class="detail-row__label">Country Profiles / Day</span><span class="detail-row__value">5</span></div>
-          <div class="detail-row"><span class="detail-row__label">Company Data</span><span class="detail-row__value">Registry level</span></div>
-          <div class="detail-row"><span class="detail-row__label">Analytics</span><span class="detail-row__value">Basic dashboard</span></div>
-          <div class="detail-row"><span class="detail-row__label">Data Export</span><span class="detail-row__value detail-row__value--yes">CSV</span></div>
-          <div class="detail-row"><span class="detail-row__label">API Access</span><span class="detail-row__value detail-row__value--no">✗ Not included</span></div>
-        </div>
-        <div class="plan-details__section">
-          <h4>Billing &amp; Support</h4>
-          <div class="detail-row"><span class="detail-row__label">Annual Price</span><span class="detail-row__value">$150 / year</span></div>
-          <div class="detail-row"><span class="detail-row__label">Monthly Equivalent</span><span class="detail-row__value">≈ $12.50 / mo</span></div>
-          <div class="detail-row"><span class="detail-row__label">Savings vs Monthly</span><span class="detail-row__value detail-row__value--yes">$90 saved</span></div>
-          <div class="detail-row"><span class="detail-row__label">Multilicense</span><span class="detail-row__value detail-row__value--no">✗ Not available</span></div>
-          <div class="detail-row"><span class="detail-row__label">Support</span><span class="detail-row__value">Email support</span></div>
-          <div class="detail-row"><span class="detail-row__label">Pro Forma Invoice</span><span class="detail-row__value detail-row__value--yes">✓ Included</span></div>
-        </div>
-      </div>
-      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:16px;text-align:center;">
-        <strong style="color:#92400e;font-family:'Montserrat',sans-serif;font-size:.85rem;">💡 Best for:</strong>
-        <span style="color:#78350f;font-size:.82rem;"> Freelancers, startups, and small businesses exploring international markets.</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="plan-details" id="details-pro">
-    <div class="plan-details__header">
-      <h3>💼 PRO Plan — Full Details</h3>
-      <span class="price-tag">$1,000 / year</span>
-    </div>
-    <div class="plan-details__body">
-      <div class="plan-details__grid">
-        <div class="plan-details__section">
-          <h4>Access &amp; Features</h4>
-          <div class="detail-row"><span class="detail-row__label">World Map Access</span><span class="detail-row__value detail-row__value--yes">Full + Select Country</span></div>
-          <div class="detail-row"><span class="detail-row__label">Country Profiles</span><span class="detail-row__value">Unlimited</span></div>
-          <div class="detail-row"><span class="detail-row__label">Company Data</span><span class="detail-row__value">Full registry + analytics</span></div>
-          <div class="detail-row"><span class="detail-row__label">Analytics</span><span class="detail-row__value detail-row__value--yes">Advanced + Reports</span></div>
-          <div class="detail-row"><span class="detail-row__label">Data Export</span><span class="detail-row__value detail-row__value--yes">CSV, Excel, PDF</span></div>
-          <div class="detail-row"><span class="detail-row__label">API Access</span><span class="detail-row__value detail-row__value--yes">✓ Full REST API</span></div>
-        </div>
-        <div class="plan-details__section">
-          <h4>Billing &amp; Multilicense</h4>
-          <div class="detail-row"><span class="detail-row__label">Annual Price</span><span class="detail-row__value">$1,000 / year</span></div>
-          <div class="detail-row"><span class="detail-row__label">Monthly Equivalent</span><span class="detail-row__value">≈ $83.33 / mo</span></div>
-          <div class="detail-row"><span class="detail-row__label">Savings vs Monthly</span><span class="detail-row__value detail-row__value--yes">$200 saved</span></div>
-          <div class="detail-row"><span class="detail-row__label">Multilicense Price</span><span class="detail-row__value">+$100 / user / year</span></div>
-          <div class="detail-row"><span class="detail-row__label">Support</span><span class="detail-row__value">Priority email &amp; chat</span></div>
-          <div class="detail-row"><span class="detail-row__label">Pro Forma + Final Invoice</span><span class="detail-row__value detail-row__value--yes">✓ Included</span></div>
-        </div>
-      </div>
-      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px;text-align:center;">
-        <strong style="color:#15803d;font-family:'Montserrat',sans-serif;font-size:.85rem;">💡 Best for:</strong>
-        <span style="color:#166534;font-size:.82rem;"> Growing SMEs, law firms, accounting offices, and business consultants.</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="plan-details" id="details-global">
-    <div class="plan-details__header">
-      <h3>🌐 GLOBAL Plan — Full Details</h3>
-      <span class="price-tag">$2,000 / year</span>
-    </div>
-    <div class="plan-details__body">
-      <div class="plan-details__grid">
-        <div class="plan-details__section">
-          <h4>Access &amp; Features</h4>
-          <div class="detail-row"><span class="detail-row__label">World Map Access</span><span class="detail-row__value detail-row__value--yes">Full + Select Region</span></div>
-          <div class="detail-row"><span class="detail-row__label">Country Profiles</span><span class="detail-row__value">Unlimited</span></div>
-          <div class="detail-row"><span class="detail-row__label">Franchise Management</span><span class="detail-row__value detail-row__value--yes">✓ Included</span></div>
-          <div class="detail-row"><span class="detail-row__label">Multi-Currency Billing</span><span class="detail-row__value detail-row__value--yes">✓ USD, EUR, GBP, CZK…</span></div>
-          <div class="detail-row"><span class="detail-row__label">Custom SLA</span><span class="detail-row__value detail-row__value--yes">✓ Negotiable</span></div>
-          <div class="detail-row"><span class="detail-row__label">Dedicated Account Manager</span><span class="detail-row__value detail-row__value--yes">✓ Included</span></div>
-        </div>
-        <div class="plan-details__section">
-          <h4>Billing &amp; Multilicense</h4>
-          <div class="detail-row"><span class="detail-row__label">Annual Price</span><span class="detail-row__value">$2,000 / year</span></div>
-          <div class="detail-row"><span class="detail-row__label">Monthly Equivalent</span><span class="detail-row__value">≈ $166.67 / mo</span></div>
-          <div class="detail-row"><span class="detail-row__label">Savings vs Monthly</span><span class="detail-row__value detail-row__value--yes">$400 saved</span></div>
-          <div class="detail-row"><span class="detail-row__label">Multilicense Price</span><span class="detail-row__value">+$100 / user / year</span></div>
-          <div class="detail-row"><span class="detail-row__label">Support</span><span class="detail-row__value">24/7 dedicated</span></div>
-          <div class="detail-row"><span class="detail-row__label">Revenue Sharing</span><span class="detail-row__value detail-row__value--yes">✓ Franchise model</span></div>
-        </div>
-      </div>
-      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:16px;text-align:center;">
-        <strong style="color:#1e40af;font-family:'Montserrat',sans-serif;font-size:.85rem;">💡 Best for:</strong>
-        <span style="color:#1e3a8a;font-size:.82rem;"> Enterprises, franchise networks, investment groups, and regional operators.</span>
-      </div>
-    </div>
-  </div>
+  {% endfor %}
 
   <!-- COMPARISON TABLE -->
   <div class="comparison-section">
@@ -543,32 +417,56 @@
         <thead>
           <tr>
             <th>Feature</th>
-            <th>FREE</th>
-            <th>BASIC<br/><small style="font-weight:400;opacity:.7;">$150/yr</small></th>
-            <th style="background:#1B2E3F;">PRO ⭐<br/><small style="font-weight:400;opacity:.7;">$1,000/yr</small></th>
-            <th>GLOBAL<br/><small style="font-weight:400;opacity:.7;">$2,000/yr</small></th>
+            {% for plan in plans %}
+            <th{% if plan.is_popular %} class="highlight-col"{% endif %}>
+              {{ plan.name }}{% if plan.is_popular %} &#11088;{% endif %}
+              <br/><small style="font-weight:400;opacity:.7;">${{ plan.price|floatformat:0 }}/yr</small>
+            </th>
+            {% endfor %}
           </tr>
         </thead>
         <tbody>
-          <tr><td>World Map Access</td><td>Basic</td><td>Full</td><td class="highlight">Full</td><td>Full</td></tr>
-          <tr><td>Country Profiles / Day</td><td>1</td><td>5</td><td class="highlight">Unlimited</td><td>Unlimited</td></tr>
-          <tr><td>Company Registry Data</td><td><span class="cross">✗</span></td><td><span class="check">✓</span></td><td class="highlight"><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
-          <tr><td>Advanced Analytics</td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td class="highlight"><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
-          <tr><td>Data Export (CSV/Excel/PDF)</td><td><span class="cross">✗</span></td><td>CSV only</td><td class="highlight">All formats</td><td>All formats</td></tr>
-          <tr><td>API Access</td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td class="highlight"><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
-          <tr><td>Multilicense</td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td class="highlight">+$100/user/yr</td><td>+$100/user/yr</td></tr>
-          <tr><td>Select Country / Region</td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td class="highlight">Country</td><td>Region</td></tr>
-          <tr><td>Franchise Management</td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td class="highlight"><span class="cross">✗</span></td><td><span class="check">✓</span></td></tr>
-          <tr><td>Multi-Currency Billing</td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td class="highlight"><span class="cross">✗</span></td><td><span class="check">✓</span></td></tr>
-          <tr><td>Dedicated Account Manager</td><td><span class="cross">✗</span></td><td><span class="cross">✗</span></td><td class="highlight"><span class="cross">✗</span></td><td><span class="check">✓</span></td></tr>
-          <tr><td>Pro Forma Invoice</td><td><span class="cross">✗</span></td><td><span class="check">✓</span></td><td class="highlight"><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
-          <tr><td>Support Level</td><td>Community</td><td>Email</td><td class="highlight">Priority</td><td>24/7 Dedicated</td></tr>
+          {% for row in comparison_rows %}
+          <tr>
+            <td>{% if forloop.last %}<strong>{{ row.label }}</strong>{% else %}{{ row.label }}{% endif %}</td>
+            {% for plan in plans %}
+            {% with val=plan.comparison %}
+              {% if row.key == "world_map" %}
+                <td{% if plan.is_popular %} class="highlight"{% endif %}>{{ val.world_map }}</td>
+              {% elif row.key == "country_profiles" %}
+                <td{% if plan.is_popular %} class="highlight"{% endif %}>{{ val.country_profiles }}</td>
+              {% elif row.key == "company_registry" %}
+                <td{% if plan.is_popular %} class="highlight"{% endif %}>{% if val.company_registry == True %}<span class="check">&#10003;</span>{% elif val.company_registry == False %}<span class="cross">&#10007;</span>{% else %}{{ val.company_registry }}{% endif %}</td>
+              {% elif row.key == "advanced_analytics" %}
+                <td{% if plan.is_popular %} class="highlight"{% endif %}>{% if val.advanced_analytics == True %}<span class="check">&#10003;</span>{% elif val.advanced_analytics == False %}<span class="cross">&#10007;</span>{% else %}{{ val.advanced_analytics }}{% endif %}</td>
+              {% elif row.key == "data_export" %}
+                <td{% if plan.is_popular %} class="highlight"{% endif %}>{% if val.data_export == True %}<span class="check">&#10003;</span>{% elif val.data_export == False %}<span class="cross">&#10007;</span>{% else %}{{ val.data_export }}{% endif %}</td>
+              {% elif row.key == "api_access" %}
+                <td{% if plan.is_popular %} class="highlight"{% endif %}>{% if val.api_access == True %}<span class="check">&#10003;</span>{% elif val.api_access == False %}<span class="cross">&#10007;</span>{% else %}{{ val.api_access }}{% endif %}</td>
+              {% elif row.key == "multilicense" %}
+                <td{% if plan.is_popular %} class="highlight"{% endif %}>{% if val.multilicense == True %}<span class="check">&#10003;</span>{% elif val.multilicense == False %}<span class="cross">&#10007;</span>{% else %}{{ val.multilicense }}{% endif %}</td>
+              {% elif row.key == "select_country_region" %}
+                <td{% if plan.is_popular %} class="highlight"{% endif %}>{% if val.select_country_region == True %}<span class="check">&#10003;</span>{% elif val.select_country_region == False %}<span class="cross">&#10007;</span>{% else %}{{ val.select_country_region }}{% endif %}</td>
+              {% elif row.key == "franchise_management" %}
+                <td{% if plan.is_popular %} class="highlight"{% endif %}>{% if val.franchise_management == True %}<span class="check">&#10003;</span>{% elif val.franchise_management == False %}<span class="cross">&#10007;</span>{% else %}{{ val.franchise_management }}{% endif %}</td>
+              {% elif row.key == "multi_currency" %}
+                <td{% if plan.is_popular %} class="highlight"{% endif %}>{% if val.multi_currency == True %}<span class="check">&#10003;</span>{% elif val.multi_currency == False %}<span class="cross">&#10007;</span>{% else %}{{ val.multi_currency }}{% endif %}</td>
+              {% elif row.key == "dedicated_manager" %}
+                <td{% if plan.is_popular %} class="highlight"{% endif %}>{% if val.dedicated_manager == True %}<span class="check">&#10003;</span>{% elif val.dedicated_manager == False %}<span class="cross">&#10007;</span>{% else %}{{ val.dedicated_manager }}{% endif %}</td>
+              {% elif row.key == "pro_forma_invoice" %}
+                <td{% if plan.is_popular %} class="highlight"{% endif %}>{% if val.pro_forma_invoice == True %}<span class="check">&#10003;</span>{% elif val.pro_forma_invoice == False %}<span class="cross">&#10007;</span>{% else %}{{ val.pro_forma_invoice }}{% endif %}</td>
+              {% elif row.key == "support" %}
+                <td{% if plan.is_popular %} class="highlight"{% endif %}>{{ val.support }}</td>
+              {% endif %}
+            {% endwith %}
+            {% endfor %}
+          </tr>
+          {% endfor %}
           <tr>
             <td><strong>Annual Price</strong></td>
-            <td><strong>$0</strong></td>
-            <td><strong>$150</strong></td>
-            <td class="highlight"><strong>$1,000</strong></td>
-            <td><strong>$2,000</strong></td>
+            {% for plan in plans %}
+            <td{% if plan.is_popular %} class="highlight"{% endif %}><strong>${{ plan.price|floatformat:0 }}</strong></td>
+            {% endfor %}
           </tr>
         </tbody>
       </table>
@@ -579,11 +477,15 @@
   <div class="membership-cta">
     <div class="selected-plan-info" id="selectedPlanInfo"></div>
     <p>Select a plan above to continue. You will receive a Pro Forma Invoice with payment instructions.</p>
-    <button class="btn-proceed" id="btnProceed" disabled onclick="proceedToCheckout()">
-      Continue to Payment →
-    </button>
+    <form method="POST" action="{% url 'select_plan' %}" id="planForm">
+      {% csrf_token %}
+      <input type="hidden" name="plan_code" id="planCodeInput" value=""/>
+      <button type="submit" class="btn-proceed" id="btnProceed" disabled>
+        Continue to Payment &rarr;
+      </button>
+    </form>
     <div style="margin-top:16px;font-size:.75rem;color:#8fa5b5;">
-      🔒 Secure checkout · Bank transfer via Pro Forma Invoice · No credit card required upfront
+      &#128274; Secure checkout &middot; Bank transfer via Pro Forma Invoice &middot; No credit card required upfront
     </div>
   </div>
 </div>
@@ -593,85 +495,70 @@
   <div class="container">
     <div class="footer__grid">
       <div class="footer__col footer__col--brand">
-        <a href="index.html" class="footer__logo">
-          <img src="images/logo_full.png" alt="FONTESIN" height="36" style="filter:brightness(0) invert(1);"/>
+        <a href="{% url 'home' %}" class="footer__logo">
+          <img src="{% static 'adminlte/images/logo_full.png' %}" alt="FONTESIN" height="36" style="filter:brightness(0) invert(1);"/>
         </a>
         <p class="footer__tagline">Global Business Intelligence Platform</p>
       </div>
       <div class="footer__col">
         <h4>Platform</h4>
-        <a href="world-map.html">World Map</a>
-        <a href="register.html">Get Started</a>
-        <a href="login.html">Log In</a>
+        <a href="{% url 'worldmap' %}">World Map</a>
+        <a href="{% url 'register' %}">Get Started</a>
+        <a href="{% url 'login' %}">Log In</a>
       </div>
       <div class="footer__col">
         <h4>Company</h4>
-        <a href="about.html">About Us</a>
-        <a href="careers.html">Careers</a>
-        <a href="contact.html">Contact</a>
+        <a href="{% url 'about' %}">About Us</a>
+        <a href="{% url 'career' %}">Careers</a>
+        <a href="{% url 'contact' %}">Contact</a>
       </div>
     </div>
     <div class="footer__bottom">
-      <span>© 2026 FONTES Inc. All rights reserved.</span>
+      <span>&copy; 2026 FONTES Inc. All rights reserved.</span>
       <span>Design by Memento Mori Digital LLC</span>
     </div>
   </div>
 </footer>
 
 <script>
-const PLANS = {
-  free:   { name: 'FREE',   price: 0,    label: 'Free Plan — $0/year' },
-  basic:  { name: 'BASIC',  price: 150,  label: 'Basic Plan — $150/year' },
-  pro:    { name: 'PRO',    price: 1000, label: 'Pro Plan — $1,000/year' },
-  global: { name: 'GLOBAL', price: 2000, label: 'Global Plan — $2,000/year' },
-};
-
+const PLANS = {{ plans_json|safe }};
 let currentPlan = null;
 
 function selectPlan(planKey) {
-  // Deselect all
-  document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.plan-card').forEach(c => {
+    c.classList.remove('selected');
+    c.classList.remove('popular');
+  });
   document.querySelectorAll('.plan-details').forEach(d => d.classList.remove('open'));
 
-  // Select clicked
   document.getElementById('card-' + planKey).classList.add('selected');
 
-  // Toggle details
   const details = document.getElementById('details-' + planKey);
   details.classList.add('open');
   details.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-  // Update CTA
   currentPlan = planKey;
   const plan = PLANS[planKey];
   const info = document.getElementById('selectedPlanInfo');
-  info.textContent = '✓ Selected: ' + plan.label;
+  info.textContent = '\u2713 Selected: ' + plan.label;
   info.classList.add('visible');
 
   const btn = document.getElementById('btnProceed');
   btn.disabled = false;
-  btn.textContent = planKey === 'free' ? 'Activate Free Account →' : 'Continue to Payment →';
+  btn.textContent = planKey === 'free' ? 'Activate Free Account \u2192' : 'Continue to Payment \u2192';
 
-  // Store in sessionStorage for thank-you page
-  sessionStorage.setItem('selectedPlan', planKey);
-  sessionStorage.setItem('selectedPlanName', plan.name);
-  sessionStorage.setItem('selectedPlanPrice', plan.price);
-}
-
-function proceedToCheckout() {
-  if (!currentPlan) return;
-  window.location.href = 'thank-you.html';
+  document.getElementById('planCodeInput').value = planKey;
 }
 </script>
-<script src="js/main.js"></script>
-  <script>
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", function() {
-        navigator.serviceWorker.register("/sw.js")
-          .then(function(reg) { console.log("[PWA] SW registered:", reg.scope); })
-          .catch(function(err) { console.warn("[PWA] SW registration failed:", err); });
-      });
-    }
-  </script>
+<script src="{% static 'js/main.js' %}"></script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function() {
+      navigator.serviceWorker.register("/sw.js")
+        .then(function(reg) { console.log("[PWA] SW registered:", reg.scope); })
+        .catch(function(err) { console.warn("[PWA] SW registration failed:", err); });
+    });
+  }
+</script>
 </body>
 </html>

@@ -31,23 +31,60 @@ class CommercialPlan(models.Model):
         ("yearly", "Yearly"),
     ]
 
+    code = models.CharField(max_length=30, unique=True, default="")
     name = models.CharField(max_length=100)
+    tagline = models.CharField(max_length=200, blank=True, default="")
+    icon = models.CharField(max_length=10, blank=True, default="")
 
     price = models.DecimalField(max_digits=10, decimal_places=2)
-
-    currency = models.CharField(max_length=10)
+    original_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    currency = models.CharField(max_length=10, default="USD")
 
     billing_period = models.CharField(
         max_length=10,
-        choices=BILLING_PERIOD
+        choices=BILLING_PERIOD,
+        default="yearly"
     )
 
+    badge_text = models.CharField(max_length=50, blank=True, default="")
+    badge_style = models.CharField(max_length=20, blank=True, default="")
+
+    features = models.JSONField(default=list, blank=True)
+    details = models.JSONField(default=dict, blank=True)
+    comparison = models.JSONField(default=dict, blank=True)
+
+    best_for = models.CharField(max_length=300, blank=True, default="")
+    best_for_style = models.CharField(max_length=20, blank=True, default="")
+
+    sort_order = models.IntegerField(default=0)
+    is_popular = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ["sort_order"]
+
     def __str__(self):
         return self.name
+
+    @property
+    def monthly_price(self):
+        if self.price and self.billing_period == "yearly":
+            return round(self.price / 12, 2)
+        return self.price
+
+    @property
+    def discount_percent(self):
+        if self.original_price and self.original_price > 0:
+            return round((1 - self.price / self.original_price) * 100)
+        return 0
+
+    @property
+    def savings(self):
+        if self.original_price:
+            return self.original_price - self.price
+        return 0
 
 
 class Subscription(models.Model):
@@ -61,9 +98,19 @@ class Subscription(models.Model):
         ("cancelled", "Cancelled"),
     ]
 
+    user = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.CASCADE,
+        related_name="subscriptions",
+        null=True,
+        blank=True,
+    )
+
     certification = models.ForeignKey(
         "billing.Certification",
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
     )
 
     plan = models.ForeignKey(
@@ -94,9 +141,9 @@ class Subscription(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["certification"],
-                condition=Q(status__in=["active", "trial"]),
-                name="unique_active_subscription_per_certification"
+                fields=["user"],
+                condition=Q(status__in=["active", "trial", "created"]),
+                name="unique_active_subscription_per_user"
             )
         ]
 
@@ -118,13 +165,17 @@ class Invoice(models.Model):
 
     amount = models.DecimalField(max_digits=10, decimal_places=2)
 
-    currency = models.CharField(max_length=10)
+    currency = models.CharField(max_length=10, default="USD")
 
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
         default="pending"
     )
+
+    variable_symbol = models.CharField(max_length=20, blank=True, default="")
+    specific_symbol = models.CharField(max_length=20, blank=True, default="")
+    payment_reference = models.CharField(max_length=100, blank=True, default="")
 
     due_date = models.DateTimeField()
 
