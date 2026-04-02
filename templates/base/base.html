@@ -101,7 +101,7 @@
       <span class="brand-text font-weight-light">Fontesin</span>
     </a>
 
-    <div class="sidebar">
+    <div class="sidebar" style="padding-bottom:70px; position:relative; height:calc(100% - 57px);">
       <nav class="mt-2">
         <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview">
 
@@ -188,6 +188,24 @@
 
         </ul>
       </nav>
+
+      <!-- Profile Section (bottom of sidebar) -->
+      <div style="position:absolute; bottom:0; left:0; right:0; border-top:1px solid rgba(255,255,255,.1); padding:12px 16px; background:#1b2e40;">
+        <a href="{% url 'profile' %}" style="display:flex; align-items:center; gap:10px; text-decoration:none; color:#fff;">
+          <div style="width:36px; height:36px; border-radius:50%; background:#2f4f68; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.85rem; color:#fff;">
+            {{ request.user.first_name|truncatechars:1 }}{{ request.user.last_name|truncatechars:1 }}
+          </div>
+          <div style="flex:1; min-width:0;">
+            <div style="font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              {{ request.user.first_name }} {{ request.user.last_name }}
+            </div>
+            <div style="font-size:.72rem; color:rgba(255,255,255,.5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              {{ request.user.email }}
+            </div>
+          </div>
+          <i class="fas fa-cog" style="color:rgba(255,255,255,.4); font-size:.85rem;"></i>
+        </a>
+      </div>
     </div>
   </aside>
 

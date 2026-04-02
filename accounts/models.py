@@ -3,7 +3,7 @@ import uuid
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.auth.base_user import BaseUserManager
 from django.utils.text import slugify
-from accounts.constants import CompanyClassificationChoices
+from accounts.constants import CompanyClassificationChoices, CountryChoices, LanguageChoices
 
 
 class Tenant(models.Model):
@@ -11,6 +11,7 @@ class Tenant(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
     slug = models.SlugField(unique=True)
+    domain = models.CharField(max_length=255, null=True, blank=True, unique=True)
 
     is_active = models.BooleanField(default=True)
 
@@ -194,6 +195,7 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     tenant = models.ForeignKey(
@@ -231,7 +233,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     gender = models.CharField(max_length=20, null=True, blank=True)
 
     # ---- Profile ----
-    preferred_language = models.CharField(max_length=10, null=True, blank=True)
+    preferred_language = models.CharField(max_length=10, choices=LanguageChoices.CHOICES, null=True, blank=True)
     bio = models.TextField(null=True, blank=True)
     notes = models.TextField(null=True, blank=True)
     photo_url = models.URLField(max_length=500, null=True, blank=True)
@@ -242,7 +244,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     city = models.CharField(max_length=150, null=True, blank=True)
     state_region = models.CharField(max_length=150, null=True, blank=True)
     postal_code = models.CharField(max_length=20, null=True, blank=True)
-    country = models.CharField(max_length=100, null=True, blank=True)
+    country = models.CharField(max_length=100, choices=CountryChoices.CHOICES, null=True, blank=True)
 
     owner = models.ForeignKey("self",null=True,blank=True,related_name="commercial_children",on_delete=models.SET_NULL)
 

@@ -88,13 +88,18 @@ def admin_logout(request):
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login
-from accounts.models import Tenant, Company, Role, UserCompany
-from accounts.models import User
+from accounts.models import Tenant, Company, Role, UserCompany, User
+from accounts.constants import CountryChoices, LanguageChoices
 
 
 def register_view(request):
 
     companies = Company.objects.filter(is_active=True)
+    ctx = {
+        "companies": companies,
+        "country_choices": CountryChoices.CHOICES,
+        "language_choices": LanguageChoices.CHOICES,
+    }
 
     if request.method == "POST":
 
@@ -112,12 +117,12 @@ def register_view(request):
         # email exists check
         if User.objects.filter(email=email).exists():
             messages.error(request, "Email already exists")
-            return render(request, "auth/register.html", {"companies": companies})
+            return render(request, "auth/register.html", ctx)
 
         # password match check
         if password != confirm_password:
             messages.error(request, "Passwords do not match")
-            return render(request, "auth/register.html", {"companies": companies})
+            return render(request, "auth/register.html", ctx)
 
         tenant, _ = Tenant.objects.get_or_create(name="Default")
 
@@ -125,7 +130,7 @@ def register_view(request):
 
         if not role:
             messages.error(request, "Invalid role selected")
-            return render(request, "auth/register.html", {"companies": companies})
+            return render(request, "auth/register.html", ctx)
 
         # create user
         user = User.objects.create_user(
@@ -139,8 +144,12 @@ def register_view(request):
             country=country,
         )
 
-        # link company
-        if company_id:
+        # "Others" is only valid for business_user role
+        if company_id == "others" and role_name != "business_user":
+            company_id = ""
+
+        # link company (skip if user selected "others" — they'll create one later)
+        if company_id and company_id != "others":
             company = Company.objects.filter(id=company_id).first()
             if company:
                 user.primary_company = company
@@ -160,7 +169,7 @@ def register_view(request):
 
         return redirect("/verify/")
 
-    return render(request, "auth/register.html", {"companies": companies})
+    return render(request, "auth/register.html", ctx)
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required

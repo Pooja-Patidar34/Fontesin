@@ -1,5 +1,6 @@
 from django.urls import path
 from .view.auth import admin_login, admin_logout,register_view,identity_verification_view,apply_view,apply_review_view
+from .view.profile import profile_view
 from .view.dashboard import dashboard
 from accounts.view.company import company_list, toggle_company,company_detail_ajax,company_delete
 from .view.user import user_list, toggle_user, assign_roles,role_list,role_detail_ajax,permission_list,save_role,user_detail_ajax,user_edit,add_user
@@ -37,6 +38,7 @@ urlpatterns = [
     path("users/add/", add_user, name="add-user"),
     path("companies/<uuid:company_id>/delete/", company_delete, name="company-delete"),
     path("register/", register_view, name="register"),
+    path("profile/", profile_view, name="profile"),
 
     #static pages
     path('home/', home, name='home'),  # default landing page

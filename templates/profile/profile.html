@@ -1,0 +1,185 @@
+{% extends "base/base.html" %}
+
+{% block title %}Profile – FONTESIN{% endblock %}
+
+{% block content %}
+
+<div class="row">
+  <!-- User Info Card -->
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body text-center">
+        <div style="width:80px; height:80px; border-radius:50%; background:#253D51; display:inline-flex; align-items:center; justify-content:center; font-weight:700; font-size:1.5rem; color:#fff; margin-bottom:16px;">
+          {{ request.user.first_name|truncatechars:1 }}{{ request.user.last_name|truncatechars:1 }}
+        </div>
+        <h4 style="margin-bottom:4px;">{{ request.user.first_name }} {{ request.user.last_name }}</h4>
+        <p class="text-muted" style="font-size:.88rem;">{{ request.user.email }}</p>
+
+        <hr>
+
+        <table class="table table-borderless table-sm text-left" style="font-size:.88rem;">
+          <tr>
+            <td class="text-muted">Phone</td>
+            <td>{{ request.user.phone|default:"-" }}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Country</td>
+            <td>{{ request.user.country|default:"-" }}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Role</td>
+            <td>{{ request.user.role.name|default:"-" }}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Tenant</td>
+            <td>{{ request.user.tenant.name|default:"-" }}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Member Since</td>
+            <td>{{ request.user.created_at|date:"M d, Y" }}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Company Section -->
+  <div class="col-md-8">
+
+    {% if messages %}
+    <div style="margin-bottom:16px;">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" style="font-size:.88rem;">
+        {{ message }}
+        <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if user_company %}
+    <!-- Existing Company Details -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-building mr-2"></i>My Company</h3>
+      </div>
+      <div class="card-body">
+        <table class="table table-borderless table-sm" style="font-size:.88rem;">
+          <tr>
+            <td class="text-muted" style="width:160px;">Company Name</td>
+            <td><strong>{{ user_company.name }}</strong></td>
+          </tr>
+          <tr>
+            <td class="text-muted">Classification</td>
+            <td>{{ user_company.classification|default:"-" }}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Website</td>
+            <td>{{ user_company.website|default:"-" }}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Phone</td>
+            <td>{{ user_company.phone|default:"-" }}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">City</td>
+            <td>{{ user_company.city|default:"-" }}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Country</td>
+            <td>{{ user_company.country|default:"-" }}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Tenant Domain</td>
+            <td>{{ user_company.tenant.domain|default:"-" }}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Status</td>
+            <td>
+              {% if user_company.is_active %}
+              <span class="badge badge-success">Active</span>
+              {% else %}
+              <span class="badge badge-secondary">Inactive</span>
+              {% endif %}
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    {% else %}
+    <!-- Create Company Form -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-plus-circle mr-2"></i>Create Your Company</h3>
+      </div>
+      <div class="card-body">
+        <p class="text-muted" style="font-size:.88rem; margin-bottom:20px;">
+          You don't have a company linked to your account yet. Create one below to get started.
+        </p>
+
+        <form method="POST" action="{% url 'profile' %}">
+          {% csrf_token %}
+
+          <div class="form-group">
+            <label>Company Name <span class="text-danger">*</span></label>
+            <input type="text" name="company_name" class="form-control" placeholder="Enter company name" required>
+          </div>
+
+          <div class="form-group">
+            <label>Domain <span class="text-danger">*</span></label>
+            <input type="text" name="domain" class="form-control" placeholder="e.g. mycompany.com" required>
+            <small class="text-muted">This domain will be linked to your company's tenant.</small>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Classification</label>
+                <select name="classification" class="form-control">
+                  <option value="">Select Classification</option>
+                  {% for value, label in classifications %}
+                  <option value="{{ value }}">{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Website</label>
+                <input type="url" name="website" class="form-control" placeholder="https://mycompany.com">
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Phone</label>
+                <input type="text" name="company_phone" class="form-control" placeholder="+1 212 555 0100">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Country</label>
+                <input type="text" name="company_country" class="form-control" placeholder="United States">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>City</label>
+            <input type="text" name="city" class="form-control" placeholder="New York">
+          </div>
+
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-building mr-1"></i> Create Company
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+{% endblock %}
