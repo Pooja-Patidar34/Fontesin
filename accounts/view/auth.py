@@ -163,10 +163,8 @@ def register_view(request):
 
         login(request, user, backend="django.contrib.auth.backends.ModelBackend")
 
-        # Consultant/Coordinator/Franchise go to apply page (has its own verification + application form)
-        if role_name in ('consultant', 'coordinator', 'franchise'):
-            return redirect("/apply/")
-
+        # All roles go through Veriff identity verification
+        # After verification, consultant/coordinator/franchise → /apply/, others → /membership/
         return redirect("/verify/")
 
     return render(request, "auth/register.html", ctx)
