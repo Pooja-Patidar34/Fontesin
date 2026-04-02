@@ -1,0 +1,1207 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#253D51"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="FONTESIN"/>
+
+  <link rel="manifest" href="{% static 'adminlte/manifest.json' %}"/>
+  <link rel="apple-touch-icon" href="{% static 'adminlte/images/icons/icon-192.png' %}"/>
+
+  <title>Apply – FONTESIN</title>
+  <meta name="description" content="Apply to join FONTESIN as a Franchise Partner, Consultant, or Regional Coordinator."/>
+  <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #f0f5f8; color: #1a2e3b; }
+
+    /* NAV */
+    .apply-nav {
+      background: var(--primary-dark, #1B2E3F);
+      padding: 0 32px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .apply-nav__logo img { height: 32px; width: auto; filter: brightness(0) invert(1); }
+    .apply-nav__back { color: rgba(255,255,255,.6); font-size: .85rem; text-decoration: none; transition: .2s; }
+    .apply-nav__back:hover { color: #fff; }
+
+    /* PROGRESS BAR */
+    .apply-progress {
+      background: #fff;
+      border-bottom: 1px solid #e5eaf0;
+      padding: 20px 32px;
+    }
+    .apply-progress__inner {
+      max-width: 860px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+    .apply-step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      position: relative;
+    }
+    .apply-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: calc(50% + 18px);
+      right: calc(-50% + 18px);
+      top: 18px;
+      height: 2px;
+      background: #D8E4EC;
+      z-index: 0;
+      transition: background .3s;
+    }
+    .apply-step.done::after { background: #253D51; }
+    .apply-step__num {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: #D8E4EC;
+      color: #5F7383;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: .85rem;
+      flex-shrink: 0;
+      position: relative; z-index: 1;
+      transition: .3s;
+    }
+    .apply-step.active .apply-step__num { background: #253D51; color: #fff; }
+    .apply-step.done .apply-step__num { background: #16a34a; color: #fff; }
+    .apply-step.done .apply-step__num::after { content: '\2713'; }
+    .apply-step.done .apply-step__num span { display: none; }
+    .apply-step__label {
+      font-size: .75rem;
+      font-weight: 600;
+      color: #9CA3AF;
+      white-space: nowrap;
+      display: none;
+    }
+    .apply-step.active .apply-step__label,
+    .apply-step.done .apply-step__label { color: #253D51; display: block; }
+    @media (min-width: 600px) { .apply-step__label { display: block; } }
+
+    /* MAIN CONTENT */
+    .apply-main {
+      max-width: 860px;
+      margin: 40px auto;
+      padding: 0 24px;
+    }
+
+    /* PHASE PANELS */
+    .apply-phase { display: none; }
+    .apply-phase.active { display: block; }
+
+    /* CARDS */
+    .apply-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 2px 16px rgba(37,61,81,.06);
+      margin-bottom: 24px;
+    }
+    .apply-card__title {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #1a2e3b;
+      margin-bottom: 6px;
+    }
+    .apply-card__subtitle {
+      font-size: .9rem;
+      color: #5F7383;
+      margin-bottom: 28px;
+      line-height: 1.6;
+    }
+
+    /* ROLE BADGE */
+    .role-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #EEF4F8;
+      border: 1px solid #C7CCD1;
+      border-radius: 24px;
+      padding: 6px 16px;
+      font-size: .85rem;
+      font-weight: 600;
+      color: #253D51;
+      margin-bottom: 24px;
+    }
+
+    /* VERIFF SECTION */
+    .veriff-box {
+      border: 2px dashed #C7CCD1;
+      border-radius: 12px;
+      padding: 32px;
+      text-align: center;
+      background: #f8fafc;
+      margin-bottom: 24px;
+    }
+    .veriff-box__icon {
+      width: 64px; height: 64px;
+      background: #EEF4F8;
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 1.8rem;
+    }
+    .veriff-box__title { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1.1rem; margin-bottom: 8px; }
+    .veriff-box__desc { font-size: .85rem; color: #5F7383; line-height: 1.6; margin-bottom: 20px; }
+    .veriff-steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .veriff-step {
+      background: #fff;
+      border: 1px solid #e5eaf0;
+      border-radius: 10px;
+      padding: 14px 10px;
+      text-align: center;
+    }
+    .veriff-step__num {
+      width: 28px; height: 28px;
+      background: #253D51;
+      color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .75rem; font-weight: 700;
+      margin: 0 auto 8px;
+    }
+    .veriff-step__title { font-size: .78rem; font-weight: 600; color: #1a2e3b; margin-bottom: 4px; }
+    .veriff-step__desc { font-size: .72rem; color: #5F7383; }
+    .veriff-btn {
+      background: #253D51;
+      color: #fff;
+      border: none;
+      padding: 14px 32px;
+      border-radius: 8px;
+      font-size: .95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: .2s;
+    }
+    .veriff-btn:hover { background: #1B2E3F; }
+    .veriff-secure { font-size: .75rem; color: #9CA3AF; margin-top: 10px; }
+
+    /* VERIFF MODAL */
+    .veriff-modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.6);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .veriff-modal-overlay.open { display: flex; }
+    .veriff-modal {
+      background: #fff;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 24px 80px rgba(0,0,0,.3);
+      position: relative;
+    }
+    .veriff-modal__logo {
+      width: 56px; height: 56px;
+      background: #253D51;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 1.5rem;
+    }
+    .veriff-modal__title { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1.3rem; margin-bottom: 8px; }
+    .veriff-modal__subtitle { font-size: .85rem; color: #5F7383; margin-bottom: 28px; line-height: 1.6; }
+    .veriff-progress-steps { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; text-align: left; }
+    .veriff-pstep {
+      display: flex; align-items: center; gap: 14px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: #f8fafc;
+      border: 1px solid #e5eaf0;
+      transition: .3s;
+    }
+    .veriff-pstep.active { background: #EEF4F8; border-color: #253D51; }
+    .veriff-pstep.done { background: #f0fdf4; border-color: #16a34a; }
+    .veriff-pstep__icon {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: #D8E4EC;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .8rem;
+      flex-shrink: 0;
+      transition: .3s;
+    }
+    .veriff-pstep.active .veriff-pstep__icon { background: #253D51; color: #fff; }
+    .veriff-pstep.done .veriff-pstep__icon { background: #16a34a; color: #fff; }
+    .veriff-pstep__text { font-size: .85rem; font-weight: 600; color: #1a2e3b; }
+    .veriff-pstep__sub { font-size: .75rem; color: #9CA3AF; }
+    .veriff-spinner {
+      width: 20px; height: 20px;
+      border: 2px solid rgba(37,61,81,.2);
+      border-top-color: #253D51;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      margin-left: auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .veriff-modal__confirm-btn {
+      background: #253D51;
+      color: #fff;
+      border: none;
+      padding: 14px 32px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: .2s;
+      display: none;
+    }
+    .veriff-modal__confirm-btn:hover { background: #1B2E3F; }
+    .veriff-modal__confirm-btn.visible { display: block; }
+    .veriff-success { display: none; text-align: center; }
+    .veriff-success.visible { display: block; }
+    .veriff-success__icon {
+      width: 64px; height: 64px;
+      background: #16a34a;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 1.8rem;
+      color: #fff;
+    }
+    .veriff-success__title { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1.2rem; margin-bottom: 8px; color: #16a34a; }
+    .veriff-success__desc { font-size: .85rem; color: #5F7383; margin-bottom: 24px; }
+
+    /* FORM SECTIONS */
+    .form-section { margin-bottom: 32px; }
+    .form-section__title {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #253D51;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #EEF4F8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .apply-form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 600px) { .apply-form-row { grid-template-columns: 1fr; } }
+    .apply-form-row.full { grid-template-columns: 1fr; }
+    .apply-form-group { margin-bottom: 16px; }
+    .apply-form-label {
+      display: block;
+      font-size: .82rem;
+      font-weight: 600;
+      color: #253D51;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+    .apply-form-control {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid #D8E4EC;
+      border-radius: 8px;
+      font-size: .9rem;
+      font-family: 'Inter', sans-serif;
+      color: #1a2e3b;
+      background: #fff;
+      transition: .2s;
+      outline: none;
+    }
+    .apply-form-control:focus { border-color: #253D51; box-shadow: 0 0 0 3px rgba(37,61,81,.08); }
+    textarea.apply-form-control { resize: vertical; min-height: 100px; }
+    select.apply-form-control { cursor: pointer; }
+    .apply-form-hint { font-size: .75rem; color: #9CA3AF; margin-top: 4px; }
+
+    /* FILE UPLOAD */
+    .file-upload {
+      border: 2px dashed #C7CCD1;
+      border-radius: 10px;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: .2s;
+      background: #f8fafc;
+    }
+    .file-upload:hover { border-color: #253D51; background: #EEF4F8; }
+    .file-upload input { display: none; }
+    .file-upload__icon { font-size: 1.8rem; margin-bottom: 8px; }
+    .file-upload__text { font-size: .85rem; font-weight: 600; color: #253D51; margin-bottom: 4px; }
+    .file-upload__hint { font-size: .75rem; color: #9CA3AF; }
+
+    /* DUE DILIGENCE */
+    .dd-question {
+      background: #f8fafc;
+      border: 1px solid #e5eaf0;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .dd-question__label {
+      font-size: .9rem;
+      font-weight: 600;
+      color: #1a2e3b;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+    .dd-question__label span {
+      background: #253D51;
+      color: #fff;
+      font-size: .7rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    .dd-radio-group { display: flex; gap: 12px; flex-wrap: wrap; }
+    .dd-radio {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-size: .85rem;
+      color: #5F7383;
+    }
+    .dd-radio input { accent-color: #253D51; }
+
+    /* CHECKBOX */
+    .apply-checkbox-group {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .apply-checkbox-group input { accent-color: #253D51; margin-top: 2px; flex-shrink: 0; }
+    .apply-checkbox-group label { font-size: .85rem; color: #5F7383; line-height: 1.5; }
+
+    /* BUTTONS */
+    .apply-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .apply-btn-primary {
+      background: #253D51;
+      color: #fff;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 8px;
+      font-size: .95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: .2s;
+      flex: 2;
+      justify-content: center;
+    }
+    .apply-btn-primary:hover { background: #1B2E3F; }
+    .apply-btn-secondary {
+      background: transparent;
+      color: #253D51;
+      border: 1.5px solid #C7CCD1;
+      padding: 14px 20px;
+      border-radius: 8px;
+      font-size: .95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .2s;
+      flex: 1;
+      justify-content: center;
+    }
+    .apply-btn-secondary:hover { border-color: #253D51; }
+
+    /* VERIFIED BADGE */
+    .verified-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: .78rem;
+      font-weight: 600;
+      color: #16a34a;
+      margin-bottom: 20px;
+    }
+
+    /* NOTIFICATION */
+    .notification {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      z-index: 99999;
+      padding: 14px 20px;
+      border-radius: 8px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: .9rem;
+      max-width: 380px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.2);
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="apply-nav">
+  <div class="apply-nav__logo">
+    <a href="{% url 'home' %}"><img src="{% static 'adminlte/images/logo_full.png' %}" alt="FONTESIN"/></a>
+  </div>
+  <a href="{% url 'register' %}" class="apply-nav__back">&larr; Back to Registration</a>
+</nav>
+
+<!-- PROGRESS -->
+<div class="apply-progress">
+  <div class="apply-progress__inner">
+    <div class="apply-step done" id="pstep-1">
+      <div class="apply-step__num"><span>1</span></div>
+      <div class="apply-step__label">Account</div>
+    </div>
+    <div class="apply-step active" id="pstep-2">
+      <div class="apply-step__num"><span>2</span></div>
+      <div class="apply-step__label">Verify ID</div>
+    </div>
+    <div class="apply-step" id="pstep-3">
+      <div class="apply-step__num"><span>3</span></div>
+      <div class="apply-step__label">Application</div>
+    </div>
+    <div class="apply-step" id="pstep-4">
+      <div class="apply-step__num"><span>4</span></div>
+      <div class="apply-step__label">Due Diligence</div>
+    </div>
+    <div class="apply-step" id="pstep-5">
+      <div class="apply-step__num"><span>5</span></div>
+      <div class="apply-step__label">Submit</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="apply-main">
+
+  <!-- PHASE 1: IDENTITY VERIFICATION -->
+  <div class="apply-phase active" id="phase-1">
+    <div class="apply-card">
+      <div class="role-badge" id="role-badge-1">{{ role_icon|default:"💼" }} <span id="role-label-display">{{ role_label|default:"Consultant" }}</span> Application</div>
+      <div class="apply-card__title">Identity Verification Required</div>
+      <div class="apply-card__subtitle">Before submitting your application, we need to verify your identity. This is required by our compliance policy and takes less than 2 minutes.</div>
+
+      <div class="veriff-box">
+        <div class="veriff-box__icon">🛡️</div>
+        <div class="veriff-box__title">Secure Identity Verification via Veriff</div>
+        <div class="veriff-box__desc">Your identity will be verified using AI-powered document scanning and biometric matching. We comply with GDPR and your data is never stored beyond the verification process.</div>
+
+        <div class="veriff-steps">
+          <div class="veriff-step">
+            <div class="veriff-step__num">1</div>
+            <div class="veriff-step__title">Prepare ID</div>
+            <div class="veriff-step__desc">Passport, national ID or driver's license</div>
+          </div>
+          <div class="veriff-step">
+            <div class="veriff-step__num">2</div>
+            <div class="veriff-step__title">Take a Selfie</div>
+            <div class="veriff-step__desc">Live photo for biometric matching</div>
+          </div>
+          <div class="veriff-step">
+            <div class="veriff-step__num">3</div>
+            <div class="veriff-step__title">Instant Result</div>
+            <div class="veriff-step__desc">AI-powered verification in seconds</div>
+          </div>
+        </div>
+
+        <button class="veriff-btn" onclick="openVeriffModal()">
+          🔍 Start Identity Verification
+        </button>
+        <div class="veriff-secure">🔒 Secured by Veriff &middot; Your data is encrypted and never stored</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHASE 2: APPLICATION FORM -->
+  <div class="apply-phase" id="phase-2">
+    <div class="apply-card">
+      <div class="verified-badge">&#10003; Identity Verified</div>
+      <div class="role-badge" id="role-badge-2">{{ role_icon|default:"💼" }} <span id="role-label-display-2">{{ role_label|default:"Consultant" }}</span> Application</div>
+      <div class="apply-card__title">Application Form</div>
+      <div class="apply-card__subtitle">Please fill in all required information. This helps us evaluate your application and match you with the right opportunities.</div>
+
+      <form id="apply-form">
+
+        <!-- PERSONAL INFORMATION -->
+        <div class="form-section">
+          <div class="form-section__title">👤 Personal Information</div>
+          <div class="apply-form-row">
+            <div class="apply-form-group">
+              <label class="apply-form-label">First Name *</label>
+              <input type="text" class="apply-form-control" placeholder="John" required/>
+            </div>
+            <div class="apply-form-group">
+              <label class="apply-form-label">Last Name *</label>
+              <input type="text" class="apply-form-control" placeholder="Smith" required/>
+            </div>
+          </div>
+          <div class="apply-form-row">
+            <div class="apply-form-group">
+              <label class="apply-form-label">Date of Birth *</label>
+              <input type="date" class="apply-form-control" required/>
+            </div>
+            <div class="apply-form-group">
+              <label class="apply-form-label">Nationality *</label>
+              <select class="apply-form-control" required>
+                <option value="">Select nationality...</option>
+                <option>American</option>
+                <option>German</option>
+                <option>Czech</option>
+                <option>British</option>
+                <option>French</option>
+                <option>Austrian</option>
+                <option>Swiss</option>
+                <option>Polish</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="apply-form-row">
+            <div class="apply-form-group">
+              <label class="apply-form-label">Phone Number *</label>
+              <input type="tel" class="apply-form-control" placeholder="+1 212 555 0100" required/>
+            </div>
+            <div class="apply-form-group">
+              <label class="apply-form-label">LinkedIn Profile</label>
+              <input type="url" class="apply-form-control" placeholder="https://linkedin.com/in/..."/>
+            </div>
+          </div>
+          <div class="apply-form-row full">
+            <div class="apply-form-group">
+              <label class="apply-form-label">Current Address *</label>
+              <input type="text" class="apply-form-control" placeholder="Street, City, Country" required/>
+            </div>
+          </div>
+        </div>
+
+        <!-- PROFESSIONAL BACKGROUND / CV -->
+        <div class="form-section">
+          <div class="form-section__title">💼 Professional Background</div>
+          <div class="apply-form-row full">
+            <div class="apply-form-group">
+              <label class="apply-form-label">Current / Most Recent Position *</label>
+              <input type="text" class="apply-form-control" placeholder="e.g. Managing Director at ABC Corp" required/>
+            </div>
+          </div>
+          <div class="apply-form-row">
+            <div class="apply-form-group">
+              <label class="apply-form-label">Years of Professional Experience *</label>
+              <select class="apply-form-control" required>
+                <option value="">Select...</option>
+                <option>1–3 years</option>
+                <option>3–5 years</option>
+                <option>5–10 years</option>
+                <option>10–15 years</option>
+                <option>15+ years</option>
+              </select>
+            </div>
+            <div class="apply-form-group">
+              <label class="apply-form-label">Primary Industry *</label>
+              <select class="apply-form-control" required>
+                <option value="">Select...</option>
+                <option>Finance &amp; Banking</option>
+                <option>Legal &amp; Compliance</option>
+                <option>Technology &amp; IT</option>
+                <option>Manufacturing</option>
+                <option>Trade &amp; Commerce</option>
+                <option>Consulting &amp; Advisory</option>
+                <option>Real Estate</option>
+                <option>Healthcare</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="apply-form-row full">
+            <div class="apply-form-group">
+              <label class="apply-form-label">Professional Summary *</label>
+              <textarea class="apply-form-control" placeholder="Briefly describe your professional background, key achievements, and relevant experience (min. 100 words)..." required style="min-height:120px;"></textarea>
+              <div class="apply-form-hint">Minimum 100 words. Focus on international business experience, network, and leadership roles.</div>
+            </div>
+          </div>
+          <div class="apply-form-group">
+            <label class="apply-form-label">Upload CV / Resume *</label>
+            <label class="file-upload" for="cv-upload">
+              <input type="file" id="cv-upload" accept=".pdf,.doc,.docx" onchange="handleFileUpload(this, 'cv-label')"/>
+              <div class="file-upload__icon">📄</div>
+              <div class="file-upload__text" id="cv-label">Click to upload your CV</div>
+              <div class="file-upload__hint">PDF, DOC, DOCX &middot; Max 10 MB</div>
+            </label>
+          </div>
+        </div>
+
+        <!-- COMPANY INFORMATION -->
+        <div class="form-section" id="company-section">
+          <div class="form-section__title">🏢 Company Information</div>
+          <div class="apply-form-row">
+            <div class="apply-form-group">
+              <label class="apply-form-label">Company Name *</label>
+              <input type="text" class="apply-form-control" placeholder="Your company name" required/>
+            </div>
+            <div class="apply-form-group">
+              <label class="apply-form-label">Company Registration Number</label>
+              <input type="text" class="apply-form-control" placeholder="e.g. 12345678"/>
+            </div>
+          </div>
+          <div class="apply-form-row">
+            <div class="apply-form-group">
+              <label class="apply-form-label">Country of Incorporation *</label>
+              <select class="apply-form-control" required>
+                <option value="">Select country...</option>
+                <option>United States</option>
+                <option>Germany</option>
+                <option>Czech Republic</option>
+                <option>United Kingdom</option>
+                <option>France</option>
+                <option>Austria</option>
+                <option>Switzerland</option>
+                <option>UAE</option>
+                <option>Japan</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="apply-form-group">
+              <label class="apply-form-label">Legal Form *</label>
+              <select class="apply-form-control" required>
+                <option value="">Select...</option>
+                <option>LLC / s.r.o.</option>
+                <option>Joint Stock Company / a.s.</option>
+                <option>Sole Trader / OSVČ</option>
+                <option>Partnership</option>
+                <option>GmbH</option>
+                <option>AG</option>
+                <option>Ltd.</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="apply-form-row">
+            <div class="apply-form-group">
+              <label class="apply-form-label">Year Founded</label>
+              <input type="number" class="apply-form-control" placeholder="e.g. 2015" min="1900" max="2026"/>
+            </div>
+            <div class="apply-form-group">
+              <label class="apply-form-label">Number of Employees</label>
+              <select class="apply-form-control">
+                <option value="">Select...</option>
+                <option>1 (Solo)</option>
+                <option>2–10</option>
+                <option>11–50</option>
+                <option>51–200</option>
+                <option>201–500</option>
+                <option>500+</option>
+              </select>
+            </div>
+          </div>
+          <div class="apply-form-row full">
+            <div class="apply-form-group">
+              <label class="apply-form-label">Company Website</label>
+              <input type="url" class="apply-form-control" placeholder="https://yourcompany.com"/>
+            </div>
+          </div>
+          <div class="apply-form-group">
+            <label class="apply-form-label">Upload Company Registration Certificate</label>
+            <label class="file-upload" for="reg-upload">
+              <input type="file" id="reg-upload" accept=".pdf,.jpg,.png" onchange="handleFileUpload(this, 'reg-label')"/>
+              <div class="file-upload__icon">📋</div>
+              <div class="file-upload__text" id="reg-label">Click to upload registration document</div>
+              <div class="file-upload__hint">PDF, JPG, PNG &middot; Max 10 MB</div>
+            </label>
+          </div>
+        </div>
+
+        <!-- ROLE-SPECIFIC: MOTIVATION & REGION -->
+        <div class="form-section">
+          <div class="form-section__title" id="motivation-title">💼 Consulting Focus &amp; Approach</div>
+          <div class="apply-form-row">
+            <div class="apply-form-group">
+              <label class="apply-form-label">Target Region / Country *</label>
+              <select class="apply-form-control" required>
+                <option value="">Select your target region...</option>
+                <optgroup label="Europe">
+                  <option>Czech Republic</option>
+                  <option>Germany</option>
+                  <option>Austria</option>
+                  <option>Switzerland</option>
+                  <option>Poland</option>
+                  <option>France</option>
+                  <option>United Kingdom</option>
+                  <option>Benelux (Belgium, Netherlands, Luxembourg)</option>
+                  <option>Scandinavia</option>
+                  <option>Other European country</option>
+                </optgroup>
+                <optgroup label="Middle East &amp; Africa">
+                  <option>UAE</option>
+                  <option>Saudi Arabia</option>
+                  <option>Other MENA country</option>
+                </optgroup>
+                <optgroup label="Asia Pacific">
+                  <option>Japan</option>
+                  <option>South Korea</option>
+                  <option>Australia</option>
+                  <option>Other APAC country</option>
+                </optgroup>
+                <optgroup label="Americas">
+                  <option>United States</option>
+                  <option>Canada</option>
+                  <option>Brazil</option>
+                  <option>Mexico</option>
+                  <option>Other Americas country</option>
+                </optgroup>
+              </select>
+            </div>
+            <div class="apply-form-group" id="franchise-type-group" style="display:none;">
+              <label class="apply-form-label">Franchise Type *</label>
+              <select class="apply-form-control">
+                <option value="">Select type...</option>
+                <option>Master Franchise (entire country)</option>
+                <option>National Franchise</option>
+                <option>Regional / Local Franchise</option>
+              </select>
+            </div>
+          </div>
+          <div class="apply-form-row full">
+            <div class="apply-form-group">
+              <label class="apply-form-label">Motivation Letter *</label>
+              <textarea class="apply-form-control" placeholder="Why do you want to join FONTESIN as a partner? What value can you bring to the platform and your region? Describe your vision and goals (min. 150 words)..." required style="min-height:140px;"></textarea>
+              <div class="apply-form-hint">Minimum 150 words. Be specific about your regional knowledge, network, and how you plan to grow FONTESIN in your target market.</div>
+            </div>
+          </div>
+          <div class="apply-form-row full">
+            <div class="apply-form-group">
+              <label class="apply-form-label">Relevant Network &amp; Connections</label>
+              <textarea class="apply-form-control" placeholder="Describe your professional network in the target region – chambers of commerce, business associations, government contacts, etc..." style="min-height:90px;"></textarea>
+            </div>
+          </div>
+          <div class="apply-form-row full">
+            <div class="apply-form-group">
+              <label class="apply-form-label">Expected Monthly Active Companies (Year 1)</label>
+              <select class="apply-form-control">
+                <option value="">Select estimate...</option>
+                <option>1–10 companies</option>
+                <option>11–50 companies</option>
+                <option>51–100 companies</option>
+                <option>100–500 companies</option>
+                <option>500+ companies</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- REFERENCES -->
+        <div class="form-section">
+          <div class="form-section__title">📎 References &amp; Supporting Documents</div>
+          <div class="apply-form-row">
+            <div class="apply-form-group">
+              <label class="apply-form-label">Reference 1 – Name &amp; Contact</label>
+              <input type="text" class="apply-form-control" placeholder="Name, Company, Email/Phone"/>
+            </div>
+            <div class="apply-form-group">
+              <label class="apply-form-label">Reference 2 – Name &amp; Contact</label>
+              <input type="text" class="apply-form-control" placeholder="Name, Company, Email/Phone"/>
+            </div>
+          </div>
+          <div class="apply-form-group">
+            <label class="apply-form-label">Additional Supporting Documents</label>
+            <label class="file-upload" for="docs-upload">
+              <input type="file" id="docs-upload" accept=".pdf,.doc,.docx,.jpg,.png" multiple onchange="handleFileUpload(this, 'docs-label')"/>
+              <div class="file-upload__icon">📁</div>
+              <div class="file-upload__text" id="docs-label">Click to upload additional documents</div>
+              <div class="file-upload__hint">Portfolio, certificates, business plan, etc. &middot; PDF, DOC, JPG, PNG &middot; Max 20 MB total</div>
+            </label>
+          </div>
+        </div>
+
+        <div class="apply-actions">
+          <button type="button" class="apply-btn-secondary" onclick="goToPhase(1)">&larr; Back</button>
+          <button type="button" class="apply-btn-primary" onclick="goToPhase(3)">Continue to Due Diligence &rarr;</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- PHASE 3: DUE DILIGENCE -->
+  <div class="apply-phase" id="phase-3">
+    <div class="apply-card">
+      <div class="verified-badge">&#10003; Identity Verified</div>
+      <div class="apply-card__title">Due Diligence Questionnaire</div>
+      <div class="apply-card__subtitle">Please answer all questions honestly. This information is required for compliance and regulatory purposes. All responses are treated with strict confidentiality.</div>
+
+      <div class="form-section">
+        <div class="form-section__title">⚖️ Legal &amp; Compliance</div>
+
+        <div class="dd-question">
+          <div class="dd-question__label"><span>Q1</span> Have you ever been convicted of a criminal offence, including financial crimes, fraud, or money laundering?</div>
+          <div class="dd-radio-group">
+            <label class="dd-radio"><input type="radio" name="dd1" value="no" required/> No</label>
+            <label class="dd-radio"><input type="radio" name="dd1" value="yes"/> Yes (please explain below)</label>
+          </div>
+          <textarea class="apply-form-control" id="dd1-explain" placeholder="If yes, please provide details..." style="margin-top:10px;min-height:70px;display:none;"></textarea>
+        </div>
+
+        <div class="dd-question">
+          <div class="dd-question__label"><span>Q2</span> Are you or have you ever been subject to any regulatory sanctions, bans, or investigations by a financial or governmental authority?</div>
+          <div class="dd-radio-group">
+            <label class="dd-radio"><input type="radio" name="dd2" value="no" required/> No</label>
+            <label class="dd-radio"><input type="radio" name="dd2" value="yes"/> Yes (please explain below)</label>
+          </div>
+          <textarea class="apply-form-control" id="dd2-explain" placeholder="If yes, please provide details..." style="margin-top:10px;min-height:70px;display:none;"></textarea>
+        </div>
+
+        <div class="dd-question">
+          <div class="dd-question__label"><span>Q3</span> Are you a Politically Exposed Person (PEP) or a close associate of a PEP?</div>
+          <div class="dd-radio-group">
+            <label class="dd-radio"><input type="radio" name="dd3" value="no" required/> No</label>
+            <label class="dd-radio"><input type="radio" name="dd3" value="yes"/> Yes</label>
+          </div>
+        </div>
+
+        <div class="dd-question">
+          <div class="dd-question__label"><span>Q4</span> Has any company you have been a director or significant shareholder of ever been subject to insolvency, liquidation, or bankruptcy proceedings?</div>
+          <div class="dd-radio-group">
+            <label class="dd-radio"><input type="radio" name="dd4" value="no" required/> No</label>
+            <label class="dd-radio"><input type="radio" name="dd4" value="yes"/> Yes (please explain below)</label>
+          </div>
+          <textarea class="apply-form-control" id="dd4-explain" placeholder="If yes, please provide details..." style="margin-top:10px;min-height:70px;display:none;"></textarea>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section__title">💰 Financial Standing</div>
+
+        <div class="dd-question">
+          <div class="dd-question__label"><span>Q5</span> Can you confirm that you have sufficient financial resources to support your operations as a FONTESIN partner for at least 12 months?</div>
+          <div class="dd-radio-group">
+            <label class="dd-radio"><input type="radio" name="dd5" value="yes" required/> Yes</label>
+            <label class="dd-radio"><input type="radio" name="dd5" value="no"/> No</label>
+            <label class="dd-radio"><input type="radio" name="dd5" value="partial"/> Partially</label>
+          </div>
+        </div>
+
+        <div class="dd-question">
+          <div class="dd-question__label"><span>Q6</span> Are you aware of any current or pending legal disputes, claims, or litigation that could materially affect your ability to fulfil your obligations as a FONTESIN partner?</div>
+          <div class="dd-radio-group">
+            <label class="dd-radio"><input type="radio" name="dd6" value="no" required/> No</label>
+            <label class="dd-radio"><input type="radio" name="dd6" value="yes"/> Yes (please explain below)</label>
+          </div>
+          <textarea class="apply-form-control" id="dd6-explain" placeholder="If yes, please provide details..." style="margin-top:10px;min-height:70px;display:none;"></textarea>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section__title">🤝 Conflicts of Interest</div>
+
+        <div class="dd-question">
+          <div class="dd-question__label"><span>Q7</span> Do you currently work for, own, or have a significant interest in any company that could be considered a direct competitor of FONTESIN?</div>
+          <div class="dd-radio-group">
+            <label class="dd-radio"><input type="radio" name="dd7" value="no" required/> No</label>
+            <label class="dd-radio"><input type="radio" name="dd7" value="yes"/> Yes (please explain below)</label>
+          </div>
+          <textarea class="apply-form-control" id="dd7-explain" placeholder="If yes, please provide details..." style="margin-top:10px;min-height:70px;display:none;"></textarea>
+        </div>
+
+        <div class="dd-question">
+          <div class="dd-question__label"><span>Q8</span> Do you have any existing contractual obligations (non-compete, exclusivity, etc.) that could restrict your activities as a FONTESIN partner?</div>
+          <div class="dd-radio-group">
+            <label class="dd-radio"><input type="radio" name="dd8" value="no" required/> No</label>
+            <label class="dd-radio"><input type="radio" name="dd8" value="yes"/> Yes (please explain below)</label>
+          </div>
+          <textarea class="apply-form-control" id="dd8-explain" placeholder="If yes, please provide details..." style="margin-top:10px;min-height:70px;display:none;"></textarea>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section__title">📋 Declaration</div>
+        <div class="apply-checkbox-group">
+          <input type="checkbox" id="dd-truthful" required/>
+          <label for="dd-truthful">I declare that all information provided in this application and due diligence questionnaire is true, accurate, and complete to the best of my knowledge.</label>
+        </div>
+        <div class="apply-checkbox-group">
+          <input type="checkbox" id="dd-update" required/>
+          <label for="dd-update">I agree to promptly notify FONTESIN of any material changes to the information provided in this application.</label>
+        </div>
+        <div class="apply-checkbox-group">
+          <input type="checkbox" id="dd-terms" required/>
+          <label for="dd-terms">I have read and agree to the <a href="#" style="color:#253D51;font-weight:600;">FONTESIN Partner Terms &amp; Conditions</a> and <a href="#" style="color:#253D51;font-weight:600;">Privacy Policy</a>.</label>
+        </div>
+        <div class="apply-checkbox-group">
+          <input type="checkbox" id="dd-aml" required/>
+          <label for="dd-aml">I consent to FONTESIN conducting background checks, AML screening, and other due diligence procedures as required by applicable law and our compliance framework.</label>
+        </div>
+      </div>
+
+      <div class="apply-actions">
+        <button type="button" class="apply-btn-secondary" onclick="goToPhase(2)">&larr; Back</button>
+        <button type="button" class="apply-btn-primary" onclick="submitApplication()">Submit Application &rarr;</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /apply-main -->
+
+<!-- VERIFF MODAL -->
+<div class="veriff-modal-overlay" id="veriff-modal">
+  <div class="veriff-modal">
+    <div class="veriff-modal__logo">🛡️</div>
+    <div class="veriff-modal__title" id="vm-title">Verifying Your Identity</div>
+    <div class="veriff-modal__subtitle" id="vm-subtitle">Please wait while we process your documents. This usually takes less than 60 seconds.</div>
+
+    <!-- Progress Steps -->
+    <div class="veriff-progress-steps" id="vm-steps">
+      <div class="veriff-pstep active" id="vps-1">
+        <div class="veriff-pstep__icon">📄</div>
+        <div>
+          <div class="veriff-pstep__text">Document Scan &amp; OCR</div>
+          <div class="veriff-pstep__sub">Reading document data...</div>
+        </div>
+        <div class="veriff-spinner" id="vps-1-spin"></div>
+      </div>
+      <div class="veriff-pstep" id="vps-2">
+        <div class="veriff-pstep__icon">🤳</div>
+        <div>
+          <div class="veriff-pstep__text">Biometric Matching</div>
+          <div class="veriff-pstep__sub">Comparing selfie to document...</div>
+        </div>
+      </div>
+      <div class="veriff-pstep" id="vps-3">
+        <div class="veriff-pstep__icon">🔍</div>
+        <div>
+          <div class="veriff-pstep__text">AML &amp; Sanctions Screening</div>
+          <div class="veriff-pstep__sub">Checking global databases...</div>
+        </div>
+      </div>
+      <div class="veriff-pstep" id="vps-4">
+        <div class="veriff-pstep__icon">✅</div>
+        <div>
+          <div class="veriff-pstep__text">Verification Complete</div>
+          <div class="veriff-pstep__sub">Identity confirmed</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="veriff-modal__confirm-btn" id="vm-confirm-btn" onclick="confirmVerification()">
+      &#10003; Confirm Identification &amp; Continue
+    </button>
+
+    <!-- Success State -->
+    <div class="veriff-success" id="vm-success">
+      <div class="veriff-success__icon">&#10003;</div>
+      <div class="veriff-success__title">Identity Successfully Verified!</div>
+      <div class="veriff-success__desc">Your identity has been confirmed. You can now proceed to fill in your application form.</div>
+      <button class="veriff-modal__confirm-btn visible" onclick="proceedToForm()">
+        Continue to Application Form &rarr;
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Read role from URL params
+var params = new URLSearchParams(window.location.search);
+var roleValue = params.get('role') || '{{ role_value|default:"consultant" }}';
+var roleLabel = params.get('label') || '{{ role_label|default:"Consultant" }}';
+
+// Role icons
+var roleIcons = {
+  franchise: '🚀',
+  consultant: '💼',
+  coordinator: '🌍'
+};
+var icon = roleIcons[roleValue] || '💼';
+
+// Update role labels
+document.querySelectorAll('#role-label-display, #role-label-display-2').forEach(function(el) {
+  el.textContent = roleLabel;
+});
+document.querySelectorAll('#role-badge-1, #role-badge-2').forEach(function(el) {
+  el.innerHTML = icon + ' <span>' + roleLabel + '</span> Application';
+});
+
+// Adjust form based on role
+if (roleValue === 'consultant') {
+  var ftg = document.getElementById('franchise-type-group');
+  if (ftg) ftg.style.display = 'none';
+  document.getElementById('motivation-title').innerHTML = '💼 Consulting Focus &amp; Approach';
+}
+if (roleValue === 'coordinator') {
+  var ftg = document.getElementById('franchise-type-group');
+  if (ftg) ftg.style.display = 'none';
+  document.getElementById('motivation-title').innerHTML = '🌍 Regional Coordination Details';
+}
+if (roleValue === 'franchise') {
+  var ftg = document.getElementById('franchise-type-group');
+  if (ftg) ftg.style.display = '';
+  document.getElementById('motivation-title').innerHTML = '🚀 Application Details';
+}
+
+// Phase navigation
+function goToPhase(num) {
+  document.querySelectorAll('.apply-phase').forEach(function(p, i) {
+    p.classList.toggle('active', i + 1 === num);
+  });
+  // Update progress steps
+  for (var i = 1; i <= 5; i++) {
+    var s = document.getElementById('pstep-' + i);
+    if (!s) continue;
+    s.classList.remove('active', 'done');
+    var pstepNum = num + 1;
+    if (i < pstepNum) s.classList.add('done');
+    if (i === pstepNum) s.classList.add('active');
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Veriff Modal
+function openVeriffModal() {
+  document.getElementById('veriff-modal').classList.add('open');
+  runVeriffAnimation();
+}
+
+function runVeriffAnimation() {
+  var steps = [
+    { id: 'vps-1', delay: 0, duration: 2000 },
+    { id: 'vps-2', delay: 2200, duration: 1800 },
+    { id: 'vps-3', delay: 4200, duration: 2000 },
+    { id: 'vps-4', delay: 6400, duration: 500 }
+  ];
+
+  steps.forEach(function(step, idx) {
+    setTimeout(function() {
+      if (idx > 0) {
+        var prev = document.getElementById(steps[idx-1].id);
+        prev.classList.remove('active');
+        prev.classList.add('done');
+        var prevSpin = document.getElementById(steps[idx-1].id + '-spin');
+        if (prevSpin) prevSpin.remove();
+        prev.querySelector('.veriff-pstep__icon').textContent = '✓';
+      }
+      var curr = document.getElementById(step.id);
+      curr.classList.add('active');
+      if (idx < 3) {
+        var spinner = document.createElement('div');
+        spinner.className = 'veriff-spinner';
+        spinner.id = step.id + '-spin';
+        curr.appendChild(spinner);
+      }
+    }, step.delay);
+  });
+
+  setTimeout(function() {
+    var last = document.getElementById('vps-4');
+    last.classList.add('done');
+    last.querySelector('.veriff-pstep__icon').textContent = '✓';
+    document.getElementById('vm-title').textContent = 'Verification Complete';
+    document.getElementById('vm-subtitle').textContent = 'All checks passed. Please confirm to proceed.';
+    document.getElementById('vm-confirm-btn').classList.add('visible');
+  }, 7200);
+}
+
+function confirmVerification() {
+  document.getElementById('vm-confirm-btn').style.display = 'none';
+  document.getElementById('vm-steps').style.display = 'none';
+  document.getElementById('vm-title').style.display = 'none';
+  document.getElementById('vm-subtitle').style.display = 'none';
+  document.getElementById('vm-success').classList.add('visible');
+}
+
+function proceedToForm() {
+  document.getElementById('veriff-modal').classList.remove('open');
+  goToPhase(2);
+}
+
+// File upload handler
+function handleFileUpload(input, labelId) {
+  var label = document.getElementById(labelId);
+  if (input.files && input.files.length > 0) {
+    var names = Array.from(input.files).map(function(f) { return f.name; }).join(', ');
+    label.textContent = '✓ ' + names;
+    label.style.color = '#16a34a';
+  }
+}
+
+// DD radio toggles for explain fields
+['dd1','dd2','dd4','dd6','dd7','dd8'].forEach(function(name) {
+  document.querySelectorAll('input[name="' + name + '"]').forEach(function(radio) {
+    radio.addEventListener('change', function() {
+      var explain = document.getElementById(name + '-explain');
+      if (explain) {
+        explain.style.display = this.value === 'yes' ? 'block' : 'none';
+      }
+    });
+  });
+});
+
+// Submit application
+function submitApplication() {
+  var checks = ['dd-truthful', 'dd-update', 'dd-terms', 'dd-aml'];
+  for (var i = 0; i < checks.length; i++) {
+    if (!document.getElementById(checks[i]).checked) {
+      showNotification('Please accept all declarations to proceed.', 'error');
+      return;
+    }
+  }
+  showNotification('Application submitted successfully! Redirecting...', 'success');
+  setTimeout(function() {
+    window.location.href = '{% url "apply-review" %}';
+  }, 2000);
+}
+
+function showNotification(message, type) {
+  var existing = document.querySelector('.notification');
+  if (existing) existing.remove();
+  var n = document.createElement('div');
+  n.className = 'notification';
+  n.innerHTML = '<span>' + message + '</span>';
+  n.style.background = type === 'success' ? '#16a34a' : type === 'error' ? '#dc2626' : '#253D51';
+  document.body.appendChild(n);
+  setTimeout(function() { if (n.parentElement) n.remove(); }, 5000);
+}
+</script>
+
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function() {
+      navigator.serviceWorker.register("/sw.js")
+        .then(function(reg) { console.log("[PWA] SW registered:", reg.scope); })
+        .catch(function(err) { console.warn("[PWA] SW registration failed:", err); });
+    });
+  }
+</script>
+</body>
+</html>

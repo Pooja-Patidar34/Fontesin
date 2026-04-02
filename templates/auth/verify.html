@@ -514,9 +514,15 @@
           </div>
         </div>
         <div class="veriff-modal__actions" style="margin-top:24px;">
+          {% if show_apply_link %}
+          <a href="{% url 'apply' %}" class="btn-modal-primary" style="text-align:center;text-decoration:none;">
+            Continue to Application Form →
+          </a>
+          {% else %}
           <a href="{% url 'membership' %}" class="btn-modal-primary" style="text-align:center;text-decoration:none;">
             Continue to Choose Plan →
           </a>
+          {% endif %}
         </div>
       </div>
 

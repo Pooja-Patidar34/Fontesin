@@ -154,6 +154,10 @@ def register_view(request):
 
         login(request, user, backend="django.contrib.auth.backends.ModelBackend")
 
+        # Consultant/Coordinator/Franchise go to apply page (has its own verification + application form)
+        if role_name in ('consultant', 'coordinator', 'franchise'):
+            return redirect("/apply/")
+
         return redirect("/verify/")
 
     return render(request, "auth/register.html", {"companies": companies})
@@ -165,11 +169,66 @@ from django.shortcuts import render
 
 @login_required
 def identity_verification_view(request):
+    show_apply_link = False
+    user = request.user
+    if user.role and user.role.code:
+        role_code = user.role.code.lower()
+        if role_code in ('consultant', 'coordinator', 'franchise'):
+            show_apply_link = True
 
     return render(
         request,
         "auth/verify.html",
         {
-            "VERIFF_PUBLIC_KEY": settings.VERIFF_API_KEY
+            "VERIFF_PUBLIC_KEY": settings.VERIFF_API_KEY,
+            "show_apply_link": show_apply_link,
         }
     )
+
+
+@login_required
+def apply_view(request):
+    user = request.user
+    role_value = ''
+    role_label = ''
+    role_icon = ''
+
+    if user.role:
+        role_code = user.role.code.lower() if user.role.code else ''
+        if 'consultant' in role_code:
+            role_value = 'consultant'
+            role_label = 'Consultant'
+            role_icon = '\U0001F4BC'
+        elif 'coordinator' in role_code:
+            role_value = 'coordinator'
+            role_label = 'Coordinator'
+            role_icon = '\U0001F30D'
+        elif 'franchise' in role_code:
+            role_value = 'franchise'
+            role_label = 'Franchise Partner'
+            role_icon = '\U0001F680'
+
+    return render(request, "auth/apply.html", {
+        "role_value": role_value,
+        "role_label": role_label,
+        "role_icon": role_icon,
+    })
+
+
+@login_required
+def apply_review_view(request):
+    user = request.user
+    role_label = 'Consultant'
+
+    if user.role and user.role.code:
+        role_code = user.role.code.lower()
+        if 'consultant' in role_code:
+            role_label = 'Consultant'
+        elif 'coordinator' in role_code:
+            role_label = 'Coordinator'
+        elif 'franchise' in role_code:
+            role_label = 'Franchise Partner'
+
+    return render(request, "auth/apply_review.html", {
+        "role_label": role_label,
+    })

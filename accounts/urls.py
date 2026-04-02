@@ -1,5 +1,5 @@
 from django.urls import path
-from .view.auth import admin_login, admin_logout,register_view,identity_verification_view
+from .view.auth import admin_login, admin_logout,register_view,identity_verification_view,apply_view,apply_review_view
 from .view.dashboard import dashboard
 from accounts.view.company import company_list, toggle_company,company_detail_ajax,company_delete
 from .view.user import user_list, toggle_user, assign_roles,role_list,role_detail_ajax,permission_list,save_role,user_detail_ajax,user_edit,add_user
@@ -62,5 +62,7 @@ urlpatterns = [
     #veriff
     path("veriff/session/", CreateVeriffSessionAPIView.as_view(),name="veriff-session",),
     path("verify/", identity_verification_view, name="identity-verification"),
+    path("apply/", apply_view, name="apply"),
+    path("apply-review/", apply_review_view, name="apply-review"),
 ]
 
