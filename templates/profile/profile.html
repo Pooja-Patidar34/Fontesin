@@ -41,6 +41,45 @@
         </table>
       </div>
     </div>
+
+    <!-- Subscription Plan Card -->
+    {% if user_plan %}
+    <div class="card" style="border-radius:14px; border:1px solid #e8eef3; box-shadow:0 2px 12px rgba(0,0,0,.06);">
+      <div class="card-body" style="padding:20px;">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
+          <div style="width:40px; height:40px; background:linear-gradient(135deg,#253D51,#2f5270); border-radius:10px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:1rem;">
+            <i class="fas fa-crown"></i>
+          </div>
+          <div>
+            <div style="font-weight:700; color:#1B2E3F; font-size:.92rem;">{{ user_plan.icon }} {{ user_plan.name }} Plan</div>
+            {% if subscription %}
+            <div style="font-size:.75rem; color:#64748b;">
+              Active since {{ subscription.start_date|date:"M d, Y" }}
+              &middot; Expires {{ subscription.end_date|date:"M d, Y" }}
+              &middot; Status: <span style="color:#15803d; font-weight:600;">{{ subscription.get_status_display }}</span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% if subscription %}
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <span style="background:#dcfce7; color:#15803d; font-weight:600; font-size:.72rem; padding:4px 12px; border-radius:100px;">{{ user_plan.name }}</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% else %}
+    <div class="card" style="border-radius:14px; border:1px solid #e8eef3; box-shadow:0 2px 12px rgba(0,0,0,.06);">
+      <div class="card-body text-center" style="padding:24px;">
+        <div style="color:#94a3b8; font-size:1.5rem; margin-bottom:8px;"><i class="fas fa-crown"></i></div>
+        <div style="font-weight:600; color:#1B2E3F; font-size:.88rem; margin-bottom:4px;">No Active Plan</div>
+        <div style="font-size:.78rem; color:#64748b; margin-bottom:12px;">Upgrade to unlock premium features</div>
+        <a href="{% url 'membership' %}" class="btn btn-sm" style="background:#253D51; color:#fff; border-radius:8px; font-size:.78rem; font-weight:600; padding:6px 20px;">
+          View Plans
+        </a>
+      </div>
+    </div>
+    {% endif %}
   </div>
 
   <!-- Company Section -->

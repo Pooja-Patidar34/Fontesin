@@ -7,75 +7,342 @@
 
   <link rel="stylesheet" href="{% static 'adminlte/plugins/fontawesome-free/css/all.min.css' %}">
   <link rel="stylesheet" href="{% static 'adminlte/css/adminlte.min.css' %}">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
+    * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+
+    /* ── Sidebar ── */
     .main-sidebar {
-    background-color: #253D51 !important;
+      background: linear-gradient(180deg, #1B2E3F 0%, #253D51 100%) !important;
+      border-right: none;
+    }
+    .main-sidebar .brand-link {
+      background: transparent !important;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-logo-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #4da3ff, #2b7de9);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 800;
+      font-size: .85rem;
+    }
+    .brand-text-custom {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: .04em;
+      text-transform: uppercase;
     }
 
-    .main-sidebar .nav-link.active {
-        background-color: #1b2e40 !important;
+    /* Role badge */
+    .sidebar-role-badge {
+      margin: 16px 16px 8px;
+      background: rgba(77,163,255,.15);
+      border: 1px solid rgba(77,163,255,.25);
+      border-radius: 10px;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #7dc4ff;
+      font-size: .78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    .sidebar-role-badge__dot {
+      width: 8px;
+      height: 8px;
+      background: #4da3ff;
+      border-radius: 50%;
+      flex-shrink: 0;
     }
 
-    .main-sidebar .nav-link:hover {
-        background-color: #2f4f68 !important;
+    /* Section headers */
+    .sidebar .nav-header {
+      color: rgba(255,255,255,.35) !important;
+      font-size: .65rem !important;
+      font-weight: 700 !important;
+      letter-spacing: .12em !important;
+      text-transform: uppercase !important;
+      padding: 20px 20px 8px !important;
     }
 
-    .brand-link {
-        background-color: #253D51 !important;
+    /* Nav links */
+    .sidebar .nav-sidebar .nav-link {
+      color: rgba(255,255,255,.6) !important;
+      border-radius: 10px !important;
+      margin: 2px 12px !important;
+      padding: 10px 14px !important;
+      font-size: .82rem;
+      font-weight: 500;
+      transition: all .15s ease;
+    }
+    .sidebar .nav-sidebar .nav-link:hover {
+      background: rgba(255,255,255,.08) !important;
+      color: #fff !important;
+    }
+    .sidebar .nav-sidebar .nav-link.active {
+      background: rgba(77,163,255,.15) !important;
+      color: #fff !important;
+      font-weight: 600;
+    }
+    .sidebar .nav-sidebar .nav-link.active .nav-icon {
+      color: #4da3ff !important;
+    }
+    .sidebar .nav-sidebar .nav-icon {
+      font-size: .92rem;
+      width: 24px;
+      text-align: center;
+      margin-right: 10px;
+      color: rgba(255,255,255,.4);
+    }
+
+    /* Treeview */
+    .nav-treeview {
+      padding-left: 8px !important;
+    }
+    .nav-treeview .nav-link {
+      font-size: .78rem !important;
+      padding: 8px 14px 8px 24px !important;
+    }
+    .nav-treeview .nav-link.active {
+      background: rgba(77,163,255,.1) !important;
+    }
+    .nav-treeview .nav-link.active::before {
+      content: "";
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 16px;
+      background: #4da3ff;
+      border-radius: 2px;
+    }
+
+    /* Company count badge */
+    .sidebar-count-badge {
+      background: #e11d48;
+      color: #fff;
+      font-size: .65rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 100px;
+      margin-left: auto;
+    }
+
+    /* Profile section */
+    .sidebar-profile {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      border-top: 1px solid rgba(255,255,255,.08);
+      padding: 14px 16px;
+      background: rgba(0,0,0,.15);
+    }
+    .sidebar-profile a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #fff;
+    }
+    .sidebar-profile__avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4da3ff, #2b7de9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: .78rem;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .sidebar-profile__name {
+      font-size: .82rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sidebar-profile__email {
+      font-size: .68rem;
+      color: rgba(255,255,255,.45);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sidebar-profile__gear {
+      color: rgba(255,255,255,.3);
+      font-size: .82rem;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+    .sidebar-profile__gear:hover {
+      color: rgba(255,255,255,.6);
+    }
+
+    /* ── Header ── */
+    .main-header.navbar {
+      background: #fff;
+      border-bottom: 1px solid #e8eef3;
+      box-shadow: 0 1px 4px rgba(0,0,0,.04);
+      padding: 0 20px;
+      min-height: 56px;
+    }
+    .header-breadcrumb {
+      font-size: .95rem;
+      font-weight: 700;
+      color: #1B2E3F;
+    }
+    .header-breadcrumb span {
+      font-weight: 400;
+      color: #94a3b8;
+    }
+    .header-search {
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 8px 16px 8px 40px;
+      font-size: .82rem;
+      color: #64748b;
+      width: 260px;
+      outline: none;
+      transition: .2s;
+    }
+    .header-search:focus {
+      border-color: #4da3ff;
+      background: #fff;
+    }
+    .header-search-wrap {
+      position: relative;
+    }
+    .header-search-wrap i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+      font-size: .82rem;
+    }
+    .header-icon-btn {
+      position: relative;
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: #f1f5f9;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      font-size: .92rem;
+      cursor: pointer;
+      transition: .15s;
+    }
+    .header-icon-btn:hover {
+      background: #e2e8f0;
+      color: #1B2E3F;
+    }
+    .header-icon-btn__badge {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 18px;
+      height: 18px;
+      background: #e11d48;
+      color: #fff;
+      font-size: .6rem;
+      font-weight: 700;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #fff;
+    }
+    .header-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #1B2E3F;
+      font-weight: 600;
+      font-size: .82rem;
+      padding: 6px 14px 6px 10px;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      background: #fff;
+      cursor: pointer;
+      transition: .15s;
+    }
+    .header-user:hover {
+      background: #f8fafc;
+    }
+    .header-user__dot {
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+    }
+    .header-user__avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4da3ff, #7c3aed);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: .68rem;
+      font-weight: 700;
+    }
+
+    /* ── Content ── */
+    .content-wrapper {
+      background: #f0f4f8 !important;
     }
     .content-wrapper .table td,
     .content-wrapper .table th {
       padding: 0.6rem 0.85rem;
       vertical-align: middle;
     }
-
     .content-wrapper .badge {
       padding: 4px 12px;
       font-size: 12px;
     }
-
     .content-wrapper .btn-sm {
       padding: 4px 14px;
       font-size: 13px;
     }
+    .card-body {
+      overflow: visible !important;
+    }
+    .table-responsive {
+      overflow: visible !important;
+    }
+    .dropdown-menu {
+      z-index: 2000;
+    }
 
+    /* Access control treeview active parent */
     .nav-item.has-treeview.access-control.menu-open > .nav-link.active {
-      background-color: #007bff !important;
+      background: rgba(77,163,255,.15) !important;
       color: #fff !important;
       font-weight: 600;
-    }
-
-    .nav-treeview .nav-link.active {
-      background-color: rgba(0, 123, 255, 0.18) !important;
-      color: #fff !important;
-      position: relative;
-    }
-
-    .nav-treeview .nav-link.active::before {
-      content: "";
-      position: absolute;
-      left: 0;
-      top: 0;
-      height: 100%;
-      width: 4px;
-      background-color: #4da3ff;
-    }
-
-    .nav-treeview {
-      padding-left: 12px;
-    }
-
-    .card-body {
-    overflow: visible !important;
-    }
-
-    .table-responsive {
-        overflow: visible !important;
-    }
-
-    .dropdown-menu {
-        z-index: 2000;
     }
   </style>
 </head>
@@ -85,38 +352,115 @@
 
   <!-- HEADER -->
   <nav class="main-header navbar navbar-expand navbar-white navbar-light">
-    <ul class="navbar-nav ml-auto">
+    <!-- Left: breadcrumb -->
+    <ul class="navbar-nav" style="align-items:center;">
       <li class="nav-item">
-        <span class="nav-link">{{ request.user.email }}</span>
+        <a class="nav-link" data-widget="pushmenu" href="#" role="button" style="color:#94a3b8;"><i class="fas fa-bars"></i></a>
+      </li>
+      <li class="nav-item d-none d-md-block">
+        <div class="header-breadcrumb">
+          {% block breadcrumb %}Dashboard <span>/ Overview</span>{% endblock %}
+        </div>
+      </li>
+    </ul>
+
+    <!-- Right: search + icons + user -->
+    <ul class="navbar-nav ml-auto" style="gap: 12px; align-items: center;">
+      <li class="nav-item d-none d-md-block">
+        <div class="header-search-wrap">
+          <i class="fas fa-search"></i>
+          <input type="text" class="header-search" placeholder="Search companies, users...">
+        </div>
       </li>
       <li class="nav-item">
-        <a href="{% url 'logout' %}" class="nav-link">Logout</a>
+        <div class="header-icon-btn">
+          <i class="fas fa-bell"></i>
+          <div class="header-icon-btn__badge">4</div>
+        </div>
+      </li>
+      <li class="nav-item">
+        <div class="header-icon-btn">
+          <i class="fas fa-comment-dots"></i>
+        </div>
+      </li>
+      <li class="nav-item dropdown">
+        <a href="#" class="header-user" style="text-decoration:none;" data-toggle="dropdown">
+          <div class="header-user__dot"></div>
+          <div class="header-user__avatar">
+            {{ request.user.first_name|truncatechars:1 }}{{ request.user.last_name|truncatechars:1 }}
+          </div>
+          <span>
+            {% if request.user.is_superuser %}Platform Admin{% elif request.user.role %}{{ request.user.role.name|title }}{% else %}{{ request.user.first_name }}{% endif %}
+          </span>
+          <i class="fas fa-chevron-down" style="font-size:.6rem; color:#94a3b8;"></i>
+        </a>
+        <div class="dropdown-menu dropdown-menu-right" style="border-radius:10px; border:1px solid #e2e8f0; box-shadow:0 8px 24px rgba(0,0,0,.1); padding:8px;">
+          <a class="dropdown-item" href="{% url 'profile' %}" style="border-radius:6px; font-size:.82rem; padding:8px 14px;">
+            <i class="fas fa-user mr-2" style="color:#94a3b8;"></i> Profile
+          </a>
+          <div class="dropdown-divider" style="margin:4px 0;"></div>
+          <a class="dropdown-item" href="{% url 'logout' %}" style="border-radius:6px; font-size:.82rem; padding:8px 14px; color:#e11d48;">
+            <i class="fas fa-sign-out-alt mr-2"></i> Logout
+          </a>
+        </div>
       </li>
     </ul>
   </nav>
 
   <!-- SIDEBAR -->
-  <aside class="main-sidebar sidebar-dark-primary elevation-4">
-    <a href="{% url 'dashboard' %}" class="brand-link">
-      <span class="brand-text font-weight-light">Fontesin</span>
+  <aside class="main-sidebar elevation-0">
+    <a href="{% url 'dashboard' %}" class="brand-link" style="text-decoration:none;">
+      <div class="brand-logo-icon">F</div>
+      <span class="brand-text-custom">Fontesin</span>
     </a>
 
-    <div class="sidebar" style="padding-bottom:70px; position:relative; height:calc(100% - 57px);">
-      <nav class="mt-2">
+    <div class="sidebar" style="padding-bottom: 70px; position: relative; height: calc(100% - 57px);">
+
+      <!-- Role Badge -->
+      <div class="sidebar-role-badge">
+        <div class="sidebar-role-badge__dot"></div>
+        {% if request.user.is_superuser %}
+          Platform Admin
+        {% elif request.user.role %}
+          {{ request.user.role.name|title }}
+        {% else %}
+          User
+        {% endif %}
+      </div>
+
+      <nav class="mt-1">
         <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview">
 
-          <!-- Dashboard -->
+          <!-- OVERVIEW -->
+          <li class="nav-header">Overview</li>
+
           <li class="nav-item">
             <a href="{% url 'dashboard' %}"
                class="nav-link {% if active_menu == 'dashboard' %}active{% endif %}">
-              <i class="nav-icon fas fa-chart-pie"></i>
+              <i class="nav-icon fas fa-th-large"></i>
               <p>Dashboard</p>
             </a>
           </li>
 
-          <!-- TENANTS (SUPERUSER ONLY) -->
-          {% if request.user.is_superuser %}
-          <li class="nav-header">SYSTEM</li>
+          <!-- Company Database with count badge -->
+          <li class="nav-item">
+            <a href="{% url 'companies' %}"
+               class="nav-link {% if active_menu == 'companies' %}active{% endif %}"
+               style="display: flex; align-items: center;">
+              <i class="nav-icon fas fa-database"></i>
+              <p style="flex:1;">Company Database</p>
+              {% if sidebar_company_count %}
+              <span class="sidebar-count-badge">{{ sidebar_company_count }}</span>
+              {% endif %}
+            </a>
+          </li>
+
+          <!-- ADMINISTRATION (SUPERUSER + TENANT ADMIN + BUSINESS USER) -->
+          {% if request.user.is_superuser or request.user.role.name == "tenant_admin" or request.user.role.code|lower == "business_user" %}
+          <li class="nav-header">Administration</li>
+
+          <!-- TENANTS -->
+          {% if request.user.is_superuser or request.user.role.code|lower == "business_user" %}
           <li class="nav-item">
             <a href="{% url 'tenants' %}"
                class="nav-link {% if active_menu == 'tenants' %}active{% endif %}">
@@ -126,18 +470,6 @@
           </li>
           {% endif %}
 
-          <!-- MANAGEMENT (SUPERUSER + TENANT ADMIN) -->
-          {% if request.user.is_superuser or request.user.role.name == "tenant_admin" %}
-          <li class="nav-header">MANAGEMENT</li>
-
-          <li class="nav-item">
-            <a href="{% url 'companies' %}"
-               class="nav-link {% if active_menu == 'companies' %}active{% endif %}">
-              <i class="nav-icon fas fa-building"></i>
-              <p>Companies</p>
-            </a>
-          </li>
-
           <li class="nav-item">
             <a href="{% url 'users' %}"
                class="nav-link {% if active_menu == 'users' %}active{% endif %}">
@@ -145,8 +477,6 @@
               <p>Users</p>
             </a>
           </li>
-
-          <li class="nav-header">SECURITY</li>
 
           <li class="nav-item has-treeview access-control {% if active_menu == 'access-control' %}menu-open{% endif %}">
             <a href="#"
@@ -161,7 +491,7 @@
             <ul class="nav nav-treeview">
               <li class="nav-item">
                 <a href="{% url 'roles' %}"
-                   class="nav-link {% if active_submenu == 'roles' %}active{% endif %}">
+                   class="nav-link {% if active_submenu == 'roles' %}active{% endif %}" style="position:relative;">
                   <i class="fas fa-user-tag nav-icon"></i>
                   <p>Roles</p>
                 </a>
@@ -169,7 +499,7 @@
 
               <li class="nav-item">
                 <a href="{% url 'permissions' %}"
-                   class="nav-link {% if active_submenu == 'permissions' %}active{% endif %}">
+                   class="nav-link {% if active_submenu == 'permissions' %}active{% endif %}" style="position:relative;">
                   <i class="fas fa-key nav-icon"></i>
                   <p>Permissions</p>
                 </a>
@@ -184,26 +514,103 @@
               <p>Audit Logs</p>
             </a>
           </li>
+
+          <li class="nav-item">
+            <a href="#"
+               class="nav-link {% if active_menu == 'subscriptions' %}active{% endif %}">
+              <i class="nav-icon fas fa-credit-card"></i>
+              <p>Subscriptions</p>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a href="#"
+               class="nav-link {% if active_menu == 'invoices' %}active{% endif %}">
+              <i class="nav-icon fas fa-file-invoice"></i>
+              <p>Invoices</p>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a href="#"
+               class="nav-link {% if active_menu == 'payments' %}active{% endif %}">
+              <i class="nav-icon fas fa-money-bill-wave"></i>
+              <p>Payments</p>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a href="#"
+               class="nav-link {% if active_menu == 'reports' %}active{% endif %}">
+              <i class="nav-icon fas fa-chart-bar"></i>
+              <p>Reports</p>
+            </a>
+          </li>
           {% endif %}
+
+          <!-- PLATFORM -->
+          <li class="nav-header">Platform</li>
+
+          <li class="nav-item">
+            <a href="#"
+               class="nav-link {% if active_menu == 'regions' %}active{% endif %}">
+              <i class="nav-icon fas fa-globe-americas"></i>
+              <p>Regions & Map</p>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a href="#"
+               class="nav-link {% if active_menu == 'page-editor' %}active{% endif %}">
+              <i class="nav-icon fas fa-edit"></i>
+              <p>Page Editor</p>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a href="#"
+               class="nav-link {% if active_menu == 'ui-components' %}active{% endif %}">
+              <i class="nav-icon fas fa-puzzle-piece"></i>
+              <p>UI Components</p>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a href="#"
+               class="nav-link {% if active_menu == 'messages' %}active{% endif %}"
+               style="display: flex; align-items: center;">
+              <i class="nav-icon fas fa-envelope"></i>
+              <p style="flex:1;">Messages</p>
+              <span class="sidebar-count-badge">5</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a href="#"
+               class="nav-link {% if active_menu == 'settings' %}active{% endif %}">
+              <i class="nav-icon fas fa-cog"></i>
+              <p>Settings</p>
+            </a>
+          </li>
 
         </ul>
       </nav>
 
-      <!-- Profile Section (bottom of sidebar) -->
-      <div style="position:absolute; bottom:0; left:0; right:0; border-top:1px solid rgba(255,255,255,.1); padding:12px 16px; background:#1b2e40;">
-        <a href="{% url 'profile' %}" style="display:flex; align-items:center; gap:10px; text-decoration:none; color:#fff;">
-          <div style="width:36px; height:36px; border-radius:50%; background:#2f4f68; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.85rem; color:#fff;">
+      <!-- Profile Section -->
+      <div class="sidebar-profile">
+        <a href="{% url 'profile' %}">
+          <div class="sidebar-profile__avatar">
             {{ request.user.first_name|truncatechars:1 }}{{ request.user.last_name|truncatechars:1 }}
           </div>
           <div style="flex:1; min-width:0;">
-            <div style="font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+            <div class="sidebar-profile__name">
               {{ request.user.first_name }} {{ request.user.last_name }}
             </div>
-            <div style="font-size:.72rem; color:rgba(255,255,255,.5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+            <div class="sidebar-profile__email">
               {{ request.user.email }}
             </div>
           </div>
-          <i class="fas fa-cog" style="color:rgba(255,255,255,.4); font-size:.85rem;"></i>
+          <i class="fas fa-cog sidebar-profile__gear"></i>
         </a>
       </div>
     </div>

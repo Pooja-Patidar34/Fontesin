@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from accounts.models import Tenant, Company, UserCompany
 from accounts.constants import CompanyClassificationChoices
+from billing.utils import get_user_plan, get_active_subscription
 
 
 @login_required
@@ -69,5 +70,7 @@ def profile_view(request):
         "active_menu": "profile",
         "user_company": user_company,
         "classifications": CompanyClassificationChoices.CHOICES,
+        "user_plan": get_user_plan(user),
+        "subscription": get_active_subscription(user),
     }
     return render(request, "profile/profile.html", context)

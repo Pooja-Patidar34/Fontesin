@@ -80,5 +80,13 @@ def dashboard(request):
             "has_franchise_management": has_plan_feature(user, "franchise_management"),
         })
 
+    # Role label for welcome banner
+    if user.is_superuser:
+        context["role_label"] = "Platform Admin"
+    elif user.role:
+        context["role_label"] = user.role.name.replace("_", " ").title()
+    else:
+        context["role_label"] = "User"
+
     context["active_menu"] = "dashboard"
     return render(request, "dashboard/index.html", context)
