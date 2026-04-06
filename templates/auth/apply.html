@@ -557,7 +557,8 @@
       <div class="apply-card__title">Application Form</div>
       <div class="apply-card__subtitle">Please fill in all required information. This helps us evaluate your application and match you with the right opportunities.</div>
 
-      <form id="apply-form">
+      <form id="apply-form" method="post" action="{% url 'apply-submit' %}" enctype="multipart/form-data">
+        {% csrf_token %}
 
         <!-- PERSONAL INFORMATION -->
         <div class="form-section">
@@ -565,21 +566,21 @@
           <div class="apply-form-row">
             <div class="apply-form-group">
               <label class="apply-form-label">First Name *</label>
-              <input type="text" class="apply-form-control" placeholder="John" required/>
+              <input type="text" name="first_name" class="apply-form-control" placeholder="John" value="{{ request.user.first_name }}" required/>
             </div>
             <div class="apply-form-group">
               <label class="apply-form-label">Last Name *</label>
-              <input type="text" class="apply-form-control" placeholder="Smith" required/>
+              <input type="text" name="last_name" class="apply-form-control" placeholder="Smith" value="{{ request.user.last_name }}" required/>
             </div>
           </div>
           <div class="apply-form-row">
             <div class="apply-form-group">
               <label class="apply-form-label">Date of Birth *</label>
-              <input type="date" class="apply-form-control" required/>
+              <input type="date" name="birth_date" class="apply-form-control" required/>
             </div>
             <div class="apply-form-group">
               <label class="apply-form-label">Nationality *</label>
-              <select class="apply-form-control" required>
+              <select name="nationality" class="apply-form-control" required>
                 <option value="">Select nationality...</option>
                 <option>American</option>
                 <option>German</option>
@@ -596,17 +597,17 @@
           <div class="apply-form-row">
             <div class="apply-form-group">
               <label class="apply-form-label">Phone Number *</label>
-              <input type="tel" class="apply-form-control" placeholder="+1 212 555 0100" required/>
+              <input type="tel" name="phone" class="apply-form-control" placeholder="+1 212 555 0100" value="{{ request.user.phone|default:'' }}" required/>
             </div>
             <div class="apply-form-group">
               <label class="apply-form-label">LinkedIn Profile</label>
-              <input type="url" class="apply-form-control" placeholder="https://linkedin.com/in/..."/>
+              <input type="url" name="linkedin_url" class="apply-form-control" placeholder="https://linkedin.com/in/..."/>
             </div>
           </div>
           <div class="apply-form-row full">
             <div class="apply-form-group">
               <label class="apply-form-label">Current Address *</label>
-              <input type="text" class="apply-form-control" placeholder="Street, City, Country" required/>
+              <input type="text" name="address_line1" class="apply-form-control" placeholder="Street, City, Country" required/>
             </div>
           </div>
         </div>
@@ -617,13 +618,13 @@
           <div class="apply-form-row full">
             <div class="apply-form-group">
               <label class="apply-form-label">Current / Most Recent Position *</label>
-              <input type="text" class="apply-form-control" placeholder="e.g. Managing Director at ABC Corp" required/>
+              <input type="text" name="current_position" class="apply-form-control" placeholder="e.g. Managing Director at ABC Corp" required/>
             </div>
           </div>
           <div class="apply-form-row">
             <div class="apply-form-group">
               <label class="apply-form-label">Years of Professional Experience *</label>
-              <select class="apply-form-control" required>
+              <select name="years_of_experience" class="apply-form-control" required>
                 <option value="">Select...</option>
                 <option>1–3 years</option>
                 <option>3–5 years</option>
@@ -634,7 +635,7 @@
             </div>
             <div class="apply-form-group">
               <label class="apply-form-label">Primary Industry *</label>
-              <select class="apply-form-control" required>
+              <select name="primary_industry" class="apply-form-control" required>
                 <option value="">Select...</option>
                 <option>Finance &amp; Banking</option>
                 <option>Legal &amp; Compliance</option>
@@ -651,7 +652,7 @@
           <div class="apply-form-row full">
             <div class="apply-form-group">
               <label class="apply-form-label">Professional Summary *</label>
-              <textarea class="apply-form-control" placeholder="Briefly describe your professional background, key achievements, and relevant experience (min. 100 words)..." required style="min-height:120px;"></textarea>
+              <textarea name="professional_summary" class="apply-form-control" placeholder="Briefly describe your professional background, key achievements, and relevant experience (min. 100 words)..." required style="min-height:120px;"></textarea>
               <div class="apply-form-hint">Minimum 100 words. Focus on international business experience, network, and leadership roles.</div>
             </div>
           </div>
@@ -672,17 +673,17 @@
           <div class="apply-form-row">
             <div class="apply-form-group">
               <label class="apply-form-label">Company Name *</label>
-              <input type="text" class="apply-form-control" placeholder="Your company name" required/>
+              <input type="text" name="applied_company_name" class="apply-form-control" placeholder="Your company name" required/>
             </div>
             <div class="apply-form-group">
               <label class="apply-form-label">Company Registration Number</label>
-              <input type="text" class="apply-form-control" placeholder="e.g. 12345678"/>
+              <input type="text" name="applied_company_reg_number" class="apply-form-control" placeholder="e.g. 12345678"/>
             </div>
           </div>
           <div class="apply-form-row">
             <div class="apply-form-group">
               <label class="apply-form-label">Country of Incorporation *</label>
-              <select class="apply-form-control" required>
+              <select name="applied_country_of_incorporation" class="apply-form-control" required>
                 <option value="">Select country...</option>
                 <option>United States</option>
                 <option>Germany</option>
@@ -698,7 +699,7 @@
             </div>
             <div class="apply-form-group">
               <label class="apply-form-label">Legal Form *</label>
-              <select class="apply-form-control" required>
+              <select name="applied_legal_form" class="apply-form-control" required>
                 <option value="">Select...</option>
                 <option>LLC / s.r.o.</option>
                 <option>Joint Stock Company / a.s.</option>
@@ -714,11 +715,11 @@
           <div class="apply-form-row">
             <div class="apply-form-group">
               <label class="apply-form-label">Year Founded</label>
-              <input type="number" class="apply-form-control" placeholder="e.g. 2015" min="1900" max="2026"/>
+              <input type="number" name="applied_year_founded" class="apply-form-control" placeholder="e.g. 2015" min="1900" max="2026"/>
             </div>
             <div class="apply-form-group">
               <label class="apply-form-label">Number of Employees</label>
-              <select class="apply-form-control">
+              <select name="applied_num_employees" class="apply-form-control">
                 <option value="">Select...</option>
                 <option>1 (Solo)</option>
                 <option>2–10</option>
@@ -732,7 +733,7 @@
           <div class="apply-form-row full">
             <div class="apply-form-group">
               <label class="apply-form-label">Company Website</label>
-              <input type="url" class="apply-form-control" placeholder="https://yourcompany.com"/>
+              <input type="url" name="applied_company_website" class="apply-form-control" placeholder="https://yourcompany.com"/>
             </div>
           </div>
           <div class="apply-form-group">
@@ -752,7 +753,7 @@
           <div class="apply-form-row">
             <div class="apply-form-group">
               <label class="apply-form-label">Target Region / Country *</label>
-              <select class="apply-form-control" required>
+              <select name="target_region" class="apply-form-control" required>
                 <option value="">Select your target region...</option>
                 <optgroup label="Europe">
                   <option>Czech Republic</option>
@@ -788,7 +789,7 @@
             </div>
             <div class="apply-form-group" id="franchise-type-group" style="display:none;">
               <label class="apply-form-label">Franchise Type *</label>
-              <select class="apply-form-control">
+              <select name="franchise_type" class="apply-form-control">
                 <option value="">Select type...</option>
                 <option>Master Franchise (entire country)</option>
                 <option>National Franchise</option>
@@ -799,20 +800,20 @@
           <div class="apply-form-row full">
             <div class="apply-form-group">
               <label class="apply-form-label">Motivation Letter *</label>
-              <textarea class="apply-form-control" placeholder="Why do you want to join FONTESIN as a partner? What value can you bring to the platform and your region? Describe your vision and goals (min. 150 words)..." required style="min-height:140px;"></textarea>
+              <textarea name="motivation" class="apply-form-control" placeholder="Why do you want to join FONTESIN as a partner? What value can you bring to the platform and your region? Describe your vision and goals (min. 150 words)..." required style="min-height:140px;"></textarea>
               <div class="apply-form-hint">Minimum 150 words. Be specific about your regional knowledge, network, and how you plan to grow FONTESIN in your target market.</div>
             </div>
           </div>
           <div class="apply-form-row full">
             <div class="apply-form-group">
               <label class="apply-form-label">Relevant Network &amp; Connections</label>
-              <textarea class="apply-form-control" placeholder="Describe your professional network in the target region – chambers of commerce, business associations, government contacts, etc..." style="min-height:90px;"></textarea>
+              <textarea name="network_connections" class="apply-form-control" placeholder="Describe your professional network in the target region – chambers of commerce, business associations, government contacts, etc..." style="min-height:90px;"></textarea>
             </div>
           </div>
           <div class="apply-form-row full">
             <div class="apply-form-group">
               <label class="apply-form-label">Expected Monthly Active Companies (Year 1)</label>
-              <select class="apply-form-control">
+              <select name="expected_companies" class="apply-form-control">
                 <option value="">Select estimate...</option>
                 <option>1–10 companies</option>
                 <option>11–50 companies</option>
@@ -830,11 +831,11 @@
           <div class="apply-form-row">
             <div class="apply-form-group">
               <label class="apply-form-label">Reference 1 – Name &amp; Contact</label>
-              <input type="text" class="apply-form-control" placeholder="Name, Company, Email/Phone"/>
+              <input type="text" name="reference_1" class="apply-form-control" placeholder="Name, Company, Email/Phone"/>
             </div>
             <div class="apply-form-group">
               <label class="apply-form-label">Reference 2 – Name &amp; Contact</label>
-              <input type="text" class="apply-form-control" placeholder="Name, Company, Email/Phone"/>
+              <input type="text" name="reference_2" class="apply-form-control" placeholder="Name, Company, Email/Phone"/>
             </div>
           </div>
           <div class="apply-form-group">
@@ -850,7 +851,7 @@
 
         <div class="apply-actions">
           <button type="button" class="apply-btn-secondary" onclick="goToPhase(1)">&larr; Back</button>
-          <button type="button" class="apply-btn-primary" onclick="goToPhase(3)">Continue to Due Diligence &rarr;</button>
+          <button type="button" class="apply-btn-primary" onclick="validateAndProceed()">Continue to Due Diligence &rarr;</button>
         </div>
       </form>
     </div>
@@ -872,7 +873,7 @@
             <label class="dd-radio"><input type="radio" name="dd1" value="no" required/> No</label>
             <label class="dd-radio"><input type="radio" name="dd1" value="yes"/> Yes (please explain below)</label>
           </div>
-          <textarea class="apply-form-control" id="dd1-explain" placeholder="If yes, please provide details..." style="margin-top:10px;min-height:70px;display:none;"></textarea>
+          <textarea name="dd1_details" class="apply-form-control" id="dd1-explain" placeholder="If yes, please provide details..." style="margin-top:10px;min-height:70px;display:none;"></textarea>
         </div>
 
         <div class="dd-question">
@@ -881,7 +882,7 @@
             <label class="dd-radio"><input type="radio" name="dd2" value="no" required/> No</label>
             <label class="dd-radio"><input type="radio" name="dd2" value="yes"/> Yes (please explain below)</label>
           </div>
-          <textarea class="apply-form-control" id="dd2-explain" placeholder="If yes, please provide details..." style="margin-top:10px;min-height:70px;display:none;"></textarea>
+          <textarea name="dd2_details" class="apply-form-control" id="dd2-explain" placeholder="If yes, please provide details..." style="margin-top:10px;min-height:70px;display:none;"></textarea>
         </div>
 
         <div class="dd-question">
@@ -898,7 +899,7 @@
             <label class="dd-radio"><input type="radio" name="dd4" value="no" required/> No</label>
             <label class="dd-radio"><input type="radio" name="dd4" value="yes"/> Yes (please explain below)</label>
           </div>
-          <textarea class="apply-form-control" id="dd4-explain" placeholder="If yes, please provide details..." style="margin-top:10px;min-height:70px;display:none;"></textarea>
+          <textarea name="dd4_details" class="apply-form-control" id="dd4-explain" placeholder="If yes, please provide details..." style="margin-top:10px;min-height:70px;display:none;"></textarea>
         </div>
       </div>
 
@@ -920,7 +921,7 @@
             <label class="dd-radio"><input type="radio" name="dd6" value="no" required/> No</label>
             <label class="dd-radio"><input type="radio" name="dd6" value="yes"/> Yes (please explain below)</label>
           </div>
-          <textarea class="apply-form-control" id="dd6-explain" placeholder="If yes, please provide details..." style="margin-top:10px;min-height:70px;display:none;"></textarea>
+          <textarea name="dd6_details" class="apply-form-control" id="dd6-explain" placeholder="If yes, please provide details..." style="margin-top:10px;min-height:70px;display:none;"></textarea>
         </div>
       </div>
 
@@ -933,7 +934,7 @@
             <label class="dd-radio"><input type="radio" name="dd7" value="no" required/> No</label>
             <label class="dd-radio"><input type="radio" name="dd7" value="yes"/> Yes (please explain below)</label>
           </div>
-          <textarea class="apply-form-control" id="dd7-explain" placeholder="If yes, please provide details..." style="margin-top:10px;min-height:70px;display:none;"></textarea>
+          <textarea name="dd7_details" class="apply-form-control" id="dd7-explain" placeholder="If yes, please provide details..." style="margin-top:10px;min-height:70px;display:none;"></textarea>
         </div>
 
         <div class="dd-question">
@@ -942,26 +943,26 @@
             <label class="dd-radio"><input type="radio" name="dd8" value="no" required/> No</label>
             <label class="dd-radio"><input type="radio" name="dd8" value="yes"/> Yes (please explain below)</label>
           </div>
-          <textarea class="apply-form-control" id="dd8-explain" placeholder="If yes, please provide details..." style="margin-top:10px;min-height:70px;display:none;"></textarea>
+          <textarea name="dd8_details" class="apply-form-control" id="dd8-explain" placeholder="If yes, please provide details..." style="margin-top:10px;min-height:70px;display:none;"></textarea>
         </div>
       </div>
 
       <div class="form-section">
         <div class="form-section__title">📋 Declaration</div>
         <div class="apply-checkbox-group">
-          <input type="checkbox" id="dd-truthful" required/>
+          <input type="checkbox" id="dd-truthful" name="declared_truthful" required/>
           <label for="dd-truthful">I declare that all information provided in this application and due diligence questionnaire is true, accurate, and complete to the best of my knowledge.</label>
         </div>
         <div class="apply-checkbox-group">
-          <input type="checkbox" id="dd-update" required/>
+          <input type="checkbox" id="dd-update" name="declared_update" required/>
           <label for="dd-update">I agree to promptly notify FONTESIN of any material changes to the information provided in this application.</label>
         </div>
         <div class="apply-checkbox-group">
-          <input type="checkbox" id="dd-terms" required/>
+          <input type="checkbox" id="dd-terms" name="accepted_terms" required/>
           <label for="dd-terms">I have read and agree to the <a href="#" style="color:#253D51;font-weight:600;">FONTESIN Partner Terms &amp; Conditions</a> and <a href="#" style="color:#253D51;font-weight:600;">Privacy Policy</a>.</label>
         </div>
         <div class="apply-checkbox-group">
-          <input type="checkbox" id="dd-aml" required/>
+          <input type="checkbox" id="dd-aml" name="consented_aml" required/>
           <label for="dd-aml">I consent to FONTESIN conducting background checks, AML screening, and other due diligence procedures as required by applicable law and our compliance framework.</label>
         </div>
       </div>
@@ -1152,6 +1153,8 @@ function handleFileUpload(input, labelId) {
     var names = Array.from(input.files).map(function(f) { return f.name; }).join(', ');
     label.textContent = '✓ ' + names;
     label.style.color = '#16a34a';
+    var uploadBox = input.closest('.file-upload');
+    if (uploadBox) uploadBox.style.borderColor = '';
   }
 }
 
@@ -1167,19 +1170,94 @@ function handleFileUpload(input, labelId) {
   });
 });
 
+// Validate required fields before proceeding to Due Diligence
+function validateAndProceed() {
+  var form = document.getElementById('apply-form');
+  var requiredFields = form.querySelectorAll('[required]');
+  var firstInvalid = null;
+
+  requiredFields.forEach(function(field) {
+    field.style.borderColor = '';
+  });
+
+  for (var i = 0; i < requiredFields.length; i++) {
+    var field = requiredFields[i];
+    var val = field.value ? field.value.trim() : '';
+    if (!val) {
+      field.style.borderColor = '#ef4444';
+      if (!firstInvalid) firstInvalid = field;
+    }
+  }
+
+  if (firstInvalid) {
+    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    firstInvalid.focus();
+    showNotification('Please fill in all required fields before proceeding.', 'error');
+    return;
+  }
+
+  // Check CV upload
+  var cvInput = document.getElementById('cv-upload');
+  if (!cvInput || !cvInput.files || cvInput.files.length === 0) {
+    var cvUpload = cvInput.closest('.file-upload');
+    cvUpload.style.borderColor = '#ef4444';
+    cvUpload.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    showNotification('Please upload your CV / Resume.', 'error');
+    return;
+  }
+
+  goToPhase(3);
+}
+
 // Submit application
 function submitApplication() {
+  // 1. Validate all DD radio questions are answered
+  var ddQuestions = ['dd1', 'dd2', 'dd3', 'dd4', 'dd5', 'dd6', 'dd7', 'dd8'];
+  for (var i = 0; i < ddQuestions.length; i++) {
+    var name = ddQuestions[i];
+    var selected = document.querySelector('input[name="' + name + '"]:checked');
+    if (!selected) {
+      var questionEl = document.querySelector('input[name="' + name + '"]').closest('.dd-question');
+      questionEl.style.border = '2px solid #ef4444';
+      questionEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      showNotification('Please answer all due diligence questions (Q' + (i + 1) + ' is unanswered).', 'error');
+      return;
+    }
+    // Reset border
+    var qEl = selected.closest('.dd-question');
+    if (qEl) qEl.style.border = '';
+  }
+
+  // 2. If "yes" is selected, check that explanation is filled
+  var ddWithExplain = ['dd1', 'dd2', 'dd4', 'dd6', 'dd7', 'dd8'];
+  for (var i = 0; i < ddWithExplain.length; i++) {
+    var name = ddWithExplain[i];
+    var selected = document.querySelector('input[name="' + name + '"]:checked');
+    if (selected && selected.value === 'yes') {
+      var explain = document.getElementById(name + '-explain');
+      if (explain && !explain.value.trim()) {
+        explain.style.borderColor = '#ef4444';
+        explain.style.display = 'block';
+        explain.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        explain.focus();
+        showNotification('Please provide details for your "Yes" answer.', 'error');
+        return;
+      }
+    }
+  }
+
+  // 3. Check all declarations
   var checks = ['dd-truthful', 'dd-update', 'dd-terms', 'dd-aml'];
   for (var i = 0; i < checks.length; i++) {
     if (!document.getElementById(checks[i]).checked) {
+      document.getElementById(checks[i]).scrollIntoView({ behavior: 'smooth', block: 'center' });
       showNotification('Please accept all declarations to proceed.', 'error');
       return;
     }
   }
-  showNotification('Application submitted successfully! Redirecting...', 'success');
-  setTimeout(function() {
-    window.location.href = '{% url "apply-review" %}';
-  }, 2000);
+
+  // Submit the form via POST
+  document.getElementById('apply-form').submit();
 }
 
 function showNotification(message, type) {

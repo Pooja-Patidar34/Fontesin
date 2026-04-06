@@ -88,7 +88,7 @@ def admin_logout(request):
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login
-from accounts.models import Tenant, Company, Role, UserCompany, User
+from accounts.models import Tenant, Company, Role, UserCompany, User, DueDiligence
 from accounts.constants import CountryChoices, LanguageChoices
 
 
@@ -220,6 +220,80 @@ def apply_view(request):
         "role_label": role_label,
         "role_icon": role_icon,
     })
+
+
+@login_required
+def apply_submit(request):
+    if request.method != "POST":
+        return redirect("apply")
+
+    user = request.user
+
+    # Personal info
+    user.first_name = request.POST.get("first_name", user.first_name)
+    user.last_name = request.POST.get("last_name", user.last_name)
+    user.birth_date = request.POST.get("birth_date") or None
+    user.nationality = request.POST.get("nationality", "")
+    user.phone = request.POST.get("phone", user.phone)
+    user.linkedin_url = request.POST.get("linkedin_url", "")
+    user.address_line1 = request.POST.get("address_line1", "")
+
+    # Professional background
+    user.current_position = request.POST.get("current_position", "")
+    user.years_of_experience = request.POST.get("years_of_experience", "")
+    user.primary_industry = request.POST.get("primary_industry", "")
+    user.professional_summary = request.POST.get("professional_summary", "")
+
+    # Company info
+    user.applied_company_name = request.POST.get("applied_company_name", "")
+    user.applied_company_reg_number = request.POST.get("applied_company_reg_number", "")
+    user.applied_country_of_incorporation = request.POST.get("applied_country_of_incorporation", "")
+    user.applied_legal_form = request.POST.get("applied_legal_form", "")
+    year_founded = request.POST.get("applied_year_founded", "")
+    user.applied_year_founded = int(year_founded) if year_founded else None
+    user.applied_num_employees = request.POST.get("applied_num_employees", "")
+    user.applied_company_website = request.POST.get("applied_company_website", "")
+
+    # Role-specific
+    user.target_region = request.POST.get("target_region", "")
+    user.franchise_type = request.POST.get("franchise_type", "")
+    user.motivation = request.POST.get("motivation", "")
+    user.network_connections = request.POST.get("network_connections", "")
+    user.expected_companies = request.POST.get("expected_companies", "")
+    user.reference_1 = request.POST.get("reference_1", "")
+    user.reference_2 = request.POST.get("reference_2", "")
+
+    # Application status
+    user.application_status = "submitted"
+
+    user.save()
+
+    # Save Due Diligence data
+    DueDiligence.objects.update_or_create(
+        user=user,
+        defaults={
+            "criminal_offence": request.POST.get("dd1", "no"),
+            "criminal_offence_details": request.POST.get("dd1_details", ""),
+            "regulatory_sanctions": request.POST.get("dd2", "no"),
+            "regulatory_sanctions_details": request.POST.get("dd2_details", ""),
+            "is_pep": request.POST.get("dd3", "no"),
+            "insolvency_history": request.POST.get("dd4", "no"),
+            "insolvency_history_details": request.POST.get("dd4_details", ""),
+            "sufficient_financial_resources": request.POST.get("dd5", "yes"),
+            "pending_legal_disputes": request.POST.get("dd6", "no"),
+            "pending_legal_disputes_details": request.POST.get("dd6_details", ""),
+            "competitor_interest": request.POST.get("dd7", "no"),
+            "competitor_interest_details": request.POST.get("dd7_details", ""),
+            "contractual_obligations": request.POST.get("dd8", "no"),
+            "contractual_obligations_details": request.POST.get("dd8_details", ""),
+            "declared_truthful": request.POST.get("declared_truthful") == "on",
+            "declared_update": request.POST.get("declared_update") == "on",
+            "accepted_terms": request.POST.get("accepted_terms") == "on",
+            "consented_aml": request.POST.get("consented_aml") == "on",
+        },
+    )
+
+    return redirect("apply-review")
 
 
 @login_required
