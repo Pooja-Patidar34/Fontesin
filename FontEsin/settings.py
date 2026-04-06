@@ -285,6 +285,11 @@ EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@fontesin.com")
 
+# MailerSend
+MAILERSEND_API_KEY = config("MAILERSEND_API_KEY", default="")
+MAILERSEND_FROM_EMAIL = config("MAILERSEND_FROM_EMAIL", default="noreply@fontesin.com")
+MAILERSEND_FROM_NAME = config("MAILERSEND_FROM_NAME", default="FONTESIN")
+
 VERIFF_API_KEY = config("VERIFF_API_KEY")
 VERIFF_MASTER_SECRET = config("VERIFF_MASTER_SECRET")
 VERIFF_BASE_URL = "https://stationapi.veriff.com"

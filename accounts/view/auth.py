@@ -186,8 +186,8 @@ def identity_verification_view(request):
 import random
 from datetime import timedelta
 from django.utils import timezone
-from django.core.mail import send_mail
 from accounts.models import User, PasswordResetToken
+from accounts.utils.mailer import send_otp_email
 
 
 def forgot_password(request):
@@ -212,20 +212,10 @@ def forgot_password(request):
                 expires_at=expires_at,
             )
 
-            send_mail(
-                subject="FONTESIN – Your password reset code",
-                message=(
-                    f"Hi {user.first_name},\n\n"
-                    f"We received a request to reset your password. "
-                    f"Use the following verification code:\n\n"
-                    f"    {otp}\n\n"
-                    f"This code expires in 10 minutes.\n\n"
-                    f"If you didn't request this, you can safely ignore this email.\n\n"
-                    f"– FONTESIN Team"
-                ),
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                fail_silently=False,
+            send_otp_email(
+                to_email=user.email,
+                first_name=user.first_name,
+                otp=otp,
             )
 
         # Store email in session for the OTP verification step
