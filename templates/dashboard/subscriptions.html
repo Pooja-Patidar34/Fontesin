@@ -1,0 +1,231 @@
+{% extends "base/base.html" %}
+{% block title %}Subscriptions{% endblock %}
+
+{% block content %}
+<style>
+  .sub-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .sub-summary-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 22px 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    border: 1px solid #e8eef3;
+  }
+  .sub-summary-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+  .sub-summary-icon--green { background: #dcfce7; color: #16a34a; }
+  .sub-summary-icon--blue { background: #e0f0ff; color: #2b7de9; }
+  .sub-summary-icon--amber { background: #fef3c7; color: #d97706; }
+  .sub-summary-value { font-size: 1.5rem; font-weight: 800; color: #1B2E3F; line-height: 1.2; }
+  .sub-summary-label { font-size: .78rem; color: #64748b; margin-top: 2px; }
+
+  .plan-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+  .plan-card {
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #e8eef3;
+    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    overflow: hidden;
+    transition: transform .15s, box-shadow .15s;
+  }
+  .plan-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(0,0,0,.1);
+  }
+  .plan-card--popular { border-color: #253D51; }
+  .plan-card__header {
+    padding: 24px 24px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .plan-card__icon {
+    width: 48px; height: 48px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+  }
+  .plan-card__icon--free { background: #f1f5f9; color: #64748b; }
+  .plan-card__icon--basic { background: #e0f0ff; color: #2b7de9; }
+  .plan-card__icon--pro { background: #253D51; color: #fff; }
+  .plan-card__icon--global { background: #ede9fe; color: #7c3aed; }
+  .plan-card__badge {
+    font-size: .68rem; font-weight: 700; text-transform: uppercase;
+    padding: 4px 12px; border-radius: 100px; letter-spacing: .05em;
+  }
+  .plan-card__badge--popular { background: #253D51; color: #fff; }
+  .plan-card__badge--active { background: #dcfce7; color: #15803d; }
+  .plan-card__badge--inactive { background: #fee2e2; color: #dc2626; }
+  .plan-card__body { padding: 0 24px 24px; }
+  .plan-card__name { font-size: 1.15rem; font-weight: 800; color: #1B2E3F; margin-bottom: 4px; }
+  .plan-card__tagline { font-size: .82rem; color: #64748b; margin-bottom: 16px; }
+  .plan-card__price {
+    display: flex; align-items: baseline; gap: 6px; margin-bottom: 4px;
+  }
+  .plan-card__price-value { font-size: 1.8rem; font-weight: 800; color: #1B2E3F; }
+  .plan-card__price-period { font-size: .82rem; color: #94a3b8; }
+  .plan-card__price-original {
+    font-size: .85rem; color: #94a3b8; text-decoration: line-through; margin-left: 8px;
+  }
+  .plan-card__monthly { font-size: .78rem; color: #64748b; margin-bottom: 20px; }
+  .plan-card__stats {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 20px;
+  }
+  .plan-card__stat {
+    text-align: center; padding: 10px 4px; background: #f8fafc; border-radius: 8px;
+  }
+  .plan-card__stat-value { font-size: 1.1rem; font-weight: 800; color: #1B2E3F; }
+  .plan-card__stat-label { font-size: .68rem; color: #94a3b8; margin-top: 2px; }
+  .plan-card__features { list-style: none; padding: 0; margin: 0; }
+  .plan-card__features li {
+    padding: 6px 0; font-size: .82rem; color: #334155;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .plan-card__features li::before {
+    content: "\2713"; color: #16a34a; font-weight: 700; font-size: .75rem;
+    width: 18px; height: 18px; border-radius: 50%; background: #dcfce7;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .plan-card__footer {
+    padding: 16px 24px;
+    background: #f8fafc;
+    border-top: 1px solid #e8eef3;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .plan-card__footer-text { font-size: .78rem; color: #64748b; }
+  .plan-card__footer-text strong { color: #1B2E3F; }
+</style>
+
+<!-- Summary Cards -->
+<div class="sub-summary">
+  <div class="sub-summary-card">
+    <div class="sub-summary-icon sub-summary-icon--blue">
+      <i class="fas fa-layer-group"></i>
+    </div>
+    <div>
+      <div class="sub-summary-value">{{ plans|length }}</div>
+      <div class="sub-summary-label">Total Plans</div>
+    </div>
+  </div>
+  <div class="sub-summary-card">
+    <div class="sub-summary-icon sub-summary-icon--green">
+      <i class="fas fa-check-circle"></i>
+    </div>
+    <div>
+      <div class="sub-summary-value">{{ total_active }}</div>
+      <div class="sub-summary-label">Active Subscriptions</div>
+    </div>
+  </div>
+  <div class="sub-summary-card">
+    <div class="sub-summary-icon sub-summary-icon--amber">
+      <i class="fas fa-dollar-sign"></i>
+    </div>
+    <div>
+      <div class="sub-summary-value">${{ total_revenue|floatformat:0 }}</div>
+      <div class="sub-summary-label">Total Revenue</div>
+    </div>
+  </div>
+</div>
+
+<!-- Plan Cards -->
+<div class="plan-cards">
+  {% for plan in plans %}
+  <div class="plan-card {% if plan.is_popular %}plan-card--popular{% endif %}">
+
+    <div class="plan-card__header">
+      <div class="plan-card__icon plan-card__icon--{{ plan.code|lower }}">
+        {% if plan.icon %}{{ plan.icon }}{% else %}<i class="fas fa-crown"></i>{% endif %}
+      </div>
+      <div>
+        {% if plan.is_popular %}
+          <span class="plan-card__badge plan-card__badge--popular">Most Popular</span>
+        {% endif %}
+        {% if plan.is_active %}
+          <span class="plan-card__badge plan-card__badge--active">Active</span>
+        {% else %}
+          <span class="plan-card__badge plan-card__badge--inactive">Inactive</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="plan-card__body">
+      <div class="plan-card__name">{{ plan.name }}</div>
+      {% if plan.tagline %}
+        <div class="plan-card__tagline">{{ plan.tagline }}</div>
+      {% endif %}
+
+      <div class="plan-card__price">
+        <span class="plan-card__price-value">{{ plan.currency }}{{ plan.price|floatformat:0 }}</span>
+        <span class="plan-card__price-period">/{{ plan.billing_period }}</span>
+        {% if plan.original_price %}
+          <span class="plan-card__price-original">{{ plan.currency }}{{ plan.original_price|floatformat:0 }}</span>
+        {% endif %}
+      </div>
+      {% if plan.billing_period == "yearly" and plan.price > 0 %}
+        <div class="plan-card__monthly">{{ plan.currency }}{{ plan.monthly_price|floatformat:2 }}/month
+          {% if plan.discount_percent %} &middot; Save {{ plan.discount_percent }}%{% endif %}
+        </div>
+      {% else %}
+        <div class="plan-card__monthly">&nbsp;</div>
+      {% endif %}
+
+      <div class="plan-card__stats">
+        <div class="plan-card__stat">
+          <div class="plan-card__stat-value">{{ plan.active_count }}</div>
+          <div class="plan-card__stat-label">Active</div>
+        </div>
+        <div class="plan-card__stat">
+          <div class="plan-card__stat-value">{{ plan.pending_count }}</div>
+          <div class="plan-card__stat-label">Pending</div>
+        </div>
+        <div class="plan-card__stat">
+          <div class="plan-card__stat-value">{{ plan.total_count }}</div>
+          <div class="plan-card__stat-label">Total</div>
+        </div>
+      </div>
+
+      {% if plan.features %}
+        <ul class="plan-card__features">
+          {% for feature in plan.features %}
+            <li>{{ feature }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+
+    <div class="plan-card__footer">
+      <div class="plan-card__footer-text">
+        {% if plan.best_for %}
+          Best for: <strong>{{ plan.best_for }}</strong>
+        {% else %}
+          Plan code: <strong>{{ plan.code }}</strong>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+  {% empty %}
+  <div class="text-center text-muted py-5" style="grid-column:1/-1;">
+    <i class="fas fa-layer-group fa-2x mb-3" style="color:#cbd5e1;"></i>
+    <p>No membership plans configured yet.</p>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

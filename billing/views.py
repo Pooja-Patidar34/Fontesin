@@ -6,7 +6,8 @@ from django.contrib import messages
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from billing.models import Invoice, Subscription
+from django.db import models
+from billing.models import Invoice, Subscription, CommercialPlan
 
 
 @login_required
@@ -127,3 +128,30 @@ def payment_reject(request, subscription_id):
 
     messages.success(request, f"Subscription for {sub.user.email} has been rejected.")
     return redirect("payments")
+
+
+@login_required
+def subscription_list(request):
+    if not request.user.is_superuser:
+        raise PermissionDenied()
+
+    plans = CommercialPlan.objects.all()
+
+    # Attach subscriber counts to each plan
+    for plan in plans:
+        plan.active_count = Subscription.objects.filter(plan=plan, status="active").count()
+        plan.trial_count = Subscription.objects.filter(plan=plan, status="trial").count()
+        plan.pending_count = Subscription.objects.filter(plan=plan, status="created").count()
+        plan.total_count = Subscription.objects.filter(plan=plan).count()
+
+    total_active = Subscription.objects.filter(status="active").count()
+    total_revenue = Invoice.objects.filter(status="paid").aggregate(
+        total=models.Sum("amount")
+    )["total"] or 0
+
+    return render(request, "dashboard/subscriptions.html", {
+        "plans": plans,
+        "total_active": total_active,
+        "total_revenue": total_revenue,
+        "active_menu": "subscriptions",
+    })
