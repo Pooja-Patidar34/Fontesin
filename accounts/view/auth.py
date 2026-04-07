@@ -352,7 +352,7 @@ def forgot_password(request):
         request.session["reset_email"] = email
 
         messages.success(request, success_msg)
-        return redirect("admin:verify-otp")
+        return redirect("verify-otp")
 
     return render(request, "auth/forgot_password.html")
 
@@ -360,7 +360,7 @@ def forgot_password(request):
 def verify_otp(request):
     email = request.session.get("reset_email")
     if not email:
-        return redirect("admin:forgot-password")
+        return redirect("forgot-password")
 
     if request.method == "POST":
         otp = request.POST.get("otp", "").strip()
@@ -381,7 +381,7 @@ def verify_otp(request):
 
         # OTP verified — store token ID in session for the reset step
         request.session["reset_token_id"] = str(reset_token.id)
-        return redirect("admin:reset-password")
+        return redirect("reset-password")
 
     return render(request, "auth/verify_otp.html", {"email": email})
 
@@ -389,7 +389,7 @@ def verify_otp(request):
 def reset_password(request):
     token_id = request.session.get("reset_token_id")
     if not token_id:
-        return redirect("admin:forgot-password")
+        return redirect("forgot-password")
 
     reset_token = PasswordResetToken.objects.filter(id=token_id, is_used=False).first()
     if not reset_token or not reset_token.is_valid():
@@ -425,6 +425,6 @@ def reset_password(request):
         request.session.pop("reset_email", None)
 
         messages.success(request, "Your password has been reset successfully. You can now log in.")
-        return redirect("admin:login")
+        return redirect("login")
 
     return render(request, "auth/reset_password.html")

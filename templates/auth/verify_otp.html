@@ -142,7 +142,7 @@
 <body>
 
 <div class="auth-page-bg">
-  <a href="{% url 'admin:forgot-password' %}" class="auth-back">&larr; Back</a>
+  <a href="{% url 'forgot-password' %}" class="auth-back">&larr; Back</a>
 
   <div class="auth-split">
 
@@ -179,7 +179,7 @@
         {% endfor %}
       {% endif %}
 
-      <form method="post" action="{% url 'admin:verify-otp' %}">
+      <form method="post" action="{% url 'verify-otp' %}">
         {% csrf_token %}
 
         <div class="form-group">
@@ -204,7 +204,7 @@
       </form>
 
       <p style="font-size:.9rem;text-align:center;margin-top:24px;">
-        Didn't receive the code? <a href="{% url 'admin:forgot-password' %}" style="color:var(--primary);font-weight:600;">Resend</a>
+        Didn't receive the code? <a href="{% url 'forgot-password' %}" style="color:var(--primary);font-weight:600;">Resend</a>
       </p>
     </div>
   </div>
