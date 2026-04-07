@@ -1,0 +1,118 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#253D51"/>
+  <title>Pending Approval - FONTESIN</title>
+  <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
+  <style>
+    .pending-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #253D51 0%, #1a2d3d 100%);
+      padding: 24px;
+    }
+    .pending-card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.15);
+      max-width: 520px;
+      width: 100%;
+      padding: 48px 40px;
+      text-align: center;
+    }
+    .pending-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: #fef3c7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      font-size: 2.2rem;
+    }
+    .pending-card h2 {
+      color: #253D51;
+      margin-bottom: 12px;
+      font-size: 1.5rem;
+    }
+    .pending-card p {
+      color: #64748b;
+      font-size: .95rem;
+      line-height: 1.7;
+      margin-bottom: 8px;
+    }
+    .plan-badge {
+      display: inline-block;
+      background: #f1f5f9;
+      color: #253D51;
+      font-weight: 700;
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-size: .95rem;
+      margin: 16px 0 24px;
+    }
+    .pending-card .btn-back {
+      display: inline-block;
+      padding: 12px 32px;
+      background: #253D51;
+      color: #fff;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: .9rem;
+      transition: background .2s;
+    }
+    .pending-card .btn-back:hover {
+      background: #1a2d3d;
+      color: #fff;
+    }
+    .pending-features {
+      text-align: left;
+      margin: 24px 0;
+      padding: 0;
+      list-style: none;
+    }
+    .pending-features li {
+      padding: 6px 0;
+      font-size: .88rem;
+      color: #64748b;
+    }
+    .pending-features li::before {
+      content: "\2713";
+      color: #f59e0b;
+      font-weight: 700;
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="pending-page">
+  <div class="pending-card">
+    <div class="pending-icon">&#9203;</div>
+    <h2>Subscription Pending Approval</h2>
+    <p>Thank you for choosing a plan! Your subscription is currently under review by our admin team.</p>
+
+    {% if subscription and subscription.plan %}
+      <div class="plan-badge">{{ subscription.plan.name }} Plan - {{ subscription.plan.currency }} {{ subscription.plan.price }}</div>
+    {% endif %}
+
+    <ul class="pending-features">
+      <li>Your payment has been received</li>
+      <li>Admin review is in progress</li>
+      <li>You'll get full dashboard access once approved</li>
+      <li>This usually takes less than 24 hours</li>
+    </ul>
+
+    <a href="{% url 'login' %}" class="btn-back">Back to Login</a>
+  </div>
+</div>
+
+</body>
+</html>

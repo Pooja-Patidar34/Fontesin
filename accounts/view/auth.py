@@ -75,6 +75,17 @@ def admin_login(request):
         if user.is_superuser or (user.role and user.role.name == "tenant_admin"):
             return redirect("dashboard")
 
+        # Check subscription status for business users
+        from billing.models import Subscription
+        pending_sub = Subscription.objects.filter(user=user, status="created").first()
+        if pending_sub:
+            messages.info(request, "Your subscription is pending admin approval. You will be able to access the dashboard once approved.")
+            return render(request, "auth/pending_approval.html", {"subscription": pending_sub})
+
+        active_sub = Subscription.objects.filter(user=user, status="active").first()
+        if active_sub:
+            return redirect("dashboard")
+
         return redirect("membership")
 
     return render(request, "auth/login.html")

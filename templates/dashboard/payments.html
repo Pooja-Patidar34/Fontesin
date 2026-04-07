@@ -1,0 +1,177 @@
+{% extends "base/base.html" %}
+{% block title %}Payments{% endblock %}
+
+{% block content %}
+<div class="card" style="border-radius:14px; border:1px solid #e8eef3; box-shadow:0 2px 12px rgba(0,0,0,.06);">
+
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h3 class="card-title font-weight-bold mb-0">
+      <i class="fas fa-money-bill-wave mr-2"></i> Payments
+      {% if pending_count %}
+        <span class="badge badge-warning ml-2">{{ pending_count }} pending</span>
+      {% endif %}
+    </h3>
+
+    <div>
+      <a href="?status=all" class="btn btn-sm {% if status_filter == 'all' %}btn-primary{% else %}btn-outline-secondary{% endif %}">All</a>
+      <a href="?status=pending" class="btn btn-sm {% if status_filter == 'pending' %}btn-warning{% else %}btn-outline-secondary{% endif %}">Pending</a>
+      <a href="?status=approved" class="btn btn-sm {% if status_filter == 'approved' %}btn-success{% else %}btn-outline-secondary{% endif %}">Approved</a>
+      <a href="?status=rejected" class="btn btn-sm {% if status_filter == 'rejected' %}btn-danger{% else %}btn-outline-secondary{% endif %}">Rejected</a>
+    </div>
+  </div>
+
+  <div class="card-body p-0">
+
+    {% if messages %}
+      <div class="px-3 pt-3">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-2" role="alert">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="bg-light">
+          <tr>
+            <th>User</th>
+            <th>Email</th>
+            <th>Plan</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Requested</th>
+            <th style="width:180px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sub in subscriptions %}
+          <tr>
+            <td>
+              <strong>
+                {% if sub.user %}
+                  {{ sub.user.first_name }} {{ sub.user.last_name }}
+                {% else %}
+                  -
+                {% endif %}
+              </strong>
+            </td>
+
+            <td>
+              {% if sub.user %}
+                {{ sub.user.email }}
+              {% else %}
+                -
+              {% endif %}
+            </td>
+
+            <td>
+              {% if sub.plan %}
+                <span class="font-weight-bold">{{ sub.plan.name }}</span>
+                <br><small class="text-muted">{{ sub.plan.billing_period }}</small>
+              {% else %}
+                -
+              {% endif %}
+            </td>
+
+            <td>
+              {% if sub.plan %}
+                {{ sub.plan.currency }} {{ sub.plan.price }}
+              {% else %}
+                -
+              {% endif %}
+            </td>
+
+            <td>
+              {% if sub.status == "created" %}
+                <span class="badge badge-warning">Pending Approval</span>
+              {% elif sub.status == "active" %}
+                <span class="badge badge-success">Approved</span>
+              {% elif sub.status == "cancelled" %}
+                <span class="badge badge-danger">Rejected</span>
+              {% elif sub.status == "trial" %}
+                <span class="badge badge-info">Trial</span>
+              {% elif sub.status == "suspended" %}
+                <span class="badge badge-secondary">Suspended</span>
+              {% else %}
+                <span class="badge badge-secondary">{{ sub.status }}</span>
+              {% endif %}
+            </td>
+
+            <td>{{ sub.created_at|date:"M d, Y H:i" }}</td>
+
+            <td>
+              {% if sub.status == "created" %}
+                <form method="post" action="{% url 'payment-approve' sub.id %}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-success" title="Approve"
+                          onclick="return confirm('Approve subscription for {{ sub.user.email }}?')">
+                    <i class="fas fa-check"></i> Approve
+                  </button>
+                </form>
+                <form method="post" action="{% url 'payment-reject' sub.id %}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-danger" title="Reject"
+                          onclick="return confirm('Reject subscription for {{ sub.user.email }}?')">
+                    <i class="fas fa-times"></i> Reject
+                  </button>
+                </form>
+              {% elif sub.status == "active" %}
+                <span class="text-success"><i class="fas fa-check-circle"></i> Approved</span>
+              {% elif sub.status == "cancelled" %}
+                <span class="text-danger"><i class="fas fa-times-circle"></i> Rejected</span>
+              {% else %}
+                -
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="text-center text-muted py-4">
+              No payment records found
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if page_obj.paginator.num_pages > 1 %}
+  <div class="card-footer">
+    <ul class="pagination pagination-sm justify-content-end mb-0">
+      {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?status={{ status_filter }}&page={{ page_obj.previous_page_number }}">Previous</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">Previous</span></li>
+      {% endif %}
+
+      {% for num in page_obj.paginator.page_range %}
+        {% if num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+          {% if num == page_obj.number %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+          {% else %}
+            <li class="page-item"><a class="page-link" href="?status={{ status_filter }}&page={{ num }}">{{ num }}</a></li>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?status={{ status_filter }}&page={{ page_obj.next_page_number }}">Next</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">Next</span></li>
+      {% endif %}
+    </ul>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
