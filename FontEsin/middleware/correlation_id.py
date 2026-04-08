@@ -26,4 +26,4 @@ class CorrelationIDMiddleware:
 
         response["X-Correlation-ID"] = correlation_id
 
-        return response
+        return response 

@@ -1,0 +1,285 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#253D51"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="FONTESIN"/>
+  <link rel="manifest" href="{% static 'manifest.json' %}"/>
+  <link rel="apple-touch-icon" href="{% static 'adminlte/images/icons/icon-192.png' %}"/>
+  <title>Contact – FONTESIN</title>
+  <meta name="description" content="Get in touch with FONTESIN. Contact us for franchise inquiries, partnerships, investor relations, or general questions."/>
+  <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="navbar__inner">
+    <a href="{% url 'admin:home' %}" class="navbar__logo">
+      <img src="{% static 'adminlte/images/logo_full.png' %}" alt="FONTESIN" height="38"/>
+    </a>
+    <div class="navbar__nav">
+      <a href="{% url 'admin:home' %}">Home</a>
+      <a href="{% url 'admin:worldmap' %}">World Map</a>
+      <a href="{% url 'admin:about' %}">About</a>
+      <a href="{% url 'admin:career' %}">Careers</a>
+      <a href="{% url 'admin:contact' %}" class="active">Contact</a>
+    </div>
+    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
+    <div class="navbar__actions">
+      <a href="{% url 'admin:login' %}" class="btn btn-outline btn-sm">Log In</a>
+      <a href="{% url 'admin:register' %}" class="btn btn-primary btn-sm">Get Started</a>
+    </div>
+  </div>
+</nav>
+
+<!-- PAGE HEADER -->
+<section class="page-header">
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="{% url 'admin:home' %}">Home</a>
+      <span>/</span>
+      <span>Contact</span>
+    </div>
+    <h1>Get In Touch</h1>
+    <p>Whether you are an investor, franchise partner, consultant, or simply curious — we would love to hear from you.</p>
+  </div>
+</section>
+
+<!-- CONTACT CONTENT -->
+<section class="section">
+  <div class="container">
+    <div class="contact-grid">
+
+      <!-- LEFT: Contact Info -->
+      <div>
+        <h3 style="margin-bottom:28px;">Contact Information</h3>
+
+        <div class="contact-info__item">
+          <div class="contact-info__icon">📍</div>
+          <div>
+            <div class="contact-info__label">Headquarters</div>
+            <div class="contact-info__value">
+              One World Trade Center<br/>
+              Suite 8500, Floor 85<br/>
+              New York, NY 10007<br/>
+              United States
+            </div>
+          </div>
+        </div>
+
+        <div class="contact-info__item">
+          <div class="contact-info__icon">📞</div>
+          <div>
+            <div class="contact-info__label">Phone</div>
+            <div class="contact-info__value">
+              <a href="tel:+12122207417" style="color:var(--primary);font-weight:600;">+1 (212) 220-7417</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="contact-info__item">
+          <div class="contact-info__icon">✉️</div>
+          <div>
+            <div class="contact-info__label">Email</div>
+            <div class="contact-info__value">
+              <a href="mailto:info@fontesin.com" style="color:var(--primary);font-weight:600;">info@fontesin.com</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="contact-info__item">
+          <div class="contact-info__icon">🌐</div>
+          <div>
+            <div class="contact-info__label">Website</div>
+            <div class="contact-info__value">
+              <a href="https://www.fontesin.com" target="_blank" style="color:var(--primary);font-weight:600;">www.fontesin.com</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="contact-info__item">
+          <div class="contact-info__icon">🕐</div>
+          <div>
+            <div class="contact-info__label">Office Hours</div>
+            <div class="contact-info__value">Monday – Friday<br/>9:00 AM – 6:00 PM EST</div>
+          </div>
+        </div>
+
+        <!-- Office Photo -->
+        <div style="height:220px;border-radius:12px;overflow:hidden;margin-top:24px;position:relative;">
+          <img
+            src="{% static 'adminlte/images/office_hq.jpg' %}"
+            alt="One World Trade Center – FONTESIN Headquarters, New York"
+            style="width:100%;height:100%;object-fit:cover;display:block;"
+            onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,var(--primary-dark),var(--primary-mid))';this.parentElement.innerHTML='<div style=\'display:flex;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,.5);font-family:Montserrat,sans-serif;font-size:.9rem;\'>FONTESIN HQ · One World Trade Center, NYC</div>'"
+          />
+          <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.65));padding:16px;color:#fff;font-family:'Montserrat',sans-serif;font-size:.8rem;font-weight:600;">
+            FONTESIN Headquarters · One World Trade Center, New York
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Contact Form -->
+      <div>
+        <h3 style="margin-bottom:28px;">Send Us a Message</h3>
+        <form id="contact-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">First Name *</label>
+              <input type="text" class="form-control" placeholder="John" required/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Last Name *</label>
+              <input type="text" class="form-control" placeholder="Smith" required/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email Address *</label>
+            <input type="email" class="form-control" placeholder="john@company.com" required/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone Number</label>
+            <input type="tel" class="form-control" placeholder="+1 212 555 0100"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Company Name</label>
+            <input type="text" class="form-control" placeholder="Your Company Ltd."/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Subject *</label>
+            <select class="form-control" required>
+              <option value="">Select a topic...</option>
+              <option>Franchise Inquiry</option>
+              <option>Partnership Request</option>
+              <option>Investor Relations</option>
+              <option>Consultant Application</option>
+              <option>Technical Support</option>
+              <option>General Inquiry</option>
+              <option>Press &amp; Media</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Message *</label>
+            <textarea class="form-control" rows="5" placeholder="Tell us about your inquiry, project, or how we can help..." required></textarea>
+          </div>
+          <div class="checkbox-group">
+            <input type="checkbox" id="privacy" required/>
+            <label for="privacy">I agree to the processing of my personal data in accordance with FONTESIN's Privacy Policy.</label>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;">Send Message</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Google Maps Embed – One World Trade Center, NYC -->
+    <div style="margin-top:56px;">
+      <h3 style="margin-bottom:20px;">Our Location</h3>
+      <div style="border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.1);">
+        <iframe
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3023.6!2d-74.0134!3d40.7127!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c25a1a4b8b8b8b%3A0x1234567890abcdef!2sOne+World+Trade+Center%2C+New+York%2C+NY+10007!5e0!3m2!1sen!2sus!4v1709000000000!5m2!1sen!2sus"
+          width="100%"
+          height="420"
+          style="border:0;display:block;"
+          allowfullscreen=""
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          title="FONTESIN Headquarters – One World Trade Center, New York, NY 10007">
+        </iframe>
+      </div>
+      <div style="margin-top:12px;display:flex;align-items:center;gap:8px;font-size:.85rem;color:var(--text-secondary);">
+        <span>📍</span>
+        <span>One World Trade Center, Suite 8500, Floor 85, New York, NY 10007 · <strong>+1 (212) 220-7417</strong> · <a href="https://www.fontesin.com" target="_blank" style="color:var(--primary);">www.fontesin.com</a></span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- QUICK CONTACTS -->
+<section class="section section--light">
+  <div class="container">
+    <h3 style="margin-bottom:28px;text-align:center;">Specific Inquiries</h3>
+    <div class="grid-3">
+      <div class="card text-center">
+        <div class="card__icon" style="margin:0 auto 16px;">🤝</div>
+        <h4 class="card__title">Franchise &amp; Partners</h4>
+        <p class="card__text" style="font-size:.85rem;margin-bottom:16px;">Interested in becoming a Master Franchise or regional partner?</p>
+        <a href="mailto:franchise@fontesin.com" style="color:var(--primary);font-weight:600;font-size:.88rem;">franchise@fontesin.com</a>
+      </div>
+      <div class="card text-center">
+        <div class="card__icon" style="margin:0 auto 16px;">📈</div>
+        <h4 class="card__title">Investor Relations</h4>
+        <p class="card__text" style="font-size:.85rem;margin-bottom:16px;">Looking for investment opportunities or financial information?</p>
+        <a href="mailto:investors@fontesin.com" style="color:var(--primary);font-weight:600;font-size:.88rem;">investors@fontesin.com</a>
+      </div>
+      <div class="card text-center">
+        <div class="card__icon" style="margin:0 auto 16px;">📰</div>
+        <h4 class="card__title">Press &amp; Media</h4>
+        <p class="card__text" style="font-size:.85rem;margin-bottom:16px;">Media inquiries, press releases, and interview requests.</p>
+        <a href="mailto:press@fontesin.com" style="color:var(--primary);font-weight:600;font-size:.88rem;">press@fontesin.com</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer__grid">
+      <div>
+        <div class="footer__logo">
+          <img src="{% static 'adminlte/images/fontesin-logo.png' %}" alt="FONTESIN" style="height:32px;width:auto;filter:brightness(0) invert(1);margin-bottom:12px;"/>
+        </div>
+        <p class="footer__brand-desc">A deep-tech global business infrastructure platform connecting companies, professionals, and markets across languages, borders, and systems.</p>
+      </div>
+      <div>
+        <p class="footer__heading">Platform</p>
+        <div class="footer__links">
+          <a href="{% url 'admin:worldmap' %}">World Map</a>
+          <a href="{% url 'admin:register' %}">Get Started</a>
+          <a href="{% url 'admin:login' %} ">Log In</a>
+        </div>
+      </div>
+      <div>
+        <p class="footer__heading">Company</p>
+        <div class="footer__links">
+          <a href="{% url 'admin:about' %}">About Us</a>
+          <a href="{% url 'admin:career' %}">Careers</a>
+          <a href="{% url 'admin:contact' %}">Contact</a>
+        </div>
+      </div>
+      <div>
+        <p class="footer__heading">Regions</p>
+        <div class="footer__links">
+          <a href="{% url 'admin:region_us' %}">United States</a>
+          <a href="{% url 'admin:region_de' %}">Germany</a>
+          <a href="{% url 'admin:region_cz' %}">Czech Republic</a>
+          <a href="{% url 'admin:region_ae' %}">UAE</a>
+          <a href="{% url 'admin:region_jp' %}">Japan</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span>© 2026 FONTES Inc. All rights reserved.</span>
+      <span>Design by Memento Mori Digital LLC</span>
+    </div>
+  </div>
+</footer>
+
+<script src="{% static 'adminlte/js/main.js' %}"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function() {
+        navigator.serviceWorker.register("{% static 'adminlte/sw.js' %}")
+          .then(function(reg) { console.log("[PWA] SW registered:", reg.scope); })
+          .catch(function(err) { console.warn("[PWA] SW registration failed:", err); });
+      });
+    }
+  </script>
+</body>
+</html>

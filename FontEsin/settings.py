@@ -2,6 +2,8 @@
 from pathlib import Path
 from decouple import config
 from datetime import timedelta
+import os
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -34,6 +36,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     'accounts',
     'accounts_api',
+    'billing',
     "drf_spectacular",
 ]
 
@@ -48,6 +51,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "FontEsin.middleware.correlation_id.CorrelationIDMiddleware",
     "FontEsin.middleware.request_logging.RequestLoggingMiddleware",
+    "FontEsin.middleware.error_logging.ErrorLoggingMiddleware",
 ]
 
 ROOT_URLCONF = 'FontEsin.urls'
@@ -118,12 +122,23 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
+
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",
     ),
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-}
 
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+
+    "DEFAULT_THROTTLE_CLASSES": (
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ),
+
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "60/min",
+        "user": "120/min",
+    },
+}
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "FontEsin API",
@@ -178,7 +193,7 @@ USE_I18N = True
 
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
+#Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 
@@ -192,7 +207,14 @@ LOGIN_URL = "/admin/login/"
 LOGIN_REDIRECT_URL = "/admin/"
 LOGOUT_REDIRECT_URL = "/admin/login/"
 
-import os
+
+STATIC_URL = '/static/'
+
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 LOGGING = {
 
@@ -250,3 +272,24 @@ LOGGING = {
 
     },
 }
+
+#varriff
+
+
+# Email settings
+EMAIL_BACKEND = config("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
+EMAIL_HOST = config("EMAIL_HOST", default="")
+EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
+EMAIL_USE_TLS = config("EMAIL_USE_TLS", default="True").lower() == "true"
+EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@fontesin.com")
+
+# MailerSend
+MAILERSEND_API_KEY = config("MAILERSEND_API_KEY", default="")
+MAILERSEND_FROM_EMAIL = config("MAILERSEND_FROM_EMAIL", default="noreply@fontesin.com")
+MAILERSEND_FROM_NAME = config("MAILERSEND_FROM_NAME", default="FONTESIN")
+
+VERIFF_API_KEY = config("VERIFF_API_KEY")
+VERIFF_MASTER_SECRET = config("VERIFF_MASTER_SECRET")
+VERIFF_BASE_URL = "https://stationapi.veriff.com"

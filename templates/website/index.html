@@ -1,0 +1,428 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#253D51"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="FONTESIN"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="apple-touch-icon" href="images/icons/icon-192.png"/>
+  <title>FONTESIN – Global Business Infrastructure Platform</title>
+  <meta name="description" content="FONTESIN is a deep-tech global business infrastructure platform connecting companies, professionals, and markets across borders."/>
+  <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}?v=5"/>
+</head>
+<body>
+
+<!-- ===== NAVBAR ===== -->
+<nav class="navbar">
+  <div class="navbar__inner">
+    <a href="{% url 'admin:home' %}" class="navbar__logo">
+      <img src="{% static 'adminlte/images/fontesin-logo.png' %}" alt="FONTESIN" height="38"/>
+    </a>
+    <div class="navbar__nav">
+      <a href="{% url 'admin:home' %}" class="active">Home</a>
+      <a href="{% url 'admin:worldmap' %}">World Map</a>
+      <a href="{% url 'admin:about' %}">About</a>
+      <a href="{% url 'admin:career' %}">Careers</a>
+      <a href="{% url 'admin:contact' %}">Contact</a>
+    </div>
+    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
+    <div class="navbar__actions">
+      <a href="{% url 'admin:login' %}" class="btn btn-outline btn-sm">Log In</a>
+      <a href="{% url 'admin:register' %}" class="btn btn-primary btn-sm">Get Started</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ===== HERO ===== -->
+<section class="hero">
+  <div class="container">
+    <div class="hero__content animate-in">
+      <div class="hero__badge">
+        <span></span>
+        Pre-MVP · Now Onboarding Partners
+      </div>
+      <h1>Global Business<br/><em>Infrastructure</em><br/>Platform</h1>
+      <p>FONTESIN is a deep-tech communication and certification platform connecting companies, professionals, and markets across languages, borders, and systems.</p>
+      <div class="hero__actions">
+        <a href="{% url 'admin:register' %}" class="btn btn--white btn-lg">Get Started Free</a>
+        <a href="{% url 'admin:worldmap' %}" class="btn btn-outline btn-lg">Explore World Map</a>
+      </div>
+      <div class="hero__stats">
+        <div>
+          <span class="hero__stat-value">177+</span>
+          <span class="hero__stat-label">Countries Mapped</span>
+        </div>
+        <div>
+          <span class="hero__stat-value">5</span>
+          <span class="hero__stat-label">Active Regions</span>
+        </div>
+        <div>
+          <span class="hero__stat-value">200</span>
+          <span class="hero__stat-label">Pioneer Members</span>
+        </div>
+        <div>
+          <span class="hero__stat-value">4</span>
+          <span class="hero__stat-label">License Tiers</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FEATURES ===== -->
+<section class="section">
+  <div class="container">
+    <span class="section-label">Platform Capabilities</span>
+    <h2 class="section-title">Built for Global Business Operations</h2>
+    <p class="section-subtitle">FONTESIN provides a structured, verified, and scalable infrastructure for companies and professionals operating across international markets.</p>
+    <div class="grid-3">
+      <div class="card">
+        <div class="card__icon">🌍</div>
+        <h4 class="card__title">Global Region Control</h4>
+        <p class="card__text">Interactive world map with live region status — Active, Planned, and Inactive markets. Direct entry point for investors, franchisees, and partners.</p>
+      </div>
+      <div class="card">
+        <div class="card__icon">🏢</div>
+        <h4 class="card__title">Company Database</h4>
+        <p class="card__text">Searchable, tenant-isolated company registry with legal form classification, NACE codes, certifications, and verified business profiles.</p>
+      </div>
+      <div class="card">
+        <div class="card__icon">✅</div>
+        <h4 class="card__title">Trust & Certification</h4>
+        <p class="card__text">Blockchain-anchored certification system providing verified badges, transparent audit trails, and institutional-grade data validation.</p>
+      </div>
+      <div class="card">
+        <div class="card__icon">🤝</div>
+        <h4 class="card__title">Partnership Network</h4>
+        <p class="card__text">Structured partnership requests, mutual visibility after acceptance, and direct 1:1 messaging within a secure, role-based environment.</p>
+      </div>
+      <div class="card">
+        <div class="card__icon">🔐</div>
+        <h4 class="card__title">Tenant-Based Security</h4>
+        <p class="card__text">Every country operates as an isolated data tenant. Licenses define access rights. No cross-tenant data leakage — ever.</p>
+      </div>
+      <div class="card">
+        <div class="card__icon">🤖</div>
+        <h4 class="card__title">AI-Powered Matching</h4>
+        <p class="card__text">Intelligent algorithms match companies, consultants, and franchise opportunities based on sector, region, and business profile.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== WORLD MAP PREVIEW ===== -->
+<section class="map-section">
+  <div class="container">
+    <span class="section-label">Region Control Layer</span>
+    <h2 class="section-title">Live Global Expansion Map</h2>
+    <p class="section-subtitle" style="margin-bottom:32px;">The world map is not a visualization — it is our regional control layer. A live interface for global rollout, licensing, and franchise activation.</p>
+
+    <div class="map-wrapper">
+      <div class="map-legend">
+        <div class="map-legend__item">
+          <span class="map-legend__dot map-legend__dot--active"></span>
+          Active Region
+        </div>
+        <div class="map-legend__item">
+          <span class="map-legend__dot map-legend__dot--planned"></span>
+          Planned Expansion
+        </div>
+        <div class="map-legend__item">
+          <span class="map-legend__dot map-legend__dot--inactive"></span>
+          Not Yet Available
+        </div>
+      </div>
+
+      <!-- Inline SVG world map (loaded via fetch for full JS access) -->
+      <div id="map-container" style="position:relative;">
+        <div id="home-svg-container" style="border-radius:10px;overflow:hidden;background:transparent;"></div>
+        <div class="map-tooltip" id="map-tooltip"></div>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:32px;">
+      <a href="world-map.html" class="btn btn-primary btn-lg">Open Full Interactive Map</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== REGIONS PREVIEW ===== -->
+<section class="section">
+  <div class="container">
+    <span class="section-label">Active Regions</span>
+    <h2 class="section-title">Explore Our Active Markets</h2>
+    <p class="section-subtitle">Click any region to view detailed economic data, legal business forms, credit ratings, and franchise availability.</p>
+    <div class="grid-3" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
+
+      <a href="region-us.html" class="card" style="text-decoration:none;display:block;">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+          <span style="font-size:2.5rem;">🇺🇸</span>
+          <div>
+            <h4 class="card__title" style="margin-bottom:4px;">United States</h4>
+            <span class="status-badge status-badge--active">Active</span>
+          </div>
+        </div>
+        <p class="card__text" style="font-size:.85rem;">GDP: $27.36T · Population: 335M · Rating: AA+</p>
+      </a>
+
+      <a href="region-de.html" class="card" style="text-decoration:none;display:block;">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+          <span style="font-size:2.5rem;">🇩🇪</span>
+          <div>
+            <h4 class="card__title" style="margin-bottom:4px;">Germany</h4>
+            <span class="status-badge status-badge--active">Active</span>
+          </div>
+        </div>
+        <p class="card__text" style="font-size:.85rem;">GDP: $4.46T · Population: 84.6M · Rating: AAA</p>
+      </a>
+
+      <a href="region-cz.html" class="card" style="text-decoration:none;display:block;">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+          <span style="font-size:2.5rem;">🇨🇿</span>
+          <div>
+            <h4 class="card__title" style="margin-bottom:4px;">Czech Republic</h4>
+            <span class="status-badge status-badge--active">Active</span>
+          </div>
+        </div>
+        <p class="card__text" style="font-size:.85rem;">GDP: $330.5B · Population: 10.9M · Rating: AA-</p>
+      </a>
+
+      <a href="region-ae.html" class="card" style="text-decoration:none;display:block;">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+          <span style="font-size:2.5rem;">🇦🇪</span>
+          <div>
+            <h4 class="card__title" style="margin-bottom:4px;">United Arab Emirates</h4>
+            <span class="status-badge status-badge--planned">Planned – Year 2</span>
+          </div>
+        </div>
+        <p class="card__text" style="font-size:.85rem;">GDP: $509.2B · Population: 9.8M · Rating: AA-</p>
+      </a>
+
+      <a href="region-jp.html" class="card" style="text-decoration:none;display:block;">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+          <span style="font-size:2.5rem;">🇯🇵</span>
+          <div>
+            <h4 class="card__title" style="margin-bottom:4px;">Japan</h4>
+            <span class="status-badge status-badge--planned">Planned – Year 3</span>
+          </div>
+        </div>
+        <p class="card__text" style="font-size:.85rem;">GDP: $4.21T · Population: 124.5M · Rating: A+</p>
+      </a>
+
+      <div class="card" style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;background:var(--bg-light);border-style:dashed;">
+        <span style="font-size:2rem;color:var(--secondary);">+</span>
+        <p style="font-size:.85rem;text-align:center;color:var(--secondary);">More regions coming soon.<br/>View full map for expansion timeline.</p>
+        <a href="world-map.html" class="btn btn-outline btn-sm" style="color:var(--primary);border-color:var(--primary);">View All Regions</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ===== LICENSE TIERS ===== -->
+<section class="section section--dark">
+  <div class="container">
+    <span class="section-label text-accent">Access Model</span>
+    <h2 class="section-title text-white">Choose Your License</h2>
+    <p class="section-subtitle">From free exploration to full global access — FONTESIN scales with your ambitions.</p>
+    <div class="grid-4">
+      <div class="card" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);">
+        <div class="card__icon" style="background:rgba(255,255,255,.08);color:#fff;">🔓</div>
+        <h4 class="card__title text-white">FREE</h4>
+        <p class="card__text" style="color:var(--accent);font-size:.85rem;">Read-only company name index. Max 1 saved selection. No active tenant.</p>
+      </div>
+      <div class="card" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);">
+        <div class="card__icon" style="background:rgba(255,255,255,.08);color:#fff;">📍</div>
+        <h4 class="card__title text-white">LOCAL</h4>
+        <p class="card__text" style="color:var(--accent);font-size:.85rem;">Full access to one country tenant. Unlimited saved selections. Company details visible.</p>
+      </div>
+      <div class="card" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);">
+        <div class="card__icon" style="background:rgba(255,255,255,.08);color:#fff;">🌐</div>
+        <h4 class="card__title text-white">PRO</h4>
+        <p class="card__text" style="color:var(--accent);font-size:.85rem;">Access to defined regions. One active country tenant per session. Advanced filters.</p>
+      </div>
+      <div class="card" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);">
+        <div class="card__icon" style="background:rgba(255,255,255,.08);color:#fff;">🚀</div>
+        <h4 class="card__title text-white">GLOBAL</h4>
+        <p class="card__text" style="color:var(--accent);font-size:.85rem;">Access to all countries. One active country tenant per session. Full platform capabilities.</p>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:40px;">
+      <a href="register.html" class="btn btn--white btn-lg">Start for Free</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CTA ===== -->
+<section class="section">
+  <div class="container text-center">
+    <span class="section-label">Join the Movement</span>
+    <h2 class="section-title">Become a Pioneer Member</h2>
+    <p class="section-subtitle" style="margin: 0 auto 36px;">We are building a global micro-community of 200 visionaries, experts, and pioneers shaping the future of digital business collaboration.</p>
+    <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+      <a href="register.html" class="btn btn-primary btn-lg">Apply for Pioneer Status</a>
+      <a href="about.html" class="btn btn-outline btn-lg" style="color:var(--primary);border-color:var(--primary);">Learn About Us</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer__grid">
+      <div>
+        <div class="footer__logo"><img src="{% static 'adminlte/images/fontesin-logo.png' %}" alt="FONTESIN" style="height:32px;width:auto;filter:brightness(0) invert(1);margin-bottom:12px;"/></div>
+        <p class="footer__brand-desc">A deep-tech global business infrastructure platform connecting companies, professionals, and markets across languages, borders, and systems.</p>
+      </div>
+      <div>
+        <p class="footer__heading">Platform</p>
+        <div class="footer__links">
+          <a href="world-map.html">World Map</a>
+          <a href="register.html">Get Started</a>
+          <a href="login.html">Log In</a>
+        </div>
+      </div>
+      <div>
+        <p class="footer__heading">Company</p>
+        <div class="footer__links">
+          <a href="{% url 'admin:about' %}">About Us</a>
+          <a href="{% url 'admin:career' %}">Careers</a>
+          <a href="{% url 'admin:contact' %}">Contact</a>
+        </div>
+      </div>
+      <div>
+        <p class="footer__heading">Regions</p>
+        <div class="footer__links">
+          <a href="region-us.html">United States</a>
+          <a href="region-de.html">Germany</a>
+          <a href="region-cz.html">Czech Republic</a>
+          <a href="region-ae.html">UAE</a>
+          <a href="region-jp.html">Japan</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span>© 2026 FONTES Inc. All rights reserved.</span>
+      <span>Design by Memento Mori Digital LLC</span>
+    </div>
+  </div>
+</footer>
+
+<script src="{% static 'adminlte/js/main.js' %}"></script>
+<script>
+// Load world map SVG inline on homepage for full JS color control
+(function() {
+  const container = document.getElementById('home-svg-container');
+  const tooltip   = document.getElementById('map-tooltip');
+  if (!container) return;
+
+  const COUNTRY_STATUS = {
+    'US': { status: 'active',  year: 1, name: 'United States',        page: 'region-us.html' },
+    'DE': { status: 'active',  year: 1, name: 'Germany',              page: 'region-de.html' },
+    'CZ': { status: 'active',  year: 1, name: 'Czech Republic',       page: 'region-cz.html' },
+    'GB': { status: 'active',  year: 1, name: 'United Kingdom',       page: null },
+    'FR': { status: 'active',  year: 1, name: 'France',               page: null },
+    'NL': { status: 'active',  year: 1, name: 'Netherlands',          page: null },
+    'PL': { status: 'active',  year: 1, name: 'Poland',               page: null },
+    'AT': { status: 'active',  year: 1, name: 'Austria',              page: null },
+    'CH': { status: 'active',  year: 1, name: 'Switzerland',          page: null },
+    'SE': { status: 'active',  year: 1, name: 'Sweden',               page: null },
+    'AE': { status: 'planned', year: 2, name: 'United Arab Emirates', page: 'region-ae.html' },
+    'JP': { status: 'planned', year: 3, name: 'Japan',                page: 'region-jp.html' },
+    'SG': { status: 'planned', year: 2, name: 'Singapore',            page: null },
+    'CA': { status: 'planned', year: 2, name: 'Canada',               page: null },
+    'AU': { status: 'planned', year: 2, name: 'Australia',            page: null },
+    'BR': { status: 'planned', year: 3, name: 'Brazil',               page: null },
+    'IN': { status: 'planned', year: 3, name: 'India',                page: null },
+    'ZA': { status: 'planned', year: 4, name: 'South Africa',         page: null },
+    'MX': { status: 'planned', year: 3, name: 'Mexico',               page: null },
+    'KR': { status: 'planned', year: 3, name: 'South Korea',          page: null },
+  };
+
+  // Petroleum blue palette
+  const COLORS = {
+    active:          '#253D51',
+    activeHover:     '#1B2E3F',
+    activeStroke:    '#1B2E3F',
+    planned:         '#5F8FAA',
+    plannedHover:    '#4a7a96',
+    plannedStroke:   '#4a7a96',
+    inactive:        '#D8E4EC',
+    inactiveStroke:  '#b8cdd9',
+  };
+
+  fetch("{% static 'adminlte/images/world-map.svg' %}?v=5")
+    .then(r => r.text())
+    .then(svgText => {
+      container.innerHTML = svgText;
+      const svg = container.querySelector('svg');
+      if (!svg) return;
+      svg.setAttribute('id', 'world-map-svg');
+      svg.style.width = '100%';
+      svg.style.height = 'auto';
+      svg.style.display = 'block';
+
+      svg.querySelectorAll('[data-iso]').forEach(path => {
+        const iso  = path.getAttribute('data-iso');
+        const info = COUNTRY_STATUS[iso];
+
+        if (info) {
+          const baseColor  = info.status === 'active' ? COLORS.active  : COLORS.planned;
+          const hoverColor = info.status === 'active' ? COLORS.activeHover : COLORS.plannedHover;
+          const stroke     = info.status === 'active' ? COLORS.activeStroke : COLORS.plannedStroke;
+          path.style.fill        = baseColor;
+          path.style.stroke      = stroke;
+          path.style.strokeWidth = '0.5';
+          path.style.cursor      = 'pointer';
+          path.style.transition  = 'fill .2s ease';
+
+          path.addEventListener('mouseenter', (e) => {
+            path.style.fill = hoverColor;
+            if (tooltip) {
+              const label = info.status === 'active' ? '● Active' : `◌ Planned – Year ${info.year}`;
+              const color = info.status === 'active' ? '#7dd3fc' : '#93c5fd';
+              tooltip.innerHTML = `<div class="map-tooltip__name">${info.name}</div><div style="color:${color};font-size:.75rem;">${label}</div>${info.page ? '<div style="font-size:.7rem;color:rgba(199,204,209,.6);margin-top:4px;">Click for details →</div>' : ''}`;
+              tooltip.classList.add('visible');
+            }
+          });
+          path.addEventListener('mousemove', (e) => {
+            if (tooltip) {
+              tooltip.style.left = Math.min(e.clientX + 14, window.innerWidth - 200) + 'px';
+              tooltip.style.top  = Math.max(e.clientY - 10, 10) + 'px';
+            }
+          });
+          path.addEventListener('mouseleave', () => {
+            path.style.fill = baseColor;
+            if (tooltip) tooltip.classList.remove('visible');
+          });
+          path.addEventListener('click', () => {
+            if (info.page) window.location.href = info.page;
+          });
+        } else {
+          // Inactive country
+          path.style.fill        = COLORS.inactive;
+          path.style.stroke      = COLORS.inactiveStroke;
+          path.style.strokeWidth = '0.3';
+        }
+      });
+    })
+    .catch(() => {
+      container.innerHTML = '<p style="padding:40px;text-align:center;color:#5F7383;">Map loading...</p>';
+    });
+})();
+</script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function() {
+        navigator.serviceWorker.register("/sw.js")
+          .then(function(reg) { console.log("[PWA] SW registered:", reg.scope); })
+          .catch(function(err) { console.warn("[PWA] SW registration failed:", err); });
+      });
+    }
+  </script>
+</body>
+</html>
