@@ -9,6 +9,21 @@
   <link rel="stylesheet" href="{% static 'adminlte/css/adminlte.min.css' %}">
 
   <style>
+    .main-sidebar {
+    background-color: #253D51 !important;
+    }
+
+    .main-sidebar .nav-link.active {
+        background-color: #1b2e40 !important;
+    }
+
+    .main-sidebar .nav-link:hover {
+        background-color: #2f4f68 !important;
+    }
+
+    .brand-link {
+        background-color: #253D51 !important;
+    }
     .content-wrapper .table td,
     .content-wrapper .table th {
       padding: 0.6rem 0.85rem;
@@ -75,15 +90,15 @@
         <span class="nav-link">{{ request.user.email }}</span>
       </li>
       <li class="nav-item">
-        <a href="{% url 'admin:logout' %}" class="nav-link">Logout</a>
+        <a href="{% url 'logout' %}" class="nav-link">Logout</a>
       </li>
     </ul>
   </nav>
 
   <!-- SIDEBAR -->
   <aside class="main-sidebar sidebar-dark-primary elevation-4">
-    <a href="{% url 'admin:dashboard' %}" class="brand-link">
-      <span class="brand-text font-weight-light">Admin Panel</span>
+    <a href="{% url 'dashboard' %}" class="brand-link">
+      <span class="brand-text font-weight-light">Fontesin</span>
     </a>
 
     <div class="sidebar">
@@ -92,7 +107,7 @@
 
           <!-- Dashboard -->
           <li class="nav-item">
-            <a href="{% url 'admin:dashboard' %}"
+            <a href="{% url 'dashboard' %}"
                class="nav-link {% if active_menu == 'dashboard' %}active{% endif %}">
               <i class="nav-icon fas fa-chart-pie"></i>
               <p>Dashboard</p>
@@ -103,7 +118,7 @@
           {% if request.user.is_superuser %}
           <li class="nav-header">SYSTEM</li>
           <li class="nav-item">
-            <a href="{% url 'admin:tenants' %}"
+            <a href="{% url 'tenants' %}"
                class="nav-link {% if active_menu == 'tenants' %}active{% endif %}">
               <i class="nav-icon fas fa-sitemap"></i>
               <p>Tenants</p>
@@ -116,7 +131,7 @@
           <li class="nav-header">MANAGEMENT</li>
 
           <li class="nav-item">
-            <a href="{% url 'admin:companies' %}"
+            <a href="{% url 'companies' %}"
                class="nav-link {% if active_menu == 'companies' %}active{% endif %}">
               <i class="nav-icon fas fa-building"></i>
               <p>Companies</p>
@@ -124,7 +139,7 @@
           </li>
 
           <li class="nav-item">
-            <a href="{% url 'admin:users' %}"
+            <a href="{% url 'users' %}"
                class="nav-link {% if active_menu == 'users' %}active{% endif %}">
               <i class="nav-icon fas fa-users"></i>
               <p>Users</p>
@@ -145,7 +160,7 @@
 
             <ul class="nav nav-treeview">
               <li class="nav-item">
-                <a href="{% url 'admin:roles' %}"
+                <a href="{% url 'roles' %}"
                    class="nav-link {% if active_submenu == 'roles' %}active{% endif %}">
                   <i class="fas fa-user-tag nav-icon"></i>
                   <p>Roles</p>
@@ -153,7 +168,7 @@
               </li>
 
               <li class="nav-item">
-                <a href="{% url 'admin:permissions' %}"
+                <a href="{% url 'permissions' %}"
                    class="nav-link {% if active_submenu == 'permissions' %}active{% endif %}">
                   <i class="fas fa-key nav-icon"></i>
                   <p>Permissions</p>
@@ -163,7 +178,7 @@
           </li>
 
           <li class="nav-item">
-            <a href="{% url 'admin:audit-logs' %}"
+            <a href="{% url 'audit-logs' %}"
                class="nav-link {% if active_menu == 'audit' %}active{% endif %}">
               <i class="nav-icon fas fa-clipboard-list"></i>
               <p>Audit Logs</p>

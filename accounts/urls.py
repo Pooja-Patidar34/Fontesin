@@ -5,10 +5,10 @@ from accounts.view.company import company_list, toggle_company,company_detail_aj
 from .view.user import user_list, toggle_user, assign_roles,role_list,role_detail_ajax,permission_list,save_role,user_detail_ajax,user_edit,add_user
 from .view.audit import audit_logs,audit_log_detail_ajax
 from .view.tenant import tenant_list,toggle_tenant,tenant_detail_ajax,tenant_delete
-from .view.website import home, about, worldmap, career, contact,membership
+from .view.website import home, about, worldmap, career, contact, membership, select_plan, invoice_detail
 from .view.regions import region_us, region_de, region_cz, region_ae, region_jp
 from .view.veriff import CreateVeriffSessionAPIView
-
+from .view.webhook import veriff_webhook
 
 
 urlpatterns = [
@@ -42,12 +42,14 @@ urlpatterns = [
     path("reset-password/", reset_password, name="reset-password"),
 
     #static pages
-    path('home', home, name='home'),  # default landing page
+    path('home/', home, name='home'),  # default landing page
     path('about/', about, name='about'),
     path('worldmap/', worldmap, name='worldmap'),
     path('career/', career, name='career'),
     path('contact/', contact, name='contact'),
     path('membership/', membership, name='membership'),
+    path('select-plan/', select_plan, name='select_plan'),
+    path('invoice/<int:invoice_id>/', invoice_detail, name='invoice_detail'),
 
     #region specific pages
     path('region/us/', region_us, name='region_us'),
@@ -55,6 +57,9 @@ urlpatterns = [
     path('region/cz/', region_cz, name='region_cz'),
     path('region/ae/', region_ae, name='region_ae'),
     path('region/jp/', region_jp, name='region_jp'),
+
+    #webhook
+    path("veriff/webhook/", veriff_webhook),
 
 
     #veriff

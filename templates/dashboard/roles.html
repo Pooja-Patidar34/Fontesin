@@ -78,14 +78,14 @@
             <!-- <td class="text-right pr-4">
               {% if can_view %}
               <button class="btn btn-sm btn-outline-primary view-role-btn"
-                      data-url="{% url 'admin:role-detail' role.id %}">
+                      data-url="{% url 'role-detail' role.id %}">
                 View
               </button>
               {% endif %}
 
               {% if request.user.is_superuser %}
               <button class="btn btn-sm btn-outline-secondary edit-role-btn ml-1"
-                      data-url="{% url 'admin:role-detail' role.id %}">
+                      data-url="{% url 'role-detail' role.id %}">
                 Edit
               </button>
               {% endif %}
@@ -104,14 +104,14 @@
 
                 {% if can_view %}
                 <button class="dropdown-item view-role-btn"
-                        data-url="{% url 'admin:role-detail' role.id %}">
+                        data-url="{% url 'role-detail' role.id %}">
                   <i class="fas fa-eye mr-2"></i> View
                 </button>
                 {% endif %}
 
                 {% if request.user.is_superuser %}
                 <button class="dropdown-item edit-role-btn"
-                        data-url="{% url 'admin:role-detail' role.id %}">
+                        data-url="{% url 'role-detail' role.id %}">
                   <i class="fas fa-edit mr-2"></i> Edit
                 </button>
                 {% endif %}
@@ -194,7 +194,7 @@
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
 
-      <form method="post" action="{% url 'admin:role-save' %}">
+      <form method="post" action="{% url 'role-save' %}">
         {% csrf_token %}
 
         <!-- ✅ ONLY ADDITION -->

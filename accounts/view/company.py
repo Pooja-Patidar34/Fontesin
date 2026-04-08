@@ -12,10 +12,12 @@ from django.http import JsonResponse
 from django.db import transaction
 
 from accounts.forms.company_form import CompanyForm
+from billing.utils import requires_plan
 
 
 
 @login_required
+@requires_plan(feature="company_registry")
 @transaction.atomic
 def company_list(request):
 
@@ -116,7 +118,7 @@ def company_list(request):
                 else "Company created successfully."
             )
 
-            return redirect(next_url or "admin:companies")
+            return redirect(next_url or "companies")
 
     # -------------------------------
     # GET (LIST + EMPTY FORM)
@@ -245,7 +247,7 @@ def company_list(request):
 
 #             messages.success(request, "Company saved successfully.")
 
-#             return redirect(next_url or "admin:companies")
+#             return redirect(next_url or "companies")
 
 #     else:
 #         form = CompanyForm(user=request.user)
@@ -345,7 +347,7 @@ def company_delete(request, company_id):
     if referer:
         return redirect(referer)
 
-    return redirect(reverse("admin:companies"))
+    return redirect(reverse("companies"))
 
 
 @login_required
@@ -387,7 +389,7 @@ def toggle_company(request, company_id):
     if referer:
         return redirect(referer)
 
-    return redirect(reverse("admin:companies"))
+    return redirect(reverse("companies"))
 
 
 

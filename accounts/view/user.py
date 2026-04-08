@@ -209,7 +209,7 @@ def toggle_user(request, user_id):
     )
 
     next_url = request.GET.get("next")
-    return redirect(next_url or "admin:user-list")
+    return redirect(next_url or "user-list")
 
 @login_required
 def user_detail_ajax(request, user_id):
@@ -551,7 +551,7 @@ def assign_roles(request, user_id):
             },
             ip_address=get_client_ip(request),
         )
-        return redirect(next_url or "admin:users")
+        return redirect(next_url or "users")
 
     return render(
         request,
@@ -638,7 +638,6 @@ def assign_roles(request, user_id):
 #     )
 
 
-
 @login_required
 def role_list(request):
     logger.info("ROLE LIST VIEW CALLED")
@@ -691,7 +690,6 @@ def role_list(request):
     )
 
 
-
 @login_required
 @transaction.atomic
 def save_role(request):
@@ -708,7 +706,7 @@ def save_role(request):
 
     if not role_id:
         messages.error(request, "Role is required.")
-        return redirect("admin:roles")
+        return redirect("roles")
 
     role = get_object_or_404(Role, id=role_id)
 
@@ -735,7 +733,7 @@ def save_role(request):
     )
 
     messages.success(request, "Role permissions updated successfully.")
-    return redirect(request.POST.get("next") or "admin:roles")
+    return redirect(request.POST.get("next") or "roles")
 
 
 @login_required
@@ -775,7 +773,7 @@ def permission_list(request):
         if form.is_valid():
             form.save()
             messages.success(request, "Permission saved successfully.")
-            return redirect("admin:permissions")
+            return redirect("permissions")
 
     else:
         form = PermissionForm()

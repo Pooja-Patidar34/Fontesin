@@ -5,7 +5,7 @@ from accounts.models import UserRole, Permission
 
 # def admin_login(request):
 #     if request.user.is_authenticated:
-#         return redirect("admin:dashboard")
+#         return redirect("dashboard")
 
 #     if request.method == "POST":
 #         email = request.POST.get("email")
@@ -23,13 +23,13 @@ from accounts.models import UserRole, Permission
 
 #         if user.is_superuser:
 #             login(request, user)
-#             return redirect("admin:dashboard")
+#             return redirect("dashboard")
 
 #         try:
 #             user_role = UserRole.objects.select_related("role").get(user=user)
 #             if user_role.role.name == "tenant_admin":
 #                 login(request, user)
-#                 return redirect("admin:dashboard")
+#                 return redirect("dashboard")
 #         except UserRole.DoesNotExist:
 #             pass
 
@@ -47,7 +47,10 @@ from django.contrib import messages
 
 def admin_login(request):
     if request.user.is_authenticated:
-        return redirect("admin:dashboard")
+        next_url = request.GET.get("next")
+        if next_url:
+            return redirect(next_url)
+        return redirect("dashboard")
 
     if request.method == "POST":
         email = request.POST.get("email")
@@ -63,32 +66,23 @@ def admin_login(request):
             messages.error(request, "Your account is inactive")
             return render(request, "auth/login.html")
 
-        if user.is_superuser:
-            login(request, user)
-            return redirect("admin:dashboard")
+        login(request, user)
 
-        if not user.role:
-            messages.error(
-                request,
-                "You are not allowed to access the admin panel"
-            )
-            return render(request, "auth/login.html")
+        next_url = request.POST.get("next") or request.GET.get("next")
+        if next_url:
+            return redirect(next_url)
 
-        if user.role.name == "tenant_admin":
-            login(request, user)
-            return redirect("admin:dashboard")
+        if user.is_superuser or (user.role and user.role.name == "tenant_admin"):
+            return redirect("dashboard")
 
-        messages.error(
-            request,
-            "You are not allowed to access the admin panel"
-        )
+        return redirect("membership")
 
     return render(request, "auth/login.html")
 
 
 def admin_logout(request):
     logout(request)
-    return redirect("admin:login")
+    return redirect("login")
 
 
 from django.shortcuts import render, redirect
@@ -127,7 +121,7 @@ def register_view(request):
 
         tenant, _ = Tenant.objects.get_or_create(name="Default")
 
-        role = Role.objects.filter(name__iexact=role_name).first()
+        role = Role.objects.filter(code__iexact=role_name).first()
 
         if not role:
             messages.error(request, "Invalid role selected")
@@ -158,11 +152,9 @@ def register_view(request):
                     is_primary=True
                 )
 
-        # ✅ THIS IS REQUIRED
-        login(request, user)
+        login(request, user, backend="django.contrib.auth.backends.ModelBackend")
 
-        # redirect to verification step
-        return redirect("/admin/verify/")
+        return redirect("/verify/")
 
     return render(request, "auth/register.html", {"companies": companies})
 

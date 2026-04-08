@@ -51,7 +51,7 @@ technical_logger = logging.getLogger("technical")
 #             )
 
 #             messages.success(request, message)
-#             return redirect("admin:tenants")
+#             return redirect("tenants")
 #     else:
 #         form = TenantForm()
     
@@ -116,7 +116,7 @@ def tenant_list(request):
             )
 
             messages.success(request, message)
-            return redirect("admin:tenants")
+            return redirect("tenants")
 
     else:
         form = TenantForm()
@@ -184,7 +184,7 @@ def toggle_tenant(request, tenant_id):
         ip_address=get_client_ip(request),
     )
 
-    return redirect(request.META.get("HTTP_REFERER", "admin:tenants"))
+    return redirect(request.META.get("HTTP_REFERER", "tenants"))
 
 
 @login_required
@@ -232,7 +232,7 @@ def tenant_delete(request, tenant_id):
         tenant.save(update_fields=["is_deleted"])
 
         messages.success(request, "Tenant deleted successfully.")
-        return redirect("admin:tenants")
+        return redirect("tenants")
 
     return render(
         request,

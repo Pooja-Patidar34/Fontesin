@@ -217,6 +217,7 @@ from accounts_api.serializers.company_serializers import (
     CompanyCreateUpdateSerializer,
 )
 from accounts_api.utils import get_user_role, can_manage_company
+from billing.utils import has_plan_feature
 
 
 class CompanyListAPIView(APIView):
@@ -249,6 +250,13 @@ class CompanyListAPIView(APIView):
     def get(self, request):
         user = request.user
         try:
+            # Plan-based access check
+            if not user.is_superuser and not has_plan_feature(user, "company_registry"):
+                return Response(
+                    {"status": False, "message": "Company registry access requires Basic plan or higher. Please upgrade your plan."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
             if user.is_superuser:
                 companies = Company.objects.select_related("tenant")
 

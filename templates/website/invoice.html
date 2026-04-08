@@ -1,0 +1,482 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pro Forma Invoice – FONTESIN</title>
+  <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    body { background: #f0f5f8; padding-top: 70px; }
+
+    .invoice-page { max-width: 800px; margin: 0 auto; padding: 48px 24px 80px; }
+
+    /* ── Progress bar ── */
+    .reg-progress { background: #fff; border-bottom: 1px solid #d4e2ec; }
+    .reg-progress__inner {
+      max-width: 900px; margin: 0 auto; padding: 0 24px;
+      display: flex; align-items: center; gap: 0;
+    }
+    .reg-step { display: flex; align-items: center; gap: 10px; padding: 18px 0; flex: 1; position: relative; }
+    .reg-step:not(:last-child)::after {
+      content: ''; position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+      width: 1px; height: 24px; background: #d4e2ec;
+    }
+    .reg-step__num {
+      width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: .78rem; flex-shrink: 0;
+    }
+    .reg-step--done .reg-step__num { background: #22c55e; color: #fff; }
+    .reg-step--active .reg-step__num { background: #253D51; color: #fff; }
+    .reg-step__label {
+      font-family: 'Montserrat', sans-serif; font-size: .75rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .05em;
+    }
+    .reg-step--done .reg-step__label { color: #22c55e; }
+    .reg-step--active .reg-step__label { color: #253D51; }
+
+    .invoice-card {
+      background: #fff; border-radius: 16px;
+      box-shadow: 0 2px 16px rgba(37,61,81,.08);
+      overflow: hidden; margin-bottom: 32px;
+    }
+
+    .invoice-header {
+      background: linear-gradient(135deg, #253D51 0%, #1B2E3F 100%);
+      padding: 32px;
+      display: flex; justify-content: space-between; align-items: flex-start;
+    }
+    .invoice-header h1 {
+      font-family: 'Montserrat', sans-serif; font-weight: 800;
+      color: #fff; font-size: 1.5rem; margin: 0 0 4px;
+    }
+    .invoice-header .subtitle { color: #8fa5b5; font-size: .85rem; }
+    .invoice-header .invoice-number {
+      font-family: 'Montserrat', sans-serif; font-weight: 700;
+      color: #C7CCD1; font-size: .85rem; text-align: right;
+    }
+
+    .invoice-body { padding: 32px; }
+
+    .info-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 24px; margin-bottom: 32px;
+    }
+    @media (max-width: 600px) { .info-grid { grid-template-columns: 1fr; } }
+
+    .info-section h3 {
+      font-family: 'Montserrat', sans-serif; font-weight: 700;
+      color: #253D51; font-size: .8rem; text-transform: uppercase;
+      letter-spacing: .06em; margin-bottom: 12px;
+      padding-bottom: 8px; border-bottom: 2px solid #d4e2ec;
+    }
+
+    .info-row {
+      display: flex; justify-content: space-between;
+      padding: 8px 0; border-bottom: 1px solid #f0f5f8;
+      font-size: .83rem;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-row__label { color: #5F7383; }
+    .info-row__value { font-weight: 600; color: #253D51; }
+    .info-row__value--highlight { color: #dc2626; font-style: italic; }
+
+    .total-box {
+      background: #f0f8ff; border: 2px solid #bfdbfe;
+      border-radius: 12px; padding: 20px 28px;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 32px;
+    }
+    .total-box__label {
+      font-family: 'Montserrat', sans-serif; font-weight: 800;
+      color: #253D51; font-size: 1.1rem;
+    }
+    .total-box__amount {
+      font-family: 'Montserrat', sans-serif; font-weight: 800;
+      color: #253D51; font-size: 2rem;
+    }
+
+    .section-title {
+      font-family: 'Montserrat', sans-serif; font-weight: 700;
+      color: #253D51; font-size: .85rem; text-transform: uppercase;
+      letter-spacing: .06em; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-title .icon { font-size: 1rem; }
+
+    .copy-btn {
+      background: #f0f5f8; border: 1px solid #d4e2ec;
+      border-radius: 6px; padding: 2px 10px;
+      font-size: .75rem; cursor: pointer; color: #5F7383;
+      transition: .2s;
+    }
+    .copy-btn:hover { background: #e2ecf3; }
+
+    .code-value {
+      font-family: 'Courier New', monospace; font-weight: 700;
+      background: #f0f5f8; padding: 4px 10px; border-radius: 6px;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+
+    .note-box {
+      background: #fffbeb; border: 1px solid #fde68a;
+      border-radius: 10px; padding: 16px;
+      font-size: .82rem; color: #92400e;
+      margin-top: 24px;
+    }
+
+    .steps-box {
+      background: #fff; border: 1px solid #d4e2ec;
+      border-radius: 16px; padding: 32px;
+      margin-bottom: 32px;
+    }
+    .steps-box h2 {
+      font-family: 'Montserrat', sans-serif; font-weight: 800;
+      color: #253D51; font-size: 1.2rem; margin-bottom: 24px;
+    }
+    .step {
+      display: flex; gap: 16px; margin-bottom: 20px;
+    }
+    .step:last-child { margin-bottom: 0; }
+    .step__num {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: #22c55e; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: .85rem;
+      flex-shrink: 0;
+    }
+    .step__content h3 {
+      font-family: 'Montserrat', sans-serif; font-weight: 700;
+      color: #253D51; font-size: .9rem; margin-bottom: 4px;
+    }
+    .step__content p { color: #5F7383; font-size: .82rem; margin: 0; }
+
+    .action-buttons {
+      display: flex; gap: 12px; flex-wrap: wrap;
+    }
+    .btn-action {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 28px; border-radius: 10px;
+      font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: .9rem;
+      cursor: pointer; transition: .2s ease; text-decoration: none;
+      border: 2px solid transparent;
+    }
+    .btn-action--print {
+      background: #253D51; color: #fff;
+    }
+    .btn-action--outline {
+      background: transparent; color: #253D51;
+      border-color: #253D51;
+    }
+    .btn-action--primary {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #fff;
+    }
+    .btn-action:hover { transform: translateY(-1px); opacity: .9; }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="navbar__inner">
+    <a href="{% url 'home' %}" class="navbar__logo">
+      <img src="{% static 'adminlte/images/logo_full.png' %}" alt="FONTESIN" height="38" style="filter:brightness(0) invert(1);"/>
+    </a>
+    <div class="navbar__nav">
+      <a href="{% url 'home' %}">Home</a>
+      <a href="{% url 'worldmap' %}">World Map</a>
+      <a href="{% url 'about' %}">About</a>
+      <a href="{% url 'career' %}">Careers</a>
+      <a href="{% url 'contact' %}">Contact</a>
+    </div>
+  </div>
+</nav>
+
+<!-- PROGRESS BAR -->
+<div class="reg-progress">
+  <div class="reg-progress__inner">
+    <div class="reg-step reg-step--done">
+      <div class="reg-step__num">&#10003;</div>
+      <div class="reg-step__label">Account Info</div>
+    </div>
+    <div class="reg-step reg-step--done">
+      <div class="reg-step__num">&#10003;</div>
+      <div class="reg-step__label">Identity Verified</div>
+    </div>
+    <div class="reg-step reg-step--done">
+      <div class="reg-step__num">&#10003;</div>
+      <div class="reg-step__label">Choose Plan</div>
+    </div>
+    <div class="reg-step reg-step--active">
+      <div class="reg-step__num">4</div>
+      <div class="reg-step__label">Confirmation</div>
+    </div>
+  </div>
+</div>
+
+<div class="invoice-page">
+
+  <!-- INVOICE CARD -->
+  <div class="invoice-card">
+    <div class="invoice-header">
+      <div>
+        <h1>Pro Forma Invoice</h1>
+        <div class="subtitle">FONTESIN Global Business Intelligence Platform</div>
+      </div>
+      <div style="background:#15803d;color:#fff;border-radius:8px;padding:8px 20px;font-family:'Montserrat',sans-serif;font-weight:800;font-size:.85rem;text-transform:uppercase;">
+        {{ invoice.subscription.plan.name }} Plan
+      </div>
+    </div>
+
+    <div class="invoice-body">
+
+      <!-- INVOICE DETAILS -->
+      <div class="section-title">INVOICE DETAILS</div>
+      <div style="margin-bottom:32px;">
+        <div class="info-row">
+          <span class="info-row__label">Invoice Number</span>
+          <span class="info-row__value"><span class="code-value">{{ invoice.invoice_number }}</span></span>
+        </div>
+        <div class="info-row">
+          <span class="info-row__label">Issue Date</span>
+          <span class="info-row__value">{{ invoice.created_at|date:"F j, Y" }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-row__label">Due Date</span>
+          <span class="info-row__value">{{ invoice.due_date|date:"F j, Y" }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-row__label">Status</span>
+          <span class="info-row__value">
+            {% if invoice.status == 'paid' %}
+              <span style="color:#15803d;">&#9989; Paid</span>
+            {% else %}
+              <span style="color:#d97706;">&#9203; Pending Payment</span>
+            {% endif %}
+          </span>
+        </div>
+      </div>
+
+      <!-- SUPPLIER -->
+      <div class="section-title">SUPPLIER (PAYEE)</div>
+      <div style="margin-bottom:32px;">
+        <div class="info-row">
+          <span class="info-row__label">Company Name</span>
+          <span class="info-row__value">FONTES Inc.</span>
+        </div>
+        <div class="info-row">
+          <span class="info-row__label">Address</span>
+          <span class="info-row__value" style="text-align:right;">One World Trade Center, Suite 8500<br/>Floor 85, New York, NY 10007, USA</span>
+        </div>
+        <div class="info-row">
+          <span class="info-row__label">Website</span>
+          <span class="info-row__value">www.fontesin.com</span>
+        </div>
+        <div class="info-row">
+          <span class="info-row__label">Email</span>
+          <span class="info-row__value">billing@fontesin.com</span>
+        </div>
+      </div>
+
+      <!-- SUBSCRIBER -->
+      <div class="section-title">SUBSCRIBER (BUYER)</div>
+      <div style="margin-bottom:32px;">
+        <div class="info-row">
+          <span class="info-row__label">Name</span>
+          <span class="info-row__value">{{ invoice.subscription.user.first_name }} {{ invoice.subscription.user.last_name }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-row__label">Email</span>
+          <span class="info-row__value">{{ invoice.subscription.user.email }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-row__label">Role</span>
+          <span class="info-row__value">{{ invoice.subscription.user.role.name|default:"—" }}</span>
+        </div>
+      </div>
+
+      <!-- SUBSCRIPTION DETAILS -->
+      <div class="section-title">SUBSCRIPTION DETAILS</div>
+      <div style="margin-bottom:32px;">
+        <div class="info-row">
+          <span class="info-row__label">Plan</span>
+          <span class="info-row__value" style="font-weight:800;">{{ invoice.subscription.plan.name }} Plan</span>
+        </div>
+        <div class="info-row">
+          <span class="info-row__label">Billing Period</span>
+          <span class="info-row__value">Annual (12 months)</span>
+        </div>
+        <div class="info-row">
+          <span class="info-row__label">Subscription Start</span>
+          <span class="info-row__value{% if invoice.subscription.plan.code != 'free' %} info-row__value--highlight{% endif %}">
+            {% if invoice.subscription.plan.code == 'free' %}{{ invoice.subscription.start_date|date:"F j, Y" }}{% else %}Upon payment confirmation{% endif %}
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="info-row__label">Subscription End</span>
+          <span class="info-row__value">{{ invoice.subscription.end_date|date:"F j, Y" }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-row__label">Currency</span>
+          <span class="info-row__value">{{ invoice.currency }} ($)</span>
+        </div>
+      </div>
+
+      <!-- TOTAL -->
+      <div class="total-box">
+        <span class="total-box__label">Total Amount Due</span>
+        <span class="total-box__amount">${{ invoice.amount|floatformat:2 }}</span>
+      </div>
+
+      {% if invoice.subscription.plan.code != 'free' %}
+      <!-- BANK TRANSFER DETAILS -->
+      <div class="section-title"><span class="icon">&#127974;</span> BANK TRANSFER DETAILS</div>
+      <div style="margin-bottom:32px;">
+        <div class="info-row">
+          <span class="info-row__label">Bank Name</span>
+          <span class="info-row__value">JPMorgan Chase Bank, N.A.</span>
+        </div>
+        <div class="info-row">
+          <span class="info-row__label">Account Holder</span>
+          <span class="info-row__value">FONTES Inc.</span>
+        </div>
+        <div class="info-row">
+          <span class="info-row__label">IBAN</span>
+          <span class="info-row__value">
+            <span class="code-value">US12 3456 7890 1234 5678 9012 <button class="copy-btn" onclick="copyText('US12345678901234567890​12')">Copy</button></span>
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="info-row__label">SWIFT / BIC</span>
+          <span class="info-row__value">
+            <span class="code-value">CHASUS33 <button class="copy-btn" onclick="copyText('CHASUS33')">Copy</button></span>
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="info-row__label">ABA Routing Number</span>
+          <span class="info-row__value">
+            <span class="code-value">021000021 <button class="copy-btn" onclick="copyText('021000021')">Copy</button></span>
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="info-row__label">Bank Address</span>
+          <span class="info-row__value">383 Madison Ave, New York, NY 10017, USA</span>
+        </div>
+      </div>
+
+      <!-- PAYMENT IDENTIFICATION -->
+      <div class="section-title"><span class="icon">&#128273;</span> PAYMENT IDENTIFICATION (REQUIRED)</div>
+      <div style="margin-bottom:32px;">
+        <div class="info-row">
+          <span class="info-row__label">Variable Symbol (VS)</span>
+          <span class="info-row__value">
+            <span class="code-value">{{ invoice.variable_symbol }} <button class="copy-btn" onclick="copyText('{{ invoice.variable_symbol }}')">Copy</button></span>
+          </span>
+        </div>
+        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 12px;margin:8px 0;font-size:.78rem;color:#92400e;">
+          &#9888; Must be included in payment reference
+        </div>
+        <div class="info-row">
+          <span class="info-row__label">Specific Symbol (SS)</span>
+          <span class="info-row__value">{{ invoice.specific_symbol }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-row__label">Payment Reference / Note</span>
+          <span class="info-row__value">
+            <span class="code-value">{{ invoice.payment_reference }} <button class="copy-btn" onclick="copyText('{{ invoice.payment_reference }}')">Copy</button></span>
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="info-row__label">Amount</span>
+          <span class="info-row__value">${{ invoice.amount|floatformat:2 }} {{ invoice.currency }}</span>
+        </div>
+      </div>
+
+      <div class="note-box">
+        <strong>Note:</strong> This Pro Forma Invoice is not a tax document. A final VAT invoice will be issued after payment confirmation. For international wire transfers, please ensure all bank charges are covered by the sender (OUR). For questions regarding your payment, contact <strong>billing@fontesin.com</strong> with your invoice number.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ACTION BUTTONS -->
+  <div class="action-buttons" style="margin-bottom:32px;">
+    {% if invoice.subscription.plan.code != 'free' %}
+    <button class="btn-action btn-action--print" onclick="window.print()">&#128424; Print / Save as PDF</button>
+    {% endif %}
+    <a href="{% url 'home' %}" class="btn-action btn-action--outline">&larr; Back to Homepage</a>
+    <a href="{% url 'dashboard' %}" class="btn-action btn-action--primary">Go to Dashboard &rarr;</a>
+  </div>
+
+  {% if invoice.subscription.plan.code != 'free' %}
+  <!-- WHAT HAPPENS NEXT -->
+  <div class="steps-box">
+    <h2>What Happens Next?</h2>
+    <div class="step">
+      <div class="step__num">1</div>
+      <div class="step__content">
+        <h3>Complete Your Bank Transfer</h3>
+        <p>Send the exact amount to the bank account above. Include your Variable Symbol (VS) in the payment reference.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step__num">2</div>
+      <div class="step__content">
+        <h3>Payment Confirmation (1–3 Business Days)</h3>
+        <p>Our finance team will verify your payment and activate your subscription. You will receive a confirmation email.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step__num">3</div>
+      <div class="step__content">
+        <h3>Receive Final Invoice</h3>
+        <p>A final VAT invoice will be issued and sent to your registered email address.</p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer__grid">
+      <div class="footer__col footer__col--brand">
+        <a href="{% url 'home' %}" class="footer__logo">
+          <img src="{% static 'adminlte/images/logo_full.png' %}" alt="FONTESIN" height="36" style="filter:brightness(0) invert(1);"/>
+        </a>
+        <p class="footer__tagline">Global Business Intelligence Platform</p>
+      </div>
+      <div class="footer__col">
+        <h4>Platform</h4>
+        <a href="{% url 'worldmap' %}">World Map</a>
+        <a href="{% url 'register' %}">Get Started</a>
+        <a href="{% url 'login' %}">Log In</a>
+      </div>
+      <div class="footer__col">
+        <h4>Company</h4>
+        <a href="{% url 'about' %}">About Us</a>
+        <a href="{% url 'career' %}">Careers</a>
+        <a href="{% url 'contact' %}">Contact</a>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span>&copy; 2026 FONTES Inc. All rights reserved.</span>
+      <span>Design by Memento Mori Digital LLC</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(function() {
+    alert('Copied: ' + text);
+  });
+}
+</script>
+</body>
+</html>

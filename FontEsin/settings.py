@@ -15,12 +15,13 @@ print(f"DEBUG mode is {'ON' if DEBUG else 'OFF'}")
 
 
 if DEBUG:
-    ALLOWED_HOSTS = ["localhost", "127.0.0.1","52.53.204.127"]
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1","52.53.204.127","*"]
 else:
     ALLOWED_HOSTS = config(
         "ALLOWED_HOSTS",
         cast=lambda v: [s.strip() for s in v.split(",")],
     )
+
 
 
 # Application definition
@@ -120,6 +121,7 @@ PASSWORD_HASHERS = [
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework.authentication.SessionAuthentication",
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
 
@@ -203,9 +205,9 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-LOGIN_URL = "/admin/login/"
-LOGIN_REDIRECT_URL = "/admin/"
-LOGOUT_REDIRECT_URL = "/admin/login/"
+LOGIN_URL = "/login/"
+LOGIN_REDIRECT_URL = "/dashboard/"
+LOGOUT_REDIRECT_URL = "/login/"
 
 
 STATIC_URL = '/static/'
@@ -293,3 +295,5 @@ MAILERSEND_FROM_NAME = config("MAILERSEND_FROM_NAME", default="FONTESIN")
 VERIFF_API_KEY = config("VERIFF_API_KEY")
 VERIFF_MASTER_SECRET = config("VERIFF_MASTER_SECRET")
 VERIFF_BASE_URL = "https://stationapi.veriff.com"
+VERIFF_WEBHOOK_SECRET = config("VERIFF_WEBHOOK_SECRET")
+VERIFF_CALLBACK_URL = config("VERIFF_CALLBACK_URL", default="http://127.0.0.1:8000/membership/")

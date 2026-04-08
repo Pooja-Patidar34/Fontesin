@@ -19,20 +19,20 @@
 <!-- ===== NAVBAR ===== -->
 <nav class="navbar">
   <div class="navbar__inner">
-    <a href="{% url 'admin:home' %}" class="navbar__logo">
+    <a href="{% url 'home' %}" class="navbar__logo">
       <img src="{% static 'adminlte/images/fontesin-logo.png' %}" alt="FONTESIN" height="38"/>
     </a>
     <div class="navbar__nav">
-      <a href="{% url 'admin:home' %}" class="active">Home</a>
-      <a href="{% url 'admin:worldmap' %}">World Map</a>
-      <a href="{% url 'admin:about' %}">About</a>
-      <a href="{% url 'admin:career' %}">Careers</a>
-      <a href="{% url 'admin:contact' %}">Contact</a>
+      <a href="{% url 'home' %}" class="active">Home</a>
+      <a href="{% url 'worldmap' %}">World Map</a>
+      <a href="{% url 'about' %}">About</a>
+      <a href="{% url 'career' %}">Careers</a>
+      <a href="{% url 'contact' %}">Contact</a>
     </div>
     <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
     <div class="navbar__actions">
-      <a href="{% url 'admin:login' %}" class="btn btn-outline btn-sm">Log In</a>
-      <a href="{% url 'admin:register' %}" class="btn btn-primary btn-sm">Get Started</a>
+      <a href="{% url 'login' %}" class="btn btn-outline btn-sm">Log In</a>
+      <a href="{% url 'register' %}" class="btn btn-primary btn-sm">Get Started</a>
     </div>
   </div>
 </nav>
@@ -48,8 +48,8 @@
       <h1>Global Business<br/><em>Infrastructure</em><br/>Platform</h1>
       <p>FONTESIN is a deep-tech communication and certification platform connecting companies, professionals, and markets across languages, borders, and systems.</p>
       <div class="hero__actions">
-        <a href="{% url 'admin:register' %}" class="btn btn--white btn-lg">Get Started Free</a>
-        <a href="{% url 'admin:worldmap' %}" class="btn btn-outline btn-lg">Explore World Map</a>
+        <a href="{% url 'register' %}" class="btn btn--white btn-lg">Get Started Free</a>
+        <a href="{% url 'worldmap' %}" class="btn btn-outline btn-lg">Explore World Map</a>
       </div>
       <div class="hero__stats">
         <div>
@@ -252,7 +252,7 @@
       </div>
     </div>
     <div style="text-align:center;margin-top:40px;">
-      <a href="register.html" class="btn btn--white btn-lg">Start for Free</a>
+      <a href="{% url 'register' %}" class="btn btn--white btn-lg">Start for Free</a>
     </div>
   </div>
 </section>
@@ -289,9 +289,9 @@
       <div>
         <p class="footer__heading">Company</p>
         <div class="footer__links">
-          <a href="{% url 'admin:about' %}">About Us</a>
-          <a href="{% url 'admin:career' %}">Careers</a>
-          <a href="{% url 'admin:contact' %}">Contact</a>
+          <a href="{% url 'about' %}">About Us</a>
+          <a href="{% url 'career' %}">Careers</a>
+          <a href="{% url 'contact' %}">Contact</a>
         </div>
       </div>
       <div>

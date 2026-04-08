@@ -362,19 +362,19 @@
 <!-- NAVBAR -->
 <nav class="navbar">
   <div class="navbar__inner">
-    <a href="{% url 'admin:home' %}" class="navbar__logo">
+    <a href="{% url 'home' %}" class="navbar__logo">
       <img src="{% static 'adminlte/images/logo_full.png' %}" alt="FONTESIN" height="38" style="filter:brightness(0) invert(1);"/>
     </a>
     <div class="navbar__nav">
-      <a href="{% url 'admin:home' %}">Home</a>
-      <a href="{% url 'admin:worldmap' %}">World Map</a>
-      <a href="{% url 'admin:about' %}">About</a>
-      <a href="{% url 'admin:career' %}">Careers</a>
-      <a href="{% url 'admin:contact' %}">Contact</a>
+      <a href="{% url 'home' %}">Home</a>
+      <a href="{% url 'worldmap' %}">World Map</a>
+      <a href="{% url 'about' %}">About</a>
+      <a href="{% url 'career' %}">Careers</a>
+      <a href="{% url 'contact' %}">Contact</a>
     </div>
     <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
     <div class="navbar__actions">
-      <a href="{% url 'admin:login' %}" class="btn btn-outline btn-sm">Log In</a>
+      <a href="{% url 'login' %}" class="btn btn-outline btn-sm">Log In</a>
     </div>
   </div>
 </nav>
@@ -514,7 +514,7 @@
           </div>
         </div>
         <div class="veriff-modal__actions" style="margin-top:24px;">
-          <a href="/admin/membership/" class="btn-modal-primary" style="text-align:center;text-decoration:none;">
+          <a href="{% url 'membership' %}" class="btn-modal-primary" style="text-align:center;text-decoration:none;">
             Continue to Choose Plan →
           </a>
         </div>
@@ -534,7 +534,7 @@
   <div class="container">
     <div class="footer__grid">
       <div class="footer__col footer__col--brand">
-        <a href="{% url 'admin:home' %}" class="footer__logo">
+        <a href="{% url 'home' %}" class="footer__logo">
           <img src="{% static 'adminlte/images/logo_full.png' %}" height="36" style="filter:brightness(0) invert(1);"/>
         </a>
       </div>
@@ -547,46 +547,48 @@
 /* ─────────────────────────────────────────────
    Veriff integration
    ───────────────────────────────────────────── */
-async function startVerification() {
-  // Open modal and start the visual progress animation immediately
-  document.getElementById('veriffOverlay').classList.add('open');
-  startScanAnimation();
 
+// async function startVerification() {
+//   try {
+//     const response = await fetch("{% url 'veriff-session' %}");
+//     if (!response.ok) throw new Error('Session fetch failed');
+
+//     const data = await response.json();
+
+//     window.location.href = data.session_url;
+
+//   } catch (error) {
+//     console.error(error);
+//     alert("Unable to start verification session.");
+//   }
+// }
+async function startVerification() {
   try {
-    // Fetch session URL from Django backend
-    const response = await fetch("{% url 'admin:veriff-session' %}");
-    if (!response.ok) throw new Error('Session fetch failed: ' + response.status);
+
+    console.log("Starting verification...");
+
+    const response = await fetch("{% url 'veriff-session' %}", {
+      method: "GET",
+      credentials: "same-origin"
+    });
+
+    console.log("Response received:", response);
+
+    if (!response.ok) {
+      throw new Error("Session fetch failed: " + response.status);
+    }
+
     const data = await response.json();
 
-    // Mount Veriff SDK inside #veriff-root
-    const veriff = Veriff({
-      host: 'https://stationapi.veriff.com',
-      apiKey: '{{ VERIFF_PUBLIC_KEY }}',
-      parentId: 'veriff-root',
-      onSession: function(err, response) {
-        // Called when SDK creates/receives the session — pass our pre-created URL
-        if (err) { console.error('Veriff session error', err); return; }
-      }
-    });
+    console.log("Session data:", data);
 
-    veriff.setParams({ sessionUrl: data.session_url });
-
-    // Listen for Veriff events
-    veriff.mount({
-      submitBtnText: 'Verify My Identity'
-    });
-
-    // Veriff fires custom DOM events for status changes
-    document.getElementById('veriff-root').addEventListener('veriff-event', function(e) {
-      if (e.detail && (e.detail.status === 'FINISHED' || e.detail.status === 'SUBMITTED')) {
-        confirmVerification();
-      }
-    });
+    window.location.href = data.session_url;
 
   } catch (error) {
-    console.error('Verification failed:', error);
-    alert('Unable to start verification session. Please try again.');
-    closeVeriffModal();
+
+    console.error("Verification error:", error);
+    alert("Unable to start verification session.");
+
   }
 }
 
