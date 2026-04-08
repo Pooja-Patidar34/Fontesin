@@ -107,14 +107,26 @@
       font-size: .75rem;
       flex-shrink: 0;
     }
-    .alert-danger {
+    .alert {
       margin-bottom: 16px;
       padding: 12px 16px;
       border-radius: 8px;
       font-size: .88rem;
+    }
+    .alert-danger, .alert-error {
       background: rgba(239,68,68,.1);
       color: #ef4444;
       border: 1px solid rgba(239,68,68,.25);
+    }
+    .alert-success {
+      background: rgba(22,163,74,.1);
+      color: #16a34a;
+      border: 1px solid rgba(22,163,74,.25);
+    }
+    .alert-info {
+      background: rgba(43,125,233,.1);
+      color: #2b7de9;
+      border: 1px solid rgba(43,125,233,.25);
     }
     @media (max-width: 700px) {
       .auth-split { grid-template-columns: 1fr; }
@@ -157,7 +169,7 @@
       <!-- ✅ Exact same messages block as the working template -->
       {% if messages %}
         {% for message in messages %}
-          <div class="alert-danger">{{ message }}</div>
+          <div class="alert alert-{{ message.tags }}">{{ message }}</div>
         {% endfor %}
       {% endif %}
 

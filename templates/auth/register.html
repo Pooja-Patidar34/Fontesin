@@ -183,7 +183,7 @@
 
     <div class="reg-card">
 
-      <!-- Error Messages -->
+      <!-- Messages -->
       {% if messages %}
       <div style="margin-bottom: 20px;">
         {% for message in messages %}
@@ -192,10 +192,12 @@
           border-radius: 8px;
           font-size: .88rem;
           font-weight: 500;
-          {% if message.tags == 'error' %}
-            background: #fef2f2; color: #dc2626; border: 1px solid #fecaca;
-          {% else %}
+          {% if message.tags == 'success' %}
             background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0;
+          {% elif message.tags == 'info' %}
+            background: rgba(43,125,233,.1); color: #2b7de9; border: 1px solid rgba(43,125,233,.25);
+          {% else %}
+            background: #fef2f2; color: #dc2626; border: 1px solid #fecaca;
           {% endif %}
         ">
           {{ message }}

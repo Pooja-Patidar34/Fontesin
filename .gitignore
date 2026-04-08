@@ -11,3 +11,6 @@ htmlcov/
 venv/
 deploy.sh
 staticfiles/
+
+# Images
+static/adminlte/images/

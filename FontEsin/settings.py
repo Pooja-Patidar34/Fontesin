@@ -14,13 +14,12 @@ DEBUG = config("DEBUG", default="True").lower() == "true"
 print(f"DEBUG mode is {'ON' if DEBUG else 'OFF'}")
 
 
-if DEBUG:
-    ALLOWED_HOSTS = ["localhost", "127.0.0.1","52.53.204.127","*"]
-else:
-    ALLOWED_HOSTS = config(
-        "ALLOWED_HOSTS",
-        cast=lambda v: [s.strip() for s in v.split(",")],
-    )
+ALLOWED_HOSTS = config(
+    "ALLOWED_HOSTS",
+    default="localhost,127.0.0.1",
+    cast=lambda v: [s.strip().strip('"').strip("'").strip("[").strip("]") for s in v.split(",") if s.strip()],
+)
+print(f"ALLOWED_HOSTS = {ALLOWED_HOSTS}")
 
 
 
@@ -137,8 +136,8 @@ REST_FRAMEWORK = {
     ),
 
     "DEFAULT_THROTTLE_RATES": {
-        "anon": "60/min",
-        "user": "120/min",
+        "anon": "100/min",
+        "user": "200/min",
     },
 }
 
@@ -294,6 +293,6 @@ MAILERSEND_FROM_NAME = config("MAILERSEND_FROM_NAME", default="FONTESIN")
 
 VERIFF_API_KEY = config("VERIFF_API_KEY")
 VERIFF_MASTER_SECRET = config("VERIFF_MASTER_SECRET")
-VERIFF_BASE_URL = "https://stationapi.veriff.com"
+VERIFF_BASE_URL= config("VERIFF_BASE_URL")
 VERIFF_WEBHOOK_SECRET = config("VERIFF_WEBHOOK_SECRET")
 VERIFF_CALLBACK_URL = config("VERIFF_CALLBACK_URL", default="http://127.0.0.1:8000/membership/")

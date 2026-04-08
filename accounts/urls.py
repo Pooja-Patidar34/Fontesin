@@ -11,7 +11,7 @@ from .view.website import home, about, worldmap, career, contact, membership, se
 from .view.regions import region_us, region_de, region_cz, region_ae, region_jp
 from .view.veriff import CreateVeriffSessionAPIView
 from .view.webhook import veriff_webhook
-from billing.views import invoice_list, payment_list, payment_approve, payment_reject, subscription_list
+from billing.views import invoice_list, payment_list, payment_approve, payment_reject, subscription_list, plan_edit, plan_toggle
 from .view.search import global_search
 
 
@@ -43,6 +43,8 @@ urlpatterns = [
     path("register/", register_view, name="register"),
     path("profile/", profile_view, name="profile"),
     path("subscriptions/", subscription_list, name="subscriptions"),
+    path("subscriptions/<int:plan_id>/edit/", plan_edit, name="plan-edit"),
+    path("subscriptions/<int:plan_id>/toggle/", plan_toggle, name="plan-toggle"),
     path("invoices/", invoice_list, name="invoices"),
     path("payments/", payment_list, name="payments"),
     path("payments/<int:subscription_id>/approve/", payment_approve, name="payment-approve"),

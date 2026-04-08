@@ -1,3 +1,6 @@
+import json
+import logging
+
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -5,9 +8,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.utils import timezone
 from django.views.decorators.http import require_POST
+from django.http import JsonResponse
 
 from django.db import models
 from billing.models import Invoice, Subscription, CommercialPlan
+
+logger = logging.getLogger("technical")
 
 
 @login_required
@@ -155,3 +161,71 @@ def subscription_list(request):
         "total_revenue": total_revenue,
         "active_menu": "subscriptions",
     })
+
+
+@login_required
+@require_POST
+def plan_toggle(request, plan_id):
+    if not request.user.is_superuser:
+        raise PermissionDenied()
+
+    try:
+        plan = get_object_or_404(CommercialPlan, id=plan_id)
+        plan.is_active = not plan.is_active
+        plan.save(update_fields=["is_active"])
+
+        status = "activated" if plan.is_active else "deactivated"
+        messages.success(request, f"Plan '{plan.name}' has been {status}.")
+    except Exception as e:
+        logger.error("Error toggling plan %s: %s", plan_id, e)
+        messages.error(request, "Failed to update plan status.")
+
+    return redirect("subscriptions")
+
+
+@login_required
+@require_POST
+def plan_edit(request, plan_id):
+    if not request.user.is_superuser:
+        raise PermissionDenied()
+
+    try:
+        plan = get_object_or_404(CommercialPlan, id=plan_id)
+
+        plan.name = request.POST.get("name", plan.name).strip()
+        plan.tagline = request.POST.get("tagline", plan.tagline).strip()
+        plan.best_for = request.POST.get("best_for", plan.best_for).strip()
+
+        price = request.POST.get("price")
+        if price:
+            plan.price = round(float(price), 2)
+
+        original_price = request.POST.get("original_price")
+        if original_price:
+            plan.original_price = round(float(original_price), 2)
+        elif original_price == "":
+            plan.original_price = None
+
+        billing_period = request.POST.get("billing_period")
+        if billing_period in ("monthly", "yearly"):
+            plan.billing_period = billing_period
+
+        plan.is_popular = request.POST.get("is_popular") == "on"
+
+        features_raw = request.POST.get("features", "").strip()
+        if features_raw:
+            plan.features = [f.strip() for f in features_raw.split("\n") if f.strip()]
+        else:
+            plan.features = []
+
+        plan.save()
+        messages.success(request, f"Plan '{plan.name}' updated successfully.")
+
+    except (ValueError, TypeError) as e:
+        logger.error("Invalid data editing plan %s: %s", plan_id, e)
+        messages.error(request, "Invalid data provided. Please check your input.")
+    except Exception as e:
+        logger.error("Error editing plan %s: %s", plan_id, e)
+        messages.error(request, "Failed to update plan.")
+
+    return redirect("subscriptions")
