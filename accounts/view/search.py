@@ -12,27 +12,25 @@ def global_search(request):
     if not q:
         return redirect("dashboard")
 
-    if request.user.is_superuser:
-        companies = Company.objects.filter(
-            Q(name__icontains=q) | Q(city__icontains=q) | Q(country__icontains=q)
-        ).select_related("tenant")[:20]
+    MAX_QUERY_LENGTH = 100
+    if len(q) > MAX_QUERY_LENGTH:
+        q = q[:MAX_QUERY_LENGTH]
 
-        users = User.objects.filter(
-            Q(email__icontains=q) | Q(first_name__icontains=q) | Q(last_name__icontains=q)
-        ).select_related("tenant")[:20]
-    else:
+    company_qs = Company.objects.all()
+    user_qs = User.objects.all()
+
+    if not request.user.is_superuser:
         tenant = request.user.tenant
-        companies = Company.objects.filter(
-            tenant=tenant
-        ).filter(
-            Q(name__icontains=q) | Q(city__icontains=q) | Q(country__icontains=q)
-        )[:20]
+        company_qs = company_qs.filter(tenant=tenant)
+        user_qs = user_qs.filter(tenant=tenant)
 
-        users = User.objects.filter(
-            tenant=tenant
-        ).filter(
-            Q(email__icontains=q) | Q(first_name__icontains=q) | Q(last_name__icontains=q)
-        )[:20]
+    companies = company_qs.filter(
+        Q(name__icontains=q) | Q(city__icontains=q) | Q(country__icontains=q)
+    ).select_related("tenant")[:20]
+
+    users = user_qs.filter(
+        Q(email__icontains=q) | Q(first_name__icontains=q) | Q(last_name__icontains=q)
+    ).select_related("tenant")[:20]
 
     return render(request, "dashboard/search.html", {
         "q": q,

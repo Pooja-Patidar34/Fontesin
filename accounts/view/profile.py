@@ -29,8 +29,9 @@ def profile_view(request):
             messages.error(request, "Domain is required.")
             return redirect("profile")
 
-        # Check if domain already exists
-        if Tenant.objects.filter(domain=domain).exists():
+        # Check if domain already exists (case-insensitive)
+        domain = domain.lower()
+        if Tenant.objects.filter(domain__iexact=domain).exists():
             messages.error(request, "This domain is already taken.")
             return redirect("profile")
 

@@ -114,8 +114,8 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 PASSWORD_HASHERS = [
-    "django.contrib.auth.hashers.Argon2PasswordHasher",
     "django.contrib.auth.hashers.PBKDF2PasswordHasher",
+    "django.contrib.auth.hashers.Argon2PasswordHasher",
 ]
 
 REST_FRAMEWORK = {
@@ -288,6 +288,7 @@ DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@fontesin.com"
 
 # MailerSend
 MAILERSEND_API_KEY = config("MAILERSEND_API_KEY", default="")
+MAILERSEND_API_URL = config("MAILERSEND_API_URL", default="https://api.mailersend.com/v1/email")
 MAILERSEND_FROM_EMAIL = config("MAILERSEND_FROM_EMAIL", default="noreply@fontesin.com")
 MAILERSEND_FROM_NAME = config("MAILERSEND_FROM_NAME", default="FONTESIN")
 

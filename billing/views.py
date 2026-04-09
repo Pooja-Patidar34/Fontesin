@@ -141,14 +141,12 @@ def subscription_list(request):
     if not request.user.is_superuser:
         raise PermissionDenied()
 
-    plans = CommercialPlan.objects.all()
-
-    # Attach subscriber counts to each plan
-    for plan in plans:
-        plan.active_count = Subscription.objects.filter(plan=plan, status="active").count()
-        plan.trial_count = Subscription.objects.filter(plan=plan, status="trial").count()
-        plan.pending_count = Subscription.objects.filter(plan=plan, status="created").count()
-        plan.total_count = Subscription.objects.filter(plan=plan).count()
+    plans = CommercialPlan.objects.annotate(
+        active_count=models.Count("subscription", filter=models.Q(subscription__status="active")),
+        trial_count=models.Count("subscription", filter=models.Q(subscription__status="trial")),
+        pending_count=models.Count("subscription", filter=models.Q(subscription__status="created")),
+        total_count=models.Count("subscription"),
+    )
 
     total_active = Subscription.objects.filter(status="active").count()
     total_revenue = Invoice.objects.filter(status="paid").aggregate(

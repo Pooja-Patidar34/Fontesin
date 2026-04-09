@@ -1,4 +1,5 @@
 import logging
+import threading
 import requests
 from django.conf import settings
 
@@ -6,6 +7,14 @@ logger = logging.getLogger("technical")
 
 
 def send_otp_email(to_email, first_name, otp):
+    """
+    Send OTP email via MailerSend API in a background thread for faster response.
+    """
+    thread = threading.Thread(target=_send_otp_email, args=(to_email, first_name, otp))
+    thread.start()
+
+
+def _send_otp_email(to_email, first_name, otp):
     """
     Send OTP email via MailerSend API.
     """
@@ -55,8 +64,9 @@ def send_otp_email(to_email, first_name, otp):
             ),
         }
 
+        api_url = settings.MAILERSEND_API_URL
         response = requests.post(
-            "https://api.mailersend.com/v1/email",
+            api_url,
             headers={
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
