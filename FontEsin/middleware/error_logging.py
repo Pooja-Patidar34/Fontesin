@@ -28,7 +28,7 @@ class ErrorLoggingMiddleware:
             user_id = None
             tenant_id = None
 
-            if request.user.is_authenticated:
+            if hasattr(request, "user") and request.user.is_authenticated:
                 user_id = request.user.id
                 tenant_id = getattr(request.user, "tenant_id", None)
 

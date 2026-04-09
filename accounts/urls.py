@@ -1,4 +1,6 @@
 from django.urls import path
+from .view.auth import admin_login, admin_logout,register_view,identity_verification_view,apply_view,apply_submit,apply_review_view
+from .view.profile import profile_view
 from .view.auth import admin_login, admin_logout, register_view, identity_verification_view, forgot_password, verify_otp, reset_password
 from .view.dashboard import dashboard
 from accounts.view.company import company_list, toggle_company,company_detail_ajax,company_delete
@@ -9,6 +11,8 @@ from .view.website import home, about, worldmap, career, contact, membership, se
 from .view.regions import region_us, region_de, region_cz, region_ae, region_jp
 from .view.veriff import CreateVeriffSessionAPIView
 from .view.webhook import veriff_webhook
+from billing.views import invoice_list, payment_list, payment_approve, payment_reject, subscription_list, plan_edit, plan_toggle
+from .view.search import global_search
 
 
 urlpatterns = [
@@ -37,6 +41,15 @@ urlpatterns = [
     path("users/add/", add_user, name="add-user"),
     path("companies/<uuid:company_id>/delete/", company_delete, name="company-delete"),
     path("register/", register_view, name="register"),
+    path("profile/", profile_view, name="profile"),
+    path("subscriptions/", subscription_list, name="subscriptions"),
+    path("subscriptions/<int:plan_id>/edit/", plan_edit, name="plan-edit"),
+    path("subscriptions/<int:plan_id>/toggle/", plan_toggle, name="plan-toggle"),
+    path("invoices/", invoice_list, name="invoices"),
+    path("payments/", payment_list, name="payments"),
+    path("payments/<int:subscription_id>/approve/", payment_approve, name="payment-approve"),
+    path("payments/<int:subscription_id>/reject/", payment_reject, name="payment-reject"),
+    path("search/", global_search, name="global-search"),
     path("forgot-password/", forgot_password, name="forgot-password"),
     path("verify-otp/", verify_otp, name="verify-otp"),
     path("reset-password/", reset_password, name="reset-password"),
@@ -65,5 +78,8 @@ urlpatterns = [
     #veriff
     path("veriff/session/", CreateVeriffSessionAPIView.as_view(),name="veriff-session",),
     path("verify/", identity_verification_view, name="identity-verification"),
+    path("apply/", apply_view, name="apply"),
+    path("apply/submit/", apply_submit, name="apply-submit"),
+    path("apply-review/", apply_review_view, name="apply-review"),
 ]
 

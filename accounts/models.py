@@ -3,7 +3,8 @@ import uuid
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.auth.base_user import BaseUserManager
 from django.utils.text import slugify
-from accounts.constants import CompanyClassificationChoices
+from accounts.constants import CompanyClassificationChoices, CountryChoices, LanguageChoices
+from django.utils import timezone
 
 
 class Tenant(models.Model):
@@ -11,6 +12,7 @@ class Tenant(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
     slug = models.SlugField(unique=True)
+    domain = models.CharField(max_length=255, null=True, blank=True, unique=True)
 
     is_active = models.BooleanField(default=True)
 
@@ -194,6 +196,7 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     tenant = models.ForeignKey(
@@ -231,7 +234,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     gender = models.CharField(max_length=20, null=True, blank=True)
 
     # ---- Profile ----
-    preferred_language = models.CharField(max_length=10, null=True, blank=True)
+    preferred_language = models.CharField(max_length=10, choices=LanguageChoices.CHOICES, null=True, blank=True)
     bio = models.TextField(null=True, blank=True)
     notes = models.TextField(null=True, blank=True)
     photo_url = models.URLField(max_length=500, null=True, blank=True)
@@ -242,7 +245,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     city = models.CharField(max_length=150, null=True, blank=True)
     state_region = models.CharField(max_length=150, null=True, blank=True)
     postal_code = models.CharField(max_length=20, null=True, blank=True)
-    country = models.CharField(max_length=100, null=True, blank=True)
+    country = models.CharField(max_length=100, choices=CountryChoices.CHOICES, null=True, blank=True)
 
     owner = models.ForeignKey("self",null=True,blank=True,related_name="commercial_children",on_delete=models.SET_NULL)
 
@@ -255,6 +258,35 @@ class User(AbstractBaseUser, PermissionsMixin):
     consultant_sub_role = models.CharField(max_length=20,null=True,blank=True)
 
     subscription_plan = models.CharField(max_length=20,null=True,blank=True)
+
+    # ---- Application Fields ----
+    nationality = models.CharField(max_length=100, null=True, blank=True)
+    linkedin_url = models.URLField(max_length=500, null=True, blank=True)
+    current_position = models.CharField(max_length=255, null=True, blank=True)
+    years_of_experience = models.CharField(max_length=50, null=True, blank=True)
+    primary_industry = models.CharField(max_length=100, null=True, blank=True)
+    professional_summary = models.TextField(null=True, blank=True)
+
+    # Company info from application
+    applied_company_name = models.CharField(max_length=255, null=True, blank=True)
+    applied_company_reg_number = models.CharField(max_length=100, null=True, blank=True)
+    applied_country_of_incorporation = models.CharField(max_length=100, null=True, blank=True)
+    applied_legal_form = models.CharField(max_length=100, null=True, blank=True)
+    applied_year_founded = models.IntegerField(null=True, blank=True)
+    applied_num_employees = models.CharField(max_length=50, null=True, blank=True)
+    applied_company_website = models.URLField(max_length=500, null=True, blank=True)
+
+    # Role-specific
+    target_region = models.CharField(max_length=255, null=True, blank=True)
+    franchise_type = models.CharField(max_length=100, null=True, blank=True)
+    motivation = models.TextField(null=True, blank=True)
+    network_connections = models.TextField(null=True, blank=True)
+    expected_companies = models.CharField(max_length=100, null=True, blank=True)
+    reference_1 = models.CharField(max_length=255, null=True, blank=True)
+    reference_2 = models.CharField(max_length=255, null=True, blank=True)
+
+    # Application status
+    application_status = models.CharField(max_length=20, default="pending", null=True, blank=True)
 
     # ---- Security / KYC ----
     kyc_id_hash = models.CharField(max_length=255, null=True, blank=True)
@@ -279,6 +311,58 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+
+class DueDiligence(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    user = models.OneToOneField(
+        "User",
+        on_delete=models.CASCADE,
+        related_name="due_diligence"
+    )
+
+    # Q1: Criminal offence
+    criminal_offence = models.CharField(max_length=10, default="no")
+    criminal_offence_details = models.TextField(null=True, blank=True)
+
+    # Q2: Regulatory sanctions
+    regulatory_sanctions = models.CharField(max_length=10, default="no")
+    regulatory_sanctions_details = models.TextField(null=True, blank=True)
+
+    # Q3: Politically Exposed Person
+    is_pep = models.CharField(max_length=10, default="no")
+
+    # Q4: Insolvency history
+    insolvency_history = models.CharField(max_length=10, default="no")
+    insolvency_history_details = models.TextField(null=True, blank=True)
+
+    # Q5: Financial resources
+    sufficient_financial_resources = models.CharField(max_length=10, default="yes")
+
+    # Q6: Legal disputes
+    pending_legal_disputes = models.CharField(max_length=10, default="no")
+    pending_legal_disputes_details = models.TextField(null=True, blank=True)
+
+    # Q7: Competitor interest
+    competitor_interest = models.CharField(max_length=10, default="no")
+    competitor_interest_details = models.TextField(null=True, blank=True)
+
+    # Q8: Contractual obligations
+    contractual_obligations = models.CharField(max_length=10, default="no")
+    contractual_obligations_details = models.TextField(null=True, blank=True)
+
+    # Declarations
+    declared_truthful = models.BooleanField(default=False)
+    declared_update = models.BooleanField(default=False)
+    accepted_terms = models.BooleanField(default=False)
+    consented_aml = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"DueDiligence - {self.user.email}"
 
 
 class Permission(models.Model):
@@ -408,3 +492,15 @@ class CertificationLog(models.Model):
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class PasswordResetToken(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="password_reset_tokens")
+    token = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+
+    def is_valid(self):
+        return not self.is_used and timezone.now() < self.expires_at

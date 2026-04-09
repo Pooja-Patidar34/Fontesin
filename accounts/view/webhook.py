@@ -1,12 +1,13 @@
-# views.py
 import hashlib
 import hmac
 import json
+import logging
 
 from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
+logger = logging.getLogger("technical")
 
 
 @csrf_exempt
@@ -15,7 +16,7 @@ def veriff_webhook(request):
     if request.method != "POST":
         return JsonResponse({"error": "Invalid request"}, status=405)
 
-    print("Received webhook from Veriff")
+    logger.info("Received webhook from Veriff")
 
     signature = request.headers.get("X-HMAC-SIGNATURE")
 
@@ -31,13 +32,13 @@ def veriff_webhook(request):
     ).hexdigest()
 
     if signature != expected_signature:
-        print("Invalid signature")
+        logger.warning("Invalid Veriff webhook signature")
         return JsonResponse({"error": "Invalid signature"}, status=400)
 
     data = json.loads(payload)
 
-    print("Webhook verified successfully")
-    print("Webhook payload:", data)
+    logger.info("Webhook verified successfully")
+    logger.debug("Webhook payload: %s", data)
 
     # EVENT WEBHOOK (submitted, started etc.)
     if "action" in data:
@@ -46,10 +47,7 @@ def veriff_webhook(request):
         session_id = data.get("id")
         vendor_data = data.get("vendorData")
 
-        print("Event webhook received")
-        print("Action:", action)
-        print("Session ID:", session_id)
-        print("VendorData:", vendor_data)
+        logger.info("Event webhook received - Action: %s, Session: %s, VendorData: %s", action, session_id, vendor_data)
 
         return JsonResponse({"success": True})
 
@@ -63,25 +61,19 @@ def veriff_webhook(request):
         verification_status = verification.get("status")
         vendor_data = verification.get("vendorData")
 
-        print("Decision webhook received")
-        print("Session ID:", session_id)
-        print("Status:", verification_status)
-        print("VendorData:", vendor_data)
+        logger.info("Decision webhook received - Session: %s, Status: %s, VendorData: %s", session_id, verification_status, vendor_data)
 
-        # Example DB update logic
         from django.contrib.auth import get_user_model
         User = get_user_model()
 
         try:
             user = User.objects.get(id=vendor_data)
-
             user.verification_status = verification_status
-            user.save()
-
-            print("User verification updated successfully")
+            user.save(update_fields=["verification_status"])
+            logger.info("User %s verification updated to %s", vendor_data, verification_status)
 
         except User.DoesNotExist:
-            print("User not found:", vendor_data)
+            logger.error("User not found for vendor_data: %s", vendor_data)
 
         return JsonResponse({"success": True})
 

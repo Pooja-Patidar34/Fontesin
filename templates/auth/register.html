@@ -183,7 +183,7 @@
 
     <div class="reg-card">
 
-      <!-- Error Messages -->
+      <!-- Messages -->
       {% if messages %}
       <div style="margin-bottom: 20px;">
         {% for message in messages %}
@@ -192,10 +192,12 @@
           border-radius: 8px;
           font-size: .88rem;
           font-weight: 500;
-          {% if message.tags == 'error' %}
-            background: #fef2f2; color: #dc2626; border: 1px solid #fecaca;
-          {% else %}
+          {% if message.tags == 'success' %}
             background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0;
+          {% elif message.tags == 'info' %}
+            background: rgba(43,125,233,.1); color: #2b7de9; border: 1px solid rgba(43,125,233,.25);
+          {% else %}
+            background: #fef2f2; color: #dc2626; border: 1px solid #fecaca;
           {% endif %}
         ">
           {{ message }}
@@ -256,19 +258,18 @@
             <label class="form-label">Country *</label>
             <select name="country" id="reg-country" class="form-control">
               <option value="">Select your country...</option>
-              <option value="IN">India</option>
-              <option value="US">United States</option>
-              <option value="DE">Germany</option>
-              <option value="GB">United Kingdom</option>
+              {% for code, label in country_choices %}
+              <option value="{{ code }}">{{ label }}</option>
+              {% endfor %}
             </select>
           </div>
 
           <div class="form-group">
             <label class="form-label">Preferred Language</label>
             <select name="language" class="form-control">
-              <option value="en">English</option>
-              <option value="de">German</option>
-              <option value="fr">French</option>
+              {% for code, label in language_choices %}
+              <option value="{{ code }}">{{ label }}</option>
+              {% endfor %}
             </select>
           </div>
 
@@ -313,7 +314,7 @@
             <div class="role-grid">
 
               <label class="role-option">
-                <input type="radio" name="role" value="business_user" checked/>
+                <input type="radio" name="role" value="business_user" checked onchange="toggleOthersOption()"/>
                 <div>
                   <div class="role-option__label">🏢 Business User</div>
                   <div class="role-option__desc">Register & certify my company</div>
@@ -321,7 +322,7 @@
               </label>
 
               <label class="role-option">
-                <input type="radio" name="role" value="consultant"/>
+                <input type="radio" name="role" value="consultant" onchange="toggleOthersOption()"/>
                 <div>
                   <div class="role-option__label">💼 Consultant</div>
                   <div class="role-option__desc">Advise companies in my region</div>
@@ -329,7 +330,7 @@
               </label>
 
               <label class="role-option">
-                <input type="radio" name="role" value="coordinator"/>
+                <input type="radio" name="role" value="coordinator" onchange="toggleOthersOption()"/>
                 <div>
                   <div class="role-option__label">🌍 Coordinator</div>
                   <div class="role-option__desc">Coordinate regional operations</div>
@@ -337,7 +338,7 @@
               </label>
 
               <label class="role-option">
-                <input type="radio" name="role" value="franchise"/>
+                <input type="radio" name="role" value="franchise" onchange="toggleOthersOption()"/>
                 <div>
                   <div class="role-option__label">🚀 Franchise Partner</div>
                   <div class="role-option__desc">Master / National / Local franchise</div>
@@ -349,12 +350,16 @@
 
           <div class="form-group">
             <label class="form-label">Company (Optional)</label>
-            <select name="company_id" class="form-control">
+            <select name="company_id" id="reg-company" class="form-control" onchange="toggleOthersCompany()">
               <option value="">Select Company</option>
               {% for company in companies %}
               <option value="{{ company.id }}">{{ company.name }}</option>
               {% endfor %}
+              <option value="others" id="others-option">Others</option>
             </select>
+            <small id="others-hint" style="display:none; color: var(--text-secondary); margin-top:6px;">
+              You can create your own company from your profile after registration.
+            </small>
           </div>
 
           <div class="form-group">
@@ -464,6 +469,30 @@
         .catch(function(err) { console.warn("[PWA] SW registration failed:", err); });
     });
   }
+
+  window.toggleOthersCompany = function() {
+    var sel = document.getElementById('reg-company');
+    var hint = document.getElementById('others-hint');
+    hint.style.display = sel.value === 'others' ? 'block' : 'none';
+  };
+
+  window.toggleOthersOption = function() {
+    var role = document.querySelector('input[name="role"]:checked');
+    var othersOpt = document.getElementById('others-option');
+    var sel = document.getElementById('reg-company');
+    var hint = document.getElementById('others-hint');
+
+    if (role && role.value === 'business_user') {
+      othersOpt.style.display = '';
+    } else {
+      othersOpt.style.display = 'none';
+      // Reset selection if "others" was selected
+      if (sel.value === 'others') {
+        sel.value = '';
+        hint.style.display = 'none';
+      }
+    }
+  };
 
   window.goToPhase = function(num) {
     // if (num === 2) {

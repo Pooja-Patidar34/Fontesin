@@ -477,11 +477,20 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   document.querySelectorAll(".view-company-btn").forEach(btn => {
-    btn.addEventListener("click", function () {
-      fetch(this.dataset.url)
-        .then(res => res.json())
-        .then(data => {
-          const c = data.company;
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var url = this.dataset.url;
+      console.log("View URL:", url);
+      fetch(url, { credentials: "same-origin" })
+        .then(function(res) {
+          console.log("View response status:", res.status);
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          return res.json();
+        })
+        .then(function(data) {
+          console.log("View data:", data);
+          var c = data.company;
 
           idField.value = c.id;
           if (tenantField) tenantField.value = c.tenant;
@@ -489,7 +498,6 @@ document.addEventListener("DOMContentLoaded", function () {
           regField.value = c.registration_id || "";
           activeField.checked = c.is_active;
 
-          // ===== ADDED FIELD POPULATION =====
           document.getElementById("id_classification").value = c.classification || "";
           document.getElementById("id_address_line1").value = c.address_line1 || "";
           document.getElementById("id_address_line2").value = c.address_line2 || "";
@@ -505,18 +513,26 @@ document.addEventListener("DOMContentLoaded", function () {
           title.innerText = "Company Details";
           setReadonly(true);
           modal.modal('show');
-      });
+        })
+        .catch(function(err) { console.error("View error:", err); });
     });
   });
 
   document.querySelectorAll(".edit-company-btn").forEach(btn => {
-    btn.addEventListener("click", function () {
-
-      fetch(this.dataset.url)
-        .then(res => res.json())
-        .then(data => {
-
-          const c = data.company;
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var url = this.dataset.url;
+      console.log("Edit URL:", url);
+      fetch(url, { credentials: "same-origin" })
+        .then(function(res) {
+          console.log("Edit response status:", res.status);
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          return res.json();
+        })
+        .then(function(data) {
+          console.log("Edit data:", data);
+          var c = data.company;
 
           idField.value = c.id;
           if (tenantField) tenantField.value = c.tenant;
@@ -537,12 +553,10 @@ document.addEventListener("DOMContentLoaded", function () {
           document.getElementById("id_website").value = c.website || "";
 
           title.innerText = "Edit Company";
-
           setReadonly(false);
-
           modal.modal('show');
-        });
-
+        })
+        .catch(function(err) { console.error("Edit error:", err); });
     });
   });
 

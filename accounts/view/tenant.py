@@ -82,10 +82,19 @@ technical_logger = logging.getLogger("technical")
 @login_required
 def tenant_list(request):
 
-    if not request.user.is_superuser:
+    is_business_user = (
+        request.user.role
+        and request.user.role.code
+        and request.user.role.code.lower() == "business_user"
+    )
+
+    if not request.user.is_superuser and not is_business_user:
         raise PermissionDenied()
 
     if request.method == "POST":
+
+        if not request.user.is_superuser:
+            raise PermissionDenied()
 
         tenant_id = request.POST.get("tenant_id")
 
@@ -124,7 +133,11 @@ def tenant_list(request):
     # SEARCH
     q = request.GET.get("q", "").strip()
 
-    qs = Tenant.objects.filter(is_deleted=False)
+    # Business user: only see their own tenant
+    if is_business_user:
+        qs = Tenant.objects.filter(id=request.user.tenant_id, is_deleted=False)
+    else:
+        qs = Tenant.objects.filter(is_deleted=False)
 
     if q:
         qs = qs.filter(name__icontains=q)
@@ -151,6 +164,7 @@ def tenant_list(request):
             "form": form,
             "active_menu": "tenants",
             "search_query": q,
+            "is_business_user": is_business_user,
         },
     )
 
@@ -189,7 +203,16 @@ def toggle_tenant(request, tenant_id):
 
 @login_required
 def tenant_detail_ajax(request, tenant_id):
-    if not request.user.is_superuser:
+    is_business_user = (
+        request.user.role
+        and request.user.role.code
+        and request.user.role.code.lower() == "business_user"
+    )
+
+    if not request.user.is_superuser and not is_business_user:
+        raise PermissionDenied()
+
+    if is_business_user and str(tenant_id) != str(request.user.tenant_id):
         raise PermissionDenied()
 
     tenant = get_object_or_404(Tenant, id=tenant_id)

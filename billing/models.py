@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.db import models
 from accounts.models import User
 from django.db.models import Q
@@ -31,7 +32,7 @@ class CommercialPlan(models.Model):
         ("yearly", "Yearly"),
     ]
 
-    code = models.CharField(max_length=30, unique=True, default="")
+    code = models.CharField(max_length=30, unique=True)
     name = models.CharField(max_length=100)
     tagline = models.CharField(max_length=200, blank=True, default="")
     icon = models.CharField(max_length=10, blank=True, default="")
@@ -71,7 +72,7 @@ class CommercialPlan(models.Model):
     @property
     def monthly_price(self):
         if self.price and self.billing_period == "yearly":
-            return round(self.price / 12, 2)
+            return (self.price / Decimal("12")).quantize(Decimal("0.01"))
         return self.price
 
     @property
@@ -208,7 +209,7 @@ class Payment(models.Model):
         on_delete=models.CASCADE
     )
 
-    transaction_id = models.CharField(max_length=255)
+    transaction_id = models.CharField(max_length=255, unique=True)
 
     webhook_event_id = models.CharField(
         max_length=255,

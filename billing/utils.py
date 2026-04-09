@@ -16,33 +16,33 @@ def get_active_subscription(user):
     )
 
 
-def get_user_plan(user):
+def get_user_plan(user, subscription=None):
     """Get the user's current CommercialPlan or None."""
-    sub = get_active_subscription(user)
-    return sub.plan if sub else None
+    if subscription is None:
+        subscription = get_active_subscription(user)
+    return subscription.plan if subscription else None
 
 
-def get_plan_feature(user, feature_key):
+def get_plan_feature(user, feature_key, plan=None):
     """
     Get a specific feature value from the user's plan comparison data.
     Returns False if user has no plan or feature doesn't exist.
     """
-    plan = get_user_plan(user)
+    if plan is None:
+        plan = get_user_plan(user)
     if not plan or not plan.comparison:
         return False
     return plan.comparison.get(feature_key, False)
 
 
-def has_plan_feature(user, feature_key):
+def has_plan_feature(user, feature_key, plan=None):
     """
     Check if user's plan grants access to a feature.
-    Returns True if the feature value is truthy (True, a string, a number > 0).
-    Returns False if the value is False, None, or empty.
+    Returns True if the feature value is truthy (True, a non-empty string, a number > 0).
+    Returns False if the value is False, None, 0, or empty.
     """
-    value = get_plan_feature(user, feature_key)
-    if value is False or value is None:
-        return False
-    return True
+    value = get_plan_feature(user, feature_key, plan=plan)
+    return bool(value)
 
 
 # ── Plan hierarchy for tier checks ──
@@ -54,9 +54,10 @@ PLAN_TIERS = {
 }
 
 
-def get_plan_tier(user):
+def get_plan_tier(user, plan=None):
     """Get the numeric tier level of the user's plan. 0 = free/no plan."""
-    plan = get_user_plan(user)
+    if plan is None:
+        plan = get_user_plan(user)
     if not plan:
         return 0
     return PLAN_TIERS.get(plan.code, 0)
@@ -83,23 +84,26 @@ def requires_plan(min_plan=None, feature=None):
             if request.user.is_superuser:
                 return view_func(request, *args, **kwargs)
 
+            # Fetch plan once for all checks
+            plan = get_user_plan(request.user)
+
             # Check minimum plan tier
             if min_plan:
                 required_tier = PLAN_TIERS.get(min_plan, 0)
-                user_tier = get_plan_tier(request.user)
+                user_tier = get_plan_tier(request.user, plan=plan)
                 if user_tier < required_tier:
                     return render(request, "website/upgrade_required.html", {
                         "required_plan": min_plan,
-                        "current_plan": get_user_plan(request.user),
+                        "current_plan": plan,
                         "feature": feature,
                     })
 
             # Check specific feature
             if feature:
-                if not has_plan_feature(request.user, feature):
+                if not has_plan_feature(request.user, feature, plan=plan):
                     return render(request, "website/upgrade_required.html", {
                         "required_plan": min_plan,
-                        "current_plan": get_user_plan(request.user),
+                        "current_plan": plan,
                         "feature": feature,
                     })
 
@@ -121,11 +125,13 @@ def requires_plan_api(min_plan=None, feature=None):
             if request.user.is_superuser:
                 return view_func(request, *args, **kwargs)
 
+            # Fetch plan once for all checks
+            plan = get_user_plan(request.user)
+
             if min_plan:
                 required_tier = PLAN_TIERS.get(min_plan, 0)
-                user_tier = get_plan_tier(request.user)
+                user_tier = get_plan_tier(request.user, plan=plan)
                 if user_tier < required_tier:
-                    plan = get_user_plan(request.user)
                     return JsonResponse({
                         "error": "Plan upgrade required",
                         "required_plan": min_plan,
@@ -133,8 +139,7 @@ def requires_plan_api(min_plan=None, feature=None):
                     }, status=403)
 
             if feature:
-                if not has_plan_feature(request.user, feature):
-                    plan = get_user_plan(request.user)
+                if not has_plan_feature(request.user, feature, plan=plan):
                     return JsonResponse({
                         "error": "This feature is not available on your current plan",
                         "feature": feature,

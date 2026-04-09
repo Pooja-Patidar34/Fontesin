@@ -1,0 +1,457 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#253D51"/>
+  <title>Application Submitted – FONTESIN</title>
+  <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #f0f5f8; color: #1a2e3b; }
+
+    /* NAV */
+    .review-nav {
+      background: var(--primary-dark, #1B2E3F);
+      padding: 0 32px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+    }
+    .review-nav__logo img { height: 32px; width: auto; filter: brightness(0) invert(1); }
+
+    /* HERO */
+    .review-hero {
+      background: linear-gradient(135deg, #1B2E3F 0%, #253D51 100%);
+      text-align: center;
+      padding: 60px 24px 80px;
+      position: relative;
+    }
+    .review-hero__icon {
+      width: 100px; height: 100px;
+      background: #f59e0b;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 24px;
+      font-size: 2.8rem;
+      color: #fff;
+      box-shadow: 0 8px 32px rgba(245,158,11,.35);
+    }
+    .review-hero__title {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 16px;
+    }
+    .review-hero__desc {
+      color: rgba(255,255,255,.7);
+      font-size: 1rem;
+      line-height: 1.7;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+    .review-hero__desc strong { color: #fff; }
+
+    /* CONTENT */
+    .review-content {
+      max-width: 700px;
+      margin: -40px auto 40px;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* CARDS */
+    .review-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 32px 36px;
+      box-shadow: 0 2px 16px rgba(37,61,81,.06);
+      margin-bottom: 20px;
+    }
+    .review-card__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .review-card__title {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1a2e3b;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: .78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    .status-badge--review {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .status-badge--review::before {
+      content: '';
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #f59e0b;
+    }
+
+    /* INFO ROWS */
+    .review-info { border-top: 1px solid #EEF4F8; }
+    .review-info__row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 0;
+      border-bottom: 1px solid #EEF4F8;
+      font-size: .88rem;
+    }
+    .review-info__label { color: #5F7383; }
+    .review-info__value { font-weight: 600; color: #1a2e3b; }
+    .review-info__ref {
+      background: #f8fafc;
+      border: 1px solid #e5eaf0;
+      border-radius: 6px;
+      padding: 4px 12px;
+      font-family: 'Montserrat', monospace;
+      font-size: .82rem;
+      font-weight: 700;
+      color: #1a2e3b;
+      letter-spacing: .03em;
+    }
+
+    /* TIMELINE */
+    .review-timeline { padding-top: 8px; }
+    .review-timeline__item {
+      display: flex;
+      gap: 16px;
+      padding-bottom: 24px;
+      position: relative;
+    }
+    .review-timeline__item:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 15px;
+      top: 36px;
+      bottom: 0;
+      width: 2px;
+      background: #EEF4F8;
+    }
+    .review-timeline__dot {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .75rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+    }
+    .review-timeline__dot--done { background: #16a34a; color: #fff; }
+    .review-timeline__dot--active { background: #f59e0b; color: #fff; animation: pulse-dot 2s infinite; }
+    .review-timeline__dot--pending { background: #D8E4EC; color: #5F7383; }
+    @keyframes pulse-dot {
+      0%,100% { box-shadow: 0 0 0 0 rgba(245,158,11,.3); }
+      50% { box-shadow: 0 0 0 8px rgba(245,158,11,0); }
+    }
+    .review-timeline__text { padding-top: 2px; }
+    .review-timeline__title { font-weight: 700; font-size: .9rem; color: #1a2e3b; margin-bottom: 4px; }
+    .review-timeline__desc { font-size: .82rem; color: #5F7383; line-height: 1.5; margin-bottom: 4px; }
+    .review-timeline__meta { font-size: .75rem; color: #9CA3AF; }
+
+    /* WHAT HAPPENS NEXT */
+    .review-next { padding: 0; }
+    .review-next__list { list-style: none; padding: 0; margin: 0; }
+    .review-next__item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 0;
+      font-size: .88rem;
+      color: #5F7383;
+      line-height: 1.6;
+    }
+    .review-next__arrow {
+      color: #253D51;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .review-next__item strong { color: #1a2e3b; }
+
+    /* CONTACT BANNER */
+    .review-contact {
+      background: #253D51;
+      border-radius: 16px;
+      padding: 36px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .review-contact__title {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+    .review-contact__desc {
+      font-size: .85rem;
+      color: rgba(255,255,255,.6);
+      line-height: 1.6;
+      margin-bottom: 20px;
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .review-contact__email {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 8px;
+      padding: 12px 24px;
+      color: #fff;
+      font-weight: 600;
+      font-size: .9rem;
+      text-decoration: none;
+      transition: .2s;
+    }
+    .review-contact__email:hover { background: rgba(255,255,255,.18); }
+
+    /* ACTIONS */
+    .review-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+      margin-bottom: 40px;
+    }
+    .review-btn {
+      flex: 1;
+      padding: 14px 24px;
+      border-radius: 8px;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      transition: .2s;
+    }
+    .review-btn--primary {
+      background: #253D51;
+      color: #fff;
+      border: none;
+    }
+    .review-btn--primary:hover { background: #1B2E3F; }
+    .review-btn--outline {
+      background: #fff;
+      color: #253D51;
+      border: 1.5px solid #C7CCD1;
+    }
+    .review-btn--outline:hover { border-color: #253D51; }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="review-nav">
+  <div class="review-nav__logo">
+    <a href="{% url 'home' %}"><img src="{% static 'adminlte/images/logo_full.png' %}" alt="FONTESIN"/></a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="review-hero">
+  <div class="review-hero__icon">&#9203;</div>
+  <h1 class="review-hero__title">Application Submitted!</h1>
+  <p class="review-hero__desc">
+    Thank you for applying to join FONTESIN. Your application is now
+    under review by our team. We will contact you within <strong>5&ndash;10 business days</strong>.
+  </p>
+</div>
+
+<!-- CONTENT -->
+<div class="review-content">
+
+  <!-- APPLICATION STATUS CARD -->
+  <div class="review-card">
+    <div class="review-card__header">
+      <div class="review-card__title">Application Status</div>
+      <span class="status-badge status-badge--review">Under Review</span>
+    </div>
+    <div class="review-info">
+      <div class="review-info__row">
+        <span class="review-info__label">Application Reference</span>
+        <span class="review-info__ref" id="app-ref"></span>
+      </div>
+      <div class="review-info__row">
+        <span class="review-info__label">Role Applied For</span>
+        <span class="review-info__value">&#128188; {{ role_label|default:"Consultant" }}</span>
+      </div>
+      <div class="review-info__row">
+        <span class="review-info__label">Submission Date</span>
+        <span class="review-info__value" id="submit-date"></span>
+      </div>
+      <div class="review-info__row">
+        <span class="review-info__label">Identity Verification</span>
+        <span class="review-info__value" style="color:#16a34a;">&#10003; Verified</span>
+      </div>
+      <div class="review-info__row">
+        <span class="review-info__label">Due Diligence</span>
+        <span class="review-info__value" style="color:#f59e0b;">&#9203; Under Review</span>
+      </div>
+      <div class="review-info__row">
+        <span class="review-info__label">Expected Decision</span>
+        <span class="review-info__value" id="expected-date"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- REVIEW PROCESS TIMELINE -->
+  <div class="review-card">
+    <div class="review-card__title" style="margin-bottom:20px;">&#128203; Review Process</div>
+    <div class="review-timeline">
+      <div class="review-timeline__item">
+        <div class="review-timeline__dot review-timeline__dot--done">&#10003;</div>
+        <div class="review-timeline__text">
+          <div class="review-timeline__title">Application Received</div>
+          <div class="review-timeline__desc">Your application and all supporting documents have been received and logged in our system.</div>
+          <div class="review-timeline__meta">Completed &middot; Today</div>
+        </div>
+      </div>
+      <div class="review-timeline__item">
+        <div class="review-timeline__dot review-timeline__dot--done">&#10003;</div>
+        <div class="review-timeline__text">
+          <div class="review-timeline__title">Identity Verification</div>
+          <div class="review-timeline__desc">Your identity has been successfully verified through Veriff biometric screening.</div>
+          <div class="review-timeline__meta">Completed &middot; Today</div>
+        </div>
+      </div>
+      <div class="review-timeline__item">
+        <div class="review-timeline__dot review-timeline__dot--active">3</div>
+        <div class="review-timeline__text">
+          <div class="review-timeline__title">Initial Screening</div>
+          <div class="review-timeline__desc">Our compliance team is reviewing your application, CV, and supporting documents for completeness and eligibility.</div>
+          <div class="review-timeline__meta">In Progress &middot; 1&ndash;3 business days</div>
+        </div>
+      </div>
+      <div class="review-timeline__item">
+        <div class="review-timeline__dot review-timeline__dot--pending">4</div>
+        <div class="review-timeline__text">
+          <div class="review-timeline__title">Due Diligence Review</div>
+          <div class="review-timeline__desc">Background checks, AML screening, and reference verification will be conducted by our compliance team.</div>
+          <div class="review-timeline__meta">Pending &middot; 3&ndash;7 business days</div>
+        </div>
+      </div>
+      <div class="review-timeline__item">
+        <div class="review-timeline__dot review-timeline__dot--pending">5</div>
+        <div class="review-timeline__text">
+          <div class="review-timeline__title">Interview (if required)</div>
+          <div class="review-timeline__desc">For Franchise Partner applications, a video interview with our regional team may be scheduled.</div>
+          <div class="review-timeline__meta">Pending &middot; If applicable</div>
+        </div>
+      </div>
+      <div class="review-timeline__item">
+        <div class="review-timeline__dot review-timeline__dot--pending">6</div>
+        <div class="review-timeline__text">
+          <div class="review-timeline__title">Decision &amp; Onboarding</div>
+          <div class="review-timeline__desc">You will receive a decision email with the outcome of your application. If approved, onboarding instructions will follow.</div>
+          <div class="review-timeline__meta">Pending &middot; 5&ndash;10 business days total</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WHAT HAPPENS NEXT -->
+  <div class="review-card">
+    <div class="review-card__title" style="margin-bottom:16px;">&#128233; What Happens Next?</div>
+    <ul class="review-next__list">
+      <li class="review-next__item">
+        <span class="review-next__arrow">&rarr;</span>
+        <span>You will receive a <strong>confirmation email</strong> at your registered address within the next 30 minutes with your application reference number.</span>
+      </li>
+      <li class="review-next__item">
+        <span class="review-next__arrow">&rarr;</span>
+        <span>Our <strong>compliance team</strong> will review your application, CV, company documents, and due diligence questionnaire.</span>
+      </li>
+      <li class="review-next__item">
+        <span class="review-next__arrow">&rarr;</span>
+        <span>If additional information is needed, we will <strong>contact you directly</strong> by email or phone.</span>
+      </li>
+      <li class="review-next__item">
+        <span class="review-next__arrow">&rarr;</span>
+        <span>For Franchise Partner applications, a <strong>video call interview</strong> may be scheduled with our regional expansion team.</span>
+      </li>
+      <li class="review-next__item">
+        <span class="review-next__arrow">&rarr;</span>
+        <span>You will receive a <strong>final decision</strong> within 5&ndash;10 business days from submission.</span>
+      </li>
+      <li class="review-next__item">
+        <span class="review-next__arrow">&rarr;</span>
+        <span>If approved, you will receive a <strong>Partner Agreement</strong> and onboarding package with all necessary information to get started.</span>
+      </li>
+    </ul>
+  </div>
+
+  <!-- CONTACT BANNER -->
+  <div class="review-contact">
+    <div class="review-contact__title">Questions About Your Application?</div>
+    <div class="review-contact__desc">
+      Our partner onboarding team is available Monday&ndash;Friday, 9:00&ndash;18:00 EST. Please include your application reference number in all correspondence.
+    </div>
+    <a href="mailto:partners@fontesin.com" class="review-contact__email">
+      &#9993; partners@fontesin.com
+    </a>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="review-actions">
+    <a href="{% url 'home' %}" class="review-btn review-btn--outline">&larr; Back to Homepage</a>
+    <a href="{% url 'login' %}" class="review-btn review-btn--primary">Log In to Your Account &rarr;</a>
+  </div>
+
+</div>
+
+<script>
+// Set submission date with time
+var now = new Date();
+var dateOpts = { year: 'numeric', month: 'long', day: 'numeric' };
+var timeOpts = { hour: '2-digit', minute: '2-digit', hour12: true };
+var dateStr = now.toLocaleDateString('en-US', dateOpts);
+var timeStr = now.toLocaleTimeString('en-US', timeOpts);
+document.getElementById('submit-date').textContent = dateStr + ' at ' + timeStr;
+
+// Generate application reference (APP-YYYY-NNNNN)
+var appRef = 'APP-' + now.getFullYear() + '-' + (Math.floor(10000 + Math.random() * 90000));
+document.getElementById('app-ref').textContent = appRef;
+
+// Calculate expected decision date (10 business days from now)
+function addBusinessDays(date, days) {
+  var result = new Date(date);
+  var added = 0;
+  while (added < days) {
+    result.setDate(result.getDate() + 1);
+    var day = result.getDay();
+    if (day !== 0 && day !== 6) added++;
+  }
+  return result;
+}
+var expectedDate = addBusinessDays(now, 10);
+document.getElementById('expected-date').textContent = 'By ' + expectedDate.toLocaleDateString('en-US', dateOpts);
+</script>
+
+</body>
+</html>

@@ -2,103 +2,832 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+<style>
+  .dash-welcome {
+    background: linear-gradient(135deg, #1B2E3F 0%, #253D51 50%, #2f5270 100%);
+    border-radius: 16px;
+    padding: 32px 36px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .dash-welcome__label {
+    font-size: .72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: rgba(255,255,255,.55);
+    margin-bottom: 6px;
+  }
+  .dash-welcome__name {
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+  .dash-welcome__meta {
+    font-size: .82rem;
+    color: rgba(255,255,255,.6);
+  }
+  .dash-welcome__actions {
+    display: flex;
+    gap: 10px;
+  }
+  .dash-welcome__actions .btn {
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 600;
+    font-size: .82rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-welcome-primary {
+    background: rgba(255,255,255,.15);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,.25);
+  }
+  .btn-welcome-primary:hover {
+    background: rgba(255,255,255,.25);
+    color: #fff;
+  }
+  .btn-welcome-secondary {
+    background: #fff;
+    color: #253D51;
+    border: none;
+  }
+  .btn-welcome-secondary:hover {
+    background: #e8eef3;
+    color: #253D51;
+  }
 
-  <!-- ================= KPI STRIP ================= -->
-  <div class="row mb-4">
+  /* KPI Cards */
+  .dash-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .dash-kpi {
+    background: #fff;
+    border-radius: 14px;
+    padding: 22px 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    border: 1px solid #e8eef3;
+  }
+  .dash-kpi__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+  .dash-kpi__icon--blue { background: #e0f0ff; color: #2b7de9; }
+  .dash-kpi__icon--green { background: #dcfce7; color: #16a34a; }
+  .dash-kpi__icon--amber { background: #fef3c7; color: #d97706; }
+  .dash-kpi__icon--purple { background: #ede9fe; color: #7c3aed; }
+  .dash-kpi__icon--cyan { background: #cffafe; color: #0891b2; }
+  .dash-kpi__icon--rose { background: #ffe4e6; color: #e11d48; }
 
-    <div class="col-md-4 d-flex">
-      <div class="info-box shadow-sm w-100">
-        <span class="info-box-icon bg-info">
-          <i class="fas fa-building"></i>
-        </span>
-        <div class="info-box-content">
-          <span class="info-box-text">Companies</span>
-          <span class="info-box-number">{{ total_companies }}</span>
-          <span class="text-muted small">{{ active_companies }} active</span>
-        </div>
+  .dash-kpi__value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #1B2E3F;
+    line-height: 1.2;
+  }
+  .dash-kpi__label {
+    font-size: .78rem;
+    color: #64748b;
+    margin-top: 2px;
+  }
+  .dash-kpi__trend {
+    font-size: .72rem;
+    font-weight: 600;
+    margin-top: 6px;
+  }
+  .dash-kpi__trend--up { color: #16a34a; }
+  .dash-kpi__trend--down { color: #e11d48; }
+
+  /* Chart Cards */
+  .dash-chart-card {
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid #e8eef3;
+    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    padding: 24px;
+  }
+  .dash-chart-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .dash-chart-card__title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1B2E3F;
+    margin: 0;
+  }
+  .dash-chart-card__subtitle {
+    font-size: .78rem;
+    color: #94a3b8;
+    margin-top: 2px;
+  }
+  .dash-toggle-group {
+    display: flex;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+  }
+  .dash-toggle-group .btn {
+    border: none;
+    border-radius: 0;
+    padding: 6px 16px;
+    font-size: .78rem;
+    font-weight: 600;
+  }
+  .dash-toggle-group .btn-active {
+    background: #253D51;
+    color: #fff;
+  }
+  .dash-toggle-group .btn-inactive {
+    background: #fff;
+    color: #64748b;
+  }
+  .dash-toggle-group .btn-inactive:hover {
+    background: #f1f5f9;
+  }
+
+  /* Insight Card */
+  .dash-insight {
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid #e8eef3;
+    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    padding: 24px;
+  }
+  .dash-insight__title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1B2E3F;
+    margin-bottom: 20px;
+  }
+  .dash-insight__value {
+    font-size: .92rem;
+    color: #334155;
+    margin-bottom: 12px;
+  }
+  .dash-insight__bar {
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 100px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .dash-insight__bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #16a34a, #22c55e);
+    border-radius: 100px;
+    transition: width .4s ease;
+  }
+  .dash-insight__note {
+    font-size: .78rem;
+    color: #94a3b8;
+  }
+
+  /* Plan Badge */
+  .dash-plan-strip {
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid #e8eef3;
+    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .dash-plan-strip__left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .dash-plan-strip__icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #253D51, #2f5270);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.1rem;
+  }
+  .dash-plan-strip__name {
+    font-weight: 700;
+    color: #1B2E3F;
+    font-size: .92rem;
+  }
+  .dash-plan-strip__meta {
+    font-size: .78rem;
+    color: #64748b;
+  }
+  .dash-plan-strip__badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .dash-plan-strip__badges .badge {
+    background: #dcfce7;
+    color: #15803d;
+    font-weight: 600;
+    font-size: .72rem;
+    padding: 5px 12px;
+    border-radius: 100px;
+  }
+
+  /* Recent Companies Table */
+  .dash-recent-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .dash-recent-table th {
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #94a3b8;
+    padding: 10px 12px;
+    border-bottom: 1px solid #e8eef3;
+  }
+  .dash-recent-table td {
+    padding: 14px 12px;
+    font-size: .85rem;
+    color: #334155;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+  }
+  .dash-recent-table tr:last-child td {
+    border-bottom: none;
+  }
+  .company-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: .82rem;
+    color: #64748b;
+    flex-shrink: 0;
+  }
+  .plan-badge-sm {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .plan-badge-sm--free { background: #f1f5f9; color: #64748b; }
+  .plan-badge-sm--basic { background: #e0f0ff; color: #2b7de9; }
+  .plan-badge-sm--pro { background: #253D51; color: #fff; }
+  .plan-badge-sm--global { background: #ede9fe; color: #7c3aed; }
+  .status-badge-sm {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: .75rem;
+    font-weight: 600;
+  }
+  .status-badge-sm--verified { color: #16a34a; }
+  .status-badge-sm--pending { color: #d97706; }
+
+  /* Activity Timeline */
+  .dash-activity { list-style: none; padding: 0; margin: 0; }
+  .dash-activity__item {
+    display: flex;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .dash-activity__item:last-child { border-bottom: none; }
+  .dash-activity__dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 5px;
+  }
+  .dash-activity__time {
+    font-size: .72rem;
+    color: #94a3b8;
+    margin-bottom: 2px;
+  }
+  .dash-activity__title {
+    font-size: .85rem;
+    font-weight: 700;
+    color: #1B2E3F;
+    margin-bottom: 2px;
+  }
+  .dash-activity__desc {
+    font-size: .78rem;
+    color: #64748b;
+  }
+
+  /* Quick Actions */
+  .dash-actions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .dash-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid #e8eef3;
+    color: #334155;
+    font-size: .82rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all .15s;
+  }
+  .dash-action-btn:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #253D51;
+    text-decoration: none;
+  }
+  .dash-action-btn i {
+    font-size: .9rem;
+    width: 20px;
+    text-align: center;
+  }
+  .dash-action-btn i.fa-plus { color: #2b7de9; }
+  .dash-action-btn i.fa-user-plus { color: #7c3aed; }
+  .dash-action-btn i.fa-file-invoice { color: #d97706; }
+  .dash-action-btn i.fa-chart-bar { color: #e11d48; }
+  .dash-action-btn i.fa-globe { color: #0891b2; }
+  .dash-action-btn i.fa-cog { color: #64748b; }
+
+  /* Billing Summary */
+  .billing-plan-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 10px;
+    margin-bottom: 16px;
+  }
+  .billing-plan-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #253D51, #2f5270);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.1rem;
+  }
+  .billing-detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: .85rem;
+  }
+  .billing-detail-row dt { color: #94a3b8; }
+  .billing-detail-row dd { color: #1B2E3F; font-weight: 600; margin: 0; }
+</style>
+
+<div class="container-fluid" style="padding: 0;">
+
+  <!-- ================= WELCOME BANNER ================= -->
+  <div class="dash-welcome">
+    <div>
+      <div class="dash-welcome__label">Welcome Back</div>
+      <div class="dash-welcome__name">{{ request.user.first_name }} {{ request.user.last_name }}</div>
+      <div class="dash-welcome__meta">
+        {{ role_label }}
+        {% if user_plan %} &middot; {{ user_plan.name|upper }} Plan{% endif %}
+        &middot; Last login: Today
       </div>
     </div>
+    <div class="dash-welcome__actions">
+      <a href="{% url 'companies' %}" class="btn btn-welcome-primary">
+        <i class="fas fa-building"></i> Browse Companies
+      </a>
+      {% if request.user.is_superuser or request.user.role.name == "tenant_admin" or request.user.role.code|lower == "business_user" %}
+      <a href="{% url 'users' %}" class="btn btn-welcome-secondary">
+        <i class="fas fa-users-cog"></i> Admin Panel
+      </a>
+      {% endif %}
+    </div>
+  </div>
 
-    <div class="col-md-4 d-flex">
-      <div class="info-box shadow-sm w-100">
-        <span class="info-box-icon bg-warning">
-          <i class="fas fa-users"></i>
-        </span>
-        <div class="info-box-content">
-          <span class="info-box-text">Users</span>
-          <span class="info-box-number">{{ total_users }}</span>
-          <span class="text-muted small">{{ active_users }} active</span>
-        </div>
+  <!-- ================= KPI CARDS ROW 1 ================= -->
+  <div class="dash-kpi-grid">
+
+    <div class="dash-kpi">
+      <div class="dash-kpi__icon dash-kpi__icon--blue">
+        <i class="fas fa-building"></i>
+      </div>
+      <div>
+        <div class="dash-kpi__value">{{ total_companies|default:"0" }}</div>
+        <div class="dash-kpi__label">Total Companies</div>
+        {% if request.user.is_superuser %}
+        <div class="dash-kpi__trend dash-kpi__trend--up">&#9650; +{{ new_companies_month|default:"0" }} this month</div>
+        {% else %}
+        <div class="dash-kpi__trend dash-kpi__trend--up">{{ active_companies }} active</div>
+        {% endif %}
       </div>
     </div>
 
     {% if request.user.is_superuser %}
-    <div class="col-md-4 d-flex">
-      <div class="info-box shadow-sm w-100">
-        <span class="info-box-icon bg-primary">
-          <i class="fas fa-sitemap"></i>
-        </span>
-        <div class="info-box-content">
-          <span class="info-box-text">Tenants</span>
-          <span class="info-box-number">{{ total_tenants }}</span>
-          <span class="text-muted small">{{ active_tenants }} active</span>
+    <div class="dash-kpi">
+      <div class="dash-kpi__icon dash-kpi__icon--green">
+        <i class="fas fa-credit-card"></i>
+      </div>
+      <div>
+        <div class="dash-kpi__value">{{ active_subscriptions|default:"0" }}</div>
+        <div class="dash-kpi__label">Active Subscriptions</div>
+        <div class="dash-kpi__trend dash-kpi__trend--up">&#9650; +{{ new_subs_week|default:"0" }} this week</div>
+      </div>
+    </div>
+
+    <div class="dash-kpi">
+      <div class="dash-kpi__icon dash-kpi__icon--amber">
+        <i class="fas fa-dollar-sign"></i>
+      </div>
+      <div>
+        <div class="dash-kpi__value">${{ monthly_revenue|floatformat:0|default:"0" }}</div>
+        <div class="dash-kpi__label">Monthly Revenue</div>
+        <div class="dash-kpi__trend {% if revenue_change >= 0 %}dash-kpi__trend--up{% else %}dash-kpi__trend--down{% endif %}">
+          {% if revenue_change >= 0 %}&#9650;{% else %}&#9660;{% endif %} {{ revenue_change }}% vs last month
         </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="dash-kpi">
+      <div class="dash-kpi__icon dash-kpi__icon--green">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div>
+        <div class="dash-kpi__value">{{ active_companies|default:"0" }}</div>
+        <div class="dash-kpi__label">Active Companies</div>
+        <div class="dash-kpi__trend dash-kpi__trend--up">{{ inactive_companies }} inactive</div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="dash-kpi">
+      <div class="dash-kpi__icon dash-kpi__icon--purple">
+        <i class="fas fa-users"></i>
+      </div>
+      <div>
+        <div class="dash-kpi__value">{{ total_users|default:"0" }}</div>
+        <div class="dash-kpi__label">Registered Users</div>
+        {% if request.user.is_superuser %}
+        <div class="dash-kpi__trend dash-kpi__trend--up">&#9650; +{{ new_users_month|default:"0" }} this month</div>
+        {% else %}
+        <div class="dash-kpi__trend dash-kpi__trend--up">{{ active_users }} active</div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  {% if request.user.is_superuser %}
+  <!-- ================= KPI CARDS ROW 2 (admin only) ================= -->
+  <div class="dash-kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom:24px;">
+
+    <div class="dash-kpi">
+      <div class="dash-kpi__icon dash-kpi__icon--rose">
+        <i class="fas fa-file-invoice"></i>
+      </div>
+      <div>
+        <div class="dash-kpi__value">{{ pending_invoices|default:"0" }}</div>
+        <div class="dash-kpi__label">Pending Invoices</div>
+        <div class="dash-kpi__trend dash-kpi__trend--down">&#9660; {{ overdue_invoices|default:"0" }} overdue</div>
+      </div>
+    </div>
+
+    <div class="dash-kpi">
+      <div class="dash-kpi__icon dash-kpi__icon--cyan">
+        <i class="fas fa-globe"></i>
+      </div>
+      <div>
+        <div class="dash-kpi__value">{{ active_regions|default:"0" }}</div>
+        <div class="dash-kpi__label">Active Regions</div>
+        <div class="dash-kpi__trend dash-kpi__trend--up">Countries with companies</div>
+      </div>
+    </div>
+
+    {% if request.user.is_superuser %}
+    <div class="dash-kpi">
+      <div class="dash-kpi__icon dash-kpi__icon--cyan">
+        <i class="fas fa-sitemap"></i>
+      </div>
+      <div>
+        <div class="dash-kpi__value">{{ total_tenants|default:"0" }}</div>
+        <div class="dash-kpi__label">Tenants</div>
+        <div class="dash-kpi__trend dash-kpi__trend--up">{{ active_tenants }} active</div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if pending_approvals %}
+    <div class="dash-kpi" style="border-color:#fef3c7;">
+      <div class="dash-kpi__icon dash-kpi__icon--amber">
+        <i class="fas fa-clock"></i>
+      </div>
+      <div>
+        <div class="dash-kpi__value">{{ pending_approvals }}</div>
+        <div class="dash-kpi__label">Pending Approvals</div>
+        <div class="dash-kpi__trend dash-kpi__trend--down"><a href="{% url 'payments' %}?status=pending" style="color:#d97706;">Review now &rarr;</a></div>
       </div>
     </div>
     {% endif %}
 
   </div>
+  {% endif %}
 
-  <!-- ================= MAIN AREA ================= -->
+  <!-- ================= PLAN INFO (non-superuser) ================= -->
+  {% if user_plan %}
+  <div class="dash-plan-strip">
+    <div class="dash-plan-strip__left">
+      <div class="dash-plan-strip__icon">
+        <i class="fas fa-crown"></i>
+      </div>
+      <div>
+        <div class="dash-plan-strip__name">{{ user_plan.icon }} {{ user_plan.name }} Plan</div>
+        <div class="dash-plan-strip__meta">
+          {% if subscription %}
+            Active since {{ subscription.start_date|date:"M d, Y" }}
+            &middot; Expires {{ subscription.end_date|date:"M d, Y" }}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="dash-plan-strip__badges">
+      {% if has_company_registry %}<span class="badge">Company Registry</span>{% endif %}
+      {% if has_advanced_analytics %}<span class="badge">Analytics</span>{% endif %}
+      {% if has_api_access %}<span class="badge">API Access</span>{% endif %}
+      {% if has_data_export %}<span class="badge">Export</span>{% endif %}
+      {% if has_franchise_management %}<span class="badge">Franchise</span>{% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if request.user.is_superuser %}
+  <!-- ================= REVENUE + SUBSCRIPTION PLANS ================= -->
+  <div class="row mb-4">
+    <div class="col-lg-7 mb-4 mb-lg-0">
+      <div class="dash-chart-card" style="height:100%;">
+        <div class="dash-chart-card__header">
+          <div>
+            <h5 class="dash-chart-card__title">Revenue Overview</h5>
+            <div class="dash-chart-card__subtitle">Monthly subscription revenue (USD)</div>
+          </div>
+        </div>
+        <div style="height:280px;">
+          <canvas id="revenueChart"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="dash-chart-card" style="height:100%;">
+        <div class="dash-chart-card__header">
+          <div>
+            <h5 class="dash-chart-card__title">Subscription Plans</h5>
+            <div class="dash-chart-card__subtitle">Distribution by plan type</div>
+          </div>
+        </div>
+        <div style="height:280px; display:flex; align-items:center; justify-content:center;">
+          <canvas id="planChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= RECENT COMPANIES + ACTIVITY ================= -->
+  <div class="row mb-4">
+    <div class="col-lg-7 mb-4 mb-lg-0">
+      <div class="dash-chart-card" style="height:100%;">
+        <div class="dash-chart-card__header">
+          <div>
+            <h5 class="dash-chart-card__title">Recent Companies</h5>
+            <div class="dash-chart-card__subtitle">Latest registered companies</div>
+          </div>
+          <a href="{% url 'companies' %}" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;font-size:.78rem;font-weight:600;">View All &rarr;</a>
+        </div>
+        <table class="dash-recent-table">
+          <thead>
+            <tr>
+              <th style="width:40px;"></th>
+              <th>Company</th>
+              <th>Country</th>
+              <th>Plan</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for company in recent_companies %}
+            <tr>
+              <td><div class="company-avatar">{{ company.name|truncatechars:1 }}</div></td>
+              <td><strong>{{ company.name }}</strong></td>
+              <td>{{ company.country|default:"-" }}</td>
+              <td>
+                {% if company.plan_name %}
+                  <span class="plan-badge-sm plan-badge-sm--{{ company.plan_name|lower }}">{{ company.plan_name }}</span>
+                {% else %}
+                  <span class="plan-badge-sm plan-badge-sm--free">FREE</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if company.is_active %}
+                  <span class="status-badge-sm status-badge-sm--verified">&#10003; Verified</span>
+                {% else %}
+                  <span class="status-badge-sm status-badge-sm--pending">Pending</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center text-muted py-3">No companies yet</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="dash-chart-card" style="height:100%;">
+        <div class="dash-chart-card__header">
+          <div>
+            <h5 class="dash-chart-card__title">Recent Activity</h5>
+            <div class="dash-chart-card__subtitle">Latest platform events</div>
+          </div>
+        </div>
+        <ul class="dash-activity">
+          {% for item in recent_activity %}
+          <li class="dash-activity__item">
+            <div class="dash-activity__dot" style="background:{{ item.color }};"></div>
+            <div>
+              <div class="dash-activity__time">{{ item.time|timesince }} ago</div>
+              <div class="dash-activity__title">{{ item.title }}</div>
+              <div class="dash-activity__desc">{{ item.desc }}</div>
+            </div>
+          </li>
+          {% empty %}
+          <li class="text-center text-muted py-3">No recent activity</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= REGIONAL + INDUSTRY ================= -->
+  <div class="row mb-4">
+    <div class="col-lg-6 mb-4 mb-lg-0">
+      <div class="dash-chart-card" style="height:100%;">
+        <div class="dash-chart-card__header">
+          <div>
+            <h5 class="dash-chart-card__title">Regional Performance</h5>
+            <div class="dash-chart-card__subtitle">Companies by region</div>
+          </div>
+        </div>
+        <div style="height:280px;">
+          <canvas id="regionChart"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="dash-chart-card" style="height:100%;">
+        <div class="dash-chart-card__header">
+          <div>
+            <h5 class="dash-chart-card__title">Industry Breakdown</h5>
+            <div class="dash-chart-card__subtitle">Companies by industry sector</div>
+          </div>
+        </div>
+        <div style="height:280px; display:flex; align-items:center; justify-content:center;">
+          <canvas id="industryChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= QUICK ACTIONS + BILLING SUMMARY ================= -->
+  <div class="row mb-4">
+    <div class="col-lg-6 mb-4 mb-lg-0">
+      <div class="dash-chart-card" style="height:100%;">
+        <div class="dash-chart-card__header">
+          <h5 class="dash-chart-card__title">Quick Actions</h5>
+        </div>
+        <div class="dash-actions-grid">
+          <a href="{% url 'companies' %}" class="dash-action-btn"><i class="fas fa-plus"></i> Add Company</a>
+          <a href="{% url 'users' %}" class="dash-action-btn"><i class="fas fa-user-plus"></i> Add User</a>
+          <a href="{% url 'invoices' %}" class="dash-action-btn"><i class="fas fa-file-invoice"></i> Create Invoice</a>
+          <a href="#" class="dash-action-btn"><i class="fas fa-chart-bar"></i> View Reports</a>
+          <a href="{% url 'worldmap' %}" class="dash-action-btn"><i class="fas fa-globe"></i> Manage Regions</a>
+          <a href="#" class="dash-action-btn"><i class="fas fa-cog"></i> Settings</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="dash-chart-card" style="height:100%;">
+        <div class="dash-chart-card__header">
+          <div>
+            <h5 class="dash-chart-card__title">Billing Summary</h5>
+            <div class="dash-chart-card__subtitle">Current subscription status</div>
+          </div>
+          <a href="{% url 'payments' %}" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;font-size:.78rem;font-weight:600;">Manage &rarr;</a>
+        </div>
+
+        <div class="billing-plan-row">
+          <div class="billing-plan-icon"><i class="fas fa-crown"></i></div>
+          <div style="flex:1;">
+            <div style="font-weight:700;color:#1B2E3F;">Platform Admin</div>
+            <div style="font-size:.78rem;color:#64748b;">Full access to all features</div>
+          </div>
+          <span class="badge" style="background:#dcfce7;color:#15803d;font-weight:600;padding:5px 14px;border-radius:100px;">Active</span>
+        </div>
+
+        <dl style="margin:0;">
+          <div class="billing-detail-row">
+            <dt>Active Subscriptions</dt>
+            <dd>{{ active_subscriptions|default:"0" }}</dd>
+          </div>
+          <div class="billing-detail-row">
+            <dt>Pending Invoices</dt>
+            <dd>{{ pending_invoices|default:"0" }}</dd>
+          </div>
+          <div class="billing-detail-row">
+            <dt>Monthly Revenue</dt>
+            <dd>${{ monthly_revenue|floatformat:0|default:"0" }} USD</dd>
+          </div>
+          <div class="billing-detail-row">
+            <dt>Payment Method</dt>
+            <dd>Bank Transfer</dd>
+          </div>
+        </dl>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:16px;border-top:1px solid #e8eef3;">
+          <span style="font-size:.82rem;color:#94a3b8;">Pending Approvals</span>
+          {% if pending_approvals %}
+          <a href="{% url 'payments' %}?status=pending" class="badge" style="background:#fef3c7;color:#d97706;font-weight:600;padding:5px 14px;border-radius:100px;">{{ pending_approvals }} pending</a>
+          {% else %}
+          <span class="badge" style="background:#dcfce7;color:#15803d;font-weight:600;padding:5px 14px;border-radius:100px;">All clear &#10003;</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ================= EXISTING CHARTS ROW (all users) ================= -->
   <div class="row">
 
     <!-- LEFT : DONUT -->
-    <div class="col-lg-8 d-flex">
-      <div class="card shadow-sm w-100">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <h5 class="mb-0" id="healthTitle">User Health</h5>
-
-          <div class="btn-group btn-group-sm">
-            <button id="btnUsers"
-                    type="button"
-                    class="btn btn-primary"
-                    onclick="showUsers()">
-              Users
-            </button>
-            <button id="btnCompanies"
-                    type="button"
-                    class="btn btn-outline-primary"
-                    onclick="showCompanies()">
-              Companies
-            </button>
+    <div class="col-lg-8 mb-4">
+      <div class="dash-chart-card">
+        <div class="dash-chart-card__header">
+          <h5 class="dash-chart-card__title" id="healthTitle">User Health</h5>
+          <div class="dash-toggle-group">
+            <button id="btnUsers" type="button" class="btn btn-active" onclick="showUsers()">Users</button>
+            <button id="btnCompanies" type="button" class="btn btn-inactive" onclick="showCompanies()">Companies</button>
           </div>
         </div>
-
-        <div class="card-body d-flex justify-content-center align-items-center">
-          <!-- IMPORTANT: wrapper for responsive donut -->
-          <div style="height:220px; width:100%;">
-            <canvas id="healthChart"></canvas>
-          </div>
+        <div style="height:260px; width:100%; display:flex; align-items:center; justify-content:center;">
+          <canvas id="healthChart"></canvas>
         </div>
       </div>
     </div>
 
     <!-- RIGHT : INSIGHT -->
-    <div class="col-lg-4 d-flex">
-      <div class="card shadow-sm w-100">
-        <div class="card-header">
-          <h6 class="mb-0">Quick Insight</h6>
+    <div class="col-lg-4 mb-4">
+      <div class="dash-insight">
+        <div class="dash-insight__title">Quick Insight</div>
+        <div class="dash-insight__value" id="insightText"></div>
+        <div class="dash-insight__bar">
+          <div class="dash-insight__bar-fill" id="insightBar"></div>
         </div>
-        <div class="card-body">
-          <p class="mb-2" id="insightText"></p>
-
-          <div class="progress mb-3">
-            <div id="insightBar" class="progress-bar bg-success"></div>
-          </div>
-
-          <p class="text-muted small mb-0" id="insightNote"></p>
-        </div>
+        <div class="dash-insight__note" id="insightNote"></div>
       </div>
     </div>
 
@@ -106,17 +835,17 @@
 
 </div>
 
-<!-- ================= CHART SCRIPT ================= -->
+<!-- ================= CHART SCRIPTS ================= -->
 <script>
+/* ---- Existing Health Chart ---- */
 const ctx = document.getElementById("healthChart").getContext("2d");
 let chart = null;
 
 function setActive(activeBtn, inactiveBtn) {
-  activeBtn.classList.add("btn-primary");
-  activeBtn.classList.remove("btn-outline-primary");
-
-  inactiveBtn.classList.remove("btn-primary");
-  inactiveBtn.classList.add("btn-outline-primary");
+  activeBtn.classList.add("btn-active");
+  activeBtn.classList.remove("btn-inactive");
+  inactiveBtn.classList.remove("btn-active");
+  inactiveBtn.classList.add("btn-inactive");
 }
 
 function renderChart(labels, data) {
@@ -130,16 +859,24 @@ function renderChart(labels, data) {
       labels: labels,
       datasets: [{
         data: data,
-        backgroundColor: ["#28a745", "#dc3545"],
+        backgroundColor: ["#22c55e", "#ef4444"],
         borderWidth: 0
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      cutout: "70%",
+      cutout: "72%",
       plugins: {
-        legend: { position: "bottom" }
+        legend: {
+          position: "bottom",
+          labels: {
+            padding: 20,
+            usePointStyle: true,
+            pointStyle: "circle",
+            font: { size: 12, weight: "600" }
+          }
+        }
       }
     }
   });
@@ -150,21 +887,19 @@ function showUsers() {
     document.getElementById("btnUsers"),
     document.getElementById("btnCompanies")
   );
-
   document.getElementById("healthTitle").innerText = "User Health";
-
   document.getElementById("insightText").innerHTML =
     "<strong>{{ active_users }}</strong> of <strong>{{ total_users }}</strong> users are active.";
 
-  document.getElementById("insightBar").style.width =
-    "{{ active_users|floatformat:0 }}%";
-
-  document.getElementById("insightNote").innerText =
-    "User activity is stable.";
+  var total = {{ total_users|default:"1" }};
+  var active = {{ active_users|default:"0" }};
+  var pct = total > 0 ? Math.round((active / total) * 100) : 0;
+  document.getElementById("insightBar").style.width = pct + "%";
+  document.getElementById("insightNote").innerText = "User activity is stable.";
 
   renderChart(
     ["Active Users", "Inactive Users"],
-    [{{ active_users }}, {{ inactive_users }}]
+    [{{ active_users|default:"0" }}, {{ inactive_users|default:"0" }}]
   );
 }
 
@@ -173,27 +908,185 @@ function showCompanies() {
     document.getElementById("btnCompanies"),
     document.getElementById("btnUsers")
   );
-
   document.getElementById("healthTitle").innerText = "Company Health";
-
   document.getElementById("insightText").innerHTML =
     "<strong>{{ active_companies }}</strong> of <strong>{{ total_companies }}</strong> companies are active.";
 
-  document.getElementById("insightBar").style.width =
-    "{{ active_companies|floatformat:0 }}%";
-
-  document.getElementById("insightNote").innerText =
-    "Company operations are stable.";
+  var total = {{ total_companies|default:"1" }};
+  var active = {{ active_companies|default:"0" }};
+  var pct = total > 0 ? Math.round((active / total) * 100) : 0;
+  document.getElementById("insightBar").style.width = pct + "%";
+  document.getElementById("insightNote").innerText = "Company operations are stable.";
 
   renderChart(
     ["Active Companies", "Inactive Companies"],
-    [{{ active_companies }}, {{ inactive_companies }}]
+    [{{ active_companies|default:"0" }}, {{ inactive_companies|default:"0" }}]
   );
 }
 
-/* DEFAULT LOAD */
 document.addEventListener("DOMContentLoaded", function () {
   showUsers();
+
+  {% if request.user.is_superuser %}
+  /* ---- Revenue Line Chart ---- */
+  var revLabels = {{ revenue_labels_json|safe }};
+  var revData = {{ revenue_data_json|safe }};
+  if (document.getElementById("revenueChart")) {
+    new Chart(document.getElementById("revenueChart").getContext("2d"), {
+      type: "line",
+      data: {
+        labels: revLabels,
+        datasets: [{
+          data: revData,
+          borderColor: "#253D51",
+          backgroundColor: "rgba(37,61,81,0.08)",
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: "#253D51",
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          borderWidth: 2.5
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(v) { return "$" + (v >= 1000 ? (v/1000) + "k" : v); },
+              font: { size: 11 }
+            },
+            grid: { color: "#f1f5f9" }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { font: { size: 11 } }
+          }
+        }
+      }
+    });
+  }
+
+  /* ---- Plan Distribution Donut ---- */
+  var planLabels = {{ plan_labels_json|safe }};
+  var planCounts = {{ plan_counts_json|safe }};
+  var planColors = ["#e2e8f0", "#93c5fd", "#253D51", "#7c3aed", "#16a34a", "#d97706"];
+  if (document.getElementById("planChart") && planLabels.length > 0) {
+    new Chart(document.getElementById("planChart").getContext("2d"), {
+      type: "doughnut",
+      data: {
+        labels: planLabels,
+        datasets: [{
+          data: planCounts,
+          backgroundColor: planColors.slice(0, planLabels.length),
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: "65%",
+        plugins: {
+          legend: {
+            position: "right",
+            labels: {
+              padding: 16,
+              usePointStyle: true,
+              pointStyle: "circle",
+              font: { size: 12, weight: "600" },
+              generateLabels: function(chart) {
+                var data = chart.data;
+                var total = data.datasets[0].data.reduce(function(a,b){return a+b;}, 0);
+                return data.labels.map(function(label, i) {
+                  var val = data.datasets[0].data[i];
+                  var pct = total > 0 ? Math.round((val/total)*100) : 0;
+                  return {
+                    text: label.toUpperCase() + "   " + val + "  " + pct + "%",
+                    fillStyle: data.datasets[0].backgroundColor[i],
+                    strokeStyle: "transparent",
+                    hidden: false,
+                    index: i
+                  };
+                });
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  /* ---- Regional Performance Bar Chart ---- */
+  var regionLabels = {{ region_labels_json|safe }};
+  var regionCounts = {{ region_counts_json|safe }};
+  var barColors = ["#1B2E3F","#2f5270","#4a8cba","#7bb3d4","#a8d0e6","#7c3aed","#16a34a"];
+  if (document.getElementById("regionChart") && regionLabels.length > 0) {
+    new Chart(document.getElementById("regionChart").getContext("2d"), {
+      type: "bar",
+      data: {
+        labels: regionLabels,
+        datasets: [{
+          data: regionCounts,
+          backgroundColor: barColors.slice(0, regionLabels.length),
+          borderRadius: 6,
+          barThickness: 32
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: "#f1f5f9" },
+            ticks: { font: { size: 11 } }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 30 }
+          }
+        }
+      }
+    });
+  }
+
+  /* ---- Industry Breakdown Pie Chart ---- */
+  var indLabels = {{ industry_labels_json|safe }};
+  var indCounts = {{ industry_counts_json|safe }};
+  var indColors = ["#1B2E3F","#4a6d8c","#93c5fd","#7c3aed","#16a34a","#d97706","#e2e8f0"];
+  if (document.getElementById("industryChart") && indLabels.length > 0) {
+    new Chart(document.getElementById("industryChart").getContext("2d"), {
+      type: "pie",
+      data: {
+        labels: indLabels,
+        datasets: [{
+          data: indCounts,
+          backgroundColor: indColors.slice(0, indLabels.length),
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: "right",
+            labels: {
+              padding: 12,
+              usePointStyle: true,
+              pointStyle: "circle",
+              font: { size: 11, weight: "600" }
+            }
+          }
+        }
+      }
+    });
+  }
+  {% endif %}
 });
 </script>
 {% endblock %}

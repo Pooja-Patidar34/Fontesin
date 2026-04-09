@@ -1,0 +1,124 @@
+{% extends "base/base.html" %}
+{% block title %}Invoices{% endblock %}
+
+{% block content %}
+<div class="card" style="border-radius:14px; border:1px solid #e8eef3; box-shadow:0 2px 12px rgba(0,0,0,.06);">
+
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h3 class="card-title font-weight-bold mb-0">
+      <i class="fas fa-file-invoice mr-2"></i> Invoices
+    </h3>
+  </div>
+
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="bg-light">
+          <tr>
+            <th>Invoice #</th>
+            {% if request.user.is_superuser %}
+            <th>User</th>
+            {% endif %}
+            <th>Plan</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Due Date</th>
+            <th>Paid At</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for invoice in invoices %}
+          <tr>
+            <td><strong>{{ invoice.invoice_number }}</strong></td>
+
+            {% if request.user.is_superuser %}
+            <td>
+              {% if invoice.subscription and invoice.subscription.user %}
+                {{ invoice.subscription.user.email }}
+              {% else %}
+                -
+              {% endif %}
+            </td>
+            {% endif %}
+
+            <td>
+              {% if invoice.subscription and invoice.subscription.plan %}
+                {{ invoice.subscription.plan.name }}
+              {% else %}
+                -
+              {% endif %}
+            </td>
+
+            <td>{{ invoice.currency }} {{ invoice.amount }}</td>
+
+            <td>
+              {% if invoice.status == "paid" %}
+                <span class="badge badge-success">Paid</span>
+              {% elif invoice.status == "pending" %}
+                <span class="badge badge-warning">Pending</span>
+              {% elif invoice.status == "failed" %}
+                <span class="badge badge-danger">Failed</span>
+              {% else %}
+                <span class="badge badge-secondary">{{ invoice.status }}</span>
+              {% endif %}
+            </td>
+
+            <td>{{ invoice.due_date|date:"M d, Y" }}</td>
+
+            <td>
+              {% if invoice.paid_at %}
+                {{ invoice.paid_at|date:"M d, Y" }}
+              {% else %}
+                -
+              {% endif %}
+            </td>
+
+            <td>{{ invoice.created_at|date:"M d, Y" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="{% if request.user.is_superuser %}8{% else %}7{% endif %}" class="text-center text-muted py-4">
+              No invoices found
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if page_obj.paginator.num_pages > 1 %}
+  <div class="card-footer">
+    <ul class="pagination pagination-sm justify-content-end mb-0">
+      {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">Previous</span></li>
+      {% endif %}
+
+      {% for num in page_obj.paginator.page_range %}
+        {% if num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+          {% if num == page_obj.number %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+          {% else %}
+            <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">Next</span></li>
+      {% endif %}
+    </ul>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

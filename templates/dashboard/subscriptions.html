@@ -1,0 +1,494 @@
+{% extends "base/base.html" %}
+{% block title %}Subscriptions{% endblock %}
+
+{% block content %}
+<style>
+  .sub-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .sub-summary-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 22px 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    border: 1px solid #e8eef3;
+  }
+  .sub-summary-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+  .sub-summary-icon--green { background: #dcfce7; color: #16a34a; }
+  .sub-summary-icon--blue { background: #e0f0ff; color: #2b7de9; }
+  .sub-summary-icon--amber { background: #fef3c7; color: #d97706; }
+  .sub-summary-value { font-size: 1.5rem; font-weight: 800; color: #1B2E3F; line-height: 1.2; }
+  .sub-summary-label { font-size: .78rem; color: #64748b; margin-top: 2px; }
+
+  .plans-table-wrap {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    border: 1px solid #e8eef3;
+    overflow: hidden;
+  }
+  .plans-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .88rem;
+  }
+  .plans-table thead th {
+    background: #f8fafc;
+    color: #64748b;
+    font-weight: 700;
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    padding: 14px 18px;
+    text-align: left;
+    border-bottom: 1px solid #e8eef3;
+  }
+  .plans-table tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background .15s;
+  }
+  .plans-table tbody tr:last-child { border-bottom: none; }
+  .plans-table tbody tr:hover { background: #f8fafc; }
+  .plans-table td { padding: 16px 18px; color: #334155; vertical-align: middle; }
+  .plans-table .plan-name { font-weight: 800; color: #1B2E3F; font-size: .95rem; }
+  .plans-table .plan-tagline { font-size: .75rem; color: #94a3b8; margin-top: 2px; }
+  .plan-badge {
+    font-size: .68rem; font-weight: 700; text-transform: uppercase;
+    padding: 4px 12px; border-radius: 100px; letter-spacing: .05em;
+    display: inline-block;
+  }
+  .plan-badge--popular { background: #253D51; color: #fff; }
+  .plan-badge--active { background: #dcfce7; color: #15803d; }
+  .plan-badge--inactive { background: #fee2e2; color: #dc2626; }
+  .plan-price-original {
+    font-size: .78rem; color: #94a3b8; text-decoration: line-through; margin-left: 6px;
+  }
+  .plan-monthly-note { font-size: .72rem; color: #64748b; }
+
+  /* Action Buttons */
+  .btn-plan-action {
+    padding: 5px 12px;
+    font-size: .75rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .btn-view-plan { color: #2b7de9; background: #e0f0ff; }
+  .btn-view-plan:hover { background: #2b7de9; color: #fff; }
+  .btn-edit-plan { color: #d97706; background: #fef3c7; }
+  .btn-edit-plan:hover { background: #d97706; color: #fff; }
+  .btn-toggle-active { color: #16a34a; background: #dcfce7; }
+  .btn-toggle-active:hover { background: #16a34a; color: #fff; }
+  .btn-toggle-inactive { color: #dc2626; background: #fee2e2; }
+  .btn-toggle-inactive:hover { background: #dc2626; color: #fff; }
+  .action-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  /* Edit Modal Form */
+  .plan-edit-form .form-row {
+    margin-bottom: 14px;
+  }
+  .plan-edit-form label {
+    display: block;
+    font-size: .75rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+  }
+  .plan-edit-form input,
+  .plan-edit-form select,
+  .plan-edit-form textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: .88rem;
+    color: #1B2E3F;
+    background: #f8fafc;
+    transition: border-color .15s;
+  }
+  .plan-edit-form input:focus,
+  .plan-edit-form select:focus,
+  .plan-edit-form textarea:focus {
+    outline: none;
+    border-color: #2b7de9;
+    background: #fff;
+  }
+  .plan-edit-form textarea { resize: vertical; min-height: 80px; }
+  .plan-edit-form .form-row-half {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  }
+  .plan-edit-form .checkbox-row {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .plan-edit-form .checkbox-row input[type="checkbox"] {
+    width: auto; accent-color: #253D51;
+  }
+  .btn-save-plan {
+    width: 100%;
+    padding: 12px;
+    background: #253D51;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: .92rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .15s;
+    margin-top: 8px;
+  }
+  .btn-save-plan:hover { background: #1B2E3F; }
+
+  /* Modal Overlay */
+  .plan-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+  }
+  .plan-modal-overlay.active { display: flex; }
+
+  /* Modal Box */
+  .plan-modal {
+    background: #fff;
+    border-radius: 16px;
+    width: 480px;
+    max-width: 92vw;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 12px 48px rgba(0,0,0,.18);
+    animation: planModalIn .2s ease;
+  }
+  @keyframes planModalIn {
+    from { opacity: 0; transform: translateY(16px) scale(.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .plan-modal__header {
+    padding: 24px 24px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .plan-modal__title { font-size: 1.15rem; font-weight: 800; color: #1B2E3F; }
+  .plan-modal__close {
+    width: 32px; height: 32px; border-radius: 8px;
+    border: none; background: #f1f5f9; color: #64748b;
+    cursor: pointer; font-size: 1rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+  }
+  .plan-modal__close:hover { background: #e2e8f0; }
+  .plan-modal__body { padding: 20px 24px 28px; }
+  .plan-modal__section-label {
+    font-size: .72rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .05em; color: #94a3b8; margin-bottom: 10px;
+  }
+  .plan-modal__info-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px;
+  }
+  .plan-modal__info-item {
+    background: #f8fafc; border-radius: 10px; padding: 12px 14px;
+  }
+  .plan-modal__info-label { font-size: .7rem; color: #94a3b8; margin-bottom: 2px; }
+  .plan-modal__info-value { font-size: .92rem; font-weight: 700; color: #1B2E3F; }
+  .plan-modal__features { list-style: none; padding: 0; margin: 0; }
+  .plan-modal__features li {
+    padding: 8px 0; font-size: .85rem; color: #334155;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid #f8fafc;
+  }
+  .plan-modal__features li:last-child { border-bottom: none; }
+  .plan-modal__features li::before {
+    content: "\2713"; color: #16a34a; font-weight: 700; font-size: .75rem;
+    width: 22px; height: 22px; border-radius: 50%; background: #dcfce7;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .plan-modal__no-features {
+    text-align: center; padding: 20px; color: #94a3b8; font-size: .85rem;
+  }
+</style>
+
+<!-- Summary Cards -->
+<div class="sub-summary">
+  <div class="sub-summary-card">
+    <div class="sub-summary-icon sub-summary-icon--blue">
+      <i class="fas fa-layer-group"></i>
+    </div>
+    <div>
+      <div class="sub-summary-value">{{ plans|length }}</div>
+      <div class="sub-summary-label">Total Plans</div>
+    </div>
+  </div>
+  <div class="sub-summary-card">
+    <div class="sub-summary-icon sub-summary-icon--green">
+      <i class="fas fa-check-circle"></i>
+    </div>
+    <div>
+      <div class="sub-summary-value">{{ total_active }}</div>
+      <div class="sub-summary-label">Active Subscriptions</div>
+    </div>
+  </div>
+  <div class="sub-summary-card">
+    <div class="sub-summary-icon sub-summary-icon--amber">
+      <i class="fas fa-dollar-sign"></i>
+    </div>
+    <div>
+      <div class="sub-summary-value">${{ total_revenue|floatformat:0 }}</div>
+      <div class="sub-summary-label">Total Revenue</div>
+    </div>
+  </div>
+</div>
+
+<!-- Plans Table -->
+<div class="plans-table-wrap">
+  <table class="plans-table">
+    <thead>
+      <tr>
+        <th>Plan Name</th>
+        <th>Price</th>
+        <th>Billing Period</th>
+        <th>Status</th>
+        <th>Active</th>
+        <th>Pending</th>
+        <th>Total</th>
+        <th>Best For</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for plan in plans %}
+      <tr>
+        <td>
+          <div class="plan-name">{{ plan.name }}</div>
+          {% if plan.tagline %}<div class="plan-tagline">{{ plan.tagline }}</div>{% endif %}
+        </td>
+        <td>
+          <strong>{{ plan.currency }}{{ plan.price|floatformat:0 }}</strong>
+          {% if plan.original_price %}
+            <span class="plan-price-original">{{ plan.currency }}{{ plan.original_price|floatformat:0 }}</span>
+          {% endif %}
+          {% if plan.billing_period == "yearly" and plan.price > 0 %}
+            <div class="plan-monthly-note">
+              {{ plan.currency }}{{ plan.monthly_price|floatformat:2 }}/mo
+              {% if plan.discount_percent %} &middot; Save {{ plan.discount_percent }}%{% endif %}
+            </div>
+          {% endif %}
+        </td>
+        <td style="text-transform:capitalize;">{{ plan.billing_period }}</td>
+        <td>
+          {% if plan.is_popular %}<span class="plan-badge plan-badge--popular">Popular</span> {% endif %}
+          {% if plan.is_active %}
+            <span class="plan-badge plan-badge--active">Active</span>
+          {% else %}
+            <span class="plan-badge plan-badge--inactive">Inactive</span>
+          {% endif %}
+        </td>
+        <td><strong>{{ plan.active_count }}</strong></td>
+        <td>{{ plan.pending_count }}</td>
+        <td>{{ plan.total_count }}</td>
+        <td>
+          {% if plan.best_for %}
+            {{ plan.best_for }}
+          {% else %}
+            <span style="color:#94a3b8;">{{ plan.code }}</span>
+          {% endif %}
+        </td>
+        <td>
+          <div class="action-btns">
+            <button class="btn-plan-action btn-view-plan" onclick="openPlanModal('plan-modal-{{ forloop.counter }}')">
+              <i class="fas fa-eye"></i> View
+            </button>
+            <button class="btn-plan-action btn-edit-plan" onclick="openPlanModal('edit-modal-{{ forloop.counter }}')">
+              <i class="fas fa-edit"></i> Edit
+            </button>
+            <form method="post" action="{% url 'plan-toggle' plan.id %}" style="display:inline;">
+              {% csrf_token %}
+              {% if plan.is_active %}
+                <button type="submit" class="btn-plan-action btn-toggle-inactive" onclick="return confirm('Deactivate {{ plan.name }}? Users will no longer see this plan.')">
+                  <i class="fas fa-ban"></i> Deactivate
+                </button>
+              {% else %}
+                <button type="submit" class="btn-plan-action btn-toggle-active">
+                  <i class="fas fa-check"></i> Activate
+                </button>
+              {% endif %}
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="9" class="text-center" style="padding:40px; color:#94a3b8;">
+          <i class="fas fa-layer-group fa-2x" style="display:block; margin-bottom:12px; color:#cbd5e1;"></i>
+          No membership plans configured yet.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Feature Modals -->
+{% for plan in plans %}
+<div class="plan-modal-overlay" id="plan-modal-{{ forloop.counter }}">
+  <div class="plan-modal">
+    <div class="plan-modal__header">
+      <div class="plan-modal__title">{{ plan.name }}</div>
+      <button class="plan-modal__close" onclick="closePlanModal('plan-modal-{{ forloop.counter }}')">&times;</button>
+    </div>
+    <div class="plan-modal__body">
+      <div class="plan-modal__section-label">Plan Details</div>
+      <div class="plan-modal__info-grid">
+        <div class="plan-modal__info-item">
+          <div class="plan-modal__info-label">Price</div>
+          <div class="plan-modal__info-value">
+            {{ plan.currency }}{{ plan.price|floatformat:0 }}/{{ plan.billing_period }}
+          </div>
+        </div>
+        <div class="plan-modal__info-item">
+          <div class="plan-modal__info-label">Status</div>
+          <div class="plan-modal__info-value">
+            {% if plan.is_active %}Active{% else %}Inactive{% endif %}
+          </div>
+        </div>
+        <div class="plan-modal__info-item">
+          <div class="plan-modal__info-label">Active Subscribers</div>
+          <div class="plan-modal__info-value">{{ plan.active_count }}</div>
+        </div>
+        <div class="plan-modal__info-item">
+          <div class="plan-modal__info-label">Total Subscribers</div>
+          <div class="plan-modal__info-value">{{ plan.total_count }}</div>
+        </div>
+      </div>
+
+      <div class="plan-modal__section-label">Features</div>
+      {% if plan.features %}
+        <ul class="plan-modal__features">
+          {% for feature in plan.features %}
+            <li>{{ feature }}</li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="plan-modal__no-features">
+          <i class="fas fa-info-circle"></i> No features listed for this plan.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+<!-- Edit Modals -->
+{% for plan in plans %}
+<div class="plan-modal-overlay" id="edit-modal-{{ forloop.counter }}">
+  <div class="plan-modal">
+    <div class="plan-modal__header">
+      <div class="plan-modal__title">Edit: {{ plan.name }}</div>
+      <button class="plan-modal__close" onclick="closePlanModal('edit-modal-{{ forloop.counter }}')">&times;</button>
+    </div>
+    <div class="plan-modal__body">
+      <form method="post" action="{% url 'plan-edit' plan.id %}" class="plan-edit-form">
+        {% csrf_token %}
+
+        <div class="form-row">
+          <label for="name-{{ forloop.counter }}">Plan Name</label>
+          <input type="text" id="name-{{ forloop.counter }}" name="name" value="{{ plan.name }}" required />
+        </div>
+
+        <div class="form-row">
+          <label for="tagline-{{ forloop.counter }}">Tagline</label>
+          <input type="text" id="tagline-{{ forloop.counter }}" name="tagline" value="{{ plan.tagline }}" />
+        </div>
+
+        <div class="form-row form-row-half">
+          <div>
+            <label for="price-{{ forloop.counter }}">Price</label>
+            <input type="number" id="price-{{ forloop.counter }}" name="price" value="{{ plan.price }}" step="0.01" min="0" required />
+          </div>
+          <div>
+            <label for="original_price-{{ forloop.counter }}">Original Price</label>
+            <input type="number" id="original_price-{{ forloop.counter }}" name="original_price" value="{{ plan.original_price|default_if_none:'' }}" step="0.01" min="0" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label for="billing_period-{{ forloop.counter }}">Billing Period</label>
+          <select id="billing_period-{{ forloop.counter }}" name="billing_period">
+            <option value="monthly" {% if plan.billing_period == "monthly" %}selected{% endif %}>Monthly</option>
+            <option value="yearly" {% if plan.billing_period == "yearly" %}selected{% endif %}>Yearly</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="best_for-{{ forloop.counter }}">Best For</label>
+          <input type="text" id="best_for-{{ forloop.counter }}" name="best_for" value="{{ plan.best_for }}" />
+        </div>
+
+        <div class="form-row checkbox-row">
+          <input type="checkbox" id="is_popular-{{ forloop.counter }}" name="is_popular" {% if plan.is_popular %}checked{% endif %} />
+          <label for="is_popular-{{ forloop.counter }}" style="margin-bottom:0;text-transform:none;font-size:.85rem;color:#334155;">Mark as Most Popular</label>
+        </div>
+
+        <div class="form-row">
+          <label for="features-{{ forloop.counter }}">Features (one per line)</label>
+          <textarea id="features-{{ forloop.counter }}" name="features" rows="5">{% for f in plan.features %}{{ f }}{% if not forloop.last %}
+{% endif %}{% endfor %}</textarea>
+        </div>
+
+        <button type="submit" class="btn-save-plan">
+          <i class="fas fa-save"></i> Save Changes
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+<script>
+  function openPlanModal(id) {
+    document.getElementById(id).classList.add('active');
+  }
+  function closePlanModal(id) {
+    document.getElementById(id).classList.remove('active');
+  }
+  // Close modal on overlay click
+  document.querySelectorAll('.plan-modal-overlay').forEach(function(overlay) {
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) overlay.classList.remove('active');
+    });
+  });
+  // Close modal on Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.plan-modal-overlay.active').forEach(function(m) {
+        m.classList.remove('active');
+      });
+    }
+  });
+</script>
+{% endblock %}
