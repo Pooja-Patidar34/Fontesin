@@ -408,7 +408,19 @@
     <button class="btn-action btn-action--print" onclick="window.print()">&#128424; Print / Save as PDF</button>
     {% endif %}
     <a href="{% url 'home' %}" class="btn-action btn-action--outline">&larr; Back to Homepage</a>
+    {# Only show "Go to Dashboard" for plans that are immediately active.
+       Paid plans are created with status="created" and need a superuser to
+       approve them. Letting users click through here just hits the dashboard
+       gate (dashboard.py) and bounces them to pending_approval.html, which
+       is a confusing UX. The free plan is auto-activated on creation and
+       can go straight to the dashboard. #}
+    {% if invoice.subscription.status == 'active' %}
     <a href="{% url 'dashboard' %}" class="btn-action btn-action--primary">Go to Dashboard &rarr;</a>
+    {% else %}
+    <span class="btn-action btn-action--outline" style="opacity:.65;cursor:not-allowed;" title="Your subscription is awaiting admin approval. You will receive an email once it's activated.">
+      &#9203; Awaiting Approval
+    </span>
+    {% endif %}
   </div>
 
   {% if invoice.subscription.plan.code != 'free' %}

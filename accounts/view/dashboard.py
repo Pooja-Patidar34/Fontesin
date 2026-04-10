@@ -18,6 +18,35 @@ logger = logging.getLogger("technical")
 def dashboard(request):
     user = request.user
 
+    # ────────────────────────────────────────────────────────────────────
+    # Subscription gate for business users.
+    #
+    # When a business user picks a paid plan via select_plan, the new
+    # Subscription is created with status="created" (= pending admin
+    # approval). The login view at accounts/view/auth.py:97-100 already
+    # redirects such users to auth/pending_approval.html, but that gate
+    # only fires at login time — a user who is *already* logged in (e.g.
+    # came from the invoice page's "Go to Dashboard" button, or typed
+    # /dashboard/ directly) would otherwise reach the dashboard before a
+    # superuser has approved their subscription. Block them here too.
+    #
+    # Superusers and tenant_admins are exempt — they manage approvals.
+    # ────────────────────────────────────────────────────────────────────
+    is_admin_role = (
+        user.is_superuser
+        or (user.role and user.role.name == "tenant_admin")
+    )
+    if not is_admin_role:
+        pending_sub = Subscription.objects.filter(
+            user=user, status="created"
+        ).first()
+        if pending_sub:
+            return render(
+                request,
+                "auth/pending_approval.html",
+                {"subscription": pending_sub},
+            )
+
     context = {}
     now = timezone.now()
     month_ago = now - relativedelta(months=1)
