@@ -74,26 +74,56 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// ---- Notification ----
-function showNotification(message, type = 'info') {
-  const existing = document.querySelector('.notification');
-  if (existing) existing.remove();
+// ---- Toast Notification System ----
+function getToastContainer() {
+  let container = document.querySelector('.toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+  }
+  return container;
+}
 
-  const n = document.createElement('div');
-  n.className = `notification notification--${type}`;
-  n.innerHTML = `<span>${message}</span><button onclick="this.parentElement.remove()">✕</button>`;
-  n.style.cssText = `
-    position: fixed; bottom: 24px; right: 24px; z-index: 9999;
-    background: ${type === 'success' ? '#16a34a' : '#253D51'};
-    color: #fff; padding: 14px 20px; border-radius: 8px;
-    box-shadow: 0 8px 32px rgba(0,0,0,.2);
-    display: flex; align-items: center; gap: 12px;
-    font-family: 'Inter', sans-serif; font-size: .9rem;
-    max-width: 380px; animation: fadeInUp .3s ease;
-  `;
-  n.querySelector('button').style.cssText = 'background:none;border:none;color:#fff;cursor:pointer;font-size:1rem;opacity:.7;';
-  document.body.appendChild(n);
-  setTimeout(() => { if (n.parentElement) n.remove(); }, 5000);
+const TOAST_ICONS = {
+  error: '!', success: '\u2713', warning: '\u26A0', info: 'i'
+};
+const TOAST_TITLES = {
+  error: 'Error', success: 'Success', warning: 'Warning', info: 'Info'
+};
+
+function showToast(message, type) {
+  type = type || 'info';
+  var container = getToastContainer();
+  var toast = document.createElement('div');
+  toast.className = 'toast toast--' + type;
+  toast.innerHTML =
+    '<span class="toast__icon">' + TOAST_ICONS[type] + '</span>' +
+    '<div class="toast__body">' +
+      '<div class="toast__title">' + TOAST_TITLES[type] + '</div>' +
+      '<div class="toast__msg">' + message + '</div>' +
+    '</div>' +
+    '<button class="toast__close">&times;</button>' +
+    '<div class="toast__progress"></div>';
+
+  toast.querySelector('.toast__close').addEventListener('click', function() {
+    dismissToast(toast);
+  });
+
+  container.appendChild(toast);
+
+  setTimeout(function() { dismissToast(toast); }, 5000);
+}
+
+function dismissToast(toast) {
+  if (!toast || !toast.parentElement) return;
+  toast.style.animation = 'toastFadeOut .3s ease forwards';
+  setTimeout(function() { if (toast.parentElement) toast.remove(); }, 300);
+}
+
+// Backward compatibility
+function showNotification(message, type) {
+  showToast(message, type);
 }
 
 // ── Mobile navbar toggle ──────────────────────────────────────────

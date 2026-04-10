@@ -220,7 +220,7 @@ document.addEventListener("DOMContentLoaded", function () {
       })
       .catch(error => {
         console.error(error);
-        alert("Failed to load log details.");
+        showToast("Failed to load log details.", "error");
       });
 
     });

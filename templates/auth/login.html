@@ -166,12 +166,7 @@
         <p style="font-size:.9rem;">Don't have an account? <a href="{% url 'register' %}" class="auth-link">Sign up free</a></p>
       </div>
 
-      <!-- ✅ Exact same messages block as the working template -->
-      {% if messages %}
-        {% for message in messages %}
-          <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-        {% endfor %}
-      {% endif %}
+      {% include "base/toasts.html" %}
 
       <!-- ✅ Exact same form structure as the working template: plain name="email", name="password", no form object -->
       <form method="post" action="{% url 'login' %}">

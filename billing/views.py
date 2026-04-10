@@ -141,20 +141,32 @@ def subscription_list(request):
     if not request.user.is_superuser:
         raise PermissionDenied()
 
-    plans = CommercialPlan.objects.annotate(
+    plans_qs = CommercialPlan.objects.annotate(
         active_count=models.Count("subscription", filter=models.Q(subscription__status="active")),
         trial_count=models.Count("subscription", filter=models.Q(subscription__status="trial")),
         pending_count=models.Count("subscription", filter=models.Q(subscription__status="created")),
         total_count=models.Count("subscription"),
-    )
+    ).order_by("id")
 
+    total_plans = plans_qs.count()
     total_active = Subscription.objects.filter(status="active").count()
     total_revenue = Invoice.objects.filter(status="paid").aggregate(
         total=models.Sum("amount")
     )["total"] or 0
 
+    paginator = Paginator(plans_qs, 10)
+    page_number = request.GET.get("page")
+    try:
+        page_obj = paginator.page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
+
     return render(request, "dashboard/subscriptions.html", {
-        "plans": plans,
+        "plans": page_obj,
+        "page_obj": page_obj,
+        "total_plans": total_plans,
         "total_active": total_active,
         "total_revenue": total_revenue,
         "active_menu": "subscriptions",

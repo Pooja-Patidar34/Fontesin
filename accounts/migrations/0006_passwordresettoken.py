@@ -8,8 +8,12 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
+    # Re-pointed from 0005_tenant_is_deleted → 0013_add_missing_application_fields
+    # to resolve the two-leaves merge conflict between this branch and the
+    # 0006_company_certification_status_…/…/0013 chain. This linearizes the
+    # PasswordResetToken creation onto the end of the primary chain.
     dependencies = [
-        ('accounts', '0005_tenant_is_deleted'),
+        ('accounts', '0013_add_missing_application_fields'),
     ]
 
     operations = [

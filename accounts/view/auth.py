@@ -1,4 +1,5 @@
 import logging
+import re
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render, redirect
 from django.contrib import messages
@@ -57,8 +58,20 @@ def admin_login(request):
         return redirect("dashboard")
 
     if request.method == "POST":
-        email = request.POST.get("email")
-        password = request.POST.get("password")
+        email = request.POST.get("email", "").strip()
+        password = request.POST.get("password", "")
+
+        if not email:
+            messages.error(request, "Email is required.")
+            return render(request, "auth/login.html")
+
+        if not re.match(r"^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$", email):
+            messages.error(request, "Enter a valid email address.")
+            return render(request, "auth/login.html")
+
+        if not password:
+            messages.error(request, "Password is required.")
+            return render(request, "auth/login.html")
 
         user = authenticate(request, email=email, password=password)
 
@@ -103,8 +116,23 @@ def admin_logout(request):
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login
+from django.http import JsonResponse
 from accounts.models import Tenant, Company, Role, UserCompany, User, DueDiligence
 from accounts.constants import CountryChoices, LanguageChoices
+
+
+def check_email_exists(request):
+    """
+    Lightweight AJAX endpoint used by the multi-step register form to validate
+    the email field on phase 1, before letting the user advance to phase 2.
+
+    Returns: {"exists": bool}
+    """
+    email = (request.GET.get("email") or "").strip()
+    if not email:
+        return JsonResponse({"exists": False})
+    exists = User.objects.filter(email__iexact=email).exists()
+    return JsonResponse({"exists": exists})
 
 
 def register_view(request):
@@ -142,6 +170,56 @@ def register_view(request):
         missing = [name for name, value in required_fields.items() if not value]
         if missing:
             messages.error(request, f"{', '.join(missing)} {'is' if len(missing) == 1 else 'are'} required.")
+            return render(request, "auth/register.html", ctx)
+
+        # emoji detection
+        emoji_pattern = re.compile(
+            r"[\U0001F600-\U0001F64F\U0001F300-\U0001F5FF\U0001F680-\U0001F6FF"
+            r"\U0001F1E0-\U0001F1FF\U00002600-\U000026FF\U00002700-\U000027BF"
+            r"\U0001F900-\U0001F9FF\U0000200D\U000020E3\U000FE00F]"
+        )
+
+        # name validation (letters, accented chars, spaces, hyphens, apostrophes — no digits, no emojis)
+        name_regex = re.compile(r"^[A-Za-zÀ-ÖØ-öø-ÿ\s'\-]+$")
+
+        if emoji_pattern.search(first_name) or not name_regex.match(first_name):
+            messages.error(request, "First name must contain only letters. Digits and emojis are not allowed.")
+            return render(request, "auth/register.html", ctx)
+        if emoji_pattern.search(last_name) or not name_regex.match(last_name):
+            messages.error(request, "Last name must contain only letters. Digits and emojis are not allowed.")
+            return render(request, "auth/register.html", ctx)
+
+        # email format validation (stricter)
+        email_regex = re.compile(r"^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$")
+        if not email_regex.match(email):
+            messages.error(request, "Enter a valid email address (e.g. john@company.com).")
+            return render(request, "auth/register.html", ctx)
+
+        # phone validation per country
+        PHONE_RULES = {
+            "US": (10, 10), "CA": (10, 10), "GB": (10, 10),
+            "DE": (10, 11), "FR": (9, 9), "NL": (9, 9),
+            "PL": (9, 9), "AT": (10, 11), "CH": (9, 9),
+            "SE": (9, 10), "CZ": (9, 9), "AE": (9, 9),
+            "SG": (8, 8), "AU": (9, 9), "JP": (10, 10),
+            "BR": (10, 11), "IN": (10, 10), "MX": (10, 10),
+            "KR": (10, 11),
+        }
+        # strip country code prefix if present
+        phone_digits = re.sub(r"[^\d]", "", phone.lstrip("+"))
+        # if phone starts with country code, strip it
+        phone_clean = re.sub(r"[\s\-()]", "", phone)
+        if phone_clean.startswith("+"):
+            # remove the + and country code digits, keep local number
+            phone_digits = re.sub(r"[^\d]", "", phone)
+            # strip leading country code by using the raw local digits
+            parts = phone.strip().split(" ", 1)
+            if len(parts) == 2:
+                phone_digits = re.sub(r"[^\d]", "", parts[1])
+
+        min_len, max_len = PHONE_RULES.get(country, (7, 15))
+        if not phone_digits.isdigit() or len(phone_digits) < min_len or len(phone_digits) > max_len:
+            messages.error(request, f"Phone number must be {min_len}-{max_len} digits for the selected country.")
             return render(request, "auth/register.html", ctx)
 
         if len(password) < 8:
@@ -420,6 +498,10 @@ def forgot_password(request):
 
         if not email:
             messages.error(request, "Email is required.")
+            return render(request, "auth/forgot_password.html")
+
+        if not re.match(r"^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$", email):
+            messages.error(request, "Enter a valid email address.")
             return render(request, "auth/forgot_password.html")
 
         # Always show success to prevent email enumeration

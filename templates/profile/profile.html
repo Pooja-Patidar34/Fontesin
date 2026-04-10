@@ -9,9 +9,11 @@
   <div class="col-md-4">
     <div class="card">
       <div class="card-body text-center">
+        {% if not request.user.is_superuser %}
         <div style="width:80px; height:80px; border-radius:50%; background:#253D51; display:inline-flex; align-items:center; justify-content:center; font-weight:700; font-size:1.5rem; color:#fff; margin-bottom:16px;">
           {{ request.user.first_name|truncatechars:1 }}{{ request.user.last_name|truncatechars:1 }}
         </div>
+        {% endif %}
         <h4 style="margin-bottom:4px;">{{ request.user.first_name }} {{ request.user.last_name }}</h4>
         <p class="text-muted" style="font-size:.88rem;">{{ request.user.email }}</p>
 
@@ -42,7 +44,8 @@
       </div>
     </div>
 
-    <!-- Subscription Plan Card -->
+    <!-- Subscription Plan Card (hidden for superusers — admins don't subscribe) -->
+    {% if not request.user.is_superuser %}
     {% if user_plan %}
     <div class="card" style="border-radius:14px; border:1px solid #e8eef3; box-shadow:0 2px 12px rgba(0,0,0,.06);">
       <div class="card-body" style="padding:20px;">
@@ -80,21 +83,13 @@
       </div>
     </div>
     {% endif %}
+    {% endif %}
   </div>
 
   <!-- Company Section -->
   <div class="col-md-8">
 
-    {% if messages %}
-    <div style="margin-bottom:16px;">
-      {% for message in messages %}
-      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" style="font-size:.88rem;">
-        {{ message }}
-        <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
-      </div>
-      {% endfor %}
-    </div>
-    {% endif %}
+    {% include "base/toasts.html" %}
 
     {% if user_company %}
     <!-- Existing Company Details -->

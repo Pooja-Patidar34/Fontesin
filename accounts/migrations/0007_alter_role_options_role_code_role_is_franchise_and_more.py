@@ -5,35 +5,29 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
+    # ────────────────────────────────────────────────────────────────────────
+    # NO-OP — emptied during merge-conflict resolution.
+    #
+    # This file used to add `code`, `is_franchise`, `tier_level` to Role and
+    # alter the `permissions` M2M. All of those operations duplicated the
+    # equivalent operations already performed in the parallel branch
+    # (0006_company_certification_status_… on Role) and additionally used
+    # field definitions that no longer match the current model state in
+    # accounts/models.py:
+    #     - code: this branch said unique=True/not null, but the model says
+    #             blank=True, null=True (matches the other branch).
+    #     - permissions: this branch added blank=True, but the model has
+    #             no blank=True on the M2M.
+    #     - AlterModelOptions(ordering=['tier_level']): the current Role
+    #             model has no Meta.ordering at all.
+    #
+    # We intentionally keep this empty migration file (instead of deleting
+    # it) so any database where it has already been recorded in
+    # django_migrations stays consistent — Django will still recognize the
+    # name and treat it as applied. New environments will run it as a no-op.
+    # ────────────────────────────────────────────────────────────────────────
     dependencies = [
         ('accounts', '0006_passwordresettoken'),
     ]
 
-    operations = [
-        migrations.AlterModelOptions(
-            name='role',
-            options={'ordering': ['tier_level']},
-        ),
-        migrations.AddField(
-            model_name='role',
-            name='code',
-            field=models.CharField(default=1, max_length=50, unique=True),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='role',
-            name='is_franchise',
-            field=models.BooleanField(default=False),
-        ),
-        migrations.AddField(
-            model_name='role',
-            name='tier_level',
-            field=models.IntegerField(default=2, help_text='0 (highest) to 6 (lowest)'),
-            preserve_default=False,
-        ),
-        migrations.AlterField(
-            model_name='role',
-            name='permissions',
-            field=models.ManyToManyField(blank=True, related_name='roles', to='accounts.permission'),
-        ),
-    ]
+    operations = []

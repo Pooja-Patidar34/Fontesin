@@ -183,28 +183,7 @@
 
     <div class="reg-card">
 
-      <!-- Messages -->
-      {% if messages %}
-      <div style="margin-bottom: 20px;">
-        {% for message in messages %}
-        <div style="
-          padding: 12px 16px;
-          border-radius: 8px;
-          font-size: .88rem;
-          font-weight: 500;
-          {% if message.tags == 'success' %}
-            background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0;
-          {% elif message.tags == 'info' %}
-            background: rgba(43,125,233,.1); color: #2b7de9; border: 1px solid rgba(43,125,233,.25);
-          {% else %}
-            background: #fef2f2; color: #dc2626; border: 1px solid #fecaca;
-          {% endif %}
-        ">
-          {{ message }}
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %}
+      {% include "base/toasts.html" %}
 
       <!-- Steps -->
       <div class="reg-steps">
@@ -250,18 +229,23 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Phone Number *</label>
-            <input type="tel" name="phone" id="reg-phone" class="form-control" placeholder="+1 212 555 0100"/>
-          </div>
-
-          <div class="form-group">
             <label class="form-label">Country *</label>
-            <select name="country" id="reg-country" class="form-control">
+            <select name="country" id="reg-country" class="form-control" onchange="updatePhoneCode()">
               <option value="">Select your country...</option>
               {% for code, label in country_choices %}
               <option value="{{ code }}">{{ label }}</option>
               {% endfor %}
             </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Phone Number *</label>
+            <div style="display:flex;gap:8px;">
+              <input type="text" id="reg-phone-code" class="form-control" style="width:80px;text-align:center;background:#f0f5f8;font-weight:600;" readonly placeholder="+1"/>
+              <input type="tel" name="phone" id="reg-phone" class="form-control" style="flex:1;" placeholder="212 555 0100" maxlength="15"/>
+              <input type="hidden" name="phone_code" id="reg-phone-code-hidden"/>
+            </div>
+            <small id="phone-format-hint" style="color:#5F7383;font-size:.75rem;margin-top:4px;display:block;"></small>
           </div>
 
           <div class="form-group">
@@ -494,6 +478,52 @@
     }
   };
 
+  // Country code mapping and phone rules
+  var COUNTRY_PHONE = {
+    US: { code: '+1',  min: 10, max: 10, name: 'United States',       format: '(XXX) XXX-XXXX' },
+    CA: { code: '+1',  min: 10, max: 10, name: 'Canada',              format: '(XXX) XXX-XXXX' },
+    GB: { code: '+44', min: 10, max: 10, name: 'United Kingdom',      format: 'XXXX XXX XXXX' },
+    DE: { code: '+49', min: 10, max: 11, name: 'Germany',             format: 'XXX XXXXXXXX' },
+    FR: { code: '+33', min: 9,  max: 9,  name: 'France',              format: 'X XX XX XX XX' },
+    NL: { code: '+31', min: 9,  max: 9,  name: 'Netherlands',         format: 'XX XXX XXXX' },
+    PL: { code: '+48', min: 9,  max: 9,  name: 'Poland',              format: 'XXX XXX XXX' },
+    AT: { code: '+43', min: 10, max: 11, name: 'Austria',             format: 'XXX XXXXXXX' },
+    CH: { code: '+41', min: 9,  max: 9,  name: 'Switzerland',         format: 'XX XXX XX XX' },
+    SE: { code: '+46', min: 9,  max: 10, name: 'Sweden',              format: 'XX XXX XXXX' },
+    CZ: { code: '+420',min: 9,  max: 9,  name: 'Czech Republic',      format: 'XXX XXX XXX' },
+    AE: { code: '+971',min: 9,  max: 9,  name: 'United Arab Emirates', format: 'XX XXX XXXX' },
+    SG: { code: '+65', min: 8,  max: 8,  name: 'Singapore',           format: 'XXXX XXXX' },
+    AU: { code: '+61', min: 9,  max: 9,  name: 'Australia',           format: 'XXX XXX XXX' },
+    JP: { code: '+81', min: 10, max: 10, name: 'Japan',               format: 'XX XXXX XXXX' },
+    BR: { code: '+55', min: 10, max: 11, name: 'Brazil',              format: 'XX XXXXX XXXX' },
+    IN: { code: '+91', min: 10, max: 10, name: 'India',               format: 'XXXXX XXXXX' },
+    MX: { code: '+52', min: 10, max: 10, name: 'Mexico',              format: 'XX XXXX XXXX' },
+    KR: { code: '+82', min: 10, max: 11, name: 'South Korea',         format: 'XX XXXX XXXX' }
+  };
+
+  var PHONE_RULES = {};
+  for (var k in COUNTRY_PHONE) {
+    PHONE_RULES[k] = { min: COUNTRY_PHONE[k].min, max: COUNTRY_PHONE[k].max, name: COUNTRY_PHONE[k].name };
+  }
+
+  window.updatePhoneCode = function() {
+    var country = document.getElementById('reg-country').value;
+    var phoneCodeEl = document.getElementById('reg-phone-code');
+    var phoneCodeHidden = document.getElementById('reg-phone-code-hidden');
+    var hint = document.getElementById('phone-format-hint');
+    var info = COUNTRY_PHONE[country];
+
+    if (info) {
+      phoneCodeEl.value = info.code;
+      phoneCodeHidden.value = info.code;
+      hint.textContent = 'Format: ' + info.format + ' (' + info.min + (info.min !== info.max ? '-' + info.max : '') + ' digits)';
+    } else {
+      phoneCodeEl.value = '';
+      phoneCodeHidden.value = '';
+      hint.textContent = '';
+    }
+  };
+
   window.goToPhase = function(num) {
     // if (num === 2) {
     //   const requiredFields = ['reg-fname','reg-lname','reg-email','reg-phone','reg-country','reg-pass','reg-pass2'];
@@ -531,6 +561,7 @@
       const country = document.getElementById('reg-country');
       const pass  = document.getElementById('reg-pass');
       const pass2 = document.getElementById('reg-pass2');
+      const phoneCode = document.getElementById('reg-phone-code');
 
       // Trim values
       fname.value = fname.value.trim();
@@ -539,59 +570,76 @@
       phone.value = phone.value.trim();
 
       // Required fields check
-      const requiredFields = [fname, lname, email, phone, country, pass, pass2];
+      const requiredFields = [fname, lname, email, country, phone, pass, pass2];
 
       for (let field of requiredFields) {
         if (!field.value) {
           field.focus();
-          alert("Please complete all required fields.");
+          showToast("Please complete all required fields.", "error");
           return;
         }
       }
 
-      // Name validation (letters only)
-      const nameRegex = /^[A-Za-z\s'-]+$/;
+      // Emoji detection regex
+      const emojiRegex = /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/u;
 
-      if (!nameRegex.test(fname.value)) {
-        alert("First name must contain only letters.");
+      // Name validation (letters, spaces, hyphens, apostrophes only — no digits, no emojis)
+      const nameRegex = /^[A-Za-zÀ-ÖØ-öø-ÿ\s'\-]+$/;
+
+      if (emojiRegex.test(fname.value) || !nameRegex.test(fname.value)) {
+        showToast("First name must contain only letters. Digits and emojis are not allowed.", "error");
         fname.focus();
         return;
       }
 
-      if (!nameRegex.test(lname.value)) {
-        alert("Last name must contain only letters.");
+      if (emojiRegex.test(lname.value) || !nameRegex.test(lname.value)) {
+        showToast("Last name must contain only letters. Digits and emojis are not allowed.", "error");
         lname.focus();
         return;
       }
 
-      // Email validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      // Email validation (stricter)
+      const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
 
       if (!emailRegex.test(email.value)) {
-        alert("Enter a valid email address.");
+        showToast("Enter a valid email address (e.g. john@company.com).", "error");
         email.focus();
-        return;
-      }
-
-      // Phone validation (international friendly)
-      const phoneRegex = /^[+]?[0-9\s\-()]{7,20}$/;
-
-      if (!phoneRegex.test(phone.value)) {
-        alert("Enter a valid phone number.");
-        phone.focus();
         return;
       }
 
       // Country validation
       if (!country.value) {
-        alert("Please select your country.");
+        showToast("Please select your country.", "error");
         country.focus();
         return;
       }
 
+      // Phone validation per country
+      var phoneDigits = phone.value.replace(/[\s\-()]/g, '');
+      var countryCode = country.value;
+      var phoneRules = PHONE_RULES[countryCode] || { min: 7, max: 15 };
+
+      if (!/^[0-9]+$/.test(phoneDigits)) {
+        showToast("Phone number must contain only digits.", "error");
+        phone.focus();
+        return;
+      }
+
+      if (phoneDigits.length < phoneRules.min || phoneDigits.length > phoneRules.max) {
+        showToast("Phone number for " + (phoneRules.name || countryCode) + " must be " + phoneRules.min + (phoneRules.min !== phoneRules.max ? "-" + phoneRules.max : "") + " digits.", "error");
+        phone.focus();
+        return;
+      }
+
+      // NOTE: do NOT mutate phone.value here. The country code is prepended
+      // once, only at form-submit time (see submit-btn handler below). Mutating
+      // it during validation breaks Back navigation: re-running this check on
+      // an already-prefixed value (e.g. "+91 9343832685") would fail the
+      // digits-only regex and re-trip the "must contain only digits" toast.
+
       // Password length
       if (pass.value.length < 8) {
-        alert("Password must be at least 8 characters.");
+        showToast("Password must be at least 8 characters.", "error");
         pass.focus();
         return;
       }
@@ -600,19 +648,49 @@
       const strongPassword = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
 
       if (!strongPassword.test(pass.value)) {
-        alert("Password must include at least one letter and one number.");
+        showToast("Password must include at least one letter and one number.", "error");
         pass.focus();
         return;
       }
 
       // Password match
       if (pass.value !== pass2.value) {
-        alert("Passwords do not match.");
+        showToast("Passwords do not match.", "error");
         pass2.focus();
         return;
       }
+
+      // Async: check email uniqueness against the server BEFORE advancing.
+      // We don't want the user filling phase 2 / phase 3 only to be told at
+      // submit time that the email is already taken.
+      fetch("{% url 'check-email' %}?email=" + encodeURIComponent(email.value), {
+        method: "GET",
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+        credentials: "same-origin",
+      })
+        .then(function(r) { return r.ok ? r.json() : { exists: false }; })
+        .then(function(data) {
+          if (data.exists) {
+            showToast("This email is already registered. Please log in or use a different email.", "error");
+            email.focus();
+            return;
+          }
+          switchToPhase(num);
+        })
+        .catch(function() {
+          // Network error — fall through and let the user proceed; the server
+          // will reject the duplicate at final submit time as a safety net.
+          switchToPhase(num);
+        });
+      return;
     }
 
+    switchToPhase(num);
+  };
+
+  // Phase switch helper, extracted so the async email check can call it
+  // after it resolves without duplicating the loop body.
+  function switchToPhase(num) {
     for (let i = 1; i <= 3; i++) {
       const step  = document.getElementById('step-'  + i);
       const phase = document.getElementById('phase-' + i);
@@ -622,19 +700,47 @@
       if (i < num)  step.classList.add('done');
       if (i === num) { step.classList.add('active'); phase.classList.add('active'); }
     }
-  };
+  }
 
   // ✅ KEY FIX: submit button is type="button", manually submit after validation
   document.getElementById('submit-btn').addEventListener('click', function() {
     if (!document.getElementById('terms').checked) {
-      alert("You must agree to the Terms of Service.");
+      showToast("You must agree to the Terms of Service.", "error");
       return;
     }
     if (!document.getElementById('gdpr').checked) {
-      alert("You must consent to GDPR data processing.");
+      showToast("You must consent to GDPR data processing.", "error");
       return;
     }
+
+    // Prepend the country code to the phone number EXACTLY ONCE, just before
+    // the POST. Idempotent: if the user happens to have already typed a "+"
+    // (or this handler somehow runs twice), we don't add the prefix again.
+    var phoneEl = document.getElementById('reg-phone');
+    var phoneCodeEl = document.getElementById('reg-phone-code');
+    if (phoneEl && phoneCodeEl && phoneEl.value && phoneCodeEl.value
+        && !phoneEl.value.trim().startsWith('+')) {
+      phoneEl.value = phoneCodeEl.value + ' ' + phoneEl.value.trim();
+    }
+
     document.getElementById('register-form').submit();
+  });
+
+  // Live input restriction: strip digits & emojis from name fields as user types
+  function sanitizeName(e) {
+    var val = e.target.value;
+    // Remove digits
+    val = val.replace(/[0-9]/g, '');
+    // Remove emojis
+    val = val.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu, '');
+    if (val !== e.target.value) e.target.value = val;
+  }
+  document.getElementById('reg-fname').addEventListener('input', sanitizeName);
+  document.getElementById('reg-lname').addEventListener('input', sanitizeName);
+
+  // Phone field: only allow digits, spaces, hyphens
+  document.getElementById('reg-phone').addEventListener('input', function(e) {
+    e.target.value = e.target.value.replace(/[^0-9\s\-]/g, '');
   });
 </script>
 

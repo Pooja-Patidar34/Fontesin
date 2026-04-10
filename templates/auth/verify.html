@@ -565,7 +565,7 @@
 
 //   } catch (error) {
 //     console.error(error);
-//     alert("Unable to start verification session.");
+//     showToast("Unable to start verification session.", "error");
 //   }
 // }
 async function startVerification() {
@@ -593,7 +593,7 @@ async function startVerification() {
   } catch (error) {
 
     console.error("Verification error:", error);
-    alert("Unable to start verification session.");
+    showToast("Unable to start verification session.", "error");
 
   }
 }

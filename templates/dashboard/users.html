@@ -761,12 +761,12 @@ document.addEventListener("DOMContentLoaded", function () {
         if (data.status) {
           window.location.reload();
         } else {
-          alert(data.message || "Failed to create user");
+          showToast(data.message || "Failed to create user", "error");
         }
       })
       .catch(err => {
         console.error("Add user failed:", err);
-        alert("Unexpected error. Check console.");
+        showToast("Unexpected error. Please try again.", "error");
       });
     }
   });

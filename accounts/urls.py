@@ -1,7 +1,7 @@
 from django.urls import path
 from .view.auth import admin_login, admin_logout,register_view,identity_verification_view,apply_view,apply_submit,apply_review_view
 from .view.profile import profile_view
-from .view.auth import admin_login, admin_logout, register_view, identity_verification_view, forgot_password, verify_otp, reset_password
+from .view.auth import admin_login, admin_logout, register_view, identity_verification_view, forgot_password, verify_otp, reset_password, check_email_exists
 from .view.dashboard import dashboard
 from accounts.view.company import company_list, toggle_company,company_detail_ajax,company_delete
 from .view.user import user_list, toggle_user, assign_roles,role_list,role_detail_ajax,permission_list,save_role,user_detail_ajax,user_edit,add_user
@@ -41,6 +41,7 @@ urlpatterns = [
     path("users/add/", add_user, name="add-user"),
     path("companies/<uuid:company_id>/delete/", company_delete, name="company-delete"),
     path("register/", register_view, name="register"),
+    path("register/check-email/", check_email_exists, name="check-email"),
     path("profile/", profile_view, name="profile"),
     path("subscriptions/", subscription_list, name="subscriptions"),
     path("subscriptions/<int:plan_id>/edit/", plan_edit, name="plan-edit"),

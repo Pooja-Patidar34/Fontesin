@@ -182,11 +182,7 @@
         </p>
       </div>
 
-      {% if messages %}
-        {% for message in messages %}
-          <div class="alert-{% if message.tags %}{{ message.tags }}{% else %}danger{% endif %}">{{ message }}</div>
-        {% endfor %}
-      {% endif %}
+      {% include "base/toasts.html" %}
 
       <form method="post" action="{% url 'verify-otp' %}">
         {% csrf_token %}

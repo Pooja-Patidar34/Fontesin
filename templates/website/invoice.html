@@ -474,7 +474,7 @@
 <script>
 function copyText(text) {
   navigator.clipboard.writeText(text).then(function() {
-    alert('Copied: ' + text);
+    showToast('Copied: ' + text, 'success');
   });
 }
 </script>

@@ -7,6 +7,7 @@
 
   <link rel="stylesheet" href="{% static 'adminlte/plugins/fontawesome-free/css/all.min.css' %}">
   <link rel="stylesheet" href="{% static 'adminlte/css/adminlte.min.css' %}">
+  <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
@@ -395,9 +396,11 @@
       <li class="nav-item dropdown">
         <a href="#" class="header-user" style="text-decoration:none;" data-toggle="dropdown">
           <div class="header-user__dot"></div>
+          {% if not request.user.is_superuser %}
           <div class="header-user__avatar">
             {{ request.user.first_name|truncatechars:1 }}{{ request.user.last_name|truncatechars:1 }}
           </div>
+          {% endif %}
           <span>
             {% if request.user.is_superuser %}Platform Admin{% elif request.user.role %}{{ request.user.role.name|title }}{% else %}{{ request.user.first_name }}{% endif %}
           </span>
@@ -608,9 +611,11 @@
       <!-- Profile Section -->
       <div class="sidebar-profile">
         <a href="{% url 'profile' %}">
+          {% if not request.user.is_superuser %}
           <div class="sidebar-profile__avatar">
             {{ request.user.first_name|truncatechars:1 }}{{ request.user.last_name|truncatechars:1 }}
           </div>
+          {% endif %}
           <div style="flex:1; min-width:0;">
             <div class="sidebar-profile__name">
               {{ request.user.first_name }} {{ request.user.last_name }}
@@ -627,7 +632,7 @@
 
   <!-- CONTENT -->
   <div class="content-wrapper">
-    <section class="content pt-3">
+    <section class="content">
       <div class="container-fluid">
         {% block content %}{% endblock %}
       </div>
@@ -640,6 +645,8 @@
 <script src="{% static 'adminlte/plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'adminlte/js/adminlte.min.js' %}"></script>
 <script src="{% static 'adminlte/plugins/chart.js/Chart.min.js' %}"></script>
+<script src="{% static 'adminlte/js/main.js' %}"></script>
+{% include "base/toasts.html" %}
 
 <script>
 (function() {

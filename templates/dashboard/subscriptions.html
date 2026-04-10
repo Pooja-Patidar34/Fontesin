@@ -240,7 +240,7 @@
       <i class="fas fa-layer-group"></i>
     </div>
     <div>
-      <div class="sub-summary-value">{{ plans|length }}</div>
+      <div class="sub-summary-value">{{ total_plans }}</div>
       <div class="sub-summary-label">Total Plans</div>
     </div>
   </div>
@@ -351,6 +351,45 @@
       {% endfor %}
     </tbody>
   </table>
+
+  {# PAGINATION #}
+  {% if page_obj.has_other_pages %}
+  <div style="display:flex; justify-content:flex-end; padding:14px 18px; border-top:1px solid #e8eef3; background:#f8fafc;">
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">Previous</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Previous</span></li>
+        {% endif %}
+
+        {% with start=page_obj.number|add:-2 end=page_obj.number|add:2 %}
+          {% for num in page_obj.paginator.page_range %}
+            {% if num >= start and num <= end %}
+              {% if num == page_obj.number %}
+                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+              {% else %}
+                <li class="page-item">
+                  <a class="page-link" href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                </li>
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+        {% endwith %}
+
+        {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">Next</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Next</span></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
 </div>
 
 <!-- Feature Modals -->

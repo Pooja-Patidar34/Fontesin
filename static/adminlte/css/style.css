@@ -33,8 +33,7 @@
 html { scroll-behavior: smooth; font-size: 16px; }
 body {
   font-family: 'Inter', sans-serif;
-  /* color: var(--text-primary); */
-  color: #e5dddd;
+  color: var(--text-primary);
   background: var(--bg-white);
   line-height: 1.6;
   overflow-x: hidden;
@@ -56,6 +55,18 @@ h2 { font-size: clamp(1.6rem, 3.5vw, 2.4rem); }
 h3 { font-size: clamp(1.2rem, 2.5vw, 1.6rem); }
 h4 { font-size: 1.1rem; }
 p  { color: var(--text-secondary); line-height: 1.75; }
+
+/* AdminLTE card titles must not inherit the marketing-page heading sizes,
+   otherwise they overflow .card-header and get clipped. */
+.card-header .card-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--primary);
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+}
+.card-header { min-height: 3.25rem; display: flex; align-items: center; }
 
 /* ---- Layout ---- */
 .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
@@ -144,26 +155,43 @@ p  { color: var(--text-secondary); line-height: 1.75; }
   border: none;
   text-decoration: none;
 }
-.btn--primary {
+/* Both BEM naming conventions are accepted (`btn--primary` and `btn-primary`).
+   The website templates use the single-dash form in 34 places across 6 files;
+   the CSS used to only define the double-dash form, so those buttons silently
+   fell back to inheriting `color` from `body`. That was invisible after the
+   body color was changed from the original near-white to near-black. */
+.btn--primary,
+.btn-primary {
   background: var(--primary);
   color: #fff;
   border: 2px solid var(--primary);
 }
-.btn--primary:hover { background: var(--primary-mid); border-color: var(--primary-mid); }
-.btn--outline {
+.btn--primary:hover,
+.btn-primary:hover { background: var(--primary-mid); border-color: var(--primary-mid); }
+
+.btn--outline,
+.btn-outline {
   background: transparent;
   color: var(--accent);
   border: 2px solid rgba(199,204,209,.4);
 }
-.btn--outline:hover { border-color: var(--accent); color: #fff; }
-.btn--white {
+.btn--outline:hover,
+.btn-outline:hover { border-color: var(--accent); color: #fff; }
+
+.btn--white,
+.btn-white {
   background: #fff;
   color: var(--primary);
   border: 2px solid #fff;
 }
-.btn--white:hover { background: var(--bg-light); }
-.btn--lg { padding: 14px 32px; font-size: 1rem; }
-.btn--sm { padding: 7px 16px; font-size: .8rem; }
+.btn--white:hover,
+.btn-white:hover { background: var(--bg-light); }
+
+.btn--lg,
+.btn-lg { padding: 14px 32px; font-size: 1rem; }
+
+.btn--sm,
+.btn-sm { padding: 7px 16px; font-size: .8rem; }
 
 /* ---- Hero ---- */
 .hero {
@@ -229,12 +257,32 @@ p  { color: var(--text-secondary); line-height: 1.75; }
 .card {
   background: var(--bg-white);
   border-radius: var(--radius-lg);
-  padding: 32px;
+  padding: 0;
+  margin-bottom: 24px;
   box-shadow: var(--shadow-md);
   border: 1px solid rgba(37,61,81,.06);
   transition: var(--transition);
+  overflow: visible;
 }
-.card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+.card:hover { box-shadow: var(--shadow-lg); }
+.card .card-body { padding: 24px; }
+.card .card-header { padding: 18px 24px; background: transparent; border-bottom: 1px solid #eef2f6; }
+
+/* Give the dashboard content area breathing room and clear the
+   (sticky) top navbar so card headers / avatars aren't hidden
+   behind it. The !important is required because Bootstrap's
+   spacing utilities (pt-3 etc.) carry !important and would
+   otherwise win over a shorthand `padding` declaration. */
+.content-wrapper > .content {
+  padding-top: 100px !important;
+  padding-right: 16px;
+  padding-bottom: 24px;
+  padding-left: 16px;
+}
+.content-wrapper .container-fluid {
+  padding-left: 8px;
+  padding-right: 8px;
+}
 .card__icon {
   width: 48px; height: 48px;
   background: var(--bg-light);
@@ -581,10 +629,12 @@ p  { color: var(--text-secondary); line-height: 1.75; }
 }
 .form-control {
   width: 100%;
+  height: auto;
   padding: 12px 16px;
   border: 1.5px solid rgba(37,61,81,.15);
   border-radius: var(--radius);
   font-size: .9rem;
+  line-height: 1.4;
   color: var(--text-primary);
   background: var(--bg-white);
   transition: var(--transition);
@@ -592,7 +642,7 @@ p  { color: var(--text-secondary); line-height: 1.75; }
 }
 .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,61,81,.08); }
 textarea.form-control { resize: vertical; min-height: 120px; }
-select.form-control { cursor: pointer; }
+select.form-control { cursor: pointer; height: auto; min-height: 46px; }
 
 .map-embed {
   border-radius: var(--radius-lg);
@@ -884,4 +934,69 @@ select.form-control { cursor: pointer; }
 [style*="background:var(--bg-sidebar)"] h3,
 [style*="background:var(--bg-sidebar)"] p {
   color: #fff !important;
+}
+
+/* ── Toast Notifications ── */
+.toast-container {
+  position: fixed; top: 24px; right: 24px; z-index: 99999;
+  display: flex; flex-direction: column; gap: 10px;
+  pointer-events: none; max-width: 420px;
+}
+.toast {
+  pointer-events: auto;
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 16px 20px; border-radius: 12px;
+  background: #fff; color: #1e293b;
+  box-shadow: 0 8px 32px rgba(0,0,0,.15), 0 2px 8px rgba(0,0,0,.08);
+  font-family: 'Inter', sans-serif; font-size: .88rem; line-height: 1.5;
+  animation: toastSlideIn .35s cubic-bezier(.21,1.02,.73,1);
+  border-left: 4px solid #64748b;
+  position: relative; overflow: hidden;
+}
+.toast--error { border-left-color: #ef4444; }
+.toast--success { border-left-color: #22c55e; }
+.toast--warning { border-left-color: #f59e0b; }
+.toast--info { border-left-color: #3b82f6; }
+.toast__icon {
+  flex-shrink: 0; width: 22px; height: 22px;
+  border-radius: 50%; display: flex; align-items: center;
+  justify-content: center; font-size: .8rem; font-weight: 700; margin-top: 1px;
+}
+.toast--error .toast__icon { background: #fef2f2; color: #ef4444; }
+.toast--success .toast__icon { background: #f0fdf4; color: #22c55e; }
+.toast--warning .toast__icon { background: #fffbeb; color: #f59e0b; }
+.toast--info .toast__icon { background: #eff6ff; color: #3b82f6; }
+.toast__body { flex: 1; }
+.toast__title { font-weight: 600; font-size: .85rem; margin-bottom: 2px; }
+.toast--error .toast__title { color: #dc2626; }
+.toast--success .toast__title { color: #16a34a; }
+.toast--warning .toast__title { color: #d97706; }
+.toast--info .toast__title { color: #2563eb; }
+.toast__msg { color: #475569; font-size: .84rem; }
+.toast__close {
+  position: absolute; top: 8px; right: 10px;
+  background: none; border: none; color: #94a3b8; cursor: pointer;
+  font-size: 1.1rem; line-height: 1; padding: 4px;
+}
+.toast__close:hover { color: #475569; }
+.toast__progress {
+  position: absolute; bottom: 0; left: 0; height: 3px;
+  border-radius: 0 0 0 12px;
+  animation: toastProgress 5s linear forwards;
+}
+.toast--error .toast__progress { background: #ef4444; }
+.toast--success .toast__progress { background: #22c55e; }
+.toast--warning .toast__progress { background: #f59e0b; }
+.toast--info .toast__progress { background: #3b82f6; }
+@keyframes toastSlideIn {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes toastFadeOut {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(40px); }
+}
+@keyframes toastProgress {
+  from { width: 100%; }
+  to { width: 0%; }
 }

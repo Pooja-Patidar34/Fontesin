@@ -778,13 +778,23 @@ def permission_list(request):
     else:
         form = PermissionForm()
 
-    permissions = Permission.objects.order_by("code")
+    permissions_qs = Permission.objects.order_by("code")
+
+    paginator = Paginator(permissions_qs, 10)
+    page_number = request.GET.get("page")
+    try:
+        page_obj = paginator.page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
 
     return render(
         request,
         "dashboard/permissions.html",
         {
-            "permissions": permissions,
+            "permissions": page_obj,
+            "page_obj": page_obj,
             "form": form,
             "active_menu": "access-control",
             "active_submenu": "permissions",
