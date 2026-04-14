@@ -181,6 +181,7 @@
             class="form-control"
             placeholder="you@company.com"
             required
+            oninput="this.value=this.value.replace(/[^\x20-\x7E]/g,'')"
           />
         </div>
 
@@ -242,6 +243,7 @@
 </div>
 
 <script src="{% static 'adminlte/js/main.js' %}"></script>
+<script src="{% static 'adminlte/js/no_emoji.js' %}"></script>
 <script>
   // Service worker
   if ("serviceWorker" in navigator) {

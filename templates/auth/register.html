@@ -225,7 +225,7 @@
 
           <div class="form-group">
             <label class="form-label">Email Address *</label>
-            <input type="email" name="email" id="reg-email" class="form-control" placeholder="john@company.com"/>
+            <input type="email" name="email" id="reg-email" class="form-control" placeholder="john@company.com" oninput="this.value=this.value.replace(/[^\x20-\x7E]/g,'')"/>
           </div>
 
           <div class="form-group">
@@ -444,6 +444,7 @@
 </div>
 
 <script src="{% static 'adminlte/js/main.js' %}"></script>
+<script src="{% static 'adminlte/js/no_emoji.js' %}"></script>
 
 <script>
   if ("serviceWorker" in navigator) {

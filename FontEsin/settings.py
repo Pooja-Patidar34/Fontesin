@@ -52,6 +52,7 @@ MIDDLEWARE = [
     "FontEsin.middleware.correlation_id.CorrelationIDMiddleware",
     "FontEsin.middleware.request_logging.RequestLoggingMiddleware",
     "FontEsin.middleware.error_logging.ErrorLoggingMiddleware",
+    "FontEsin.middleware.no_emoji.NoEmojiMiddleware",
 ]
 
 ROOT_URLCONF = 'FontEsin.urls'

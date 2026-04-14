@@ -209,12 +209,93 @@
       </form>
 
       <p style="font-size:.9rem;text-align:center;margin-top:24px;">
-        Didn't receive the code? <a href="{% url 'forgot-password' %}" style="color:var(--primary);font-weight:600;">Resend</a>
+        Didn't receive the code?
+        <a href="{% url 'forgot-password' %}"
+           id="resend-link"
+           data-resend-url="{% url 'forgot-password' %}"
+           style="color:var(--primary);font-weight:600;">Resend</a>
       </p>
     </div>
   </div>
 </div>
 
 <script src="{% static 'adminlte/js/main.js' %}"></script>
+<script src="{% static 'adminlte/js/no_emoji.js' %}"></script>
+<script>
+(function () {
+  var COOLDOWN_MS = 60 * 1000;
+  var STORAGE_KEY = 'fontesin_resend_otp_at';
+
+  var link = document.getElementById('resend-link');
+  if (!link) return;
+
+  var originalText = 'Resend';
+  var timerId = null;
+
+  function notify(msg) {
+    if (typeof window.showToast === 'function') {
+      window.showToast(msg, 'warning');
+    } else {
+      alert(msg);
+    }
+  }
+
+  function remaining() {
+    var sentAt = parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10);
+    if (!sentAt) return 0;
+    var left = COOLDOWN_MS - (Date.now() - sentAt);
+    return left > 0 ? left : 0;
+  }
+
+  function startCountdown() {
+    stopCountdown();
+    link.setAttribute('aria-disabled', 'true');
+    link.style.pointerEvents = 'none';
+    link.style.opacity = '0.5';
+    link.style.cursor = 'not-allowed';
+
+    function tick() {
+      var left = remaining();
+      if (left <= 0) {
+        endCountdown();
+        return;
+      }
+      link.textContent = 'Resend in ' + Math.ceil(left / 1000) + 's';
+    }
+    tick();
+    timerId = setInterval(tick, 1000);
+  }
+
+  function stopCountdown() {
+    if (timerId) { clearInterval(timerId); timerId = null; }
+  }
+
+  function endCountdown() {
+    stopCountdown();
+    link.textContent = originalText;
+    link.removeAttribute('aria-disabled');
+    link.style.pointerEvents = '';
+    link.style.opacity = '';
+    link.style.cursor = '';
+  }
+
+  // Code was just sent when this page loaded; seed cooldown if not already set.
+  if (!localStorage.getItem(STORAGE_KEY)) {
+    localStorage.setItem(STORAGE_KEY, String(Date.now()));
+  }
+
+  if (remaining() > 0) startCountdown(); else endCountdown();
+
+  link.addEventListener('click', function (e) {
+    var left = remaining();
+    if (left > 0) {
+      e.preventDefault();
+      notify('Please wait ' + Math.ceil(left / 1000) + 's before requesting another code.');
+      return;
+    }
+    localStorage.setItem(STORAGE_KEY, String(Date.now()));
+  });
+})();
+</script>
 </body>
 </html>

@@ -1,10 +1,10 @@
 import logging
 
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.db import transaction
-from django.http import JsonResponse
+from django.db import IntegrityError, transaction
+from django.http import Http404, JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 
@@ -108,7 +108,7 @@ def add_user(request):
         # --------------------
         role_id = data.get("role")
         if role_id:
-            role = Role.objects.get(id=role_id, tenant=tenant)
+            role = Role.objects.get(id=role_id)
             UserRole.objects.create(user=user, role=role)
 
         return JsonResponse({"status": True, "user_id": str(user.id)})
@@ -209,7 +209,7 @@ def toggle_user(request, user_id):
     )
 
     next_url = request.GET.get("next")
-    return redirect(next_url or "user-list")
+    return redirect(next_url or "users")
 
 @login_required
 def user_detail_ajax(request, user_id):
@@ -493,6 +493,9 @@ def user_edit(request, user_id):
     except PermissionDenied:
         raise
 
+    except Http404:
+        raise
+
     except Exception:
         return JsonResponse(
             {
@@ -511,14 +514,14 @@ def assign_roles(request, user_id):
 
     if request.user.is_superuser:
         user = get_object_or_404(User, id=user_id)
-        roles = Role.objects.filter(tenant=user.tenant)
+        roles = Role.objects.all()
     else:
         user = get_object_or_404(
             User,
             id=user_id,
             tenant=request.user.tenant,
         )
-        roles = Role.objects.filter(tenant=request.user.tenant)
+        roles = Role.objects.all()
 
     if request.method == "POST":
 

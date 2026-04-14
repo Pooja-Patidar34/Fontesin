@@ -140,7 +140,7 @@
           </div>
           <div class="form-group">
             <label class="form-label">Email Address *</label>
-            <input type="email" class="form-control" placeholder="john@company.com" required/>
+            <input type="email" class="form-control" placeholder="john@company.com" required oninput="this.value=this.value.replace(/[^\x20-\x7E]/g,'')"/>
           </div>
           <div class="form-group">
             <label class="form-label">Phone Number</label>
@@ -281,5 +281,6 @@
       });
     }
   </script>
+  <script src="{% static 'adminlte/js/no_emoji.js' %}"></script>
 </body>
 </html>

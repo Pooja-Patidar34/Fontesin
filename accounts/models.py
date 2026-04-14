@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.auth.base_user import BaseUserManager
 from django.utils.text import slugify
 from accounts.constants import CompanyClassificationChoices, CountryChoices, LanguageChoices
+from accounts.common.active_manager import ActiveManager
 from django.utils import timezone
 
 
@@ -19,6 +20,9 @@ class Tenant(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_deleted = models.BooleanField(default=False)
+
+    objects = ActiveManager()
+    all_objects = models.Manager()
 
     def __str__(self):
         return self.name
@@ -84,9 +88,13 @@ class Company(models.Model):
 
     # ---- Status ----
     is_active = models.BooleanField(default=True)
+    is_deleted = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    objects = ActiveManager()
+    all_objects = models.Manager()
 
     class Meta:
         unique_together = ("tenant", "name")
@@ -177,6 +185,9 @@ class CompanyEnrichment(models.Model):
 class UserManager(BaseUserManager):
     def get_by_natural_key(self, email):
         return self.get(email__iexact=email)
+
+    def get_queryset(self):
+        return super().get_queryset().filter(is_deleted=False)
 
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -294,11 +305,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     # ---- System ----
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    is_deleted = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     objects = UserManager()
+    all_objects = BaseUserManager()
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["first_name", "last_name"]

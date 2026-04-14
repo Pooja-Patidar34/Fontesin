@@ -49,16 +49,18 @@
     }
     .apply-step {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       flex: 1;
       position: relative;
+      text-align: center;
     }
     .apply-step:not(:last-child)::after {
       content: '';
       position: absolute;
-      left: calc(50% + 18px);
-      right: calc(-50% + 18px);
+      left: calc(50% + 22px);
+      right: calc(-50% + 22px);
       top: 18px;
       height: 2px;
       background: #D8E4EC;
@@ -317,12 +319,19 @@
     .apply-form-group { margin-bottom: 16px; }
     .apply-form-label {
       display: block;
+      width: 100%;
       font-size: .82rem;
       font-weight: 600;
       color: #253D51;
       margin-bottom: 6px;
       text-transform: uppercase;
       letter-spacing: .4px;
+      position: relative;
+      z-index: 1;
+      background: transparent;
+      overflow: visible;
+      white-space: normal;
+      clear: both;
     }
     .apply-form-control {
       width: 100%;
@@ -343,6 +352,9 @@
 
     /* FILE UPLOAD */
     .file-upload {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
       border: 2px dashed #C7CCD1;
       border-radius: 10px;
       padding: 24px;
@@ -350,7 +362,12 @@
       cursor: pointer;
       transition: .2s;
       background: #f8fafc;
+      margin: 0;
+      position: relative;
+      clear: both;
+      overflow: hidden;
     }
+    .apply-form-group { display: block; clear: both; }
     .file-upload:hover { border-color: #253D51; background: #EEF4F8; }
     .file-upload input { display: none; }
     .file-upload__icon { font-size: 1.8rem; margin-bottom: 8px; }
@@ -800,8 +817,11 @@
           <div class="apply-form-row full">
             <div class="apply-form-group">
               <label class="apply-form-label">Motivation Letter *</label>
-              <textarea name="motivation" class="apply-form-control" placeholder="Why do you want to join FONTESIN as a partner? What value can you bring to the platform and your region? Describe your vision and goals (min. 150 words)..." required style="min-height:140px;"></textarea>
-              <div class="apply-form-hint">Minimum 150 words. Be specific about your regional knowledge, network, and how you plan to grow FONTESIN in your target market.</div>
+              <textarea id="motivation-letter" name="motivation" class="apply-form-control" placeholder="Why do you want to join FONTESIN as a partner? What value can you bring to the platform and your region? Describe your vision and goals (min. 150 words)..." required style="min-height:140px;" data-min-words="150"></textarea>
+              <div class="apply-form-hint">
+                Minimum 150 words. Be specific about your regional knowledge, network, and how you plan to grow FONTESIN in your target market.
+                <span id="motivation-word-count" style="float:right;font-weight:600;color:#ef4444;">0 / 150 words</span>
+              </div>
             </div>
           </div>
           <div class="apply-form-row full">
@@ -1158,6 +1178,21 @@ function handleFileUpload(input, labelId) {
   }
 }
 
+// Motivation Letter word counter
+(function () {
+  var ta = document.getElementById('motivation-letter');
+  var counter = document.getElementById('motivation-word-count');
+  if (!ta || !counter) return;
+  var min = parseInt(ta.getAttribute('data-min-words') || '150', 10);
+  function update() {
+    var words = (ta.value.trim().match(/\S+/g) || []).length;
+    counter.textContent = words + ' / ' + min + ' words';
+    counter.style.color = words >= min ? '#16a34a' : '#ef4444';
+  }
+  ta.addEventListener('input', update);
+  update();
+})();
+
 // DD radio toggles for explain fields
 ['dd1','dd2','dd4','dd6','dd7','dd8'].forEach(function(name) {
   document.querySelectorAll('input[name="' + name + '"]').forEach(function(radio) {
@@ -1194,6 +1229,79 @@ function validateAndProceed() {
     firstInvalid.focus();
     showNotification('Please fill in all required fields before proceeding.', 'error');
     return;
+  }
+
+  // Motivation Letter: enforce minimum word count
+  var motivation = form.querySelector('#motivation-letter');
+  if (motivation) {
+    var minWords = parseInt(motivation.getAttribute('data-min-words') || '150', 10);
+    var words = (motivation.value.trim().match(/\S+/g) || []).length;
+    if (words < minWords) {
+      motivation.style.borderColor = '#ef4444';
+      motivation.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      motivation.focus();
+      var msg = 'Motivation Letter must be at least ' + minWords + ' words (currently ' + words + ').';
+      if (typeof window.showToast === 'function') {
+        window.showToast(msg, 'error');
+      } else {
+        showNotification(msg, 'error');
+      }
+      return;
+    }
+    motivation.style.borderColor = '';
+  }
+
+  // Company Website URL format (optional field, but must be valid if filled)
+  var website = form.querySelector('input[name="applied_company_website"]');
+  if (website && website.value.trim()) {
+    var websiteRe = /^https?:\/\/([A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,}(?::\d{1,5})?(?:\/[^\s]*)?$/;
+    if (!websiteRe.test(website.value.trim())) {
+      website.style.borderColor = '#ef4444';
+      website.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      website.focus();
+      if (typeof window.showToast === 'function') {
+        window.showToast('Enter a valid website URL (e.g. https://yourcompany.com).', 'error');
+      } else {
+        showNotification('Enter a valid website URL (e.g. https://yourcompany.com).', 'error');
+      }
+      return;
+    }
+  }
+
+  // LinkedIn URL format (optional field, but must be valid if filled)
+  var linkedin = form.querySelector('input[name="linkedin_url"]');
+  if (linkedin && linkedin.value.trim()) {
+    var linkedinRe = /^https?:\/\/(?:[a-z]{2,3}\.)?linkedin\.com\/(?:in|pub|company|school|profile)\/[A-Za-z0-9\-_%]+\/?(?:\?[^\s]*)?$/i;
+    if (!linkedinRe.test(linkedin.value.trim())) {
+      linkedin.style.borderColor = '#ef4444';
+      linkedin.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      linkedin.focus();
+      if (typeof window.showToast === 'function') {
+        window.showToast('Enter a valid LinkedIn URL (e.g. https://linkedin.com/in/username).', 'error');
+      } else {
+        showNotification('Enter a valid LinkedIn URL (e.g. https://linkedin.com/in/username).', 'error');
+      }
+      return;
+    }
+  }
+
+  // Date of Birth must be in the past
+  var dob = form.querySelector('input[name="birth_date"]');
+  if (dob && dob.value) {
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var picked = new Date(dob.value);
+    if (picked > today) {
+      dob.style.borderColor = '#ef4444';
+      dob.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      dob.focus();
+      if (typeof window.showToast === 'function') {
+        window.showToast('Date of Birth cannot be in the future.', 'error');
+      } else {
+        showNotification('Date of Birth cannot be in the future.', 'error');
+      }
+      return;
+    }
   }
 
   // Check CV upload
@@ -1281,5 +1389,6 @@ function showNotification(message, type) {
     });
   }
 </script>
+<script src="{% static 'adminlte/js/no_emoji.js' %}"></script>
 </body>
 </html>
