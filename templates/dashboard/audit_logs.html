@@ -195,7 +195,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       const logId = this.getAttribute("data-id");
 
-      fetch(`/admin/audit/logs/${logId}/detail/`, {
+      fetch(`/audit/logs/${logId}/detail/`, {
         headers: { "X-Requested-With": "XMLHttpRequest" }
       })
       .then(response => {

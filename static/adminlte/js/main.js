@@ -76,10 +76,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ---- Toast Notification System ----
 function getToastContainer() {
-  let container = document.querySelector('.toast-container');
+  let container = document.querySelector('.app-toast-container');
   if (!container) {
     container = document.createElement('div');
-    container.className = 'toast-container';
+    container.className = 'app-toast-container';
     document.body.appendChild(container);
   }
   return container;
@@ -92,27 +92,28 @@ const TOAST_TITLES = {
   error: 'Error', success: 'Success', warning: 'Warning', info: 'Info'
 };
 
-function showToast(message, type) {
+function showToast(message, type, duration) {
   type = type || 'info';
+  duration = duration || 5000;
   var container = getToastContainer();
   var toast = document.createElement('div');
-  toast.className = 'toast toast--' + type;
+  toast.className = 'app-toast app-toast--' + type;
   toast.innerHTML =
-    '<span class="toast__icon">' + TOAST_ICONS[type] + '</span>' +
-    '<div class="toast__body">' +
-      '<div class="toast__title">' + TOAST_TITLES[type] + '</div>' +
-      '<div class="toast__msg">' + message + '</div>' +
+    '<span class="app-toast__icon">' + TOAST_ICONS[type] + '</span>' +
+    '<div class="app-toast__body">' +
+      '<div class="app-toast__title">' + TOAST_TITLES[type] + '</div>' +
+      '<div class="app-toast__msg">' + message + '</div>' +
     '</div>' +
-    '<button class="toast__close">&times;</button>' +
-    '<div class="toast__progress"></div>';
+    '<button class="app-toast__close">&times;</button>' +
+    '<div class="app-toast__progress"></div>';
 
-  toast.querySelector('.toast__close').addEventListener('click', function() {
+  toast.querySelector('.app-toast__close').addEventListener('click', function() {
     dismissToast(toast);
   });
 
   container.appendChild(toast);
 
-  setTimeout(function() { dismissToast(toast); }, 5000);
+  setTimeout(function() { dismissToast(toast); }, duration);
 }
 
 function dismissToast(toast) {

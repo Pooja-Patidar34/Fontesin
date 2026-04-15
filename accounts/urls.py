@@ -13,6 +13,7 @@ from .view.veriff import CreateVeriffSessionAPIView
 from .view.webhook import veriff_webhook
 from billing.views import invoice_list, payment_list, payment_approve, payment_reject, subscription_list, plan_edit, plan_toggle
 from .view.search import global_search
+from .view.error import access_denied
 
 
 urlpatterns = [
@@ -51,6 +52,7 @@ urlpatterns = [
     path("payments/<int:subscription_id>/approve/", payment_approve, name="payment-approve"),
     path("payments/<int:subscription_id>/reject/", payment_reject, name="payment-reject"),
     path("search/", global_search, name="global-search"),
+    path("access-denied/", access_denied, name="access-denied"),
     path("forgot-password/", forgot_password, name="forgot-password"),
     path("verify-otp/", verify_otp, name="verify-otp"),
     path("reset-password/", reset_password, name="reset-password"),

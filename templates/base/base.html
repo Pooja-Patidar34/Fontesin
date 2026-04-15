@@ -490,6 +490,7 @@
             </a>
           </li>
 
+          {% if request.user.role.code|lower != "business_user" %}
           <li class="nav-item has-treeview access-control {% if active_menu == 'access-control' %}menu-open{% endif %}">
             <a href="#"
                class="nav-link {% if active_menu == 'access-control' %}active{% endif %}">
@@ -518,6 +519,7 @@
               </li>
             </ul>
           </li>
+          {% endif %}
 
           <li class="nav-item">
             <a href="{% url 'audit-logs' %}"
@@ -527,6 +529,7 @@
             </a>
           </li>
 
+          {% if request.user.role.code|lower != "business_user" %}
           <li class="nav-item">
             <a href="{% url 'subscriptions' %}"
                class="nav-link {% if active_menu == 'subscriptions' %}active{% endif %}">
@@ -534,6 +537,7 @@
               <p>Subscriptions</p>
             </a>
           </li>
+          {% endif %}
 
           <li class="nav-item">
             <a href="{% url 'invoices' %}"
@@ -543,6 +547,7 @@
             </a>
           </li>
 
+          {% if request.user.role.code|lower != "business_user" %}
           <li class="nav-item">
             <a href="{% url 'payments' %}"
                class="nav-link {% if active_menu == 'payments' %}active{% endif %}">
@@ -552,19 +557,20 @@
           </li>
 
           <li class="nav-item">
-            <a href="#"
+            <a href="#" data-coming-soon="1"
                class="nav-link {% if active_menu == 'reports' %}active{% endif %}">
               <i class="nav-icon fas fa-chart-bar"></i>
               <p>Reports</p>
             </a>
           </li>
           {% endif %}
+          {% endif %}
 
           <!-- PLATFORM -->
           <li class="nav-header">Platform</li>
 
           <li class="nav-item">
-            <a href="#"
+            <a href="#" data-coming-soon="1" data-feature="geographic_scope"
                class="nav-link {% if active_menu == 'regions' %}active{% endif %}">
               <i class="nav-icon fas fa-globe-americas"></i>
               <p>Regions & Map</p>
@@ -572,7 +578,7 @@
           </li>
 
           <li class="nav-item">
-            <a href="#"
+            <a href="#" data-coming-soon="1"
                class="nav-link {% if active_menu == 'page-editor' %}active{% endif %}">
               <i class="nav-icon fas fa-edit"></i>
               <p>Page Editor</p>
@@ -580,15 +586,7 @@
           </li>
 
           <li class="nav-item">
-            <a href="#"
-               class="nav-link {% if active_menu == 'ui-components' %}active{% endif %}">
-              <i class="nav-icon fas fa-puzzle-piece"></i>
-              <p>UI Components</p>
-            </a>
-          </li>
-
-          <li class="nav-item">
-            <a href="#"
+            <a href="#" data-coming-soon="1" data-feature="messaging"
                class="nav-link {% if active_menu == 'messages' %}active{% endif %}"
                style="display: flex; align-items: center;">
               <i class="nav-icon fas fa-envelope"></i>
@@ -598,7 +596,7 @@
           </li>
 
           <li class="nav-item">
-            <a href="#"
+            <a href="#" data-coming-soon="1"
                class="nav-link {% if active_menu == 'settings' %}active{% endif %}">
               <i class="nav-icon fas fa-cog"></i>
               <p>Settings</p>
@@ -656,6 +654,33 @@
   searchInput.addEventListener('input', function() {
     if (!this.value.trim()) {
       window.location.href = '{% url "dashboard" %}';
+    }
+  });
+})();
+</script>
+
+<script>
+(function() {
+  var PLAN_FEATURES = {{ plan_features_json|safe }} || {};
+  var IS_SUPERUSER = PLAN_FEATURES.__superuser__ === true;
+
+  document.addEventListener('click', function(e) {
+    var link = e.target.closest('a[data-coming-soon]');
+    if (!link) return;
+    e.preventDefault();
+
+    var feature = link.getAttribute('data-feature');
+
+    // If the link is tied to a plan feature, check whether the user's plan
+    // includes it. Not included → 403 access denied. Included but not built
+    // yet → "coming soon" toast. Superusers always get the toast.
+    if (feature && !IS_SUPERUSER && PLAN_FEATURES[feature] !== true) {
+      window.location.href = "{% url 'access-denied' %}";
+      return;
+    }
+
+    if (typeof showToast === 'function') {
+      showToast('Feature coming soon', 'info');
     }
   });
 })();

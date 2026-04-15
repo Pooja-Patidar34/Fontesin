@@ -44,19 +44,13 @@ def membership(request):
     plans = CommercialPlan.objects.filter(is_active=True)
 
     comparison_rows = [
-        {"label": "World Map Access", "key": "world_map"},
-        {"label": "Country Profiles / Day", "key": "country_profiles"},
-        {"label": "Company Registry Data", "key": "company_registry"},
-        {"label": "Advanced Analytics", "key": "advanced_analytics"},
-        {"label": "Data Export (CSV/Excel/PDF)", "key": "data_export"},
-        {"label": "API Access", "key": "api_access"},
-        {"label": "Multilicense", "key": "multilicense"},
-        {"label": "Select Country / Region", "key": "select_country_region"},
-        {"label": "Franchise Management", "key": "franchise_management"},
-        {"label": "Multi-Currency Billing", "key": "multi_currency"},
-        {"label": "Dedicated Account Manager", "key": "dedicated_manager"},
-        {"label": "Pro Forma Invoice", "key": "pro_forma_invoice"},
-        {"label": "Support Level", "key": "support"},
+        {"label": "Profile Visibility", "key": "profile_visibility"},
+        {"label": "Geographic Access Scope", "key": "geographic_scope"},
+        {"label": "Search Scope", "key": "search_scope"},
+        {"label": "Company Certification", "key": "company_certification"},
+        {"label": "Partnerships", "key": "partnerships"},
+        {"label": "Messaging", "key": "messaging"},
+        {"label": "Saving Databases", "key": "saving_databases"},
     ]
 
     plans_json = json.dumps({
@@ -99,7 +93,7 @@ def select_plan(request):
     subscription = Subscription.objects.create(
         user=user,
         plan=plan,
-        status="active" if plan.code == "free" else "created",
+        status="created",
         start_date=now,
         end_date=end_date,
     )

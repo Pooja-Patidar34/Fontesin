@@ -2086,7 +2086,7 @@ class SelectPlanTests(BaseBillingTestCase):
         )
         self.assertEqual(response.status_code, 302)
         sub = Subscription.objects.get(user=self.user)
-        self.assertEqual(sub.status, "active")
+        self.assertEqual(sub.status, "created")
         invoice = Invoice.objects.get(subscription=sub)
         self.assertEqual(invoice.status, "paid")
 

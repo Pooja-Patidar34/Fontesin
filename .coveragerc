@@ -1,0 +1,21 @@
+[run]
+source =
+    accounts
+    accounts_api
+    billing
+    FontEsin
+branch = True
+omit =
+    */migrations/*
+    */tests.py
+    */__pycache__/*
+    manage.py
+
+[report]
+show_missing = True
+skip_covered = False
+exclude_lines =
+    pragma: no cover
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:

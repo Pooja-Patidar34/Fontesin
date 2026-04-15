@@ -4,6 +4,7 @@ from django.shortcuts import redirect, render
 from django.db.models import Q
 
 from accounts.models import Company, User
+from billing.utils import filter_companies_by_plan_scope
 
 
 PAGE_SIZE = 10
@@ -35,9 +36,10 @@ def global_search(request):
     user_qs = User.objects.all()
 
     if not request.user.is_superuser:
-        tenant = request.user.tenant
-        company_qs = company_qs.filter(tenant=tenant)
-        user_qs = user_qs.filter(tenant=tenant)
+        # Tenant scope still applies for users (own org)
+        user_qs = user_qs.filter(tenant=request.user.tenant)
+        # Companies are filtered by the user's membership-plan geographic scope
+        company_qs = filter_companies_by_plan_scope(company_qs, request.user)
 
     company_qs = company_qs.filter(
         Q(name__icontains=q) | Q(city__icontains=q) | Q(country__icontains=q)

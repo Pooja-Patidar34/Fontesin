@@ -54,6 +54,100 @@ PLAN_TIERS = {
 }
 
 
+# ── Geographic scope by plan ──
+# Region -> list of ISO 2-letter country codes that belong to that region.
+PLAN_REGIONS = {
+    "europe": ["DE", "CZ", "GB", "FR", "NL", "PL", "AT", "CH", "SE"],
+    "north_america": ["US", "CA", "MX"],
+    "south_america": ["BR"],
+    "asia": ["JP", "SG", "IN", "KR"],
+    "middle_east": ["AE"],
+    "australia_oceania": ["AU"],
+}
+
+
+def _region_for_country(country_code):
+    """Return the region key that contains the given country code, or None."""
+    if not country_code:
+        return None
+    code = country_code.strip().upper()
+    for region, codes in PLAN_REGIONS.items():
+        if code in codes:
+            return region
+    return None
+
+
+def get_user_geographic_scope(user, plan=None):
+    """
+    Return the user's allowed geographic scope as a dict:
+        {"mode": "country"|"region"|"worldwide"|"none",
+         "countries": [list of country codes] | None}
+
+    - FREE:   mode="country", countries=[user.country] (domicile only)
+    - BASIC:  mode="country", countries=[user.country] (selected country)
+    - PRO:    mode="region",  countries=<all codes in user's region>
+    - GLOBAL: mode="worldwide", countries=None (no filter)
+    - No plan: mode="none", countries=[] (block everything)
+    """
+    if plan is None:
+        plan = get_user_plan(user)
+
+    code = plan.code if plan else None
+    user_country = (getattr(user, "country", None) or "").strip().upper() or None
+
+    if code in ("free", "basic"):
+        return {"mode": "country", "countries": [user_country] if user_country else []}
+    if code == "pro":
+        region = _region_for_country(user_country)
+        return {"mode": "region", "countries": PLAN_REGIONS.get(region, []) if region else []}
+    if code == "global":
+        return {"mode": "worldwide", "countries": None}
+    return {"mode": "none", "countries": []}
+
+
+# Map ISO codes to common full-name spellings used in legacy free-text Company.country values
+_COUNTRY_NAME_BY_CODE = {
+    "US": "United States", "DE": "Germany", "CZ": "Czech Republic",
+    "GB": "United Kingdom", "FR": "France", "NL": "Netherlands",
+    "PL": "Poland", "AT": "Austria", "CH": "Switzerland", "SE": "Sweden",
+    "AE": "United Arab Emirates", "SG": "Singapore", "CA": "Canada",
+    "AU": "Australia", "JP": "Japan", "BR": "Brazil", "IN": "India",
+    "MX": "Mexico", "KR": "South Korea",
+}
+
+
+def filter_companies_by_plan_scope(queryset, user, country_field="country"):
+    """
+    Restrict a Company queryset to the user's plan geographic scope.
+
+    Superusers bypass filtering. GLOBAL plan returns the queryset unchanged.
+    For country/region-scoped plans, matches both ISO code and common full name
+    (case-insensitive) since Company.country is a free-text field.
+    """
+    from django.db.models import Q
+
+    if getattr(user, "is_superuser", False):
+        return queryset
+
+    scope = get_user_geographic_scope(user)
+
+    if scope["mode"] == "worldwide":
+        return queryset
+
+    if scope["mode"] == "none" or not scope["countries"]:
+        return queryset.none()
+
+    q = Q()
+    for code in scope["countries"]:
+        if not code:
+            continue
+        q |= Q(**{f"{country_field}__iexact": code})
+        full = _COUNTRY_NAME_BY_CODE.get(code)
+        if full:
+            q |= Q(**{f"{country_field}__iexact": full})
+    return queryset.filter(q)
+
+
 def get_plan_tier(user, plan=None):
     """Get the numeric tier level of the user's plan. 0 = free/no plan."""
     if plan is None:

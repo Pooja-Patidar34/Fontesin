@@ -12,12 +12,9 @@ from django.http import JsonResponse
 from django.db import transaction
 
 from accounts.forms.company_form import CompanyForm
-from billing.utils import requires_plan
-
 
 
 @login_required
-@requires_plan(feature="company_registry")
 @transaction.atomic
 def company_list(request):
 

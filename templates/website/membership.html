@@ -431,32 +431,20 @@
             <td>{% if forloop.last %}<strong>{{ row.label }}</strong>{% else %}{{ row.label }}{% endif %}</td>
             {% for plan in plans %}
             {% with val=plan.comparison %}
-              {% if row.key == "world_map" %}
-                <td{% if plan.is_popular %} class="highlight"{% endif %}>{{ val.world_map }}</td>
-              {% elif row.key == "country_profiles" %}
-                <td{% if plan.is_popular %} class="highlight"{% endif %}>{{ val.country_profiles }}</td>
-              {% elif row.key == "company_registry" %}
-                <td{% if plan.is_popular %} class="highlight"{% endif %}>{% if val.company_registry == True %}<span class="check">&#10003;</span>{% elif val.company_registry == False %}<span class="cross">&#10007;</span>{% else %}{{ val.company_registry }}{% endif %}</td>
-              {% elif row.key == "advanced_analytics" %}
-                <td{% if plan.is_popular %} class="highlight"{% endif %}>{% if val.advanced_analytics == True %}<span class="check">&#10003;</span>{% elif val.advanced_analytics == False %}<span class="cross">&#10007;</span>{% else %}{{ val.advanced_analytics }}{% endif %}</td>
-              {% elif row.key == "data_export" %}
-                <td{% if plan.is_popular %} class="highlight"{% endif %}>{% if val.data_export == True %}<span class="check">&#10003;</span>{% elif val.data_export == False %}<span class="cross">&#10007;</span>{% else %}{{ val.data_export }}{% endif %}</td>
-              {% elif row.key == "api_access" %}
-                <td{% if plan.is_popular %} class="highlight"{% endif %}>{% if val.api_access == True %}<span class="check">&#10003;</span>{% elif val.api_access == False %}<span class="cross">&#10007;</span>{% else %}{{ val.api_access }}{% endif %}</td>
-              {% elif row.key == "multilicense" %}
-                <td{% if plan.is_popular %} class="highlight"{% endif %}>{% if val.multilicense == True %}<span class="check">&#10003;</span>{% elif val.multilicense == False %}<span class="cross">&#10007;</span>{% else %}{{ val.multilicense }}{% endif %}</td>
-              {% elif row.key == "select_country_region" %}
-                <td{% if plan.is_popular %} class="highlight"{% endif %}>{% if val.select_country_region == True %}<span class="check">&#10003;</span>{% elif val.select_country_region == False %}<span class="cross">&#10007;</span>{% else %}{{ val.select_country_region }}{% endif %}</td>
-              {% elif row.key == "franchise_management" %}
-                <td{% if plan.is_popular %} class="highlight"{% endif %}>{% if val.franchise_management == True %}<span class="check">&#10003;</span>{% elif val.franchise_management == False %}<span class="cross">&#10007;</span>{% else %}{{ val.franchise_management }}{% endif %}</td>
-              {% elif row.key == "multi_currency" %}
-                <td{% if plan.is_popular %} class="highlight"{% endif %}>{% if val.multi_currency == True %}<span class="check">&#10003;</span>{% elif val.multi_currency == False %}<span class="cross">&#10007;</span>{% else %}{{ val.multi_currency }}{% endif %}</td>
-              {% elif row.key == "dedicated_manager" %}
-                <td{% if plan.is_popular %} class="highlight"{% endif %}>{% if val.dedicated_manager == True %}<span class="check">&#10003;</span>{% elif val.dedicated_manager == False %}<span class="cross">&#10007;</span>{% else %}{{ val.dedicated_manager }}{% endif %}</td>
-              {% elif row.key == "pro_forma_invoice" %}
-                <td{% if plan.is_popular %} class="highlight"{% endif %}>{% if val.pro_forma_invoice == True %}<span class="check">&#10003;</span>{% elif val.pro_forma_invoice == False %}<span class="cross">&#10007;</span>{% else %}{{ val.pro_forma_invoice }}{% endif %}</td>
-              {% elif row.key == "support" %}
-                <td{% if plan.is_popular %} class="highlight"{% endif %}>{{ val.support }}</td>
+              {% if row.key == "profile_visibility" %}
+                <td{% if plan.is_popular %} class="highlight"{% endif %}>{{ val.profile_visibility }}</td>
+              {% elif row.key == "geographic_scope" %}
+                <td{% if plan.is_popular %} class="highlight"{% endif %}>{{ val.geographic_scope }}</td>
+              {% elif row.key == "search_scope" %}
+                <td{% if plan.is_popular %} class="highlight"{% endif %}>{{ val.search_scope }}</td>
+              {% elif row.key == "company_certification" %}
+                <td{% if plan.is_popular %} class="highlight"{% endif %}>{% if val.company_certification == True %}<span class="check">&#10003;</span>{% elif val.company_certification == False %}<span class="cross">&#10007;</span>{% else %}{{ val.company_certification }}{% endif %}</td>
+              {% elif row.key == "partnerships" %}
+                <td{% if plan.is_popular %} class="highlight"{% endif %}>{% if val.partnerships == True %}<span class="check">&#10003;</span>{% elif val.partnerships == False %}<span class="cross">&#10007;</span>{% else %}{{ val.partnerships }}{% endif %}</td>
+              {% elif row.key == "messaging" %}
+                <td{% if plan.is_popular %} class="highlight"{% endif %}>{% if val.messaging == True %}<span class="check">&#10003;</span>{% elif val.messaging == False %}<span class="cross">&#10007;</span>{% else %}{{ val.messaging }}{% endif %}</td>
+              {% elif row.key == "saving_databases" %}
+                <td{% if plan.is_popular %} class="highlight"{% endif %}>{% if val.saving_databases == True %}<span class="check">&#10003;</span>{% elif val.saving_databases == False %}<span class="cross">&#10007;</span>{% else %}{{ val.saving_databases }}{% endif %}</td>
               {% endif %}
             {% endwith %}
             {% endfor %}
