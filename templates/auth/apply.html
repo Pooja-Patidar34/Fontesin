@@ -583,11 +583,11 @@
           <div class="apply-form-row">
             <div class="apply-form-group">
               <label class="apply-form-label">First Name *</label>
-              <input type="text" name="first_name" class="apply-form-control" placeholder="John" value="{{ request.user.first_name }}" required/>
+              <input type="text" name="first_name" class="apply-form-control" placeholder="John" value="{{ request.user.first_name }}" required maxlength="50" oninput="this.value=this.value.replace(/\s+/g,' ').replace(/^ /,'')"/>
             </div>
             <div class="apply-form-group">
               <label class="apply-form-label">Last Name *</label>
-              <input type="text" name="last_name" class="apply-form-control" placeholder="Smith" value="{{ request.user.last_name }}" required/>
+              <input type="text" name="last_name" class="apply-form-control" placeholder="Smith" value="{{ request.user.last_name }}" required maxlength="50" oninput="this.value=this.value.replace(/\s+/g,' ').replace(/^ /,'')"/>
             </div>
           </div>
           <div class="apply-form-row">

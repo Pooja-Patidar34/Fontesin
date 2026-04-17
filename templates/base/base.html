@@ -490,6 +490,7 @@
             </a>
           </li>
 
+          {% comment "Access Control - hidden from sidebar, not in current scope" %}
           {% if request.user.role.code|lower != "business_user" %}
           <li class="nav-item has-treeview access-control {% if active_menu == 'access-control' %}menu-open{% endif %}">
             <a href="#"
@@ -520,6 +521,7 @@
             </ul>
           </li>
           {% endif %}
+          {% endcomment %}
 
           <li class="nav-item">
             <a href="{% url 'audit-logs' %}"
@@ -539,20 +541,20 @@
           </li>
           {% endif %}
 
-          <li class="nav-item">
+          <!-- <li class="nav-item">
             <a href="{% url 'invoices' %}"
                class="nav-link {% if active_menu == 'invoices' %}active{% endif %}">
               <i class="nav-icon fas fa-file-invoice"></i>
               <p>Invoices</p>
             </a>
-          </li>
+          </li> -->
 
           {% if request.user.role.code|lower != "business_user" %}
           <li class="nav-item">
             <a href="{% url 'payments' %}"
                class="nav-link {% if active_menu == 'payments' %}active{% endif %}">
               <i class="nav-icon fas fa-money-bill-wave"></i>
-              <p>Payments</p>
+              <p>Invoices</p>
             </a>
           </li>
 
@@ -581,7 +583,7 @@
             <a href="#" data-coming-soon="1"
                class="nav-link {% if active_menu == 'page-editor' %}active{% endif %}">
               <i class="nav-icon fas fa-edit"></i>
-              <p>Page Editor</p>
+              <p>Partnerships</p>
             </a>
           </li>
 
@@ -684,6 +686,146 @@
     }
   });
 })();
+</script>
+
+<!-- Global Confirm Modal -->
+<style>
+  .confirm-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 99999;
+    align-items: center;
+    justify-content: center;
+  }
+  .confirm-modal-overlay.active { display: flex; }
+  .confirm-modal-box {
+    background: #fff;
+    border-radius: 16px;
+    width: 420px;
+    max-width: 92vw;
+    box-shadow: 0 12px 48px rgba(0,0,0,.25);
+    animation: confirmModalIn .2s ease;
+  }
+  @keyframes confirmModalIn {
+    from { opacity: 0; transform: translateY(16px) scale(.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .confirm-modal-box__icon {
+    width: 56px; height: 56px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; margin: 24px auto 12px;
+  }
+  .confirm-modal-box__icon--danger { background: #fee2e2; color: #dc2626; }
+  .confirm-modal-box__icon--warning { background: #fef3c7; color: #d97706; }
+  .confirm-modal-box__icon--info { background: #e0f0ff; color: #2b7de9; }
+  .confirm-modal-box__icon--success { background: #dcfce7; color: #16a34a; }
+  .confirm-modal-box__title {
+    text-align: center; font-size: 1.15rem; font-weight: 800;
+    color: #1B2E3F; margin-bottom: 8px;
+  }
+  .confirm-modal-box__text {
+    text-align: center; font-size: .88rem; color: #64748b;
+    padding: 0 28px; margin-bottom: 24px; line-height: 1.5;
+  }
+  .confirm-modal-box__actions {
+    display: flex; gap: 10px; padding: 0 24px 24px;
+  }
+  .confirm-modal-box__btn {
+    flex: 1; padding: 11px; border: none; border-radius: 10px;
+    font-size: .9rem; font-weight: 700; cursor: pointer;
+    transition: background .15s, color .15s;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .confirm-modal-box__btn--cancel { background: #f1f5f9; color: #475569; }
+  .confirm-modal-box__btn--cancel:hover { background: #e2e8f0; }
+  .confirm-modal-box__btn--danger { background: #dc2626; color: #fff; }
+  .confirm-modal-box__btn--danger:hover { background: #b91c1c; }
+  .confirm-modal-box__btn--primary { background: #253D51; color: #fff; }
+  .confirm-modal-box__btn--primary:hover { background: #1B2E3F; }
+  .confirm-modal-box__btn--success { background: #16a34a; color: #fff; }
+  .confirm-modal-box__btn--success:hover { background: #15803d; }
+</style>
+
+<div class="confirm-modal-overlay" id="app-confirm-modal">
+  <div class="confirm-modal-box">
+    <div class="confirm-modal-box__icon" id="app-confirm-icon">
+      <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    <div class="confirm-modal-box__title" id="app-confirm-title">Are you sure?</div>
+    <div class="confirm-modal-box__text" id="app-confirm-text"></div>
+    <div class="confirm-modal-box__actions">
+      <button type="button" class="confirm-modal-box__btn confirm-modal-box__btn--cancel" onclick="appConfirmClose()">
+        Cancel
+      </button>
+      <button type="button" class="confirm-modal-box__btn" id="app-confirm-ok">
+        Confirm
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function(){
+    let pendingAction = null;
+
+    window.appConfirm = function(opts) {
+      const overlay = document.getElementById('app-confirm-modal');
+      const iconEl = document.getElementById('app-confirm-icon');
+      const titleEl = document.getElementById('app-confirm-title');
+      const textEl = document.getElementById('app-confirm-text');
+      const okBtn = document.getElementById('app-confirm-ok');
+
+      const kind = opts.kind || 'danger';
+      const iconMap = {
+        danger: 'fa-exclamation-triangle',
+        warning: 'fa-exclamation-circle',
+        info: 'fa-info-circle',
+        success: 'fa-check-circle'
+      };
+      const btnStyleMap = {
+        danger: 'confirm-modal-box__btn--danger',
+        warning: 'confirm-modal-box__btn--primary',
+        info: 'confirm-modal-box__btn--primary',
+        success: 'confirm-modal-box__btn--success'
+      };
+
+      iconEl.className = 'confirm-modal-box__icon confirm-modal-box__icon--' + kind;
+      iconEl.innerHTML = '<i class="fas ' + (iconMap[kind] || iconMap.danger) + '"></i>';
+
+      titleEl.textContent = opts.title || 'Are you sure?';
+      textEl.innerHTML = opts.text || '';
+
+      okBtn.className = 'confirm-modal-box__btn ' + (btnStyleMap[kind] || btnStyleMap.danger);
+      okBtn.innerHTML = (opts.okIcon ? '<i class="fas ' + opts.okIcon + '"></i> ' : '') + (opts.okLabel || 'Confirm');
+
+      pendingAction = opts.onConfirm || null;
+      overlay.classList.add('active');
+    };
+
+    window.appConfirmClose = function() {
+      pendingAction = null;
+      document.getElementById('app-confirm-modal').classList.remove('active');
+    };
+
+    document.getElementById('app-confirm-ok').addEventListener('click', function() {
+      const action = pendingAction;
+      appConfirmClose();
+      if (typeof action === 'function') action();
+    });
+
+    document.getElementById('app-confirm-modal').addEventListener('click', function(e) {
+      if (e.target === this) appConfirmClose();
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        const m = document.getElementById('app-confirm-modal');
+        if (m && m.classList.contains('active')) appConfirmClose();
+      }
+    });
+  })();
 </script>
 </body>
 </html>

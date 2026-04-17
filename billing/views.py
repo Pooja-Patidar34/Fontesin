@@ -137,6 +137,72 @@ def payment_reject(request, subscription_id):
 
 
 @login_required
+def payment_detail_ajax(request, subscription_id):
+    """Return subscription data as JSON for the edit modal."""
+    if not request.user.is_superuser:
+        return JsonResponse({"error": "forbidden"}, status=403)
+
+    sub = get_object_or_404(
+        Subscription.objects.select_related("user", "plan"), id=subscription_id
+    )
+    plans = list(
+        CommercialPlan.objects.filter(is_active=True)
+        .order_by("sort_order")
+        .values("id", "code", "name")
+    )
+    return JsonResponse({
+        "id": sub.id,
+        "user_email": sub.user.email if sub.user else "-",
+        "plan_id": sub.plan_id,
+        "status": sub.status,
+        "start_date": sub.start_date.strftime("%Y-%m-%d") if sub.start_date else "",
+        "end_date": sub.end_date.strftime("%Y-%m-%d") if sub.end_date else "",
+        "plans": plans,
+    })
+
+
+@login_required
+@require_POST
+def payment_edit(request, subscription_id):
+    """Update subscription plan, status, and dates."""
+    if not request.user.is_superuser:
+        raise PermissionDenied()
+
+    sub = get_object_or_404(Subscription, id=subscription_id)
+
+    plan_id = request.POST.get("plan_id")
+    status = request.POST.get("status")
+    end_date = request.POST.get("end_date")
+
+    if plan_id:
+        plan = get_object_or_404(CommercialPlan, id=plan_id, is_active=True)
+        sub.plan = plan
+        if sub.user:
+            sub.user.subscription_plan = plan.code
+            sub.user.save(update_fields=["subscription_plan"])
+
+    if status and status in dict(Subscription.STATUS_CHOICES):
+        old_status = sub.status
+        sub.status = status
+        # If changing to active, mark invoice as paid
+        if status == "active" and old_status != "active":
+            Invoice.objects.filter(subscription=sub, status="pending").update(
+                status="paid", paid_at=timezone.now()
+            )
+
+    if end_date:
+        from datetime import datetime
+        try:
+            sub.end_date = timezone.make_aware(datetime.strptime(end_date, "%Y-%m-%d"))
+        except ValueError:
+            pass
+
+    sub.save()
+    messages.success(request, f"Subscription for {sub.user.email} updated successfully.")
+    return redirect("payments")
+
+
+@login_required
 def subscription_list(request):
     if not request.user.is_superuser:
         raise PermissionDenied()

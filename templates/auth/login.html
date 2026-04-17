@@ -181,6 +181,10 @@
             class="form-control"
             placeholder="you@company.com"
             required
+            maxlength="254"
+            pattern="^[a-zA-Z0-9._+\-]+@[a-zA-Z0-9\-]+(\.[a-zA-Z0-9\-]+)*\.[a-zA-Z]{2,10}$"
+            title="Please enter a valid email address (e.g., you@company.com)"
+            oninput="this.value=this.value.replace(/[^a-zA-Z0-9@._+\-]/g,'')"
           />
         </div>
 
@@ -194,6 +198,8 @@
               class="form-control"
               placeholder="Enter your password"
               required
+              maxlength="50"
+              oninput="this.value=this.value.replace(/[^\x20-\x7E]/g,'')"
             />
             <button type="button" class="password-toggle__btn" id="toggle-password" aria-label="Toggle password visibility">👁</button>
           </div>

@@ -166,9 +166,10 @@
 
                 <form method="post"
                       action="{% url 'company-delete' company.id %}"
-                      onsubmit="return confirm('Delete this company permanently?');">
+                      id="company-delete-form-{{ company.id }}">
                   {% csrf_token %}
-                  <button type="submit" class="dropdown-item text-danger">
+                  <button type="button" class="dropdown-item text-danger"
+                          onclick="appConfirm({kind:'danger', title:'Delete Company?', text:'Are you sure you want to permanently delete this company? This action cannot be undone.', okLabel:'Delete', okIcon:'fa-trash', onConfirm:function(){document.getElementById('company-delete-form-{{ company.id }}').submit();}})">
                     <i class="fas fa-trash mr-2"></i> Delete
                   </button>
                 </form>

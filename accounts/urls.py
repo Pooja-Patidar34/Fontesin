@@ -11,7 +11,7 @@ from .view.website import home, about, worldmap, career, contact, membership, se
 from .view.regions import region_us, region_de, region_cz, region_ae, region_jp
 from .view.veriff import CreateVeriffSessionAPIView
 from .view.webhook import veriff_webhook
-from billing.views import invoice_list, payment_list, payment_approve, payment_reject, subscription_list, plan_edit, plan_toggle
+from billing.views import invoice_list, payment_list, payment_approve, payment_reject, payment_edit, payment_detail_ajax, subscription_list, plan_edit, plan_toggle
 from .view.search import global_search
 from .view.error import access_denied
 
@@ -51,6 +51,8 @@ urlpatterns = [
     path("payments/", payment_list, name="payments"),
     path("payments/<int:subscription_id>/approve/", payment_approve, name="payment-approve"),
     path("payments/<int:subscription_id>/reject/", payment_reject, name="payment-reject"),
+    path("payments/<int:subscription_id>/edit/", payment_edit, name="payment-edit"),
+    path("payments/<int:subscription_id>/detail/", payment_detail_ajax, name="payment-detail"),
     path("search/", global_search, name="global-search"),
     path("access-denied/", access_denied, name="access-denied"),
     path("forgot-password/", forgot_password, name="forgot-password"),

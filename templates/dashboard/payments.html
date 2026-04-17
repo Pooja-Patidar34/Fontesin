@@ -95,17 +95,17 @@
 
             <td>
               {% if sub.status == "created" %}
-                <form method="post" action="{% url 'payment-approve' sub.id %}" style="display:inline;">
+                <form method="post" action="{% url 'payment-approve' sub.id %}" style="display:inline;" id="approve-form-{{ sub.id }}">
                   {% csrf_token %}
-                  <button type="submit" class="btn btn-sm btn-success" title="Approve"
-                          onclick="return confirm('Approve subscription for {{ sub.user.email }}?')">
+                  <button type="button" class="btn btn-sm btn-success" title="Approve"
+                          onclick="appConfirm({kind:'success', title:'Approve Subscription?', text:'Approve subscription for <strong>{{ sub.user.email|escapejs }}</strong>?', okLabel:'Approve', okIcon:'fa-check', onConfirm:function(){document.getElementById('approve-form-{{ sub.id }}').submit();}})">
                     <i class="fas fa-check"></i> Approve
                   </button>
                 </form>
-                <form method="post" action="{% url 'payment-reject' sub.id %}" style="display:inline;">
+                <form method="post" action="{% url 'payment-reject' sub.id %}" style="display:inline;" id="reject-form-{{ sub.id }}">
                   {% csrf_token %}
-                  <button type="submit" class="btn btn-sm btn-danger" title="Reject"
-                          onclick="return confirm('Reject subscription for {{ sub.user.email }}?')">
+                  <button type="button" class="btn btn-sm btn-danger" title="Reject"
+                          onclick="appConfirm({kind:'danger', title:'Reject Subscription?', text:'Reject subscription for <strong>{{ sub.user.email|escapejs }}</strong>?', okLabel:'Reject', okIcon:'fa-times', onConfirm:function(){document.getElementById('reject-form-{{ sub.id }}').submit();}})">
                     <i class="fas fa-times"></i> Reject
                   </button>
                 </form>
@@ -116,6 +116,10 @@
               {% else %}
                 -
               {% endif %}
+              <button class="btn btn-sm btn-outline-primary ml-1 edit-sub-btn"
+                      data-id="{{ sub.id }}" title="Edit">
+                <i class="fas fa-edit"></i> Edit
+              </button>
             </td>
           </tr>
           {% empty %}
@@ -163,4 +167,87 @@
   {% endif %}
 
 </div>
+
+<!-- Edit Subscription Modal -->
+<div class="modal fade" id="editSubModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" id="editSubForm">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title font-weight-bold">Edit Subscription</h5>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="font-weight-bold">User</label>
+            <input type="text" class="form-control" id="edit-user-email" readonly>
+          </div>
+          <div class="form-group">
+            <label class="font-weight-bold">Plan</label>
+            <select class="form-control" name="plan_id" id="edit-plan"></select>
+          </div>
+          <div class="form-group">
+            <label class="font-weight-bold">Status</label>
+            <select class="form-control" name="status" id="edit-status">
+              <option value="created">Pending Approval</option>
+              <option value="active">Active (Approved)</option>
+              <option value="trial">Trial</option>
+              <option value="past_due">Past Due</option>
+              <option value="suspended">Suspended</option>
+              <option value="cancelled">Cancelled (Rejected)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="font-weight-bold">End Date</label>
+            <input type="date" class="form-control" name="end_date" id="edit-end-date">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  document.querySelectorAll(".edit-sub-btn").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var subId = this.getAttribute("data-id");
+
+      fetch("/payments/" + subId + "/detail/", {
+        headers: {"X-Requested-With": "XMLHttpRequest"}
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        document.getElementById("edit-user-email").value = data.user_email;
+        document.getElementById("edit-status").value = data.status;
+        document.getElementById("edit-end-date").value = data.end_date;
+
+        var planSelect = document.getElementById("edit-plan");
+        planSelect.innerHTML = "";
+        data.plans.forEach(function(p) {
+          var opt = document.createElement("option");
+          opt.value = p.id;
+          opt.textContent = p.name;
+          if (p.id === data.plan_id) opt.selected = true;
+          planSelect.appendChild(opt);
+        });
+
+        document.getElementById("editSubForm").action = "/payments/" + subId + "/edit/";
+        $("#editSubModal").modal("show");
+      })
+      .catch(function(err) {
+        if (typeof showToast === "function") {
+          showToast("Failed to load subscription details.", "error");
+        }
+      });
+    });
+  });
+});
+</script>
+
 {% endblock %}

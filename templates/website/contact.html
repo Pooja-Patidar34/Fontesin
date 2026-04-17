@@ -140,7 +140,7 @@
           </div>
           <div class="form-group">
             <label class="form-label">Email Address *</label>
-            <input type="email" class="form-control" placeholder="john@company.com" required oninput="this.value=this.value.replace(/[^\x20-\x7E]/g,'')"/>
+            <input type="email" class="form-control" placeholder="john@company.com" required maxlength="254" pattern="^[a-zA-Z0-9._+\-]+@[a-zA-Z0-9\-]+(\.[a-zA-Z0-9\-]+)*\.[a-zA-Z]{2,10}$" title="Please enter a valid email address (e.g., you@company.com)" oninput="this.value=this.value.replace(/[^a-zA-Z0-9@._+\-]/g,'')"/>
           </div>
           <div class="form-group">
             <label class="form-label">Phone Number</label>

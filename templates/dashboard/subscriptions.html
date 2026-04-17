@@ -160,6 +160,39 @@
   }
   .btn-save-plan:hover { background: #1B2E3F; }
 
+  /* Confirm Modal */
+  .confirm-modal { width: 420px; max-width: 92vw; }
+  .confirm-modal__icon {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: #fee2e2; color: #dc2626;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; margin: 24px auto 12px;
+  }
+  .confirm-modal__title {
+    text-align: center; font-size: 1.15rem; font-weight: 800;
+    color: #1B2E3F; margin-bottom: 8px;
+  }
+  .confirm-modal__text {
+    text-align: center; font-size: .88rem; color: #64748b;
+    padding: 0 28px; margin-bottom: 24px; line-height: 1.5;
+  }
+  .confirm-modal__actions {
+    display: flex; gap: 10px; padding: 0 24px 24px;
+  }
+  .confirm-modal__btn {
+    flex: 1; padding: 11px; border: none; border-radius: 10px;
+    font-size: .9rem; font-weight: 700; cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .confirm-modal__btn--cancel {
+    background: #f1f5f9; color: #475569;
+  }
+  .confirm-modal__btn--cancel:hover { background: #e2e8f0; }
+  .confirm-modal__btn--danger {
+    background: #dc2626; color: #fff;
+  }
+  .confirm-modal__btn--danger:hover { background: #b91c1c; }
+
   /* Modal Overlay */
   .plan-modal-overlay {
     display: none;
@@ -326,10 +359,10 @@
             <button class="btn-plan-action btn-edit-plan" onclick="openPlanModal('edit-modal-{{ forloop.counter }}')">
               <i class="fas fa-edit"></i> Edit
             </button>
-            <form method="post" action="{% url 'plan-toggle' plan.id %}" style="display:inline;">
+            <form method="post" action="{% url 'plan-toggle' plan.id %}" style="display:inline;" id="toggle-form-{{ forloop.counter }}">
               {% csrf_token %}
               {% if plan.is_active %}
-                <button type="submit" class="btn-plan-action btn-toggle-inactive" onclick="return confirm('Deactivate {{ plan.name }}? Users will no longer see this plan.')">
+                <button type="button" class="btn-plan-action btn-toggle-inactive" onclick="appConfirm({kind:'danger', title:'Deactivate Plan?', text:'Are you sure you want to deactivate <strong>{{ plan.name|escapejs }}</strong>? Users will no longer be able to see or subscribe to this plan.', okLabel:'Deactivate', okIcon:'fa-ban', onConfirm:function(){document.getElementById('toggle-form-{{ forloop.counter }}').submit();}})">
                   <i class="fas fa-ban"></i> Deactivate
                 </button>
               {% else %}
