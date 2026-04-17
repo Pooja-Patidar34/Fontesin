@@ -43,11 +43,37 @@
     return y + '-' + m + '-' + day;
   }
 
+  function ensureToastContainer() {
+    var container = document.getElementById('ne-toast-container');
+    if (container) return container;
+    container = document.createElement('div');
+    container.id = 'ne-toast-container';
+    container.style.cssText = 'position:fixed;top:20px;right:20px;z-index:999999;display:flex;flex-direction:column;gap:10px;pointer-events:none;';
+    document.body.appendChild(container);
+    return container;
+  }
+
+  function showInlineToast(msg) {
+    var container = ensureToastContainer();
+    var toast = document.createElement('div');
+    toast.style.cssText = 'min-width:280px;max-width:400px;padding:14px 18px;border-radius:10px;background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;font-size:.88rem;font-weight:500;box-shadow:0 6px 24px rgba(0,0,0,.12);pointer-events:auto;display:flex;align-items:center;gap:10px;animation:neToastIn .2s ease;';
+    toast.innerHTML = '<span style="font-size:1rem;">\u26A0\uFE0F</span><span>' + msg.replace(/</g, '&lt;') + '</span>';
+    container.appendChild(toast);
+    setTimeout(function () {
+      toast.style.transition = 'opacity .25s, transform .25s';
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateX(20px)';
+      setTimeout(function () { toast.remove(); }, 250);
+    }, 3500);
+  }
+
   function notify(msg) {
     if (typeof window.showToast === 'function') {
       window.showToast(msg, 'error');
+    } else if (typeof window.showNotification === 'function') {
+      window.showNotification(msg, 'error');
     } else {
-      alert(msg);
+      showInlineToast(msg);
     }
   }
 
