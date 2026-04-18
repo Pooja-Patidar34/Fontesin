@@ -2,6 +2,7 @@ import json
 import random
 from datetime import timedelta
 
+from dateutil.relativedelta import relativedelta
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
@@ -87,7 +88,10 @@ def select_plan(request):
         return redirect("membership")
 
     now = timezone.now()
-    end_date = now + timedelta(days=30)
+    if plan.billing_period == "monthly":
+        end_date = now + relativedelta(months=1)
+    else:
+        end_date = now + relativedelta(years=1)
 
     # Create subscription
     subscription = Subscription.objects.create(

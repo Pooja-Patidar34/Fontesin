@@ -18,7 +18,7 @@ from django.http import JsonResponse
 from accounts.models import Tenant, Company, Role, UserCompany, User, DueDiligence
 from accounts.constants import CountryChoices, LanguageChoices
 import random
-from datetime import timedelta
+from datetime import date, timedelta
 from django.utils import timezone
 from accounts.models import User, PasswordResetToken
 from accounts.utils.mailer import send_otp_email
@@ -313,24 +313,27 @@ def identity_verification_view(request):
 @login_required
 def apply_view(request):
     user = request.user
-    role_value = ''
-    role_label = ''
-    role_icon = ''
 
-    if user.role:
-        role_code = user.role.code.lower() if user.role.code else ''
-        if 'consultant' in role_code:
-            role_value = 'consultant'
-            role_label = 'Consultant'
-            role_icon = '\U0001F4BC'
-        elif 'coordinator' in role_code:
-            role_value = 'coordinator'
-            role_label = 'Coordinator'
-            role_icon = '\U0001F30D'
-        elif 'franchise' in role_code:
-            role_value = 'franchise'
-            role_label = 'Franchise Partner'
-            role_icon = '\U0001F680'
+    if not user.role or not user.role.code:
+        messages.error(request, "Your account does not have a valid role assigned. Please contact support.")
+        return redirect("login")
+
+    role_code = user.role.code.lower()
+    if 'consultant' in role_code:
+        role_value = 'consultant'
+        role_label = 'Consultant'
+        role_icon = '\U0001F4BC'
+    elif 'coordinator' in role_code:
+        role_value = 'coordinator'
+        role_label = 'Coordinator'
+        role_icon = '\U0001F30D'
+    elif 'franchise' in role_code:
+        role_value = 'franchise'
+        role_label = 'Franchise Partner'
+        role_icon = '\U0001F680'
+    else:
+        messages.error(request, "The application form is only available for consultants, coordinators, and franchise partners.")
+        return redirect("dashboard")
 
     return render(request, "auth/apply.html", {
         "role_value": role_value,
@@ -345,6 +348,15 @@ def apply_submit(request):
         return redirect("apply")
 
     user = request.user
+
+    if not user.role or not user.role.code:
+        messages.error(request, "Your account does not have a valid role assigned. Please contact support.")
+        return redirect("login")
+
+    role_code = user.role.code.lower()
+    if not any(r in role_code for r in ('consultant', 'coordinator', 'franchise')):
+        messages.error(request, "The application form is only available for consultants, coordinators, and franchise partners.")
+        return redirect("dashboard")
 
     # Collect and strip fields
     first_name = request.POST.get("first_name", "").strip()
@@ -393,6 +405,31 @@ def apply_submit(request):
     missing = [name for name, value in required_fields.items() if not value]
     if missing:
         messages.error(request, f"{', '.join(missing)} {'is' if len(missing) == 1 else 'are'} required.")
+        return redirect("apply")
+
+    # Validate phone length and characters (7-20 chars, digits/+/-/space/parentheses only)
+    phone_digits = re.sub(r"\D", "", phone)
+    if not re.fullmatch(r"[\d+\-\s()]{7,20}", phone) or not (7 <= len(phone_digits) <= 15):
+        messages.error(request, "Phone number must be 7-15 digits (you may include +, spaces, dashes, or parentheses).")
+        return redirect("apply")
+
+    # Age must be consistent with selected years of experience (min working age 16)
+    try:
+        dob = date.fromisoformat(birth_date)
+    except ValueError:
+        messages.error(request, "Enter a valid date of birth.")
+        return redirect("apply")
+
+    today = date.today()
+    age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+    exp_match = re.match(r"^\s*(\d+)", years_of_experience)
+    min_exp = int(exp_match.group(1)) if exp_match else 0
+    required_age = 16 + min_exp
+    if age < required_age:
+        messages.error(
+            request,
+            f"Date of Birth and Years of Experience are inconsistent. Minimum age of {required_age} is expected for the selected experience level.",
+        )
         return redirect("apply")
 
     # Validate declarations

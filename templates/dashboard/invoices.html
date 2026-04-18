@@ -64,7 +64,13 @@
               {% endif %}
             </td>
 
-            <td>{{ invoice.due_date|date:"M d, Y" }}</td>
+            <td>
+              {% if invoice.status == "paid" %}
+                -
+              {% else %}
+                {{ invoice.due_date|date:"M d, Y" }}
+              {% endif %}
+            </td>
 
             <td>
               {% if invoice.paid_at %}

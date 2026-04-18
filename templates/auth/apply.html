@@ -614,7 +614,7 @@
           <div class="apply-form-row">
             <div class="apply-form-group">
               <label class="apply-form-label">Phone Number *</label>
-              <input type="tel" name="phone" class="apply-form-control" placeholder="+1 212 555 0100" value="{{ request.user.phone|default:'' }}" required/>
+              <input type="tel" name="phone" class="apply-form-control" placeholder="+1 212 555 0100" value="{{ request.user.phone|default:'' }}" maxlength="20" pattern="[\d+\-\s()]{7,20}" title="Enter 7 to 20 digits (optionally with +, -, spaces or parentheses)" required/>
             </div>
             <div class="apply-form-group">
               <label class="apply-form-label">LinkedIn Profile</label>
@@ -1285,13 +1285,14 @@ function validateAndProceed() {
     }
   }
 
-  // Date of Birth must be in the past
+  // Date of Birth must be in the past (compare as local-date strings to avoid UTC parsing skew)
   var dob = form.querySelector('input[name="birth_date"]');
   if (dob && dob.value) {
-    var today = new Date();
-    today.setHours(0, 0, 0, 0);
-    var picked = new Date(dob.value);
-    if (picked > today) {
+    var nowLocal = new Date();
+    var todayISO = nowLocal.getFullYear() + '-' +
+                   String(nowLocal.getMonth() + 1).padStart(2, '0') + '-' +
+                   String(nowLocal.getDate()).padStart(2, '0');
+    if (dob.value > todayISO) {
       dob.style.borderColor = '#ef4444';
       dob.scrollIntoView({ behavior: 'smooth', block: 'center' });
       dob.focus();
@@ -1301,6 +1302,34 @@ function validateAndProceed() {
         showNotification('Date of Birth cannot be in the future.', 'error');
       }
       return;
+    }
+
+    // Age must be consistent with selected years of experience (min working age 16)
+    var expSel = form.querySelector('select[name="years_of_experience"]');
+    if (expSel && expSel.value) {
+      var expMatch = expSel.value.match(/^\s*(\d+)/);
+      if (expMatch) {
+        var minExp = parseInt(expMatch[1], 10);
+        var dobDate = new Date(dob.value + 'T00:00:00');
+        var age = nowLocal.getFullYear() - dobDate.getFullYear();
+        var monthDiff = nowLocal.getMonth() - dobDate.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && nowLocal.getDate() < dobDate.getDate())) {
+          age--;
+        }
+        var requiredAge = 16 + minExp;
+        if (age < requiredAge) {
+          dob.style.borderColor = '#ef4444';
+          expSel.style.borderColor = '#ef4444';
+          dob.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          var msg = 'Date of Birth and Years of Experience are inconsistent. Minimum age of ' + requiredAge + ' is expected for the selected experience level.';
+          if (typeof window.showToast === 'function') {
+            window.showToast(msg, 'error');
+          } else {
+            showNotification(msg, 'error');
+          }
+          return;
+        }
+      }
     }
   }
 

@@ -244,10 +244,12 @@
           <span class="info-row__label">Issue Date</span>
           <span class="info-row__value">{{ invoice.created_at|date:"F j, Y" }}</span>
         </div>
+        {% if invoice.status != "paid" %}
         <div class="info-row">
           <span class="info-row__label">Due Date</span>
           <span class="info-row__value">{{ invoice.due_date|date:"F j, Y" }}</span>
         </div>
+        {% endif %}
         <div class="info-row">
           <span class="info-row__label">Status</span>
           <span class="info-row__value">
@@ -307,7 +309,13 @@
         </div>
         <div class="info-row">
           <span class="info-row__label">Billing Period</span>
-          <span class="info-row__value">Annual (12 months)</span>
+          <span class="info-row__value">
+            {% if invoice.subscription.plan.billing_period == "monthly" %}
+              Monthly (1 month)
+            {% else %}
+              Annual (12 months)
+            {% endif %}
+          </span>
         </div>
         <div class="info-row">
           <span class="info-row__label">Subscription Start</span>
