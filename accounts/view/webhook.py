@@ -2,7 +2,6 @@ import hashlib
 import hmac
 import json
 import logging
-
 from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt

@@ -5,6 +5,10 @@ from django.shortcuts import render
 
 from accounts.models import AuditLog
 from accounts.utils.permissions import has_permission
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from django.core.exceptions import PermissionDenied
+from django.contrib.auth.decorators import login_required
 
 @login_required
 def audit_logs(request):
@@ -41,10 +45,6 @@ def audit_logs(request):
     )
 
 
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
-from django.core.exceptions import PermissionDenied
-from django.contrib.auth.decorators import login_required
 
 @login_required
 def audit_log_detail_ajax(request, log_id):

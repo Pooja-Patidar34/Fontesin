@@ -4,6 +4,24 @@ from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from accounts.models import UserRole, Permission
+from django.conf import settings
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from django.contrib.auth import authenticate, login
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.contrib.auth import get_user_model, login
+from django.http import JsonResponse
+from accounts.models import Tenant, Company, Role, UserCompany, User, DueDiligence
+from accounts.constants import CountryChoices, LanguageChoices
+import random
+from datetime import timedelta
+from django.utils import timezone
+from accounts.models import User, PasswordResetToken
+from accounts.utils.mailer import send_otp_email
 
 logger = logging.getLogger("technical")
 
@@ -45,10 +63,6 @@ logger = logging.getLogger("technical")
 #     return render(request, "auth/login.html")
 
 
-from django.contrib.auth import authenticate, login
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from django.utils.http import url_has_allowed_host_and_scheme
 
 def admin_login(request):
     if request.user.is_authenticated:
@@ -111,14 +125,6 @@ def admin_login(request):
 def admin_logout(request):
     logout(request)
     return redirect("login")
-
-
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from django.contrib.auth import get_user_model, login
-from django.http import JsonResponse
-from accounts.models import Tenant, Company, Role, UserCompany, User, DueDiligence
-from accounts.constants import CountryChoices, LanguageChoices
 
 
 def check_email_exists(request):
@@ -281,9 +287,6 @@ def register_view(request):
 
     return render(request, "auth/register.html", ctx)
 
-from django.conf import settings
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
 
 
 @login_required
@@ -485,11 +488,6 @@ def apply_review_view(request):
     return render(request, "auth/apply_review.html", {
         "role_label": role_label,
     })
-import random
-from datetime import timedelta
-from django.utils import timezone
-from accounts.models import User, PasswordResetToken
-from accounts.utils.mailer import send_otp_email
 
 
 def forgot_password(request):

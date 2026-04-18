@@ -1,5 +1,6 @@
 import json
 import logging
+from datetime import datetime
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
@@ -27,16 +28,11 @@ def invoice_list(request):
     if not request.user.is_superuser and not is_business_user:
         raise PermissionDenied()
 
-    if request.user.is_superuser:
-        qs = Invoice.objects.select_related(
-            "subscription__user", "subscription__plan"
-        ).order_by("-created_at")
-    else:
-        qs = Invoice.objects.filter(
-            subscription__user=request.user
-        ).select_related(
-            "subscription__user", "subscription__plan"
-        ).order_by("-created_at")
+    qs = Invoice.objects.select_related(
+        "subscription__user", "subscription__plan"
+    ).order_by("-created_at")
+    if not request.user.is_superuser:
+        qs = qs.filter(subscription__user=request.user)
 
     paginator = Paginator(qs, 10)
     page_number = request.GET.get("page", 1)
@@ -191,7 +187,6 @@ def payment_edit(request, subscription_id):
             )
 
     if end_date:
-        from datetime import datetime
         try:
             sub.end_date = timezone.make_aware(datetime.strptime(end_date, "%Y-%m-%d"))
         except ValueError:
@@ -214,13 +209,13 @@ def subscription_list(request):
         total_count=models.Count("subscription"),
     ).order_by("id")
 
-    total_plans = plans_qs.count()
     total_active = Subscription.objects.filter(status="active").count()
     total_revenue = Invoice.objects.filter(status="paid").aggregate(
         total=models.Sum("amount")
     )["total"] or 0
 
     paginator = Paginator(plans_qs, 10)
+    total_plans = paginator.count
     page_number = request.GET.get("page")
     try:
         page_obj = paginator.page(page_number)
