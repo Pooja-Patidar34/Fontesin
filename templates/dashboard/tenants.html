@@ -13,17 +13,18 @@
 
   <div class="ml-auto d-flex align-items-center">
 
-    <form method="get" class="mr-2">
+    <form method="get" class="mr-2" id="tenant-search-form">
       <div class="input-group input-group-sm" style="width:220px;">
         <input type="text"
               name="q"
               id="tenant-search"
               value="{{ request.GET.q }}"
               class="form-control"
-              placeholder="Search tenant...">
+              placeholder="Search tenant..."
+              autocomplete="off">
 
         <div class="input-group-append">
-          <button class="btn btn-outline-secondary">
+          <button class="btn btn-outline-secondary" type="submit">
             <i class="fas fa-search"></i>
           </button>
         </div>
@@ -38,204 +39,9 @@
   </div>
   </div>
 
-  <!-- Table -->
-  <div class="card-body p-0">
-    <div class="table-responsive">
-      <table class="table table-hover table-sm mb-0">
-
-        <thead class="bg-light">
-          <tr>
-            <th class="align-middle">Name</th>
-            <th class="align-middle">Status</th>
-            <th class="text-center align-middle">Users</th>
-            <th class="text-center align-middle">Companies</th>
-            <th class="align-middle">Created</th>
-            <th class="text-center align-middle">Action</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {% for tenant in tenants %}
-          <tr>
-
-            <td class="align-middle">
-              <strong>{{ tenant.name }}</strong>
-            </td>
-            <td class="align-middle">
-              {% if tenant.is_active %}
-                <span class="badge badge-success">Active</span>
-              {% else %}
-                <span class="badge badge-danger">Inactive</span>
-              {% endif %}
-            </td>
-
-            <td class="text-center align-middle">
-              <a href="{% url 'users' %}?tenant={{ tenant.id }}"
-                 class="badge badge-info">
-                {{ tenant.user_count }}
-              </a>
-            </td>
-
-            <td class="text-center align-middle">
-              <a href="{% url 'companies' %}?tenant={{ tenant.id }}"
-                 class="badge badge-primary">
-                {{ tenant.company_count }}
-              </a>
-            </td>
-
-            <td class="text-muted align-middle">
-              {{ tenant.created_at|date:"M d, Y" }}
-            </td>
-
-            <!-- Properly aligned action column -->
-            <td class="text-center align-middle">
-
-              <div class="dropdown">
-                <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
-                        type="button"
-                        data-toggle="dropdown">
-                  Action
-                </button>
-                <div class="dropdown-menu dropdown-menu-right">
-
-                  <!-- VIEW -->
-                  <button class="dropdown-item view-tenant-btn"
-                          data-url="{% url 'tenant-detail' tenant.id %}">
-                    <i class="fas fa-eye mr-2"></i> View
-                  </button>
-
-                  <!-- EDIT -->
-                  <button class="dropdown-item edit-tenant-btn"
-                          data-url="{% url 'tenant-detail' tenant.id %}">
-                    <i class="fas fa-edit mr-2"></i> Edit
-                  </button>
-
-                  <div class="dropdown-divider"></div>
-
-                  {% if tenant.is_active %}
-                    <a class="dropdown-item text-warning"
-                      href="{% url 'tenant-toggle' tenant.id %}">
-                      <i class="fas fa-ban mr-2"></i> Deactivate
-                    </a>
-                  {% else %}
-                    <a class="dropdown-item text-success"
-                      href="{% url 'tenant-toggle' tenant.id %}">
-                      <i class="fas fa-check mr-2"></i> Activate
-                    </a>
-                  {% endif %}
-
-                  <div class="dropdown-divider"></div>
-
-                  <form method="post"
-                        action="{% url 'tenant-delete' tenant.id %}"
-                        id="tenant-delete-form-{{ tenant.id }}">
-                    {% csrf_token %}
-                    <button type="button" class="dropdown-item text-danger"
-                            onclick="appConfirm({kind:'danger', title:'Delete Tenant?', text:'Are you sure you want to permanently delete this tenant? This action cannot be undone.', okLabel:'Delete', okIcon:'fa-trash', onConfirm:function(){document.getElementById('tenant-delete-form-{{ tenant.id }}').submit();}})">
-                      <i class="fas fa-trash mr-2"></i> Delete
-                    </button>
-                  </form>
-
-                </div>
-              </div>
-            </td>
-
-          </tr>
-
-          {% empty %}
-          <tr>
-            <td colspan="7" class="text-center text-muted py-4">
-              No tenants found
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-
-      </table>
-    </div>
+  <div id="tenants-panel">
+    {% include "dashboard/_tenants_panel.html" %}
   </div>
-
-  <!-- AdminLTE Pagination -->
-{% if page_obj.paginator.num_pages > 1 %}
-<div class="card-footer">
-  <ul class="pagination pagination-sm justify-content-end mb-0">
-
-    {% if page_obj.has_previous %}
-      <li class="page-item">
-        <a class="page-link"
-           href="?page={{ page_obj.previous_page_number }}">
-          Previous
-        </a>
-      </li>
-    {% else %}
-      <li class="page-item disabled">
-        <span class="page-link">Previous</span>
-      </li>
-    {% endif %}
-
-    <!-- FIRST PAGE -->
-    {% if page_obj.number > 3 %}
-      <li class="page-item">
-        <a class="page-link" href="?page=1">1</a>
-      </li>
-
-      {% if page_obj.number > 4 %}
-      <li class="page-item disabled">
-        <span class="page-link">...</span>
-      </li>
-      {% endif %}
-    {% endif %}
-
-    <!-- CURRENT RANGE -->
-    {% for num in page_obj.paginator.page_range %}
-      {% if num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
-        {% if num == page_obj.number %}
-          <li class="page-item active">
-            <span class="page-link">{{ num }}</span>
-          </li>
-        {% else %}
-          <li class="page-item">
-            <a class="page-link"
-               href="?q={{ request.GET.q }}&page={{ num }}">
-              {{ num }}
-            </a>
-          </li>
-        {% endif %}
-      {% endif %}
-    {% endfor %}
-
-    <!-- LAST PAGE -->
-    {% if page_obj.number < page_obj.paginator.num_pages|add:-2 %}
-      {% if page_obj.number < page_obj.paginator.num_pages|add:-3 %}
-      <li class="page-item disabled">
-        <span class="page-link">...</span>
-      </li>
-      {% endif %}
-
-      <li class="page-item">
-        <a class="page-link"
-           href="?page={{ page_obj.paginator.num_pages }}">
-          {{ page_obj.paginator.num_pages }}
-        </a>
-      </li>
-    {% endif %}
-
-    {% if page_obj.has_next %}
-      <li class="page-item">
-        <a class="page-link"
-           href="?page={{ page_obj.next_page_number }}">
-          Next
-        </a>
-      </li>
-    {% else %}
-      <li class="page-item disabled">
-        <span class="page-link">Next</span>
-      </li>
-    {% endif %}
-
-  </ul>
-</div>
-{% endif %}
 
 </div>
 
@@ -338,50 +144,25 @@
       modal.modal('show');
   });
 
-  document.querySelectorAll(".view-tenant-btn").forEach(button => {
+  // Event delegation so view/edit buttons keep working after AJAX panel swaps.
+  const panel = document.getElementById("tenants-panel");
+  panel?.addEventListener("click", function (e) {
+    const viewBtn = e.target.closest(".view-tenant-btn");
+    const editBtn = e.target.closest(".edit-tenant-btn");
+    const btn = viewBtn || editBtn;
+    if (!btn) return;
 
-      button.addEventListener("click", function () {
+    fetch(btn.dataset.url)
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById("tenant-id-field").value = data.id;
+        document.getElementById("id_name").value = data.name;
+        document.getElementById("id_is_active").checked = data.is_active;
 
-          fetch(this.dataset.url)
-              .then(response => response.json())
-              .then(data => {
-
-                  document.getElementById("tenant-id-field").value = data.id;
-                  document.getElementById("id_name").value = data.name;
-                  document.getElementById("id_is_active").checked = data.is_active;
-
-                  document.querySelector(".modal-title").innerText = "Tenant Details";
-
-                  setReadonly(true);
-
-                  modal.modal('show');
-              });
-
+        document.querySelector(".modal-title").innerText = viewBtn ? "Tenant Details" : "Edit Tenant";
+        setReadonly(!!viewBtn);
+        modal.modal('show');
       });
-
-  });
-
-  document.querySelectorAll(".edit-tenant-btn").forEach(button => {
-
-      button.addEventListener("click", function () {
-
-          fetch(this.dataset.url)
-              .then(response => response.json())
-              .then(data => {
-
-                  document.getElementById("tenant-id-field").value = data.id;
-                  document.getElementById("id_name").value = data.name;
-                  document.getElementById("id_is_active").checked = data.is_active;
-
-                  document.querySelector(".modal-title").innerText = "Edit Tenant";
-
-                  setReadonly(false);
-
-                  modal.modal('show');
-              });
-
-      });
-
   });
   });
 
@@ -404,16 +185,55 @@
       };
   }
 
+  // --- AJAX search: swap only the tenants-panel instead of reloading the page ---
   document.addEventListener("DOMContentLoaded", function () {
 
       const searchInput = document.getElementById("tenant-search");
-      const form = searchInput.closest("form");
+      const form = document.getElementById("tenant-search-form");
+      const tenantsPanel = document.getElementById("tenants-panel");
 
-      const debouncedSearch = debounce(function () {
-          form.submit();
-      }, 1000); // 500ms delay
+      let lastQuery = (new URLSearchParams(window.location.search).get("q") || "").trim();
 
-      searchInput.addEventListener("input", debouncedSearch);
+      function runSearch() {
+          const q = (searchInput?.value || "").trim();
+
+          // No-op when the query hasn't changed (e.g. empty submit on an unfiltered list,
+          // or re-submitting the same term). Avoids a pointless round-trip and flicker.
+          if (q === lastQuery) return;
+          lastQuery = q;
+
+          const params = new URLSearchParams();
+          if (q) params.set("q", q);
+          const qs = params.toString();
+          const url = window.location.pathname + (qs ? "?" + qs : "");
+
+          fetch(url, {
+            headers: { "X-Requested-With": "XMLHttpRequest", "Accept": "text/html" },
+            credentials: "same-origin",
+          })
+            .then(res => {
+              if (!res.ok) throw new Error("HTTP " + res.status);
+              return res.text();
+            })
+            .then(html => {
+              tenantsPanel.innerHTML = html;
+              // Reflect the current query in the browser URL so refresh / sharing works.
+              window.history.replaceState({}, "", url);
+            })
+            .catch(err => {
+              console.error("Tenant search failed:", err);
+              if (typeof showToast === "function") {
+                showToast("Search failed. Please try again.", "error");
+              }
+            });
+      }
+
+      form?.addEventListener("submit", function (e) {
+          e.preventDefault();
+          runSearch();
+      });
+
+      searchInput?.addEventListener("input", debounce(runSearch, 400));
 
   });
 </script>

@@ -1,0 +1,179 @@
+{% extends "base/base.html" %}
+{% block title %}Regions & Map{% endblock %}
+{% block content %}
+
+<link rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""/>
+
+<style>
+.regions-wrapper { display: flex; gap: 16px; flex-wrap: wrap; }
+.regions-map-col { flex: 1 1 600px; min-width: 320px; }
+.regions-list-col { flex: 1 1 360px; min-width: 280px; max-height: 560px; overflow-y: auto; }
+#regions-map { height: 560px; border-radius: 6px; border: 1px solid #e5eaf0; }
+.region-group {
+  border: 1px solid #e5eaf0;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  background: #fff;
+}
+.region-group__header {
+  padding: 10px 14px;
+  background: #f4f6f9;
+  border-bottom: 1px solid #e5eaf0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  font-size: 14px;
+}
+.region-group__count {
+  background: #253D51;
+  color: #fff;
+  border-radius: 12px;
+  padding: 2px 10px;
+  font-size: 12px;
+}
+.region-group__body { padding: 8px 14px; }
+.region-consultant {
+  padding: 6px 0;
+  border-bottom: 1px dashed #edf1f5;
+  font-size: 13px;
+}
+.region-consultant:last-child { border-bottom: none; }
+.region-consultant__name { font-weight: 600; color: #1a2e3b; }
+.region-consultant__meta { color: #6c757d; font-size: 12px; }
+.regions-summary {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.regions-summary__card {
+  flex: 1 1 160px;
+  background: #fff;
+  border: 1px solid #e5eaf0;
+  border-radius: 6px;
+  padding: 14px 16px;
+}
+.regions-summary__label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: #6c757d;
+}
+.regions-summary__value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #253D51;
+}
+</style>
+
+<div class="card card-outline card-primary shadow-sm">
+  <div class="card-header">
+    <h3 class="card-title font-weight-bold mb-0">
+      <i class="fas fa-globe-americas mr-2"></i>Regions & Map
+    </h3>
+  </div>
+
+  <div class="card-body">
+
+    <div class="regions-summary">
+      <div class="regions-summary__card">
+        <div class="regions-summary__label">Consultants</div>
+        <div class="regions-summary__value">{{ total_consultants }}</div>
+      </div>
+      <div class="regions-summary__card">
+        <div class="regions-summary__label">Regions covered</div>
+        <div class="regions-summary__value">{{ regions|length }}</div>
+      </div>
+    </div>
+
+    <div class="regions-wrapper">
+
+      <div class="regions-map-col">
+        <div id="regions-map"></div>
+      </div>
+
+      <div class="regions-list-col">
+        {% if regions %}
+          {% for r in regions %}
+          <div class="region-group">
+            <div class="region-group__header">
+              <span>
+                <i class="fas fa-map-marker-alt mr-1 text-primary"></i>
+                {{ r.label }}
+              </span>
+              <span class="region-group__count">{{ r.count }}</span>
+            </div>
+            <div class="region-group__body">
+              {% for c in r.consultants %}
+              <div class="region-consultant">
+                <div class="region-consultant__name">{{ c.name }}</div>
+                <div class="region-consultant__meta">
+                  {{ c.email }}{% if c.company %} &middot; {{ c.company }}{% endif %}
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-muted text-center p-4">
+            No consultants have selected a target region yet.
+          </div>
+        {% endif %}
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
+<script>
+(function () {
+  const mapEl = document.getElementById("regions-map");
+  if (!mapEl) return;
+
+  const points = {{ map_points_json|safe }};
+
+  const map = L.map("regions-map", {
+    worldCopyJump: true,
+  }).setView([20, 0], 2);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 18,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  }).addTo(map);
+
+  if (!points.length) return;
+
+  const markers = [];
+  points.forEach(p => {
+    if (!p.coords) return;
+    const preview = p.consultants.slice(0, 5).map(n => "&bull; " + n).join("<br>");
+    const extra = p.consultants.length > 5
+      ? "<br><em>+ " + (p.consultants.length - 5) + " more</em>"
+      : "";
+    const popupHtml =
+      "<strong>" + p.label + "</strong><br>" +
+      "<span style='color:#6c757d'>" + p.count + " consultant" +
+      (p.count === 1 ? "" : "s") + "</span><br><br>" +
+      preview + extra;
+
+    const marker = L.marker(p.coords).addTo(map).bindPopup(popupHtml);
+    markers.push(marker);
+  });
+
+  if (markers.length) {
+    const group = L.featureGroup(markers);
+    map.fitBounds(group.getBounds().pad(0.25));
+  }
+})();
+</script>
+
+{% endblock %}

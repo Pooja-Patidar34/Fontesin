@@ -1,5 +1,58 @@
+import re
+
 from django import forms
 from accounts.models import Company, Tenant
+from accounts.constants import CountryChoices, PHONE_RULES
+
+# General phone/fax shape (length/digits bounds validated separately, per-country for phone).
+PHONE_CHARSET_RE = re.compile(r"^[\d+\-\s()]{7,25}$")
+
+# Country / State: letters, spaces, hyphens, apostrophes; must start with a letter; 2-60 chars.
+COUNTRY_NAME_RE = re.compile(r"^[A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F\s'\-]{1,59}$")
+STATE_NAME_RE = COUNTRY_NAME_RE
+
+# City: letters, spaces, hyphens, apostrophes, and periods (for abbreviations like "St. Louis");
+# must start with a letter; 2-60 chars. No digits or other special characters.
+CITY_NAME_RE = re.compile(r"^[A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F\s'\-.]{1,59}$")
+
+# Company Name: letters (incl. accented), digits, spaces and & ' . , - ( ); must contain at least one letter; 2-100 chars.
+COMPANY_NAME_RE = re.compile(r"^(?=.*[A-Za-z\u00C0-\u024F])[A-Za-z\u00C0-\u024F0-9&'.,\-()\s]{2,100}$")
+
+# Registration ID: alphanumerics and - / . _ ; 2-100 chars; at least one alphanumeric.
+REGISTRATION_ID_RE = re.compile(r"^(?=.*[A-Za-z0-9])[A-Za-z0-9\-/._]{2,100}$")
+
+# Map known country names (lowercased) to ISO codes so PHONE_RULES lookups work from free-text input.
+COUNTRY_NAME_TO_CODE = {label.lower(): code for code, label in CountryChoices.CHOICES}
+
+# Strict website URL:
+#   - http/https only
+#   - domain with TLD (2+ letters)
+#   - optional port
+#   - optional path using URL-safe chars only (alphanumerics, - . _ ~ /)
+#   - optional query using alphanumerics and - . _ ~ & =
+# Rejects characters like $ ( ) + : ! * , ; ' ? # % which allowed Django's default
+# URLValidator to accept obvious garbage trailers.
+WEBSITE_URL_RE = re.compile(
+    r"^https?://"
+    r"[a-z0-9](?:[a-z0-9\-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9\-]{0,61}[a-z0-9])?)*"
+    r"\.[a-z]{2,}"
+    r"(?::\d{1,5})?"
+    r"(?:/[A-Za-z0-9\-._~/]*)?"
+    r"(?:\?[A-Za-z0-9\-._~&=]*)?"
+    r"/?$",
+    re.IGNORECASE,
+)
+
+# Fax: digits with optional + - ( ) and whitespace; 7-25 chars overall; 5-15 raw digits.
+FAX_RE = re.compile(r"^[\d+\-\s()]{7,25}$")
+
+# Address line: letters (incl. accented), digits, spaces and the explicit allowlist , . - / #
+# Must contain at least one alphanumeric; 3-120 chars.
+# Rejects unusual symbols like ! @ $ % ^ & * ' ( ) { } [ ] < > " ; : ? = + _ |
+ADDRESS_LINE_RE = re.compile(r"^(?=.*[A-Za-z0-9])[A-Za-z\u00C0-\u024F0-9\s,./#\-]{3,120}$")
+
+# Postal code: alphanumerics with optional spaces/hyphens (US/UK/CA/etc.); 3-12 chars.
+POSTAL_CODE_RE = re.compile(r"^(?=.*[A-Za-z0-9])[A-Za-z0-9\s\-]{3,12}$")
 
 
 class CompanyForm(forms.ModelForm):
@@ -36,17 +89,81 @@ class CompanyForm(forms.ModelForm):
         widgets = {
             # Identity
             "tenant": forms.Select(attrs={"class": "form-control"}),
-            "name": forms.TextInput(attrs={"class": "form-control"}),
-            "registration_id": forms.TextInput(attrs={"class": "form-control"}),
+            "name": forms.TextInput(attrs={
+                "class": "form-control",
+                "minlength": "2",
+                "maxlength": "100",
+                "pattern": r"(?=.*[A-Za-z\u00C0-\u024F])[A-Za-z\u00C0-\u024F0-9&'.,\-()\s]{2,100}",
+                "title": "2-100 characters. Letters, digits, spaces, and & ' . , - ( ) only. Must contain at least one letter.",
+                "required": True,
+            }),
+            "registration_id": forms.TextInput(attrs={
+                "class": "form-control",
+                "minlength": "2",
+                "maxlength": "100",
+                "pattern": r"(?=.*[A-Za-z0-9])[A-Za-z0-9\-/._]{2,100}",
+                "title": "Letters, digits and the symbols - / . _ only (2-100 characters).",
+            }),
             "classification": forms.Select(attrs={"class": "form-control"}),
 
             # Address
-            "address_line1": forms.TextInput(attrs={"class": "form-control"}),
-            "address_line2": forms.TextInput(attrs={"class": "form-control"}),
-            "city": forms.TextInput(attrs={"class": "form-control"}),
-            "state": forms.TextInput(attrs={"class": "form-control"}),
-            "postal_code": forms.TextInput(attrs={"class": "form-control"}),
-            "country": forms.TextInput(attrs={"class": "form-control"}),
+            "address_line1": forms.TextInput(attrs={
+                "class": "form-control",
+                "minlength": "3",
+                "maxlength": "120",
+                "pattern": r"(?=.*[A-Za-z0-9])[A-Za-z\u00C0-\u024F0-9\s,./#\-]{3,120}",
+                "placeholder": "e.g. 221B Baker Street",
+                "title": "3-120 characters. Letters, digits, spaces and the symbols , . - / # only. Other special characters are not allowed.",
+                "autocomplete": "address-line1",
+            }),
+            "address_line2": forms.TextInput(attrs={
+                "class": "form-control",
+                "minlength": "3",
+                "maxlength": "120",
+                "pattern": r"(?=.*[A-Za-z0-9])[A-Za-z\u00C0-\u024F0-9\s,./#\-]{3,120}",
+                "placeholder": "Apt, suite, unit (optional)",
+                "title": "3-120 characters. Letters, digits, spaces and the symbols , . - / # only. Other special characters are not allowed.",
+                "autocomplete": "address-line2",
+            }),
+            "city": forms.TextInput(attrs={
+                "class": "form-control",
+                "id": "id_city",
+                "minlength": "2",
+                "maxlength": "60",
+                "pattern": r"[A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F\s'\-.]{1,59}",
+                "placeholder": "e.g. New York",
+                "title": "City must be 2-60 letters (letters, spaces, hyphens, apostrophes and periods only). Numbers and special characters are not allowed.",
+                "autocomplete": "address-level2",
+            }),
+            "state": forms.TextInput(attrs={
+                "class": "form-control",
+                "id": "id_state",
+                "minlength": "2",
+                "maxlength": "60",
+                "pattern": r"[A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F\s'\-]{1,59}",
+                "placeholder": "e.g. California",
+                "title": "State must be 2-60 letters (letters, spaces, hyphens and apostrophes only). Numbers and special characters are not allowed.",
+                "autocomplete": "address-level1",
+            }),
+            "postal_code": forms.TextInput(attrs={
+                "class": "form-control",
+                "minlength": "3",
+                "maxlength": "12",
+                "pattern": r"(?=.*[A-Za-z0-9])[A-Za-z0-9\s\-]{3,12}",
+                "placeholder": "e.g. 10001 or SW1A 1AA",
+                "title": "3-12 characters. Letters, digits, spaces and hyphens only. Must contain at least one letter or digit.",
+                "autocomplete": "postal-code",
+            }),
+            "country": forms.TextInput(attrs={
+                "class": "form-control",
+                "id": "id_country",
+                "minlength": "2",
+                "maxlength": "60",
+                "pattern": r"[A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F\s'\-]{1,59}",
+                "placeholder": "e.g. India",
+                "title": "Country must be 2-60 letters (letters, spaces, hyphens and apostrophes only). Numbers and special characters are not allowed.",
+                "autocomplete": "country-name",
+            }),
 
             "latitude": forms.NumberInput(
                 attrs={"class": "form-control", "step": "0.00000001"}
@@ -56,10 +173,40 @@ class CompanyForm(forms.ModelForm):
             ),
 
             # Contact
-            "phone": forms.TextInput(attrs={"class": "form-control"}),
-            "phone_secondary": forms.TextInput(attrs={"class": "form-control"}),
-            "fax": forms.TextInput(attrs={"class": "form-control"}),
-            "website": forms.URLInput(attrs={"class": "form-control"}),
+            "phone": forms.TextInput(attrs={
+                "class": "form-control",
+                "id": "id_phone",
+                "maxlength": "25",
+                "pattern": r"[\d+\-\s()]{7,25}",
+                "placeholder": "+1 212 555 0100",
+                "title": "Digits and + - ( ) spaces only. Length is validated against the selected country.",
+                "inputmode": "tel",
+                "data-phone-validate": "1",
+            }),
+            "phone_secondary": forms.TextInput(attrs={
+                "class": "form-control",
+                "id": "id_phone_secondary",
+                "maxlength": "25",
+                "pattern": r"[\d+\-\s()]{7,25}",
+                "placeholder": "+1 212 555 0100",
+                "title": "Digits and + - ( ) spaces only. Length is validated against the selected country.",
+                "inputmode": "tel",
+                "data-phone-validate": "1",
+            }),
+            "fax": forms.TextInput(attrs={
+                "class": "form-control",
+                "maxlength": "25",
+                "pattern": r"[\d+\-\s()]{7,25}",
+                "placeholder": "+1 212 555 0199",
+                "title": "Fax may only contain digits and the symbols + - ( ) and spaces (7-25 characters).",
+                "inputmode": "tel",
+            }),
+            "website": forms.URLInput(attrs={
+                "class": "form-control",
+                "maxlength": "500",
+                "placeholder": "https://example.com",
+                "title": "Enter a valid URL like https://example.com (letters, digits, and . - _ / only in the path).",
+            }),
 
             # Status
             "is_active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
@@ -83,3 +230,175 @@ class CompanyForm(forms.ModelForm):
             )
             self.fields["tenant"].initial = user.tenant
             self.fields["tenant"].widget = forms.HiddenInput()
+
+    def clean_name(self):
+        name = (self.cleaned_data.get("name") or "").strip()
+        if not name:
+            raise forms.ValidationError("Company name is required and cannot be only spaces.")
+        if len(name) < 2:
+            raise forms.ValidationError("Company name must be at least 2 characters.")
+        if len(name) > 100:
+            raise forms.ValidationError("Company name must be 100 characters or fewer.")
+        if not COMPANY_NAME_RE.match(name):
+            raise forms.ValidationError(
+                "Company name may only contain letters, digits, spaces, and the symbols & ' . , - ( ), and must contain at least one letter."
+            )
+        return name
+
+    def clean_registration_id(self):
+        reg = (self.cleaned_data.get("registration_id") or "").strip()
+        if not reg:
+            # Optional field: whitespace-only collapses to empty and is allowed.
+            return ""
+        if len(reg) < 2:
+            raise forms.ValidationError("Registration ID must be at least 2 characters.")
+        if len(reg) > 100:
+            raise forms.ValidationError("Registration ID must be 100 characters or fewer.")
+        if not REGISTRATION_ID_RE.match(reg):
+            raise forms.ValidationError(
+                "Registration ID may only contain letters, digits, and the symbols - / . _ , and must contain at least one letter or digit."
+            )
+        return reg
+
+    def _clean_address_line(self, field_name, label):
+        value = (self.cleaned_data.get(field_name) or "").strip()
+        if not value:
+            return value
+        if len(value) < 3:
+            raise forms.ValidationError(f"{label} must be at least 3 characters.")
+        if len(value) > 120:
+            raise forms.ValidationError(f"{label} must be 120 characters or fewer.")
+        if not ADDRESS_LINE_RE.match(value):
+            raise forms.ValidationError(
+                f"{label} may only contain letters, digits, spaces and the symbols , . - / #. Other special characters (such as ! @ $ % ^ * {{ }} [ ] < >) are not allowed."
+            )
+        return value
+
+    def clean_address_line1(self):
+        return self._clean_address_line("address_line1", "Address Line 1")
+
+    def clean_address_line2(self):
+        return self._clean_address_line("address_line2", "Address Line 2")
+
+    def clean_postal_code(self):
+        postal = (self.cleaned_data.get("postal_code") or "").strip()
+        if not postal:
+            return postal
+        if len(postal) < 3:
+            raise forms.ValidationError("Postal code must be at least 3 characters.")
+        if len(postal) > 12:
+            raise forms.ValidationError("Postal code must be 12 characters or fewer.")
+        if not POSTAL_CODE_RE.match(postal):
+            raise forms.ValidationError(
+                "Postal code may only contain letters, digits, spaces and hyphens, and must contain at least one letter or digit."
+            )
+        return postal
+
+    def clean_city(self):
+        city = (self.cleaned_data.get("city") or "").strip()
+        if not city:
+            return city
+        if len(city) < 2:
+            raise forms.ValidationError("City must be at least 2 characters.")
+        if len(city) > 60:
+            raise forms.ValidationError("City must be 60 characters or fewer.")
+        if not CITY_NAME_RE.match(city):
+            raise forms.ValidationError(
+                "City may only contain letters, spaces, hyphens, apostrophes and periods. Numbers and special characters are not allowed."
+            )
+        return city
+
+    def clean_state(self):
+        state = (self.cleaned_data.get("state") or "").strip()
+        if not state:
+            return state
+        if len(state) < 2:
+            raise forms.ValidationError("State must be at least 2 characters.")
+        if len(state) > 60:
+            raise forms.ValidationError("State must be 60 characters or fewer.")
+        if not STATE_NAME_RE.match(state):
+            raise forms.ValidationError(
+                "State may only contain letters, spaces, hyphens and apostrophes. Numbers and special characters are not allowed."
+            )
+        return state
+
+    def clean_country(self):
+        country = (self.cleaned_data.get("country") or "").strip()
+        if not country:
+            return country
+        if len(country) < 2:
+            raise forms.ValidationError("Country must be at least 2 characters.")
+        if len(country) > 60:
+            raise forms.ValidationError("Country must be 60 characters or fewer.")
+        if not COUNTRY_NAME_RE.match(country):
+            raise forms.ValidationError(
+                "Country may only contain letters, spaces, hyphens and apostrophes. Numbers and special characters are not allowed."
+            )
+        return country
+
+    def _clean_phone_field(self, field_name, label):
+        value = (self.cleaned_data.get(field_name) or "").strip()
+        if not value:
+            return value
+        if not PHONE_CHARSET_RE.match(value):
+            raise forms.ValidationError(
+                f"{label} may only contain digits and the symbols + - ( ) and spaces (7-25 characters)."
+            )
+
+        digits = re.sub(r"\D", "", value)
+        # If the caller prepended a country code (e.g. +91 98xxxxxxxx), strip the trailing
+        # country-code prefix so we compare the subscriber number against PHONE_RULES.
+        raw_country = (self.cleaned_data.get("country") or "").strip()
+        # Country may be an ISO code ("IN") or a free-text name ("India") — resolve either.
+        country_code = raw_country.upper() if len(raw_country) == 2 else COUNTRY_NAME_TO_CODE.get(raw_country.lower(), "")
+        rule = PHONE_RULES.get(country_code)
+
+        if rule:
+            min_len, max_len = rule
+            # Allow up to 4 leading country-code digits when the value starts with '+'.
+            candidates = [digits]
+            if value.lstrip().startswith("+"):
+                for cc_len in (1, 2, 3, 4):
+                    if len(digits) > cc_len:
+                        candidates.append(digits[cc_len:])
+            if not any(min_len <= len(c) <= max_len for c in candidates):
+                raise forms.ValidationError(
+                    f"{label} must be {min_len}-{max_len} digits for the selected country."
+                )
+        else:
+            # No country selected or unknown: fall back to a generic 5-15 digit bound.
+            if not (5 <= len(digits) <= 15):
+                raise forms.ValidationError(f"{label} must contain 5-15 digits.")
+        return value
+
+    def clean_phone(self):
+        return self._clean_phone_field("phone", "Phone")
+
+    def clean_phone_secondary(self):
+        return self._clean_phone_field("phone_secondary", "Secondary phone")
+
+    def clean_fax(self):
+        fax = (self.cleaned_data.get("fax") or "").strip()
+        if not fax:
+            return fax
+        if not FAX_RE.match(fax):
+            raise forms.ValidationError(
+                "Fax may only contain digits and the symbols + - ( ) and spaces (7-25 characters)."
+            )
+        digits = re.sub(r"\D", "", fax)
+        if not (5 <= len(digits) <= 15):
+            raise forms.ValidationError("Fax number must contain 5-15 digits.")
+        return fax
+
+    def clean_website(self):
+        website = (self.cleaned_data.get("website") or "").strip()
+        if not website:
+            return website
+        if len(website) > 500:
+            raise forms.ValidationError("Website URL must be 500 characters or fewer.")
+        if not WEBSITE_URL_RE.match(website):
+            raise forms.ValidationError(
+                "Enter a valid website URL like https://example.com. "
+                "Only letters, digits, and - . _ / are allowed in the path."
+            )
+        return website

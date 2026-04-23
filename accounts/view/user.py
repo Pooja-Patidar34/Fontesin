@@ -26,98 +26,149 @@ logger = logging.getLogger(__name__)
 @login_required
 def add_user(request):
     if request.method != "POST":
-        return JsonResponse({"status": False, "message": "Invalid request"})
+        return JsonResponse({"status": False, "message": "Invalid request method."}, status=405)
 
-    try:
-        data = request.POST
+    data = request.POST
 
-        # --------------------
-        # Required fields
-        # --------------------
-        email = data.get("email")
-        password = data.get("password")
-        first_name = data.get("first_name")
-        last_name = data.get("last_name")
+    # --------------------
+    # Required fields (user-friendly messages per missing field)
+    # --------------------
+    email = (data.get("email") or "").strip().lower()
+    password = data.get("password") or ""
+    first_name = (data.get("first_name") or "").strip()
+    last_name = (data.get("last_name") or "").strip()
 
-        if not all([email, password, first_name, last_name]):
-            return JsonResponse({
-                "status": False,
-                "message": "Required fields missing"
-            })
-
-        # --------------------
-        # Tenant resolution
-        # --------------------
-        if request.user.is_superuser:
-            tenant_id = data.get("tenant")
-            if not tenant_id:
-                return JsonResponse({
-                    "status": False,
-                    "message": "Tenant is required"
-                })
-            tenant = Tenant.objects.get(id=tenant_id)
-        else:
-            tenant = request.user.tenant
-
-        # --------------------
-        # Company (tenant scoped)
-        # --------------------
-        company = None
-        company_id = data.get("primary_company")
-        if company_id:
-            company = Company.objects.get(id=company_id, tenant=tenant)
-
-        # --------------------
-        # Create User
-        # --------------------
-        user = User.objects.create_user(
-            email=email,
-            password=password,
-            first_name=first_name,
-            last_name=last_name,
-            tenant=tenant,
-            primary_company=company,
-            is_active=data.get("is_active") == "true",
-
-            # Contact
-            phone=data.get("phone"),
-            national_prefix=data.get("national_prefix"),
-
-            # Personal
-            birth_date=data.get("birth_date") or None,
-            ethnicity=data.get("ethnicity"),
-            gender=data.get("gender"),
-
-            # Profile
-            preferred_language=data.get("preferred_language"),
-            bio=data.get("bio"),
-            notes=data.get("notes"),
-            photo_url=data.get("photo_url"),
-
-            # Address
-            address_line1=data.get("address_line1"),
-            address_line2=data.get("address_line2"),
-            city=data.get("city"),
-            state_region=data.get("state_region"),
-            postal_code=data.get("postal_code"),
-            country=data.get("country"),
-        )
-
-        # --------------------
-        # Role assignment
-        # --------------------
-        role_id = data.get("role")
-        if role_id:
-            role = Role.objects.get(id=role_id)
-            UserRole.objects.create(user=user, role=role)
-
-        return JsonResponse({"status": True, "user_id": str(user.id)})
-
-    except Exception as e:
+    missing = []
+    if not email:
+        missing.append("Email")
+    if not password:
+        missing.append("Password")
+    if not first_name:
+        missing.append("First name")
+    if not last_name:
+        missing.append("Last name")
+    if missing:
         return JsonResponse({
             "status": False,
-            "message": str(e)
-        })
+            "message": f"{', '.join(missing)} {'is' if len(missing) == 1 else 'are'} required.",
+        }, status=400)
+
+    # --------------------
+    # Shape validation
+    # --------------------
+    import re as _re
+    if not _re.match(r"^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$", email):
+        return JsonResponse({"status": False, "message": "Enter a valid email address."}, status=400)
+
+    if len(password) < 8:
+        return JsonResponse({"status": False, "message": "Password must be at least 8 characters."}, status=400)
+
+    if User.objects.filter(email__iexact=email).exists():
+        return JsonResponse({"status": False, "message": "A user with this email already exists."}, status=400)
+
+    # --------------------
+    # Tenant resolution
+    # --------------------
+    if request.user.is_superuser:
+        tenant_id = data.get("tenant")
+        if not tenant_id:
+            return JsonResponse({"status": False, "message": "Tenant is required."}, status=400)
+        try:
+            tenant = Tenant.objects.get(id=tenant_id)
+        except (Tenant.DoesNotExist, ValueError):
+            return JsonResponse({"status": False, "message": "Selected tenant does not exist."}, status=400)
+        if not tenant.is_active:
+            return JsonResponse({"status": False, "message": "Selected tenant is inactive."}, status=400)
+    else:
+        tenant = request.user.tenant
+        if not tenant:
+            return JsonResponse({"status": False, "message": "Your account has no tenant assigned."}, status=400)
+
+    # --------------------
+    # Company (tenant scoped)
+    # --------------------
+    company = None
+    company_id = data.get("primary_company") or data.get("company")
+    if company_id:
+        try:
+            company = Company.objects.get(id=company_id, tenant=tenant)
+        except (Company.DoesNotExist, ValueError):
+            return JsonResponse({
+                "status": False,
+                "message": "Selected company does not exist or does not belong to the chosen tenant.",
+            }, status=400)
+
+    # --------------------
+    # Role (resolve before creating the user so nothing is half-written)
+    # --------------------
+    role = None
+    role_id = data.get("role")
+    if role_id:
+        try:
+            role = Role.objects.get(id=role_id)
+        except (Role.DoesNotExist, ValueError):
+            return JsonResponse({"status": False, "message": "Selected role does not exist."}, status=400)
+
+    # --------------------
+    # Create
+    # --------------------
+    try:
+        with transaction.atomic():
+            user = User.objects.create_user(
+                email=email,
+                password=password,
+                first_name=first_name,
+                last_name=last_name,
+                tenant=tenant,
+                primary_company=company,
+                is_active=data.get("is_active") in ("true", "on", "1"),
+
+                # Contact
+                phone=data.get("phone") or None,
+                national_prefix=data.get("national_prefix") or None,
+
+                # Personal
+                birth_date=data.get("birth_date") or None,
+                ethnicity=data.get("ethnicity") or None,
+                gender=data.get("gender") or None,
+
+                # Profile
+                preferred_language=data.get("preferred_language") or None,
+                bio=data.get("bio") or None,
+                notes=data.get("notes") or None,
+                photo_url=data.get("photo_url") or None,
+
+                # Address
+                address_line1=data.get("address_line1") or None,
+                address_line2=data.get("address_line2") or None,
+                city=data.get("city") or None,
+                state_region=data.get("state_region") or None,
+                postal_code=data.get("postal_code") or None,
+                country=data.get("country") or None,
+            )
+            if role:
+                UserRole.objects.create(user=user, role=role)
+    except ValidationError as e:
+        msgs = "; ".join(e.messages) if hasattr(e, "messages") else str(e)
+        return JsonResponse({"status": False, "message": msgs}, status=400)
+    except IntegrityError as e:
+        msg = str(e).lower()
+        if "email" in msg:
+            friendly = "A user with this email already exists."
+        elif "phone" in msg:
+            friendly = "A user with this phone number already exists."
+        else:
+            friendly = "This user conflicts with an existing record."
+        logger.warning("IntegrityError creating user: %s", e)
+        return JsonResponse({"status": False, "message": friendly}, status=400)
+    except Exception as e:
+        logger.exception("Unexpected error creating user")
+        return JsonResponse({
+            "status": False,
+            "message": "Unable to create user due to an internal error. Please contact support.",
+        }, status=500)
+
+    return JsonResponse({"status": True, "user_id": str(user.id), "message": "User created successfully."})
 
 @login_required
 def user_list(request):
@@ -130,48 +181,106 @@ def user_list(request):
 
     if request.user.is_superuser:
         qs = User.objects.select_related("tenant")
-        tenants = Tenant.objects.order_by("name")
+        tenants = Tenant.objects.filter(is_active=True).order_by("name")
 
         if tenant_id:
             qs = qs.filter(tenant_id=tenant_id)
-            companies = Company.objects.filter(tenant_id=tenant_id)
-
-            if company_id:
-                qs = qs.filter(usercompany__company_id=company_id).distinct()
+            companies = (
+                Company.objects.filter(tenant_id=tenant_id, is_active=True)
+                .select_related("tenant")
+                .order_by("name")
+            )
         else:
-            companies = Company.objects.none()
-            company_id = None
-    else:
-        qs = User.objects.filter(tenant=request.user.tenant)
-        tenants = None
-        companies = Company.objects.filter(tenant=request.user.tenant)
+            # No tenant filter → offer all active companies across tenants so the Company dropdown is usable.
+            companies = (
+                Company.objects.filter(is_active=True)
+                .select_related("tenant")
+                .order_by("name")
+            )
 
         if company_id:
             qs = qs.filter(usercompany__company_id=company_id).distinct()
+    else:
+        qs = User.objects.filter(tenant=request.user.tenant)
+        tenants = None
+        companies = (
+            Company.objects.filter(tenant=request.user.tenant, is_active=True)
+            .order_by("name")
+        )
+
+        if company_id:
+            qs = qs.filter(usercompany__company_id=company_id).distinct()
+
+        # Coordinators oversee consultants across the tenant, so they see every
+        # user in their tenant (read-only). Other view-only roles (e.g. consultant,
+        # franchise) see only users who share their own company — either via
+        # User.primary_company or the UserCompany M2M.
+        role_code = (request.user.role.code or "").upper() if request.user.role else ""
+        is_coordinator = role_code == "COORDINATOR"
+
+        if not has_permission(request.user, "user.manage") and not is_coordinator:
+            own_company_ids = list(
+                request.user.usercompany_set.values_list("company_id", flat=True)
+            ) if hasattr(request.user, "usercompany_set") else []
+            if request.user.primary_company_id:
+                own_company_ids.append(request.user.primary_company_id)
+            own_company_ids = [cid for cid in own_company_ids if cid]
+
+            if own_company_ids:
+                from django.db.models import Q
+                # Drop tenant pre-filter: company linkage can be cross-tenant
+                # (registration lets you pick a company from any tenant), so
+                # gating by shared company alone is the correct scope here.
+                qs = User.objects.filter(
+                    Q(primary_company_id__in=own_company_ids)
+                    | Q(usercompany__company_id__in=own_company_ids)
+                ).distinct()
+            else:
+                qs = qs.none()
 
     qs = qs.order_by("-created_at")
 
     paginator = Paginator(qs, 10)
 
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
     try:
         page_obj = paginator.page(page_number)
-    except (EmptyPage, PageNotAnInteger):
-        page_obj = paginator.page(1)
+    except PageNotAnInteger:
+        if is_ajax:
+            page_obj = paginator.page(1)
+        else:
+            messages.error(request, "Invalid page number. Showing the first page.")
+            querydict = request.GET.copy()
+            querydict["page"] = 1
+            return redirect(f"{request.path}?{querydict.urlencode()}")
+    except EmptyPage:
+        if is_ajax:
+            page_obj = paginator.page(1)
+        else:
+            messages.error(
+                request,
+                f"Page {page_number} doesn't exist. There are only {paginator.num_pages} page(s). Showing the first page.",
+            )
+            querydict = request.GET.copy()
+            querydict["page"] = 1
+            return redirect(f"{request.path}?{querydict.urlencode()}")
 
-    return render(
-        request,
-        "dashboard/users.html",
-        {
-            "users": page_obj,
-            "page_obj": page_obj,
-            "tenants": tenants,
-            "companies": companies,
-            "selected_tenant": tenant_id,
-            "selected_company": company_id,
-            "active_menu": "users"
+    context = {
+        "users": page_obj,
+        "page_obj": page_obj,
+        "tenants": tenants,
+        "companies": companies,
+        "selected_tenant": tenant_id,
+        "selected_company": company_id,
+        "active_menu": "users",
+        "can_manage_users": has_permission(request.user, "user.manage"),
+    }
 
-        },
-    )
+    # AJAX requests (pagination, future filter clicks) just want the panel fragment.
+    if is_ajax:
+        return render(request, "dashboard/_users_panel.html", context)
+
+    return render(request, "dashboard/users.html", context)
 
 @login_required
 def toggle_user(request, user_id):

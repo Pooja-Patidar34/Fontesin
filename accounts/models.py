@@ -29,12 +29,14 @@ class Tenant(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            base_slug = slugify(self.name)
+            max_slug_len = self._meta.get_field("slug").max_length
+            base_slug = slugify(self.name)[:max_slug_len]
             slug = base_slug
             counter = 1
 
             while Tenant.objects.filter(slug=slug).exclude(id=self.id).exists():
-                slug = f"{base_slug}-{counter}"
+                suffix = f"-{counter}"
+                slug = base_slug[: max_slug_len - len(suffix)] + suffix
                 counter += 1
 
             self.slug = slug

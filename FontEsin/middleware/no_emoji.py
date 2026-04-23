@@ -1,7 +1,10 @@
 import json
 import re
 
+from django.contrib import messages
 from django.http import JsonResponse
+from django.shortcuts import redirect
+from django.utils.http import url_has_allowed_host_and_scheme
 
 EMOJI_PATTERN = re.compile(
     "["
@@ -46,7 +49,7 @@ class NoEmojiMiddleware:
         if request.method in ("POST", "PUT", "PATCH", "DELETE"):
             for key, value in request.POST.items():
                 if _contains_emoji(key) or _contains_emoji(value):
-                    return self._reject(key)
+                    return self._reject(request, key)
 
             content_type = request.content_type or ""
             if "application/json" in content_type and request.body:
@@ -55,17 +58,35 @@ class NoEmojiMiddleware:
                 except (ValueError, UnicodeDecodeError):
                     payload = None
                 if payload is not None and _contains_emoji(payload):
-                    return self._reject()
+                    return self._reject(request)
 
         for key, value in request.GET.items():
             if _contains_emoji(key) or _contains_emoji(value):
-                return self._reject(key)
+                return self._reject(request, key)
 
         return self.get_response(request)
 
     @staticmethod
-    def _reject(field=None):
+    def _wants_json(request):
+        if request.path.startswith("/api/"):
+            return True
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return True
+        accept = request.headers.get("Accept", "")
+        return "application/json" in accept and "text/html" not in accept
+
+    @classmethod
+    def _reject(cls, request, field=None):
         message = "Emojis are not allowed in input."
         if field:
             message = f"Emojis are not allowed in input '{field}'."
-        return JsonResponse({"error": message}, status=400)
+
+        if cls._wants_json(request):
+            return JsonResponse({"error": message}, status=400)
+
+        messages.error(request, message)
+        referer = request.META.get("HTTP_REFERER")
+        host = request.get_host()
+        if referer and url_has_allowed_host_and_scheme(referer, allowed_hosts={host}):
+            return redirect(referer)
+        return redirect(request.path)

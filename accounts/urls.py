@@ -8,7 +8,8 @@ from .view.user import user_list, toggle_user, assign_roles,role_list,role_detai
 from .view.audit import audit_logs,audit_log_detail_ajax
 from .view.tenant import tenant_list,toggle_tenant,tenant_detail_ajax,tenant_delete
 from .view.website import home, about, worldmap, career, contact, membership, select_plan, invoice_detail
-from .view.regions import region_us, region_de, region_cz, region_ae, region_jp
+from .view.regions import region_us, region_de, region_cz, region_ae, region_jp, regions_map_view
+from .view.consultant import consultant_companies, consultant_users, coordinator_users, coordinator_companies
 from .view.veriff import CreateVeriffSessionAPIView
 from .view.webhook import veriff_webhook
 from billing.views import invoice_list, payment_list, payment_approve, payment_reject, payment_edit, payment_detail_ajax, subscription_list, plan_edit, plan_toggle
@@ -68,6 +69,15 @@ urlpatterns = [
     path('membership/', membership, name='membership'),
     path('select-plan/', select_plan, name='select_plan'),
     path('invoice/<int:invoice_id>/', invoice_detail, name='invoice_detail'),
+
+    #coordinator regions & map dashboard
+    path('regions-map/', regions_map_view, name='regions-map'),
+
+    #staff directory (coordinator + franchise + superuser)
+    path('consultants/companies/', consultant_companies, name='consultant-companies'),
+    path('consultants/users/', consultant_users, name='consultant-users'),
+    path('coordinators/users/', coordinator_users, name='coordinator-users'),
+    path('coordinators/companies/', coordinator_companies, name='coordinator-companies'),
 
     #region specific pages
     path('region/us/', region_us, name='region_us'),

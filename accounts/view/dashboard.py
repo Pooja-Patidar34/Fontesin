@@ -316,28 +316,32 @@ def dashboard(request):
             logger.error("Dashboard: tenant_admin metrics failed: %s", e)
 
     else:
-        # Regular user - show tenant-scoped data + plan features
+        # Regular user - show counts scoped to the companies they're linked to,
+        # matching what the Company Database / Users list pages now show.
         tenant = user.tenant
         try:
             plan = get_user_plan(user)
             subscription = get_active_subscription(user)
 
+            from django.db.models import Q
+            linked_companies = Company.objects.filter(
+                Q(consultant=user)
+                | Q(owner_user=user)
+                | Q(primary_users=user)
+            ).distinct()
+            linked_company_ids = list(linked_companies.values_list("id", flat=True))
+            users_of_linked_companies = User.objects.filter(
+                Q(primary_company_id__in=linked_company_ids)
+                | Q(usercompany__company_id__in=linked_company_ids)
+            ).distinct() if linked_company_ids else User.objects.none()
+
             context.update({
-                # Tenant-scoped metrics (same data as tenant_admin)
-                "total_companies": Company.objects.filter(tenant=tenant).count(),
-                "active_companies": Company.objects.filter(
-                    tenant=tenant, is_active=True
-                ).count(),
-                "inactive_companies": Company.objects.filter(
-                    tenant=tenant, is_active=False
-                ).count(),
-                "total_users": User.objects.filter(tenant=tenant).count(),
-                "active_users": User.objects.filter(
-                    tenant=tenant, is_active=True
-                ).count(),
-                "inactive_users": User.objects.filter(
-                    tenant=tenant, is_active=False
-                ).count(),
+                "total_companies": linked_companies.count(),
+                "active_companies": linked_companies.filter(is_active=True).count(),
+                "inactive_companies": linked_companies.filter(is_active=False).count(),
+                "total_users": users_of_linked_companies.count(),
+                "active_users": users_of_linked_companies.filter(is_active=True).count(),
+                "inactive_users": users_of_linked_companies.filter(is_active=False).count(),
 
                 # Plan info
                 "user_plan": plan,

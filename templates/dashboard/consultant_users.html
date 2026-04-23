@@ -1,0 +1,328 @@
+{% extends "base/base.html" %}
+{% block title %}{{ page_title|default:"Consultant Users" }}{% endblock %}
+{% block content %}
+
+<style>
+.table td, .table th { vertical-align: middle !important; }
+.table thead th {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    font-weight: 600;
+}
+.status-badge { padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+</style>
+
+<div class="card card-outline card-primary shadow-sm">
+
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h3 class="card-title font-weight-bold mb-0">
+      <i class="fas fa-user-tie mr-2"></i>{{ page_title|default:"Consultant Users" }}
+    </h3>
+    <span class="text-muted small">Total: {{ page_obj.paginator.count }}</span>
+  </div>
+
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover table-sm mb-0">
+        <thead class="bg-light">
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Company</th>
+            <th>Status</th>
+            <th class="text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td>
+              <strong>{{ u.first_name }} {{ u.last_name }}</strong>
+            </td>
+            <td>{{ u.email }}</td>
+            <td>
+              {% if u.primary_company %}
+                {{ u.primary_company.name }}
+              {% elif u.applied_company_name %}
+                {{ u.applied_company_name }}
+              {% else %}
+                <span class="text-muted">&mdash;</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if u.is_active %}
+                <span class="badge badge-success status-badge">Active</span>
+              {% else %}
+                <span class="badge badge-danger status-badge">Inactive</span>
+              {% endif %}
+            </td>
+            <td class="text-right">
+              <button type="button"
+                      class="btn btn-sm btn-primary view-cu-btn"
+                      data-row-index="{{ forloop.counter0 }}">
+                <i class="fas fa-eye mr-1"></i> View
+              </button>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center text-muted py-4">
+              No {{ entity_label|default:"consultant" }} users found.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {{ users_json|json_script:"cu-rows-data" }}
+
+  {% if page_obj.has_other_pages %}
+  <div class="card-footer d-flex justify-content-end">
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Previous</span></li>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+          {% if num == page_obj.number %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+          {% else %}
+            <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Next</span></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- VIEW DETAIL MODAL -->
+<div class="modal fade" id="cuDetailModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-user-tie mr-2"></i>
+          <span id="cu-modal-title">{{ entity_label|default:"consultant"|capfirst }} Details</span>
+        </h5>
+        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+      </div>
+
+      <div class="modal-body">
+
+        <h6 class="text-primary font-weight-bold mt-1 mb-2">Identity</h6>
+        <table class="table table-sm table-borderless mb-3">
+          <tr><th style="width: 34%;">Name</th><td id="cu-name"></td></tr>
+          <tr><th>Email</th><td id="cu-email"></td></tr>
+          <tr><th>Status</th><td id="cu-status"></td></tr>
+          <tr><th>Application Status</th><td id="cu-app-status"></td></tr>
+          <tr><th>Sub-Role</th><td id="cu-sub-role"></td></tr>
+        </table>
+
+        <h6 class="text-primary font-weight-bold mt-3 mb-2">Personal</h6>
+        <table class="table table-sm table-borderless mb-3">
+          <tr><th style="width: 34%;">Date of Birth</th><td id="cu-dob"></td></tr>
+          <tr><th>Ethnicity</th><td id="cu-ethnicity"></td></tr>
+          <tr><th>Nationality</th><td id="cu-nationality"></td></tr>
+          <tr><th>Preferred Language</th><td id="cu-language"></td></tr>
+        </table>
+
+        <h6 class="text-primary font-weight-bold mt-3 mb-2">Contact</h6>
+        <table class="table table-sm table-borderless mb-3">
+          <tr><th style="width: 34%;">Phone</th><td id="cu-phone"></td></tr>
+          <tr><th>LinkedIn</th><td id="cu-linkedin"></td></tr>
+        </table>
+
+        <h6 class="text-primary font-weight-bold mt-3 mb-2">Address</h6>
+        <table class="table table-sm table-borderless mb-3">
+          <tr><th style="width: 34%;">Country</th><td id="cu-country"></td></tr>
+          <tr><th>City</th><td id="cu-city"></td></tr>
+          <tr><th>State / Region</th><td id="cu-state"></td></tr>
+          <tr><th>Postal Code</th><td id="cu-postal"></td></tr>
+          <tr><th>Address</th><td id="cu-address"></td></tr>
+        </table>
+
+        <h6 class="text-primary font-weight-bold mt-3 mb-2">Territory</h6>
+        <table class="table table-sm table-borderless mb-3">
+          <tr><th style="width: 34%;">Country</th><td id="cu-territory-country"></td></tr>
+          <tr><th>Region</th><td id="cu-territory-region"></td></tr>
+          <tr><th>City</th><td id="cu-territory-city"></td></tr>
+        </table>
+
+        <h6 class="text-primary font-weight-bold mt-3 mb-2">Professional</h6>
+        <table class="table table-sm table-borderless mb-3">
+          <tr><th style="width: 34%;">Current Position</th><td id="cu-position"></td></tr>
+          <tr><th>Years of Experience</th><td id="cu-experience"></td></tr>
+          <tr><th>Primary Industry</th><td id="cu-industry"></td></tr>
+          <tr><th>Professional Summary</th><td id="cu-summary"></td></tr>
+        </table>
+
+        <h6 class="text-primary font-weight-bold mt-3 mb-2">Company</h6>
+        <table class="table table-sm table-borderless mb-3">
+          <tr><th style="width: 34%;">Registered Company</th><td id="cu-company"></td></tr>
+          <tr><th>Applied Company Name</th><td id="cu-app-company-name"></td></tr>
+          <tr><th>Registration Number</th><td id="cu-app-company-reg"></td></tr>
+          <tr><th>Country of Incorporation</th><td id="cu-app-company-country"></td></tr>
+          <tr><th>Legal Form</th><td id="cu-app-company-legal"></td></tr>
+          <tr><th>Year Founded</th><td id="cu-app-company-founded"></td></tr>
+          <tr><th>Number of Employees</th><td id="cu-app-company-employees"></td></tr>
+          <tr><th>Website</th><td id="cu-app-company-website"></td></tr>
+        </table>
+
+        <h6 class="text-primary font-weight-bold mt-3 mb-2">Application</h6>
+        <table class="table table-sm table-borderless mb-3">
+          <tr><th style="width: 34%;">Target Region</th><td id="cu-target-region"></td></tr>
+          <tr><th>Franchise Type</th><td id="cu-franchise-type"></td></tr>
+          <tr><th>Motivation</th><td id="cu-motivation"></td></tr>
+          <tr><th>Network Connections</th><td id="cu-network"></td></tr>
+          <tr><th>Expected Companies</th><td id="cu-expected"></td></tr>
+          <tr><th>Reference 1</th><td id="cu-ref-1"></td></tr>
+          <tr><th>Reference 2</th><td id="cu-ref-2"></td></tr>
+        </table>
+
+        <h6 class="text-primary font-weight-bold mt-3 mb-2">System</h6>
+        <table class="table table-sm table-borderless mb-0">
+          <tr><th style="width: 34%;">Created</th><td id="cu-created"></td></tr>
+          <tr><th>Updated</th><td id="cu-updated"></td></tr>
+        </table>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const dataEl = document.getElementById("cu-rows-data");
+  if (!dataEl) return;
+  const rows = JSON.parse(dataEl.textContent);
+
+  function setText(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = (value === null || value === undefined || value === "") ? "-" : value;
+  }
+
+  function setHtml(id, html) {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  }
+
+  document.querySelectorAll(".view-cu-btn").forEach(btn => {
+    btn.addEventListener("click", function () {
+      const idx = parseInt(this.dataset.rowIndex, 10);
+      const row = rows[idx];
+      if (!row) return;
+
+      function linkify(id, url) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (url) {
+          el.innerHTML = '<a href="' + url + '" target="_blank" rel="noopener">' + url + '</a>';
+        } else {
+          el.textContent = "-";
+        }
+      }
+
+      function fmtDate(iso) {
+        if (!iso) return "";
+        try {
+          return new Date(iso).toLocaleString();
+        } catch (_) { return iso; }
+      }
+
+      // Identity
+      const fullName = (row.first_name + " " + row.last_name).trim() || row.email;
+      setText("cu-modal-title", fullName);
+      setText("cu-name", fullName);
+      setText("cu-email", row.email);
+
+      const statusBadge = row.is_active
+        ? '<span class="badge badge-success">Active</span>'
+        : '<span class="badge badge-danger">Inactive</span>';
+      setHtml("cu-status", statusBadge);
+      setText("cu-app-status", row.application_status);
+      setText("cu-sub-role", row.consultant_sub_role);
+
+      // Personal
+      setText("cu-dob", row.birth_date);
+      setText("cu-ethnicity", row.ethnicity);
+      setText("cu-nationality", row.nationality);
+      setText("cu-language", row.preferred_language);
+
+      // Contact
+      const phoneText = row.national_prefix
+        ? (row.national_prefix + " " + row.phone).trim()
+        : row.phone;
+      setText("cu-phone", phoneText);
+      linkify("cu-linkedin", row.linkedin_url);
+
+      // Address
+      setText("cu-country", row.country);
+      setText("cu-city", row.city);
+      setText("cu-state", row.state_region);
+      setText("cu-postal", row.postal_code);
+      const addressParts = [row.address_line1, row.address_line2].filter(Boolean);
+      setText("cu-address", addressParts.length ? addressParts.join(", ") : "-");
+
+      // Territory
+      setText("cu-territory-country", row.territory_country);
+      setText("cu-territory-region", row.territory_region);
+      setText("cu-territory-city", row.territory_city);
+
+      // Professional
+      setText("cu-position", row.current_position);
+      setText("cu-experience", row.years_of_experience);
+      setText("cu-industry", row.primary_industry);
+      setText("cu-summary", row.professional_summary);
+
+      // Company
+      setText("cu-company", row.company);
+      setText("cu-app-company-name", row.applied_company_name);
+      setText("cu-app-company-reg", row.applied_company_reg_number);
+      setText("cu-app-company-country", row.applied_country_of_incorporation);
+      setText("cu-app-company-legal", row.applied_legal_form);
+      setText("cu-app-company-founded", row.applied_year_founded);
+      setText("cu-app-company-employees", row.applied_num_employees);
+      linkify("cu-app-company-website", row.applied_company_website);
+
+      // Application
+      setText("cu-target-region", row.target_region);
+      setText("cu-franchise-type", row.franchise_type);
+      setText("cu-motivation", row.motivation);
+      setText("cu-network", row.network_connections);
+      setText("cu-expected", row.expected_companies);
+      setText("cu-ref-1", row.reference_1);
+      setText("cu-ref-2", row.reference_2);
+
+      // System
+      setText("cu-created", fmtDate(row.created_at));
+      setText("cu-updated", fmtDate(row.updated_at));
+
+      $('#cuDetailModal').modal('show');
+    });
+  });
+})();
+</script>
+
+{% endblock %}

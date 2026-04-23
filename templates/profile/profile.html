@@ -19,33 +19,34 @@
 
         <hr>
 
-        <table class="table table-borderless table-sm text-left" style="font-size:.88rem;">
+        <table class="table table-borderless table-sm text-left" style="font-size:.88rem; table-layout:fixed; width:100%;">
           <tr>
-            <td class="text-muted">Phone</td>
-            <td>{{ request.user.phone|default:"-" }}</td>
+            <td class="text-muted" style="width:40%;">Phone</td>
+            <td style="word-break:break-word; overflow-wrap:anywhere;">{{ request.user.phone|default:"-" }}</td>
           </tr>
           <tr>
             <td class="text-muted">Country</td>
-            <td>{{ request.user.country|default:"-" }}</td>
+            <td style="word-break:break-word; overflow-wrap:anywhere;">{{ request.user.country|default:"-" }}</td>
           </tr>
           <tr>
             <td class="text-muted">Role</td>
-            <td>{{ request.user.role.name|default:"-" }}</td>
+            <td style="word-break:break-word; overflow-wrap:anywhere;">{{ request.user.role.name|default:"-" }}</td>
           </tr>
           <tr>
             <td class="text-muted">Tenant</td>
-            <td>{{ request.user.tenant.name|default:"-" }}</td>
+            <td style="word-break:break-word; overflow-wrap:anywhere;" title="{{ request.user.tenant.name|default:'-' }}">{{ request.user.tenant.name|default:"-" }}</td>
           </tr>
           <tr>
             <td class="text-muted">Member Since</td>
-            <td>{{ request.user.created_at|date:"M d, Y" }}</td>
+            <td style="word-break:break-word; overflow-wrap:anywhere;">{{ request.user.created_at|date:"M d, Y" }}</td>
           </tr>
         </table>
       </div>
     </div>
 
-    <!-- Subscription Plan Card (hidden for superusers — admins don't subscribe) -->
-    {% if not request.user.is_superuser %}
+    <!-- Subscription Plan Card (hidden for superusers and non-subscribing roles) -->
+    {% with role_code=request.user.role.code|lower %}
+    {% if not request.user.is_superuser and role_code != "consultant" and role_code != "coordinator" and role_code != "franchise" %}
     {% if user_plan %}
     <div class="card" style="border-radius:14px; border:1px solid #e8eef3; box-shadow:0 2px 12px rgba(0,0,0,.06);">
       <div class="card-body" style="padding:20px;">
@@ -84,6 +85,7 @@
     </div>
     {% endif %}
     {% endif %}
+    {% endwith %}
   </div>
 
   <!-- Company Section -->
@@ -156,12 +158,20 @@
 
           <div class="form-group">
             <label>Company Name <span class="text-danger">*</span></label>
-            <input type="text" name="company_name" class="form-control" placeholder="Enter company name" required>
+            <input type="text" name="company_name" class="form-control" placeholder="Enter company name"
+                   minlength="2" maxlength="100"
+                   pattern="(?=.*[A-Za-z\u00C0-\u024F])[A-Za-z\u00C0-\u024F0-9&'.,\-()\s]{2,100}"
+                   title="2-100 characters. Letters, digits, spaces, and &amp; ' . , - ( ) only. Must contain at least one letter."
+                   required>
           </div>
 
           <div class="form-group">
             <label>Domain <span class="text-danger">*</span></label>
-            <input type="text" name="domain" class="form-control" placeholder="e.g. mycompany.com" required>
+            <input type="text" name="domain" class="form-control" placeholder="e.g. mycompany.com"
+                   minlength="4" maxlength="253"
+                   pattern="(?=[A-Za-z0-9.\-]{4,253}$)([A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,}"
+                   title="Enter a valid domain like mycompany.com (letters, digits, hyphens and dots; must include a TLD)"
+                   required>
             <small class="text-muted">This domain will be linked to your company's tenant.</small>
           </div>
 
@@ -180,7 +190,10 @@
             <div class="col-md-6">
               <div class="form-group">
                 <label>Website</label>
-                <input type="url" name="website" class="form-control" placeholder="https://mycompany.com">
+                <input type="url" name="website" class="form-control"
+                       placeholder="https://mycompany.com"
+                       maxlength="500"
+                       title="Enter a valid URL like https://example.com (letters, digits, and - . _ / only in the path).">
               </div>
             </div>
           </div>
@@ -189,20 +202,35 @@
             <div class="col-md-6">
               <div class="form-group">
                 <label>Phone</label>
-                <input type="text" name="company_phone" class="form-control" placeholder="+1 212 555 0100">
+                <input type="tel" name="company_phone" class="form-control"
+                       placeholder="+1 212 555 0100"
+                       maxlength="25"
+                       pattern="[\d+\-\s()]{7,25}"
+                       inputmode="tel"
+                       title="Digits and + - ( ) spaces only (7-25 characters, 5-15 digits).">
               </div>
             </div>
             <div class="col-md-6">
               <div class="form-group">
                 <label>Country</label>
-                <input type="text" name="company_country" class="form-control" placeholder="United States">
+                <input type="text" name="company_country" class="form-control"
+                       placeholder="United States"
+                       minlength="2" maxlength="60"
+                       pattern="[A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F\s'\-]{1,59}"
+                       autocomplete="country-name"
+                       title="2-60 letters only (letters, spaces, hyphens and apostrophes). Numbers and special characters are not allowed.">
               </div>
             </div>
           </div>
 
           <div class="form-group">
             <label>City</label>
-            <input type="text" name="city" class="form-control" placeholder="New York">
+            <input type="text" name="city" class="form-control"
+                   placeholder="New York"
+                   minlength="2" maxlength="60"
+                   pattern="[A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F\s'\-.]{1,59}"
+                   autocomplete="address-level2"
+                   title="2-60 letters (letters, spaces, hyphens, apostrophes and periods). Numbers and special characters are not allowed.">
           </div>
 
           <button type="submit" class="btn btn-primary">

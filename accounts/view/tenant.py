@@ -152,21 +152,34 @@ def tenant_list(request):
 
     try:
         page_obj = paginator.page(page_number)
-    except (PageNotAnInteger, EmptyPage):
-        page_obj = paginator.page(1)
+    except PageNotAnInteger:
+        messages.error(request, "Invalid page number. Showing the first page.")
+        querydict = request.GET.copy()
+        querydict["page"] = 1
+        return redirect(f"{request.path}?{querydict.urlencode()}")
+    except EmptyPage:
+        messages.error(
+            request,
+            f"Page {page_number} doesn't exist. There are only {paginator.num_pages} page(s). Showing the first page.",
+        )
+        querydict = request.GET.copy()
+        querydict["page"] = 1
+        return redirect(f"{request.path}?{querydict.urlencode()}")
 
-    return render(
-        request,
-        "dashboard/tenants.html",
-        {
-            "tenants": page_obj,
-            "page_obj": page_obj,
-            "form": form,
-            "active_menu": "tenants",
-            "search_query": q,
-            "is_business_user": is_business_user,
-        },
-    )
+    context = {
+        "tenants": page_obj,
+        "page_obj": page_obj,
+        "form": form,
+        "active_menu": "tenants",
+        "search_query": q,
+        "is_business_user": is_business_user,
+    }
+
+    # For AJAX search, return only the panel partial so the client can swap it in.
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return render(request, "dashboard/_tenants_panel.html", context)
+
+    return render(request, "dashboard/tenants.html", context)
 
 @login_required
 def toggle_tenant(request, tenant_id):

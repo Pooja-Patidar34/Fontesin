@@ -60,6 +60,19 @@ class CountryChoices:
     ]
 
 
+# National subscriber-number length bounds per country (excluding country dialing code).
+# Used to validate phone/fax input against the selected country.
+PHONE_RULES = {
+    "US": (10, 10), "CA": (10, 10), "GB": (10, 10),
+    "DE": (10, 11), "FR": (9, 9),   "NL": (9, 9),
+    "PL": (9, 9),   "AT": (10, 11), "CH": (9, 9),
+    "SE": (9, 10),  "CZ": (9, 9),   "AE": (9, 9),
+    "SG": (8, 8),   "AU": (9, 9),   "JP": (10, 10),
+    "BR": (10, 11), "IN": (10, 10), "MX": (10, 10),
+    "KR": (10, 11),
+}
+
+
 class LanguageChoices:
     EN = "en"
     DE = "de"

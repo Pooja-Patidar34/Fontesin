@@ -499,6 +499,23 @@
   <a href="{% url 'register' %}" class="apply-nav__back">&larr; Back to Registration</a>
 </nav>
 
+{% if messages %}
+<div class="apply-messages" style="max-width: 860px; margin: 16px auto 0; padding: 0 24px;">
+  {% for message in messages %}
+  <div style="
+    background: {% if message.tags == 'error' %}#fef2f2{% else %}#ecfdf5{% endif %};
+    border: 1px solid {% if message.tags == 'error' %}#fecaca{% else %}#a7f3d0{% endif %};
+    color: {% if message.tags == 'error' %}#991b1b{% else %}#065f46{% endif %};
+    padding: 12px 18px;
+    border-radius: 8px;
+    font-size: .9rem;
+    font-weight: 500;
+    margin-bottom: 8px;
+  ">{{ message }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+
 <!-- PROGRESS -->
 <div class="apply-progress">
   <div class="apply-progress__inner">
@@ -669,8 +686,11 @@
           <div class="apply-form-row full">
             <div class="apply-form-group">
               <label class="apply-form-label">Professional Summary *</label>
-              <textarea name="professional_summary" class="apply-form-control" placeholder="Briefly describe your professional background, key achievements, and relevant experience (min. 100 words)..." required style="min-height:120px;"></textarea>
-              <div class="apply-form-hint">Minimum 100 words. Focus on international business experience, network, and leadership roles.</div>
+              <textarea id="professional-summary" name="professional_summary" class="apply-form-control" placeholder="Briefly describe your professional background, key achievements, and relevant experience (min. 100 characters)..." required style="min-height:120px;" data-min-chars="100"></textarea>
+              <div class="apply-form-hint">
+                Minimum 100 characters. Focus on international business experience, network, and leadership roles.
+                <span id="professional-summary-count" style="float:right;font-weight:600;color:#ef4444;">0 / 100 characters</span>
+              </div>
             </div>
           </div>
           <div class="apply-form-group">
@@ -817,10 +837,10 @@
           <div class="apply-form-row full">
             <div class="apply-form-group">
               <label class="apply-form-label">Motivation Letter *</label>
-              <textarea id="motivation-letter" name="motivation" class="apply-form-control" placeholder="Why do you want to join FONTESIN as a partner? What value can you bring to the platform and your region? Describe your vision and goals (min. 150 words)..." required style="min-height:140px;" data-min-words="150"></textarea>
+              <textarea id="motivation-letter" name="motivation" class="apply-form-control" placeholder="Why do you want to join FONTESIN as a partner? What value can you bring to the platform and your region? Describe your vision and goals (min. 150 characters)..." required style="min-height:140px;" data-min-chars="150"></textarea>
               <div class="apply-form-hint">
-                Minimum 150 words. Be specific about your regional knowledge, network, and how you plan to grow FONTESIN in your target market.
-                <span id="motivation-word-count" style="float:right;font-weight:600;color:#ef4444;">0 / 150 words</span>
+                Minimum 150 characters. Be specific about your regional knowledge, network, and how you plan to grow FONTESIN in your target market.
+                <span id="motivation-word-count" style="float:right;font-weight:600;color:#ef4444;">0 / 150 characters</span>
               </div>
             </div>
           </div>
@@ -873,7 +893,6 @@
           <button type="button" class="apply-btn-secondary" onclick="goToPhase(1)">&larr; Back</button>
           <button type="button" class="apply-btn-primary" onclick="validateAndProceed()">Continue to Due Diligence &rarr;</button>
         </div>
-      </form>
     </div>
   </div>
 
@@ -993,6 +1012,8 @@
       </div>
     </div>
   </div>
+
+  </form>
 
 </div><!-- /apply-main -->
 
@@ -1178,16 +1199,31 @@ function handleFileUpload(input, labelId) {
   }
 }
 
-// Motivation Letter word counter
+// Motivation Letter character counter
 (function () {
   var ta = document.getElementById('motivation-letter');
   var counter = document.getElementById('motivation-word-count');
   if (!ta || !counter) return;
-  var min = parseInt(ta.getAttribute('data-min-words') || '150', 10);
+  var min = parseInt(ta.getAttribute('data-min-chars') || '150', 10);
   function update() {
-    var words = (ta.value.trim().match(/\S+/g) || []).length;
-    counter.textContent = words + ' / ' + min + ' words';
-    counter.style.color = words >= min ? '#16a34a' : '#ef4444';
+    var chars = ta.value.trim().length;
+    counter.textContent = chars + ' / ' + min + ' characters';
+    counter.style.color = chars >= min ? '#16a34a' : '#ef4444';
+  }
+  ta.addEventListener('input', update);
+  update();
+})();
+
+// Professional Summary character counter
+(function () {
+  var ta = document.getElementById('professional-summary');
+  var counter = document.getElementById('professional-summary-count');
+  if (!ta || !counter) return;
+  var min = parseInt(ta.getAttribute('data-min-chars') || '100', 10);
+  function update() {
+    var chars = ta.value.trim().length;
+    counter.textContent = chars + ' / ' + min + ' characters';
+    counter.style.color = chars >= min ? '#16a34a' : '#ef4444';
   }
   ta.addEventListener('input', update);
   update();
@@ -1231,16 +1267,36 @@ function validateAndProceed() {
     return;
   }
 
-  // Motivation Letter: enforce minimum word count
+  // Professional Summary: enforce minimum character count
+  var summary = form.querySelector('#professional-summary');
+  if (summary) {
+    var minSummaryChars = parseInt(summary.getAttribute('data-min-chars') || '100', 10);
+    var summaryChars = summary.value.trim().length;
+    if (summaryChars < minSummaryChars) {
+      summary.style.borderColor = '#ef4444';
+      summary.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      summary.focus();
+      var summaryMsg = 'Professional Summary must be at least ' + minSummaryChars + ' characters (currently ' + summaryChars + ').';
+      if (typeof window.showToast === 'function') {
+        window.showToast(summaryMsg, 'error');
+      } else {
+        showNotification(summaryMsg, 'error');
+      }
+      return;
+    }
+    summary.style.borderColor = '';
+  }
+
+  // Motivation Letter: enforce minimum character count
   var motivation = form.querySelector('#motivation-letter');
   if (motivation) {
-    var minWords = parseInt(motivation.getAttribute('data-min-words') || '150', 10);
-    var words = (motivation.value.trim().match(/\S+/g) || []).length;
-    if (words < minWords) {
+    var minChars = parseInt(motivation.getAttribute('data-min-chars') || '150', 10);
+    var chars = motivation.value.trim().length;
+    if (chars < minChars) {
       motivation.style.borderColor = '#ef4444';
       motivation.scrollIntoView({ behavior: 'smooth', block: 'center' });
       motivation.focus();
-      var msg = 'Motivation Letter must be at least ' + minWords + ' words (currently ' + words + ').';
+      var msg = 'Motivation Letter must be at least ' + minChars + ' characters (currently ' + chars + ').';
       if (typeof window.showToast === 'function') {
         window.showToast(msg, 'error');
       } else {

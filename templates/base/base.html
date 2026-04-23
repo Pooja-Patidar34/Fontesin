@@ -462,10 +462,67 @@
               <i class="nav-icon fas fa-database"></i>
               <p style="flex:1;">Company Database</p>
               {% if sidebar_company_count %}
-              <span class="sidebar-count-badge">{{ sidebar_company_count }}</span>
+              <!-- <span class="sidebar-count-badge">{{ sidebar_company_count }}</span> -->
               {% endif %}
             </a>
           </li>
+
+          <!-- Users link for consultant / franchise (sees only their company's users) -->
+          {% if request.user.role.code|lower == "consultant" or request.user.role.code|lower == "franchise" %}
+          <li class="nav-item">
+            <a href="{% url 'users' %}"
+               class="nav-link {% if active_menu == 'users' %}active{% endif %}">
+              <i class="nav-icon fas fa-users"></i>
+              <p>Users</p>
+            </a>
+          </li>
+          {% endif %}
+
+          <!-- Network menu (coordinator + franchise + superuser) -->
+          {% if request.user.is_superuser or request.user.role.code|lower == "coordinator" or request.user.role.code|lower == "franchise" %}
+          <li class="nav-item has-treeview {% if active_menu == 'network' or active_menu == 'consultants' %}menu-open{% endif %}">
+            <a href="#"
+               class="nav-link {% if active_menu == 'network' or active_menu == 'consultants' %}active{% endif %}">
+              <i class="nav-icon fas fa-user-tie"></i>
+              <p>
+                Network
+                <i class="right fas fa-angle-left"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="{% url 'consultant-companies' %}"
+                   class="nav-link {% if active_submenu == 'consultant-companies' %}active{% endif %}">
+                  <i class="fas fa-building nav-icon"></i>
+                  <p>Consultants' Companies</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{% url 'consultant-users' %}"
+                   class="nav-link {% if active_submenu == 'consultant-users' %}active{% endif %}">
+                  <i class="fas fa-user-friends nav-icon"></i>
+                  <p>Consultant Users</p>
+                </a>
+              </li>
+              {% if request.user.is_superuser or request.user.role.code|lower == "franchise" %}
+              <li class="nav-item">
+                <a href="{% url 'coordinator-companies' %}"
+                   class="nav-link {% if active_submenu == 'coordinator-companies' %}active{% endif %}">
+                  <i class="fas fa-city nav-icon"></i>
+                  <p>Coordinators' Companies</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{% url 'coordinator-users' %}"
+                   class="nav-link {% if active_submenu == 'coordinator-users' %}active{% endif %}">
+                  <i class="fas fa-user-shield nav-icon"></i>
+                  <p>Coordinators</p>
+                </a>
+              </li>
+              {% endif %}
+            </ul>
+          </li>
+          {% endif %}
 
           <!-- ADMINISTRATION (SUPERUSER + TENANT ADMIN + BUSINESS USER) -->
           {% if request.user.is_superuser or request.user.role.name == "tenant_admin" or request.user.role.code|lower == "business_user" %}
@@ -571,6 +628,15 @@
           <!-- PLATFORM -->
           <li class="nav-header">Platform</li>
 
+          {% if request.user.is_superuser or request.user.role.code|lower == "coordinator" %}
+          <li class="nav-item">
+            <a href="{% url 'regions-map' %}"
+               class="nav-link {% if active_menu == 'regions' %}active{% endif %}">
+              <i class="nav-icon fas fa-globe-americas"></i>
+              <p>Regions & Map</p>
+            </a>
+          </li>
+          {% else %}
           <li class="nav-item">
             <a href="#" data-coming-soon="1" data-feature="geographic_scope"
                class="nav-link {% if active_menu == 'regions' %}active{% endif %}">
@@ -578,6 +644,7 @@
               <p>Regions & Map</p>
             </a>
           </li>
+          {% endif %}
 
           <li class="nav-item">
             <a href="#" data-coming-soon="1"
@@ -593,7 +660,7 @@
                style="display: flex; align-items: center;">
               <i class="nav-icon fas fa-envelope"></i>
               <p style="flex:1;">Messages</p>
-              <span class="sidebar-count-badge">5</span>
+              <!-- <span class="sidebar-count-badge">5</span> -->
             </a>
           </li>
 

@@ -1,17 +1,23 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.exceptions import PermissionDenied
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 
 from accounts.models import Company, Tenant,AuditLog
+from django.db.models import Q
 from accounts.utils.permissions import has_permission
 from accounts.utils.ip import get_client_ip
 from django.urls import reverse
 from django.contrib import messages
 from django.http import JsonResponse
 from django.db import transaction
+from django.template.loader import render_to_string
 
 from accounts.forms.company_form import CompanyForm
+
+
+def _is_ajax(request):
+    return request.headers.get("X-Requested-With") == "XMLHttpRequest"
 
 
 @login_required
@@ -82,6 +88,11 @@ def company_list(request):
             if not request.user.is_superuser:
                 company.tenant = request.user.tenant
 
+            # Auto-link the creator as owner on new rows so the narrow-scope
+            # listing (see GET branch below) shows the company they just added.
+            if not company_id and not request.user.is_superuser and not company.owner_user_id:
+                company.owner_user = request.user
+
             company.save()
             form.save_m2m()
 
@@ -108,14 +119,56 @@ def company_list(request):
                 # Never block core flow for audit failures
                 pass
 
-            messages.success(
-                request,
+            success_msg = (
                 "Company updated successfully."
                 if company_id
                 else "Company created successfully."
             )
 
+            if _is_ajax(request):
+                row_html = render_to_string(
+                    "dashboard/_company_row.html",
+                    {
+                        "company": company,
+                        "can_view": has_permission(request.user, "company.view"),
+                        "can_manage": has_permission(request.user, "company.manage"),
+                    },
+                    request=request,
+                )
+                return JsonResponse({
+                    "ok": True,
+                    "created": not company_id,
+                    "message": success_msg,
+                    "row_html": row_html,
+                    "company_id": str(company.id),
+                })
+
+            messages.success(request, success_msg)
             return redirect(next_url or "companies")
+
+        else:
+            # Surface validation errors (e.g. duplicate name+tenant) so the user sees why the save failed.
+            if _is_ajax(request):
+                flat_errors = []
+                for field, errs in form.errors.items():
+                    for err in errs:
+                        if field == "__all__":
+                            flat_errors.append(err)
+                        else:
+                            label = form.fields[field].label or field.replace("_", " ").title()
+                            flat_errors.append(f"{label}: {err}")
+                return JsonResponse(
+                    {"ok": False, "errors": form.errors, "message": " ".join(flat_errors)},
+                    status=400,
+                )
+
+            for field, errs in form.errors.items():
+                for err in errs:
+                    if field == "__all__":
+                        messages.error(request, err)
+                    else:
+                        label = form.fields[field].label or field.replace("_", " ").title()
+                        messages.error(request, f"{label}: {err}")
 
     # -------------------------------
     # GET (LIST + EMPTY FORM)
@@ -135,18 +188,43 @@ def company_list(request):
         if selected_tenant_id:
             queryset = queryset.filter(tenant_id=selected_tenant_id)
 
-        tenants = Tenant.objects.order_by("name")
+        tenants = Tenant.objects.filter(is_active=True).order_by("name")
 
     else:
-        queryset = Company.objects.filter(
-            tenant=request.user.tenant
-        )
+        role_name = (request.user.role.name or "").lower() if request.user.role else ""
+        if role_name == "tenant_admin":
+            # Tenant admins see every company in their tenant.
+            queryset = Company.objects.filter(tenant=request.user.tenant)
+        else:
+            # Everyone else (business_user, consultant, coordinator, franchise)
+            # sees only companies they're directly linked to. No tenant
+            # pre-filter because registration lets users pick a company from
+            # any tenant, so a linked company may live outside their own tenant.
+            queryset = Company.objects.filter(
+                Q(consultant=request.user)
+                | Q(owner_user=request.user)
+                | Q(primary_users=request.user)
+            ).distinct()
         tenants = Tenant.objects.filter(
             id=request.user.tenant_id
         )
 
     paginator = Paginator(queryset.order_by("name"), 10)
-    page_obj = paginator.get_page(page_number)
+    try:
+        page_obj = paginator.page(page_number)
+    except PageNotAnInteger:
+        messages.error(request, "Invalid page number. Showing the first page.")
+        querydict = request.GET.copy()
+        querydict["page"] = 1
+        return redirect(f"{request.path}?{querydict.urlencode()}")
+    except EmptyPage:
+        messages.error(
+            request,
+            f"Page {page_number} doesn't exist. There are only {paginator.num_pages} page(s). Showing the first page.",
+        )
+        querydict = request.GET.copy()
+        querydict["page"] = 1
+        return redirect(f"{request.path}?{querydict.urlencode()}")
 
     # -------------------------------
     # RENDER
@@ -398,11 +476,23 @@ def company_detail_ajax(request, company_id):
 
     if request.user.is_superuser:
         company = get_object_or_404(Company, id=company_id)
-    else:
+    elif has_permission(request.user, "company.manage"):
         company = get_object_or_404(
             Company,
             id=company_id,
-            tenant=request.user.tenant
+            tenant=request.user.tenant,
+        )
+    else:
+        # View-only roles (consultant/coordinator/franchise) can see any company
+        # they're linked to, regardless of tenant — matches company_list scoping.
+        company = get_object_or_404(
+            Company.objects.filter(
+                Q(tenant=request.user.tenant)
+                | Q(consultant=request.user)
+                | Q(owner_user=request.user)
+                | Q(primary_users=request.user)
+            ).distinct(),
+            id=company_id,
         )
 
     enrichment = getattr(company, "enrichment", None)

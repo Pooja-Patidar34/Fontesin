@@ -16,6 +16,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model, login
 from django.http import JsonResponse
 from accounts.models import Tenant, Company, Role, UserCompany, User, DueDiligence
+from django.db import IntegrityError
 from accounts.constants import CountryChoices, LanguageChoices
 import random
 from datetime import date, timedelta
@@ -104,6 +105,12 @@ def admin_login(request):
             return redirect(next_url)
 
         if user.is_superuser or (user.role and user.role.name == "tenant_admin"):
+            return redirect("dashboard")
+
+        # Non-subscribing roles: go straight to the dashboard (no membership flow).
+        non_subscribing = {"consultant", "coordinator", "franchise"}
+        role_code = (user.role.code or "").lower() if user.role else ""
+        if role_code in non_subscribing:
             return redirect("dashboard")
 
         # Check subscription status for business users
@@ -474,6 +481,47 @@ def apply_submit(request):
     user.application_status = "submitted"
 
     user.save()
+
+    # Create (or update) the Company row from applied_company_* so the consultant
+    # can see their own company in the Company Database tab.
+    if applied_company_name:
+        try:
+            company, _ = Company.objects.get_or_create(
+                tenant=user.tenant,
+                name=applied_company_name,
+                defaults={
+                    "registration_id": applied_company_reg_number or None,
+                    "country": applied_country_of_incorporation or None,
+                    "website": applied_company_website or None,
+                    "owner_user": user,
+                    "consultant": user,
+                },
+            )
+            update_fields = []
+            if not company.consultant_id:
+                company.consultant = user
+                update_fields.append("consultant")
+            if not company.owner_user_id:
+                company.owner_user = user
+                update_fields.append("owner_user")
+            if applied_company_reg_number and not company.registration_id:
+                company.registration_id = applied_company_reg_number
+                update_fields.append("registration_id")
+            if applied_country_of_incorporation and not company.country:
+                company.country = applied_country_of_incorporation
+                update_fields.append("country")
+            if applied_company_website and not company.website:
+                company.website = applied_company_website
+                update_fields.append("website")
+            if update_fields:
+                company.save(update_fields=update_fields)
+
+            if not user.primary_company_id:
+                user.primary_company = company
+                user.save(update_fields=["primary_company"])
+        except IntegrityError:
+            # Name collision within tenant that get_or_create couldn't resolve cleanly — skip.
+            pass
 
     # Save Due Diligence data
     DueDiligence.objects.update_or_create(

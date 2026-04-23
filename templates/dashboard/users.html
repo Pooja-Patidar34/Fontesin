@@ -24,10 +24,12 @@
   <!-- HEADER -->
   <div class="card-header d-flex justify-content-between align-items-center">
     <h3 class="card-title font-weight-bold mb-0">Users</h3>
+      {% if can_manage_users %}
       <button class="btn btn-sm btn-primary"
           onclick="openAddUserModal()">
         <i class="fas fa-user-plus mr-1"></i> Add User
       </button>
+      {% endif %}
 
     <form method="get" class="form-inline">
       {% if request.user.is_superuser %}
@@ -51,143 +53,21 @@
       {% endif %}
 
       <select name="company" class="form-control form-control-sm"
-              onchange="this.form.submit()"
-              {% if request.user.is_superuser and not selected_tenant %}disabled{% endif %}>
+              onchange="this.form.submit()">
         <option value="">All Companies</option>
         {% for company in companies %}
           <option value="{{ company.id }}"
             {% if company.id|stringformat:'s' == selected_company %}selected{% endif %}>
-            {{ company.name }}
+            {{ company.name }}{% if request.user.is_superuser and not selected_tenant %} — {{ company.tenant.name }}{% endif %}
           </option>
         {% endfor %}
       </select>
     </form>
   </div>
 
-  <!-- TABLE -->
-  <div class="card-body p-0">
-    <div class="table-responsive">
-      <table class="table table-hover table-sm mb-0">
-        <thead class="bg-light">
-          <tr>
-            <th>Email</th>
-            <th>Status</th>
-            <th class="text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for user in users %}
-          <tr>
-            <td>{{ user.email }}</td>
-            <td>
-              {% if user.is_active %}
-                <span class="badge badge-success status-badge">Active</span>
-              {% else %}
-                <span class="badge badge-danger status-badge">Inactive</span>
-              {% endif %}
-            </td>
-            <td class="text-right">
-              <div class="btn-group">
-                <button class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown">
-                  <i class="fas fa-ellipsis-v"></i>
-                </button>
-                <div class="dropdown-menu dropdown-menu-right shadow-sm">
-                  <a class="dropdown-item" href="#" onclick="viewUser('{{ user.id }}'); return false;">
-                    <i class="fas fa-eye mr-2 text-info"></i> View
-                  </a>
-                  <a class="dropdown-item" href="#" onclick="editUser('{{ user.id }}'); return false;">
-                    <i class="fas fa-edit mr-2 text-warning"></i> Edit
-                  </a>
-                  <div class="dropdown-divider"></div>
-
-                  {% if user.is_active %}
-                  <a class="dropdown-item text-danger"
-                     href="{% url 'user-toggle' user.id %}?next={{ request.get_full_path|urlencode }}">
-                    <i class="fas fa-user-slash mr-2"></i> Deactivate
-                  </a>
-                  {% else %}
-                  <a class="dropdown-item text-success"
-                     href="{% url 'user-toggle' user.id %}?next={{ request.get_full_path|urlencode }}">
-                    <i class="fas fa-user-check mr-2"></i> Activate
-                  </a>
-                  {% endif %}
-
-                  <a class="dropdown-item"
-                     href="{% url 'assign-roles' user.id %}?next={{ request.get_full_path|urlencode }}">
-                    <i class="fas fa-user-tag mr-2 text-secondary"></i> Roles
-                  </a>
-                </div>
-              </div>
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="3" class="text-center text-muted py-4">No users found</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+  <div id="users-panel">
+    {% include "dashboard/_users_panel.html" %}
   </div>
-
-<!-- PAGINATION -->
-  {% if page_obj.has_other_pages %}
-<div class="card-footer d-flex justify-content-end">
-  <nav>
-    <ul class="pagination pagination-sm mb-0">
-
-      {# PREVIOUS BUTTON #}
-      {% if page_obj.has_previous %}
-        <li class="page-item">
-          <a class="page-link"
-             href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">
-            Previous
-          </a>
-        </li>
-      {% else %}
-        <li class="page-item disabled">
-          <span class="page-link">Previous</span>
-        </li>
-      {% endif %}
-
-      {# PAGE NUMBERS (MAX 5) #}
-      {% with start=page_obj.number|add:-2 end=page_obj.number|add:2 %}
-        {% for num in page_obj.paginator.page_range %}
-          {% if num >= start and num <= end %}
-            {% if num == page_obj.number %}
-              <li class="page-item active">
-                <span class="page-link">{{ num }}</span>
-              </li>
-            {% else %}
-              <li class="page-item">
-                <a class="page-link"
-                   href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ num }}">
-                  {{ num }}
-                </a>
-              </li>
-            {% endif %}
-          {% endif %}
-        {% endfor %}
-      {% endwith %}
-
-      {# NEXT BUTTON #}
-      {% if page_obj.has_next %}
-        <li class="page-item">
-          <a class="page-link"
-             href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">
-            Next
-          </a>
-        </li>
-      {% else %}
-        <li class="page-item disabled">
-          <span class="page-link">Next</span>
-        </li>
-      {% endif %}
-
-    </ul>
-  </nav>
-</div>
-{% endif %}
 
 </div>
 <!-- ADD USER MODAL -->
@@ -506,7 +386,7 @@
 <script>
 let editUserId = null;
 function viewUser(userId) {
-  fetch(`/admin/users/${userId}/view/`)
+  fetch(`/users/${userId}/view/`)
     .then(r => r.json())
     .then(data => {
 
@@ -566,7 +446,7 @@ function viewUser(userId) {
 function editUser(userId) {
   editUserId = userId;
 
-  fetch(`/admin/users/${userId}/view/`)
+  fetch(`/users/${userId}/view/`)
     .then(res => res.json())
     .then(data => {
 
@@ -630,7 +510,7 @@ function saveUserEdit() {
   const fullName = document.getElementById("eu-name").value.trim();
   const parts = fullName.split(" ");
 
-  fetch(`/admin/users/${editUserId}/edit/`, {
+  fetch(`/users/${editUserId}/edit/`, {
     method: "POST",
     headers: {
       "X-CSRFToken": "{{ csrf_token }}",
@@ -677,6 +557,46 @@ function saveUserEdit() {
   .catch(err => console.error("Save failed:", err));
 }
 
+
+// --- AJAX pagination: swap only the #users-panel instead of full page reload ---
+(function () {
+  const panel = document.getElementById("users-panel");
+  if (!panel) return;
+
+  panel.addEventListener("click", function (e) {
+    const link = e.target.closest(".pagination a.page-link");
+    if (!link) return;
+    // Ignore disabled / non-navigating links (e.g. placeholder "..."):
+    const href = link.getAttribute("href");
+    if (!href || href === "#" || link.closest(".disabled")) return;
+
+    e.preventDefault();
+
+    // Resolve relative ?query-only hrefs against the current pathname.
+    const url = new URL(href, window.location.origin + window.location.pathname);
+
+    fetch(url.toString(), {
+      headers: { "X-Requested-With": "XMLHttpRequest", "Accept": "text/html" },
+      credentials: "same-origin",
+    })
+      .then(res => {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.text();
+      })
+      .then(html => {
+        panel.innerHTML = html;
+        window.history.replaceState({}, "", url.toString());
+        // Scroll back to the table top so the user sees the new page's first row.
+        panel.scrollIntoView({ behavior: "smooth", block: "start" });
+      })
+      .catch(err => {
+        console.error("Pagination load failed:", err);
+        if (typeof showToast === "function") {
+          showToast("Failed to load page. Please try again.", "error");
+        }
+      });
+  });
+})();
 
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -747,26 +667,51 @@ document.addEventListener("DOMContentLoaded", function () {
   document.addEventListener("submit", function (e) {
     if (e.target && e.target.id === "addUserForm") {
       e.preventDefault();
+      const form = e.target;
+      const submitBtn = form.querySelector('button[type="submit"], input[type="submit"]');
+      if (submitBtn?.dataset.busy === "1") return;   // prevent double-submit stacking toasts
+      if (submitBtn) {
+        submitBtn.dataset.busy = "1";
+        submitBtn.disabled = true;
+      }
 
-      fetch("/admin/users/add/", {
+      fetch("/users/add/", {
         method: "POST",
         headers: {
           "X-CSRFToken": "{{ csrf_token }}",
-          "Content-Type": "application/x-www-form-urlencoded"
+          "X-Requested-With": "XMLHttpRequest",
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Accept": "application/json"
         },
-        body: new URLSearchParams(new FormData(e.target))
+        body: new URLSearchParams(new FormData(form))
       })
-      .then(res => res.json())
-      .then(data => {
-        if (data.status) {
+      .then(async (res) => {
+        let data = null;
+        try { data = await res.json(); } catch (_) { /* not JSON */ }
+        return { status: res.status, ok: res.ok, data };
+      })
+      .then(result => {
+        const data = result.data || {};
+        if (result.ok && data.status) {
           window.location.reload();
-        } else {
-          showToast(data.message || "Failed to create user", "error");
+          return;
         }
+        const msg = data.message
+          || (result.status === 403 ? "You don't have permission to add users."
+          :  result.status === 413 ? "Submitted data is too large."
+          :  result.status >= 500   ? "Server error while creating user. Please try again or contact support."
+          : "Failed to create user. Please check the form.");
+        showToast(msg, "error");
       })
       .catch(err => {
         console.error("Add user failed:", err);
-        showToast("Unexpected error. Please try again.", "error");
+        showToast("Network error. Please check your connection and try again.", "error");
+      })
+      .finally(() => {
+        if (submitBtn) {
+          submitBtn.dataset.busy = "";
+          submitBtn.disabled = false;
+        }
       });
     }
   });
