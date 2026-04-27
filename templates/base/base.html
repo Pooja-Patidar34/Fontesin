@@ -252,13 +252,28 @@
     .header-search-wrap {
       position: relative;
     }
-    .header-search-wrap i {
+    .header-search-icon-btn {
       position: absolute;
-      left: 14px;
+      left: 8px;
       top: 50%;
       transform: translateY(-50%);
+      background: transparent;
+      border: 0;
+      padding: 4px 6px;
       color: #94a3b8;
       font-size: .82rem;
+      cursor: pointer;
+      line-height: 1;
+      border-radius: 6px;
+      transition: color .15s, background .15s;
+    }
+    .header-search-icon-btn:hover {
+      color: #1e293b;
+      background: rgba(0,0,0,.04);
+    }
+    .header-search-icon-btn:focus {
+      outline: none;
+      color: #1e293b;
     }
     .header-icon-btn {
       position: relative;
@@ -388,7 +403,9 @@
     <ul class="navbar-nav ml-auto" style="gap: 12px; align-items: center;">
       <li class="nav-item d-none d-md-block">
         <form method="get" action="{% url 'global-search' %}" class="header-search-wrap mb-0">
-          <i class="fas fa-search"></i>
+          <button type="submit" class="header-search-icon-btn" aria-label="Search">
+            <i class="fas fa-search"></i>
+          </button>
           <input type="text" name="q" class="header-search" placeholder="Search companies, users..." value="{{ request.GET.q|default:'' }}">
         </form>
       </li>
@@ -659,6 +676,8 @@
             </a>
           </li>
 
+          {# Reports — hidden for admin / superuser #}
+          {% if not request.user.is_superuser %}
           <li class="nav-item">
             <a href="#" data-coming-soon="1"
                class="nav-link {% if active_menu == 'reports' %}active{% endif %}">
@@ -666,6 +685,7 @@
               <p>Reports</p>
             </a>
           </li>
+          {% endif %}
           {% endif %}
           {% endif %}
 
@@ -696,9 +716,10 @@
           </li>
           {% endif %}
 
-          {# Messages — hidden on free plan; also hidden for business users on basic and pro plans #}
+          {# Messages — hidden on free plan; also hidden for business users on basic/pro plans; also hidden for admin / superuser #}
           {% if not is_free_plan %}
           {% if not is_basic_or_pro_business_user %}
+          {% if not request.user.is_superuser %}
           <li class="nav-item">
             <a href="#" data-coming-soon="1" data-feature="messaging"
                class="nav-link {% if active_menu == 'messages' %}active{% endif %}"
@@ -710,10 +731,12 @@
           </li>
           {% endif %}
           {% endif %}
+          {% endif %}
 
-          {# Settings — hidden on free plan; also hidden for business users on basic and pro plans #}
+          {# Settings — hidden on free plan; also hidden for business users on basic/pro plans; also hidden for admin / superuser #}
           {% if not is_free_plan %}
           {% if not is_basic_or_pro_business_user %}
+          {% if not request.user.is_superuser %}
           <li class="nav-item">
             <a href="#" data-coming-soon="1"
                class="nav-link {% if active_menu == 'settings' %}active{% endif %}">
@@ -721,6 +744,7 @@
               <p>Settings</p>
             </a>
           </li>
+          {% endif %}
           {% endif %}
           {% endif %}
 

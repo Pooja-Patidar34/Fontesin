@@ -333,6 +333,49 @@ def toggle_user(request, user_id):
     next_url = request.GET.get("next")
     return redirect(next_url or "users")
 
+
+@login_required
+@transaction.atomic
+def user_delete(request, user_id):
+    """Soft-delete a user. Superuser only."""
+    if not request.user.is_superuser:
+        raise PermissionDenied()
+
+    if request.method != "POST":
+        raise PermissionDenied()
+
+    user = get_object_or_404(User, id=user_id)
+
+    # Don't let a superuser delete themselves and lock the system out.
+    if user.id == request.user.id:
+        messages.error(request, "You cannot delete your own account.")
+        return redirect(request.GET.get("next") or "users")
+
+    email = user.email
+    tenant = user.tenant
+
+    user.is_deleted = True
+    user.is_active = False
+    user.save(update_fields=["is_deleted", "is_active", "updated_at"])
+
+    try:
+        AuditLog.objects.create(
+            tenant=tenant,
+            actor=request.user,
+            action="user.deleted",
+            entity_type="User",
+            entity_id=user.id,
+            metadata={"user_email": email},
+            ip_address=get_client_ip(request),
+        )
+    except Exception:
+        # Never block delete on audit failures.
+        logger.exception("Failed to write audit log for user.deleted")
+
+    messages.success(request, f"User {email} has been deleted.")
+    return redirect(request.GET.get("next") or "users")
+
+
 @login_required
 def user_detail_ajax(request, user_id):
     if not request.user.is_superuser and not has_permission(request.user, "user.view"):

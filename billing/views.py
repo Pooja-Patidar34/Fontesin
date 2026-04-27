@@ -245,15 +245,28 @@ def plan_toggle(request, plan_id):
     if not request.user.is_superuser:
         raise PermissionDenied()
 
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+
     try:
         plan = get_object_or_404(CommercialPlan, id=plan_id)
         plan.is_active = not plan.is_active
         plan.save(update_fields=["is_active"])
 
         status = "activated" if plan.is_active else "deactivated"
-        messages.success(request, f"Plan '{plan.name}' has been {status}.")
+        msg = f"Plan '{plan.name}' has been {status}."
+
+        if is_ajax:
+            return JsonResponse({
+                "ok": True,
+                "is_active": plan.is_active,
+                "message": msg,
+            })
+
+        messages.success(request, msg)
     except Exception as e:
         logger.error("Error toggling plan %s: %s", plan_id, e)
+        if is_ajax:
+            return JsonResponse({"ok": False, "message": "Failed to update plan status."}, status=500)
         messages.error(request, "Failed to update plan status.")
 
     return redirect("subscriptions")

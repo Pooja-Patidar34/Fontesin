@@ -335,11 +335,9 @@
         <td style="text-transform:capitalize;">{{ plan.billing_period }}</td>
         <td>
           {% if plan.is_popular %}<span class="plan-badge plan-badge--popular">Popular</span> {% endif %}
-          {% if plan.is_active %}
-            <span class="plan-badge plan-badge--active">Active</span>
-          {% else %}
-            <span class="plan-badge plan-badge--inactive">Inactive</span>
-          {% endif %}
+          <span class="plan-badge plan-badge--{% if plan.is_active %}active{% else %}inactive{% endif %} js-plan-status">
+            {% if plan.is_active %}Active{% else %}Inactive{% endif %}
+          </span>
         </td>
         <td><strong>{{ plan.active_count }}</strong></td>
         <td>{{ plan.pending_count }}</td>
@@ -359,18 +357,17 @@
             <button class="btn-plan-action btn-edit-plan" onclick="openPlanModal('edit-modal-{{ forloop.counter }}')">
               <i class="fas fa-edit"></i> Edit
             </button>
-            <form method="post" action="{% url 'plan-toggle' plan.id %}" style="display:inline;" id="toggle-form-{{ forloop.counter }}">
-              {% csrf_token %}
+            <button type="button"
+                    class="btn-plan-action js-plan-toggle {% if plan.is_active %}btn-toggle-inactive{% else %}btn-toggle-active{% endif %}"
+                    data-toggle-url="{% url 'plan-toggle' plan.id %}"
+                    data-plan-name="{{ plan.name|escapejs }}"
+                    data-active="{{ plan.is_active|yesno:'1,0' }}">
               {% if plan.is_active %}
-                <button type="button" class="btn-plan-action btn-toggle-inactive" onclick="appConfirm({kind:'danger', title:'Deactivate Plan?', text:'Are you sure you want to deactivate <strong>{{ plan.name|escapejs }}</strong>? Users will no longer be able to see or subscribe to this plan.', okLabel:'Deactivate', okIcon:'fa-ban', onConfirm:function(){document.getElementById('toggle-form-{{ forloop.counter }}').submit();}})">
-                  <i class="fas fa-ban"></i> Deactivate
-                </button>
+                <i class="fas fa-ban"></i> Deactivate
               {% else %}
-                <button type="submit" class="btn-plan-action btn-toggle-active">
-                  <i class="fas fa-check"></i> Activate
-                </button>
+                <i class="fas fa-check"></i> Activate
               {% endif %}
-            </form>
+            </button>
           </div>
         </td>
       </tr>
@@ -562,5 +559,81 @@
       });
     }
   });
+
+  // ── AJAX plan toggle (no page refresh) ──
+  (function () {
+    function csrfToken() {
+      const el = document.querySelector('[name=csrfmiddlewaretoken]');
+      return el ? el.value : '';
+    }
+
+    function applyToggleResult(btn, isActive) {
+      // Button label / class
+      btn.dataset.active = isActive ? '1' : '0';
+      btn.classList.toggle('btn-toggle-inactive', isActive);
+      btn.classList.toggle('btn-toggle-active', !isActive);
+      btn.innerHTML = isActive
+        ? '<i class="fas fa-ban"></i> Deactivate'
+        : '<i class="fas fa-check"></i> Activate';
+
+      // Status badge in the same row
+      const tr = btn.closest('tr');
+      const badge = tr ? tr.querySelector('.js-plan-status') : null;
+      if (badge) {
+        badge.classList.toggle('plan-badge--active', isActive);
+        badge.classList.toggle('plan-badge--inactive', !isActive);
+        badge.textContent = isActive ? 'Active' : 'Inactive';
+      }
+    }
+
+    function performToggle(btn) {
+      btn.disabled = true;
+      fetch(btn.dataset.toggleUrl, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': csrfToken(),
+        },
+        credentials: 'same-origin',
+      })
+      .then(function (r) { return r.json().then(function (d) { return { status: r.status, data: d }; }); })
+      .then(function (res) {
+        if (res.status === 200 && res.data.ok) {
+          applyToggleResult(btn, !!res.data.is_active);
+          if (typeof showToast === 'function') showToast(res.data.message, 'success');
+        } else {
+          const msg = (res.data && res.data.message) || 'Failed to update plan status.';
+          if (typeof showToast === 'function') showToast(msg, 'error');
+          else alert(msg);
+        }
+      })
+      .catch(function () {
+        if (typeof showToast === 'function') showToast('Network error. Please try again.', 'error');
+      })
+      .finally(function () { btn.disabled = false; });
+    }
+
+    document.addEventListener('click', function (e) {
+      const btn = e.target.closest('.js-plan-toggle');
+      if (!btn) return;
+      e.preventDefault();
+
+      const isActive = btn.dataset.active === '1';
+      const planName = btn.dataset.planName || 'this plan';
+
+      if (isActive && typeof appConfirm === 'function') {
+        appConfirm({
+          kind: 'danger',
+          title: 'Deactivate Plan?',
+          text: 'Are you sure you want to deactivate <strong>' + planName + '</strong>? Users will no longer be able to see or subscribe to this plan.',
+          okLabel: 'Deactivate',
+          okIcon: 'fa-ban',
+          onConfirm: function () { performToggle(btn); },
+        });
+      } else {
+        performToggle(btn);
+      }
+    });
+  })();
 </script>
 {% endblock %}

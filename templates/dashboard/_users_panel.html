@@ -57,6 +57,19 @@
                     <i class="fas fa-user-tag mr-2 text-secondary"></i> Roles
                   </a>
                   {% endif %}
+
+                  {# Delete — superuser only #}
+                  {% if request.user.is_superuser and user.id != request.user.id %}
+                  <div class="dropdown-divider"></div>
+                  <form method="post" action="{% url 'user-delete' user.id %}?next={{ request.get_full_path|urlencode }}"
+                        id="user-delete-form-{{ user.id }}" class="m-0">
+                    {% csrf_token %}
+                    <button type="button" class="dropdown-item text-danger"
+                            onclick="appConfirm({kind:'danger', title:'Delete User?', text:'Are you sure you want to permanently delete <strong>{{ user.email|escapejs }}</strong>? This action cannot be undone.', okLabel:'Delete', okIcon:'fa-trash', onConfirm:function(){document.getElementById('user-delete-form-{{ user.id }}').submit();}})">
+                      <i class="fas fa-trash mr-2"></i> Delete
+                    </button>
+                  </form>
+                  {% endif %}
                   {% endif %}{# /not is_pro_plan #}
                   {% endif %}
                 </div>
