@@ -18,8 +18,11 @@
           {% for tenant in tenants %}
           <tr>
 
-            <td class="align-middle">
-              <strong>{{ tenant.name }}</strong>
+            <td class="align-middle" style="max-width:280px;">
+              <strong style="display:inline-block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:bottom;"
+                      title="{{ tenant.name }}">
+                {{ tenant.name }}
+              </strong>
             </td>
             <td class="align-middle">
               {% if tenant.is_active %}

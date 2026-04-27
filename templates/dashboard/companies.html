@@ -101,8 +101,9 @@
             <option value="">All Tenants</option>
             {% for tenant in tenants %}
               <option value="{{ tenant.id }}"
-                {% if tenant.id|stringformat:"s" == selected_tenant_id %}selected{% endif %}>
-                {{ tenant.name }}
+                {% if tenant.id|stringformat:"s" == selected_tenant_id %}selected{% endif %}
+                title="{{ tenant.name }}">
+                {{ tenant.name|truncatechars:35 }}
               </option>
             {% endfor %}
           </select>

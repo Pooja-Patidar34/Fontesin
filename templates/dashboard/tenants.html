@@ -48,7 +48,7 @@
 
 <!-- Modal (Create + Update) -->
 <div class="modal fade" id="tenantModal" tabindex="-1">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
 
       <form method="post">
@@ -69,6 +69,10 @@
           <div class="form-group">
             <label>Name</label>
             {{ form.name }}
+            <div id="tenant-name-readonly"
+                 style="display:none; margin-top:.25rem; padding:.5rem .75rem;
+                        background:#f8f9fa; border:1px solid #e2e8f0; border-radius:.25rem;
+                        word-break:break-word; overflow-wrap:anywhere; color:#374151; font-weight:500;"></div>
           </div>
 
           <div class="form-check">
@@ -106,16 +110,29 @@
   function setReadonly(state) {
 
       const nameField = document.getElementById("id_name");
+      const nameReadonly = document.getElementById("tenant-name-readonly");
       const activeField = document.getElementById("id_is_active");
       const saveBtn = document.querySelector(".modal-footer .btn-primary");
 
       if (state) {
+          // View mode: hide single-line input, show wrappable display
+          nameField.style.display = "none";
+          if (nameReadonly) {
+              nameReadonly.textContent = nameField.value || "—";
+              nameReadonly.style.display = "block";
+          }
           nameField.readOnly = true;
-          nameField.blur();                 // remove cursor
+          nameField.blur();
           nameField.style.pointerEvents = "none";
 
           activeField.disabled = true;
       } else {
+          // Add / Edit mode: show input, hide wrappable display
+          nameField.style.display = "";
+          if (nameReadonly) {
+              nameReadonly.style.display = "none";
+              nameReadonly.textContent = "";
+          }
           nameField.readOnly = false;
           nameField.style.pointerEvents = "auto";
 

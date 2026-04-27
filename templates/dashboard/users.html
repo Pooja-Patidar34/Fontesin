@@ -51,8 +51,9 @@
         <option value="">All Tenants</option>
         {% for tenant in tenants %}
           <option value="{{ tenant.id }}"
-            {% if tenant.id|stringformat:'s' == selected_tenant %}selected{% endif %}>
-            {{ tenant.name }}
+            {% if tenant.id|stringformat:'s' == selected_tenant %}selected{% endif %}
+            title="{{ tenant.name }}">
+            {{ tenant.name|truncatechars:35 }}
           </option>
         {% endfor %}
       </select>
@@ -64,8 +65,9 @@
         <option value="">All Companies</option>
         {% for company in companies %}
           <option value="{{ company.id }}"
-            {% if company.id|stringformat:'s' == selected_company %}selected{% endif %}>
-            {{ company.name }}{% if request.user.is_superuser and not selected_tenant %} — {{ company.tenant.name }}{% endif %}
+            {% if company.id|stringformat:'s' == selected_company %}selected{% endif %}
+            title="{{ company.name }}{% if request.user.is_superuser and not selected_tenant %} — {{ company.tenant.name }}{% endif %}">
+            {{ company.name|truncatechars:30 }}{% if request.user.is_superuser and not selected_tenant %} — {{ company.tenant.name|truncatechars:25 }}{% endif %}
           </option>
         {% endfor %}
       </select>

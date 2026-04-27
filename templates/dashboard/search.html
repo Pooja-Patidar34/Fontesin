@@ -37,7 +37,7 @@
             <td><strong>{{ company.name }}</strong></td>
             <td>{{ company.city|default:"-" }}</td>
             <td>{{ company.country|default:"-" }}</td>
-            {% if request.user.is_superuser %}<td class="text-muted">{{ company.tenant.name }}</td>{% endif %}
+            {% if request.user.is_superuser %}<td class="text-muted" style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ company.tenant.name }}">{{ company.tenant.name }}</td>{% endif %}
             <td>
               {% if company.is_active %}
                 <span class="badge badge-success">Active</span>
@@ -120,7 +120,7 @@
           <tr>
             <td><strong>{{ user.first_name }} {{ user.last_name }}</strong></td>
             <td>{{ user.email }}</td>
-            {% if request.user.is_superuser %}<td class="text-muted">{{ user.tenant.name }}</td>{% endif %}
+            {% if request.user.is_superuser %}<td class="text-muted" style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ user.tenant.name }}">{{ user.tenant.name }}</td>{% endif %}
             <td>
               {% if user.is_active %}
                 <span class="badge badge-success">Active</span>

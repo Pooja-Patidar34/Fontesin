@@ -16,7 +16,10 @@
   {% endif %}
 
   {% if request.user.is_superuser %}
-  <td class="text-muted">{{ company.tenant.name }}</td>
+  <td class="text-muted" style="max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
+      title="{{ company.tenant.name }}">
+    {{ company.tenant.name }}
+  </td>
   {% endif %}
 
   <td>
