@@ -288,9 +288,22 @@ def plan_edit(request, plan_id):
 
         plan.is_popular = request.POST.get("is_popular") == "on"
 
+        # Features are entered as one per line. A leading "-" or "x" marks
+        # the feature as NOT included (renders the X icon). Stored as a list
+        # of dicts so the membership template can show check / cross icons.
         features_raw = request.POST.get("features", "").strip()
         if features_raw:
-            plan.features = [f.strip() for f in features_raw.split("\n") if f.strip()]
+            features = []
+            for line in features_raw.split("\n"):
+                text = line.strip()
+                if not text:
+                    continue
+                included = True
+                if text.startswith(("-", "x", "X", "✗")):
+                    included = False
+                    text = text.lstrip("-xX✗").strip()
+                features.append({"included": included, "text": text})
+            plan.features = features
         else:
             plan.features = []
 

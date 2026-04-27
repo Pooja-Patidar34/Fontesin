@@ -359,12 +359,19 @@
       <ul class="plan-features">
         {% for feat in plan.features %}
         <li>
-          {% if feat.included %}
-            <span class="icon icon--check">&#10003;</span>
+          {% if feat.text %}
+            {# Dict shape: {"included": bool, "text": "..."} #}
+            {% if feat.included %}
+              <span class="icon icon--check">&#10003;</span>
+            {% else %}
+              <span class="icon icon--x">&#10007;</span>
+            {% endif %}
+            {{ feat.text }}
           {% else %}
-            <span class="icon icon--x">&#10007;</span>
+            {# Plain-string shape: "Feature label" — treat as included #}
+            <span class="icon icon--check">&#10003;</span>
+            {{ feat }}
           {% endif %}
-          {{ feat.text }}
         </li>
         {% endfor %}
       </ul>
