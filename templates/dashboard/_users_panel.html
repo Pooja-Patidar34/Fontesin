@@ -29,10 +29,13 @@
                   <a class="dropdown-item" href="#" onclick="viewUser('{{ user.id }}'); return false;">
                     <i class="fas fa-eye mr-2 text-info"></i> View
                   </a>
-                  {% if can_manage_users %}
+                  {# Basic plan: only View allowed. Pro plan: View + Edit only. #}
+                  {% if can_manage_users and not is_basic_plan %}
                   <a class="dropdown-item" href="#" onclick="editUser('{{ user.id }}'); return false;">
                     <i class="fas fa-edit mr-2 text-warning"></i> Edit
                   </a>
+
+                  {% if not is_pro_plan %}
                   <div class="dropdown-divider"></div>
 
                   {% if user.is_active %}
@@ -47,10 +50,14 @@
                   </a>
                   {% endif %}
 
+                  {# Roles — also hidden on global plan #}
+                  {% if not is_global_plan %}
                   <a class="dropdown-item"
                      href="{% url 'assign-roles' user.id %}?next={{ request.get_full_path|urlencode }}">
                     <i class="fas fa-user-tag mr-2 text-secondary"></i> Roles
                   </a>
+                  {% endif %}
+                  {% endif %}{# /not is_pro_plan #}
                   {% endif %}
                 </div>
               </div>

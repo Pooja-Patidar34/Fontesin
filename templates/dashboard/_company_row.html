@@ -1,6 +1,19 @@
 <tr data-company-id="{{ company.id }}">
 
-  <td><strong>{{ company.name }}</strong></td>
+  {% if is_free_plan %}
+  <td>
+    {% with owner=company.owner_user %}
+      {% if owner %}
+        <strong>{{ owner.first_name }} {{ owner.last_name }}</strong>
+      {% else %}
+        —
+      {% endif %}
+    {% endwith %}
+  </td>
+  <td class="text-muted">{{ company.name|default:"—" }}</td>
+  {% else %}
+  <td><strong>{{ company.name|default:"—" }}</strong></td>
+  {% endif %}
 
   {% if request.user.is_superuser %}
   <td class="text-muted">{{ company.tenant.name }}</td>
@@ -14,6 +27,7 @@
     {% endif %}
   </td>
 
+  {% if not is_free_plan %}
   <td class="text-right pr-4">
 
     <div class="dropdown d-inline">
@@ -32,12 +46,35 @@
       </button>
       {% endif %}
 
+      {# Connect — visible for basic, pro, and global business users #}
+      {% if is_basic_or_pro_business_user %}
+      <form method="post" action="{% url 'company-connect' company.id %}"
+            class="company-connect-form m-0" data-company-id="{{ company.id }}">
+        {% csrf_token %}
+        {% if company.id in connected_ids %}
+        <button type="button" class="dropdown-item text-muted" disabled>
+          <i class="fas fa-check mr-2"></i> Connection requested
+        </button>
+        {% else %}
+        <button type="submit" class="dropdown-item text-success">
+          <i class="fas fa-handshake mr-2"></i> Connect
+        </button>
+        {% endif %}
+      </form>
+      {% endif %}
+
+      {# Basic plan: only View + Connect are allowed. Edit and below are hidden for basic. #}
+      {% if not is_basic_plan %}
+
       {% if can_manage %}
       <button class="dropdown-item edit-company-btn"
               data-url="{% url 'company-detail' company.id %}">
         <i class="fas fa-edit mr-2"></i> Edit
       </button>
       {% endif %}
+
+      {# Deactivate/Activate + Delete — hidden on free and pro plans. Delete also hidden on global. #}
+      {% if not is_free_plan and not is_pro_plan %}
 
       <div class="dropdown-divider"></div>
 
@@ -55,7 +92,7 @@
         {% endif %}
       {% endif %}
 
-      {% if can_manage %}
+      {% if can_manage and not is_global_plan %}
       <div class="dropdown-divider"></div>
 
       <form method="post"
@@ -69,9 +106,14 @@
       </form>
       {% endif %}
 
+      {% endif %}{# /not free and not pro #}
+
+      {% endif %}{# /not is_basic_plan #}
+
     </div>
     </div>
 
   </td>
+  {% endif %}
 
 </tr>

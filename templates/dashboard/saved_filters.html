@@ -1,0 +1,60 @@
+{% extends "base/base.html" %}
+{% block title %}Favorites{% endblock %}
+
+{% block content %}
+
+<div class="card card-outline card-primary shadow-sm">
+  <div class="card-header">
+    <h3 class="card-title font-weight-bold mb-0">
+      <i class="far fa-star mr-1"></i> Saved Filters
+    </h3>
+  </div>
+
+  <div class="card-body p-0">
+    {% if saved_filters %}
+      <ul class="list-group list-group-flush">
+        {% for sf in saved_filters %}
+          <li class="list-group-item">
+            <div class="d-flex justify-content-between align-items-center" style="gap:.75rem;">
+              <div class="flex-grow-1" style="min-width:0;">
+                <div class="font-weight-bold text-truncate">{{ sf.name }}</div>
+                <div class="small text-muted">
+                  {% for key, value in sf.filters.items %}
+                    <span class="text-capitalize">{{ key }}</span>: <strong>{{ value }}</strong>{% if not forloop.last %} · {% endif %}
+                  {% empty %}
+                    <em>No criteria</em>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <div class="d-flex align-items-center" style="gap:.5rem;">
+                <a href="{% url 'saved-filter-apply' sf.id %}" class="btn btn-sm btn-primary">
+                  <i class="fas fa-external-link-alt mr-1"></i> Open in Companies
+                </a>
+                <form method="post" action="{% url 'saved-filter-delete' sf.id %}"
+                      id="delete-filter-form-{{ sf.id }}" class="m-0">
+                  {% csrf_token %}
+                  <button type="button" class="btn btn-sm btn-outline-danger"
+                          onclick="if(confirm('Remove this saved filter?')){document.getElementById('delete-filter-form-{{ sf.id }}').submit();}">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="p-4 text-center text-muted">
+        <i class="far fa-star fa-2x mb-2"></i>
+        <p class="mb-1">No favorites yet.</p>
+        <p class="small mb-0">
+          Apply filters on the <a href="{% url 'companies' %}">Companies</a> page and click
+          <strong>Save to Favorites</strong> to pin a view here.
+        </p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

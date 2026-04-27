@@ -4,8 +4,12 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from accounts.models import Tenant, Company, UserCompany
-from accounts.constants import CompanyClassificationChoices
+from accounts.constants import CompanyClassificationChoices, CountryChoices
 from billing.utils import get_user_plan, get_active_subscription
+
+# First / last name: 1-50 chars, letters (incl. accented) + spaces/hyphens/apostrophes/periods.
+NAME_RE = re.compile(r"^[A-Za-zÀ-ɏ][A-Za-zÀ-ɏ\s'\-.]{0,49}$")
+COUNTRY_CODES = {code for code, _ in CountryChoices.CHOICES}
 
 # 2-100 chars, letters (incl. accented) / digits / spaces / & ' . , - ( ) only, must contain at least one letter.
 COMPANY_NAME_RE = re.compile(r"^(?=.*[A-Za-z\u00C0-\u024F])[A-Za-z\u00C0-\u024F0-9&'.,\-()\s]{2,100}$")
@@ -42,6 +46,44 @@ def profile_view(request):
     user_company = user.primary_company
 
     if request.method == "POST":
+        form_type = request.POST.get("form_type", "")
+
+        # ---- Edit personal profile (available to all users / all plans) ----
+        if form_type == "edit_profile":
+            first_name = request.POST.get("first_name", "").strip()
+            last_name = request.POST.get("last_name", "").strip()
+            phone = request.POST.get("phone", "").strip()
+            country = request.POST.get("country", "").strip().upper()
+
+            if not first_name or not NAME_RE.match(first_name):
+                messages.error(request, "Enter a valid first name (letters, spaces, hyphens, apostrophes; up to 50 characters).")
+                return redirect("profile")
+            if not last_name or not NAME_RE.match(last_name):
+                messages.error(request, "Enter a valid last name (letters, spaces, hyphens, apostrophes; up to 50 characters).")
+                return redirect("profile")
+
+            if phone:
+                if not PHONE_CHARSET_RE.match(phone):
+                    messages.error(request, "Phone may only contain digits and the symbols + - ( ) and spaces (7-25 characters).")
+                    return redirect("profile")
+                digits = re.sub(r"\D", "", phone)
+                if not (5 <= len(digits) <= 15):
+                    messages.error(request, "Phone must contain 5-15 digits.")
+                    return redirect("profile")
+
+            if country and country not in COUNTRY_CODES:
+                messages.error(request, "Please select a valid country from the list.")
+                return redirect("profile")
+
+            user.first_name = first_name
+            user.last_name = last_name
+            user.phone = phone or None
+            user.country = country or None
+            user.save(update_fields=["first_name", "last_name", "phone", "country", "updated_at"])
+
+            messages.success(request, "Profile updated successfully.")
+            return redirect("profile")
+
         # Company creation from profile
         company_name = request.POST.get("company_name", "").strip()
         domain = request.POST.get("domain", "").strip()
@@ -152,6 +194,7 @@ def profile_view(request):
         "active_menu": "profile",
         "user_company": user_company,
         "classifications": CompanyClassificationChoices.CHOICES,
+        "countries": CountryChoices.CHOICES,
         "user_plan": get_user_plan(user),
         "subscription": get_active_subscription(user),
     }

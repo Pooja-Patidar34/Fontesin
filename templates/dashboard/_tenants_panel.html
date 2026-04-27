@@ -62,10 +62,16 @@
                     <i class="fas fa-eye mr-2"></i> View
                   </button>
 
+                  {# Basic plan: only View allowed in Action menu. #}
+                  {% if not is_basic_plan %}
+
                   <button class="dropdown-item edit-tenant-btn"
                           data-url="{% url 'tenant-detail' tenant.id %}">
                     <i class="fas fa-edit mr-2"></i> Edit
                   </button>
+
+                  {# Activate/Deactivate + Delete — hidden on pro plan (pro gets View + Edit only) #}
+                  {% if not is_pro_plan %}
 
                   <div class="dropdown-divider"></div>
 
@@ -81,6 +87,8 @@
                     </a>
                   {% endif %}
 
+                  {# Delete — also hidden on global plan #}
+                  {% if not is_global_plan %}
                   <div class="dropdown-divider"></div>
 
                   <form method="post"
@@ -92,6 +100,11 @@
                       <i class="fas fa-trash mr-2"></i> Delete
                     </button>
                   </form>
+                  {% endif %}
+
+                  {% endif %}{# /not is_pro_plan #}
+
+                  {% endif %}{# /not is_basic_plan #}
 
                 </div>
               </div>

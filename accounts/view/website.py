@@ -93,11 +93,14 @@ def select_plan(request):
     else:
         end_date = now + relativedelta(years=1)
 
+    # Free plan needs no admin approval — activate immediately.
+    subscription_status = "active" if plan.code == "free" else "created"
+
     # Create subscription
     subscription = Subscription.objects.create(
         user=user,
         plan=plan,
-        status="created",
+        status=subscription_status,
         start_date=now,
         end_date=end_date,
     )

@@ -15,6 +15,13 @@ from .view.webhook import veriff_webhook
 from billing.views import invoice_list, payment_list, payment_approve, payment_reject, payment_edit, payment_detail_ajax, subscription_list, plan_edit, plan_toggle
 from .view.search import global_search
 from .view.error import access_denied
+from .view.saved_filter import (
+    saved_filter_list,
+    saved_filter_save,
+    saved_filter_delete,
+    saved_filter_apply,
+    company_connect,
+)
 
 
 urlpatterns = [
@@ -42,6 +49,13 @@ urlpatterns = [
     path("users/<uuid:user_id>/edit/", user_edit, name="user-edit"),
     path("users/add/", add_user, name="add-user"),
     path("companies/<uuid:company_id>/delete/", company_delete, name="company-delete"),
+    path("companies/<uuid:company_id>/connect/", company_connect, name="company-connect"),
+
+    # Saved filters (Favorites) — basic business users only
+    path("saved-filters/", saved_filter_list, name="saved-filters"),
+    path("saved-filters/save/", saved_filter_save, name="saved-filter-save"),
+    path("saved-filters/<uuid:filter_id>/apply/", saved_filter_apply, name="saved-filter-apply"),
+    path("saved-filters/<uuid:filter_id>/delete/", saved_filter_delete, name="saved-filter-delete"),
     path("register/", register_view, name="register"),
     path("register/check-email/", check_email_exists, name="check-email"),
     path("profile/", profile_view, name="profile"),

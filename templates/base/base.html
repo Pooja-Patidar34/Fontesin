@@ -26,9 +26,19 @@
       z-index: 1038;
       scrollbar-width: none;
       -ms-overflow-style: none;
+      display: flex;
+      flex-direction: column;
     }
     .main-sidebar::-webkit-scrollbar {
       display: none;
+    }
+    /* Stretch the sidebar body so the profile can pin to the bottom
+       even when the nav is short (e.g. free-plan with many items hidden). */
+    .main-sidebar > .sidebar {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      min-height: 0;
     }
     .main-sidebar .brand-link {
       background: transparent !important;
@@ -156,11 +166,11 @@
       margin-left: auto;
     }
 
-    /* Profile section */
+    /* Profile section — pinned to the bottom of the flex sidebar body. */
     .sidebar-profile {
       border-top: 1px solid rgba(255,255,255,.08);
       padding: 14px 16px;
-      margin-top: 16px;
+      margin-top: auto;
       background: rgba(0,0,0,.15);
     }
     .sidebar-profile a {
@@ -429,7 +439,7 @@
     <div class="sidebar" style="position: relative;">
 
       <!-- Role Badge -->
-      <div class="sidebar-role-badge">
+      <!-- <div class="sidebar-role-badge">
         <div class="sidebar-role-badge__dot"></div>
         {% if request.user.is_superuser %}
           Platform Admin
@@ -438,7 +448,7 @@
         {% else %}
           User
         {% endif %}
-      </div>
+      </div> -->
 
       <nav class="mt-1">
         <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview">
@@ -466,6 +476,28 @@
               {% endif %}
             </a>
           </li>
+
+          {# Favorites — basic business users only (saved filters + connect) #}
+          {% if is_basic_or_pro_business_user %}
+          <li class="nav-item">
+            <a href="{% url 'saved-filters' %}"
+               class="nav-link {% if active_menu == 'favorites' %}active{% endif %}">
+              <i class="nav-icon far fa-star"></i>
+              <p>Favorites</p>
+            </a>
+          </li>
+          {% endif %}
+
+          {# Create Company Profile — free, basic, pro, and global plans (adds companies beyond the one chosen at signup) #}
+          {% if is_free_plan or is_basic_plan or is_pro_plan or is_global_plan %}
+          <li class="nav-item">
+            <a href="{% url 'companies' %}?new=1"
+               class="nav-link {% if active_menu == 'create-company' %}active{% endif %}">
+              <i class="nav-icon fas fa-plus-circle"></i>
+              <p>Create Company</p>
+            </a>
+          </li>
+          {% endif %}
 
           <!-- Users link for consultant / franchise (sees only their company's users) -->
           {% if request.user.role.code|lower == "consultant" or request.user.role.code|lower == "franchise" %}
@@ -526,9 +558,12 @@
 
           <!-- ADMINISTRATION (SUPERUSER + TENANT ADMIN + BUSINESS USER) -->
           {% if request.user.is_superuser or request.user.role.name == "tenant_admin" or request.user.role.code|lower == "business_user" %}
+          {% if not is_free_plan %}
           <li class="nav-header">Administration</li>
+          {% endif %}
 
-          <!-- TENANTS -->
+          <!-- TENANTS (hidden on free plan) -->
+          {% if not is_free_plan %}
           {% if request.user.is_superuser or request.user.role.code|lower == "business_user" %}
           <li class="nav-item">
             <a href="{% url 'tenants' %}"
@@ -538,7 +573,10 @@
             </a>
           </li>
           {% endif %}
+          {% endif %}
 
+          {# Users (Administration) — hidden on free plan #}
+          {% if not is_free_plan %}
           <li class="nav-item">
             <a href="{% url 'users' %}"
                class="nav-link {% if active_menu == 'users' %}active{% endif %}">
@@ -546,6 +584,7 @@
               <p>Users</p>
             </a>
           </li>
+          {% endif %}
 
           {% comment "Access Control - hidden from sidebar, not in current scope" %}
           {% if request.user.role.code|lower != "business_user" %}
@@ -580,6 +619,9 @@
           {% endif %}
           {% endcomment %}
 
+          {# Audit Logs — hidden on free plan; also hidden for business users on basic and pro plans #}
+          {% if not is_free_plan %}
+          {% if not is_basic_or_pro_business_user %}
           <li class="nav-item">
             <a href="{% url 'audit-logs' %}"
                class="nav-link {% if active_menu == 'audit' %}active{% endif %}">
@@ -587,6 +629,8 @@
               <p>Audit Logs</p>
             </a>
           </li>
+          {% endif %}
+          {% endif %}
 
           {% if request.user.role.code|lower != "business_user" %}
           <li class="nav-item">
@@ -626,8 +670,11 @@
           {% endif %}
 
           <!-- PLATFORM -->
+          {% if not is_free_plan %}
           <li class="nav-header">Platform</li>
+          {% endif %}
 
+          {# Regions & Map — only superusers and coordinators see this; hidden for all plan users #}
           {% if request.user.is_superuser or request.user.role.code|lower == "coordinator" %}
           <li class="nav-item">
             <a href="{% url 'regions-map' %}"
@@ -636,16 +683,10 @@
               <p>Regions & Map</p>
             </a>
           </li>
-          {% else %}
-          <li class="nav-item">
-            <a href="#" data-coming-soon="1" data-feature="geographic_scope"
-               class="nav-link {% if active_menu == 'regions' %}active{% endif %}">
-              <i class="nav-icon fas fa-globe-americas"></i>
-              <p>Regions & Map</p>
-            </a>
-          </li>
           {% endif %}
 
+          {# Partnerships — hidden on free plan #}
+          {% if not is_free_plan %}
           <li class="nav-item">
             <a href="#" data-coming-soon="1"
                class="nav-link {% if active_menu == 'page-editor' %}active{% endif %}">
@@ -653,7 +694,11 @@
               <p>Partnerships</p>
             </a>
           </li>
+          {% endif %}
 
+          {# Messages — hidden on free plan; also hidden for business users on basic and pro plans #}
+          {% if not is_free_plan %}
+          {% if not is_basic_or_pro_business_user %}
           <li class="nav-item">
             <a href="#" data-coming-soon="1" data-feature="messaging"
                class="nav-link {% if active_menu == 'messages' %}active{% endif %}"
@@ -663,7 +708,12 @@
               <!-- <span class="sidebar-count-badge">5</span> -->
             </a>
           </li>
+          {% endif %}
+          {% endif %}
 
+          {# Settings — hidden on free plan; also hidden for business users on basic and pro plans #}
+          {% if not is_free_plan %}
+          {% if not is_basic_or_pro_business_user %}
           <li class="nav-item">
             <a href="#" data-coming-soon="1"
                class="nav-link {% if active_menu == 'settings' %}active{% endif %}">
@@ -671,6 +721,8 @@
               <p>Settings</p>
             </a>
           </li>
+          {% endif %}
+          {% endif %}
 
         </ul>
       </nav>

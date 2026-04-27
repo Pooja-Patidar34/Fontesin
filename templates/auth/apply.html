@@ -710,67 +710,73 @@
           <div class="apply-form-row">
             <div class="apply-form-group">
               <label class="apply-form-label">Company Name *</label>
-              <input type="text" name="applied_company_name" class="apply-form-control" placeholder="Your company name" required/>
+              <input type="text" name="applied_company_name" class="apply-form-control" placeholder="Your company name" value="{{ prefill.company_name }}" required/>
             </div>
             <div class="apply-form-group">
               <label class="apply-form-label">Company Registration Number</label>
-              <input type="text" name="applied_company_reg_number" class="apply-form-control" placeholder="e.g. 12345678"/>
+              <input type="text" name="applied_company_reg_number" class="apply-form-control" placeholder="e.g. 12345678" value="{{ prefill.company_reg_number }}"/>
             </div>
           </div>
           <div class="apply-form-row">
             <div class="apply-form-group">
               <label class="apply-form-label">Country of Incorporation *</label>
+              {% with sel=prefill.country_of_incorporation %}
               <select name="applied_country_of_incorporation" class="apply-form-control" required>
                 <option value="">Select country...</option>
-                <option>United States</option>
-                <option>Germany</option>
-                <option>Czech Republic</option>
-                <option>United Kingdom</option>
-                <option>France</option>
-                <option>Austria</option>
-                <option>Switzerland</option>
-                <option>UAE</option>
-                <option>Japan</option>
-                <option>Other</option>
+                <option{% if sel == "United States" %} selected{% endif %}>United States</option>
+                <option{% if sel == "Germany" %} selected{% endif %}>Germany</option>
+                <option{% if sel == "Czech Republic" %} selected{% endif %}>Czech Republic</option>
+                <option{% if sel == "United Kingdom" %} selected{% endif %}>United Kingdom</option>
+                <option{% if sel == "France" %} selected{% endif %}>France</option>
+                <option{% if sel == "Austria" %} selected{% endif %}>Austria</option>
+                <option{% if sel == "Switzerland" %} selected{% endif %}>Switzerland</option>
+                <option{% if sel == "UAE" %} selected{% endif %}>UAE</option>
+                <option{% if sel == "Japan" %} selected{% endif %}>Japan</option>
+                <option{% if sel and sel != "United States" and sel != "Germany" and sel != "Czech Republic" and sel != "United Kingdom" and sel != "France" and sel != "Austria" and sel != "Switzerland" and sel != "UAE" and sel != "Japan" %} selected{% endif %}>Other</option>
               </select>
+              {% endwith %}
             </div>
             <div class="apply-form-group">
               <label class="apply-form-label">Legal Form *</label>
+              {% with sel=prefill.legal_form %}
               <select name="applied_legal_form" class="apply-form-control" required>
                 <option value="">Select...</option>
-                <option>LLC / s.r.o.</option>
-                <option>Joint Stock Company / a.s.</option>
-                <option>Sole Trader / OSVČ</option>
-                <option>Partnership</option>
-                <option>GmbH</option>
-                <option>AG</option>
-                <option>Ltd.</option>
-                <option>Other</option>
+                <option{% if sel == "LLC / s.r.o." %} selected{% endif %}>LLC / s.r.o.</option>
+                <option{% if sel == "Joint Stock Company / a.s." %} selected{% endif %}>Joint Stock Company / a.s.</option>
+                <option{% if sel == "Sole Trader / OSVČ" %} selected{% endif %}>Sole Trader / OSVČ</option>
+                <option{% if sel == "Partnership" %} selected{% endif %}>Partnership</option>
+                <option{% if sel == "GmbH" %} selected{% endif %}>GmbH</option>
+                <option{% if sel == "AG" %} selected{% endif %}>AG</option>
+                <option{% if sel == "Ltd." %} selected{% endif %}>Ltd.</option>
+                <option{% if sel and sel != "LLC / s.r.o." and sel != "Joint Stock Company / a.s." and sel != "Sole Trader / OSVČ" and sel != "Partnership" and sel != "GmbH" and sel != "AG" and sel != "Ltd." %} selected{% endif %}>Other</option>
               </select>
+              {% endwith %}
             </div>
           </div>
           <div class="apply-form-row">
             <div class="apply-form-group">
               <label class="apply-form-label">Year Founded</label>
-              <input type="number" name="applied_year_founded" class="apply-form-control" placeholder="e.g. 2015" min="1900" max="2026"/>
+              <input type="number" name="applied_year_founded" class="apply-form-control" placeholder="e.g. 2015" min="1900" max="2026" value="{{ prefill.year_founded }}"/>
             </div>
             <div class="apply-form-group">
               <label class="apply-form-label">Number of Employees</label>
+              {% with sel=prefill.num_employees %}
               <select name="applied_num_employees" class="apply-form-control">
                 <option value="">Select...</option>
-                <option>1 (Solo)</option>
-                <option>2–10</option>
-                <option>11–50</option>
-                <option>51–200</option>
-                <option>201–500</option>
-                <option>500+</option>
+                <option{% if sel == "1 (Solo)" %} selected{% endif %}>1 (Solo)</option>
+                <option{% if sel == "2–10" %} selected{% endif %}>2–10</option>
+                <option{% if sel == "11–50" %} selected{% endif %}>11–50</option>
+                <option{% if sel == "51–200" %} selected{% endif %}>51–200</option>
+                <option{% if sel == "201–500" %} selected{% endif %}>201–500</option>
+                <option{% if sel == "500+" %} selected{% endif %}>500+</option>
               </select>
+              {% endwith %}
             </div>
           </div>
           <div class="apply-form-row full">
             <div class="apply-form-group">
               <label class="apply-form-label">Company Website</label>
-              <input type="url" name="applied_company_website" class="apply-form-control" placeholder="https://yourcompany.com"/>
+              <input type="url" name="applied_company_website" class="apply-form-control" placeholder="https://yourcompany.com" value="{{ prefill.company_website }}"/>
             </div>
           </div>
           <div class="apply-form-group">

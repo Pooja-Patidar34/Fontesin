@@ -214,11 +214,17 @@ def user_list(request):
         # Coordinators oversee consultants across the tenant, so they see every
         # user in their tenant (read-only). Other view-only roles (e.g. consultant,
         # franchise) see only users who share their own company — either via
-        # User.primary_company or the UserCompany M2M.
+        # User.primary_company or the UserCompany M2M. Business users also see
+        # only users in their own company, even though they can manage users.
         role_code = (request.user.role.code or "").upper() if request.user.role else ""
         is_coordinator = role_code == "COORDINATOR"
+        is_business_user = role_code == "BUSINESS_USER"
 
-        if not has_permission(request.user, "user.manage") and not is_coordinator:
+        scope_to_own_company = is_business_user or (
+            not has_permission(request.user, "user.manage") and not is_coordinator
+        )
+
+        if scope_to_own_company:
             own_company_ids = list(
                 request.user.usercompany_set.values_list("company_id", flat=True)
             ) if hasattr(request.user, "usercompany_set") else []
@@ -235,8 +241,15 @@ def user_list(request):
                     Q(primary_company_id__in=own_company_ids)
                     | Q(usercompany__company_id__in=own_company_ids)
                 ).distinct()
+                # Scope the Companies dropdown to the user's own companies too,
+                # so business users can't filter/add to companies they don't own.
+                companies = (
+                    Company.objects.filter(id__in=own_company_ids, is_active=True)
+                    .order_by("name")
+                )
             else:
                 qs = qs.none()
+                companies = Company.objects.none()
 
     qs = qs.order_by("-created_at")
 

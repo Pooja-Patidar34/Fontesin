@@ -342,10 +342,25 @@ def apply_view(request):
         messages.error(request, "The application form is only available for consultants, coordinators, and franchise partners.")
         return redirect("dashboard")
 
+    # Pre-fill the Company Information section from the company the user picked
+    # at /register/ (primary_company). Fall back to any applied_* values already
+    # saved on the user (e.g. if they reopen the form after a partial submit).
+    pc = user.primary_company
+    prefill = {
+        "company_name": (pc.name if pc else "") or (user.applied_company_name or ""),
+        "company_reg_number": (pc.registration_id if pc else "") or (user.applied_company_reg_number or ""),
+        "country_of_incorporation": (pc.country if pc else "") or (user.applied_country_of_incorporation or ""),
+        "legal_form": (pc.classification if pc else "") or (user.applied_legal_form or ""),
+        "year_founded": user.applied_year_founded or "",
+        "num_employees": user.applied_num_employees or "",
+        "company_website": (pc.website if pc else "") or (user.applied_company_website or ""),
+    }
+
     return render(request, "auth/apply.html", {
         "role_value": role_value,
         "role_label": role_label,
         "role_icon": role_icon,
+        "prefill": prefill,
     })
 
 

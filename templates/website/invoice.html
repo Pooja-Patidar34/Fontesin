@@ -298,6 +298,10 @@
           <span class="info-row__label">Role</span>
           <span class="info-row__value">{{ invoice.subscription.user.role.name|default:"—" }}</span>
         </div>
+        <div class="info-row">
+          <span class="info-row__label">Company</span>
+          <span class="info-row__value">{{ invoice.subscription.user.primary_company.name|default:"—" }}</span>
+        </div>
       </div>
 
       <!-- SUBSCRIPTION DETAILS -->

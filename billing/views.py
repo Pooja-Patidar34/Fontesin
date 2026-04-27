@@ -56,7 +56,12 @@ def payment_list(request):
 
     status_filter = request.GET.get("status", "all")
 
-    qs = Subscription.objects.select_related("user", "plan").order_by("-created_at")
+    qs = (
+        Subscription.objects
+        .select_related("user", "plan")
+        .prefetch_related("invoice_set")
+        .order_by("-created_at")
+    )
 
     if status_filter == "pending":
         qs = qs.filter(status="created")

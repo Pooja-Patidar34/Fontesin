@@ -21,6 +21,64 @@
   .dropdown-menu {
     z-index: 2000;
   }
+
+  /* Filter bar */
+  .filter-bar {
+    padding: .75rem 1.25rem;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+  }
+  .filter-bar .form-group { margin-bottom: 0; }
+  .filter-bar label.small {
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: .25rem;
+    display: block;
+  }
+  .filter-actions {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+  }
+  @media (max-width: 767.98px) {
+    .filter-actions { margin-top: .75rem; }
+  }
+
+  /* Company modal */
+  #companyModal .modal-dialog {
+    margin: 1.5rem auto !important;
+  }
+  #companyModal .modal-body {
+    max-height: calc(100vh - 200px) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    padding: 1rem 1.25rem !important;
+  }
+  #companyModal .form-group { margin-bottom: .75rem; }
+  #companyModal label { font-size: .85rem; font-weight: 600; color: #495057; margin-bottom: .25rem; display: block; }
+  #companyModal .form-control,
+  #companyModal input[type="text"],
+  #companyModal input[type="url"],
+  #companyModal input[type="tel"],
+  #companyModal input[type="email"],
+  #companyModal input[type="number"],
+  #companyModal select {
+    width: 100%;
+    display: block;
+    font-size: .9rem;
+    box-sizing: border-box;
+  }
+  #companyModal .section-title {
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #6c757d;
+    font-weight: 700;
+    margin: 1rem 0 .5rem;
+    padding-bottom: .25rem;
+    border-bottom: 1px solid #e9ecef;
+  }
+  #companyModal .section-title:first-child { margin-top: 0; }
 </style>
 
 <div class="card card-outline card-primary shadow-sm">
@@ -61,6 +119,47 @@
     </div>
   </div>
 
+  {% if is_basic_or_pro_business_user %}
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <form method="get" id="company-filter-form" autocomplete="off">
+      <div class="row">
+        <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
+          <label class="small">Country</label>
+          <input type="text" name="country" class="form-control form-control-sm"
+                 value="{{ applied_filters.country|default:'' }}" placeholder="e.g. USA">
+        </div>
+        <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
+          <label class="small">State / Region</label>
+          <input type="text" name="state" class="form-control form-control-sm"
+                 value="{{ applied_filters.state|default:'' }}" placeholder="e.g. California">
+        </div>
+        <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
+          <label class="small">City</label>
+          <input type="text" name="city" class="form-control form-control-sm"
+                 value="{{ applied_filters.city|default:'' }}" placeholder="e.g. San Francisco">
+        </div>
+        <div class="col-md-3 col-sm-6 d-flex align-items-end">
+          <div class="filter-actions">
+            <button type="submit" class="btn btn-sm btn-outline-primary">
+              <i class="fas fa-filter mr-1"></i> Apply
+            </button>
+            {% if applied_filters %}
+            <a href="{% url 'companies' %}" class="btn btn-sm btn-outline-secondary">Clear</a>
+            <button type="button" class="btn btn-sm btn-success" id="save-filter-btn">
+              <i class="far fa-star mr-1"></i> Save
+            </button>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <p class="small text-muted mt-2 mb-0">
+        Certification, revenue, and company-size filters are planned for a future release.
+      </p>
+    </form>
+  </div>
+  {% endif %}
+
   <!-- Table -->
   <div class="card-body p-0">
     <div class="table-responsive">
@@ -68,12 +167,19 @@
 
         <thead class="bg-light">
           <tr>
-            <th>Name</th>
+            {% if is_free_plan %}
+            <th>User Name</th>
+            <th>Company Name</th>
+            {% else %}
+            <th>Company Name</th>
+            {% endif %}
             {% if request.user.is_superuser %}
             <th>Tenant</th>
             {% endif %}
             <th>Status</th>
+            {% if not is_free_plan %}
             <th class="text-right pr-4">Action</th>
+            {% endif %}
           </tr>
         </thead>
 
@@ -82,10 +188,19 @@
             {% include "dashboard/_company_row.html" %}
           {% empty %}
           <tr id="no-companies-row">
-            <td colspan="{% if request.user.is_superuser %}4{% else %}3{% endif %}"
-                class="text-center text-muted py-4">
-              No companies found
-            </td>
+            {% if request.user.is_superuser %}
+              {% if is_free_plan %}
+                <td colspan="4" class="text-center text-muted py-4">No companies found</td>
+              {% else %}
+                <td colspan="4" class="text-center text-muted py-4">No companies found</td>
+              {% endif %}
+            {% else %}
+              {% if is_free_plan %}
+                <td colspan="3" class="text-center text-muted py-4">No companies found</td>
+              {% else %}
+                <td colspan="3" class="text-center text-muted py-4">No companies found</td>
+              {% endif %}
+            {% endif %}
           </tr>
           {% endfor %}
         </tbody>
@@ -183,7 +298,7 @@
 
 <!-- ================= MODAL ================= -->
 <div class="modal fade" id="companyModal" tabindex="-1">
-  <div class="modal-dialog modal-lg">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
     <div class="modal-content">
 
       <form method="post" id="company-form">
@@ -207,27 +322,25 @@
             {{ form.tenant }}
           {% endif %}
 
-          <!-- ORIGINAL FIELDS -->
+          <div class="section-title">Basic Info</div>
+
           <div class="form-group">
             <label>Name</label>
             {{ form.name }}
           </div>
 
-          <div class="form-group">
-            <label>Registration ID</label>
-            {{ form.registration_id }}
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label>Registration ID</label>
+              {{ form.registration_id }}
+            </div>
+            <div class="form-group col-md-6">
+              <label>Classification</label>
+              {{ form.classification }}
+            </div>
           </div>
 
-          <!-- ===== ADDED FIELDS START (NO REMOVALS) ===== -->
-
-          <div class="form-group">
-            <label>Classification</label>
-            {{ form.classification }}
-          </div>
-
-          <hr>
-
-          <h6 class="text-muted">Address</h6>
+          <div class="section-title">Address</div>
 
           <div class="form-group">
             <label>Address Line 1</label>
@@ -240,52 +353,50 @@
           </div>
 
           <div class="form-row">
-            <div class="col">
+            <div class="form-group col-md-6">
               <label>City</label>
               {{ form.city }}
             </div>
-            <div class="col">
+            <div class="form-group col-md-6">
               <label>State</label>
               {{ form.state }}
             </div>
           </div>
 
-          <div class="form-row mt-2">
-            <div class="col">
+          <div class="form-row">
+            <div class="form-group col-md-6">
               <label>Postal Code</label>
               {{ form.postal_code }}
             </div>
-            <div class="col">
+            <div class="form-group col-md-6">
               <label>Country</label>
               {{ form.country }}
             </div>
           </div>
 
-          <hr>
+          <div class="section-title">Contact</div>
 
-          <h6 class="text-muted">Contact</h6>
-
-          <div class="form-group">
-            <label>Phone</label>
-            {{ form.phone }}
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label>Phone</label>
+              {{ form.phone }}
+            </div>
+            <div class="form-group col-md-6">
+              <label>Secondary Phone</label>
+              {{ form.phone_secondary }}
+            </div>
           </div>
 
-          <div class="form-group">
-            <label>Secondary Phone</label>
-            {{ form.phone_secondary }}
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label>Fax</label>
+              {{ form.fax }}
+            </div>
+            <div class="form-group col-md-6">
+              <label>Website</label>
+              {{ form.website }}
+            </div>
           </div>
-
-          <div class="form-group">
-            <label>Fax</label>
-            {{ form.fax }}
-          </div>
-
-          <div class="form-group">
-            <label>Website</label>
-            {{ form.website }}
-          </div>
-
-          <!-- ===== ADDED FIELDS END ===== -->
 
           <div class="form-check mt-2">
             {{ form.is_active }}
@@ -295,6 +406,7 @@
         </div>
 
         <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
           {% if can_manage %}
           <button type="submit"
                   id="save-btn"
@@ -302,7 +414,6 @@
             Save
           </button>
           {% endif %}
-
         </div>
 
       </form>
@@ -375,6 +486,11 @@ document.addEventListener("DOMContentLoaded", function () {
       setReadonly(false);
       modal.modal('show');
   });
+
+  // Auto-open Add Company modal when arriving via "Create Company" sidebar link (?new=1)
+  if (new URLSearchParams(window.location.search).get("new") === "1") {
+    document.getElementById("add-company-btn")?.click();
+  }
 
   document.querySelectorAll(".view-company-btn").forEach(btn => {
     btn.addEventListener("click", function (e) {
@@ -562,5 +678,95 @@ document.addEventListener("DOMContentLoaded", function () {
 
 });
 </script>
+
+{% if is_basic_or_pro_business_user %}
+<div class="modal fade" id="saveFilterModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title font-weight-bold">Save Filter to Favorites</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="small text-muted">
+          Save the current filter criteria under a friendly name. Return anytime from the Favorites tab —
+          one click re-applies the filter. This does <strong>not</strong> export or download data.
+        </p>
+        <div class="form-group mb-2">
+          <label>Name</label>
+          <input type="text" id="saved-filter-name" class="form-control"
+                 placeholder="e.g. Health Insurance — USA / CA / San Francisco" maxlength="120">
+        </div>
+        <dl class="row small mb-0">
+          {% for key, value in applied_filters.items %}
+          <dt class="col-4 text-muted text-capitalize">{{ key }}</dt>
+          <dd class="col-8">{{ value }}</dd>
+          {% endfor %}
+        </dl>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success btn-sm" id="confirm-save-filter-btn">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const openBtn = document.getElementById("save-filter-btn");
+  const modal = $('#saveFilterModal');
+  const nameInput = document.getElementById("saved-filter-name");
+  const confirmBtn = document.getElementById("confirm-save-filter-btn");
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || "";
+
+  openBtn?.addEventListener("click", function () {
+    nameInput.value = "";
+    modal.modal('show');
+    setTimeout(function () { nameInput.focus(); }, 200);
+  });
+
+  confirmBtn?.addEventListener("click", function () {
+    const name = (nameInput.value || "").trim();
+    if (!name) {
+      nameInput.focus();
+      return;
+    }
+    confirmBtn.disabled = true;
+
+    const params = new URLSearchParams(window.location.search);
+    const body = new FormData();
+    body.append("name", name);
+    ["country", "state", "city"].forEach(function (k) {
+      const v = params.get(k);
+      if (v) body.append(k, v);
+    });
+
+    fetch("{% url 'saved-filter-save' %}", {
+      method: "POST",
+      headers: { "X-Requested-With": "XMLHttpRequest", "X-CSRFToken": csrfToken },
+      body: body,
+      credentials: "same-origin",
+    })
+      .then(function (r) { return r.json().then(function (d) { return { status: r.status, data: d }; }); })
+      .then(function (res) {
+        if (res.status === 200 && res.data.ok) {
+          modal.modal("hide");
+          if (typeof showToast === "function") showToast(res.data.message, "success");
+          else alert(res.data.message);
+        } else {
+          const msg = res.data.message || "Could not save filter.";
+          if (typeof showToast === "function") showToast(msg, "error");
+          else alert(msg);
+        }
+      })
+      .catch(function () {
+        if (typeof showToast === "function") showToast("Network error. Please try again.", "error");
+      })
+      .finally(function () { confirmBtn.disabled = false; });
+  });
+});
+</script>
+{% endif %}
 
 {% endblock %}

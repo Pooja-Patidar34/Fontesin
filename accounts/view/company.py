@@ -3,9 +3,42 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 
-from accounts.models import Company, Tenant,AuditLog
+from accounts.models import Company, Tenant, AuditLog, CompanyConnection
+from accounts.constants import CountryChoices
 from django.db.models import Q
 from accounts.utils.permissions import has_permission
+from accounts.view.saved_filter import (
+    FILTER_FIELDS,
+    _is_basic_business_user,
+    _is_basic_or_pro_business_user,
+    _plan_code_for_business_user,
+)
+from billing.utils import PLAN_REGIONS, _region_for_country
+
+
+# Extra free-text spellings seen in Company.country (mapped by ISO code).
+# The user's profile stores the ISO code; companies store free-text names.
+_COUNTRY_ALIASES = {
+    "US": ("USA", "United States of America", "U.S.", "U.S.A."),
+    "GB": ("UK", "U.K.", "Great Britain"),
+    "AE": ("UAE", "U.A.E."),
+    "KR": ("Korea", "South Korea"),
+    "CZ": ("Czechia",),
+}
+
+
+def _country_match_q(country_code):
+    """Build a Q that matches Company.country against the user's country code,
+    including the CountryChoices label and common free-text aliases."""
+    variants = [country_code]
+    label = dict(CountryChoices.CHOICES).get(country_code)
+    if label:
+        variants.append(label)
+    variants.extend(_COUNTRY_ALIASES.get(country_code, ()))
+    q = Q()
+    for v in variants:
+        q |= Q(country__iexact=v)
+    return q
 from accounts.utils.ip import get_client_ip
 from django.urls import reverse
 from django.contrib import messages
@@ -47,13 +80,26 @@ def company_list(request):
 
         # ---------- UPDATE ----------
         if company_id:
+            role_name = (request.user.role.name or "").lower() if request.user.role else ""
+
             if request.user.is_superuser:
                 company = get_object_or_404(Company, id=company_id)
-            else:
+            elif role_name == "tenant_admin":
                 company = get_object_or_404(
                     Company,
                     id=company_id,
                     tenant=request.user.tenant,
+                )
+            else:
+                # Match list-view scoping (linkage-based, cross-tenant).
+                company = get_object_or_404(
+                    Company.objects.filter(
+                        Q(tenant=request.user.tenant)
+                        | Q(consultant=request.user)
+                        | Q(owner_user=request.user)
+                        | Q(primary_users=request.user)
+                    ).distinct(),
+                    id=company_id,
                 )
 
             old_data = {
@@ -200,14 +246,52 @@ def company_list(request):
             # sees only companies they're directly linked to. No tenant
             # pre-filter because registration lets users pick a company from
             # any tenant, so a linked company may live outside their own tenant.
-            queryset = Company.objects.filter(
+            linkage_q = (
                 Q(consultant=request.user)
                 | Q(owner_user=request.user)
                 | Q(primary_users=request.user)
-            ).distinct()
+            )
+
+            # Basic / Pro / Global business users also get a discovery view:
+            #   basic  → all active companies in the user's registered country
+            #   pro    → all active companies in the user's whole region
+            #   global → all active companies worldwide (no country restriction)
+            # User.country is an ISO code ("US"); Company.country is free-text,
+            # so match across code + label + common aliases.
+            plan_code = _plan_code_for_business_user(request.user)
+            if plan_code == "global":
+                linkage_q = linkage_q | Q(is_active=True)
+            elif plan_code in ("basic", "pro"):
+                user_country = (request.user.country or "").strip().upper()
+                if user_country:
+                    if plan_code == "pro":
+                        region = _region_for_country(user_country)
+                        scope_codes = PLAN_REGIONS.get(region, []) if region else []
+                    else:
+                        scope_codes = [user_country]
+
+                    if scope_codes:
+                        scope_q = Q()
+                        for code in scope_codes:
+                            scope_q |= _country_match_q(code)
+                        linkage_q = linkage_q | (scope_q & Q(is_active=True))
+
+            queryset = Company.objects.filter(linkage_q).distinct()
         tenants = Tenant.objects.filter(
             id=request.user.tenant_id
         )
+
+    # -------------------------------
+    # LOCATION FILTERS (paid business users — basic, pro, global)
+    # -------------------------------
+    is_paid_bu = _is_basic_or_pro_business_user(request.user)
+    applied_filters = {}
+    if is_paid_bu:
+        for key in FILTER_FIELDS:
+            value = (request.GET.get(key) or "").strip()
+            if value:
+                applied_filters[key] = value
+                queryset = queryset.filter(**{f"{key}__iexact": value})
 
     paginator = Paginator(queryset.order_by("name"), 10)
     try:
@@ -226,6 +310,14 @@ def company_list(request):
         querydict["page"] = 1
         return redirect(f"{request.path}?{querydict.urlencode()}")
 
+    connected_ids = set()
+    if is_paid_bu:
+        connected_ids = set(
+            CompanyConnection.objects
+            .filter(user=request.user, company__in=[c.id for c in page_obj.object_list])
+            .values_list("company_id", flat=True)
+        )
+
     # -------------------------------
     # RENDER
     # -------------------------------
@@ -242,6 +334,8 @@ def company_list(request):
             "can_view": has_permission(request.user, "company.view"),
             "active_menu": "companies",
             "next": request.get_full_path(),
+            "applied_filters": applied_filters,
+            "connected_ids": connected_ids,
         },
     )
 
@@ -474,17 +568,22 @@ def company_detail_ajax(request, company_id):
     if not has_permission(request.user, "company.view"):
         raise PermissionDenied()
 
+    role_name = (request.user.role.name or "").lower() if request.user.role else ""
+
     if request.user.is_superuser:
         company = get_object_or_404(Company, id=company_id)
-    elif has_permission(request.user, "company.manage"):
+    elif role_name == "tenant_admin":
+        # Tenant admins manage every company in their tenant.
         company = get_object_or_404(
             Company,
             id=company_id,
             tenant=request.user.tenant,
         )
     else:
-        # View-only roles (consultant/coordinator/franchise) can see any company
-        # they're linked to, regardless of tenant — matches company_list scoping.
+        # Business users, consultants, coordinators, franchises see only
+        # companies they're linked to — matches the list-view scoping,
+        # which is cross-tenant because registration lets you pick a
+        # company from any tenant.
         company = get_object_or_404(
             Company.objects.filter(
                 Q(tenant=request.user.tenant)

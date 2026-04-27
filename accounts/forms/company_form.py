@@ -224,11 +224,26 @@ class CompanyForm(forms.ModelForm):
             self.fields["tenant"].queryset = Tenant.objects.all()
 
         else:
-            # Tenant admin restricted to own tenant
+            # Non-superusers see a hidden tenant field. The queryset is
+            # normally locked to the user's own tenant, but when editing an
+            # existing company that was linked cross-tenant (registration
+            # lets users pick companies from any tenant), we must also
+            # include the instance's current tenant — otherwise the hidden
+            # field posts a value that isn't in the queryset and Django
+            # raises "Select a valid choice" on save.
+            tenant_ids = {user.tenant_id} if user.tenant_id else set()
+            if self.instance and self.instance.pk and self.instance.tenant_id:
+                tenant_ids.add(self.instance.tenant_id)
+
             self.fields["tenant"].queryset = Tenant.objects.filter(
-                id=user.tenant_id
+                id__in=tenant_ids
             )
-            self.fields["tenant"].initial = user.tenant
+            # Company.id has default=uuid.uuid4, so `self.instance.pk` is truthy
+            # even for unsaved instances. Use tenant_id as the real "existing row"
+            # signal — it's only populated once the company has been saved.
+            self.fields["tenant"].initial = (
+                self.instance.tenant if self.instance and self.instance.tenant_id else user.tenant
+            )
             self.fields["tenant"].widget = forms.HiddenInput()
 
     def clean_name(self):

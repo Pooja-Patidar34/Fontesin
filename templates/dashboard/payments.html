@@ -30,6 +30,7 @@
           <tr>
             <th>User</th>
             <th>Email</th>
+            <th>Payment Reference No.</th>
             <th>Plan</th>
             <th>Amount</th>
             <th>Status</th>
@@ -56,6 +57,16 @@
               {% else %}
                 -
               {% endif %}
+            </td>
+
+            <td>
+              {% with inv=sub.invoice_set.all|first %}
+                {% if inv %}
+                  <code>{{ inv.invoice_number }}</code>
+                {% else %}
+                  -
+                {% endif %}
+              {% endwith %}
             </td>
 
             <td>
@@ -124,7 +135,7 @@
           </tr>
           {% empty %}
           <tr>
-            <td colspan="7" class="text-center text-muted py-4">
+            <td colspan="8" class="text-center text-muted py-4">
               No payment records found
             </td>
           </tr>
