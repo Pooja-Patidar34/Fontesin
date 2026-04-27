@@ -22,46 +22,54 @@
 <div class="card card-outline card-primary shadow-sm">
 
   <!-- HEADER -->
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <h3 class="card-title font-weight-bold mb-0">Users</h3>
+  <div class="card-header">
+    <!-- Row 1: title + Add User -->
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h3 class="card-title font-weight-bold mb-0">Users</h3>
       {% if can_manage_users %}
-      <button class="btn btn-sm btn-primary"
-          onclick="openAddUserModal()">
+      <button class="btn btn-sm btn-primary" onclick="openAddUserModal()">
         <i class="fas fa-user-plus mr-1"></i> Add User
       </button>
       {% endif %}
+    </div>
 
-    <form method="get" class="form-inline">
+    <!-- Row 2: filters -->
+    <form method="get" class="row" style="margin: 0 -.25rem;">
       {% if request.user.is_superuser %}
-      <select name="tenant" class="form-control form-control-sm mr-2"
-              onchange="
-                const params = new URLSearchParams(window.location.search);
-                if (this.value) params.set('tenant', this.value);
-                else params.delete('tenant');
-                params.delete('company');
-                params.delete('page');
-                window.location = window.location.pathname + '?' + params.toString();
-              ">
-        <option value="">All Tenants</option>
-        {% for tenant in tenants %}
-          <option value="{{ tenant.id }}"
-            {% if tenant.id|stringformat:'s' == selected_tenant %}selected{% endif %}>
-            {{ tenant.name }}
-          </option>
-        {% endfor %}
-      </select>
+      <div class="col-sm-6 px-1 mb-2 mb-sm-0">
+        <select name="tenant" class="form-control form-control-sm"
+                onchange="
+                  const params = new URLSearchParams(window.location.search);
+                  if (this.value) params.set('tenant', this.value);
+                  else params.delete('tenant');
+                  params.delete('company');
+                  params.delete('page');
+                  window.location = window.location.pathname + '?' + params.toString();
+                ">
+          <option value="">All Tenants</option>
+          {% for tenant in tenants %}
+            <option value="{{ tenant.id }}"
+              {% if tenant.id|stringformat:'s' == selected_tenant %}selected{% endif %}>
+              {{ tenant.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-sm-6 px-1">
+      {% else %}
+      <div class="col-12 px-1">
       {% endif %}
-
-      <select name="company" class="form-control form-control-sm"
-              onchange="this.form.submit()">
-        <option value="">All Companies</option>
-        {% for company in companies %}
-          <option value="{{ company.id }}"
-            {% if company.id|stringformat:'s' == selected_company %}selected{% endif %}>
-            {{ company.name }}{% if request.user.is_superuser and not selected_tenant %} — {{ company.tenant.name }}{% endif %}
-          </option>
-        {% endfor %}
-      </select>
+        <select name="company" class="form-control form-control-sm"
+                onchange="this.form.submit()">
+          <option value="">All Companies</option>
+          {% for company in companies %}
+            <option value="{{ company.id }}"
+              {% if company.id|stringformat:'s' == selected_company %}selected{% endif %}>
+              {{ company.name }}{% if request.user.is_superuser and not selected_tenant %} — {{ company.tenant.name }}{% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
     </form>
   </div>
 

@@ -92,7 +92,8 @@
         {% endif %}
       {% endif %}
 
-      {% if can_manage and not is_global_plan %}
+      {# Delete — also hidden for consultants (CRU only, no D) #}
+      {% if can_manage and not is_global_plan and request.user.role.code|lower != "consultant" %}
       <div class="dropdown-divider"></div>
 
       <form method="post"

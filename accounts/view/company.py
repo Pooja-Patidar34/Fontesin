@@ -468,6 +468,13 @@ def company_delete(request, company_id):
     if not has_permission(request.user, "company.manage"):
         raise PermissionDenied()
 
+    # Consultants get CRU on companies but not delete — block here.
+    role_code = ""
+    if request.user.role and request.user.role.code:
+        role_code = request.user.role.code.lower()
+    if role_code == "consultant":
+        raise PermissionDenied()
+
     if request.method != "POST":
         raise PermissionDenied()
 
