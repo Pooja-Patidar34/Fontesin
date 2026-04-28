@@ -268,6 +268,15 @@ p  { color: var(--text-secondary); line-height: 1.75; }
 .card .card-body { padding: 24px; }
 .card .card-header { padding: 18px 24px; background: transparent; border-bottom: 1px solid #eef2f6; }
 
+/* Marketing/website cards use BEM children directly (no .card-body wrapper).
+   Give those cards internal padding so the icon/title/text have equal
+   left + right gutters. Dashboard cards (which use .card-body) are unaffected. */
+.card:has(> .card__icon),
+.card:has(> .card__title),
+.card:has(> .card__text) {
+  padding: 28px;
+}
+
 /* Give the dashboard content area breathing room and clear the
    (sticky) top navbar so card headers / avatars aren't hidden
    behind it. The !important is required because Bootstrap's

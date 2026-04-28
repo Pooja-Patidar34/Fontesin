@@ -184,6 +184,23 @@ class Invoice(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # ── Snapshots (frozen at invoice creation, never edited afterward) ──
+    # JSON shape mirrors the bank-details dict in accounts/view/website.py:
+    # { profile, currency, bank_name, bank_address, aba_routing, swift,
+    #   account_label, account_number, account_kind, beneficiary_name,
+    #   beneficiary_address, remittance_reference }
+    bank_snapshot = models.JSONField(default=dict, blank=True)
+
+    # JSON shape:
+    # { name, email, phone, country, address_line1, address_line2, city,
+    #   state_region, postal_code, full_address, tenant_name }
+    sender_snapshot = models.JSONField(default=dict, blank=True)
+
+    # FX info — explicit columns for queryability/aggregation.
+    fx_source_currency = models.CharField(max_length=10, blank=True, default="")
+    fx_source_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    fx_rate = models.DecimalField(max_digits=12, decimal_places=6, null=True, blank=True)
+
 
 class WebhookEvent(models.Model):
 

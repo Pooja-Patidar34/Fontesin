@@ -333,50 +333,88 @@
         </div>
         <div class="info-row">
           <span class="info-row__label">Currency</span>
-          <span class="info-row__value">{{ invoice.currency }} ($)</span>
+          <span class="info-row__value">
+            {{ display_currency }}
+            {% if display_currency == "EUR" %}(€){% else %}($){% endif %}
+          </span>
         </div>
       </div>
 
       <!-- TOTAL -->
       <div class="total-box">
         <span class="total-box__label">Total Amount Due</span>
-        <span class="total-box__amount">${{ invoice.amount|floatformat:2 }}</span>
+        <span class="total-box__amount">{% if display_currency == "EUR" %}€{% else %}${% endif %}{{ display_amount|floatformat:2 }}</span>
+        {% if fx_rate %}
+        <div style="font-size:.72rem; color:#6b7280; margin-top:6px; font-weight:500;">
+          Converted from {{ fx_source_amount|default:invoice.amount|floatformat:2 }} {{ fx_source_currency }} at rate
+          1 {{ fx_source_currency }} = {{ fx_rate|floatformat:4 }} {{ display_currency }}{% if invoice.fx_rate %} <span style="opacity:.7;">(frozen at invoice creation)</span>{% endif %}
+        </div>
+        {% endif %}
       </div>
 
       {% if invoice.subscription.plan.code != 'free' %}
       <!-- BANK TRANSFER DETAILS -->
-      <div class="section-title"><span class="icon">&#127974;</span> BANK TRANSFER DETAILS</div>
+      <div class="section-title">
+        <span class="icon">&#127974;</span> BANK TRANSFER DETAILS
+        {% if bank.profile == "domestic_us" %}<small style="font-weight:500; color:#64748b; margin-left:8px;">— Domestic US (USD)</small>
+        {% elif bank.profile == "international_eur" %}<small style="font-weight:500; color:#64748b; margin-left:8px;">— International Wire (EUR)</small>
+        {% elif bank.profile == "international_usd" %}<small style="font-weight:500; color:#64748b; margin-left:8px;">— International Wire (USD)</small>
+        {% endif %}
+      </div>
       <div style="margin-bottom:32px;">
         <div class="info-row">
-          <span class="info-row__label">Bank Name</span>
-          <span class="info-row__value">JPMorgan Chase Bank, N.A.</span>
+          <span class="info-row__label">Beneficiary Name</span>
+          <span class="info-row__value">{{ bank.beneficiary_name }}</span>
         </div>
         <div class="info-row">
-          <span class="info-row__label">Account Holder</span>
-          <span class="info-row__value">FONTES Inc.</span>
+          <span class="info-row__label">Beneficiary Address</span>
+          <span class="info-row__value">{{ bank.beneficiary_address }}</span>
         </div>
         <div class="info-row">
-          <span class="info-row__label">IBAN</span>
+          <span class="info-row__label">{{ bank.account_label }}</span>
           <span class="info-row__value">
-            <span class="code-value">US12 3456 7890 1234 5678 9012 <button class="copy-btn" onclick="copyText('US12345678901234567890​12')">Copy</button></span>
+            <span class="code-value">{{ bank.account_number }} <button class="copy-btn" onclick="copyText('{{ bank.account_number }}')">Copy</button></span>
           </span>
         </div>
+        {% if bank.account_kind %}
+        <div class="info-row">
+          <span class="info-row__label">Account Kind</span>
+          <span class="info-row__value">{{ bank.account_kind }}</span>
+        </div>
+        {% endif %}
+        {% if bank.swift %}
         <div class="info-row">
           <span class="info-row__label">SWIFT / BIC</span>
           <span class="info-row__value">
-            <span class="code-value">CHASUS33 <button class="copy-btn" onclick="copyText('CHASUS33')">Copy</button></span>
+            <span class="code-value">{{ bank.swift }} <button class="copy-btn" onclick="copyText('{{ bank.swift }}')">Copy</button></span>
           </span>
         </div>
+        {% endif %}
         <div class="info-row">
           <span class="info-row__label">ABA Routing Number</span>
           <span class="info-row__value">
-            <span class="code-value">021000021 <button class="copy-btn" onclick="copyText('021000021')">Copy</button></span>
+            <span class="code-value">{{ bank.aba_routing }} <button class="copy-btn" onclick="copyText('{{ bank.aba_routing }}')">Copy</button></span>
           </span>
         </div>
         <div class="info-row">
-          <span class="info-row__label">Bank Address</span>
-          <span class="info-row__value">383 Madison Ave, New York, NY 10017, USA</span>
+          <span class="info-row__label">Bank Name</span>
+          <span class="info-row__value">{{ bank.bank_name }}</span>
         </div>
+        <div class="info-row">
+          <span class="info-row__label">Bank Address</span>
+          <span class="info-row__value">{{ bank.bank_address }}</span>
+        </div>
+        {% if bank.remittance_reference %}
+        <div class="info-row" style="background:#eef2ff; border:1px solid #c7d2fe; border-radius:8px; padding:8px 12px; margin-top:10px;">
+          <span class="info-row__label">Remittance Reference</span>
+          <span class="info-row__value">
+            <span class="code-value">{{ bank.remittance_reference }} <button class="copy-btn" onclick="copyText('{{ bank.remittance_reference }}')">Copy</button></span>
+          </span>
+        </div>
+        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 12px;margin:8px 0;font-size:.78rem;color:#92400e;">
+          &#9888; You must include this reference in the wire's "Memo" / Section 70 field. If space is short, include as much as possible.
+        </div>
+        {% endif %}
       </div>
 
       <!-- PAYMENT IDENTIFICATION -->
@@ -403,7 +441,7 @@
         </div>
         <div class="info-row">
           <span class="info-row__label">Amount</span>
-          <span class="info-row__value">${{ invoice.amount|floatformat:2 }} {{ invoice.currency }}</span>
+          <span class="info-row__value">{% if display_currency == "EUR" %}€{% else %}${% endif %}{{ display_amount|floatformat:2 }} {{ display_currency }}</span>
         </div>
       </div>
 
