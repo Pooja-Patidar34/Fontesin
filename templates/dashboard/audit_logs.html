@@ -42,107 +42,10 @@
     </h3>
   </div>
 
-  <!-- TABLE -->
-  <div class="card-body p-0">
-    <div class="table-responsive">
-      <table class="table table-hover table-sm mb-0">
-
-        <thead class="bg-light">
-          <tr>
-            <th>User</th>
-            <th>Action</th>
-            <th>Date</th>
-            <th class="text-right">View</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {% for log in logs %}
-          <tr>
-
-            <td>
-              {{ log.actor.email|default:"System" }}
-            </td>
-
-            <td>
-              {{ log.action }}
-            </td>
-
-            <td class="text-muted">
-              {{ log.created_at|date:"M d, Y H:i" }}
-            </td>
-
-            <td class="text-right">
-              <button class="btn btn-sm btn-outline-primary action-btn view-log-btn"
-                      data-id="{{ log.id }}">
-                View
-              </button>
-            </td>
-
-          </tr>
-
-          {% empty %}
-          <tr>
-            <td colspan="4" class="text-center text-muted py-4">
-              No logs found
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-
-      </table>
-    </div>
+  <!-- TABLE + PAGINATION (AJAX-swappable) -->
+  <div id="audit-logs-panel">
+    {% include "dashboard/_audit_logs_panel.html" %}
   </div>
-
-
-  <!-- PAGINATION -->
-  {% if page_obj.paginator.num_pages > 1 %}
-  <div class="card-footer clearfix">
-    <ul class="pagination pagination-sm m-0 float-right">
-
-      {% if page_obj.has_previous %}
-      <li class="page-item">
-        <a class="page-link"
-           href="?page={{ page_obj.previous_page_number }}">
-          Previous
-        </a>
-      </li>
-      {% else %}
-      <li class="page-item disabled">
-        <span class="page-link">Previous</span>
-      </li>
-      {% endif %}
-
-      {% for num in page_obj.paginator.page_range %}
-        {% if page_obj.number == num %}
-          <li class="page-item active">
-            <span class="page-link">{{ num }}</span>
-          </li>
-        {% else %}
-          <li class="page-item">
-            <a class="page-link" href="?page={{ num }}">
-              {{ num }}
-            </a>
-          </li>
-        {% endif %}
-      {% endfor %}
-
-      {% if page_obj.has_next %}
-      <li class="page-item">
-        <a class="page-link"
-           href="?page={{ page_obj.next_page_number }}">
-          Next
-        </a>
-      </li>
-      {% else %}
-      <li class="page-item disabled">
-        <span class="page-link">Next</span>
-      </li>
-      {% endif %}
-
-    </ul>
-  </div>
-  {% endif %}
 
 </div>
 
@@ -189,42 +92,79 @@
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
-  document.querySelectorAll(".view-log-btn").forEach(function (button) {
+  const panel = document.getElementById("audit-logs-panel");
+  if (!panel) return;
 
-    button.addEventListener("click", function () {
+  // View-Log click — delegated so it survives AJAX swaps of #audit-logs-panel.
+  panel.addEventListener("click", function (e) {
+    const button = e.target.closest(".view-log-btn");
+    if (!button) return;
 
-      const logId = this.getAttribute("data-id");
+    const logId = button.getAttribute("data-id");
 
-      fetch(`/audit/logs/${logId}/detail/`, {
-        headers: { "X-Requested-With": "XMLHttpRequest" }
-      })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error("Status Code: " + response.status);
-        }
-        return response.json();
-      })
-      .then(data => {
+    fetch(`/audit/logs/${logId}/detail/`, {
+      headers: { "X-Requested-With": "XMLHttpRequest" }
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error("Status Code: " + response.status);
+      }
+      return response.json();
+    })
+    .then(data => {
+      document.getElementById("detail-actor").innerText = data.actor;
+      document.getElementById("detail-action").innerText = data.action;
+      document.getElementById("detail-entity-type").innerText = data.entity_type;
+      document.getElementById("detail-entity-id").innerText = data.entity_id;
+      document.getElementById("detail-ip").innerText = data.ip_address;
+      document.getElementById("detail-created").innerText = data.created_at;
 
-        document.getElementById("detail-actor").innerText = data.actor;
-        document.getElementById("detail-action").innerText = data.action;
-        document.getElementById("detail-entity-type").innerText = data.entity_type;
-        document.getElementById("detail-entity-id").innerText = data.entity_id;
-        document.getElementById("detail-ip").innerText = data.ip_address;
-        document.getElementById("detail-created").innerText = data.created_at;
+      document.getElementById("detail-metadata").innerText =
+        JSON.stringify(data.metadata, null, 2);
 
-        document.getElementById("detail-metadata").innerText =
-            JSON.stringify(data.metadata, null, 2);
-
-        $('#logDetailModal').modal('show');
-      })
-      .catch(error => {
-        console.error(error);
+      $('#logDetailModal').modal('show');
+    })
+    .catch(error => {
+      console.error(error);
+      if (typeof showToast === "function") {
         showToast("Failed to load log details.", "error");
-      });
-
+      }
     });
+  });
 
+  // --- AJAX pagination (no full page reload) ---
+  function loadPanel(url, push) {
+    fetch(url, {
+      headers: { "X-Requested-With": "XMLHttpRequest", "Accept": "text/html" }
+    })
+    .then(r => r.text())
+    .then(html => {
+      panel.innerHTML = html;
+      if (push) {
+        history.pushState({ url: url }, "", url);
+      }
+    })
+    .catch(() => {
+      if (typeof showToast === "function") {
+        showToast("Failed to load page.", "error");
+      }
+    });
+  }
+
+  panel.addEventListener("click", function (e) {
+    const link = e.target.closest(".pagination a.page-link");
+    if (!link) return;
+    const href = link.getAttribute("href");
+    if (!href || href === "#" || link.closest(".disabled")) return;
+    e.preventDefault();
+    // Resolve relative ?page=N hrefs against the current pathname.
+    const url = new URL(href, window.location.origin + window.location.pathname).toString();
+    loadPanel(url, true);
+  });
+
+  window.addEventListener("popstate", function (e) {
+    const url = (e.state && e.state.url) || (window.location.pathname + window.location.search);
+    loadPanel(url, false);
   });
 
 });

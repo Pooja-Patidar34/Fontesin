@@ -43,27 +43,46 @@
     <div class="dropdown-menu dropdown-menu-right">
 
       {% if can_view %}
-      <button class="dropdown-item view-company-btn"
-              data-url="{% url 'company-detail' company.id %}">
-        <i class="fas fa-eye mr-2"></i> View
-      </button>
+        {% if is_basic_business_user %}
+          {% if company.id in viewable_ids %}
+          <button class="dropdown-item view-company-btn text-success"
+                  data-url="{% url 'company-detail' company.id %}">
+            <i class="fas fa-eye mr-2"></i> View
+          </button>
+          {% else %}
+          <button type="button" class="dropdown-item text-success"
+                  style="opacity:.45; cursor: not-allowed;" disabled
+                  title="Send a connection request and wait for approval to view this company.">
+            <i class="fas fa-eye mr-2"></i> View
+          </button>
+          {% endif %}
+        {% else %}
+        <button class="dropdown-item view-company-btn"
+                data-url="{% url 'company-detail' company.id %}">
+          <i class="fas fa-eye mr-2"></i> View
+        </button>
+        {% endif %}
       {% endif %}
 
       {# Connect — visible for basic, pro, and global business users #}
       {% if is_basic_or_pro_business_user %}
-      <form method="post" action="{% url 'company-connect' company.id %}"
-            class="company-connect-form m-0" data-company-id="{{ company.id }}">
-        {% csrf_token %}
-        {% if company.id in connected_ids %}
+        {% if company.id in accepted_ids %}
+        <button type="button" class="dropdown-item text-success" disabled>
+          <i class="fas fa-link mr-2"></i> Connected
+        </button>
+        {% elif company.id in pending_ids %}
         <button type="button" class="dropdown-item text-muted" disabled>
-          <i class="fas fa-check mr-2"></i> Connection requested
+          <i class="fas fa-hourglass-half mr-2"></i> Connection requested
         </button>
         {% else %}
-        <button type="submit" class="dropdown-item text-success">
-          <i class="fas fa-handshake mr-2"></i> Connect
-        </button>
+        <form method="post" action="{% url 'company-connect' company.id %}"
+              class="company-connect-form m-0" data-company-id="{{ company.id }}">
+          {% csrf_token %}
+          <button type="submit" class="dropdown-item text-success">
+            <i class="fas fa-handshake mr-2"></i> Connect
+          </button>
+        </form>
         {% endif %}
-      </form>
       {% endif %}
 
       {# Basic plan: only View + Connect are allowed. Edit and below are hidden for basic. #}

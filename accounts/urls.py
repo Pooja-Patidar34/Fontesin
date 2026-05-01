@@ -22,6 +22,7 @@ from .view.saved_filter import (
     saved_filter_apply,
     company_connect,
 )
+from .view.partnership import partnership_list, partnership_action
 
 
 urlpatterns = [
@@ -51,6 +52,10 @@ urlpatterns = [
     path("users/add/", add_user, name="add-user"),
     path("companies/<uuid:company_id>/delete/", company_delete, name="company-delete"),
     path("companies/<uuid:company_id>/connect/", company_connect, name="company-connect"),
+
+    # Partnerships (basic-plan business users only)
+    path("partnerships/", partnership_list, name="partnerships"),
+    path("partnerships/<uuid:connection_id>/action/", partnership_action, name="partnership-action"),
 
     # Saved filters (Favorites) — basic business users only
     path("saved-filters/", saved_filter_list, name="saved-filters"),

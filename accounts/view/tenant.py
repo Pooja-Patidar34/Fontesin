@@ -8,6 +8,7 @@ from accounts.utils.permissions import has_permission
 from accounts.utils.ip import get_client_ip
 from accounts.forms.tenant_form import TenantForm
 from django.contrib import messages
+from django.db import IntegrityError, transaction
 from django.db.models import Count
 from django.http import JsonResponse
 import logging
@@ -109,23 +110,29 @@ def tenant_list(request):
             message = "Tenant created successfully."
 
         if form.is_valid():
-            tenant = form.save()
+            try:
+                with transaction.atomic():
+                    tenant = form.save()
 
-            AuditLog.objects.create(
-                tenant=tenant,
-                actor=request.user,
-                action=action,
-                entity_type="Tenant",
-                entity_id=tenant.id,
-                metadata={
-                    "name": tenant.name,
-                    "is_active": tenant.is_active,
-                },
-                ip_address=get_client_ip(request),
-            )
-
-            messages.success(request, message)
-            return redirect("tenants")
+                    AuditLog.objects.create(
+                        tenant=tenant,
+                        actor=request.user,
+                        action=action,
+                        entity_type="Tenant",
+                        entity_id=tenant.id,
+                        metadata={
+                            "name": tenant.name,
+                            "is_active": tenant.is_active,
+                        },
+                        ip_address=get_client_ip(request),
+                    )
+            except IntegrityError:
+                duplicate_msg = "A tenant with this name (or a similar one) already exists. Please choose a different name."
+                form.add_error("name", duplicate_msg)
+                messages.error(request, duplicate_msg)
+            else:
+                messages.success(request, message)
+                return redirect("tenants")
 
     else:
         form = TenantForm()

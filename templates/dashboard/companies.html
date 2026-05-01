@@ -316,7 +316,7 @@
 
           {% if request.user.is_superuser %}
           <div class="form-group">
-            <label>Tenant</label>
+            <label>Tenant <span class="text-danger">*</span></label>
             {{ form.tenant }}
           </div>
           {% else %}
@@ -326,7 +326,7 @@
           <div class="section-title">Basic Info</div>
 
           <div class="form-group">
-            <label>Name</label>
+            <label>Name <span class="text-danger">*</span></label>
             {{ form.name }}
           </div>
 
@@ -336,7 +336,7 @@
               {{ form.registration_id }}
             </div>
             <div class="form-group col-md-6">
-              <label>Classification</label>
+              <label>Classification <span class="text-danger">*</span></label>
               {{ form.classification }}
             </div>
           </div>
@@ -355,11 +355,11 @@
 
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label>City</label>
+              <label>City <span class="text-danger">*</span></label>
               {{ form.city }}
             </div>
             <div class="form-group col-md-6">
-              <label>State</label>
+              <label>State <span class="text-danger">*</span></label>
               {{ form.state }}
             </div>
           </div>
@@ -370,7 +370,7 @@
               {{ form.postal_code }}
             </div>
             <div class="form-group col-md-6">
-              <label>Country</label>
+              <label>Country <span class="text-danger">*</span></label>
               {{ form.country }}
             </div>
           </div>

@@ -311,10 +311,7 @@
 <div class="membership-page">
   <div class="membership-header">
     <h1>Choose Your Membership Plan</h1>
-    <p>Select the plan that best fits your business needs. All plans include annual billing with significant savings.</p>
-    <div style="text-align:center;">
-      <span class="billing-badge">&#127881; Annual billing — Save up to 25% vs monthly</span>
-    </div>
+    <p>Select the plan that best fits your business needs.</p>
   </div>
 
   <!-- PLAN CARDS -->
@@ -346,8 +343,12 @@
         {% if plan.code == 'free' %}
           <div class="plan-price__period">Forever free</div>
         {% else %}
-          <div class="plan-price__period">per year &middot; billed annually</div>
-          <div class="plan-price__monthly">&asymp; ${{ plan.monthly_price|floatformat:2 }} / month</div>
+          {% if plan.billing_period == 'monthly' %}
+            <div class="plan-price__period">per month &middot; billed monthly</div>
+          {% else %}
+            <div class="plan-price__period">per year &middot; billed annually</div>
+            <div class="plan-price__monthly">&asymp; ${{ plan.monthly_price|floatformat:2 }} / month</div>
+          {% endif %}
           {% if plan.savings %}
           <span class="plan-price__save">Save ${{ plan.savings|floatformat:0 }}{% if plan.original_price %} on regular price{% endif %}</span>
           {% endif %}
@@ -386,7 +387,7 @@
   <div class="plan-details" id="details-{{ plan.code }}">
     <div class="plan-details__header">
       <h3>{{ plan.icon }} {{ plan.name }} Plan — Full Details</h3>
-      <span class="price-tag">${{ plan.price|floatformat:0 }} / year</span>
+      <span class="price-tag">${{ plan.price|floatformat:0 }} / {% if plan.billing_period == 'monthly' %}month{% else %}year{% endif %}</span>
     </div>
     <div class="plan-details__body">
       <div class="plan-details__grid">
@@ -427,7 +428,7 @@
             {% for plan in plans %}
             <th{% if plan.is_popular %} class="highlight-col"{% endif %}>
               {{ plan.name }}{% if plan.is_popular %} &#11088;{% endif %}
-              <br/><small style="font-weight:400;opacity:.7;">${{ plan.price|floatformat:0 }}/yr</small>
+              <br/><small style="font-weight:400;opacity:.7;">${{ plan.price|floatformat:0 }}/{% if plan.billing_period == 'monthly' %}mo{% else %}yr{% endif %}</small>
             </th>
             {% endfor %}
           </tr>
@@ -458,9 +459,9 @@
           </tr>
           {% endfor %}
           <tr>
-            <td><strong>Annual Price</strong></td>
+            <td><strong>Price</strong></td>
             {% for plan in plans %}
-            <td{% if plan.is_popular %} class="highlight"{% endif %}><strong>${{ plan.price|floatformat:0 }}</strong></td>
+            <td{% if plan.is_popular %} class="highlight"{% endif %}><strong>${{ plan.price|floatformat:0 }}</strong>{% if plan.code != 'free' %} / {% if plan.billing_period == 'monthly' %}month{% else %}year{% endif %}{% endif %}</td>
             {% endfor %}
           </tr>
         </tbody>

@@ -115,7 +115,10 @@
             </div>
             <div class="form-group col-md-6">
               <label>Password *</label>
-              <input type="password" class="form-control" name="password" required maxlength="50" oninput="this.value=this.value.replace(/[^\x20-\x7E]/g,'')">
+              <div class="password-toggle">
+                <input type="password" class="form-control" name="password" required maxlength="50" oninput="this.value=this.value.replace(/[^\x20-\x7E]/g,'')">
+                <button type="button" class="password-toggle__btn" aria-label="Toggle password visibility">&#128065;</button>
+              </div>
             </div>
           </div>
 
@@ -135,11 +138,9 @@
             <label>Company</label>
             <select class="form-control" name="primary_company" id="au-company">
               <option value="">Select Company</option>
-              {% if not request.user.is_superuser %}
-                {% for company in companies %}
-                  <option value="{{ company.id }}">{{ company.name }}</option>
-                {% endfor %}
-              {% endif %}
+              {% for company in companies %}
+                <option value="{{ company.id }}">{{ company.name }}</option>
+              {% endfor %}
             </select>
           </div>
 
@@ -217,13 +218,13 @@
 
           <!-- Profile -->
           <tr><th>Preferred Language</th><td id="ud-language"></td></tr>
-          <tr><th>Bio</th><td id="ud-bio"></td></tr>
-          <tr><th>Notes</th><td id="ud-notes"></td></tr>
+          <tr><th>Bio</th><td id="ud-bio" style="word-break:break-word;overflow-wrap:anywhere;white-space:pre-wrap;"></td></tr>
+          <tr><th>Notes</th><td id="ud-notes" style="word-break:break-word;overflow-wrap:anywhere;white-space:pre-wrap;"></td></tr>
 
           <!-- Address -->
           <tr>
             <th>Address</th>
-            <td id="ud-address"></td>
+            <td id="ud-address" style="word-break:break-word;overflow-wrap:anywhere;"></td>
           </tr>
 
           <!-- Meta -->
@@ -256,14 +257,19 @@
 
         <!-- Full Name (kept for backward compatibility) -->
         <div class="form-group">
-          <label>Full Name</label>
-          <input type="text" class="form-control" id="eu-name">
+          <label>Full Name *</label>
+          <input type="text" class="form-control" id="eu-name" required>
         </div>
 
         <!-- Contact -->
         <div class="form-group">
-          <label>Phone</label>
-          <input type="text" class="form-control" id="eu-phone">
+          <label>Phone *</label>
+          <input type="tel" class="form-control" id="eu-phone" required
+                 minlength="7" maxlength="20"
+                 pattern="^\+?[\d\s\-\(\)]{7,20}$"
+                 title="7–15 digits. May include leading + and spaces, hyphens, or parentheses."
+                 oninput="this.value=this.value.replace(/[^\d+\s\-()]/g,'').replace(/(?!^)\+/g,'').slice(0,20)">
+          <small class="form-text text-muted">7–15 digits. Optional leading +.</small>
         </div>
 
         <!-- Personal -->
@@ -271,6 +277,7 @@
           <div class="form-group col-md-6">
             <label>Date of Birth</label>
             <input type="date" class="form-control" id="eu-dob">
+            <small class="form-text text-muted">Age must be between 13 and 120.</small>
           </div>
 
           <div class="form-group col-md-6">
@@ -315,12 +322,14 @@
 
         <div class="form-group">
           <label>Bio</label>
-          <textarea class="form-control" id="eu-bio" rows="2"></textarea>
+          <textarea class="form-control" id="eu-bio" rows="2" minlength="10" maxlength="500"></textarea>
+          <small class="form-text text-muted">Optional. If provided, 10–500 characters.</small>
         </div>
 
         <div class="form-group">
           <label>Notes</label>
-          <textarea class="form-control" id="eu-notes" rows="2"></textarea>
+          <textarea class="form-control" id="eu-notes" rows="2" minlength="5" maxlength="1000"></textarea>
+          <small class="form-text text-muted">Optional. If provided, 5–1000 characters.</small>
         </div>
 
         <!-- Address -->
@@ -337,11 +346,17 @@
         <div class="form-row">
           <div class="form-group col-md-4">
             <label>City</label>
-            <input type="text" class="form-control" id="eu-city">
+            <input type="text" class="form-control" id="eu-city"
+                   minlength="2" maxlength="50"
+                   pattern="^[A-Za-zÀ-ɏ][A-Za-zÀ-ɏ\s.\-']{1,49}$"
+                   title="2–50 characters. Letters, spaces, dots, hyphens, and apostrophes only.">
           </div>
           <div class="form-group col-md-4">
             <label>State / Region</label>
-            <input type="text" class="form-control" id="eu-state">
+            <input type="text" class="form-control" id="eu-state"
+                   minlength="2" maxlength="50"
+                   pattern="^[A-Za-zÀ-ɏ][A-Za-zÀ-ɏ\s.\-']{1,49}$"
+                   title="2–50 characters. Letters, spaces, dots, hyphens, and apostrophes only.">
           </div>
           <div class="form-group col-md-4">
             <label>Postal Code</label>
@@ -350,8 +365,8 @@
         </div>
 
         <div class="form-group">
-          <label>Country</label>
-          <select class="form-control" id="eu-country">
+          <label>Country *</label>
+          <select class="form-control" id="eu-country" required>
             <option value="">-- Select Country --</option>
             <option value="US">United States</option>
             <option value="IN">India</option>
@@ -363,8 +378,8 @@
 
         <!-- Status -->
         <div class="form-group">
-          <label>Status</label>
-          <select class="form-control" id="eu-active">
+          <label>Status *</label>
+          <select class="form-control" id="eu-active" required>
             <option value="true">Active</option>
             <option value="false">Inactive</option>
           </select>
@@ -372,14 +387,14 @@
 
         <!-- Company -->
         <div class="form-group">
-          <label>Company</label>
-          <select class="form-control" id="eu-company"></select>
+          <label>Company *</label>
+          <select class="form-control" id="eu-company" required></select>
         </div>
 
         <!-- Role -->
         <div class="form-group">
-          <label>Role</label>
-          <select class="form-control" id="eu-role"></select>
+          <label>Role *</label>
+          <select class="form-control" id="eu-role" required></select>
         </div>
 
       </div>
@@ -455,6 +470,15 @@ function viewUser(userId) {
 function editUser(userId) {
   editUserId = userId;
 
+  // Constrain DOB picker to a realistic range (age 13–120).
+  const dobInput = document.getElementById("eu-dob");
+  if (dobInput) {
+    const now = new Date();
+    const toISO = d => d.toISOString().slice(0, 10);
+    dobInput.max = toISO(new Date(now.getFullYear() - 13, now.getMonth(), now.getDate()));
+    dobInput.min = toISO(new Date(now.getFullYear() - 120, now.getMonth(), now.getDate()));
+  }
+
   fetch(`/users/${userId}/view/`)
     .then(res => res.json())
     .then(data => {
@@ -516,8 +540,109 @@ function editUser(userId) {
 }
 
 function saveUserEdit() {
-  const fullName = document.getElementById("eu-name").value.trim();
+  const nameInput = document.getElementById("eu-name");
+  const phoneInput = document.getElementById("eu-phone");
+  const countrySelect = document.getElementById("eu-country");
+  const statusSelect = document.getElementById("eu-active");
+  const companySelect = document.getElementById("eu-company");
+  const roleSelect = document.getElementById("eu-role");
+
+  const fullName = nameInput.value.trim();
+  if (!fullName) {
+    alert("Full name is required.");
+    nameInput.focus();
+    return;
+  }
   const parts = fullName.split(" ");
+
+  const phoneRaw = phoneInput.value.trim();
+  if (!phoneRaw) {
+    alert("Phone is required.");
+    phoneInput.focus();
+    return;
+  }
+  const digitCount = (phoneRaw.match(/\d/g) || []).length;
+  const formatOk = /^\+?[\d\s\-()]{7,20}$/.test(phoneRaw);
+  if (!formatOk || digitCount < 7 || digitCount > 15) {
+    alert("Phone number must contain 7 to 15 digits. It may include a leading + and spaces, hyphens, or parentheses.");
+    phoneInput.focus();
+    return;
+  }
+
+  if (!countrySelect.value) {
+    alert("Country is required.");
+    countrySelect.focus();
+    return;
+  }
+  if (!statusSelect.value) {
+    alert("Status is required.");
+    statusSelect.focus();
+    return;
+  }
+  if (!companySelect.value) {
+    alert("Company is required.");
+    companySelect.focus();
+    return;
+  }
+  if (!roleSelect.value) {
+    alert("Role is required.");
+    roleSelect.focus();
+    return;
+  }
+
+  // Optional fields — validated only when filled.
+  const dobInput = document.getElementById("eu-dob");
+  const dobRaw = dobInput.value;
+  if (dobRaw) {
+    const dobDate = new Date(dobRaw);
+    if (isNaN(dobDate.getTime())) {
+      alert("Date of birth is invalid.");
+      dobInput.focus();
+      return;
+    }
+    const now = new Date();
+    let age = now.getFullYear() - dobDate.getFullYear();
+    const m = now.getMonth() - dobDate.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < dobDate.getDate())) age--;
+    if (age < 13 || age > 120) {
+      alert("Date of birth must correspond to an age between 13 and 120.");
+      dobInput.focus();
+      return;
+    }
+  }
+
+  const bioInput = document.getElementById("eu-bio");
+  const bioVal = bioInput.value.trim();
+  if (bioVal && (bioVal.length < 10 || bioVal.length > 500)) {
+    alert("Bio must be between 10 and 500 characters.");
+    bioInput.focus();
+    return;
+  }
+
+  const notesInput = document.getElementById("eu-notes");
+  const notesVal = notesInput.value.trim();
+  if (notesVal && (notesVal.length < 5 || notesVal.length > 1000)) {
+    alert("Notes must be between 5 and 1000 characters.");
+    notesInput.focus();
+    return;
+  }
+
+  const placeRe = /^[A-Za-zÀ-ɏ][A-Za-zÀ-ɏ\s.\-']{1,49}$/;
+  const cityInput = document.getElementById("eu-city");
+  const cityVal = cityInput.value.trim();
+  if (cityVal && !placeRe.test(cityVal)) {
+    alert("City must be 2–50 characters and contain only letters, spaces, dots, hyphens, or apostrophes.");
+    cityInput.focus();
+    return;
+  }
+
+  const stateInput = document.getElementById("eu-state");
+  const stateVal = stateInput.value.trim();
+  if (stateVal && !placeRe.test(stateVal)) {
+    alert("State / Region must be 2–50 characters and contain only letters, spaces, dots, hyphens, or apostrophes.");
+    stateInput.focus();
+    return;
+  }
 
   fetch(`/users/${editUserId}/edit/`, {
     method: "POST",
@@ -558,8 +683,12 @@ function saveUserEdit() {
       role_id: document.getElementById("eu-role").value
     })
   })
-  .then(res => res.json())
-  .then(() => {
+  .then(res => res.json().then(data => ({ ok: res.ok, data })))
+  .then(({ ok, data }) => {
+    if (!ok) {
+      alert((data && data.message) || "Failed to save user.");
+      return;
+    }
     // refresh list, keep filters
     window.location.href = window.location.pathname + window.location.search;
   })

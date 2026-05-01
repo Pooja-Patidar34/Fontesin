@@ -50,14 +50,6 @@
                   </a>
                   {% endif %}
 
-                  {# Roles — also hidden on global plan #}
-                  {% if not is_global_plan %}
-                  <a class="dropdown-item"
-                     href="{% url 'assign-roles' user.id %}?next={{ request.get_full_path|urlencode }}">
-                    <i class="fas fa-user-tag mr-2 text-secondary"></i> Roles
-                  </a>
-                  {% endif %}
-
                   {# Delete — superuser only #}
                   {% if request.user.is_superuser and user.id != request.user.id %}
                   <div class="dropdown-divider"></div>

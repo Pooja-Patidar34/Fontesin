@@ -16,6 +16,14 @@ from billing.models import Invoice, Subscription, CommercialPlan
 
 logger = logging.getLogger("technical")
 
+# The admin Edit Plan form only exposes a "Mark as Most Popular" checkbox, not
+# the underlying badge_text / badge_style fields. We treat is_popular as the
+# source of truth for the popular badge so unchecking it actually removes the
+# badge from the membership page. Other badges (e.g. "Best Value", which is
+# stored on a non-popular plan) are preserved.
+POPULAR_BADGE_TEXT = "⭐ Most Popular"
+POPULAR_BADGE_STYLE = "primary"
+
 
 @login_required
 def invoice_list(request):
@@ -81,13 +89,19 @@ def payment_list(request):
     # Count pending for badge
     pending_count = Subscription.objects.filter(status="created").count()
 
-    return render(request, "dashboard/payments.html", {
+    context = {
         "subscriptions": page_obj,
         "page_obj": page_obj,
         "active_menu": "payments",
         "status_filter": status_filter,
         "pending_count": pending_count,
-    })
+    }
+
+    # AJAX: filter-tab and pagination clicks ask only for the inner panel.
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return render(request, "dashboard/_payments_panel.html", context)
+
+    return render(request, "dashboard/payments.html", context)
 
 
 @login_required
@@ -299,7 +313,21 @@ def plan_edit(request, plan_id):
         if billing_period in ("monthly", "yearly"):
             plan.billing_period = billing_period
 
-        plan.is_popular = request.POST.get("is_popular") == "on"
+        mark_popular = request.POST.get("is_popular") == "on"
+        plan.is_popular = mark_popular
+        if mark_popular:
+            # Re-apply the popular badge so the membership page shows it.
+            plan.badge_text = POPULAR_BADGE_TEXT
+            plan.badge_style = POPULAR_BADGE_STYLE
+        elif (
+            plan.badge_text == POPULAR_BADGE_TEXT
+            or plan.badge_style == POPULAR_BADGE_STYLE
+        ):
+            # Was the popular plan, now isn't — clear the badge so it stops
+            # rendering. Don't touch other badges (e.g. "Best Value") attached
+            # to non-popular plans.
+            plan.badge_text = ""
+            plan.badge_style = ""
 
         # Features are entered as one per line. A leading "-" or "x" marks
         # the feature as NOT included (renders the X icon). Stored as a list

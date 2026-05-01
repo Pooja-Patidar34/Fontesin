@@ -216,6 +216,23 @@ class CompanyForm(forms.ModelForm):
         user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
 
+        # Replace Django's default "---------" placeholder with a clearer prompt.
+        self.fields["tenant"].empty_label = "Select Tenant"
+
+        # Address fields and classification are blank=True on the model (so
+        # the DB column is nullable), but the admin Add/Edit Company UI
+        # treats them as required. Force them required at the form layer;
+        # the model column stays nullable so legacy / API-only writes can
+        # still leave them empty.
+        for required_field in ("city", "state", "country", "classification"):
+            self.fields[required_field].required = True
+
+        # Drop the implicit "---------" blank option from classification so
+        # the dropdown can't be submitted unselected.
+        self.fields["classification"].choices = [
+            choice for choice in self.fields["classification"].choices if choice[0]
+        ]
+
         if not user:
             return
 
@@ -273,7 +290,46 @@ class CompanyForm(forms.ModelForm):
             raise forms.ValidationError(
                 "Registration ID may only contain letters, digits, and the symbols - / . _ , and must contain at least one letter or digit."
             )
+
+        # Globally unique (case-insensitive). Registration IDs are real-world
+        # legal identifiers and must not repeat across tenants. Soft-deleted
+        # companies are excluded via ActiveManager so a re-registration of a
+        # previously deleted company can reuse its number. tenant_id is the
+        # reliable "already saved" signal here — Company.id has a uuid4
+        # default, so .pk is truthy even on unsaved instances.
+        duplicates = Company.objects.filter(registration_id__iexact=reg)
+        if self.instance and self.instance.tenant_id:
+            duplicates = duplicates.exclude(pk=self.instance.pk)
+        if duplicates.exists():
+            raise forms.ValidationError(
+                "A company with this Registration ID already exists. Registration IDs must be unique."
+            )
         return reg
+
+    def clean(self):
+        # Soft duplicate check on (name, country). Catches the most common
+        # collision — same legal-language name registered twice in the same
+        # country — before submitting to the DB. Different countries are
+        # allowed (e.g. "Apple Inc." in US vs UK are distinct entities), and
+        # the registration_id constraint is the hard backstop for legal
+        # identity. Case-insensitive on both fields. Skips the check on
+        # update (only flags new rows that conflict with someone else).
+        cleaned = super().clean()
+        name = (cleaned.get("name") or "").strip()
+        country = (cleaned.get("country") or "").strip()
+        if name and country:
+            qs = Company.objects.filter(name__iexact=name, country__iexact=country)
+            if self.instance and self.instance.tenant_id:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                self.add_error(
+                    "name",
+                    forms.ValidationError(
+                        f"A company named '{name}' already exists in {country}. "
+                        "If this is a different legal entity, please provide a Registration ID to distinguish it."
+                    ),
+                )
+        return cleaned
 
     def _clean_address_line(self, field_name, label):
         value = (self.cleaned_data.get(field_name) or "").strip()

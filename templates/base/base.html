@@ -691,11 +691,13 @@
 
           <!-- PLATFORM -->
           {% if not is_free_plan %}
+          {% if request.user.role.code|lower != "consultant" and request.user.role.code|lower != "coordinator" and request.user.role.code|lower != "franchise" %}
           <li class="nav-header">Platform</li>
           {% endif %}
+          {% endif %}
 
-          {# Regions & Map — only superusers and coordinators see this; hidden for all plan users #}
-          {% if request.user.is_superuser or request.user.role.code|lower == "coordinator" %}
+          {# Regions & Map — only superusers see this; hidden for coordinators and all plan users #}
+          {% if request.user.is_superuser %}
           <li class="nav-item">
             <a href="{% url 'regions-map' %}"
                class="nav-link {% if active_menu == 'regions' %}active{% endif %}">
@@ -705,21 +707,22 @@
           </li>
           {% endif %}
 
-          {# Partnerships — hidden on free plan #}
-          {% if not is_free_plan %}
+          {# Partnerships — paid business users (basic / pro / global) #}
+          {% if is_paid_business_user %}
           <li class="nav-item">
-            <a href="#" data-coming-soon="1"
-               class="nav-link {% if active_menu == 'page-editor' %}active{% endif %}">
-              <i class="nav-icon fas fa-edit"></i>
+            <a href="{% url 'partnerships' %}"
+               class="nav-link {% if active_menu == 'partnerships' %}active{% endif %}">
+              <i class="nav-icon fas fa-handshake"></i>
               <p>Partnerships</p>
             </a>
           </li>
           {% endif %}
 
-          {# Messages — hidden on free plan; also hidden for business users on basic/pro plans; also hidden for admin / superuser #}
+          {# Messages — hidden on free plan; also hidden for business users on basic/pro plans; also hidden for admin / superuser; also hidden for consultants #}
           {% if not is_free_plan %}
           {% if not is_basic_or_pro_business_user %}
           {% if not request.user.is_superuser %}
+          {% if request.user.role.code|lower != "consultant" and request.user.role.code|lower != "coordinator" and request.user.role.code|lower != "franchise" %}
           <li class="nav-item">
             <a href="#" data-coming-soon="1" data-feature="messaging"
                class="nav-link {% if active_menu == 'messages' %}active{% endif %}"
@@ -732,11 +735,13 @@
           {% endif %}
           {% endif %}
           {% endif %}
+          {% endif %}
 
-          {# Settings — hidden on free plan; also hidden for business users on basic/pro plans; also hidden for admin / superuser #}
+          {# Settings — hidden on free plan; also hidden for business users on basic/pro plans; also hidden for admin / superuser; also hidden for consultants #}
           {% if not is_free_plan %}
           {% if not is_basic_or_pro_business_user %}
           {% if not request.user.is_superuser %}
+          {% if request.user.role.code|lower != "consultant" and request.user.role.code|lower != "coordinator" and request.user.role.code|lower != "franchise" %}
           <li class="nav-item">
             <a href="#" data-coming-soon="1"
                class="nav-link {% if active_menu == 'settings' %}active{% endif %}">
@@ -744,6 +749,7 @@
               <p>Settings</p>
             </a>
           </li>
+          {% endif %}
           {% endif %}
           {% endif %}
           {% endif %}

@@ -12,170 +12,17 @@
       {% endif %}
     </h3>
 
-    <div>
-      <a href="?status=all" class="btn btn-sm {% if status_filter == 'all' %}btn-primary{% else %}btn-outline-secondary{% endif %}">All</a>
-      <a href="?status=pending" class="btn btn-sm {% if status_filter == 'pending' %}btn-warning{% else %}btn-outline-secondary{% endif %}">Pending</a>
-      <a href="?status=approved" class="btn btn-sm {% if status_filter == 'approved' %}btn-success{% else %}btn-outline-secondary{% endif %}">Approved</a>
-      <a href="?status=rejected" class="btn btn-sm {% if status_filter == 'rejected' %}btn-danger{% else %}btn-outline-secondary{% endif %}">Rejected</a>
+    <div id="payments-filter-tabs">
+      <a href="?status=all" data-status="all" class="btn btn-sm {% if status_filter == 'all' %}btn-primary{% else %}btn-outline-secondary{% endif %}">All</a>
+      <a href="?status=pending" data-status="pending" class="btn btn-sm {% if status_filter == 'pending' %}btn-warning{% else %}btn-outline-secondary{% endif %}">Pending</a>
+      <a href="?status=approved" data-status="approved" class="btn btn-sm {% if status_filter == 'approved' %}btn-success{% else %}btn-outline-secondary{% endif %}">Approved</a>
+      <a href="?status=rejected" data-status="rejected" class="btn btn-sm {% if status_filter == 'rejected' %}btn-danger{% else %}btn-outline-secondary{% endif %}">Rejected</a>
     </div>
   </div>
 
-  <div class="card-body p-0">
-
-    <div class="table-responsive">
-      <table class="table table-hover mb-0">
-        <thead class="bg-light">
-          <tr>
-            <th>User</th>
-            <th>Email</th>
-            <th>Payment Reference No.</th>
-            <th>Plan</th>
-            <th>Amount</th>
-            <th>Status</th>
-            <th>Requested</th>
-            <th style="width:180px;">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for sub in subscriptions %}
-          <tr>
-            <td>
-              <strong>
-                {% if sub.user %}
-                  {{ sub.user.first_name }} {{ sub.user.last_name }}
-                {% else %}
-                  -
-                {% endif %}
-              </strong>
-            </td>
-
-            <td>
-              {% if sub.user %}
-                {{ sub.user.email }}
-              {% else %}
-                -
-              {% endif %}
-            </td>
-
-            <td>
-              {% with inv=sub.invoice_set.all|first %}
-                {% if inv %}
-                  <code>{{ inv.invoice_number }}</code>
-                {% else %}
-                  -
-                {% endif %}
-              {% endwith %}
-            </td>
-
-            <td>
-              {% if sub.plan %}
-                <span class="font-weight-bold">{{ sub.plan.name }}</span>
-                <br><small class="text-muted">{{ sub.plan.billing_period }}</small>
-              {% else %}
-                -
-              {% endif %}
-            </td>
-
-            <td>
-              {% if sub.plan %}
-                {{ sub.plan.currency }} {{ sub.plan.price }}
-              {% else %}
-                -
-              {% endif %}
-            </td>
-
-            <td style="text-align:center; vertical-align:middle;">
-              {% if sub.status == "created" %}
-                <span class="badge badge-warning">Pending Approval</span>
-              {% elif sub.status == "active" %}
-                <span class="badge badge-success">Approved</span>
-              {% elif sub.status == "cancelled" %}
-                <span class="badge badge-danger">Rejected</span>
-              {% elif sub.status == "trial" %}
-                <span class="badge badge-info">Trial</span>
-              {% elif sub.status == "suspended" %}
-                <span class="badge badge-secondary">Suspended</span>
-              {% else %}
-                <span class="badge badge-secondary">{{ sub.status }}</span>
-              {% endif %}
-            </td>
-
-            <td style="vertical-align:middle;">{{ sub.created_at|date:"M d, Y H:i" }}</td>
-
-            <td style="vertical-align:middle;">
-              <div style="display:flex; align-items:center; gap:.4rem; flex-wrap:nowrap;">
-                {% if sub.status == "created" %}
-                  <form method="post" action="{% url 'payment-approve' sub.id %}" class="m-0" id="approve-form-{{ sub.id }}">
-                    {% csrf_token %}
-                    <button type="button" class="btn btn-sm btn-success" title="Approve"
-                            onclick="appConfirm({kind:'success', title:'Approve Subscription?', text:'Approve subscription for <strong>{{ sub.user.email|escapejs }}</strong>?', okLabel:'Approve', okIcon:'fa-check', onConfirm:function(){document.getElementById('approve-form-{{ sub.id }}').submit();}})">
-                      <i class="fas fa-check"></i>
-                    </button>
-                  </form>
-                  <form method="post" action="{% url 'payment-reject' sub.id %}" class="m-0" id="reject-form-{{ sub.id }}">
-                    {% csrf_token %}
-                    <button type="button" class="btn btn-sm btn-danger" title="Reject"
-                            onclick="appConfirm({kind:'danger', title:'Reject Subscription?', text:'Reject subscription for <strong>{{ sub.user.email|escapejs }}</strong>?', okLabel:'Reject', okIcon:'fa-times', onConfirm:function(){document.getElementById('reject-form-{{ sub.id }}').submit();}})">
-                      <i class="fas fa-times"></i>
-                    </button>
-                  </form>
-                {% elif sub.status == "active" %}
-                  <span class="text-success" style="white-space:nowrap; font-size:.85rem;"><i class="fas fa-check-circle"></i> Approved</span>
-                {% elif sub.status == "cancelled" %}
-                  <span class="text-danger" style="white-space:nowrap; font-size:.85rem;"><i class="fas fa-times-circle"></i> Rejected</span>
-                {% else %}
-                  <span class="text-muted">-</span>
-                {% endif %}
-                <button class="btn btn-sm btn-outline-primary edit-sub-btn"
-                        data-id="{{ sub.id }}" title="Edit">
-                  <i class="fas fa-edit"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="8" class="text-center text-muted py-4">
-              No payment records found
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+  <div class="card-body p-0" id="payments-panel">
+    {% include "dashboard/_payments_panel.html" %}
   </div>
-
-  {% if page_obj.paginator.num_pages > 1 %}
-  <div class="card-footer">
-    <ul class="pagination pagination-sm justify-content-end mb-0">
-      {% if page_obj.has_previous %}
-        <li class="page-item">
-          <a class="page-link" href="?status={{ status_filter }}&page={{ page_obj.previous_page_number }}">Previous</a>
-        </li>
-      {% else %}
-        <li class="page-item disabled"><span class="page-link">Previous</span></li>
-      {% endif %}
-
-      {% for num in page_obj.paginator.page_range %}
-        {% if num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
-          {% if num == page_obj.number %}
-            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-          {% else %}
-            <li class="page-item"><a class="page-link" href="?status={{ status_filter }}&page={{ num }}">{{ num }}</a></li>
-          {% endif %}
-        {% endif %}
-      {% endfor %}
-
-      {% if page_obj.has_next %}
-        <li class="page-item">
-          <a class="page-link" href="?status={{ status_filter }}&page={{ page_obj.next_page_number }}">Next</a>
-        </li>
-      {% else %}
-        <li class="page-item disabled"><span class="page-link">Next</span></li>
-      {% endif %}
-    </ul>
-  </div>
-  {% endif %}
 
 </div>
 
@@ -225,9 +72,14 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-  document.querySelectorAll(".edit-sub-btn").forEach(function(btn) {
-    btn.addEventListener("click", function() {
-      var subId = this.getAttribute("data-id");
+
+  // Edit-Subscription click — delegated on the panel so it survives AJAX swaps.
+  var panel = document.getElementById("payments-panel");
+  if (panel) {
+    panel.addEventListener("click", function(e) {
+      var btn = e.target.closest(".edit-sub-btn");
+      if (!btn) return;
+      var subId = btn.getAttribute("data-id");
 
       fetch("/payments/" + subId + "/detail/", {
         headers: {"X-Requested-With": "XMLHttpRequest"}
@@ -251,13 +103,78 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById("editSubForm").action = "/payments/" + subId + "/edit/";
         $("#editSubModal").modal("show");
       })
-      .catch(function(err) {
+      .catch(function() {
         if (typeof showToast === "function") {
           showToast("Failed to load subscription details.", "error");
         }
       });
     });
+  }
+
+  // --- AJAX filter tabs + pagination (no full page reload) ---
+  var tabs = document.getElementById("payments-filter-tabs");
+  if (!panel || !tabs) return;
+
+  var TAB_ACTIVE_CLASS = {
+    "all": "btn-primary",
+    "pending": "btn-warning",
+    "approved": "btn-success",
+    "rejected": "btn-danger"
+  };
+
+  function setActiveTab(status) {
+    tabs.querySelectorAll("a[data-status]").forEach(function(a) {
+      var s = a.getAttribute("data-status");
+      a.classList.remove("btn-primary", "btn-warning", "btn-success", "btn-danger", "btn-outline-secondary");
+      if (s === status) {
+        a.classList.add(TAB_ACTIVE_CLASS[s] || "btn-primary");
+      } else {
+        a.classList.add("btn-outline-secondary");
+      }
+    });
+  }
+
+  function loadPanel(url, push) {
+    fetch(url, {
+      headers: {"X-Requested-With": "XMLHttpRequest", "Accept": "text/html"}
+    })
+    .then(function(r) { return r.text(); })
+    .then(function(html) {
+      panel.innerHTML = html;
+      if (push) {
+        history.pushState({ url: url }, "", url);
+      }
+      var status = new URL(url, window.location.origin).searchParams.get("status") || "all";
+      setActiveTab(status);
+    })
+    .catch(function() {
+      if (typeof showToast === "function") {
+        showToast("Failed to load payments.", "error");
+      }
+    });
+  }
+
+  tabs.addEventListener("click", function(e) {
+    var link = e.target.closest("a[data-status]");
+    if (!link) return;
+    e.preventDefault();
+    loadPanel(link.getAttribute("href"), true);
   });
+
+  panel.addEventListener("click", function(e) {
+    var link = e.target.closest(".pagination a.page-link");
+    if (!link) return;
+    var href = link.getAttribute("href");
+    if (!href || href === "#" || link.closest(".disabled")) return;
+    e.preventDefault();
+    loadPanel(href, true);
+  });
+
+  window.addEventListener("popstate", function(e) {
+    var url = (e.state && e.state.url) || (window.location.pathname + window.location.search);
+    loadPanel(url, false);
+  });
+
 });
 </script>
 

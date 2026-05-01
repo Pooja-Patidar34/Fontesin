@@ -19,6 +19,14 @@ class TenantForm(forms.ModelForm):
                 "maxlength": "100",
                 "pattern": r"(?=.*[A-Za-z\u00C0-\u024F])[A-Za-z\u00C0-\u024F0-9&'.,\-()\s]{2,100}",
                 "title": "2-100 characters. Letters, digits, spaces, and & ' . , - ( ) only. Must contain at least one letter.",
+                # Strip disallowed characters as the user types or pastes \u2014
+                # mirrors the server-side TENANT_NAME_RE allowlist. Browser
+                # still enforces maxlength=100 natively.
+                "oninput": (
+                    "this.value=this.value"
+                    ".replace(/[^A-Za-z\u00C0-\u024F0-9&'.,\\-()\\s]/g,'')"
+                    ".replace(/\\s+/g,' ').replace(/^ /,'')"
+                ),
             }),
             "is_active": forms.CheckboxInput(attrs={
                 "class": "form-check-input"

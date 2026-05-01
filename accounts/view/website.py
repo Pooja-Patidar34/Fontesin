@@ -55,7 +55,12 @@ def membership(request):
     ]
 
     plans_json = json.dumps({
-        p.code: {"name": p.name, "price": float(p.price), "label": f"{p.name} Plan — ${p.price:,.0f}/year"}
+        p.code: {
+            "name": p.name,
+            "price": float(p.price),
+            "billing_period": p.billing_period,
+            "label": f"{p.name} Plan — ${p.price:,.0f}/{'month' if p.billing_period == 'monthly' else 'year'}",
+        }
         for p in plans
     })
 

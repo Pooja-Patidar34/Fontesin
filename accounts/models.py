@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q
 import uuid
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.auth.base_user import BaseUserManager
@@ -34,7 +35,7 @@ class Tenant(models.Model):
             slug = base_slug
             counter = 1
 
-            while Tenant.objects.filter(slug=slug).exclude(id=self.id).exists():
+            while Tenant.all_objects.filter(slug=slug).exclude(id=self.id).exists():
                 suffix = f"-{counter}"
                 slug = base_slug[: max_slug_len - len(suffix)] + suffix
                 counter += 1
@@ -102,6 +103,18 @@ class Company(models.Model):
         unique_together = ("tenant", "name")
         indexes = [
             models.Index(fields=["tenant", "name"]),
+        ]
+        constraints = [
+            # registration_id is the legal identity of a company (company-house
+            # number, EIN, CIN, etc.). Two rows sharing it ARE the same entity,
+            # so enforce global uniqueness — but only when a value is provided.
+            # Null and empty strings are excluded so the 169 existing rows
+            # without a registration_id continue to coexist.
+            models.UniqueConstraint(
+                fields=["registration_id"],
+                condition=Q(registration_id__isnull=False) & ~Q(registration_id__exact=""),
+                name="unique_company_registration_id",
+            ),
         ]
 
     def __str__(self):

@@ -1,0 +1,285 @@
+{% extends "base/base.html" %}
+{% block title %}Partnerships{% endblock %}
+
+{% block content %}
+
+<style>
+  .partnership-tabs {
+    display: flex;
+    gap: .25rem;
+    border-bottom: 1px solid #e9ecef;
+    padding: 0 1.25rem;
+    background: #f8f9fa;
+  }
+  .partnership-tab {
+    border: 0;
+    background: transparent;
+    padding: .75rem 1rem;
+    font-size: .85rem;
+    font-weight: 600;
+    color: #6c757d;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+  }
+  .partnership-tab:hover { color: #1B2E3F; }
+  .partnership-tab.active {
+    color: #1B2E3F;
+    border-bottom-color: #4da3ff;
+  }
+  .partnership-tab .badge {
+    margin-left: .35rem;
+    font-size: .68rem;
+  }
+  .partnership-pane { display: none; }
+  .partnership-pane.active { display: block; }
+  .empty-state {
+    text-align: center;
+    color: #94a3b8;
+    padding: 2.5rem 1rem;
+  }
+  .empty-state .fa-2x { margin-bottom: .5rem; }
+  .pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 100px;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  .pill-pending { background: #fef3c7; color: #92400e; }
+  .pill-accepted { background: #dcfce7; color: #166534; }
+  .pill-rejected { background: #fee2e2; color: #991b1b; }
+</style>
+
+<div class="card card-outline card-primary shadow-sm">
+
+  <div class="card-header">
+    <h3 class="card-title font-weight-bold mb-0">
+      <i class="fas fa-handshake mr-1"></i> Partnerships
+    </h3>
+    <p class="small text-muted mb-0 mt-1">
+      Approve or reject incoming connection requests on your companies, and track requests you've sent.
+    </p>
+  </div>
+
+  <div class="partnership-tabs">
+    <button type="button" class="partnership-tab active" data-pane="incoming">
+      Incoming
+      {% if incoming_pending %}
+      <span class="badge badge-warning">{{ incoming_pending|length }}</span>
+      {% endif %}
+    </button>
+    <button type="button" class="partnership-tab" data-pane="outgoing">
+      My Requests
+      {% if outgoing %}
+      <span class="badge badge-secondary">{{ outgoing|length }}</span>
+      {% endif %}
+    </button>
+    <button type="button" class="partnership-tab" data-pane="history">
+      History
+      {% if incoming_history %}
+      <span class="badge badge-secondary">{{ incoming_history|length }}</span>
+      {% endif %}
+    </button>
+  </div>
+
+  <!-- ============== INCOMING (pending) ============== -->
+  <div class="partnership-pane active" id="pane-incoming">
+    <div class="card-body p-0">
+      {% if incoming_pending %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th>Requester</th>
+              <th>Company</th>
+              <th>Sent</th>
+              <th class="text-right pr-4">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for req in incoming_pending %}
+            <tr data-connection-id="{{ req.id }}">
+              <td>
+                <strong>{{ req.user.first_name }} {{ req.user.last_name }}</strong>
+                <div class="small text-muted">{{ req.user.email }}</div>
+              </td>
+              <td>{{ req.company.name }}</td>
+              <td class="small text-muted">{{ req.created_at|date:"M j, Y H:i" }}</td>
+              <td class="text-right pr-4">
+                <form method="post" action="{% url 'partnership-action' req.id %}"
+                      class="partnership-form d-inline m-0">
+                  {% csrf_token %}
+                  <input type="hidden" name="decision" value="approve">
+                  <button type="submit" class="btn btn-sm btn-success">
+                    <i class="fas fa-check mr-1"></i> Approve
+                  </button>
+                </form>
+                <form method="post" action="{% url 'partnership-action' req.id %}"
+                      class="partnership-form d-inline m-0 ml-1">
+                  {% csrf_token %}
+                  <input type="hidden" name="decision" value="reject">
+                  <button type="submit" class="btn btn-sm btn-outline-danger">
+                    <i class="fas fa-times mr-1"></i> Reject
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="fas fa-inbox fa-2x"></i>
+        <p class="mb-0">No pending requests.</p>
+        <p class="small mb-0">
+          When another user requests to connect with one of your companies, it will appear here.
+        </p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ============== OUTGOING ============== -->
+  <div class="partnership-pane" id="pane-outgoing">
+    <div class="card-body p-0">
+      {% if outgoing %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th>Company</th>
+              <th>Status</th>
+              <th>Sent</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for req in outgoing %}
+            <tr>
+              <td><strong>{{ req.company.name }}</strong></td>
+              <td>
+                <span class="pill pill-{{ req.status }}">{{ req.get_status_display }}</span>
+              </td>
+              <td class="small text-muted">{{ req.created_at|date:"M j, Y H:i" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="far fa-paper-plane fa-2x"></i>
+        <p class="mb-0">You haven't sent any connection requests yet.</p>
+        <p class="small mb-0">
+          Open the <a href="{% url 'companies' %}">Companies</a> page and click
+          <strong>Connect</strong> on any company you'd like to partner with.
+        </p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ============== HISTORY (decided incoming) ============== -->
+  <div class="partnership-pane" id="pane-history">
+    <div class="card-body p-0">
+      {% if incoming_history %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th>Requester</th>
+              <th>Company</th>
+              <th>Status</th>
+              <th>Decided</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for req in incoming_history %}
+            <tr>
+              <td>
+                <strong>{{ req.user.first_name }} {{ req.user.last_name }}</strong>
+                <div class="small text-muted">{{ req.user.email }}</div>
+              </td>
+              <td>{{ req.company.name }}</td>
+              <td>
+                <span class="pill pill-{{ req.status }}">{{ req.get_status_display }}</span>
+              </td>
+              <td class="small text-muted">{{ req.updated_at|date:"M j, Y H:i" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="fas fa-history fa-2x"></i>
+        <p class="mb-0">No decisions yet.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  // ---- tab switching ----
+  var tabs = document.querySelectorAll(".partnership-tab");
+  var panes = document.querySelectorAll(".partnership-pane");
+  tabs.forEach(function (t) {
+    t.addEventListener("click", function () {
+      tabs.forEach(function (x) { x.classList.remove("active"); });
+      panes.forEach(function (p) { p.classList.remove("active"); });
+      t.classList.add("active");
+      var pane = document.getElementById("pane-" + t.dataset.pane);
+      if (pane) pane.classList.add("active");
+    });
+  });
+
+  // ---- AJAX approve / reject ----
+  var csrfToken = document.querySelector("[name=csrfmiddlewaretoken]")?.value || "";
+
+  document.querySelectorAll(".partnership-form").forEach(function (form) {
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var btns = form.querySelectorAll("button");
+      btns.forEach(function (b) { b.disabled = true; });
+
+      fetch(form.getAttribute("action"), {
+        method: "POST",
+        headers: { "X-Requested-With": "XMLHttpRequest", "X-CSRFToken": csrfToken },
+        body: new FormData(form),
+        credentials: "same-origin",
+      })
+        .then(function (r) { return r.json().then(function (d) { return { status: r.status, data: d }; }); })
+        .then(function (res) {
+          if (res.status === 200 && res.data.ok) {
+            if (typeof showToast === "function") showToast(res.data.message, "success");
+            // Remove the row from the pending list — page reload will rebuild
+            // the History tab on the next visit.
+            var row = form.closest("tr");
+            if (row) row.remove();
+            var tbody = document.querySelector("#pane-incoming tbody");
+            if (tbody && tbody.children.length === 0) {
+              window.location.reload();
+            }
+          } else {
+            var msg = (res.data && res.data.message) || "Action failed.";
+            if (typeof showToast === "function") showToast(msg, "error");
+            else alert(msg);
+            btns.forEach(function (b) { b.disabled = false; });
+          }
+        })
+        .catch(function () {
+          if (typeof showToast === "function") showToast("Network error. Please try again.", "error");
+          btns.forEach(function (b) { b.disabled = false; });
+        });
+    });
+  });
+});
+</script>
+
+{% endblock %}

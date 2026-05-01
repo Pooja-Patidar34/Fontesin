@@ -91,11 +91,18 @@ def admin_login(request):
         user = authenticate(request, email=email, password=password)
 
         if user is None:
-            messages.error(request, "Invalid credentials")
-            return render(request, "auth/login.html")
-
-        if not user.is_active:
-            messages.error(request, "Your account is inactive")
+            # Django's ModelBackend rejects inactive users at authenticate(), so
+            # distinguish "deactivated by admin" from "wrong credentials" here.
+            # Only reveal deactivation when the password actually matches — this
+            # avoids leaking which emails are registered.
+            candidate = User.objects.filter(email__iexact=email).first()
+            if candidate and not candidate.is_active and candidate.check_password(password):
+                messages.error(
+                    request,
+                    "Your account has been deactivated by admin. Please contact support.",
+                )
+            else:
+                messages.error(request, "Invalid credentials")
             return render(request, "auth/login.html")
 
         login(request, user)

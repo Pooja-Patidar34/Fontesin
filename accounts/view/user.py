@@ -1,4 +1,6 @@
 import logging
+import re
+from datetime import date, datetime
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -7,6 +9,14 @@ from django.db import IntegrityError, transaction
 from django.http import Http404, JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
+
+# Optional phone field. If non-empty: 7–15 digits total, with optional leading
+# "+" and spaces, hyphens, or parentheses for formatting (overall 7–20 chars).
+PHONE_FORMAT_RE = re.compile(r"^\+?[\d\s\-()]{7,20}$")
+
+# City / State: 2–50 chars, must start with a letter, allows letters (incl.
+# Latin-extended accented), spaces, dots, hyphens, apostrophes.
+PLACE_NAME_RE = re.compile(r"^[A-Za-zÀ-ɏ][A-Za-zÀ-ɏ\s.\-']{1,49}$")
 
 from accounts.models import (
     User,
@@ -513,6 +523,117 @@ def user_edit(request, user_id):
 
         tenant = user.tenant
 
+        # -------------------------------
+        # Required-field validation (full name, phone, country, status, company, role)
+        # -------------------------------
+        first_name = (request.POST.get("first_name") or "").strip()
+        last_name = (request.POST.get("last_name") or "").strip()
+        phone_raw = (request.POST.get("phone") or "").strip()
+        country_val = (request.POST.get("country") or "").strip()
+        status_val = (request.POST.get("is_active") or "").strip()
+        company_id = (request.POST.get("company_id") or "").strip()
+        role_id = (request.POST.get("role_id") or "").strip()
+
+        if not first_name and not last_name:
+            return JsonResponse(
+                {"success": False, "message": "Full name is required."},
+                status=400,
+            )
+        if not phone_raw:
+            return JsonResponse(
+                {"success": False, "message": "Phone is required."},
+                status=400,
+            )
+        phone_digits = sum(c.isdigit() for c in phone_raw)
+        if not PHONE_FORMAT_RE.match(phone_raw) or not (7 <= phone_digits <= 15):
+            return JsonResponse(
+                {
+                    "success": False,
+                    "message": "Phone number must contain 7 to 15 digits. It may include a leading + and spaces, hyphens, or parentheses.",
+                },
+                status=400,
+            )
+        if not country_val:
+            return JsonResponse(
+                {"success": False, "message": "Country is required."},
+                status=400,
+            )
+        if status_val not in ("true", "false"):
+            return JsonResponse(
+                {"success": False, "message": "Status is required."},
+                status=400,
+            )
+        if not company_id:
+            return JsonResponse(
+                {"success": False, "message": "Company is required."},
+                status=400,
+            )
+        if not role_id:
+            return JsonResponse(
+                {"success": False, "message": "Role is required."},
+                status=400,
+            )
+
+        # -------------------------------
+        # Optional-field validation (DOB realism, bio/notes length, city/state format)
+        # -------------------------------
+        birth_date_raw = (request.POST.get("birth_date") or "").strip()
+        birth_date_value = None
+        if birth_date_raw:
+            try:
+                birth_date_value = datetime.strptime(birth_date_raw, "%Y-%m-%d").date()
+            except ValueError:
+                return JsonResponse(
+                    {"success": False, "message": "Date of birth is invalid."},
+                    status=400,
+                )
+            today = date.today()
+            age = today.year - birth_date_value.year - (
+                (today.month, today.day) < (birth_date_value.month, birth_date_value.day)
+            )
+            if age < 13 or age > 120:
+                return JsonResponse(
+                    {
+                        "success": False,
+                        "message": "Date of birth must correspond to an age between 13 and 120.",
+                    },
+                    status=400,
+                )
+
+        bio_val = (request.POST.get("bio") or "").strip()
+        if bio_val and not (10 <= len(bio_val) <= 500):
+            return JsonResponse(
+                {"success": False, "message": "Bio must be between 10 and 500 characters."},
+                status=400,
+            )
+
+        notes_val = (request.POST.get("notes") or "").strip()
+        if notes_val and not (5 <= len(notes_val) <= 1000):
+            return JsonResponse(
+                {"success": False, "message": "Notes must be between 5 and 1000 characters."},
+                status=400,
+            )
+
+        city_val = (request.POST.get("city") or "").strip()
+        if city_val and not PLACE_NAME_RE.match(city_val):
+            return JsonResponse(
+                {
+                    "success": False,
+                    "message": "City must be 2–50 characters and contain only letters, spaces, dots, hyphens, or apostrophes.",
+                },
+                status=400,
+            )
+
+        state_val = (request.POST.get("state_region") or "").strip()
+        if state_val and not PLACE_NAME_RE.match(state_val):
+            return JsonResponse(
+                {
+                    "success": False,
+                    "message": "State / Region must be 2–50 characters and contain only letters, spaces, dots, hyphens, or apostrophes.",
+                },
+                status=400,
+            )
+
         with transaction.atomic():
 
             # -------------------------------
@@ -534,15 +655,15 @@ def user_edit(request, user_id):
             # -------------------------------
             # Core Identity
             # -------------------------------
-            user.first_name = request.POST.get("first_name", user.first_name)
-            user.last_name = request.POST.get("last_name", user.last_name)
+            user.first_name = first_name
+            user.last_name = last_name
             user.email = request.POST.get("email", user.email)
-            user.is_active = request.POST.get("is_active") == "true"
+            user.is_active = status_val == "true"
 
             # -------------------------------
             # Contact
             # -------------------------------
-            user.phone = request.POST.get("phone", user.phone)
+            user.phone = phone_raw
             user.national_prefix = request.POST.get(
                 "national_prefix", user.national_prefix
             )
@@ -550,9 +671,7 @@ def user_edit(request, user_id):
             # -------------------------------
             # Personal
             # -------------------------------
-            user.birth_date = (
-                request.POST.get("birth_date") or user.birth_date
-            )
+            user.birth_date = birth_date_value if birth_date_raw else user.birth_date
             user.ethnicity = request.POST.get("ethnicity", user.ethnicity)
             user.gender = request.POST.get("gender", user.gender)
 
@@ -562,8 +681,8 @@ def user_edit(request, user_id):
             user.preferred_language = request.POST.get(
                 "preferred_language", user.preferred_language
             )
-            user.bio = request.POST.get("bio", user.bio)
-            user.notes = request.POST.get("notes", user.notes)
+            user.bio = bio_val
+            user.notes = notes_val
             user.photo_url = request.POST.get("photo_url", user.photo_url)
 
             # -------------------------------
@@ -575,33 +694,26 @@ def user_edit(request, user_id):
             user.address_line2 = request.POST.get(
                 "address_line2", user.address_line2
             )
-            user.city = request.POST.get("city", user.city)
-            user.state_region = request.POST.get(
-                "state_region", user.state_region
-            )
+            user.city = city_val
+            user.state_region = state_val
             user.postal_code = request.POST.get(
                 "postal_code", user.postal_code
             )
-            user.country = request.POST.get("country", user.country)
+            user.country = country_val
 
             # -------------------------------
             # Company (tenant-scoped)
             # -------------------------------
-            company_id = request.POST.get("company_id")
-            if company_id:
-                user.primary_company = get_object_or_404(
-                    Company,
-                    id=company_id,
-                    tenant=tenant,
-                )
+            user.primary_company = get_object_or_404(
+                Company,
+                id=company_id,
+                tenant=tenant,
+            )
 
             # -------------------------------
             # Role (GLOBAL)
             # -------------------------------
-            role_id = request.POST.get("role_id")
-            if role_id:
-                role = get_object_or_404(Role, id=role_id)
-                user.role = role
+            user.role = get_object_or_404(Role, id=role_id)
 
             user.full_clean()
             user.save()

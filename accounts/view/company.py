@@ -98,6 +98,7 @@ def company_list(request):
                         | Q(consultant=request.user)
                         | Q(owner_user=request.user)
                         | Q(primary_users=request.user)
+                        | Q(usercompany__user=request.user)
                     ).distinct(),
                     id=company_id,
                 )
@@ -246,10 +247,14 @@ def company_list(request):
             # sees only companies they're directly linked to. No tenant
             # pre-filter because registration lets users pick a company from
             # any tenant, so a linked company may live outside their own tenant.
+            # `usercompany__user` covers approved partnership connections —
+            # `partnership_action` adds a UserCompany row on approve so the
+            # requester gains list + detail access.
             linkage_q = (
                 Q(consultant=request.user)
                 | Q(owner_user=request.user)
                 | Q(primary_users=request.user)
+                | Q(usercompany__user=request.user)
             )
 
             # Basic / Pro / Global business users also get a discovery view:
@@ -310,13 +315,26 @@ def company_list(request):
         querydict["page"] = 1
         return redirect(f"{request.path}?{querydict.urlencode()}")
 
-    connected_ids = set()
+    pending_ids = set()
+    accepted_ids = set()
     if is_paid_bu:
-        connected_ids = set(
+        page_company_ids = [c.id for c in page_obj.object_list]
+        for company_id, status in (
             CompanyConnection.objects
-            .filter(user=request.user, company__in=[c.id for c in page_obj.object_list])
-            .values_list("company_id", flat=True)
-        )
+            .filter(user=request.user, company_id__in=page_company_ids)
+            .values_list("company_id", "status")
+        ):
+            if status == CompanyConnection.STATUS_ACCEPTED:
+                accepted_ids.add(company_id)
+            elif status == CompanyConnection.STATUS_PENDING:
+                pending_ids.add(company_id)
+
+    # Companies the basic-plan business user is allowed to "View" — their
+    # own primary (selected at signup / created from profile) plus any company
+    # they've established an approved partnership with.
+    viewable_ids = set(accepted_ids)
+    if not request.user.is_superuser and request.user.primary_company_id:
+        viewable_ids.add(request.user.primary_company_id)
 
     # -------------------------------
     # RENDER
@@ -335,7 +353,9 @@ def company_list(request):
             "active_menu": "companies",
             "next": request.get_full_path(),
             "applied_filters": applied_filters,
-            "connected_ids": connected_ids,
+            "pending_ids": pending_ids,
+            "accepted_ids": accepted_ids,
+            "viewable_ids": viewable_ids,
         },
     )
 
@@ -590,13 +610,16 @@ def company_detail_ajax(request, company_id):
         # Business users, consultants, coordinators, franchises see only
         # companies they're linked to — matches the list-view scoping,
         # which is cross-tenant because registration lets you pick a
-        # company from any tenant.
+        # company from any tenant. `usercompany__user` covers approved
+        # partnership connections so the requester can View the company
+        # data once the owner approves.
         company = get_object_or_404(
             Company.objects.filter(
                 Q(tenant=request.user.tenant)
                 | Q(consultant=request.user)
                 | Q(owner_user=request.user)
                 | Q(primary_users=request.user)
+                | Q(usercompany__user=request.user)
             ).distinct(),
             id=company_id,
         )

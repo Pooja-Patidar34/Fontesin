@@ -34,15 +34,17 @@ def audit_logs(request):
     except (PageNotAnInteger, EmptyPage):
         page_obj = paginator.page(1)
 
-    return render(
-        request,
-        "dashboard/audit_logs.html",
-        {
-            "logs": page_obj,
-            "page_obj": page_obj,
-            "active_menu": "audit",
-        },
-    )
+    context = {
+        "logs": page_obj,
+        "page_obj": page_obj,
+        "active_menu": "audit",
+    }
+
+    # AJAX pagination clicks ask only for the inner panel.
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return render(request, "dashboard/_audit_logs_panel.html", context)
+
+    return render(request, "dashboard/audit_logs.html", context)
 
 
 
