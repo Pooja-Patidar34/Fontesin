@@ -34,13 +34,23 @@ def contact(request):
 
 
 def membership(request):
-    # Block if user already has an active subscription
+    # Don't gate the page itself — users on Free/Basic/Pro need to be able
+    # to view plans in order to upgrade. The actual create-subscription
+    # decision (same-tier? pending already? unknown plan?) lives in
+    # `select_plan` so this view stays a pure read-only catalogue.
     if request.user.is_authenticated:
-        from billing.utils import get_active_subscription
-        active_sub = get_active_subscription(request.user)
-        if active_sub and active_sub.end_date and active_sub.end_date > timezone.now():
-            messages.info(request, f"You already have an active {active_sub.plan.name} plan (expires {active_sub.end_date.strftime('%B %d, %Y')}). You can change your plan after it expires.")
-            return redirect("dashboard")
+        pending_sub = (
+            Subscription.objects
+            .filter(user=request.user, status="created")
+            .select_related("plan")
+            .first()
+        )
+        if pending_sub:
+            messages.info(
+                request,
+                f"Your upgrade to the {pending_sub.plan.name} plan is pending admin approval. "
+                "You can't start another upgrade until that one is approved or rejected.",
+            )
 
     plans = CommercialPlan.objects.filter(is_active=True)
 
@@ -78,11 +88,18 @@ def select_plan(request):
 
     user = request.user
 
-    # Block if user already has an active subscription
-    from billing.utils import get_active_subscription
-    active_sub = get_active_subscription(user)
-    if active_sub and active_sub.end_date and active_sub.end_date > timezone.now():
-        messages.info(request, f"You already have an active {active_sub.plan.name} plan. You can change your plan after it expires.")
+    # Block stacking: one pending upgrade at a time.
+    pending_sub = (
+        Subscription.objects
+        .filter(user=user, status="created")
+        .select_related("plan")
+        .first()
+    )
+    if pending_sub:
+        messages.info(
+            request,
+            f"Your upgrade to the {pending_sub.plan.name} plan is already pending admin approval.",
+        )
         return redirect("dashboard")
 
     plan_code = request.POST.get("plan_code")
@@ -91,6 +108,26 @@ def select_plan(request):
     if not plan:
         messages.error(request, "Invalid plan selected")
         return redirect("membership")
+
+    # Tier check: only allow strictly-higher-tier moves. This is the actual
+    # "upgrade" guard — same plan or a downgrade is a no-op (or worse, would
+    # silently issue a refund-shaped flow we don't support yet).
+    from billing.utils import PLAN_TIERS
+    current_active = (
+        Subscription.objects
+        .filter(user=user, status="active")
+        .select_related("plan")
+        .first()
+    )
+    if current_active:
+        current_tier = PLAN_TIERS.get((current_active.plan.code or "").lower(), -1)
+        new_tier = PLAN_TIERS.get((plan.code or "").lower(), -1)
+        if new_tier <= current_tier:
+            messages.info(
+                request,
+                f"You're already on the {current_active.plan.name} plan. Pick a higher tier to upgrade.",
+            )
+            return redirect("membership")
 
     now = timezone.now()
     if plan.billing_period == "monthly":
@@ -110,9 +147,13 @@ def select_plan(request):
         end_date=end_date,
     )
 
-    # Update user subscription_plan field
-    user.subscription_plan = plan.code
-    user.save(update_fields=["subscription_plan"])
+    # Only sync User.subscription_plan when the subscription is *active* now
+    # (free path). For paid upgrades the sub starts as "created" — deferring
+    # the write keeps User.subscription_plan in step with the actually-live
+    # plan until the admin approves and `payment_approve` flips it.
+    if subscription_status == "active":
+        user.subscription_plan = plan.code
+        user.save(update_fields=["subscription_plan"])
 
     # Create invoice
     year = now.strftime("%Y")

@@ -70,8 +70,16 @@
           </div>
         </div>
         {% if subscription %}
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
           <span style="background:#dcfce7; color:#15803d; font-weight:600; font-size:.72rem; padding:4px 12px; border-radius:100px;">{{ user_plan.name }}</span>
+        </div>
+        {% endif %}
+        {% if user_plan.code|lower != "global" %}
+        <a href="{% url 'membership' %}" class="btn btn-sm" style="background:#253D51; color:#fff; border-radius:8px; font-size:.78rem; font-weight:600; padding:6px 20px; display:inline-flex; align-items:center; gap:6px;">
+          <i class="fas fa-arrow-up"></i> Upgrade Plan
+        </a>
+        <div style="font-size:.72rem; color:#64748b; margin-top:8px;">
+          Pick a higher plan, an invoice will be generated, and an admin will review and approve it before your next login.
         </div>
         {% endif %}
       </div>

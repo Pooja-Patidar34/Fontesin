@@ -116,8 +116,11 @@ def profile_view(request):
             messages.success(request, "Profile updated successfully.")
             return redirect("profile")
 
-        # Company creation from profile
-        company_name = request.POST.get("company_name", "").strip()
+        # Company creation from profile.
+        # Collapse runs of whitespace in the company name so "Acme  Corp" and
+        # "Acme Corp" can't sneak past the uniqueness check by virtue of an
+        # extra space.
+        company_name = re.sub(r"\s+", " ", request.POST.get("company_name", "").strip())
         registration_id = request.POST.get("registration_id", "").strip()
         domain = request.POST.get("domain", "").strip()
         classification = request.POST.get("classification", "").strip()
@@ -143,8 +146,20 @@ def profile_view(request):
             )
             return redirect("profile")
 
-        if Company.objects.filter(name__iexact=company_name).exists():
-            messages.error(request, "A company with this name already exists. Please choose a different name.")
+        # Strict same-name guard: reject if either an active Company OR an
+        # active Tenant with this name already exists. Profile creation
+        # provisions a Tenant alongside the Company, and Tenant.name is
+        # unique=True at the DB level — without the Tenant half of this
+        # check, a tenant-only collision later raises IntegrityError and
+        # the user sees a 500 instead of "already exists".
+        if (
+            Company.objects.filter(name__iexact=company_name).exists()
+            or Tenant.objects.filter(name__iexact=company_name).exists()
+        ):
+            messages.error(
+                request,
+                "A company with this name already exists. Please choose a different name.",
+            )
             return redirect("profile")
 
         if not registration_id:

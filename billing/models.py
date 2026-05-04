@@ -143,7 +143,7 @@ class Subscription(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=["user"],
-                condition=Q(status__in=["active", "trial", "created"]),
+                condition=Q(status__in=["active", "trial"]),
                 name="unique_active_subscription_per_user"
             )
         ]

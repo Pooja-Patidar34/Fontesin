@@ -756,7 +756,14 @@
           <div class="apply-form-row">
             <div class="apply-form-group">
               <label class="apply-form-label">Year Founded</label>
-              <input type="number" name="applied_year_founded" class="apply-form-control" placeholder="e.g. 2015" min="1900" max="2026" value="{{ prefill.year_founded }}"/>
+              <input type="number" name="applied_year_founded" class="apply-form-control"
+                     placeholder="e.g. 2015"
+                     min="{{ year_founded_min }}" max="{{ year_founded_max }}"
+                     step="1"
+                     inputmode="numeric"
+                     pattern="\d{4}"
+                     title="Enter a 4-digit year between {{ year_founded_min }} and {{ year_founded_max }}."
+                     value="{{ prefill.year_founded }}"/>
             </div>
             <div class="apply-form-group">
               <label class="apply-form-label">Number of Employees</label>

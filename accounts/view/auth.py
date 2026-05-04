@@ -368,6 +368,8 @@ def apply_view(request):
         "role_label": role_label,
         "role_icon": role_icon,
         "prefill": prefill,
+        "year_founded_min": 1800,
+        "year_founded_max": date.today().year,
     })
 
 
@@ -442,6 +444,24 @@ def apply_submit(request):
         messages.error(request, "Phone number must be 7-15 digits (you may include +, spaces, dashes, or parentheses).")
         return redirect("apply")
 
+    # Validate Year Founded if provided. Must be a 4-digit integer between
+    # 1800 and the current year — without this guard, "13" or "20240" would
+    # be saved verbatim because the int() cast below accepts both.
+    applied_year_founded_int = None
+    if year_founded:
+        if not re.fullmatch(r"\d{4}", year_founded):
+            messages.error(request, "Year Founded must be a 4-digit year (e.g. 2015).")
+            return redirect("apply")
+        yf = int(year_founded)
+        current_year = date.today().year
+        if yf < 1800 or yf > current_year:
+            messages.error(
+                request,
+                f"Year Founded must be between 1800 and {current_year}.",
+            )
+            return redirect("apply")
+        applied_year_founded_int = yf
+
     # Age must be consistent with selected years of experience (min working age 16)
     try:
         dob = date.fromisoformat(birth_date)
@@ -487,7 +507,7 @@ def apply_submit(request):
     user.applied_company_reg_number = applied_company_reg_number
     user.applied_country_of_incorporation = applied_country_of_incorporation
     user.applied_legal_form = applied_legal_form
-    user.applied_year_founded = int(year_founded) if year_founded else None
+    user.applied_year_founded = applied_year_founded_int
     user.applied_num_employees = applied_num_employees
     user.applied_company_website = applied_company_website
 

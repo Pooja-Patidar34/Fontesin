@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import render
+from django.utils import timezone
 
 from accounts.models import AuditLog
 from accounts.utils.permissions import has_permission
@@ -69,6 +70,6 @@ def audit_log_detail_ajax(request, log_id):
         "entity_id": str(log.entity_id),
         "ip_address": log.ip_address,
         "metadata": log.metadata,
-        "created_at": log.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+        "created_at": timezone.localtime(log.created_at).strftime("%Y-%m-%d %H:%M:%S"),
     })
 

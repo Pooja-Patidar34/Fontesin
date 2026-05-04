@@ -116,13 +116,36 @@ def payment_approve(request, subscription_id):
         messages.warning(request, "This subscription is not pending approval.")
         return redirect("payments")
 
+    now = timezone.now()
+
+    # Supersede any other still-active subscription for this user (e.g. the
+    # Free plan they were on before initiating this upgrade). Without this
+    # the user ends up with two `active` rows and `get_active_subscription`
+    # picks one with `.first()` and no ordering — the resulting plan tier is
+    # effectively non-deterministic. Using "cancelled" because the existing
+    # STATUS_CHOICES has no "superseded"/"expired" — closest fit.
+    Subscription.objects.filter(
+        user=sub.user, status="active"
+    ).exclude(pk=sub.pk).update(
+        status="cancelled", end_date=now, updated_at=now
+    )
+
     sub.status = "active"
-    sub.start_date = timezone.now()
+    sub.start_date = now
     sub.save(update_fields=["status", "start_date", "updated_at"])
+
+    # Sync User.subscription_plan to the newly-active plan. select_plan
+    # intentionally defers this write for paid upgrades; this is the
+    # promotion point.
+    user = sub.user
+    new_plan_code = (sub.plan.code or "").lower() if sub.plan_id else ""
+    if new_plan_code and user.subscription_plan != new_plan_code:
+        user.subscription_plan = new_plan_code
+        user.save(update_fields=["subscription_plan"])
 
     # Mark the related invoice as paid
     Invoice.objects.filter(subscription=sub, status="pending").update(
-        status="paid", paid_at=timezone.now()
+        status="paid", paid_at=now
     )
 
     messages.success(request, f"Subscription for {sub.user.email} has been approved.")

@@ -264,7 +264,9 @@ class CompanyForm(forms.ModelForm):
             self.fields["tenant"].widget = forms.HiddenInput()
 
     def clean_name(self):
-        name = (self.cleaned_data.get("name") or "").strip()
+        # Collapse runs of whitespace ("Acme  Corp" -> "Acme Corp") so the
+        # uniqueness check below can't be slipped past with extra spaces.
+        name = re.sub(r"\s+", " ", (self.cleaned_data.get("name") or "").strip())
         if not name:
             raise forms.ValidationError("Company name is required and cannot be only spaces.")
         if len(name) < 2:
@@ -274,6 +276,18 @@ class CompanyForm(forms.ModelForm):
         if not COMPANY_NAME_RE.match(name):
             raise forms.ValidationError(
                 "Company name may only contain letters, digits, spaces, and the symbols & ' . , - ( ), and must contain at least one letter."
+            )
+
+        # Strict global same-name guard: applies to both create and edit.
+        # On edit, exclude the current row so saving without renaming works.
+        # tenant_id is the reliable "already saved" signal here — Company.id
+        # has a uuid4 default, so .pk is truthy even on unsaved instances.
+        duplicates = Company.objects.filter(name__iexact=name)
+        if self.instance and self.instance.tenant_id:
+            duplicates = duplicates.exclude(pk=self.instance.pk)
+        if duplicates.exists():
+            raise forms.ValidationError(
+                "A company with this name already exists. Please choose a different name."
             )
         return name
 
