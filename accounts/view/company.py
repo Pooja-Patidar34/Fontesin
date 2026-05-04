@@ -339,25 +339,36 @@ def company_list(request):
     # -------------------------------
     # RENDER
     # -------------------------------
-    return render(
-        request,
-        "dashboard/companies.html",
-        {
-            "companies": page_obj,
-            "page_obj": page_obj,
-            "tenants": tenants,
-            "selected_tenant_id": selected_tenant_id,
-            "form": form,
-            "can_manage": has_permission(request.user, "company.manage"),
-            "can_view": has_permission(request.user, "company.view"),
-            "active_menu": "companies",
-            "next": request.get_full_path(),
-            "applied_filters": applied_filters,
-            "pending_ids": pending_ids,
-            "accepted_ids": accepted_ids,
-            "viewable_ids": viewable_ids,
-        },
-    )
+    context = {
+        "companies": page_obj,
+        "page_obj": page_obj,
+        "tenants": tenants,
+        "selected_tenant_id": selected_tenant_id,
+        "form": form,
+        "can_manage": has_permission(request.user, "company.manage"),
+        "can_view": has_permission(request.user, "company.view"),
+        "active_menu": "companies",
+        "next": request.get_full_path(),
+        "applied_filters": applied_filters,
+        "pending_ids": pending_ids,
+        "accepted_ids": accepted_ids,
+        "viewable_ids": viewable_ids,
+    }
+
+    # AJAX GET (pagination): return only the rendered fragments. The same
+    # request path serves both full-page and partial responses; the client
+    # opts in by sending X-Requested-With.
+    if request.method == "GET" and _is_ajax(request):
+        return JsonResponse({
+            "rows_html": render_to_string(
+                "dashboard/_companies_rows.html", context, request=request
+            ),
+            "pagination_html": render_to_string(
+                "dashboard/_companies_pagination.html", context, request=request
+            ),
+        })
+
+    return render(request, "dashboard/companies.html", context)
 
 
 

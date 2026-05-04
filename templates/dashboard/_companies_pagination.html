@@ -1,0 +1,80 @@
+{% if companies.paginator.num_pages > 1 %}
+<div class="card-footer">
+  <ul class="pagination pagination-sm justify-content-end mb-0">
+
+    {% if companies.has_previous %}
+      <li class="page-item">
+        <a class="page-link"
+           href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ companies.previous_page_number }}">
+          Previous
+        </a>
+      </li>
+    {% else %}
+      <li class="page-item disabled">
+        <span class="page-link">Previous</span>
+      </li>
+    {% endif %}
+
+    {% if companies.number > 3 %}
+      <li class="page-item">
+        <a class="page-link"
+           href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page=1">
+          1
+        </a>
+      </li>
+
+      {% if companies.number > 4 %}
+      <li class="page-item disabled">
+        <span class="page-link">...</span>
+      </li>
+      {% endif %}
+    {% endif %}
+
+    {% for num in companies.paginator.page_range %}
+      {% if num >= companies.number|add:-2 and num <= companies.number|add:2 %}
+        {% if num == companies.number %}
+          <li class="page-item active">
+            <span class="page-link">{{ num }}</span>
+          </li>
+        {% else %}
+          <li class="page-item">
+            <a class="page-link"
+               href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ num }}">
+              {{ num }}
+            </a>
+          </li>
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+
+    {% if companies.number < companies.paginator.num_pages|add:-2 %}
+      {% if companies.number < companies.paginator.num_pages|add:-3 %}
+      <li class="page-item disabled">
+        <span class="page-link">...</span>
+      </li>
+      {% endif %}
+
+      <li class="page-item">
+        <a class="page-link"
+           href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ companies.paginator.num_pages }}">
+          {{ companies.paginator.num_pages }}
+        </a>
+      </li>
+    {% endif %}
+
+    {% if companies.has_next %}
+      <li class="page-item">
+        <a class="page-link"
+           href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ companies.next_page_number }}">
+          Next
+        </a>
+      </li>
+    {% else %}
+      <li class="page-item disabled">
+        <span class="page-link">Next</span>
+      </li>
+    {% endif %}
+
+  </ul>
+</div>
+{% endif %}

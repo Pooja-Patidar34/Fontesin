@@ -226,6 +226,7 @@
             <th>Address</th>
             <td id="ud-address" style="word-break:break-word;overflow-wrap:anywhere;"></td>
           </tr>
+          <tr><th>Country</th><td id="ud-country"></td></tr>
 
           <!-- Meta -->
           <tr><th>Created</th><td id="ud-created"></td></tr>
@@ -409,6 +410,23 @@
 </div>
 <script>
 let editUserId = null;
+
+function formatCreatedDate(isoString) {
+  if (!isoString) return "-";
+  const d = new Date(isoString);
+  if (isNaN(d.getTime())) return "-";
+  const pad = function (n) { return String(n).padStart(2, "0"); };
+  const dd = pad(d.getDate());
+  const mm = pad(d.getMonth() + 1);
+  const yyyy = d.getFullYear();
+  const h24 = d.getHours();
+  const hh = pad(((h24 % 12) || 12));
+  const min = pad(d.getMinutes());
+  const ss = pad(d.getSeconds());
+  const ampm = h24 >= 12 ? "PM" : "AM";
+  return dd + "/" + mm + "/" + yyyy + ", " + hh + ":" + min + ":" + ss + " " + ampm;
+}
+
 function viewUser(userId) {
   fetch(`/users/${userId}/view/`)
     .then(r => r.json())
@@ -448,19 +466,22 @@ function viewUser(userId) {
       document.getElementById("ud-notes").innerText =
         data.notes || "-";
 
-      // Address (merged)
+      // Address (merged) — Country is shown in its own row, not merged here,
+      // otherwise users with only a country set would see e.g. "AU" rendered
+      // as their full address.
       document.getElementById("ud-address").innerText = [
         data.address_line1,
         data.address_line2,
         data.city,
         data.state_region,
-        data.postal_code,
-        data.country
+        data.postal_code
       ].filter(Boolean).join(", ") || "-";
+      document.getElementById("ud-country").innerText = data.country || "-";
 
-      // Meta
+      // Meta — explicit DD/MM/YYYY, hh:mm:ss AM/PM with zero padding so the
+      // value doesn't shift between browser locales ("2/5/2026" vs "5/2/2026").
       document.getElementById("ud-created").innerText =
-        new Date(data.created_at).toLocaleString();
+        formatCreatedDate(data.created_at);
 
       $('#userDetailModal').modal('show');
     })

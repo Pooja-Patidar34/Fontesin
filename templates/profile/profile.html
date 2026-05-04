@@ -10,11 +10,11 @@
     <div class="card">
       <div class="card-body text-center">
         {% if not request.user.is_superuser %}
-        <div style="width:80px; height:80px; border-radius:50%; background:#253D51; display:inline-flex; align-items:center; justify-content:center; font-weight:700; font-size:1.5rem; color:#fff; margin-bottom:16px;">
+        <div id="profile-avatar" style="width:80px; height:80px; border-radius:50%; background:#253D51; display:inline-flex; align-items:center; justify-content:center; font-weight:700; font-size:1.5rem; color:#fff; margin-bottom:16px;">
           {{ request.user.first_name|truncatechars:1 }}{{ request.user.last_name|truncatechars:1 }}
         </div>
         {% endif %}
-        <h4 style="margin-bottom:4px;">{{ request.user.first_name }} {{ request.user.last_name }}</h4>
+        <h4 id="profile-fullname" style="margin-bottom:4px;">{{ request.user.first_name }} {{ request.user.last_name }}</h4>
         <p class="text-muted" style="font-size:.88rem;">{{ request.user.email }}</p>
 
         <button type="button" class="btn btn-sm btn-outline-primary" data-toggle="modal" data-target="#editProfileModal">
@@ -26,11 +26,11 @@
         <table class="table table-borderless table-sm text-left" style="font-size:.88rem; table-layout:fixed; width:100%;">
           <tr>
             <td class="text-muted" style="width:40%;">Phone</td>
-            <td style="word-break:break-word; overflow-wrap:anywhere;">{{ request.user.phone|default:"-" }}</td>
+            <td id="profile-phone" style="word-break:break-word; overflow-wrap:anywhere;">{{ request.user.phone|default:"-" }}</td>
           </tr>
           <tr>
             <td class="text-muted">Country</td>
-            <td style="word-break:break-word; overflow-wrap:anywhere;">{{ request.user.country|default:"-" }}</td>
+            <td id="profile-country" style="word-break:break-word; overflow-wrap:anywhere;">{{ request.user.country|default:"-" }}</td>
           </tr>
           <tr>
             <td class="text-muted">Role</td>
@@ -95,8 +95,6 @@
   <!-- Company Section -->
   <div class="col-md-8">
 
-    {% include "base/toasts.html" %}
-
     {% if user_company %}
     <!-- Existing Company Details -->
     <div class="card">
@@ -110,6 +108,10 @@
             <td><strong>{{ user_company.name }}</strong></td>
           </tr>
           <tr>
+            <td class="text-muted">Registration No.</td>
+            <td>{{ user_company.registration_id|default:"-" }}</td>
+          </tr>
+          <tr>
             <td class="text-muted">Classification</td>
             <td>{{ user_company.classification|default:"-" }}</td>
           </tr>
@@ -118,16 +120,40 @@
             <td>{{ user_company.website|default:"-" }}</td>
           </tr>
           <tr>
-            <td class="text-muted">Phone</td>
-            <td>{{ user_company.phone|default:"-" }}</td>
+            <td class="text-muted">Address Line 1</td>
+            <td>{{ user_company.address_line1|default:"-" }}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Address Line 2</td>
+            <td>{{ user_company.address_line2|default:"-" }}</td>
           </tr>
           <tr>
             <td class="text-muted">City</td>
             <td>{{ user_company.city|default:"-" }}</td>
           </tr>
           <tr>
+            <td class="text-muted">State</td>
+            <td>{{ user_company.state|default:"-" }}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Postal Code</td>
+            <td>{{ user_company.postal_code|default:"-" }}</td>
+          </tr>
+          <tr>
             <td class="text-muted">Country</td>
             <td>{{ user_company.country|default:"-" }}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Phone</td>
+            <td>{{ user_company.phone|default:"-" }}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Secondary Phone</td>
+            <td>{{ user_company.phone_secondary|default:"-" }}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">Fax</td>
+            <td>{{ user_company.fax|default:"-" }}</td>
           </tr>
           <tr>
             <td class="text-muted">Tenant Domain</td>
@@ -157,7 +183,7 @@
           You don't have a company linked to your account yet. Create one below to get started.
         </p>
 
-        <form method="POST" action="{% url 'profile' %}">
+        <form method="POST" action="{% url 'profile' %}" id="create-company-form">
           {% csrf_token %}
           <input type="hidden" name="form_type" value="create_company">
 
@@ -168,6 +194,17 @@
                    pattern="(?=.*[A-Za-z\u00C0-\u024F])[A-Za-z\u00C0-\u024F0-9&'.,\-()\s]{2,100}"
                    title="2-100 characters. Letters, digits, spaces, and &amp; ' . , - ( ) only. Must contain at least one letter."
                    required>
+          </div>
+
+          <div class="form-group">
+            <label>Registration No. <span class="text-danger">*</span></label>
+            <input type="text" name="registration_id" class="form-control"
+                   placeholder="e.g. CH123456 / EIN-12-3456789"
+                   minlength="2" maxlength="100"
+                   pattern="(?=.*[A-Za-z0-9])[A-Za-z0-9\-/._]{2,100}"
+                   title="Letters, digits and the symbols - / . _ only (2-100 characters)."
+                   required>
+            <small class="text-muted">Legal identifier (e.g. company-house number, EIN, CIN). Must be unique.</small>
           </div>
 
           <div class="form-group">
@@ -183,8 +220,8 @@
           <div class="row">
             <div class="col-md-6">
               <div class="form-group">
-                <label>Classification</label>
-                <select name="classification" class="form-control">
+                <label>Classification <span class="text-danger">*</span></label>
+                <select name="classification" class="form-control" required>
                   <option value="">Select Classification</option>
                   {% for value, label in classifications %}
                   <option value="{{ value }}">{{ label }}</option>
@@ -203,6 +240,79 @@
             </div>
           </div>
 
+          <div class="form-group">
+            <label>Address Line 1</label>
+            <input type="text" name="address_line1" class="form-control"
+                   placeholder="e.g. 221B Baker Street"
+                   minlength="3" maxlength="120"
+                   pattern="(?=.*[A-Za-z0-9])[A-Za-z\u00C0-\u024F0-9\s,./#\-]{3,120}"
+                   autocomplete="address-line1"
+                   title="3-120 characters. Letters, digits, spaces and the symbols , . - / # only.">
+          </div>
+
+          <div class="form-group">
+            <label>Address Line 2</label>
+            <input type="text" name="address_line2" class="form-control"
+                   placeholder="Apt, suite, unit (optional)"
+                   minlength="3" maxlength="120"
+                   pattern="(?=.*[A-Za-z0-9])[A-Za-z\u00C0-\u024F0-9\s,./#\-]{3,120}"
+                   autocomplete="address-line2"
+                   title="3-120 characters. Letters, digits, spaces and the symbols , . - / # only.">
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>City <span class="text-danger">*</span></label>
+                <input type="text" name="city" class="form-control"
+                       placeholder="e.g. New York"
+                       minlength="2" maxlength="60"
+                       pattern="[A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F\s'\-.]{1,59}"
+                       autocomplete="address-level2"
+                       title="2-60 letters (letters, spaces, hyphens, apostrophes and periods)."
+                       required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>State <span class="text-danger">*</span></label>
+                <input type="text" name="state" class="form-control"
+                       placeholder="e.g. California"
+                       minlength="2" maxlength="60"
+                       pattern="[A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F\s'\-]{1,59}"
+                       autocomplete="address-level1"
+                       title="2-60 letters (letters, spaces, hyphens and apostrophes)."
+                       required>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Postal Code</label>
+                <input type="text" name="postal_code" class="form-control"
+                       placeholder="e.g. 10001 or SW1A 1AA"
+                       minlength="3" maxlength="12"
+                       pattern="(?=.*[A-Za-z0-9])[A-Za-z0-9\s\-]{3,12}"
+                       autocomplete="postal-code"
+                       title="3-12 characters. Letters, digits, spaces and hyphens only.">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Country <span class="text-danger">*</span></label>
+                <input type="text" name="company_country" class="form-control"
+                       placeholder="e.g. United States"
+                       minlength="2" maxlength="60"
+                       pattern="[A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F\s'\-]{1,59}"
+                       autocomplete="country-name"
+                       title="2-60 letters (letters, spaces, hyphens and apostrophes)."
+                       required>
+              </div>
+            </div>
+          </div>
+
           <div class="row">
             <div class="col-md-6">
               <div class="form-group">
@@ -217,25 +327,25 @@
             </div>
             <div class="col-md-6">
               <div class="form-group">
-                <label>Country</label>
-                <input type="text" name="company_country" class="form-control"
-                       placeholder="United States"
-                       minlength="2" maxlength="60"
-                       pattern="[A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F\s'\-]{1,59}"
-                       autocomplete="country-name"
-                       title="2-60 letters only (letters, spaces, hyphens and apostrophes). Numbers and special characters are not allowed.">
+                <label>Secondary Phone</label>
+                <input type="tel" name="phone_secondary" class="form-control"
+                       placeholder="+1 212 555 0100"
+                       maxlength="25"
+                       pattern="[\d+\-\s()]{7,25}"
+                       inputmode="tel"
+                       title="Digits and + - ( ) spaces only (7-25 characters, 5-15 digits).">
               </div>
             </div>
           </div>
 
           <div class="form-group">
-            <label>City</label>
-            <input type="text" name="city" class="form-control"
-                   placeholder="New York"
-                   minlength="2" maxlength="60"
-                   pattern="[A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F\s'\-.]{1,59}"
-                   autocomplete="address-level2"
-                   title="2-60 letters (letters, spaces, hyphens, apostrophes and periods). Numbers and special characters are not allowed.">
+            <label>Fax</label>
+            <input type="tel" name="fax" class="form-control"
+                   placeholder="+1 212 555 0199"
+                   maxlength="25"
+                   pattern="[\d+\-\s()]{7,25}"
+                   inputmode="tel"
+                   title="Digits and + - ( ) spaces only (7-25 characters, 5-15 digits).">
           </div>
 
           <button type="submit" class="btn btn-primary">
@@ -253,7 +363,7 @@
 <div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <form method="POST" action="{% url 'profile' %}">
+      <form method="POST" action="{% url 'profile' %}" id="edit-profile-form">
         {% csrf_token %}
         <input type="hidden" name="form_type" value="edit_profile">
 
@@ -268,18 +378,18 @@
               <label>First Name <span class="text-danger">*</span></label>
               <input type="text" name="first_name" class="form-control"
                      value="{{ request.user.first_name }}"
-                     maxlength="50"
-                     pattern="[A-Za-zÀ-ɏ][A-Za-zÀ-ɏ\s'\-.]{0,49}"
-                     title="Letters, spaces, hyphens, apostrophes, periods (1-50 characters)."
+                     minlength="2" maxlength="50"
+                     pattern="[A-Za-zÀ-ɏ][A-Za-zÀ-ɏ\s'\-.]{1,49}"
+                     title="Letters, spaces, hyphens, apostrophes, periods (2-50 characters)."
                      required>
             </div>
             <div class="form-group col-md-6">
               <label>Last Name <span class="text-danger">*</span></label>
               <input type="text" name="last_name" class="form-control"
                      value="{{ request.user.last_name }}"
-                     maxlength="50"
-                     pattern="[A-Za-zÀ-ɏ][A-Za-zÀ-ɏ\s'\-.]{0,49}"
-                     title="Letters, spaces, hyphens, apostrophes, periods (1-50 characters)."
+                     minlength="2" maxlength="50"
+                     pattern="[A-Za-zÀ-ɏ][A-Za-zÀ-ɏ\s'\-.]{1,49}"
+                     title="Letters, spaces, hyphens, apostrophes, periods (2-50 characters)."
                      required>
             </div>
           </div>
@@ -315,11 +425,166 @@
 
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
+          <button type="submit" id="edit-profile-save-btn" class="btn btn-primary btn-sm" disabled>Save Changes</button>
         </div>
       </form>
     </div>
   </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const form = document.getElementById("edit-profile-form");
+  if (!form) return;
+
+  const saveBtn = document.getElementById("edit-profile-save-btn");
+  const fields = form.querySelectorAll('[name="first_name"], [name="last_name"], [name="phone"], [name="country"]');
+
+  // Snapshot the values rendered into the form so we can detect changes.
+  // Refreshed after a successful AJAX save so the button stays disabled
+  // until the user actually edits something new.
+  let initial = {};
+  // Snapshot of the payload last sent to the server. While the current
+  // values match this, the button stays disabled — repeat-submitting the
+  // same invalid data would just re-show the same toast.
+  let lastSubmitted = null;
+  let inFlight = false;
+
+  function currentValues() {
+    const v = {};
+    fields.forEach(function (el) { v[el.name] = el.value; });
+    return v;
+  }
+  function snapshot() {
+    initial = currentValues();
+  }
+  function valuesEqual(a, b) {
+    if (!a || !b) return false;
+    for (const el of fields) {
+      if (a[el.name] !== b[el.name]) return false;
+    }
+    return true;
+  }
+  function isDirty() {
+    for (const el of fields) {
+      if (el.value !== initial[el.name]) return true;
+    }
+    return false;
+  }
+  function syncSaveBtn() {
+    if (!saveBtn) return;
+    if (inFlight) { saveBtn.disabled = true; return; }
+    if (!isDirty()) { saveBtn.disabled = true; return; }
+    if (lastSubmitted && valuesEqual(currentValues(), lastSubmitted)) {
+      saveBtn.disabled = true;
+      return;
+    }
+    saveBtn.disabled = false;
+  }
+
+  snapshot();
+  fields.forEach(function (el) {
+    el.addEventListener("input", syncSaveBtn);
+    el.addEventListener("change", syncSaveBtn);
+  });
+
+  // Re-snapshot when the modal opens so reopening after a save (or after
+  // discarded edits via Cancel) starts in a "no changes" state.
+  $('#editProfileModal').on('shown.bs.modal', function () {
+    // If the user closed without saving, reset the inputs to the snapshot.
+    fields.forEach(function (el) {
+      if (initial[el.name] !== undefined) el.value = initial[el.name];
+    });
+    lastSubmitted = null;
+    syncSaveBtn();
+  });
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (inFlight || !isDirty()) return;
+    if (lastSubmitted && valuesEqual(currentValues(), lastSubmitted)) return;
+
+    inFlight = true;
+    lastSubmitted = currentValues();
+    saveBtn.disabled = true;
+    const formData = new FormData(form);
+
+    fetch(form.action, {
+      method: "POST",
+      headers: { "X-Requested-With": "XMLHttpRequest", "Accept": "application/json" },
+      body: formData,
+      credentials: "same-origin",
+    })
+      .then(function (res) {
+        return res.json().then(function (data) { return { status: res.status, data: data }; });
+      })
+      .then(function (result) {
+        inFlight = false;
+        if (result.status === 200 && result.data.ok) {
+          const u = result.data.user || {};
+          const fullname = ((u.first_name || "") + " " + (u.last_name || "")).trim();
+          const initials = (u.first_name || "").charAt(0) + (u.last_name || "").charAt(0);
+
+          const nameEl = document.getElementById("profile-fullname");
+          if (nameEl) nameEl.textContent = fullname;
+          const avatarEl = document.getElementById("profile-avatar");
+          if (avatarEl) avatarEl.textContent = initials;
+          const phoneEl = document.getElementById("profile-phone");
+          if (phoneEl) phoneEl.textContent = u.phone ? u.phone : "-";
+          const countryEl = document.getElementById("profile-country");
+          if (countryEl) countryEl.textContent = u.country ? u.country : "-";
+
+          lastSubmitted = null;
+          snapshot();
+          syncSaveBtn();
+          $('#editProfileModal').modal('hide');
+          if (typeof showToast === "function") showToast(result.data.message || "Profile updated successfully.", "success");
+        } else {
+          const msg = result.data.message || "Could not update profile.";
+          if (typeof showToast === "function") showToast(msg, "error");
+          else alert(msg);
+          syncSaveBtn();
+        }
+      })
+      .catch(function () {
+        inFlight = false;
+        if (typeof showToast === "function") showToast("Network error. Please try again.", "error");
+        // Network failure isn't the user's data being rejected, so let them
+        // retry the same payload — clear the resubmit guard.
+        lastSubmitted = null;
+        syncSaveBtn();
+      });
+  });
+});
+</script>
+
+<script>
+// Block whitespace-only Company Name on the Create Company form so a redirect
+// (which clears the rest of the form) never happens for that case.
+document.addEventListener("DOMContentLoaded", function () {
+  const form = document.getElementById("create-company-form");
+  if (!form) return;
+  const nameInput = form.querySelector('[name="company_name"]');
+  if (!nameInput) return;
+
+  function clearCustomMsg() { nameInput.setCustomValidity(""); }
+  nameInput.addEventListener("input", clearCustomMsg);
+
+  form.addEventListener("submit", function (e) {
+    const trimmed = nameInput.value.trim();
+    if (trimmed === "") {
+      e.preventDefault();
+      e.stopPropagation();
+      nameInput.setCustomValidity("Company name cannot be empty or just spaces.");
+      nameInput.reportValidity();
+      nameInput.focus();
+      return;
+    }
+    // Submit the trimmed value — the server strips it anyway, but this keeps
+    // the post-redirect display consistent for any path that echoes it back.
+    nameInput.value = trimmed;
+  });
+});
+</script>
 
 {% endblock %}

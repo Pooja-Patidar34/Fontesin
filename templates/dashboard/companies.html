@@ -185,25 +185,7 @@
         </thead>
 
         <tbody id="companies-tbody">
-          {% for company in companies %}
-            {% include "dashboard/_company_row.html" %}
-          {% empty %}
-          <tr id="no-companies-row">
-            {% if request.user.is_superuser %}
-              {% if is_free_plan %}
-                <td colspan="4" class="text-center text-muted py-4">No companies found</td>
-              {% else %}
-                <td colspan="4" class="text-center text-muted py-4">No companies found</td>
-              {% endif %}
-            {% else %}
-              {% if is_free_plan %}
-                <td colspan="3" class="text-center text-muted py-4">No companies found</td>
-              {% else %}
-                <td colspan="3" class="text-center text-muted py-4">No companies found</td>
-              {% endif %}
-            {% endif %}
-          </tr>
-          {% endfor %}
+          {% include "dashboard/_companies_rows.html" %}
         </tbody>
 
       </table>
@@ -211,89 +193,9 @@
   </div>
 
   <!-- Pagination -->
-{% if companies.paginator.num_pages > 1 %}
-<div class="card-footer">
-  <ul class="pagination pagination-sm justify-content-end mb-0">
-
-    {% if companies.has_previous %}
-      <li class="page-item">
-        <a class="page-link"
-           href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ companies.previous_page_number }}">
-          Previous
-        </a>
-      </li>
-    {% else %}
-      <li class="page-item disabled">
-        <span class="page-link">Previous</span>
-      </li>
-    {% endif %}
-
-    <!-- FIRST PAGE -->
-    {% if companies.number > 3 %}
-      <li class="page-item">
-        <a class="page-link"
-           href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page=1">
-          1
-        </a>
-      </li>
-
-      {% if companies.number > 4 %}
-      <li class="page-item disabled">
-        <span class="page-link">...</span>
-      </li>
-      {% endif %}
-    {% endif %}
-
-    <!-- CURRENT RANGE -->
-    {% for num in companies.paginator.page_range %}
-      {% if num >= companies.number|add:-2 and num <= companies.number|add:2 %}
-        {% if num == companies.number %}
-          <li class="page-item active">
-            <span class="page-link">{{ num }}</span>
-          </li>
-        {% else %}
-          <li class="page-item">
-            <a class="page-link"
-               href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ num }}">
-              {{ num }}
-            </a>
-          </li>
-        {% endif %}
-      {% endif %}
-    {% endfor %}
-
-    <!-- LAST PAGE -->
-    {% if companies.number < companies.paginator.num_pages|add:-2 %}
-      {% if companies.number < companies.paginator.num_pages|add:-3 %}
-      <li class="page-item disabled">
-        <span class="page-link">...</span>
-      </li>
-      {% endif %}
-
-      <li class="page-item">
-        <a class="page-link"
-           href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ companies.paginator.num_pages }}">
-          {{ companies.paginator.num_pages }}
-        </a>
-      </li>
-    {% endif %}
-
-    {% if companies.has_next %}
-      <li class="page-item">
-        <a class="page-link"
-           href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ companies.next_page_number }}">
-          Next
-        </a>
-      </li>
-    {% else %}
-      <li class="page-item disabled">
-        <span class="page-link">Next</span>
-      </li>
-    {% endif %}
-
-  </ul>
-</div>
-{% endif %}
+  <div id="companies-pagination">
+    {% include "dashboard/_companies_pagination.html" %}
+  </div>
 
 </div>
 
@@ -493,88 +395,78 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("add-company-btn")?.click();
   }
 
-  document.querySelectorAll(".view-company-btn").forEach(btn => {
-    btn.addEventListener("click", function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      var url = this.dataset.url;
-      console.log("View URL:", url);
-      fetch(url, { credentials: "same-origin" })
-        .then(function(res) {
-          console.log("View response status:", res.status);
-          if (!res.ok) throw new Error("HTTP " + res.status);
-          return res.json();
-        })
-        .then(function(data) {
-          console.log("View data:", data);
-          var c = data.company;
+  function populateCompanyModal(c, mode) {
+    idField.value = c.id;
+    if (tenantField) tenantField.value = c.tenant;
+    nameField.value = c.name;
+    regField.value = c.registration_id || "";
+    activeField.checked = c.is_active;
 
-          idField.value = c.id;
-          if (tenantField) tenantField.value = c.tenant;
-          nameField.value = c.name;
-          regField.value = c.registration_id || "";
-          activeField.checked = c.is_active;
+    document.getElementById("id_classification").value = c.classification || "";
+    document.getElementById("id_address_line1").value = c.address_line1 || "";
+    document.getElementById("id_address_line2").value = c.address_line2 || "";
+    document.getElementById("id_city").value = c.city || "";
+    document.getElementById("id_state").value = c.state || "";
+    document.getElementById("id_postal_code").value = c.postal_code || "";
+    document.getElementById("id_country").value = c.country || "";
+    document.getElementById("id_phone").value = c.phone || "";
+    document.getElementById("id_phone_secondary").value = c.phone_secondary || "";
+    document.getElementById("id_fax").value = c.fax || "";
+    document.getElementById("id_website").value = c.website || "";
 
-          document.getElementById("id_classification").value = c.classification || "";
-          document.getElementById("id_address_line1").value = c.address_line1 || "";
-          document.getElementById("id_address_line2").value = c.address_line2 || "";
-          document.getElementById("id_city").value = c.city || "";
-          document.getElementById("id_state").value = c.state || "";
-          document.getElementById("id_postal_code").value = c.postal_code || "";
-          document.getElementById("id_country").value = c.country || "";
-          document.getElementById("id_phone").value = c.phone || "";
-          document.getElementById("id_phone_secondary").value = c.phone_secondary || "";
-          document.getElementById("id_fax").value = c.fax || "";
-          document.getElementById("id_website").value = c.website || "";
+    title.innerText = mode === "view" ? "Company Details" : "Edit Company";
+    setReadonly(mode === "view");
+    modal.modal("show");
+  }
 
-          title.innerText = "Company Details";
-          setReadonly(true);
-          modal.modal('show');
-        })
-        .catch(function(err) { console.error("View error:", err); });
-    });
+  // Delegated so handlers survive AJAX-replaced rows.
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest(".view-company-btn, .edit-company-btn");
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var mode = btn.classList.contains("edit-company-btn") ? "edit" : "view";
+    fetch(btn.dataset.url, { credentials: "same-origin" })
+      .then(function (res) {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      })
+      .then(function (data) { populateCompanyModal(data.company, mode); })
+      .catch(function (err) { console.error(mode + " error:", err); });
   });
 
-  document.querySelectorAll(".edit-company-btn").forEach(btn => {
-    btn.addEventListener("click", function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      var url = this.dataset.url;
-      console.log("Edit URL:", url);
-      fetch(url, { credentials: "same-origin" })
-        .then(function(res) {
-          console.log("Edit response status:", res.status);
-          if (!res.ok) throw new Error("HTTP " + res.status);
-          return res.json();
-        })
-        .then(function(data) {
-          console.log("Edit data:", data);
-          var c = data.company;
+  // --- AJAX pagination ---
+  // Pagination links live in #companies-pagination. We fetch the same URL with
+  // X-Requested-With set; the server returns rendered HTML for the rows and
+  // pagination footer instead of the full page.
+  document.addEventListener("click", function (e) {
+    var link = e.target.closest("#companies-pagination .page-link");
+    if (!link) return;
+    var href = link.getAttribute("href");
+    if (!href || link.closest(".page-item.disabled") || link.closest(".page-item.active")) return;
 
-          idField.value = c.id;
-          if (tenantField) tenantField.value = c.tenant;
-          nameField.value = c.name;
-          regField.value = c.registration_id || "";
-          activeField.checked = c.is_active;
+    e.preventDefault();
+    var fullUrl = new URL(href, window.location.href).toString();
 
-          document.getElementById("id_classification").value = c.classification || "";
-          document.getElementById("id_address_line1").value = c.address_line1 || "";
-          document.getElementById("id_address_line2").value = c.address_line2 || "";
-          document.getElementById("id_city").value = c.city || "";
-          document.getElementById("id_state").value = c.state || "";
-          document.getElementById("id_postal_code").value = c.postal_code || "";
-          document.getElementById("id_country").value = c.country || "";
-          document.getElementById("id_phone").value = c.phone || "";
-          document.getElementById("id_phone_secondary").value = c.phone_secondary || "";
-          document.getElementById("id_fax").value = c.fax || "";
-          document.getElementById("id_website").value = c.website || "";
-
-          title.innerText = "Edit Company";
-          setReadonly(false);
-          modal.modal('show');
-        })
-        .catch(function(err) { console.error("Edit error:", err); });
-    });
+    fetch(fullUrl, {
+      headers: { "X-Requested-With": "XMLHttpRequest", "Accept": "application/json" },
+      credentials: "same-origin",
+    })
+      .then(function (res) {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        var tbody = document.getElementById("companies-tbody");
+        var pag = document.getElementById("companies-pagination");
+        if (tbody && typeof data.rows_html === "string") tbody.innerHTML = data.rows_html;
+        if (pag && typeof data.pagination_html === "string") pag.innerHTML = data.pagination_html;
+        window.history.pushState({}, "", fullUrl);
+      })
+      .catch(function (err) {
+        console.error("Pagination fetch failed:", err);
+        window.location.href = fullUrl;
+      });
   });
 
   editBtn?.addEventListener("click", function () {

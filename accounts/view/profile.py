@@ -3,16 +3,26 @@ import re
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.http import JsonResponse
 from accounts.models import Tenant, Company, UserCompany
 from accounts.constants import CompanyClassificationChoices, CountryChoices
+
+CLASSIFICATION_CODES = {code for code, _ in CompanyClassificationChoices.CHOICES}
 from billing.utils import get_user_plan, get_active_subscription
 
-# First / last name: 1-50 chars, letters (incl. accented) + spaces/hyphens/apostrophes/periods.
-NAME_RE = re.compile(r"^[A-Za-zÀ-ɏ][A-Za-zÀ-ɏ\s'\-.]{0,49}$")
+
+def _is_ajax(request):
+    return request.headers.get("X-Requested-With") == "XMLHttpRequest"
+
+# First / last name: 2-50 chars, letters (incl. accented) + spaces/hyphens/apostrophes/periods.
+NAME_RE = re.compile(r"^[A-Za-zÀ-ɏ][A-Za-zÀ-ɏ\s'\-.]{1,49}$")
 COUNTRY_CODES = {code for code, _ in CountryChoices.CHOICES}
 
 # 2-100 chars, letters (incl. accented) / digits / spaces / & ' . , - ( ) only, must contain at least one letter.
 COMPANY_NAME_RE = re.compile(r"^(?=.*[A-Za-z\u00C0-\u024F])[A-Za-z\u00C0-\u024F0-9&'.,\-()\s]{2,100}$")
+
+# Company registration ID: 2-100 chars, letters/digits and - / . _ only.
+REGISTRATION_ID_RE = re.compile(r"^(?=.*[A-Za-z0-9])[A-Za-z0-9\-/._]{2,100}$")
 
 # Domain: 4-253 chars, ASCII labels separated by dots, TLD of 2+ letters (e.g. mycompany.com).
 DOMAIN_RE = re.compile(
@@ -38,6 +48,13 @@ PHONE_CHARSET_RE = re.compile(r"^[\d+\-\s()]{7,25}$")
 # City and Country: letters, spaces, hyphens, apostrophes (plus periods for city).
 CITY_NAME_RE = re.compile(r"^[A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F\s'\-.]{1,59}$")
 COUNTRY_NAME_RE = re.compile(r"^[A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F\s'\-]{1,59}$")
+STATE_NAME_RE = COUNTRY_NAME_RE
+
+# Address line: letters/digits/spaces and the explicit allowlist , . - / #; 3-120 chars.
+ADDRESS_LINE_RE = re.compile(r"^(?=.*[A-Za-z0-9])[A-Za-z\u00C0-\u024F0-9\s,./#\-]{3,120}$")
+
+# Postal code: alphanumerics with optional spaces/hyphens (US/UK/CA/etc.); 3-12 chars.
+POSTAL_CODE_RE = re.compile(r"^(?=.*[A-Za-z0-9])[A-Za-z0-9\s\-]{3,12}$")
 
 
 @login_required
@@ -50,30 +67,33 @@ def profile_view(request):
 
         # ---- Edit personal profile (available to all users / all plans) ----
         if form_type == "edit_profile":
+            ajax = _is_ajax(request)
+
+            def _fail(msg):
+                if ajax:
+                    return JsonResponse({"ok": False, "message": msg}, status=400)
+                messages.error(request, msg)
+                return redirect("profile")
+
             first_name = request.POST.get("first_name", "").strip()
             last_name = request.POST.get("last_name", "").strip()
             phone = request.POST.get("phone", "").strip()
             country = request.POST.get("country", "").strip().upper()
 
             if not first_name or not NAME_RE.match(first_name):
-                messages.error(request, "Enter a valid first name (letters, spaces, hyphens, apostrophes; up to 50 characters).")
-                return redirect("profile")
+                return _fail("Enter a valid first name (2-50 characters; letters, spaces, hyphens, apostrophes).")
             if not last_name or not NAME_RE.match(last_name):
-                messages.error(request, "Enter a valid last name (letters, spaces, hyphens, apostrophes; up to 50 characters).")
-                return redirect("profile")
+                return _fail("Enter a valid last name (2-50 characters; letters, spaces, hyphens, apostrophes).")
 
             if phone:
                 if not PHONE_CHARSET_RE.match(phone):
-                    messages.error(request, "Phone may only contain digits and the symbols + - ( ) and spaces (7-25 characters).")
-                    return redirect("profile")
+                    return _fail("Phone may only contain digits and the symbols + - ( ) and spaces (7-25 characters).")
                 digits = re.sub(r"\D", "", phone)
                 if not (5 <= len(digits) <= 15):
-                    messages.error(request, "Phone must contain 5-15 digits.")
-                    return redirect("profile")
+                    return _fail("Phone must contain 5-15 digits.")
 
             if country and country not in COUNTRY_CODES:
-                messages.error(request, "Please select a valid country from the list.")
-                return redirect("profile")
+                return _fail("Please select a valid country from the list.")
 
             user.first_name = first_name
             user.last_name = last_name
@@ -81,16 +101,35 @@ def profile_view(request):
             user.country = country or None
             user.save(update_fields=["first_name", "last_name", "phone", "country", "updated_at"])
 
+            if ajax:
+                return JsonResponse({
+                    "ok": True,
+                    "message": "Profile updated successfully.",
+                    "user": {
+                        "first_name": user.first_name,
+                        "last_name": user.last_name,
+                        "phone": user.phone or "",
+                        "country": user.country or "",
+                    },
+                })
+
             messages.success(request, "Profile updated successfully.")
             return redirect("profile")
 
         # Company creation from profile
         company_name = request.POST.get("company_name", "").strip()
+        registration_id = request.POST.get("registration_id", "").strip()
         domain = request.POST.get("domain", "").strip()
-        classification = request.POST.get("classification", "")
+        classification = request.POST.get("classification", "").strip()
         website = request.POST.get("website", "").strip()
         phone = request.POST.get("company_phone", "").strip()
+        phone_secondary = request.POST.get("phone_secondary", "").strip()
+        fax = request.POST.get("fax", "").strip()
+        address_line1 = request.POST.get("address_line1", "").strip()
+        address_line2 = request.POST.get("address_line2", "").strip()
         city = request.POST.get("city", "").strip()
+        state = request.POST.get("state", "").strip()
+        postal_code = request.POST.get("postal_code", "").strip()
         country = request.POST.get("company_country", "").strip()
 
         if not company_name:
@@ -106,6 +145,24 @@ def profile_view(request):
 
         if Company.objects.filter(name__iexact=company_name).exists():
             messages.error(request, "A company with this name already exists. Please choose a different name.")
+            return redirect("profile")
+
+        if not registration_id:
+            messages.error(request, "Registration No. is required.")
+            return redirect("profile")
+
+        if not REGISTRATION_ID_RE.match(registration_id):
+            messages.error(
+                request,
+                "Registration No. may only contain letters, digits, and the symbols - / . _ (2-100 characters).",
+            )
+            return redirect("profile")
+
+        if Company.objects.filter(registration_id__iexact=registration_id).exists():
+            messages.error(
+                request,
+                "A company with this Registration No. already exists. Registration No. must be unique.",
+            )
             return redirect("profile")
 
         if not domain:
@@ -125,6 +182,14 @@ def profile_view(request):
             messages.error(request, "This domain is already taken.")
             return redirect("profile")
 
+        if not classification:
+            messages.error(request, "Classification is required.")
+            return redirect("profile")
+
+        if classification not in CLASSIFICATION_CODES:
+            messages.error(request, "Please select a valid classification from the list.")
+            return redirect("profile")
+
         if website and not WEBSITE_URL_RE.match(website):
             messages.error(
                 request,
@@ -132,26 +197,80 @@ def profile_view(request):
             )
             return redirect("profile")
 
-        if phone:
-            if not PHONE_CHARSET_RE.match(phone):
-                messages.error(
-                    request,
-                    "Phone may only contain digits and the symbols + - ( ) and spaces (7-25 characters).",
-                )
-                return redirect("profile")
-            digits = re.sub(r"\D", "", phone)
+        def _validate_phone_like(value, label):
+            if not PHONE_CHARSET_RE.match(value):
+                return f"{label} may only contain digits and the symbols + - ( ) and spaces (7-25 characters)."
+            digits = re.sub(r"\D", "", value)
             if not (5 <= len(digits) <= 15):
-                messages.error(request, "Phone must contain 5-15 digits.")
+                return f"{label} must contain 5-15 digits."
+            return None
+
+        if phone:
+            err = _validate_phone_like(phone, "Phone")
+            if err:
+                messages.error(request, err)
                 return redirect("profile")
 
-        if city and not CITY_NAME_RE.match(city):
+        if phone_secondary:
+            err = _validate_phone_like(phone_secondary, "Secondary phone")
+            if err:
+                messages.error(request, err)
+                return redirect("profile")
+
+        if fax:
+            err = _validate_phone_like(fax, "Fax")
+            if err:
+                messages.error(request, err)
+                return redirect("profile")
+
+        if address_line1 and not ADDRESS_LINE_RE.match(address_line1):
+            messages.error(
+                request,
+                "Address line 1 may only contain letters, digits, spaces and the symbols , . - / # (3-120 characters).",
+            )
+            return redirect("profile")
+
+        if address_line2 and not ADDRESS_LINE_RE.match(address_line2):
+            messages.error(
+                request,
+                "Address line 2 may only contain letters, digits, spaces and the symbols , . - / # (3-120 characters).",
+            )
+            return redirect("profile")
+
+        if not city:
+            messages.error(request, "City is required.")
+            return redirect("profile")
+
+        if not CITY_NAME_RE.match(city):
             messages.error(
                 request,
                 "City may only contain letters, spaces, hyphens, apostrophes and periods (2-60 characters).",
             )
             return redirect("profile")
 
-        if country and not COUNTRY_NAME_RE.match(country):
+        if not state:
+            messages.error(request, "State is required.")
+            return redirect("profile")
+
+        if not STATE_NAME_RE.match(state):
+            messages.error(
+                request,
+                "State may only contain letters, spaces, hyphens and apostrophes (2-60 characters).",
+            )
+            return redirect("profile")
+
+        if postal_code and not POSTAL_CODE_RE.match(postal_code):
+            messages.error(
+                request,
+                "Postal code may only contain letters, digits, spaces and hyphens (3-12 characters).",
+            )
+            return redirect("profile")
+
+        if not country:
+            messages.error(request, "Country is required.")
+            return redirect("profile")
+
+        if not COUNTRY_NAME_RE.match(country):
             messages.error(
                 request,
                 "Country may only contain letters, spaces, hyphens and apostrophes (2-60 characters).",
@@ -168,10 +287,17 @@ def profile_view(request):
         company = Company.objects.create(
             tenant=tenant,
             name=company_name,
+            registration_id=registration_id,
             classification=classification or None,
             website=website or None,
             phone=phone or None,
+            phone_secondary=phone_secondary or None,
+            fax=fax or None,
+            address_line1=address_line1 or None,
+            address_line2=address_line2 or None,
             city=city or None,
+            state=state or None,
+            postal_code=postal_code or None,
             country=country or None,
             owner_user=user,
         )
