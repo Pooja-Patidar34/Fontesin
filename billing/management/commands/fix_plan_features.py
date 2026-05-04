@@ -73,12 +73,24 @@ class Command(BaseCommand):
 
 def _normalize_feature(feat):
     """Return a canonical {included, text} dict, or None if unparseable."""
-    # Already canonical.
+    # Dict shape: could be canonical, or doubly-corrupted (a canonical wrapper
+    # whose `text` field itself holds the repr string of the original dict —
+    # this happens when the admin Edit Plan textarea pre-filled with a dict
+    # repr and the save handler re-wrapped that whole repr as the new `text`).
     if isinstance(feat, dict) and "text" in feat:
-        return {
-            "included": bool(feat.get("included", True)),
-            "text": str(feat.get("text", "")),
-        }
+        text = str(feat.get("text", "")).strip()
+        included = bool(feat.get("included", True))
+        if text.startswith("{") and text.endswith("}"):
+            try:
+                parsed = ast.literal_eval(text)
+            except (ValueError, SyntaxError):
+                parsed = None
+            if isinstance(parsed, dict) and "text" in parsed:
+                return {
+                    "included": bool(parsed.get("included", True)),
+                    "text": str(parsed.get("text", "")),
+                }
+        return {"included": included, "text": text}
 
     # Plain string — could be a label or a Python-repr of a dict.
     if isinstance(feat, str):
