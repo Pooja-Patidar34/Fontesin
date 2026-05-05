@@ -120,15 +120,21 @@ def admin_login(request):
         if role_code in non_subscribing:
             return redirect("dashboard")
 
-        # Check subscription status for business users
+        # Subscription status for business users.
+        # A pending paid sub no longer blocks login — users get into the
+        # dashboard with their current active (Free) plan and the pending
+        # upgrade is surfaced as a "Pending" status on their profile until
+        # the admin approves. Only redirect to membership if the user has
+        # no active sub at all (and no pending one — select_plan now
+        # auto-creates a Free active sub for paid signups so this branch
+        # only fires for users who haven't visited membership yet).
         from billing.models import Subscription
-        pending_sub = Subscription.objects.filter(user=user, status="created").first()
-        if pending_sub:
-            messages.info(request, "Your subscription is pending admin approval. You will be able to access the dashboard once approved.")
-            return render(request, "auth/pending_approval.html", {"subscription": pending_sub})
-
         active_sub = Subscription.objects.filter(user=user, status="active").first()
         if active_sub:
+            return redirect("dashboard")
+
+        pending_sub = Subscription.objects.filter(user=user, status="created").first()
+        if pending_sub:
             return redirect("dashboard")
 
         return redirect("membership")

@@ -7,11 +7,30 @@ from billing.models import Subscription, CommercialPlan
 
 
 def get_active_subscription(user):
-    """Get the user's current active/trial/created subscription."""
+    """Get the user's currently *active* subscription.
+
+    Pending ("created") subs are deliberately excluded — those represent
+    a paid upgrade that hasn't been admin-approved yet, and the user's
+    real plan / feature set is whatever active sub they have today (Free
+    while waiting). The pending sub is surfaced separately via
+    `get_pending_subscription` for UI that needs to show the upgrade
+    request status.
+    """
     return (
         Subscription.objects
-        .filter(user=user, status__in=["active", "trial", "created"])
+        .filter(user=user, status__in=["active", "trial"])
         .select_related("plan")
+        .first()
+    )
+
+
+def get_pending_subscription(user):
+    """Return the user's pending (admin-approval-awaiting) subscription, if any."""
+    return (
+        Subscription.objects
+        .filter(user=user, status="created")
+        .select_related("plan")
+        .order_by("-created_at")
         .first()
     )
 

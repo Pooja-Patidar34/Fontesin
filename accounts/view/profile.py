@@ -8,7 +8,7 @@ from accounts.models import Tenant, Company, UserCompany
 from accounts.constants import CompanyClassificationChoices, CountryChoices
 
 CLASSIFICATION_CODES = {code for code, _ in CompanyClassificationChoices.CHOICES}
-from billing.utils import get_user_plan, get_active_subscription
+from billing.utils import get_user_plan, get_active_subscription, get_pending_subscription
 
 
 def _is_ajax(request):
@@ -338,5 +338,6 @@ def profile_view(request):
         "countries": CountryChoices.CHOICES,
         "user_plan": get_user_plan(user),
         "subscription": get_active_subscription(user),
+        "pending_subscription": get_pending_subscription(user),
     }
     return render(request, "profile/profile.html", context)

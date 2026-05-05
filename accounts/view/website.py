@@ -138,7 +138,32 @@ def select_plan(request):
     # Free plan needs no admin approval — activate immediately.
     subscription_status = "active" if plan.code == "free" else "created"
 
-    # Create subscription
+    # If the user is buying a paid plan and doesn't have any active sub yet
+    # (e.g. fresh signup straight to a paid tier), spin up a Free active sub
+    # alongside the pending paid sub. This is what lets the user log into the
+    # dashboard with Free-tier access while the paid upgrade is awaiting
+    # admin approval — without it, they'd land back on /membership/ on next
+    # login because there's no `status="active"` row to gate them through.
+    if subscription_status == "created":
+        has_active = Subscription.objects.filter(user=user, status="active").exists()
+        if not has_active:
+            free_plan = (
+                CommercialPlan.objects
+                .filter(code="free", is_active=True)
+                .first()
+            )
+            if free_plan:
+                Subscription.objects.create(
+                    user=user,
+                    plan=free_plan,
+                    status="active",
+                    start_date=now,
+                    end_date=now + relativedelta(years=1),
+                )
+                user.subscription_plan = "free"
+                user.save(update_fields=["subscription_plan"])
+
+    # Create the requested subscription (free → active immediately, paid → created).
     subscription = Subscription.objects.create(
         user=user,
         plan=plan,
@@ -147,10 +172,10 @@ def select_plan(request):
         end_date=end_date,
     )
 
-    # Only sync User.subscription_plan when the subscription is *active* now
-    # (free path). For paid upgrades the sub starts as "created" — deferring
-    # the write keeps User.subscription_plan in step with the actually-live
-    # plan until the admin approves and `payment_approve` flips it.
+    # Only sync User.subscription_plan when *this* sub is active now (free path).
+    # For paid upgrades the sub starts as "created" — deferring the write keeps
+    # User.subscription_plan in step with the actually-live plan until the admin
+    # approves and `payment_approve` flips it.
     if subscription_status == "active":
         user.subscription_plan = plan.code
         user.save(update_fields=["subscription_plan"])
