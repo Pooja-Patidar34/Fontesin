@@ -89,28 +89,67 @@
       {% if not is_basic_plan %}
 
       {% if can_manage %}
-      <button class="dropdown-item edit-company-btn"
-              data-url="{% url 'company-detail' company.id %}">
-        <i class="fas fa-edit mr-2"></i> Edit
-      </button>
+      {% if is_pro_plan or is_global_plan %}
+        {% if company.id in accepted_ids %}
+        <button class="dropdown-item edit-company-btn"
+                data-url="{% url 'company-detail' company.id %}">
+          <i class="fas fa-edit mr-2"></i> Edit
+        </button>
+        {% elif company.id in pending_ids %}
+        <button type="button" class="dropdown-item"
+                style="opacity:.45; cursor: not-allowed;" disabled
+                title="Waiting for the company owner to accept your connection request before you can edit.">
+          <i class="fas fa-edit mr-2"></i> Edit
+        </button>
+        {% else %}
+        <button type="button" class="dropdown-item"
+                style="opacity:.45; cursor: not-allowed;" disabled
+                title="Send a connection request and wait for approval to edit this company.">
+          <i class="fas fa-edit mr-2"></i> Edit
+        </button>
+        {% endif %}
+      {% else %}
+        <button class="dropdown-item edit-company-btn"
+                data-url="{% url 'company-detail' company.id %}">
+          <i class="fas fa-edit mr-2"></i> Edit
+        </button>
+      {% endif %}
       {% endif %}
 
-      {# Deactivate/Activate + Delete — hidden on free and pro plans. Delete also hidden on global. #}
+      {# Deactivate/Activate — hidden on free and pro plans. Global gets the same accepted-partnership gate as Edit. #}
       {% if not is_free_plan and not is_pro_plan %}
 
       <div class="dropdown-divider"></div>
 
       {% if can_manage %}
-        {% if company.is_active %}
-          <a class="dropdown-item text-warning"
-            href="{% url 'company-toggle' company.id %}">
-            <i class="fas fa-ban mr-2"></i> Deactivate
-          </a>
+        {% if is_global_plan and company.id not in accepted_ids %}
+          {% if company.id in pending_ids %}
+          <button type="button" class="dropdown-item"
+                  style="opacity:.45; cursor: not-allowed;" disabled
+                  title="Waiting for the company owner to accept your connection request before you can change activation status.">
+            <i class="fas fa-ban mr-2"></i>
+            {% if company.is_active %}Deactivate{% else %}Activate{% endif %}
+          </button>
+          {% else %}
+          <button type="button" class="dropdown-item"
+                  style="opacity:.45; cursor: not-allowed;" disabled
+                  title="Send a connection request and wait for approval to change this company's activation status.">
+            <i class="fas fa-ban mr-2"></i>
+            {% if company.is_active %}Deactivate{% else %}Activate{% endif %}
+          </button>
+          {% endif %}
         {% else %}
-          <a class="dropdown-item text-success"
-            href="{% url 'company-toggle' company.id %}">
-            <i class="fas fa-check mr-2"></i> Activate
-          </a>
+          {% if company.is_active %}
+            <a class="dropdown-item text-warning"
+              href="{% url 'company-toggle' company.id %}">
+              <i class="fas fa-ban mr-2"></i> Deactivate
+            </a>
+          {% else %}
+            <a class="dropdown-item text-success"
+              href="{% url 'company-toggle' company.id %}">
+              <i class="fas fa-check mr-2"></i> Activate
+            </a>
+          {% endif %}
         {% endif %}
       {% endif %}
 

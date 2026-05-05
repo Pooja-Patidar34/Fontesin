@@ -562,13 +562,30 @@ def toggle_company(request, company_id):
     if not has_permission(request.user, "company.manage"):
         raise PermissionDenied()
 
+    role_name = (request.user.role.name or "").lower() if request.user.role else ""
+
     if request.user.is_superuser:
         company = get_object_or_404(Company, id=company_id)
-    else:
+    elif role_name == "tenant_admin":
         company = get_object_or_404(
             Company,
             id=company_id,
             tenant=request.user.tenant,
+        )
+    else:
+        # Match the edit-path scoping (linkage-based, cross-tenant). Global /
+        # Pro business users can toggle a partner company once the owner has
+        # approved the connection — that approval adds the UserCompany row
+        # picked up by `usercompany__user`.
+        company = get_object_or_404(
+            Company.objects.filter(
+                Q(tenant=request.user.tenant)
+                | Q(consultant=request.user)
+                | Q(owner_user=request.user)
+                | Q(primary_users=request.user)
+                | Q(usercompany__user=request.user)
+            ).distinct(),
+            id=company_id,
         )
 
     old_status = company.is_active
@@ -624,14 +641,39 @@ def company_detail_ajax(request, company_id):
         # company from any tenant. `usercompany__user` covers approved
         # partnership connections so the requester can View the company
         # data once the owner approves.
+        scope_q = (
+            Q(tenant=request.user.tenant)
+            | Q(consultant=request.user)
+            | Q(owner_user=request.user)
+            | Q(primary_users=request.user)
+            | Q(usercompany__user=request.user)
+        )
+
+        # Mirror the list view's regional discovery scope so paid business
+        # users (basic / pro / global) can View any company they can see in
+        # the list, not just ones they've already linked to. Without this,
+        # the list shows cross-tenant companies but the detail endpoint
+        # 404s and the View click silently fails in the browser.
+        plan_code = _plan_code_for_business_user(request.user)
+        if plan_code == "global":
+            scope_q = scope_q | Q(is_active=True)
+        elif plan_code in ("basic", "pro"):
+            user_country = (request.user.country or "").strip().upper()
+            if user_country:
+                if plan_code == "pro":
+                    region = _region_for_country(user_country)
+                    scope_codes = PLAN_REGIONS.get(region, []) if region else []
+                else:
+                    scope_codes = [user_country]
+
+                if scope_codes:
+                    region_q = Q()
+                    for code in scope_codes:
+                        region_q |= _country_match_q(code)
+                    scope_q = scope_q | (region_q & Q(is_active=True))
+
         company = get_object_or_404(
-            Company.objects.filter(
-                Q(tenant=request.user.tenant)
-                | Q(consultant=request.user)
-                | Q(owner_user=request.user)
-                | Q(primary_users=request.user)
-                | Q(usercompany__user=request.user)
-            ).distinct(),
+            Company.objects.filter(scope_q).distinct(),
             id=company_id,
         )
 
