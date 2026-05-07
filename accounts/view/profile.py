@@ -5,9 +5,14 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.http import JsonResponse
 from accounts.models import Tenant, Company, UserCompany
-from accounts.constants import CompanyClassificationChoices, CountryChoices
+from accounts.constants import (
+    CompanyClassificationChoices,
+    CountryChoices,
+    COUNTRY_STATES,
+)
 
 CLASSIFICATION_CODES = {code for code, _ in CompanyClassificationChoices.CHOICES}
+COUNTRY_LABELS = dict(CountryChoices.CHOICES)
 from billing.utils import get_user_plan, get_active_subscription, get_pending_subscription
 
 
@@ -134,6 +139,27 @@ def profile_view(request):
         state = request.POST.get("state", "").strip()
         postal_code = request.POST.get("postal_code", "").strip()
         country = request.POST.get("company_country", "").strip()
+
+        # Stash the cleaned values so a validation-failure redirect can
+        # repopulate the form on the next GET — losing every field on a
+        # single duplicate-domain (or any other) error is hostile UX. The
+        # session entry is consumed and removed by the GET branch below.
+        request.session["create_company_form"] = {
+            "company_name": company_name,
+            "registration_id": registration_id,
+            "domain": domain,
+            "classification": classification,
+            "website": website,
+            "company_phone": phone,
+            "phone_secondary": phone_secondary,
+            "fax": fax,
+            "address_line1": address_line1,
+            "address_line2": address_line2,
+            "city": city,
+            "state": state,
+            "postal_code": postal_code,
+            "company_country": country,
+        }
 
         if not company_name:
             messages.error(request, "Company name is required.")
@@ -263,14 +289,29 @@ def profile_view(request):
             )
             return redirect("profile")
 
+        # Country comes from the dropdown as an ISO-3166 alpha-2 code (e.g. "US").
+        # State must be one of the known subdivisions for that country — both
+        # selects are populated from the same map the server uses, so the only
+        # way to get a value outside the map is a tampered request.
+        if not country:
+            messages.error(request, "Country is required.")
+            return redirect("profile")
+
+        country_code = country.upper()
+        if country_code not in COUNTRY_LABELS:
+            messages.error(request, "Please select a valid country from the list.")
+            return redirect("profile")
+        country = country_code
+
+        valid_states = COUNTRY_STATES.get(country_code, [])
         if not state:
             messages.error(request, "State is required.")
             return redirect("profile")
 
-        if not STATE_NAME_RE.match(state):
+        if valid_states and state not in valid_states:
             messages.error(
                 request,
-                "State may only contain letters, spaces, hyphens and apostrophes (2-60 characters).",
+                "Please select a valid state for the chosen country.",
             )
             return redirect("profile")
 
@@ -278,17 +319,6 @@ def profile_view(request):
             messages.error(
                 request,
                 "Postal code may only contain letters, digits, spaces and hyphens (3-12 characters).",
-            )
-            return redirect("profile")
-
-        if not country:
-            messages.error(request, "Country is required.")
-            return redirect("profile")
-
-        if not COUNTRY_NAME_RE.match(country):
-            messages.error(
-                request,
-                "Country may only contain letters, spaces, hyphens and apostrophes (2-60 characters).",
             )
             return redirect("profile")
 
@@ -328,6 +358,7 @@ def profile_view(request):
             defaults={"is_primary": True},
         )
 
+        request.session.pop("create_company_form", None)
         messages.success(request, "Company created successfully!")
         return redirect("profile")
 
@@ -336,8 +367,13 @@ def profile_view(request):
         "user_company": user_company,
         "classifications": CompanyClassificationChoices.CHOICES,
         "countries": CountryChoices.CHOICES,
+        "country_states": COUNTRY_STATES,
         "user_plan": get_user_plan(user),
         "subscription": get_active_subscription(user),
         "pending_subscription": get_pending_subscription(user),
+        # Pop-and-render: the previous POST stashed cleaned values here on a
+        # validation-failure redirect; consuming them now means a manual page
+        # refresh starts with a blank form again.
+        "create_company_form": request.session.pop("create_company_form", None),
     }
     return render(request, "profile/profile.html", context)

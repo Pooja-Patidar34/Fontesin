@@ -261,19 +261,19 @@
               {{ form.city }}
             </div>
             <div class="form-group col-md-6">
-              <label>State <span class="text-danger">*</span></label>
-              {{ form.state }}
+              <label>Country <span class="text-danger">*</span></label>
+              {{ form.country }}
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label>Postal Code</label>
-              {{ form.postal_code }}
+              <label>State <span class="text-danger">*</span></label>
+              {{ form.state }}
             </div>
             <div class="form-group col-md-6">
-              <label>Country <span class="text-danger">*</span></label>
-              {{ form.country }}
+              <label>Postal Code</label>
+              {{ form.postal_code }}
             </div>
           </div>
 
@@ -326,6 +326,49 @@
 </div>
 
 <!-- ================= JS (UNCHANGED LOGIC, ONLY ADDITIONS) ================= -->
+
+{% comment %}
+  Country → state map, indexed client-side when the user picks a country
+  in the Add / Edit Company modal.
+{% endcomment %}
+{{ country_states|json_script:"company-country-states" }}
+
+<script>
+// Country / State dependent dropdown wiring for the company modal. State
+// options are blank on first render; whenever the country changes (either
+// by user input or via the populateCompanyModal trigger for Edit/View),
+// we rebuild the State <select> from COUNTRY_STATES[country].
+document.addEventListener("DOMContentLoaded", function () {
+  const dataNode = document.getElementById("company-country-states");
+  const countryStates = dataNode ? JSON.parse(dataNode.textContent) : {};
+  const countrySel = document.getElementById("id_country");
+  const stateSel = document.getElementById("id_state");
+  if (!countrySel || !stateSel) return;
+
+  function rebuildStateOptions(countryCode, preserveValue) {
+    const options = (countryCode && countryStates[countryCode]) || [];
+    const currentValue = preserveValue != null ? preserveValue : stateSel.value;
+    if (!options.length) {
+      stateSel.innerHTML = '<option value="">Select State</option>';
+      stateSel.disabled = true;
+      return;
+    }
+    let html = '<option value="">Select State</option>';
+    options.forEach(function (name) {
+      const sel = name === currentValue ? " selected" : "";
+      html += '<option value="' + name + '"' + sel + '>' + name + '</option>';
+    });
+    stateSel.innerHTML = html;
+    stateSel.disabled = false;
+  }
+
+  rebuildStateOptions(countrySel.value);
+  countrySel.addEventListener("change", function () {
+    rebuildStateOptions(countrySel.value, "");
+  });
+});
+</script>
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -406,9 +449,21 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("id_address_line1").value = c.address_line1 || "";
     document.getElementById("id_address_line2").value = c.address_line2 || "";
     document.getElementById("id_city").value = c.city || "";
-    document.getElementById("id_state").value = c.state || "";
     document.getElementById("id_postal_code").value = c.postal_code || "";
-    document.getElementById("id_country").value = c.country || "";
+
+    // Country / State are dependent dropdowns — set country first so the
+    // change-listener can populate the matching state options before we
+    // try to assign the saved state value.
+    const countryField = document.getElementById("id_country");
+    const stateField = document.getElementById("id_state");
+    if (countryField) {
+      countryField.value = c.country || "";
+      // Direct .value= doesn't fire 'change'; trigger it manually so the
+      // state dropdown is rebuilt for the loaded country.
+      countryField.dispatchEvent(new Event("change"));
+    }
+    if (stateField) stateField.value = c.state || "";
+
     document.getElementById("id_phone").value = c.phone || "";
     document.getElementById("id_phone_secondary").value = c.phone_secondary || "";
     document.getElementById("id_fax").value = c.fax || "";

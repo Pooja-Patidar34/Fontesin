@@ -2,13 +2,22 @@
 
   {% if is_free_plan %}
   <td>
-    {% with owner=company.owner_user %}
-      {% if owner %}
-        <strong>{{ owner.first_name }} {{ owner.last_name }}</strong>
-      {% else %}
-        —
-      {% endif %}
-    {% endwith %}
+    {% comment %}
+      Free plan only shows companies the current user is linked to (owner,
+      consultant, primary_users, or partnership). owner_user can be blank for
+      rows imported / created before that field was wired up — fall back to
+      the consultant, and finally the current user, so the column is never
+      empty for a row the user is genuinely associated with.
+    {% endcomment %}
+    {% if company.owner_user %}
+      <strong>{{ company.owner_user.first_name }} {{ company.owner_user.last_name }}</strong>
+    {% elif company.consultant %}
+      <strong>{{ company.consultant.first_name }} {{ company.consultant.last_name }}</strong>
+    {% elif request.user.first_name or request.user.last_name %}
+      <strong>{{ request.user.first_name }} {{ request.user.last_name }}</strong>
+    {% else %}
+      <strong>{{ request.user.email }}</strong>
+    {% endif %}
   </td>
   <td class="text-muted">{{ company.name|default:"—" }}</td>
   {% else %}
@@ -42,8 +51,59 @@
 
     <div class="dropdown-menu dropdown-menu-right">
 
+      {% if company.owner_user_id == request.user.id %}
+
+        {% comment %}
+          Owner override — the company owner always gets the full management
+          set (View / Edit / Activate-Deactivate / Delete) on their own
+          company, regardless of plan. Plan limits below only apply to other
+          users acting on companies they don't own.
+        {% endcomment %}
+
+        {% if can_view %}
+        <button class="dropdown-item view-company-btn"
+                data-url="{% url 'company-detail' company.id %}">
+          <i class="fas fa-eye mr-2"></i> View
+        </button>
+        {% endif %}
+
+        {% if can_manage %}
+        <button class="dropdown-item edit-company-btn"
+                data-url="{% url 'company-detail' company.id %}">
+          <i class="fas fa-edit mr-2"></i> Edit
+        </button>
+
+        <div class="dropdown-divider"></div>
+
+        {% if company.is_active %}
+        <a class="dropdown-item text-warning"
+           href="{% url 'company-toggle' company.id %}">
+          <i class="fas fa-ban mr-2"></i> Deactivate
+        </a>
+        {% else %}
+        <a class="dropdown-item text-success"
+           href="{% url 'company-toggle' company.id %}">
+          <i class="fas fa-check mr-2"></i> Activate
+        </a>
+        {% endif %}
+
+        <div class="dropdown-divider"></div>
+
+        <form method="post"
+              action="{% url 'company-delete' company.id %}"
+              id="company-delete-form-{{ company.id }}">
+          {% csrf_token %}
+          <button type="button" class="dropdown-item text-danger"
+                  onclick="appConfirm({kind:'danger', title:'Delete Company?', text:'Are you sure you want to permanently delete this company? This action cannot be undone.', okLabel:'Delete', okIcon:'fa-trash', onConfirm:function(){document.getElementById('company-delete-form-{{ company.id }}').submit();}})">
+            <i class="fas fa-trash mr-2"></i> Delete
+          </button>
+        </form>
+        {% endif %}
+
+      {% else %}
+
       {% if can_view %}
-        {% if is_basic_business_user %}
+        {% if is_basic_or_pro_business_user %}
           {% if company.id in viewable_ids %}
           <button class="dropdown-item view-company-btn text-success"
                   data-url="{% url 'company-detail' company.id %}">
@@ -64,7 +124,7 @@
         {% endif %}
       {% endif %}
 
-      {# Connect — visible for basic, pro, and global business users #}
+      {# Connect — visible for basic, pro, and global business users on companies they don't own. #}
       {% if is_basic_or_pro_business_user %}
         {% if company.id in accepted_ids %}
         <button type="button" class="dropdown-item text-success" disabled>
@@ -88,68 +148,29 @@
       {# Basic plan: only View + Connect are allowed. Edit and below are hidden for basic. #}
       {% if not is_basic_plan %}
 
-      {% if can_manage %}
-      {% if is_pro_plan or is_global_plan %}
-        {% if company.id in accepted_ids %}
+      {% if can_manage and not is_pro_plan and not is_global_plan %}
         <button class="dropdown-item edit-company-btn"
                 data-url="{% url 'company-detail' company.id %}">
           <i class="fas fa-edit mr-2"></i> Edit
         </button>
-        {% elif company.id in pending_ids %}
-        <button type="button" class="dropdown-item"
-                style="opacity:.45; cursor: not-allowed;" disabled
-                title="Waiting for the company owner to accept your connection request before you can edit.">
-          <i class="fas fa-edit mr-2"></i> Edit
-        </button>
-        {% else %}
-        <button type="button" class="dropdown-item"
-                style="opacity:.45; cursor: not-allowed;" disabled
-                title="Send a connection request and wait for approval to edit this company.">
-          <i class="fas fa-edit mr-2"></i> Edit
-        </button>
-        {% endif %}
-      {% else %}
-        <button class="dropdown-item edit-company-btn"
-                data-url="{% url 'company-detail' company.id %}">
-          <i class="fas fa-edit mr-2"></i> Edit
-        </button>
-      {% endif %}
       {% endif %}
 
-      {# Deactivate/Activate — hidden on free and pro plans. Global gets the same accepted-partnership gate as Edit. #}
-      {% if not is_free_plan and not is_pro_plan %}
+      {# Deactivate/Activate — hidden on free, pro, and global plans. #}
+      {% if not is_free_plan and not is_pro_plan and not is_global_plan %}
 
       <div class="dropdown-divider"></div>
 
       {% if can_manage %}
-        {% if is_global_plan and company.id not in accepted_ids %}
-          {% if company.id in pending_ids %}
-          <button type="button" class="dropdown-item"
-                  style="opacity:.45; cursor: not-allowed;" disabled
-                  title="Waiting for the company owner to accept your connection request before you can change activation status.">
-            <i class="fas fa-ban mr-2"></i>
-            {% if company.is_active %}Deactivate{% else %}Activate{% endif %}
-          </button>
-          {% else %}
-          <button type="button" class="dropdown-item"
-                  style="opacity:.45; cursor: not-allowed;" disabled
-                  title="Send a connection request and wait for approval to change this company's activation status.">
-            <i class="fas fa-ban mr-2"></i>
-            {% if company.is_active %}Deactivate{% else %}Activate{% endif %}
-          </button>
-          {% endif %}
+        {% if company.is_active %}
+          <a class="dropdown-item text-warning"
+            href="{% url 'company-toggle' company.id %}">
+            <i class="fas fa-ban mr-2"></i> Deactivate
+          </a>
         {% else %}
-          {% if company.is_active %}
-            <a class="dropdown-item text-warning"
-              href="{% url 'company-toggle' company.id %}">
-              <i class="fas fa-ban mr-2"></i> Deactivate
-            </a>
-          {% else %}
-            <a class="dropdown-item text-success"
-              href="{% url 'company-toggle' company.id %}">
-              <i class="fas fa-check mr-2"></i> Activate
-            </a>
-          {% endif %}
+          <a class="dropdown-item text-success"
+            href="{% url 'company-toggle' company.id %}">
+            <i class="fas fa-check mr-2"></i> Activate
+          </a>
         {% endif %}
       {% endif %}
 
@@ -171,6 +192,8 @@
       {% endif %}{# /not free and not pro #}
 
       {% endif %}{# /not is_basic_plan #}
+
+      {% endif %}{# /owner override else branch #}
 
     </div>
     </div>

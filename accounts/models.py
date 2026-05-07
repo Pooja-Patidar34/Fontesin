@@ -26,6 +26,7 @@ class Tenant(models.Model):
     all_objects = models.Manager()
 
     def __str__(self):
+        
         return self.name
 
     def save(self, *args, **kwargs):

@@ -2,14 +2,12 @@ import re
 
 from django import forms
 from accounts.models import Company, Tenant
-from accounts.constants import CountryChoices, PHONE_RULES
+from accounts.constants import CountryChoices, PHONE_RULES, COUNTRY_STATES
+
+COUNTRY_LABELS = dict(CountryChoices.CHOICES)
 
 # General phone/fax shape (length/digits bounds validated separately, per-country for phone).
 PHONE_CHARSET_RE = re.compile(r"^[\d+\-\s()]{7,25}$")
-
-# Country / State: letters, spaces, hyphens, apostrophes; must start with a letter; 2-60 chars.
-COUNTRY_NAME_RE = re.compile(r"^[A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F\s'\-]{1,59}$")
-STATE_NAME_RE = COUNTRY_NAME_RE
 
 # City: letters, spaces, hyphens, apostrophes, and periods (for abbreviations like "St. Louis");
 # must start with a letter; 2-60 chars. No digits or other special characters.
@@ -56,6 +54,21 @@ POSTAL_CODE_RE = re.compile(r"^(?=.*[A-Za-z0-9])[A-Za-z0-9\s\-]{3,12}$")
 
 
 class CompanyForm(forms.ModelForm):
+
+    # Company.country on the model is a plain CharField with no `choices`, so
+    # Django auto-generates a forms.CharField (free-text). Declare an explicit
+    # ChoiceField here to render the country dropdown and gate validation on
+    # the ISO codes we recognize. The widget id matches the JS in
+    # companies.html that rebuilds the State dropdown on country change.
+    country = forms.ChoiceField(
+        required=True,
+        choices=[("", "Select Country")] + list(CountryChoices.CHOICES),
+        widget=forms.Select(attrs={
+            "class": "form-control",
+            "id": "id_country",
+            "autocomplete": "country",
+        }),
+    )
 
     class Meta:
         model = Company
@@ -135,14 +148,9 @@ class CompanyForm(forms.ModelForm):
                 "title": "City must be 2-60 letters (letters, spaces, hyphens, apostrophes and periods only). Numbers and special characters are not allowed.",
                 "autocomplete": "address-level2",
             }),
-            "state": forms.TextInput(attrs={
+            "state": forms.Select(attrs={
                 "class": "form-control",
                 "id": "id_state",
-                "minlength": "2",
-                "maxlength": "60",
-                "pattern": r"[A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F\s'\-]{1,59}",
-                "placeholder": "e.g. California",
-                "title": "State must be 2-60 letters (letters, spaces, hyphens and apostrophes only). Numbers and special characters are not allowed.",
                 "autocomplete": "address-level1",
             }),
             "postal_code": forms.TextInput(attrs={
@@ -154,17 +162,6 @@ class CompanyForm(forms.ModelForm):
                 "title": "3-12 characters. Letters, digits, spaces and hyphens only. Must contain at least one letter or digit.",
                 "autocomplete": "postal-code",
             }),
-            "country": forms.TextInput(attrs={
-                "class": "form-control",
-                "id": "id_country",
-                "minlength": "2",
-                "maxlength": "60",
-                "pattern": r"[A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F\s'\-]{1,59}",
-                "placeholder": "e.g. India",
-                "title": "Country must be 2-60 letters (letters, spaces, hyphens and apostrophes only). Numbers and special characters are not allowed.",
-                "autocomplete": "country-name",
-            }),
-
             "latitude": forms.NumberInput(
                 attrs={"class": "form-control", "step": "0.00000001"}
             ),
@@ -331,7 +328,25 @@ class CompanyForm(forms.ModelForm):
         cleaned = super().clean()
         name = (cleaned.get("name") or "").strip()
         country = (cleaned.get("country") or "").strip()
+        state = (cleaned.get("state") or "").strip()
+
+        # Country/state pairing — the State dropdown is populated client-side
+        # from COUNTRY_STATES[country], so any value outside that list is a
+        # tampered request or stale data, not a typo.
+        if country:
+            valid_states = COUNTRY_STATES.get(country, [])
+            if not state:
+                self.add_error("state", forms.ValidationError("State is required."))
+            elif valid_states and state not in valid_states:
+                self.add_error(
+                    "state",
+                    forms.ValidationError("Please select a valid state for the chosen country."),
+                )
+        elif state:
+            self.add_error("country", forms.ValidationError("Country is required."))
+
         if name and country:
+            country_label = COUNTRY_LABELS.get(country, country)
             qs = Company.objects.filter(name__iexact=name, country__iexact=country)
             if self.instance and self.instance.tenant_id:
                 qs = qs.exclude(pk=self.instance.pk)
@@ -339,7 +354,7 @@ class CompanyForm(forms.ModelForm):
                 self.add_error(
                     "name",
                     forms.ValidationError(
-                        f"A company named '{name}' already exists in {country}. "
+                        f"A company named '{name}' already exists in {country_label}. "
                         "If this is a different legal entity, please provide a Registration ID to distinguish it."
                     ),
                 )
@@ -394,32 +409,17 @@ class CompanyForm(forms.ModelForm):
         return city
 
     def clean_state(self):
-        state = (self.cleaned_data.get("state") or "").strip()
-        if not state:
-            return state
-        if len(state) < 2:
-            raise forms.ValidationError("State must be at least 2 characters.")
-        if len(state) > 60:
-            raise forms.ValidationError("State must be 60 characters or fewer.")
-        if not STATE_NAME_RE.match(state):
-            raise forms.ValidationError(
-                "State may only contain letters, spaces, hyphens and apostrophes. Numbers and special characters are not allowed."
-            )
-        return state
+        # State is a free-text CharField on the model; we constrain it to one
+        # of COUNTRY_STATES[country] in clean() once the country is also
+        # available. Just normalize whitespace here.
+        return (self.cleaned_data.get("state") or "").strip()
 
     def clean_country(self):
+        # Country is a model ChoiceField (CountryChoices), so Django's built-in
+        # TypedChoiceField validation already rejects values outside the list.
+        # Just normalize and uppercase the ISO code so downstream lookups work.
         country = (self.cleaned_data.get("country") or "").strip()
-        if not country:
-            return country
-        if len(country) < 2:
-            raise forms.ValidationError("Country must be at least 2 characters.")
-        if len(country) > 60:
-            raise forms.ValidationError("Country must be 60 characters or fewer.")
-        if not COUNTRY_NAME_RE.match(country):
-            raise forms.ValidationError(
-                "Country may only contain letters, spaces, hyphens and apostrophes. Numbers and special characters are not allowed."
-            )
-        return country
+        return country.upper() if country else country
 
     def _clean_phone_field(self, field_name, label):
         value = (self.cleaned_data.get(field_name) or "").strip()

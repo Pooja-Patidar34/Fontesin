@@ -525,11 +525,13 @@
 
         <div class="form-row">
           <label for="features-{{ forloop.counter }}">Features (one per line — prefix with "- " for an excluded feature)</label>
-          {# Pre-fill in the same shape the save handler expects: plain text per line,
-             with a leading "- " on excluded features. Rendering {{ f }} (a dict)
-             would dump the Python repr like "{'included': True, 'text': '...'}",
-             which the next Save then re-stores verbatim into f.text — corrupting
-             the data. f.text|default:f keeps legacy plain-string features working. #}
+          {% comment %}
+            Pre-fill in the same shape the save handler expects: plain text per line,
+            with a leading "- " on excluded features. Rendering a dict would dump the
+            Python repr like "{'included': True, 'text': '...'}", which the next Save
+            then re-stores verbatim into f.text — corrupting the data.
+            f.text|default:f keeps legacy plain-string features working.
+          {% endcomment %}
           <textarea id="features-{{ forloop.counter }}" name="features" rows="5">{% for f in plan.features %}{% if f.included is False %}- {% endif %}{{ f.text|default:f }}{% if not forloop.last %}
 {% endif %}{% endfor %}</textarea>
         </div>

@@ -1589,6 +1589,7 @@ class VerifyOTPTests(BaseIAMTestCase):
         self.assertRedirects(response, reverse("forgot-password"))
 
     def test_page_loads_with_session(self):
+        
         session = self.client.session
         session["reset_email"] = "user@test.com"
         session.save()

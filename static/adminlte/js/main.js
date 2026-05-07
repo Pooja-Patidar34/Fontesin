@@ -96,6 +96,34 @@ function showToast(message, type, duration) {
   type = type || 'info';
   duration = duration || 5000;
   var container = getToastContainer();
+
+  // Deduplicate: if a toast with the same message+type is already showing,
+  // reset its dismiss timer (and replay the slide-in + progress-bar
+  // animation so the user gets visual feedback the action registered)
+  // instead of stacking another copy. Stops a misbehaving form from
+  // spawning a column of identical errors.
+  var existing = container.querySelectorAll('.app-toast--' + type);
+  for (var i = 0; i < existing.length; i++) {
+    var t = existing[i];
+    var msgEl = t.querySelector('.app-toast__msg');
+    if (msgEl && msgEl.textContent === message) {
+      if (t._dismissTimer) clearTimeout(t._dismissTimer);
+      // Re-trigger CSS animations by clearing them, forcing a reflow,
+      // then reapplying — without the reflow the browser keeps the old
+      // animation state and the keyframes don't replay.
+      var progress = t.querySelector('.app-toast__progress');
+      t.style.animation = 'none';
+      if (progress) progress.style.animation = 'none';
+      void t.offsetWidth;
+      t.style.animation = 'toastSlideIn .35s cubic-bezier(.21,1.02,.73,1)';
+      if (progress) progress.style.animation = 'toastProgress 5s linear forwards';
+      (function (toastEl) {
+        toastEl._dismissTimer = setTimeout(function () { dismissToast(toastEl); }, duration);
+      })(t);
+      return;
+    }
+  }
+
   var toast = document.createElement('div');
   toast.className = 'app-toast app-toast--' + type;
   toast.innerHTML =
@@ -108,12 +136,13 @@ function showToast(message, type, duration) {
     '<div class="app-toast__progress"></div>';
 
   toast.querySelector('.app-toast__close').addEventListener('click', function() {
+    if (toast._dismissTimer) clearTimeout(toast._dismissTimer);
     dismissToast(toast);
   });
 
   container.appendChild(toast);
 
-  setTimeout(function() { dismissToast(toast); }, duration);
+  toast._dismissTimer = setTimeout(function() { dismissToast(toast); }, duration);
 }
 
 function dismissToast(toast) {

@@ -252,8 +252,10 @@ def register_view(request):
             messages.error(request, "Password must be at least 8 characters.")
             return render(request, "auth/register.html", ctx)
 
-        # email exists check
-        if User.objects.filter(email=email).exists():
+        # email exists check (case-insensitive — create_user lowercases the domain
+        # via normalize_email, so a case-sensitive lookup misses existing rows
+        # and the INSERT then trips the unique constraint)
+        if User.objects.filter(email__iexact=email).exists():
             messages.error(request, "Email already exists")
             return render(request, "auth/register.html", ctx)
 
@@ -270,17 +272,23 @@ def register_view(request):
             messages.error(request, "Invalid role selected")
             return render(request, "auth/register.html", ctx)
 
-        # create user
-        user = User.objects.create_user(
-            email=email,
-            password=password,
-            first_name=first_name,
-            last_name=last_name,
-            tenant=tenant,
-            role=role,
-            phone=phone,
-            country=country,
-        )
+        # create user — guard against the race between the iexact check above
+        # and the INSERT (two concurrent submits, or normalize_email collapsing
+        # to an existing row)
+        try:
+            user = User.objects.create_user(
+                email=email,
+                password=password,
+                first_name=first_name,
+                last_name=last_name,
+                tenant=tenant,
+                role=role,
+                phone=phone,
+                country=country,
+            )
+        except IntegrityError:
+            messages.error(request, "Email already exists")
+            return render(request, "auth/register.html", ctx)
 
         # "Others" is only valid for business_user role
         if company_id == "others" and role_name != "business_user":

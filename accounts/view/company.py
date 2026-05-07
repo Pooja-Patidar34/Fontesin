@@ -4,7 +4,7 @@ from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 
 from accounts.models import Company, Tenant, AuditLog, CompanyConnection
-from accounts.constants import CountryChoices
+from accounts.constants import CountryChoices, COUNTRY_STATES
 from django.db.models import Q
 from accounts.utils.permissions import has_permission
 from accounts.view.saved_filter import (
@@ -329,12 +329,24 @@ def company_list(request):
             elif status == CompanyConnection.STATUS_PENDING:
                 pending_ids.add(company_id)
 
-    # Companies the basic-plan business user is allowed to "View" — their
-    # own primary (selected at signup / created from profile) plus any company
-    # they've established an approved partnership with.
+    # Companies a paid business user (basic / pro / global) is allowed to
+    # "View": companies they're directly linked to (owner, consultant,
+    # primary_users, UserCompany) plus any company they've established an
+    # approved partnership with, plus their primary company. Discovery-only
+    # rows (region / worldwide listings) stay gated until the partnership is
+    # accepted by the company owner.
     viewable_ids = set(accepted_ids)
     if not request.user.is_superuser and request.user.primary_company_id:
         viewable_ids.add(request.user.primary_company_id)
+    if is_paid_bu and page_obj.object_list:
+        page_company_ids = [c.id for c in page_obj.object_list]
+        linked_ids = Company.objects.filter(id__in=page_company_ids).filter(
+            Q(consultant=request.user)
+            | Q(owner_user=request.user)
+            | Q(primary_users=request.user)
+            | Q(usercompany__user=request.user)
+        ).values_list("id", flat=True)
+        viewable_ids.update(linked_ids)
 
     # -------------------------------
     # RENDER
@@ -353,6 +365,9 @@ def company_list(request):
         "pending_ids": pending_ids,
         "accepted_ids": accepted_ids,
         "viewable_ids": viewable_ids,
+        # Country → state map consumed by the modal's dependent dropdown JS,
+        # rendered server-side via {% json_script %}.
+        "country_states": COUNTRY_STATES,
     }
 
     # AJAX GET (pagination): return only the rendered fragments. The same
@@ -640,7 +655,9 @@ def company_detail_ajax(request, company_id):
         # which is cross-tenant because registration lets you pick a
         # company from any tenant. `usercompany__user` covers approved
         # partnership connections so the requester can View the company
-        # data once the owner approves.
+        # data once the owner approves; discovery-only rows from the
+        # paid-plan list view stay 404 here until the partnership is
+        # accepted.
         scope_q = (
             Q(tenant=request.user.tenant)
             | Q(consultant=request.user)
@@ -648,29 +665,6 @@ def company_detail_ajax(request, company_id):
             | Q(primary_users=request.user)
             | Q(usercompany__user=request.user)
         )
-
-        # Mirror the list view's regional discovery scope so paid business
-        # users (basic / pro / global) can View any company they can see in
-        # the list, not just ones they've already linked to. Without this,
-        # the list shows cross-tenant companies but the detail endpoint
-        # 404s and the View click silently fails in the browser.
-        plan_code = _plan_code_for_business_user(request.user)
-        if plan_code == "global":
-            scope_q = scope_q | Q(is_active=True)
-        elif plan_code in ("basic", "pro"):
-            user_country = (request.user.country or "").strip().upper()
-            if user_country:
-                if plan_code == "pro":
-                    region = _region_for_country(user_country)
-                    scope_codes = PLAN_REGIONS.get(region, []) if region else []
-                else:
-                    scope_codes = [user_country]
-
-                if scope_codes:
-                    region_q = Q()
-                    for code in scope_codes:
-                        region_q |= _country_match_q(code)
-                    scope_q = scope_q | (region_q & Q(is_active=True))
 
         company = get_object_or_404(
             Company.objects.filter(scope_q).distinct(),

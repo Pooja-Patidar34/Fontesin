@@ -229,6 +229,7 @@
                    minlength="2" maxlength="100"
                    pattern="(?=.*[A-Za-z\u00C0-\u024F])[A-Za-z\u00C0-\u024F0-9&'.,\-()\s]{2,100}"
                    title="2-100 characters. Letters, digits, spaces, and &amp; ' . , - ( ) only. Must contain at least one letter."
+                   value="{{ create_company_form.company_name|default:'' }}"
                    required>
           </div>
 
@@ -239,6 +240,7 @@
                    minlength="2" maxlength="100"
                    pattern="(?=.*[A-Za-z0-9])[A-Za-z0-9\-/._]{2,100}"
                    title="Letters, digits and the symbols - / . _ only (2-100 characters)."
+                   value="{{ create_company_form.registration_id|default:'' }}"
                    required>
             <small class="text-muted">Legal identifier (e.g. company-house number, EIN, CIN). Must be unique.</small>
           </div>
@@ -249,6 +251,7 @@
                    minlength="4" maxlength="253"
                    pattern="(?=[A-Za-z0-9.\-]{4,253}$)([A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,}"
                    title="Enter a valid domain like mycompany.com (letters, digits, hyphens and dots; must include a TLD)"
+                   value="{{ create_company_form.domain|default:'' }}"
                    required>
             <small class="text-muted">This domain will be linked to your company's tenant.</small>
           </div>
@@ -260,7 +263,7 @@
                 <select name="classification" class="form-control" required>
                   <option value="">Select Classification</option>
                   {% for value, label in classifications %}
-                  <option value="{{ value }}">{{ label }}</option>
+                  <option value="{{ value }}" {% if create_company_form.classification == value %}selected{% endif %}>{{ label }}</option>
                   {% endfor %}
                 </select>
               </div>
@@ -271,7 +274,8 @@
                 <input type="url" name="website" class="form-control"
                        placeholder="https://mycompany.com"
                        maxlength="500"
-                       title="Enter a valid URL like https://example.com (letters, digits, and - . _ / only in the path).">
+                       title="Enter a valid URL like https://example.com (letters, digits, and - . _ / only in the path)."
+                       value="{{ create_company_form.website|default:'' }}">
               </div>
             </div>
           </div>
@@ -283,7 +287,8 @@
                    minlength="3" maxlength="120"
                    pattern="(?=.*[A-Za-z0-9])[A-Za-z\u00C0-\u024F0-9\s,./#\-]{3,120}"
                    autocomplete="address-line1"
-                   title="3-120 characters. Letters, digits, spaces and the symbols , . - / # only.">
+                   title="3-120 characters. Letters, digits, spaces and the symbols , . - / # only."
+                   value="{{ create_company_form.address_line1|default:'' }}">
           </div>
 
           <div class="form-group">
@@ -293,7 +298,8 @@
                    minlength="3" maxlength="120"
                    pattern="(?=.*[A-Za-z0-9])[A-Za-z\u00C0-\u024F0-9\s,./#\-]{3,120}"
                    autocomplete="address-line2"
-                   title="3-120 characters. Letters, digits, spaces and the symbols , . - / # only.">
+                   title="3-120 characters. Letters, digits, spaces and the symbols , . - / # only."
+                   value="{{ create_company_form.address_line2|default:'' }}">
           </div>
 
           <div class="row">
@@ -306,24 +312,35 @@
                        pattern="[A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F\s'\-.]{1,59}"
                        autocomplete="address-level2"
                        title="2-60 letters (letters, spaces, hyphens, apostrophes and periods)."
+                       value="{{ create_company_form.city|default:'' }}"
                        required>
               </div>
             </div>
             <div class="col-md-6">
               <div class="form-group">
-                <label>State <span class="text-danger">*</span></label>
-                <input type="text" name="state" class="form-control"
-                       placeholder="e.g. California"
-                       minlength="2" maxlength="60"
-                       pattern="[A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F\s'\-]{1,59}"
-                       autocomplete="address-level1"
-                       title="2-60 letters (letters, spaces, hyphens and apostrophes)."
-                       required>
+                <label>Country <span class="text-danger">*</span></label>
+                <select name="company_country" id="cc-country" class="form-control"
+                        autocomplete="country" required>
+                  <option value="">Select Country</option>
+                  {% for code, label in countries %}
+                  <option value="{{ code }}" {% if create_company_form.company_country == code %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
               </div>
             </div>
           </div>
 
           <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>State <span class="text-danger">*</span></label>
+                <select name="state" id="cc-state" class="form-control"
+                        data-initial="{{ create_company_form.state|default:'' }}"
+                        autocomplete="address-level1" required disabled>
+                  <option value="">Select State</option>
+                </select>
+              </div>
+            </div>
             <div class="col-md-6">
               <div class="form-group">
                 <label>Postal Code</label>
@@ -332,19 +349,8 @@
                        minlength="3" maxlength="12"
                        pattern="(?=.*[A-Za-z0-9])[A-Za-z0-9\s\-]{3,12}"
                        autocomplete="postal-code"
-                       title="3-12 characters. Letters, digits, spaces and hyphens only.">
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="form-group">
-                <label>Country <span class="text-danger">*</span></label>
-                <input type="text" name="company_country" class="form-control"
-                       placeholder="e.g. United States"
-                       minlength="2" maxlength="60"
-                       pattern="[A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F\s'\-]{1,59}"
-                       autocomplete="country-name"
-                       title="2-60 letters (letters, spaces, hyphens and apostrophes)."
-                       required>
+                       title="3-12 characters. Letters, digits, spaces and hyphens only."
+                       value="{{ create_company_form.postal_code|default:'' }}">
               </div>
             </div>
           </div>
@@ -358,7 +364,8 @@
                        maxlength="25"
                        pattern="[\d+\-\s()]{7,25}"
                        inputmode="tel"
-                       title="Digits and + - ( ) spaces only (7-25 characters, 5-15 digits).">
+                       title="Digits and + - ( ) spaces only (7-25 characters, 5-15 digits)."
+                       value="{{ create_company_form.company_phone|default:'' }}">
               </div>
             </div>
             <div class="col-md-6">
@@ -369,7 +376,8 @@
                        maxlength="25"
                        pattern="[\d+\-\s()]{7,25}"
                        inputmode="tel"
-                       title="Digits and + - ( ) spaces only (7-25 characters, 5-15 digits).">
+                       title="Digits and + - ( ) spaces only (7-25 characters, 5-15 digits)."
+                       value="{{ create_company_form.phone_secondary|default:'' }}">
               </div>
             </div>
           </div>
@@ -381,7 +389,8 @@
                    maxlength="25"
                    pattern="[\d+\-\s()]{7,25}"
                    inputmode="tel"
-                   title="Digits and + - ( ) spaces only (7-25 characters, 5-15 digits).">
+                   title="Digits and + - ( ) spaces only (7-25 characters, 5-15 digits)."
+                   value="{{ create_company_form.fax|default:'' }}">
           </div>
 
           <button type="submit" class="btn btn-primary">
@@ -594,25 +603,86 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 </script>
 
+{% comment %}
+  Country → state map, keyed by ISO code. The script below uses it to
+  rebuild the State dropdown whenever the user picks a country.
+{% endcomment %}
+{{ country_states|json_script:"cc-country-states" }}
+
+<script>
+// Country / State dependent dropdowns on the Create Company form. The Company
+// model stores Country as an ISO-3166 alpha-2 code; State is free-text but we
+// constrain it here to the country's known subdivisions so the database
+// doesn't fill up with typos like "rfrrtt".
+document.addEventListener("DOMContentLoaded", function () {
+  const countrySel = document.getElementById("cc-country");
+  const stateSel = document.getElementById("cc-state");
+  if (!countrySel || !stateSel) return;
+
+  const dataNode = document.getElementById("cc-country-states");
+  const states = dataNode ? JSON.parse(dataNode.textContent) : {};
+  const initialState = stateSel.dataset.initial || "";
+
+  function renderStates(countryCode, selected) {
+    const options = (countryCode && states[countryCode]) || [];
+    if (!options.length) {
+      stateSel.innerHTML = '<option value="">Select State</option>';
+      stateSel.disabled = true;
+      return;
+    }
+    let html = '<option value="">Select State</option>';
+    options.forEach(function (name) {
+      const isSel = name === selected ? " selected" : "";
+      html += '<option value="' + name + '"' + isSel + '>' + name + '</option>';
+    });
+    stateSel.innerHTML = html;
+    stateSel.disabled = false;
+  }
+
+  // Repopulate on first load (covers both empty and pre-filled redirects).
+  renderStates(countrySel.value, initialState);
+
+  countrySel.addEventListener("change", function () {
+    renderStates(countrySel.value, "");
+  });
+});
+</script>
+
 <script>
 // Block whitespace-only Company Name on the Create Company form so a redirect
 // (which clears the rest of the form) never happens for that case.
+//
+// The Company Name input has an HTML5 `pattern` that already rejects
+// whitespace-only values. That blocks form submission BEFORE the form's
+// `submit` event fires, so a plain submit-handler check can't reach the
+// "spaces only" case — the user just sees the browser's discreet native
+// tooltip and assumes the page silently bounced back. We listen for
+// `invalid` instead, suppress that tooltip, and surface a clear toast.
 document.addEventListener("DOMContentLoaded", function () {
   const form = document.getElementById("create-company-form");
   if (!form) return;
   const nameInput = form.querySelector('[name="company_name"]');
   if (!nameInput) return;
 
-  function clearCustomMsg() { nameInput.setCustomValidity(""); }
-  nameInput.addEventListener("input", clearCustomMsg);
+  function showError(msg) {
+    if (typeof showToast === "function") showToast(msg, "error");
+    else alert(msg);
+  }
+
+  nameInput.addEventListener("invalid", function (e) {
+    if (nameInput.value.trim() === "") {
+      e.preventDefault();
+      showError("Company name cannot be empty or just spaces.");
+      nameInput.focus();
+    }
+  });
 
   form.addEventListener("submit", function (e) {
     const trimmed = nameInput.value.trim();
     if (trimmed === "") {
       e.preventDefault();
       e.stopPropagation();
-      nameInput.setCustomValidity("Company name cannot be empty or just spaces.");
-      nameInput.reportValidity();
+      showError("Company name cannot be empty or just spaces.");
       nameInput.focus();
       return;
     }
