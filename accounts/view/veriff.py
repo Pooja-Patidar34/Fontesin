@@ -1,9 +1,13 @@
+import logging
+
 import requests
 from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny,IsAuthenticated
 from rest_framework import status
+
+logger = logging.getLogger("technical")
 
 
 class CreateVeriffSessionAPIView(APIView):
@@ -56,9 +60,25 @@ class CreateVeriffSessionAPIView(APIView):
 
         except requests.exceptions.RequestException as e:
 
-            print("VERIFF ERROR:", str(e))
+            veriff_status = None
+            veriff_body = None
+            if getattr(e, "response", None) is not None:
+                veriff_status = e.response.status_code
+                try:
+                    veriff_body = e.response.json()
+                except ValueError:
+                    veriff_body = e.response.text
+
+            logger.error(
+                "Veriff session creation failed: status=%s body=%s exc=%s",
+                veriff_status, veriff_body, str(e),
+            )
 
             return Response(
-                {"error": "Unable to create verification session"},
-                status=status.HTTP_400_BAD_REQUEST
+                {
+                    "error": "Unable to create verification session",
+                    "veriff_status": veriff_status,
+                    "veriff_body": veriff_body,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
             )
