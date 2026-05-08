@@ -16,16 +16,27 @@ class CreateVeriffSessionAPIView(APIView):
 
     def get(self, request):
 
-        payload = {
-            "verification": {
-                "vendorData": str(request.user.id),
-                "callback": settings.VERIFF_CALLBACK_URL,
-                "person": {
-                    "firstName": request.user.first_name or "Test",
-                    "lastName": request.user.last_name or "User",
-                }
-            }
+        verification = {
+            "vendorData": str(request.user.id),
+            "person": {
+                "firstName": request.user.first_name or "Test",
+                "lastName": request.user.last_name or "User",
+            },
         }
+
+        # Veriff's WAF rejects sessions with non-domain callbacks (bare IPs,
+        # localhost, etc.) on live integrations, so only include the field
+        # when it points at a real hostname.
+        callback_url = (settings.VERIFF_CALLBACK_URL or "").strip()
+        if callback_url:
+            from urllib.parse import urlparse
+            host = urlparse(callback_url).hostname or ""
+            looks_like_ip = host.replace(".", "").isdigit()
+            looks_like_local = host in ("localhost", "127.0.0.1", "0.0.0.0")
+            if host and not looks_like_ip and not looks_like_local:
+                verification["callback"] = callback_url
+
+        payload = {"verification": verification}
 
         headers = {
             "X-AUTH-CLIENT": settings.VERIFF_API_KEY,
