@@ -58,6 +58,46 @@ def invoice_list(request):
 
 
 @login_required
+def plan_history(request):
+    """Timeline of subscriptions for the logged-in business user.
+
+    Shows every Subscription row tied to the user, including past ones
+    (status=cancelled with end_date set) and the current active/trial one.
+    Superusers see all subscriptions across the platform for support cases.
+    """
+    is_business_user = (
+        request.user.role
+        and request.user.role.code
+        and request.user.role.code.lower() == "business_user"
+    )
+
+    if not request.user.is_superuser and not is_business_user:
+        raise PermissionDenied()
+
+    qs = (
+        Subscription.objects
+        .select_related("plan", "user")
+        .order_by("-start_date", "-created_at")
+    )
+    if not request.user.is_superuser:
+        qs = qs.filter(user=request.user)
+
+    paginator = Paginator(qs, 10)
+    page_number = request.GET.get("page", 1)
+
+    try:
+        page_obj = paginator.page(page_number)
+    except (PageNotAnInteger, EmptyPage):
+        page_obj = paginator.page(1)
+
+    return render(request, "dashboard/plan_history.html", {
+        "subscriptions": page_obj,
+        "page_obj": page_obj,
+        "active_menu": "plan-history",
+    })
+
+
+@login_required
 def payment_list(request):
     if not request.user.is_superuser:
         raise PermissionDenied()

@@ -3,13 +3,13 @@ from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import render, get_object_or_404, redirect
 
-from accounts.models import Tenant, AuditLog
+from accounts.models import Company, Tenant, AuditLog
 from accounts.utils.permissions import has_permission
 from accounts.utils.ip import get_client_ip
 from accounts.forms.tenant_form import TenantForm
 from django.contrib import messages
 from django.db import IntegrityError, transaction
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.http import JsonResponse
 import logging
 
@@ -149,10 +149,43 @@ def tenant_list(request):
     if q:
         qs = qs.filter(name__icontains=q)
 
-    qs = qs.annotate(
-        company_count=Count("companies", distinct=True),
-        user_count=Count("users", distinct=True)
-    ).order_by("name")
+    if is_business_user:
+        # Scope the counts to what the business user can actually see when
+        # clicking through. Without this, the badge says "5 users" but the
+        # users page only shows the 2 sharing a company with the requester
+        # (per scope_to_own_company in user_list). Companies count likewise
+        # reflects the linkage scope, not every company in the tenant.
+        own_company_ids = set(
+            request.user.usercompany_set.values_list("company_id", flat=True)
+        )
+        if request.user.primary_company_id:
+            own_company_ids.add(request.user.primary_company_id)
+        own_company_ids.update(
+            Company.objects.filter(
+                Q(consultant=request.user) | Q(owner_user=request.user)
+            ).values_list("id", flat=True)
+        )
+
+        qs = qs.annotate(
+            company_count=Count(
+                "companies",
+                filter=Q(companies__id__in=own_company_ids),
+                distinct=True,
+            ),
+            user_count=Count(
+                "users",
+                filter=(
+                    Q(users__primary_company_id__in=own_company_ids)
+                    | Q(users__usercompany__company_id__in=own_company_ids)
+                ),
+                distinct=True,
+            ),
+        ).order_by("name")
+    else:
+        qs = qs.annotate(
+            company_count=Count("companies", distinct=True),
+            user_count=Count("users", distinct=True),
+        ).order_by("name")
 
     paginator = Paginator(qs, 10)
     page_number = request.GET.get("page", 1)

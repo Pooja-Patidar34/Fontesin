@@ -79,6 +79,23 @@
     border-bottom: 1px solid #e9ecef;
   }
   #companyModal .section-title:first-child { margin-top: 0; }
+
+  /* Suppress browser :invalid red while the user is still typing — only
+     apply the red error styling after a submit attempt (Bootstrap's
+     was-validated pattern). Fixes optional fields like FAX showing red
+     on partial input that hasn't yet matched their length pattern. */
+  #companyModal #company-form input:invalid,
+  #companyModal #company-form select:invalid,
+  #companyModal #company-form textarea:invalid {
+    box-shadow: none;
+    border-color: #ced4da;
+  }
+  #companyModal #company-form.was-validated input:invalid,
+  #companyModal #company-form.was-validated select:invalid,
+  #companyModal #company-form.was-validated textarea:invalid {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+  }
 </style>
 
 <div class="card card-outline card-primary shadow-sm">
@@ -120,7 +137,7 @@
     </div>
   </div>
 
-  {% if is_basic_or_pro_business_user %}
+  {% if is_basic_or_pro_business_user or request.user.role.code|lower == "consultant" %}
   <!-- Filter bar -->
   <div class="filter-bar">
     <form method="get" id="company-filter-form" autocomplete="off">
@@ -240,6 +257,13 @@
             <div class="form-group col-md-6">
               <label>Classification <span class="text-danger">*</span></label>
               {{ form.classification }}
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label>Company Type</label>
+              {{ form.entity_type }}
             </div>
           </div>
 
@@ -446,6 +470,8 @@ document.addEventListener("DOMContentLoaded", function () {
     activeField.checked = c.is_active;
 
     document.getElementById("id_classification").value = c.classification || "";
+    var entityTypeField = document.getElementById("id_entity_type");
+    if (entityTypeField) entityTypeField.value = c.entity_type || "";
     document.getElementById("id_address_line1").value = c.address_line1 || "";
     document.getElementById("id_address_line2").value = c.address_line2 || "";
     document.getElementById("id_city").value = c.city || "";
@@ -558,6 +584,12 @@ document.addEventListener("DOMContentLoaded", function () {
   // --- AJAX submit for Add Company ---
   // Edits still use the normal full-page POST.
   const companyForm = document.getElementById("company-form");
+  // Defer red invalid-styling until submit is actually attempted, so optional
+  // fields like FAX don't flash red while the user is still typing.
+  companyForm?.addEventListener("submit", function () {
+    companyForm.classList.add("was-validated");
+  });
+
   companyForm?.addEventListener("submit", function (e) {
     // Only intercept when creating (no existing company_id).
     if (idField.value) return;

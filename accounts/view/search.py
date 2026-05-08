@@ -38,8 +38,24 @@ def global_search(request):
     if not request.user.is_superuser:
         # Tenant scope still applies for users (own org)
         user_qs = user_qs.filter(tenant=request.user.tenant)
-        # Companies are filtered by the user's membership-plan geographic scope
-        company_qs = filter_companies_by_plan_scope(company_qs, request.user)
+
+        # Plan-scope filtering only makes sense for business users — they're
+        # the ones with a paid plan that defines a country/region. Other roles
+        # (consultant, coordinator, franchise, tenant_admin) have no plan, so
+        # plan_scope returns mode="none" and zeroes the queryset. For those
+        # roles we scope by linkage instead so they can find any company
+        # they're connected to via their tenant or direct relationships.
+        role_code = (request.user.role.code or "").lower() if request.user.role else ""
+        if role_code == "business_user":
+            company_qs = filter_companies_by_plan_scope(company_qs, request.user)
+        else:
+            company_qs = company_qs.filter(
+                Q(tenant=request.user.tenant)
+                | Q(consultant=request.user)
+                | Q(owner_user=request.user)
+                | Q(primary_users=request.user)
+                | Q(usercompany__user=request.user)
+            ).distinct()
 
     company_qs = company_qs.filter(
         Q(name__icontains=q) | Q(city__icontains=q) | Q(country__icontains=q)

@@ -106,7 +106,14 @@
                 <strong>{{ req.user.first_name }} {{ req.user.last_name }}</strong>
                 <div class="small text-muted">{{ req.user.email }}</div>
               </td>
-              <td>{{ req.company.name }}</td>
+              <td>
+                {% if req.user.primary_company %}
+                  <strong>{{ req.user.primary_company.name }}</strong>
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+                <div class="small text-muted">→ Your company: {{ req.company.name }}</div>
+              </td>
               <td class="small text-muted">{{ req.created_at|date:"M j, Y H:i" }}</td>
               <td class="text-right pr-4">
                 <form method="post" action="{% url 'partnership-action' req.id %}"
@@ -154,16 +161,40 @@
               <th>Company</th>
               <th>Status</th>
               <th>Sent</th>
+              <th class="text-right pr-4">Action</th>
             </tr>
           </thead>
           <tbody>
             {% for req in outgoing %}
-            <tr>
+            <tr data-connection-id="{{ req.id }}">
               <td><strong>{{ req.company.name }}</strong></td>
               <td>
                 <span class="pill pill-{{ req.status }}">{{ req.get_status_display }}</span>
               </td>
               <td class="small text-muted">{{ req.created_at|date:"M j, Y H:i" }}</td>
+              <td class="text-right pr-4">
+                {% if req.status == 'pending' %}
+                <form method="post" action="{% url 'partnership-cancel' req.id %}"
+                      class="partnership-cancel-form d-inline m-0"
+                      data-confirm="Cancel your connection request to {{ req.company.name }}?">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-times mr-1"></i> Cancel Request
+                  </button>
+                </form>
+                {% elif req.status == 'accepted' %}
+                <form method="post" action="{% url 'partnership-cancel' req.id %}"
+                      class="partnership-cancel-form d-inline m-0"
+                      data-confirm="Disconnect from {{ req.company.name }}? You'll lose view access to this company.">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger">
+                    <i class="fas fa-unlink mr-1"></i> Disconnect
+                  </button>
+                </form>
+                {% else %}
+                <span class="text-muted small">—</span>
+                {% endif %}
+              </td>
             </tr>
             {% endfor %}
           </tbody>
@@ -194,20 +225,42 @@
               <th>Company</th>
               <th>Status</th>
               <th>Decided</th>
+              <th class="text-right pr-4">Action</th>
             </tr>
           </thead>
           <tbody>
             {% for req in incoming_history %}
-            <tr>
+            <tr data-connection-id="{{ req.id }}">
               <td>
                 <strong>{{ req.user.first_name }} {{ req.user.last_name }}</strong>
                 <div class="small text-muted">{{ req.user.email }}</div>
               </td>
-              <td>{{ req.company.name }}</td>
+              <td>
+                {% if req.user.primary_company %}
+                  <strong>{{ req.user.primary_company.name }}</strong>
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+                <div class="small text-muted">→ Your company: {{ req.company.name }}</div>
+              </td>
               <td>
                 <span class="pill pill-{{ req.status }}">{{ req.get_status_display }}</span>
               </td>
               <td class="small text-muted">{{ req.updated_at|date:"M j, Y H:i" }}</td>
+              <td class="text-right pr-4">
+                {% if req.status == 'accepted' %}
+                <form method="post" action="{% url 'partnership-cancel' req.id %}"
+                      class="partnership-cancel-form d-inline m-0"
+                      data-confirm="Revoke partnership with {{ req.user.email }}? They'll lose view access to {{ req.company.name }}.">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger">
+                    <i class="fas fa-ban mr-1"></i> Revoke
+                  </button>
+                </form>
+                {% else %}
+                <span class="text-muted small">—</span>
+                {% endif %}
+              </td>
             </tr>
             {% endfor %}
           </tbody>
@@ -269,6 +322,50 @@ document.addEventListener("DOMContentLoaded", function () {
             }
           } else {
             var msg = (res.data && res.data.message) || "Action failed.";
+            if (typeof showToast === "function") showToast(msg, "error");
+            else alert(msg);
+            btns.forEach(function (b) { b.disabled = false; });
+          }
+        })
+        .catch(function () {
+          if (typeof showToast === "function") showToast("Network error. Please try again.", "error");
+          btns.forEach(function (b) { b.disabled = false; });
+        });
+    });
+  });
+
+  // ---- AJAX cancel / disconnect / revoke ----
+  document.querySelectorAll(".partnership-cancel-form").forEach(function (form) {
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      var confirmText = form.dataset.confirm || "Cancel this partnership?";
+      if (!window.confirm(confirmText)) return;
+
+      var btns = form.querySelectorAll("button");
+      btns.forEach(function (b) { b.disabled = true; });
+
+      fetch(form.getAttribute("action"), {
+        method: "POST",
+        headers: { "X-Requested-With": "XMLHttpRequest", "X-CSRFToken": csrfToken },
+        body: new FormData(form),
+        credentials: "same-origin",
+      })
+        .then(function (r) { return r.json().then(function (d) { return { status: r.status, data: d }; }); })
+        .then(function (res) {
+          if (res.status === 200 && res.data.ok) {
+            if (typeof showToast === "function") showToast(res.data.message, "success");
+            var row = form.closest("tr");
+            if (row) row.remove();
+            // If the pane's tbody is empty after removal, reload so the empty
+            // state ("No pending requests" etc.) renders cleanly.
+            var pane = form.closest(".partnership-pane");
+            var tbody = pane && pane.querySelector("tbody");
+            if (tbody && tbody.children.length === 0) {
+              window.location.reload();
+            }
+          } else {
+            var msg = (res.data && res.data.message) || "Could not cancel.";
             if (typeof showToast === "function") showToast(msg, "error");
             else alert(msg);
             btns.forEach(function (b) { b.disabled = false; });

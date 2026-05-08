@@ -34,10 +34,13 @@ def partnership_list(request):
     owned_company_ids = list(
         Company.objects.filter(owner_user=request.user).values_list("id", flat=True)
     )
+    # `user__primary_company` so the incoming view can show the requester's
+    # company (the relevant "who's asking to partner") instead of the owner's
+    # own company (which the owner already knows).
     incoming = (
         CompanyConnection.objects
         .filter(company_id__in=owned_company_ids)
-        .select_related("user", "company")
+        .select_related("user", "user__primary_company", "company")
     )
 
     incoming_pending = [c for c in incoming if c.status == CompanyConnection.STATUS_PENDING]
@@ -117,6 +120,85 @@ def partnership_action(request, connection_id):
             "status_label": connection.get_status_display(),
             "message": msg,
         })
+
+    messages.success(request, msg)
+    return redirect(reverse("partnerships"))
+
+
+@login_required
+@require_POST
+@transaction.atomic
+def partnership_cancel(request, connection_id):
+    """
+    Cancel a partnership from either side.
+
+    - Sender (connection.user) can cancel a pending request (withdraw) or an
+      accepted one (disconnect).
+    - Receiver (company.owner_user) can revoke an accepted partnership.
+    Rejected partnerships are not cancellable — that's already a final state.
+
+    On cancel of an accepted partnership we also remove the UserCompany row
+    that approval created, so the requester loses view access cleanly.
+    """
+    connection = get_object_or_404(
+        CompanyConnection.objects.select_related("company", "user"),
+        id=connection_id,
+    )
+
+    is_sender = connection.user_id == request.user.id
+    is_receiver = connection.company.owner_user_id == request.user.id
+
+    if not (is_sender or is_receiver):
+        msg = "You don't have permission to cancel this partnership."
+        if _is_ajax(request):
+            return JsonResponse({"ok": False, "message": msg}, status=403)
+        messages.error(request, msg)
+        return redirect("partnerships")
+
+    # Receiver may only cancel partnerships they actively approved. Pending
+    # requests on their company use approve/reject; rejected ones are final.
+    if is_receiver and not is_sender:
+        if connection.status != CompanyConnection.STATUS_ACCEPTED:
+            msg = (
+                "Only accepted partnerships can be revoked. Use Reject for "
+                "pending requests."
+            )
+            if _is_ajax(request):
+                return JsonResponse({"ok": False, "message": msg}, status=400)
+            messages.error(request, msg)
+            return redirect("partnerships")
+
+    # Sender may cancel pending or accepted, but not rejected (the decision
+    # was made and isn't theirs to undo).
+    if is_sender and connection.status == CompanyConnection.STATUS_REJECTED:
+        msg = "This request was rejected and can't be cancelled."
+        if _is_ajax(request):
+            return JsonResponse({"ok": False, "message": msg}, status=400)
+        messages.error(request, msg)
+        return redirect("partnerships")
+
+    company_name = connection.company.name
+    was_accepted = connection.status == CompanyConnection.STATUS_ACCEPTED
+
+    # If approval had granted view access via UserCompany, remove it. Keep
+    # primary linkages (is_primary=True) — those represent the user's chosen
+    # primary company at signup, not a partnership grant.
+    if was_accepted:
+        UserCompany.objects.filter(
+            user=connection.user,
+            company=connection.company,
+            is_primary=False,
+        ).delete()
+
+    connection.delete()
+
+    if was_accepted:
+        msg = f"Partnership with {company_name} has been ended."
+    else:
+        msg = f"Connection request to {company_name} has been cancelled."
+
+    if _is_ajax(request):
+        return JsonResponse({"ok": True, "message": msg})
 
     messages.success(request, msg)
     return redirect(reverse("partnerships"))

@@ -235,15 +235,24 @@ def user_list(request):
         )
 
         if scope_to_own_company:
+            from django.db.models import Q
             own_company_ids = list(
                 request.user.usercompany_set.values_list("company_id", flat=True)
             ) if hasattr(request.user, "usercompany_set") else []
             if request.user.primary_company_id:
                 own_company_ids.append(request.user.primary_company_id)
+            # Consultants and owners are also "their company" for dropdown
+            # purposes — without these, a consultant who creates a fresh
+            # company (which sets owner_user/consultant on the new row but no
+            # UserCompany M2M) couldn't see it in the picker.
+            own_company_ids.extend(
+                Company.objects.filter(
+                    Q(consultant=request.user) | Q(owner_user=request.user)
+                ).values_list("id", flat=True)
+            )
             own_company_ids = [cid for cid in own_company_ids if cid]
 
             if own_company_ids:
-                from django.db.models import Q
                 # Drop tenant pre-filter: company linkage can be cross-tenant
                 # (registration lets you pick a company from any tenant), so
                 # gating by shared company alone is the correct scope here.

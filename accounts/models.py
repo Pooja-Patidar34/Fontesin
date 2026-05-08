@@ -4,7 +4,12 @@ import uuid
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.auth.base_user import BaseUserManager
 from django.utils.text import slugify
-from accounts.constants import CompanyClassificationChoices, CountryChoices, LanguageChoices
+from accounts.constants import (
+    CompanyClassificationChoices,
+    CompanyEntityTypeChoices,
+    CountryChoices,
+    LanguageChoices,
+)
 from accounts.common.active_manager import ActiveManager
 from django.utils import timezone
 
@@ -62,6 +67,13 @@ class Company(models.Model):
     classification = models.CharField(
         max_length=50,
         choices=CompanyClassificationChoices.CHOICES,
+        null=True,
+        blank=True,
+    )
+
+    entity_type = models.CharField(
+        max_length=30,
+        choices=CompanyEntityTypeChoices.CHOICES,
         null=True,
         blank=True,
     )

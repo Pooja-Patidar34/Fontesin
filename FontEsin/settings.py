@@ -54,6 +54,7 @@ MIDDLEWARE = [
     "FontEsin.middleware.error_logging.ErrorLoggingMiddleware",
     "FontEsin.middleware.no_emoji.NoEmojiMiddleware",
     "FontEsin.middleware.no_cache.NoCachePagesMiddleware",
+    "FontEsin.middleware.require_plan.RequirePlanForBusinessUserMiddleware",
 ]
 
 ROOT_URLCONF = 'FontEsin.urls'

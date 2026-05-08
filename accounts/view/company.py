@@ -282,16 +282,30 @@ def company_list(request):
                         linkage_q = linkage_q | (scope_q & Q(is_active=True))
 
             queryset = Company.objects.filter(linkage_q).distinct()
+
+        # Honor the ?tenant=<id> query param for non-superusers too. The
+        # Tenants page links each company-count badge to /companies/?tenant=<id>
+        # so the user can drill into a specific tenant's companies. Without
+        # this intersect, the param was silently dropped and the page showed
+        # the user's full unscoped list — confusing the count and the result.
+        # The filter intersects with the existing scope (tenant_admin's own
+        # tenant, or business users' linkage + discovery), so users only ever
+        # see companies they're already permitted to see.
+        if selected_tenant_id:
+            queryset = queryset.filter(tenant_id=selected_tenant_id)
+
         tenants = Tenant.objects.filter(
             id=request.user.tenant_id
         )
 
     # -------------------------------
-    # LOCATION FILTERS (paid business users — basic, pro, global)
+    # LOCATION FILTERS (paid business users + consultants)
     # -------------------------------
     is_paid_bu = _is_basic_or_pro_business_user(request.user)
+    role_code = (request.user.role.code or "").lower() if request.user.role else ""
+    can_filter_companies = is_paid_bu or role_code == "consultant"
     applied_filters = {}
-    if is_paid_bu:
+    if can_filter_companies:
         for key in FILTER_FIELDS:
             value = (request.GET.get(key) or "").strip()
             if value:
@@ -683,6 +697,7 @@ def company_detail_ajax(request, company_id):
             "name": company.name,
             "registration_id": company.registration_id,
             "classification": company.classification,
+            "entity_type": company.entity_type,
 
             "address_line1": company.address_line1,
             "address_line2": company.address_line2,

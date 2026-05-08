@@ -78,6 +78,7 @@ class CompanyForm(forms.ModelForm):
             "name",
             "registration_id",
             "classification",
+            "entity_type",
 
             # ---- Address ----
             "address_line1",
@@ -118,6 +119,7 @@ class CompanyForm(forms.ModelForm):
                 "title": "Letters, digits and the symbols - / . _ only (2-100 characters).",
             }),
             "classification": forms.Select(attrs={"class": "form-control"}),
+            "entity_type": forms.Select(attrs={"class": "form-control"}),
 
             # Address
             "address_line1": forms.TextInput(attrs={

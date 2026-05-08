@@ -16,6 +16,47 @@ class CompanyClassificationChoices:
     ]
 
 
+class CompanyEntityTypeChoices:
+    """Legal entity type — distinct from `classification` (which is industry).
+
+    Stored as the short suffix (e.g. "inc", "pvt_ltd") so future label edits
+    don't require a data migration.
+    """
+    INC = "inc"
+    LLC = "llc"
+    LTD = "ltd"
+    PVT_LTD = "pvt_ltd"
+    LLP = "llp"
+    CORP = "corp"
+    GMBH = "gmbh"
+    AG = "ag"
+    SA = "sa"
+    SARL = "sarl"
+    BV = "bv"
+    SOLE_PROPRIETORSHIP = "sole_proprietorship"
+    PARTNERSHIP = "partnership"
+    NON_PROFIT = "non_profit"
+    OTHER = "other"
+
+    CHOICES = [
+        (INC, "Inc. (Incorporated)"),
+        (LLC, "LLC (Limited Liability Company)"),
+        (LTD, "Ltd. (Limited)"),
+        (PVT_LTD, "Pvt. Ltd. (Private Limited)"),
+        (LLP, "LLP (Limited Liability Partnership)"),
+        (CORP, "Corp. (Corporation)"),
+        (GMBH, "GmbH"),
+        (AG, "AG"),
+        (SA, "S.A."),
+        (SARL, "S.A.R.L."),
+        (BV, "B.V."),
+        (SOLE_PROPRIETORSHIP, "Sole Proprietorship"),
+        (PARTNERSHIP, "Partnership"),
+        (NON_PROFIT, "Non-Profit"),
+        (OTHER, "Other"),
+    ]
+
+
 class CountryChoices:
     US = "US"
     DE = "DE"
