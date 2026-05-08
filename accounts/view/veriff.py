@@ -15,7 +15,7 @@ class CreateVeriffSessionAPIView(APIView):
         payload = {
             "verification": {
                 "vendorData": str(request.user.id),
-                "callback": "https://960f-2401-4900-8820-177e-cc75-6884-ef7a-4eab.ngrok-free.app/membership/",
+                "callback": settings.VERIFF_CALLBACK_URL,
                 "person": {
                     "firstName": request.user.first_name or "Test",
                     "lastName": request.user.last_name or "User",
@@ -28,10 +28,12 @@ class CreateVeriffSessionAPIView(APIView):
             "Content-Type": "application/json"
         }
 
+        sessions_url = settings.VERIFF_BASE_URL.rstrip("/") + "/v1/sessions"
+
         try:
 
             response = requests.post(
-                "https://stationapi.veriff.com/v1/sessions",
+                sessions_url,
                 json=payload,
                 headers=headers,
                 timeout=10
