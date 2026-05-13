@@ -1,6 +1,7 @@
 import json
 import logging
 from datetime import datetime
+from decimal import Decimal
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
@@ -12,7 +13,7 @@ from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 
 from django.db import models
-from billing.models import Invoice, Subscription, CommercialPlan
+from billing.models import Invoice, Subscription, CommercialPlan, ConsultantCommission
 
 logger = logging.getLogger("technical")
 
@@ -188,8 +189,181 @@ def payment_approve(request, subscription_id):
         status="paid", paid_at=now
     )
 
+    # Consultant commission: 10% to the consultant whose company the business
+    # user is currently linked to as their primary. Skipped for the Free plan
+    # (no real revenue), for users with no primary_company, and for companies
+    # whose `consultant` FK is unset. The unique (consultant, subscription)
+    # constraint makes this idempotent — re-approval can never double-pay.
+    _maybe_create_commission(sub, now)
+
     messages.success(request, f"Subscription for {sub.user.email} has been approved.")
     return redirect("payments")
+
+
+@login_required
+def commission_list(request):
+    """Earnings page. Consultants see only their own rows; superusers see all
+    rows across the platform (for payout review)."""
+    is_consultant = (
+        request.user.role
+        and request.user.role.code
+        and request.user.role.code.lower() == "consultant"
+    )
+    if not request.user.is_superuser and not is_consultant:
+        raise PermissionDenied()
+
+    qs = (
+        ConsultantCommission.objects
+        .select_related("consultant", "business_user", "company", "subscription__plan", "invoice")
+        .order_by("-created_at")
+    )
+    if not request.user.is_superuser:
+        qs = qs.filter(consultant=request.user)
+
+    status_filter = (request.GET.get("status") or "").strip().lower()
+    if status_filter in {"pending", "paid", "cancelled"}:
+        qs = qs.filter(status=status_filter)
+
+    # Totals per currency — a consultant may earn in USD and EUR from
+    # different business users, so sum is meaningless without a currency split.
+    totals_by_currency = {}
+    pending_by_currency = {}
+    admin_totals_by_currency = {}
+    for row in qs:
+        totals_by_currency[row.currency] = totals_by_currency.get(row.currency, Decimal("0")) + row.commission_amount
+        admin_totals_by_currency[row.currency] = admin_totals_by_currency.get(row.currency, Decimal("0")) + row.admin_share
+        if row.status == "pending":
+            pending_by_currency[row.currency] = pending_by_currency.get(row.currency, Decimal("0")) + row.commission_amount
+
+    paginator = Paginator(qs, 20)
+    page_number = request.GET.get("page", 1)
+    try:
+        page_obj = paginator.page(page_number)
+    except (PageNotAnInteger, EmptyPage):
+        page_obj = paginator.page(1)
+
+    return render(request, "dashboard/commissions.html", {
+        "commissions": page_obj,
+        "page_obj": page_obj,
+        "status_filter": status_filter,
+        "active_menu": "commissions",
+        "totals_by_currency": totals_by_currency,
+        "pending_by_currency": pending_by_currency,
+        "admin_totals_by_currency": admin_totals_by_currency,
+        "viewing_as_admin": request.user.is_superuser,
+    })
+
+
+@login_required
+def commission_invoice_detail_ajax(request, commission_id):
+    """Renders the invoice block for a commission row inside the commissions
+    modal. Visible to the admin and to the consultant who earned the
+    commission — they need to see what the business user was billed."""
+    commission = get_object_or_404(
+        ConsultantCommission.objects.select_related(
+            "consultant",
+            "business_user",
+            "company",
+            "subscription__plan",
+            "subscription__user",
+            "invoice",
+        ),
+        id=commission_id,
+    )
+    if not request.user.is_superuser and commission.consultant_id != request.user.id:
+        raise PermissionDenied()
+
+    invoice = commission.invoice
+    if invoice is None:
+        return render(
+            request,
+            "dashboard/_commission_invoice_modal.html",
+            {"commission": commission, "invoice": None},
+        )
+
+    bank = invoice.bank_snapshot or {}
+    sender = invoice.sender_snapshot or {}
+
+    invoice_currency = (invoice.currency or "USD").upper()
+    if invoice.fx_rate is not None:
+        display_amount = invoice.amount
+        display_currency = invoice_currency
+        fx_rate = invoice.fx_rate
+        fx_source_currency = invoice.fx_source_currency or None
+        fx_source_amount = invoice.fx_source_amount
+    else:
+        display_amount = invoice.amount
+        display_currency = invoice_currency
+        fx_rate = None
+        fx_source_currency = None
+        fx_source_amount = None
+
+    return render(
+        request,
+        "dashboard/_commission_invoice_modal.html",
+        {
+            "commission": commission,
+            "invoice": invoice,
+            "bank": bank,
+            "sender": sender,
+            "display_amount": display_amount,
+            "display_currency": display_currency,
+            "fx_rate": fx_rate,
+            "fx_source_currency": fx_source_currency,
+            "fx_source_amount": fx_source_amount,
+        },
+    )
+
+
+@login_required
+@require_POST
+def commission_mark_paid(request, commission_id):
+    """Admin records that they've actually disbursed a pending commission."""
+    if not request.user.is_superuser:
+        raise PermissionDenied()
+    commission = get_object_or_404(ConsultantCommission, id=commission_id)
+    if commission.status != "pending":
+        messages.warning(request, "This commission is not in pending state.")
+        return redirect("commissions")
+    commission.status = "paid"
+    commission.paid_at = timezone.now()
+    commission.save(update_fields=["status", "paid_at", "updated_at"])
+    messages.success(request, f"Commission for {commission.consultant.email} marked as paid.")
+    return redirect("commissions")
+
+
+def _maybe_create_commission(sub, now):
+    plan_code = (sub.plan.code or "").lower() if sub.plan_id else ""
+    if plan_code in ("", "free"):
+        return
+
+    business_user = sub.user
+    primary_company = getattr(business_user, "primary_company", None)
+    if not primary_company or not primary_company.consultant_id:
+        return
+
+    consultant = primary_company.consultant
+    invoice = Invoice.objects.filter(subscription=sub).order_by("-created_at").first()
+    if not invoice:
+        return
+
+    rate = Decimal("10.00")
+    commission_amount = (invoice.amount * rate / Decimal("100")).quantize(Decimal("0.01"))
+
+    ConsultantCommission.objects.get_or_create(
+        consultant=consultant,
+        subscription=sub,
+        defaults={
+            "business_user": business_user,
+            "company": primary_company,
+            "invoice": invoice,
+            "subscription_amount": invoice.amount,
+            "currency": invoice.currency,
+            "rate_percent": rate,
+            "commission_amount": commission_amount,
+            "status": "pending",
+        },
+    )
 
 
 @login_required

@@ -12,7 +12,7 @@ from .view.regions import region_us, region_de, region_cz, region_ae, region_jp,
 from .view.consultant import consultant_companies, consultant_users, coordinator_users, coordinator_companies
 from .view.veriff import CreateVeriffSessionAPIView
 from .view.webhook import veriff_webhook
-from billing.views import invoice_list, plan_history, payment_list, payment_approve, payment_reject, payment_edit, payment_detail_ajax, subscription_list, plan_edit, plan_toggle
+from billing.views import invoice_list, plan_history, payment_list, payment_approve, payment_reject, payment_edit, payment_detail_ajax, subscription_list, plan_edit, plan_toggle, commission_list, commission_mark_paid, commission_invoice_detail_ajax
 from .view.search import global_search
 from .view.error import access_denied
 from .view.saved_filter import (
@@ -71,6 +71,9 @@ urlpatterns = [
     path("subscriptions/<int:plan_id>/toggle/", plan_toggle, name="plan-toggle"),
     path("invoices/", invoice_list, name="invoices"),
     path("plan-history/", plan_history, name="plan-history"),
+    path("commissions/", commission_list, name="commissions"),
+    path("commissions/<int:commission_id>/mark-paid/", commission_mark_paid, name="commission-mark-paid"),
+    path("commissions/<int:commission_id>/invoice/", commission_invoice_detail_ajax, name="commission-invoice-detail"),
     path("payments/", payment_list, name="payments"),
     path("payments/<int:subscription_id>/approve/", payment_approve, name="payment-approve"),
     path("payments/<int:subscription_id>/reject/", payment_reject, name="payment-reject"),

@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.contrib import messages
 
-from billing.models import CommercialPlan, Subscription, Invoice
+from billing.models import CommercialPlan, Subscription, Invoice, ConsultantCommission
 
 
 def home(request):
@@ -321,16 +321,33 @@ def _bank_details_for_user(user):
 def invoice_detail(request, invoice_id):
     invoice = Invoice.objects.select_related(
         "subscription__plan", "subscription__user"
-    ).filter(id=invoice_id, subscription__user=request.user).first()
+    ).filter(id=invoice_id).first()
 
     if not invoice:
         messages.error(request, "Invoice not found")
         return redirect("membership")
 
+    # Access control: the subscription owner (business user) always sees their
+    # own invoice. Superusers see everything. Consultants see an invoice when
+    # they have a commission row tied to it (i.e. they earned on this sale).
+    subscription_user = invoice.subscription.user if invoice.subscription_id else None
+    is_owner = subscription_user is not None and subscription_user == request.user
+    is_linked_consultant = ConsultantCommission.objects.filter(
+        invoice=invoice, consultant=request.user
+    ).exists()
+    if not (request.user.is_superuser or is_owner or is_linked_consultant):
+        messages.error(request, "Invoice not found")
+        return redirect("membership")
+
+    # The bank-details fallback should reflect the subscriber's region, not
+    # the viewer's — an admin or consultant opening someone else's invoice
+    # must see the same bank block the business user would.
+    bank_user = subscription_user or request.user
+
     # Prefer the snapshot stored at invoice creation time. Fall back to a
     # live computation for legacy invoices that were created before snapshots
     # were introduced.
-    bank = invoice.bank_snapshot or _bank_details_for_user(request.user)
+    bank = invoice.bank_snapshot or _bank_details_for_user(bank_user)
     sender = invoice.sender_snapshot
 
     invoice_currency = (invoice.currency or "USD").upper()

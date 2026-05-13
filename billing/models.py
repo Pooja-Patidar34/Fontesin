@@ -245,3 +245,86 @@ class Payment(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+
+class ConsultantCommission(models.Model):
+    """Commission owed to a consultant when a business user whose primary
+    company they created subscribes to a paid plan and the admin approves it.
+
+    One row per (consultant, subscription) — re-approval is idempotent. The
+    amount/currency are frozen at approval time so later invoice edits or FX
+    drift don't retroactively change a payout. `status` tracks the disbursement
+    lifecycle (pending until the admin records the actual payout).
+    """
+
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("paid", "Paid"),
+        ("cancelled", "Cancelled"),
+    ]
+
+    consultant = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.PROTECT,
+        related_name="commissions_earned",
+    )
+    business_user = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.PROTECT,
+        related_name="commissions_generated",
+    )
+    company = models.ForeignKey(
+        "accounts.Company",
+        on_delete=models.PROTECT,
+        related_name="referral_commissions",
+        null=True,
+        blank=True,
+    )
+    subscription = models.ForeignKey(
+        "billing.Subscription",
+        on_delete=models.PROTECT,
+        related_name="commissions",
+    )
+    invoice = models.ForeignKey(
+        "billing.Invoice",
+        on_delete=models.PROTECT,
+        related_name="commissions",
+        null=True,
+        blank=True,
+    )
+
+    subscription_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=10, default="USD")
+    rate_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("10.00"))
+    commission_amount = models.DecimalField(max_digits=10, decimal_places=2)
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["consultant", "subscription"],
+                name="unique_consultant_subscription_commission",
+            ),
+        ]
+        ordering = ["-created_at"]
+
+    @property
+    def admin_share(self):
+        """Platform share = subscription amount minus the consultant's cut.
+        Same currency as `subscription_amount` / `commission_amount`."""
+        return (self.subscription_amount - self.commission_amount).quantize(Decimal("0.01"))
+
+    @property
+    def admin_share_percent(self):
+        """100 - consultant's rate. Useful for label rendering in templates."""
+        return (Decimal("100") - self.rate_percent).quantize(Decimal("0.01"))
+
+    def __str__(self):
+        return (
+            f"{self.consultant.email} <- {self.commission_amount} {self.currency} "
+            f"({self.business_user.email}, {self.status})"
+        )

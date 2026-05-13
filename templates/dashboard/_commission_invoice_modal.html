@@ -1,0 +1,244 @@
+{% if invoice %}
+<style>
+  .inv-modal-section { margin-bottom: 1.25rem; }
+  .inv-modal-section h6 {
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    font-size: .72rem;
+    font-weight: 700;
+    color: #253D51;
+    border-bottom: 2px solid #d4e2ec;
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+  }
+  .inv-modal-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 5px 0;
+    border-bottom: 1px solid #f0f5f8;
+    font-size: .82rem;
+  }
+  .inv-modal-row:last-child { border-bottom: none; }
+  .inv-modal-row .lbl { color: #5F7383; }
+  .inv-modal-row .val { font-weight: 600; color: #253D51; text-align: right; word-break: break-word; }
+  .inv-modal-total {
+    background: #f0f8ff;
+    border: 2px solid #bfdbfe;
+    border-radius: 10px;
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 12px 0 16px;
+  }
+  .inv-modal-total .t-lbl { font-weight: 800; color: #253D51; font-size: .95rem; }
+  .inv-modal-total .t-amt { font-weight: 800; color: #253D51; font-size: 1.4rem; }
+  .inv-modal-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: .72rem;
+    font-weight: 700;
+  }
+  .inv-modal-badge--paid { background: #dcfce7; color: #15803d; }
+  .inv-modal-badge--pending { background: #fef3c7; color: #92400e; }
+  .inv-modal-badge--failed { background: #fee2e2; color: #b91c1c; }
+  .inv-code {
+    font-family: 'Courier New', monospace;
+    background: #f0f5f8;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: .8rem;
+  }
+</style>
+
+<div class="inv-modal-section">
+  <h6>Invoice</h6>
+  <div class="inv-modal-row">
+    <span class="lbl">Invoice Number</span>
+    <span class="val"><span class="inv-code">{{ invoice.invoice_number }}</span></span>
+  </div>
+  <div class="inv-modal-row">
+    <span class="lbl">Issue Date</span>
+    <span class="val">{{ invoice.created_at|date:"F j, Y" }}</span>
+  </div>
+  {% if invoice.status != "paid" %}
+  <div class="inv-modal-row">
+    <span class="lbl">Due Date</span>
+    <span class="val">{{ invoice.due_date|date:"F j, Y" }}</span>
+  </div>
+  {% endif %}
+  {% if invoice.paid_at %}
+  <div class="inv-modal-row">
+    <span class="lbl">Paid At</span>
+    <span class="val">{{ invoice.paid_at|date:"F j, Y" }}</span>
+  </div>
+  {% endif %}
+  <div class="inv-modal-row">
+    <span class="lbl">Status</span>
+    <span class="val">
+      {% if invoice.status == "paid" %}
+        <span class="inv-modal-badge inv-modal-badge--paid">Paid</span>
+      {% elif invoice.status == "pending" %}
+        <span class="inv-modal-badge inv-modal-badge--pending">Pending</span>
+      {% elif invoice.status == "failed" %}
+        <span class="inv-modal-badge inv-modal-badge--failed">Failed</span>
+      {% else %}
+        <span class="inv-modal-badge">{{ invoice.status }}</span>
+      {% endif %}
+    </span>
+  </div>
+</div>
+
+<div class="inv-modal-section">
+  <h6>Subscriber</h6>
+  <div class="inv-modal-row">
+    <span class="lbl">Name</span>
+    <span class="val">{{ invoice.subscription.user.first_name }} {{ invoice.subscription.user.last_name }}</span>
+  </div>
+  <div class="inv-modal-row">
+    <span class="lbl">Email</span>
+    <span class="val">{{ invoice.subscription.user.email }}</span>
+  </div>
+  <div class="inv-modal-row">
+    <span class="lbl">Role</span>
+    <span class="val">{{ invoice.subscription.user.role.name|default:"—" }}</span>
+  </div>
+  <div class="inv-modal-row">
+    <span class="lbl">Company</span>
+    <span class="val">{{ commission.company.name|default:invoice.subscription.user.primary_company.name|default:"—" }}</span>
+  </div>
+</div>
+
+<div class="inv-modal-section">
+  <h6>Subscription</h6>
+  <div class="inv-modal-row">
+    <span class="lbl">Plan</span>
+    <span class="val">{{ invoice.subscription.plan.name }}</span>
+  </div>
+  <div class="inv-modal-row">
+    <span class="lbl">Billing Period</span>
+    <span class="val">
+      {% if invoice.subscription.plan.billing_period == "monthly" %}Monthly{% else %}Annual{% endif %}
+    </span>
+  </div>
+  <div class="inv-modal-row">
+    <span class="lbl">Start Date</span>
+    <span class="val">{{ invoice.subscription.start_date|date:"F j, Y"|default:"—" }}</span>
+  </div>
+  <div class="inv-modal-row">
+    <span class="lbl">End Date</span>
+    <span class="val">{{ invoice.subscription.end_date|date:"F j, Y"|default:"—" }}</span>
+  </div>
+</div>
+
+<div class="inv-modal-total">
+  <span class="t-lbl">Total Amount</span>
+  <span class="t-amt">{% if display_currency == "EUR" %}€{% else %}${% endif %}{{ display_amount|floatformat:2 }} {{ display_currency }}</span>
+</div>
+{% if fx_rate %}
+<div style="font-size:.72rem; color:#6b7280; margin: -8px 0 16px; text-align:right;">
+  Converted from {{ fx_source_amount|default:invoice.amount|floatformat:2 }} {{ fx_source_currency }} at rate
+  1 {{ fx_source_currency }} = {{ fx_rate|floatformat:4 }} {{ display_currency }}{% if invoice.fx_rate %} (frozen){% endif %}
+</div>
+{% endif %}
+
+<div class="inv-modal-section">
+  <h6>Commission</h6>
+  <div class="inv-modal-row">
+    <span class="lbl">Consultant</span>
+    <span class="val">{{ commission.consultant.email }}</span>
+  </div>
+  <div class="inv-modal-row">
+    <span class="lbl">Rate</span>
+    <span class="val">{{ commission.rate_percent|floatformat:0 }}%</span>
+  </div>
+  <div class="inv-modal-row">
+    <span class="lbl">Consultant Share</span>
+    <span class="val" style="color:#15803d;">{{ commission.commission_amount|floatformat:2 }} {{ commission.currency }}</span>
+  </div>
+  <div class="inv-modal-row">
+    <span class="lbl">Admin Share</span>
+    <span class="val">{{ commission.admin_share|floatformat:2 }} {{ commission.currency }}</span>
+  </div>
+  <div class="inv-modal-row">
+    <span class="lbl">Status</span>
+    <span class="val">
+      {% if commission.status == "paid" %}
+        <span class="inv-modal-badge inv-modal-badge--paid">Paid{% if commission.paid_at %} · {{ commission.paid_at|date:"M d, Y" }}{% endif %}</span>
+      {% elif commission.status == "pending" %}
+        <span class="inv-modal-badge inv-modal-badge--pending">Pending</span>
+      {% else %}
+        <span class="inv-modal-badge">{{ commission.status }}</span>
+      {% endif %}
+    </span>
+  </div>
+</div>
+
+{% if bank and invoice.subscription.plan.code != "free" %}
+<div class="inv-modal-section">
+  <h6>Bank Transfer</h6>
+  {% if bank.beneficiary_name %}
+  <div class="inv-modal-row">
+    <span class="lbl">Beneficiary</span>
+    <span class="val">{{ bank.beneficiary_name }}</span>
+  </div>
+  {% endif %}
+  {% if bank.account_number %}
+  <div class="inv-modal-row">
+    <span class="lbl">{{ bank.account_label|default:"Account Number" }}</span>
+    <span class="val"><span class="inv-code">{{ bank.account_number }}</span></span>
+  </div>
+  {% endif %}
+  {% if bank.swift %}
+  <div class="inv-modal-row">
+    <span class="lbl">SWIFT / BIC</span>
+    <span class="val"><span class="inv-code">{{ bank.swift }}</span></span>
+  </div>
+  {% endif %}
+  {% if bank.aba_routing %}
+  <div class="inv-modal-row">
+    <span class="lbl">ABA Routing</span>
+    <span class="val"><span class="inv-code">{{ bank.aba_routing }}</span></span>
+  </div>
+  {% endif %}
+  {% if bank.bank_name %}
+  <div class="inv-modal-row">
+    <span class="lbl">Bank Name</span>
+    <span class="val">{{ bank.bank_name }}</span>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if invoice.variable_symbol or invoice.payment_reference %}
+<div class="inv-modal-section">
+  <h6>Payment Identification</h6>
+  {% if invoice.variable_symbol %}
+  <div class="inv-modal-row">
+    <span class="lbl">Variable Symbol</span>
+    <span class="val"><span class="inv-code">{{ invoice.variable_symbol }}</span></span>
+  </div>
+  {% endif %}
+  {% if invoice.specific_symbol %}
+  <div class="inv-modal-row">
+    <span class="lbl">Specific Symbol</span>
+    <span class="val">{{ invoice.specific_symbol }}</span>
+  </div>
+  {% endif %}
+  {% if invoice.payment_reference %}
+  <div class="inv-modal-row">
+    <span class="lbl">Payment Reference</span>
+    <span class="val"><span class="inv-code">{{ invoice.payment_reference }}</span></span>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="text-center text-muted py-5">
+  <i class="fas fa-file-invoice fa-2x mb-3" style="opacity:.4;"></i>
+  <div>No invoice is linked to this commission record.</div>
+</div>
+{% endif %}

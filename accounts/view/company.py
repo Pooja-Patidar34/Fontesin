@@ -140,6 +140,17 @@ def company_list(request):
             if not company_id and not request.user.is_superuser and not company.owner_user_id:
                 company.owner_user = request.user
 
+            # Auto-link the consultant FK when a consultant creates a company.
+            # This is what makes downstream commission attribution work — when
+            # a business user later picks this company as their primary, the
+            # 10% commission flows back to this consultant on every approved
+            # paid subscription.
+            creator_role_code = ""
+            if request.user.role and request.user.role.code:
+                creator_role_code = request.user.role.code.lower()
+            if not company_id and creator_role_code == "consultant" and not company.consultant_id:
+                company.consultant = request.user
+
             company.save()
             form.save_m2m()
 

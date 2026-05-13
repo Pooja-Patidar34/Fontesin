@@ -1,0 +1,254 @@
+{% extends "base/base.html" %}
+{% block title %}Commissions{% endblock %}
+
+{% block content %}
+<style>
+  /* Local table tightening so 9 columns + a Mark-Paid button fit without
+     the right edge clipping. Scoped to this page via .commissions-table. */
+  .commissions-table th,
+  .commissions-table td {
+    padding: 0.5rem 0.6rem !important;
+    vertical-align: middle;
+    font-size: .85rem;
+  }
+  .commissions-table .email-cell {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .commissions-table .company-cell {
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .commissions-table .btn-mark-paid,
+  .commissions-table .btn-view-invoice {
+    padding: 4px 10px;
+    font-size: .75rem;
+    white-space: nowrap;
+  }
+</style>
+<div class="card card-outline card-primary shadow-sm">
+
+  <div class="card-header">
+    <div class="d-flex justify-content-between align-items-center flex-wrap" style="gap:1rem;">
+      <h3 class="card-title font-weight-bold mb-0">
+        {% if viewing_as_admin %}All Commissions{% else %}My Commissions{% endif %}
+      </h3>
+
+      {% comment %}
+        Totals strip — one chip per currency for consultant share, admin share,
+        and pending-only consultant share. Admin chip is only shown to admins.
+      {% endcomment %}
+      <div class="d-flex flex-wrap" style="gap:.5rem;">
+        {% for currency, amount in totals_by_currency.items %}
+          <span class="badge" style="background:#dcfce7; color:#15803d; font-weight:600; font-size:.78rem; padding:6px 14px; border-radius:100px;">
+            Consultant {{ currency }}: {{ amount|floatformat:2 }}
+          </span>
+        {% endfor %}
+        {% if viewing_as_admin %}
+          {% for currency, amount in admin_totals_by_currency.items %}
+            <span class="badge" style="background:#dbeafe; color:#1d4ed8; font-weight:600; font-size:.78rem; padding:6px 14px; border-radius:100px;">
+              Admin {{ currency }}: {{ amount|floatformat:2 }}
+            </span>
+          {% endfor %}
+        {% endif %}
+        {% for currency, amount in pending_by_currency.items %}
+          <span class="badge" style="background:#fef3c7; color:#92400e; font-weight:600; font-size:.78rem; padding:6px 14px; border-radius:100px;">
+            Pending {{ currency }}: {{ amount|floatformat:2 }}
+          </span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  {# Status filter tabs. #}
+  <div class="card-body" style="padding:.75rem 1.25rem; background:#f8f9fa; border-bottom:1px solid #e9ecef;">
+    <div class="d-flex flex-wrap" style="gap:.5rem;">
+      <a href="{% url 'commissions' %}"
+         class="btn btn-sm {% if not status_filter %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+        All
+      </a>
+      <a href="?status=pending"
+         class="btn btn-sm {% if status_filter == 'pending' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+        Pending
+      </a>
+      <a href="?status=paid"
+         class="btn btn-sm {% if status_filter == 'paid' %}btn-success{% else %}btn-outline-success{% endif %}">
+        Paid
+      </a>
+      <a href="?status=cancelled"
+         class="btn btn-sm {% if status_filter == 'cancelled' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+        Cancelled
+      </a>
+    </div>
+  </div>
+
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 commissions-table">
+        <thead class="bg-light">
+          <tr>
+            <th>Date</th>
+            {% if viewing_as_admin %}<th>Consultant</th>{% endif %}
+            <th>Business User</th>
+            <th>Company</th>
+            <th>Plan</th>
+            <th class="text-right" style="white-space:nowrap;">Subscription</th>
+            <th class="text-right" style="white-space:nowrap;">Consultant Share</th>
+            <th class="text-right" style="white-space:nowrap;">Admin Share</th>
+            <th class="text-right pr-4">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in commissions %}
+          <tr>
+            <td style="white-space:nowrap;">{{ c.created_at|date:"M d, Y" }}</td>
+            {% if viewing_as_admin %}
+            <td class="email-cell" title="{{ c.consultant.email }}">{{ c.consultant.email }}</td>
+            {% endif %}
+            <td class="email-cell" title="{{ c.business_user.email }}">{{ c.business_user.email }}</td>
+            <td class="company-cell" title="{{ c.company.name|default:'-' }}">{{ c.company.name|default:"-" }}</td>
+            <td>{{ c.subscription.plan.name }}</td>
+            <td class="text-right" style="white-space:nowrap;">{{ c.subscription_amount|floatformat:2 }} {{ c.currency }}</td>
+            <td class="text-right" style="white-space:nowrap;">
+              <strong style="color:#15803d;">{{ c.commission_amount|floatformat:2 }} {{ c.currency }}</strong>
+              <div class="text-muted small">{{ c.rate_percent|floatformat:0 }}%</div>
+            </td>
+            <td class="text-right" style="white-space:nowrap;">
+              <strong>{{ c.admin_share|floatformat:2 }} {{ c.currency }}</strong>
+              <div class="text-muted small">{{ c.admin_share_percent|floatformat:0 }}%</div>
+            </td>
+            <td class="text-right">
+              {% if c.invoice_id %}
+              <button type="button"
+                      class="btn btn-outline-primary btn-view-invoice view-commission-invoice"
+                      data-commission-id="{{ c.id }}"
+                      title="View invoice details">
+                <i class="fas fa-eye"></i> View
+              </button>
+              {% endif %}
+              {% if viewing_as_admin %}
+                {% if c.status == "pending" %}
+                <form method="post" action="{% url 'commission-mark-paid' c.id %}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-success btn-mark-paid"
+                          title="Mark commission as paid"
+                          onclick="return confirm('Mark this commission as paid? This records the disbursement.');">
+                    <i class="fas fa-check"></i> Paid
+                  </button>
+                </form>
+                {% elif c.status == "paid" %}
+                <span class="badge badge-success" title="Paid on {{ c.paid_at|date:'M d, Y' }}">
+                  <i class="fas fa-check"></i> Paid
+                </span>
+                {% endif %}
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="{% if viewing_as_admin %}9{% else %}8{% endif %}" class="text-center text-muted py-4">
+              {% if viewing_as_admin %}No commissions recorded yet.{% else %}You haven't earned any commissions yet. They appear here when a business user linked to one of your companies subscribes to a paid plan.{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if commissions.paginator.num_pages > 1 %}
+  <div class="card-footer">
+    <ul class="pagination pagination-sm justify-content-end mb-0">
+      {% if commissions.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?{% if status_filter %}status={{ status_filter }}&{% endif %}page={{ commissions.previous_page_number }}">Previous</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">Previous</span></li>
+      {% endif %}
+      <li class="page-item active">
+        <span class="page-link">{{ commissions.number }} / {{ commissions.paginator.num_pages }}</span>
+      </li>
+      {% if commissions.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?{% if status_filter %}status={{ status_filter }}&{% endif %}page={{ commissions.next_page_number }}">Next</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">Next</span></li>
+      {% endif %}
+    </ul>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- Invoice Detail Modal -->
+<div class="modal fade" id="commissionInvoiceModal" tabindex="-1" role="dialog" aria-labelledby="commissionInvoiceModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title font-weight-bold" id="commissionInvoiceModalLabel">
+          <i class="fas fa-file-invoice mr-2"></i> Invoice Details
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" id="commissionInvoiceModalBody">
+        <div class="text-center py-5 text-muted">
+          <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+          <div>Loading invoice…</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  var modal = document.getElementById("commissionInvoiceModal");
+  var body = document.getElementById("commissionInvoiceModalBody");
+  if (!modal || !body) return;
+
+  var loadingHtml =
+    '<div class="text-center py-5 text-muted">' +
+    '<i class="fas fa-spinner fa-spin fa-2x mb-2"></i>' +
+    '<div>Loading invoice…</div></div>';
+
+  document.querySelectorAll(".view-commission-invoice").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var commissionId = btn.getAttribute("data-commission-id");
+      if (!commissionId) return;
+
+      body.innerHTML = loadingHtml;
+      $("#commissionInvoiceModal").modal("show");
+
+      fetch("/commissions/" + commissionId + "/invoice/", {
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+        credentials: "same-origin",
+      })
+        .then(function (r) {
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          return r.text();
+        })
+        .then(function (html) {
+          body.innerHTML = html;
+        })
+        .catch(function () {
+          body.innerHTML =
+            '<div class="text-center py-5 text-danger">' +
+            '<i class="fas fa-exclamation-triangle fa-2x mb-2"></i>' +
+            '<div>Failed to load invoice details.</div></div>';
+        });
+    });
+  });
+});
+</script>
+{% endblock %}
