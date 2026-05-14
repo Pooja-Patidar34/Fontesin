@@ -61,6 +61,23 @@ class CompanyEntityTypeChoices:
     ]
 
 
+class EmployeeCountRangeChoices:
+    """Headcount buckets shown in the company onboarding form."""
+    UP_TO_10 = "up_to_10"
+    UP_TO_50 = "up_to_50"
+    UP_TO_100 = "up_to_100"
+    UP_TO_1000 = "up_to_1000"
+    OVER_1000 = "over_1000"
+
+    CHOICES = [
+        (UP_TO_10, "Up to 10"),
+        (UP_TO_50, "Up to 50"),
+        (UP_TO_100, "Up to 100"),
+        (UP_TO_1000, "Up to 1,000"),
+        (OVER_1000, "Over 1,000"),
+    ]
+
+
 class CountryChoices:
     US = "US"
     DE = "DE"

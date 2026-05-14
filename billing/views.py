@@ -10,7 +10,13 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.utils import timezone
 from django.views.decorators.http import require_POST
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
+import csv
+import io
+
+from openpyxl import Workbook
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.utils import get_column_letter
 
 from django.db import models
 from billing.models import Invoice, Subscription, CommercialPlan, ConsultantCommission
@@ -313,6 +319,269 @@ def commission_invoice_detail_ajax(request, commission_id):
             "fx_source_amount": fx_source_amount,
         },
     )
+
+
+@login_required
+def commission_invoice_export(request, commission_id):
+    """Formatted XLSX download of a single commission's invoice.
+
+    Layout:
+      • Title banner with FONTESIN + invoice number.
+      • Sectioned tables (Invoice / Subscriber / Plan / Total / Commission)
+        each with a dark header row, alternating-color body rows, and
+        thin borders so it reads as a proper invoice in Excel rather
+        than a raw key/value dump.
+
+    Access: same gate as ``commission_invoice_detail_ajax`` — admin or
+    the consultant who earned the commission. Anyone else gets 403.
+    """
+    commission = get_object_or_404(
+        ConsultantCommission.objects.select_related(
+            "consultant",
+            "business_user",
+            "company",
+            "subscription__plan",
+            "subscription__user",
+            "invoice",
+        ),
+        id=commission_id,
+    )
+    if not request.user.is_superuser and commission.consultant_id != request.user.id:
+        raise PermissionDenied()
+
+    invoice = commission.invoice
+    sub = commission.subscription
+    business_user = commission.business_user or (sub.user if sub else None)
+    company = commission.company or (
+        getattr(business_user, "primary_company", None) if business_user else None
+    )
+
+    inv_number = invoice.invoice_number if invoice else f"commission-{commission.id}"
+    safe_inv = "".join(c if c.isalnum() or c in "-_." else "_" for c in str(inv_number))
+    filename = f"invoice-{safe_inv}.xlsx"
+
+    # ---- Styles ----
+    DARK = "253D51"
+    LIGHT = "EAF2F7"
+    ALT = "F8FAFC"
+    GREEN = "DCFCE7"
+    title_font = Font(name="Calibri", size=18, bold=True, color="FFFFFF")
+    section_font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
+    label_font = Font(name="Calibri", size=10, bold=True, color="253D51")
+    value_font = Font(name="Calibri", size=10, color="1B2E3F")
+    total_font = Font(name="Calibri", size=14, bold=True, color="166534")
+    title_fill = PatternFill("solid", fgColor=DARK)
+    section_fill = PatternFill("solid", fgColor=DARK)
+    light_fill = PatternFill("solid", fgColor=LIGHT)
+    alt_fill = PatternFill("solid", fgColor=ALT)
+    total_fill = PatternFill("solid", fgColor=GREEN)
+    center = Alignment(horizontal="center", vertical="center")
+    left = Alignment(horizontal="left", vertical="center", wrap_text=True)
+    right = Alignment(horizontal="right", vertical="center")
+    thin = Side(border_style="thin", color="C7D2DC")
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Invoice"
+
+    # Column widths
+    widths = [22, 30, 22, 30]
+    for i, w in enumerate(widths, start=1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+
+    row = 1
+
+    def title_banner(text, height=32):
+        nonlocal row
+        ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=4)
+        cell = ws.cell(row=row, column=1, value=text)
+        cell.font = title_font
+        cell.fill = title_fill
+        cell.alignment = center
+        ws.row_dimensions[row].height = height
+        row += 1
+
+    def section_header(text):
+        nonlocal row
+        ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=4)
+        cell = ws.cell(row=row, column=1, value=text)
+        cell.font = section_font
+        cell.fill = section_fill
+        cell.alignment = left
+        ws.row_dimensions[row].height = 22
+        row += 1
+
+    def kv_pair(label, value, alt=False):
+        """Render two key/value pairs side by side, one in cols A:B, one in C:D.
+        Pass `value` as None to leave the right pair blank."""
+        nonlocal row
+        fill = alt_fill if alt else light_fill
+        # Pre-set fills + borders on all four cells so merged regions still
+        # render with a continuous background.
+        for col in range(1, 5):
+            c = ws.cell(row=row, column=col)
+            c.fill = fill
+            c.border = border
+        a = ws.cell(row=row, column=1, value=label)
+        b = ws.cell(row=row, column=2, value=value)
+        a.font = label_font
+        a.alignment = left
+        b.font = value_font
+        b.alignment = left
+        # Empty right half — merge B-D so single values can span when desired
+        row += 1
+
+    def kv_row(label1, value1, label2, value2, alt=False):
+        nonlocal row
+        fill = alt_fill if alt else light_fill
+        for col in range(1, 5):
+            c = ws.cell(row=row, column=col)
+            c.fill = fill
+            c.border = border
+        a = ws.cell(row=row, column=1, value=label1)
+        b = ws.cell(row=row, column=2, value=value1)
+        c = ws.cell(row=row, column=3, value=label2)
+        d = ws.cell(row=row, column=4, value=value2)
+        a.font = label_font
+        c.font = label_font
+        b.font = value_font
+        d.font = value_font
+        a.alignment = left
+        c.alignment = left
+        b.alignment = left
+        d.alignment = left
+        row += 1
+
+    def spacer():
+        nonlocal row
+        ws.row_dimensions[row].height = 6
+        row += 1
+
+    def total_row(label, amount):
+        nonlocal row
+        ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=2)
+        ws.merge_cells(start_row=row, start_column=3, end_row=row, end_column=4)
+        a = ws.cell(row=row, column=1, value=label)
+        b = ws.cell(row=row, column=3, value=amount)
+        for col in (1, 2, 3, 4):
+            c = ws.cell(row=row, column=col)
+            c.fill = total_fill
+            c.border = border
+        a.font = total_font
+        a.alignment = left
+        b.font = total_font
+        b.alignment = right
+        ws.row_dimensions[row].height = 28
+        row += 1
+
+    # ---- Helpers for value formatting ----
+    def fmt_date(dt):
+        return dt.strftime("%B %d, %Y") if dt else "—"
+
+    def fmt_currency(amount, currency):
+        if amount is None:
+            return "—"
+        return f"{amount:,.2f} {currency or ''}".strip()
+
+    plan_name = sub.plan.name if sub and sub.plan else "—"
+    billing_period = (
+        "Monthly" if sub and sub.plan and sub.plan.billing_period == "monthly"
+        else "Annual" if sub and sub.plan else "—"
+    )
+    sub_user_name = (
+        f"{business_user.first_name} {business_user.last_name}".strip()
+        if business_user else "—"
+    )
+    sub_user_role = (
+        business_user.role.name if business_user and business_user.role else "—"
+    )
+
+    # ---- Build the workbook ----
+    title_banner(f"FONTESIN  ·  Invoice {inv_number}", height=36)
+    spacer()
+
+    section_header("Invoice")
+    kv_row("Invoice Number", inv_number, "Status", (invoice.status if invoice else "—").upper(), alt=False)
+    kv_row(
+        "Issue Date",
+        fmt_date(invoice.created_at) if invoice else "—",
+        "Paid At",
+        fmt_date(invoice.paid_at) if invoice and invoice.paid_at else "—",
+        alt=True,
+    )
+    if invoice and invoice.status != "paid" and invoice.due_date:
+        kv_row("Due Date", fmt_date(invoice.due_date), "", "", alt=False)
+    spacer()
+
+    section_header("Subscriber")
+    kv_row("Name", sub_user_name, "Email", business_user.email if business_user else "—", alt=False)
+    kv_row("Role", sub_user_role, "Company", company.name if company else "—", alt=True)
+    kv_row("Country", company.country if company else "—", "", "", alt=False)
+    spacer()
+
+    section_header("Plan & Period")
+    kv_row("Plan", plan_name, "Billing Period", billing_period, alt=False)
+    kv_row(
+        "Period Start",
+        fmt_date(sub.start_date) if sub and sub.start_date else "—",
+        "Period End",
+        fmt_date(sub.end_date) if sub and sub.end_date else "—",
+        alt=True,
+    )
+    spacer()
+
+    total_row(
+        "Total Amount",
+        fmt_currency(commission.subscription_amount, commission.currency),
+    )
+    spacer()
+
+    section_header("Commission")
+    kv_row(
+        "Consultant",
+        commission.consultant.email if commission.consultant else "—",
+        "Rate",
+        f"{commission.rate_percent:.0f}%",
+        alt=False,
+    )
+    kv_row(
+        "Consultant Share",
+        fmt_currency(commission.commission_amount, commission.currency),
+        "Admin Share",
+        fmt_currency(commission.admin_share, commission.currency),
+        alt=True,
+    )
+    kv_row(
+        "Commission Status",
+        commission.status.upper(),
+        "Paid At",
+        fmt_date(commission.paid_at) if commission.paid_at else "—",
+        alt=False,
+    )
+
+    if invoice and invoice.fx_rate is not None:
+        spacer()
+        section_header("FX")
+        kv_row(
+            "Source Amount",
+            fmt_currency(invoice.fx_source_amount, invoice.fx_source_currency),
+            "Rate",
+            f"1 {invoice.fx_source_currency or ''} = {invoice.fx_rate:.4f} {commission.currency or ''}".strip(),
+            alt=False,
+        )
+
+    # ---- Serialize ----
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+
+    response = HttpResponse(
+        buf.getvalue(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
 
 
 @login_required

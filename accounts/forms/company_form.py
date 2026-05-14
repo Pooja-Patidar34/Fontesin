@@ -1,8 +1,14 @@
+import datetime
 import re
 
 from django import forms
 from accounts.models import Company, Tenant
-from accounts.constants import CountryChoices, PHONE_RULES, COUNTRY_STATES
+from accounts.constants import (
+    CountryChoices,
+    EmployeeCountRangeChoices,
+    PHONE_RULES,
+    COUNTRY_STATES,
+)
 
 COUNTRY_LABELS = dict(CountryChoices.CHOICES)
 
@@ -52,6 +58,20 @@ ADDRESS_LINE_RE = re.compile(r"^(?=.*[A-Za-z0-9])[A-Za-z\u00C0-\u024F0-9\s,./#\-
 # Postal code: alphanumerics with optional spaces/hyphens (US/UK/CA/etc.); 3-12 chars.
 POSTAL_CODE_RE = re.compile(r"^(?=.*[A-Za-z0-9])[A-Za-z0-9\s\-]{3,12}$")
 
+# House number: digits with optional letter suffix and / - (e.g. "221B", "12/3", "5-A"); 1-15 chars.
+HOUSE_NUMBER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9\-/ ]{0,14}$")
+
+# Region / District / Keywords: letters, digits, spaces and the symbols , . - / & ' ; 1-120 chars.
+REGION_DISTRICT_RE = re.compile(r"^(?=.*[A-Za-z0-9])[A-Za-zÀ-ɏ0-9\s,./&'\-]{1,120}$")
+
+# Industry code (NACE / ISIC / NAICS): digits, letters, optional dot — 1-20 chars.
+INDUSTRY_CODE_RE = re.compile(r"^[A-Za-z0-9.\-]{1,20}$")
+
+# Allowed logo extensions.
+LOGO_ALLOWED_EXTENSIONS = (".png", ".jpg", ".jpeg", ".svg", ".webp", ".gif")
+# 5 MB upper bound on logo upload size.
+LOGO_MAX_BYTES = 5 * 1024 * 1024
+
 
 class CompanyForm(forms.ModelForm):
 
@@ -83,6 +103,9 @@ class CompanyForm(forms.ModelForm):
             # ---- Address ----
             "address_line1",
             "address_line2",
+            "house_number",
+            "district",
+            "region",
             "city",
             "state",
             "postal_code",
@@ -90,11 +113,21 @@ class CompanyForm(forms.ModelForm):
             "latitude",
             "longitude",
 
+            # ---- Business attributes ----
+            "year_established",
+            "industry_code",
+            "keywords",
+            "employee_count_range",
+
             # ---- Contact ----
             "phone",
             "phone_secondary",
             "fax",
             "website",
+            "contact_email",
+
+            # ---- Branding ----
+            "logo",
 
             # ---- Status ----
             "is_active",
@@ -127,9 +160,26 @@ class CompanyForm(forms.ModelForm):
                 "minlength": "3",
                 "maxlength": "120",
                 "pattern": r"(?=.*[A-Za-z0-9])[A-Za-z\u00C0-\u024F0-9\s,./#\-]{3,120}",
-                "placeholder": "e.g. 221B Baker Street",
+                "placeholder": "e.g. Baker Street",
                 "title": "3-120 characters. Letters, digits, spaces and the symbols , . - / # only. Other special characters are not allowed.",
                 "autocomplete": "address-line1",
+            }),
+            "house_number": forms.TextInput(attrs={
+                "class": "form-control",
+                "maxlength": "15",
+                "pattern": r"[A-Za-z0-9][A-Za-z0-9\-/ ]{0,14}",
+                "placeholder": "e.g. 221B",
+                "title": "Letters, digits and the symbols - / and spaces (1-15 characters).",
+            }),
+            "district": forms.TextInput(attrs={
+                "class": "form-control",
+                "maxlength": "120",
+                "placeholder": "e.g. Westminster",
+            }),
+            "region": forms.TextInput(attrs={
+                "class": "form-control",
+                "maxlength": "120",
+                "placeholder": "e.g. Greater London",
             }),
             "address_line2": forms.TextInput(attrs={
                 "class": "form-control",
@@ -205,6 +255,43 @@ class CompanyForm(forms.ModelForm):
                 "maxlength": "500",
                 "placeholder": "https://example.com",
                 "title": "Enter a valid URL like https://example.com (letters, digits, and . - _ / only in the path).",
+            }),
+            "contact_email": forms.EmailInput(attrs={
+                "class": "form-control",
+                "maxlength": "254",
+                "placeholder": "contact@example.com",
+                "autocomplete": "email",
+            }),
+
+            # Business attributes
+            "year_established": forms.NumberInput(attrs={
+                "class": "form-control",
+                "min": "1500",
+                # `max` is enforced server-side against current year; render as
+                # a generous upper bound so the browser widget stays usable on
+                # New Year's Eve without a deploy.
+                "max": str(datetime.date.today().year),
+                "step": "1",
+                "placeholder": "e.g. 2014",
+            }),
+            "industry_code": forms.TextInput(attrs={
+                "class": "form-control",
+                "maxlength": "20",
+                "pattern": r"[A-Za-z0-9.\-]{1,20}",
+                "placeholder": "NACE / ISIC code",
+                "title": "1-20 characters. Letters, digits, dots and hyphens only.",
+            }),
+            "keywords": forms.TextInput(attrs={
+                "class": "form-control",
+                "maxlength": "500",
+                "placeholder": "comma-separated search keywords",
+            }),
+            "employee_count_range": forms.Select(attrs={"class": "form-control"}),
+
+            # Branding
+            "logo": forms.ClearableFileInput(attrs={
+                "class": "form-control-file",
+                "accept": ",".join(LOGO_ALLOWED_EXTENSIONS),
             }),
 
             # Status
@@ -476,6 +563,86 @@ class CompanyForm(forms.ModelForm):
         if not (5 <= len(digits) <= 15):
             raise forms.ValidationError("Fax number must contain 5-15 digits.")
         return fax
+
+    def _clean_text_field(self, field_name, label, regex, max_len=120):
+        value = (self.cleaned_data.get(field_name) or "").strip()
+        if not value:
+            return value
+        if len(value) > max_len:
+            raise forms.ValidationError(f"{label} must be {max_len} characters or fewer.")
+        if not regex.match(value):
+            raise forms.ValidationError(
+                f"{label} contains invalid characters."
+            )
+        return value
+
+    def clean_house_number(self):
+        return self._clean_text_field("house_number", "House number", HOUSE_NUMBER_RE, max_len=15)
+
+    def clean_district(self):
+        return self._clean_text_field("district", "District", REGION_DISTRICT_RE, max_len=120)
+
+    def clean_region(self):
+        return self._clean_text_field("region", "Region", REGION_DISTRICT_RE, max_len=120)
+
+    def clean_industry_code(self):
+        code = (self.cleaned_data.get("industry_code") or "").strip()
+        if not code:
+            return code
+        if not INDUSTRY_CODE_RE.match(code):
+            raise forms.ValidationError(
+                "Industry code may only contain letters, digits, dots and hyphens (1-20 characters)."
+            )
+        return code
+
+    def clean_keywords(self):
+        keywords = (self.cleaned_data.get("keywords") or "").strip()
+        if not keywords:
+            return keywords
+        if len(keywords) > 500:
+            raise forms.ValidationError("Keywords must be 500 characters or fewer.")
+        return keywords
+
+    def clean_year_established(self):
+        year = self.cleaned_data.get("year_established")
+        if year in (None, ""):
+            return None
+        current_year = datetime.date.today().year
+        if year < 1500 or year > current_year:
+            raise forms.ValidationError(
+                f"Year of establishment must be between 1500 and {current_year}."
+            )
+        return year
+
+    def clean_contact_email(self):
+        # EmailField already validates the format; we just normalize the case
+        # of the domain portion and strip surrounding whitespace.
+        email = (self.cleaned_data.get("contact_email") or "").strip()
+        if not email:
+            return email
+        if "@" in email:
+            local, _, domain = email.partition("@")
+            email = f"{local}@{domain.lower()}"
+        return email
+
+    def clean_logo(self):
+        logo = self.cleaned_data.get("logo")
+        # Only validate when a new file was uploaded this request — preserving
+        # the existing file (FieldFile) on edits without re-uploading.
+        if not logo or not hasattr(logo, "name") or not hasattr(logo, "size"):
+            return logo
+        # `size` is only present on freshly-uploaded files; existing FieldFile
+        # instances have it too but it equals the stored file size. Guard the
+        # extension/size check to UploadedFile so we don't re-reject the
+        # already-saved logo on update.
+        name = (logo.name or "").lower()
+        if not name.endswith(LOGO_ALLOWED_EXTENSIONS):
+            raise forms.ValidationError(
+                "Logo must be one of: " + ", ".join(LOGO_ALLOWED_EXTENSIONS)
+            )
+        if getattr(logo, "size", 0) > LOGO_MAX_BYTES:
+            raise forms.ValidationError("Logo file must be 5 MB or smaller.")
+        return logo
 
     def clean_website(self):
         website = (self.cleaned_data.get("website") or "").strip()

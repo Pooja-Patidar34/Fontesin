@@ -53,6 +53,7 @@ from django.db import transaction
 from django.template.loader import render_to_string
 
 from accounts.forms.company_form import CompanyForm
+from accounts.utils.certification_routing import find_consultant_for_company
 
 
 def _is_ajax(request):
@@ -167,6 +168,7 @@ def company_list(request):
 
             form = CompanyForm(
                 request.POST,
+                request.FILES,
                 instance=company,
                 user=request.user,
             )
@@ -179,6 +181,7 @@ def company_list(request):
 
             form = CompanyForm(
                 request.POST,
+                request.FILES,
                 user=request.user,
             )
             action = "company.created"
@@ -205,6 +208,21 @@ def company_list(request):
                 creator_role_code = request.user.role.code.lower()
             if not company_id and creator_role_code == "consultant" and not company.consultant_id:
                 company.consultant = request.user
+
+            # New companies created through the BU onboarding form are not yet
+            # vetted — flag them as awaiting consultant certification, hold
+            # them out of the public directory until approved, and route them
+            # to a consultant in the same locality. Consultants who create
+            # companies for their own clients bypass this gate (they're the
+            # ones doing the certifying), so the toggle only fires for
+            # non-consultant authors.
+            if not company_id and creator_role_code != "consultant":
+                company.certification_status = "pending"
+                company.is_active = False
+                if not company.consultant_id:
+                    routed = find_consultant_for_company(company)
+                    if routed and routed.id != request.user.id:
+                        company.consultant = routed
 
             company.save()
             form.save_m2m()
@@ -235,7 +253,7 @@ def company_list(request):
             success_msg = (
                 "Company updated successfully."
                 if company_id
-                else "Company created successfully."
+                else "Certification request submitted. An admin will review your company shortly."
             )
 
             if _is_ajax(request):
@@ -420,7 +438,24 @@ def company_list(request):
 
         queryset = queryset.distinct()
 
-    paginator = Paginator(queryset.order_by("name"), 10)
+    # Order: the user's own companies first (owner_user / primary_company /
+    # consultant), then everyone else, both groups alphabetical by name.
+    # Without this, a newly-approved company is hidden alphabetically across
+    # many pages of discovery rows and feels like a missing approval.
+    from django.db.models import Case, When, IntegerField, Value
+    own_q = (
+        Q(owner_user=request.user)
+        | Q(consultant=request.user)
+        | Q(primary_users=request.user)
+    )
+    queryset = queryset.annotate(
+        _own_rank=Case(
+            When(own_q, then=Value(0)),
+            default=Value(1),
+            output_field=IntegerField(),
+        )
+    )
+    paginator = Paginator(queryset.order_by("_own_rank", "name"), 10)
     try:
         page_obj = paginator.page(page_number)
     except PageNotAnInteger:
@@ -816,6 +851,9 @@ def company_detail_ajax(request, company_id):
 
             "address_line1": company.address_line1,
             "address_line2": company.address_line2,
+            "house_number": company.house_number,
+            "district": company.district,
+            "region": company.region,
             "city": company.city,
             "state": company.state,
             "postal_code": company.postal_code,
@@ -824,10 +862,28 @@ def company_detail_ajax(request, company_id):
             "latitude": str(company.latitude) if company.latitude else None,
             "longitude": str(company.longitude) if company.longitude else None,
 
+            "year_established": company.year_established,
+            "industry_code": company.industry_code,
+            "keywords": company.keywords,
+            "employee_count_range": company.employee_count_range,
+
             "phone": company.phone,
             "phone_secondary": company.phone_secondary,
             "fax": company.fax,
             "website": company.website,
+            "contact_email": company.contact_email,
+
+            # Absolute URL so the template can render the logo in the modal
+            # header regardless of how the page was opened (e.g. via API or
+            # an internal redirect).
+            "logo_url": request.build_absolute_uri(company.logo.url) if company.logo else None,
+            "certification_status": company.certification_status,
+            "certified_by_name": (
+                (f"{company.certified_by.first_name} {company.certified_by.last_name}".strip()
+                 or company.certified_by.email)
+                if company.certified_by else None
+            ),
+            "certified_at": company.certified_at.isoformat() if company.certified_at else None,
 
             "is_active": company.is_active,
         },

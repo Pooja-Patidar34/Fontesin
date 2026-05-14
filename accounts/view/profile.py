@@ -1,18 +1,33 @@
 import re
 
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.http import JsonResponse
 from accounts.models import Tenant, Company, UserCompany
+from accounts.utils.certification_routing import find_consultant_for_company
 from accounts.constants import (
     CompanyClassificationChoices,
+    CompanyEntityTypeChoices,
     CountryChoices,
+    EmployeeCountRangeChoices,
     COUNTRY_STATES,
 )
+import datetime
 
 CLASSIFICATION_CODES = {code for code, _ in CompanyClassificationChoices.CHOICES}
+ENTITY_TYPE_CODES = {code for code, _ in CompanyEntityTypeChoices.CHOICES}
+EMPLOYEE_RANGE_CODES = {code for code, _ in EmployeeCountRangeChoices.CHOICES}
 COUNTRY_LABELS = dict(CountryChoices.CHOICES)
+
+# Reused on the profile-page Create Company form (mirrors the modal in companies.html).
+HOUSE_NUMBER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9\-/ ]{0,14}$")
+REGION_DISTRICT_RE = re.compile(r"^(?=.*[A-Za-z0-9])[A-Za-zÀ-ɏ0-9\s,./&'\-]{1,120}$")
+INDUSTRY_CODE_RE = re.compile(r"^[A-Za-z0-9.\-]{1,20}$")
+EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+LOGO_ALLOWED_EXTENSIONS = (".png", ".jpg", ".jpeg", ".svg", ".webp", ".gif")
+LOGO_MAX_BYTES = 5 * 1024 * 1024
 from billing.utils import get_user_plan, get_active_subscription, get_pending_subscription
 
 
@@ -60,6 +75,35 @@ ADDRESS_LINE_RE = re.compile(r"^(?=.*[A-Za-z0-9])[A-Za-z\u00C0-\u024F0-9\s,./#\-
 
 # Postal code: alphanumerics with optional spaces/hyphens (US/UK/CA/etc.); 3-12 chars.
 POSTAL_CODE_RE = re.compile(r"^(?=.*[A-Za-z0-9])[A-Za-z0-9\s\-]{3,12}$")
+
+
+@login_required
+def plans_view(request):
+    """Standalone Plans page — same plan-status card the profile sidebar
+    renders, lifted into its own sidebar tab so users don't have to dig
+    into Profile to see / upgrade their subscription.
+
+    The page reuses ``profile/_plan_card.html`` so the two views never
+    drift. The Upgrade CTA still routes to /membership/ for plan
+    selection; admins approve the request from the existing flow.
+    """
+    user = request.user
+    role_code = (user.role.code or "").lower() if user.role else ""
+    # Mirror the profile-card visibility: superusers and staff roles don't
+    # have subscriptions, so the dedicated page should also refuse them.
+    if user.is_superuser or role_code in ("consultant", "coordinator", "franchise"):
+        raise PermissionDenied("Plans are only available to subscribing users.")
+
+    return render(
+        request,
+        "dashboard/plans.html",
+        {
+            "active_menu": "plans",
+            "user_plan": get_user_plan(user),
+            "subscription": get_active_subscription(user),
+            "pending_subscription": get_pending_subscription(user),
+        },
+    )
 
 
 @login_required
@@ -194,10 +238,27 @@ def profile_view(request):
         postal_code = request.POST.get("postal_code", "").strip()
         country = request.POST.get("company_country", "").strip()
 
+        # New BU-onboarding fields. Mirrors the modal in companies.html so the
+        # certification request carries the same info no matter where it's
+        # filed from.
+        entity_type = request.POST.get("entity_type", "").strip()
+        year_established_raw = request.POST.get("year_established", "").strip()
+        employee_count_range = request.POST.get("employee_count_range", "").strip()
+        region = request.POST.get("region", "").strip()
+        district = request.POST.get("district", "").strip()
+        house_number = request.POST.get("house_number", "").strip()
+        industry_code = request.POST.get("industry_code", "").strip()
+        keywords = request.POST.get("keywords", "").strip()
+        contact_email = request.POST.get("contact_email", "").strip()
+        logo_file = request.FILES.get("logo")
+
         # Stash the cleaned values so a validation-failure redirect can
         # repopulate the form on the next GET — losing every field on a
         # single duplicate-domain (or any other) error is hostile UX. The
         # session entry is consumed and removed by the GET branch below.
+        # Note: `logo_file` is intentionally not persisted in the session —
+        # UploadedFile isn't JSON-serializable and the user will have to
+        # re-select the file on error.
         request.session["create_company_form"] = {
             "company_name": company_name,
             "registration_id": registration_id,
@@ -213,6 +274,15 @@ def profile_view(request):
             "state": state,
             "postal_code": postal_code,
             "company_country": country,
+            "entity_type": entity_type,
+            "year_established": year_established_raw,
+            "employee_count_range": employee_count_range,
+            "region": region,
+            "district": district,
+            "house_number": house_number,
+            "industry_code": industry_code,
+            "keywords": keywords,
+            "contact_email": contact_email,
         }
 
         if not company_name:
@@ -376,30 +446,117 @@ def profile_view(request):
             )
             return redirect("profile")
 
+        # ---- New BU-onboarding fields validation ----
+        if entity_type and entity_type not in ENTITY_TYPE_CODES:
+            messages.error(request, "Please select a valid legal form from the list.")
+            return redirect("profile")
+
+        year_established = None
+        if year_established_raw:
+            try:
+                year_established = int(year_established_raw)
+            except ValueError:
+                messages.error(request, "Year of establishment must be a number.")
+                return redirect("profile")
+            current_year = datetime.date.today().year
+            if year_established < 1500 or year_established > current_year:
+                messages.error(
+                    request,
+                    f"Year of establishment must be between 1500 and {current_year}.",
+                )
+                return redirect("profile")
+
+        if employee_count_range and employee_count_range not in EMPLOYEE_RANGE_CODES:
+            messages.error(request, "Please select a valid employee count range.")
+            return redirect("profile")
+
+        if region and not REGION_DISTRICT_RE.match(region):
+            messages.error(request, "Region contains invalid characters.")
+            return redirect("profile")
+
+        if district and not REGION_DISTRICT_RE.match(district):
+            messages.error(request, "District contains invalid characters.")
+            return redirect("profile")
+
+        if house_number and not HOUSE_NUMBER_RE.match(house_number):
+            messages.error(
+                request,
+                "House number may only contain letters, digits and the symbols - / and spaces (1-15 characters).",
+            )
+            return redirect("profile")
+
+        if industry_code and not INDUSTRY_CODE_RE.match(industry_code):
+            messages.error(
+                request,
+                "Industry code may only contain letters, digits, dots and hyphens (1-20 characters).",
+            )
+            return redirect("profile")
+
+        if keywords and len(keywords) > 500:
+            messages.error(request, "Keywords must be 500 characters or fewer.")
+            return redirect("profile")
+
+        if contact_email and not EMAIL_RE.match(contact_email):
+            messages.error(request, "Contact email is not a valid email address.")
+            return redirect("profile")
+
+        if logo_file:
+            name = (logo_file.name or "").lower()
+            if not name.endswith(LOGO_ALLOWED_EXTENSIONS):
+                messages.error(
+                    request,
+                    "Logo must be one of: " + ", ".join(LOGO_ALLOWED_EXTENSIONS),
+                )
+                return redirect("profile")
+            if getattr(logo_file, "size", 0) > LOGO_MAX_BYTES:
+                messages.error(request, "Logo file must be 5 MB or smaller.")
+                return redirect("profile")
+
         # Create tenant internally
         tenant = Tenant.objects.create(
             name=company_name,
             domain=domain,
         )
 
-        # Create company linked to the new tenant
+        # Create company linked to the new tenant. New rows enter the
+        # certification queue as "pending" and stay invisible to the public
+        # directory (is_active=False) until a consultant approves them.
         company = Company.objects.create(
             tenant=tenant,
             name=company_name,
             registration_id=registration_id,
             classification=classification or None,
+            entity_type=entity_type or None,
             website=website or None,
             phone=phone or None,
             phone_secondary=phone_secondary or None,
             fax=fax or None,
             address_line1=address_line1 or None,
             address_line2=address_line2 or None,
+            house_number=house_number or None,
+            district=district or None,
+            region=region or None,
             city=city or None,
             state=state or None,
             postal_code=postal_code or None,
             country=country or None,
+            year_established=year_established,
+            industry_code=industry_code or None,
+            keywords=keywords or None,
+            employee_count_range=employee_count_range or None,
+            contact_email=contact_email or None,
+            logo=logo_file or None,
+            certification_status="pending",
+            is_active=False,
             owner_user=user,
         )
+
+        # Route to a consultant in the same locality so the request lands in
+        # the right reviewer's queue.
+        routed_consultant = find_consultant_for_company(company)
+        if routed_consultant and routed_consultant.id != user.id:
+            company.consultant = routed_consultant
+            company.save(update_fields=["consultant"])
 
         # Link user to the new tenant and company
         user.tenant = tenant
@@ -413,13 +570,18 @@ def profile_view(request):
         )
 
         request.session.pop("create_company_form", None)
-        messages.success(request, "Company created successfully!")
+        messages.success(
+            request,
+            "Certification request submitted. An admin will review your company shortly.",
+        )
         return redirect("profile")
 
     context = {
         "active_menu": "profile",
         "user_company": user_company,
         "classifications": CompanyClassificationChoices.CHOICES,
+        "entity_types": CompanyEntityTypeChoices.CHOICES,
+        "employee_count_ranges": EmployeeCountRangeChoices.CHOICES,
         "countries": CountryChoices.CHOICES,
         "country_states": COUNTRY_STATES,
         "user_plan": get_user_plan(user),

@@ -17,6 +17,9 @@ def admin_context(request):
     is_paid_business_user = False
     pending_partnership_count = 0
     show_partnership_upgrade_banner = False
+    pending_certification_count = 0
+    bu_certification_status = ""
+    bu_certification_consultant_name = ""
 
     if request.user.is_authenticated:
         if not request.user.is_superuser:
@@ -76,6 +79,37 @@ def admin_context(request):
                 if pending_partnership_count and is_business_user and not is_paid_business_user:
                     show_partnership_upgrade_banner = True
 
+            # Consultants see a sidebar badge with the number of pending
+            # certification requests in their queue. Use all_objects to
+            # include pending rows that are still is_active=False.
+            if role_code == "consultant":
+                pending_certification_count = Company.all_objects.filter(
+                    certification_status="pending",
+                    consultant=request.user,
+                ).count()
+
+            # Business users see the status of their primary company's
+            # certification request (used by a banner that says "Your company
+            # was certified by [Consultant]" / "pending review"). Only the
+            # primary company carries this state — secondary linkages don't.
+            if is_business_user and getattr(request.user, "primary_company_id", None):
+                primary = Company.all_objects.filter(
+                    id=request.user.primary_company_id
+                ).select_related("certified_by").first()
+                if primary:
+                    bu_certification_status = primary.certification_status or ""
+                    if primary.certified_by:
+                        bu_certification_consultant_name = (
+                            f"{primary.certified_by.first_name} "
+                            f"{primary.certified_by.last_name}"
+                        ).strip() or primary.certified_by.email
+
+        # Superusers get the global pending count so admins can step in.
+        if request.user.is_superuser:
+            pending_certification_count = Company.all_objects.filter(
+                certification_status="pending"
+            ).count()
+
     return {
         "is_tenant_admin": is_tenant_admin,
         "sidebar_company_count": sidebar_company_count,
@@ -92,4 +126,7 @@ def admin_context(request):
         "is_basic_or_pro_business_user": is_paid_business_user,
         "pending_partnership_count": pending_partnership_count,
         "show_partnership_upgrade_banner": show_partnership_upgrade_banner,
+        "pending_certification_count": pending_certification_count,
+        "bu_certification_status": bu_certification_status,
+        "bu_certification_consultant_name": bu_certification_consultant_name,
     }

@@ -2,6 +2,72 @@
 {% block title %}Payments{% endblock %}
 
 {% block content %}
+<style>
+  /* Scoped table tightening for the Payments grid. 8 columns, several with
+     long-ish content (emails, invoice numbers) — keep header text on one
+     line and prevent the Plan/Amount cells from breaking mid-value. */
+  .payments-table {
+    table-layout: fixed;
+    width: 100%;
+  }
+  .payments-table th,
+  .payments-table td {
+    padding: 0.55rem 0.65rem !important;
+    vertical-align: middle;
+    font-size: .85rem;
+  }
+  .payments-table th {
+    white-space: nowrap;
+    font-weight: 700;
+    color: #1B2E3F;
+  }
+  .payments-table .col-user      { width: 22%; }
+  .payments-table .col-ref       { width: 18%; }
+  .payments-table .col-plan      { width: 10%; }
+  .payments-table .col-amount    { width: 12%; white-space: nowrap; }
+  .payments-table .col-status    { width: 12%; text-align: center; white-space: nowrap; }
+  .payments-table .col-requested { width: 12%; white-space: nowrap; }
+  .payments-table .col-actions   { width: 14%; }
+  .payments-table .user-cell strong {
+    display: block;
+    font-size: .88rem;
+    color: #1B2E3F;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .payments-table .user-cell .muted {
+    display: block;
+    font-size: .75rem;
+    color: #6c757d;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .payments-table .email-cell,
+  .payments-table .ref-cell {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .payments-table .plan-cell {
+    white-space: nowrap;
+    line-height: 1.2;
+  }
+  .payments-table .plan-cell small {
+    display: block;
+    font-size: .72rem;
+  }
+  .payments-table code {
+    font-size: .78rem;
+    word-break: break-all;
+  }
+  .payments-table .btn-sm {
+    padding: 4px 8px;
+    font-size: .75rem;
+  }
+</style>
+
 <div class="card" style="border-radius:14px; border:1px solid #e8eef3; box-shadow:0 2px 12px rgba(0,0,0,.06);">
 
   <div class="card-header d-flex justify-content-between align-items-center">

@@ -24,7 +24,8 @@
     white-space: nowrap;
   }
   .commissions-table .btn-mark-paid,
-  .commissions-table .btn-view-invoice {
+  .commissions-table .btn-view-invoice,
+  .commissions-table .btn-export-invoice {
     padding: 4px 10px;
     font-size: .75rem;
     white-space: nowrap;
@@ -129,6 +130,11 @@
                       title="View invoice details">
                 <i class="fas fa-eye"></i> View
               </button>
+              <a href="{% url 'commission-invoice-export' c.id %}"
+                 class="btn btn-outline-success btn-export-invoice"
+                 title="Download invoice as Excel (.xlsx)">
+                <i class="fas fa-file-excel"></i> Export
+              </a>
               {% endif %}
               {% if viewing_as_admin %}
                 {% if c.status == "pending" %}

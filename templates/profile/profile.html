@@ -49,83 +49,7 @@
     </div>
 
     <!-- Subscription Plan Card (hidden for superusers and non-subscribing roles) -->
-    {% with role_code=request.user.role.code|lower %}
-    {% if not request.user.is_superuser and role_code != "consultant" and role_code != "coordinator" and role_code != "franchise" %}
-    {% if user_plan %}
-    <div class="card" style="border-radius:14px; border:1px solid #e8eef3; box-shadow:0 2px 12px rgba(0,0,0,.06);">
-      <div class="card-body" style="padding:20px;">
-        <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
-          <div style="width:40px; height:40px; background:linear-gradient(135deg,#253D51,#2f5270); border-radius:10px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:1rem;">
-            <i class="fas fa-crown"></i>
-          </div>
-          <div>
-            <div style="font-weight:700; color:#1B2E3F; font-size:.92rem;">{{ user_plan.icon }} {{ user_plan.name }} Plan</div>
-            {% if subscription %}
-            <div style="font-size:.75rem; color:#64748b;">
-              Active since {{ subscription.start_date|date:"M d, Y" }}
-              &middot; Expires {{ subscription.end_date|date:"M d, Y" }}
-              &middot; Status: <span style="color:#15803d; font-weight:600;">{{ subscription.get_status_display }}</span>
-            </div>
-            {% endif %}
-          </div>
-        </div>
-        {% if subscription %}
-        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
-          <span style="background:#dcfce7; color:#15803d; font-weight:600; font-size:.72rem; padding:4px 12px; border-radius:100px;">{{ user_plan.name }}</span>
-        </div>
-        {% endif %}
-        {% if user_plan.code|lower != "global" and not pending_subscription %}
-        <a href="{% url 'membership' %}" class="btn btn-sm" style="background:#253D51; color:#fff; border-radius:8px; font-size:.78rem; font-weight:600; padding:6px 20px; display:inline-flex; align-items:center; gap:6px;">
-          <i class="fas fa-arrow-up"></i> Upgrade Plan
-        </a>
-        <div style="font-size:.72rem; color:#64748b; margin-top:8px;">
-          Pick a higher plan, an invoice will be generated, and an admin will review and approve it.
-        </div>
-        {% endif %}
-      </div>
-    </div>
-
-    {% if pending_subscription %}
-    <div class="card" style="border-radius:14px; border:1px solid #fde68a; box-shadow:0 2px 12px rgba(0,0,0,.06); background:#fffbeb;">
-      <div class="card-body" style="padding:18px;">
-        <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
-          <div style="width:36px; height:36px; background:#f59e0b; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0;">
-            <i class="fas fa-hourglass-half"></i>
-          </div>
-          <div>
-            <div style="font-weight:700; color:#92400e; font-size:.88rem;">
-              {{ pending_subscription.plan.icon }} {{ pending_subscription.plan.name }} Plan — Pending
-            </div>
-            <div style="font-size:.72rem; color:#92400e;">
-              Awaiting admin approval. Until then you keep your current {{ user_plan.name }} access.
-            </div>
-          </div>
-        </div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <span style="background:#fef3c7; color:#92400e; font-weight:600; font-size:.72rem; padding:4px 12px; border-radius:100px;">
-            Pending Approval
-          </span>
-          <span style="background:#fef3c7; color:#92400e; font-weight:500; font-size:.72rem; padding:4px 12px; border-radius:100px;">
-            Requested {{ pending_subscription.created_at|date:"M d, Y" }}
-          </span>
-        </div>
-      </div>
-    </div>
-    {% endif %}
-    {% else %}
-    <div class="card" style="border-radius:14px; border:1px solid #e8eef3; box-shadow:0 2px 12px rgba(0,0,0,.06);">
-      <div class="card-body text-center" style="padding:24px;">
-        <div style="color:#94a3b8; font-size:1.5rem; margin-bottom:8px;"><i class="fas fa-crown"></i></div>
-        <div style="font-weight:600; color:#1B2E3F; font-size:.88rem; margin-bottom:4px;">No Active Plan</div>
-        <div style="font-size:.78rem; color:#64748b; margin-bottom:12px;">Upgrade to unlock premium features</div>
-        <a href="{% url 'membership' %}" class="btn btn-sm" style="background:#253D51; color:#fff; border-radius:8px; font-size:.78rem; font-weight:600; padding:6px 20px;">
-          View Plans
-        </a>
-      </div>
-    </div>
-    {% endif %}
-    {% endif %}
-    {% endwith %}
+    {% include "profile/_plan_card.html" %}
   </div>
 
   <!-- Company Section -->
@@ -274,7 +198,7 @@
 
           <!-- CREATE PANE -->
           <div class="tab-pane fade" id="create-pane" role="tabpanel" aria-labelledby="create-tab">
-        <form method="POST" action="{% url 'profile' %}" id="create-company-form">
+        <form method="POST" action="{% url 'profile' %}" id="create-company-form" enctype="multipart/form-data">
           {% csrf_token %}
           <input type="hidden" name="form_type" value="create_company">
 
@@ -314,6 +238,39 @@
           <div class="row">
             <div class="col-md-6">
               <div class="form-group">
+                <label>Legal Form</label>
+                <select name="entity_type" class="form-control">
+                  <option value="">Select Legal Form</option>
+                  {% for value, label in entity_types %}
+                  <option value="{{ value }}" {% if create_company_form.entity_type == value %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Year of Establishment</label>
+                <input type="number" name="year_established" class="form-control"
+                       min="1500" step="1"
+                       placeholder="e.g. 2014"
+                       value="{{ create_company_form.year_established|default:'' }}">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Number of Employees</label>
+            <select name="employee_count_range" class="form-control">
+              <option value="">Select range</option>
+              {% for value, label in employee_count_ranges %}
+              <option value="{{ value }}" {% if create_company_form.employee_count_range == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
                 <label>Classification <span class="text-danger">*</span></label>
                 <select name="classification" class="form-control" required>
                   <option value="">Select Classification</option>
@@ -335,27 +292,54 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label>Address Line 1</label>
-            <input type="text" name="address_line1" class="form-control"
-                   placeholder="e.g. 221B Baker Street"
-                   minlength="3" maxlength="120"
-                   pattern="(?=.*[A-Za-z0-9])[A-Za-z\u00C0-\u024F0-9\s,./#\-]{3,120}"
-                   autocomplete="address-line1"
-                   title="3-120 characters. Letters, digits, spaces and the symbols , . - / # only."
-                   value="{{ create_company_form.address_line1|default:'' }}">
+          <div class="row">
+            <div class="col-md-8">
+              <div class="form-group">
+                <label>Street</label>
+                <input type="text" name="address_line1" class="form-control"
+                       placeholder="e.g. Baker Street"
+                       minlength="3" maxlength="120"
+                       pattern="(?=.*[A-Za-z0-9])[A-Za-z\u00C0-\u024F0-9\s,./#\-]{3,120}"
+                       autocomplete="address-line1"
+                       title="3-120 characters. Letters, digits, spaces and the symbols , . - / # only."
+                       value="{{ create_company_form.address_line1|default:'' }}">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label>House Number</label>
+                <input type="text" name="house_number" class="form-control"
+                       placeholder="e.g. 221B"
+                       maxlength="15"
+                       pattern="[A-Za-z0-9][A-Za-z0-9\-/ ]{0,14}"
+                       title="Letters, digits and the symbols - / and spaces (1-15 characters)."
+                       value="{{ create_company_form.house_number|default:'' }}">
+              </div>
+            </div>
           </div>
 
-          <div class="form-group">
-            <label>Address Line 2</label>
-            <input type="text" name="address_line2" class="form-control"
-                   placeholder="Apt, suite, unit (optional)"
-                   minlength="3" maxlength="120"
-                   pattern="(?=.*[A-Za-z0-9])[A-Za-z\u00C0-\u024F0-9\s,./#\-]{3,120}"
-                   autocomplete="address-line2"
-                   title="3-120 characters. Letters, digits, spaces and the symbols , . - / # only."
-                   value="{{ create_company_form.address_line2|default:'' }}">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Region</label>
+                <input type="text" name="region" class="form-control"
+                       placeholder="e.g. Greater London"
+                       maxlength="120"
+                       value="{{ create_company_form.region|default:'' }}">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>District</label>
+                <input type="text" name="district" class="form-control"
+                       placeholder="e.g. Westminster"
+                       maxlength="120"
+                       value="{{ create_company_form.district|default:'' }}">
+              </div>
+            </div>
           </div>
+
+          <input type="hidden" name="address_line2" value="{{ create_company_form.address_line2|default:'' }}">
 
           <div class="row">
             <div class="col-md-6">
@@ -437,19 +421,50 @@
             </div>
           </div>
 
+          <input type="hidden" name="fax" value="{{ create_company_form.fax|default:'' }}">
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Contact Email</label>
+                <input type="email" name="contact_email" class="form-control"
+                       placeholder="contact@example.com"
+                       maxlength="254"
+                       autocomplete="email"
+                       value="{{ create_company_form.contact_email|default:'' }}">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>NACE / ISIC Code</label>
+                <input type="text" name="industry_code" class="form-control"
+                       placeholder="NACE / ISIC code"
+                       maxlength="20"
+                       pattern="[A-Za-z0-9.\-]{1,20}"
+                       title="1-20 characters. Letters, digits, dots and hyphens only."
+                       value="{{ create_company_form.industry_code|default:'' }}">
+              </div>
+            </div>
+          </div>
+
           <div class="form-group">
-            <label>Fax</label>
-            <input type="tel" name="fax" class="form-control"
-                   placeholder="+1 212 555 0199"
-                   maxlength="25"
-                   pattern="[\d+\-\s()]{7,25}"
-                   inputmode="tel"
-                   title="Digits and + - ( ) spaces only (7-25 characters, 5-15 digits)."
-                   value="{{ create_company_form.fax|default:'' }}">
+            <label>Keywords</label>
+            <input type="text" name="keywords" class="form-control"
+                   placeholder="comma-separated search keywords"
+                   maxlength="500"
+                   value="{{ create_company_form.keywords|default:'' }}">
+            <small class="text-muted">Words other users will type to find this company.</small>
+          </div>
+
+          <div class="form-group">
+            <label>Company Logo</label>
+            <input type="file" name="logo" class="form-control-file"
+                   accept=".png,.jpg,.jpeg,.svg,.webp,.gif">
+            <small class="text-muted">PNG, JPG, SVG, WEBP or GIF (max 5 MB). Shown in the company overview.</small>
           </div>
 
           <button type="submit" class="btn btn-primary">
-            <i class="fas fa-building mr-1"></i> Create Company
+            <i class="fas fa-certificate mr-1"></i> Request Certification
           </button>
         </form>
           </div><!-- /#create-pane -->

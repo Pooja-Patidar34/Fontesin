@@ -96,6 +96,12 @@
     border-color: #dc3545;
     box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
   }
+
+  /* Status pills for the company-cert-badge in the modal header. */
+  #companyModal .pill-pending   { background:#fef3c7; color:#92400e; }
+  #companyModal .pill-certified { background:#dcfce7; color:#166534; }
+  #companyModal .pill-rejected  { background:#fee2e2; color:#991b1b; }
+  #companyModal .pill-uncertified { background:#e5e7eb; color:#4b5563; }
 </style>
 
 <div class="card card-outline card-primary shadow-sm">
@@ -386,12 +392,7 @@
 
         <thead class="bg-light">
           <tr>
-            {% if is_free_plan %}
-            <th>User Name</th>
             <th>Company Name</th>
-            {% else %}
-            <th>Company Name</th>
-            {% endif %}
             {% if request.user.is_superuser %}
             <th>Tenant</th>
             {% endif %}
@@ -422,14 +423,31 @@
   <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
     <div class="modal-content">
 
-      <form method="post" id="company-form">
+      <form method="post" id="company-form" enctype="multipart/form-data">
         {% csrf_token %}
         <input type="hidden" name="next" value="{{ next }}">
         <input type="hidden" name="company_id" id="company-id-field">
 
         <div class="modal-header">
-          <h5 class="modal-title font-weight-bold">Company</h5>
-          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <div class="d-flex align-items-center" style="gap:.75rem;">
+            <h5 class="modal-title font-weight-bold mb-0">Company</h5>
+            <span id="company-cert-badge"
+                  class="pill pill-pending"
+                  style="display:none;padding:2px 10px;border-radius:100px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;"></span>
+          </div>
+          <div class="d-flex align-items-center ml-auto" style="gap:.75rem;">
+            <img id="company-logo-preview"
+                 src=""
+                 alt=""
+                 style="display:none;max-height:48px;max-width:120px;border-radius:6px;border:1px solid #e9ecef;background:#fff;object-fit:contain;">
+            <button type="button" class="close ml-2" data-dismiss="modal" style="font-size:1.5rem;line-height:1;">&times;</button>
+          </div>
+        </div>
+        <div id="company-certified-by-banner"
+             style="display:none;background:#ecfdf5;border-bottom:1px solid #6ee7b7;padding:.5rem 1.25rem;color:#065f46;font-size:.82rem;">
+          <i class="fas fa-certificate mr-1"></i>
+          Certified by <strong id="company-certified-by-name"></strong>
+          <span id="company-certified-on" class="text-muted ml-1"></span>
         </div>
 
         <div class="modal-body">
@@ -446,55 +464,60 @@
           <div class="section-title">Basic Info</div>
 
           <div class="form-group">
-            <label>Name <span class="text-danger">*</span></label>
+            <label>Company Name <span class="text-danger">*</span></label>
             {{ form.name }}
           </div>
 
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label>Registration ID</label>
-              {{ form.registration_id }}
+              <label>Legal Form <span class="text-danger">*</span></label>
+              {{ form.entity_type }}
             </div>
             <div class="form-group col-md-6">
-              <label>Classification <span class="text-danger">*</span></label>
-              {{ form.classification }}
+              <label>Registration Number / Company ID</label>
+              {{ form.registration_id }}
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label>Company Type</label>
-              {{ form.entity_type }}
+              <label>Year of Establishment</label>
+              {{ form.year_established }}
+            </div>
+            <div class="form-group col-md-6">
+              <label>Number of Employees</label>
+              {{ form.employee_count_range }}
             </div>
           </div>
 
           <div class="section-title">Address</div>
 
-          <div class="form-group">
-            <label>Address Line 1</label>
-            {{ form.address_line1 }}
-          </div>
-
-          <div class="form-group">
-            <label>Address Line 2</label>
-            {{ form.address_line2 }}
-          </div>
-
           <div class="form-row">
-            <div class="form-group col-md-6">
-              <label>City <span class="text-danger">*</span></label>
-              {{ form.city }}
-            </div>
             <div class="form-group col-md-6">
               <label>Country <span class="text-danger">*</span></label>
               {{ form.country }}
             </div>
+            <div class="form-group col-md-6">
+              <label>State</label>
+              {{ form.state }}
+            </div>
           </div>
 
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label>State <span class="text-danger">*</span></label>
-              {{ form.state }}
+              <label>Region</label>
+              {{ form.region }}
+            </div>
+            <div class="form-group col-md-6">
+              <label>City / Municipality <span class="text-danger">*</span></label>
+              {{ form.city }}
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label>District</label>
+              {{ form.district }}
             </div>
             <div class="form-group col-md-6">
               <label>Postal Code</label>
@@ -502,44 +525,83 @@
             </div>
           </div>
 
+          <div class="form-row">
+            <div class="form-group col-md-8">
+              <label>Street</label>
+              {{ form.address_line1 }}
+            </div>
+            <div class="form-group col-md-4">
+              <label>House Number</label>
+              {{ form.house_number }}
+            </div>
+          </div>
+
+          <div class="section-title">Business Activity</div>
+
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label>Primary Line of Business <span class="text-danger">*</span></label>
+              {{ form.classification }}
+            </div>
+            <div class="form-group col-md-6">
+              <label>NACE / ISIC Code</label>
+              {{ form.industry_code }}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Keywords</label>
+            {{ form.keywords }}
+            <small class="form-text text-muted">
+              Words other users will type to find this company.
+            </small>
+          </div>
+
           <div class="section-title">Contact</div>
 
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label>Phone</label>
-              {{ form.phone }}
+              <label>Contact Email <span class="text-danger">*</span></label>
+              {{ form.contact_email }}
             </div>
             <div class="form-group col-md-6">
-              <label>Secondary Phone</label>
-              {{ form.phone_secondary }}
+              <label>Phone</label>
+              {{ form.phone }}
             </div>
           </div>
 
           <div class="form-row">
-            <div class="form-group col-md-6">
-              <label>Fax</label>
-              {{ form.fax }}
-            </div>
             <div class="form-group col-md-6">
               <label>Website</label>
               {{ form.website }}
             </div>
           </div>
 
-          <div class="form-check mt-2">
+          <div class="section-title">Branding</div>
+
+          <div class="form-group">
+            <label>Company Logo</label>
+            {{ form.logo }}
+            <small class="form-text text-muted">
+              PNG, JPG, SVG, WEBP or GIF (max 5 MB). Shown in the company overview.
+            </small>
+          </div>
+
+          <div style="display:none;" aria-hidden="true">
+            {{ form.address_line2 }}
+            {{ form.phone_secondary }}
+            {{ form.fax }}
             {{ form.is_active }}
-            <label class="form-check-label ml-1">Active</label>
           </div>
 
         </div>
 
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
           {% if can_manage %}
           <button type="submit"
                   id="save-btn"
                   class="btn btn-primary btn-sm">
-            Save
+            <i class="fas fa-certificate mr-1"></i> Request Certification
           </button>
           {% endif %}
         </div>
@@ -646,8 +708,21 @@ document.addEventListener("DOMContentLoaded", function () {
       idField.value = "";
       title.innerText = "Add Company";
 
-      modal.find("input[type=text], input[type=url]").val("");
+      modal.find("input[type=text], input[type=url], input[type=email], input[type=number], input[type=tel]").val("");
       activeField.checked = true;
+
+      // Reset the logo file input + hide the header preview when starting a
+      // fresh Add Company flow so the previous viewer's image doesn't leak.
+      var logoInput = document.getElementById("id_logo");
+      if (logoInput) logoInput.value = "";
+      var logoPreview = document.getElementById("company-logo-preview");
+      if (logoPreview) { logoPreview.src = ""; logoPreview.style.display = "none"; }
+      // Hide the cert-status badge + "Certified by" banner — they only make
+      // sense on existing rows.
+      var certBadge = document.getElementById("company-cert-badge");
+      if (certBadge) certBadge.style.display = "none";
+      var certBanner = document.getElementById("company-certified-by-banner");
+      if (certBanner) certBanner.style.display = "none";
 
       // ✅ Auto select tenant if page filtered
       if (tenantField && selectedTenantId) {
@@ -695,6 +770,60 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("id_phone_secondary").value = c.phone_secondary || "";
     document.getElementById("id_fax").value = c.fax || "";
     document.getElementById("id_website").value = c.website || "";
+
+    // New onboarding fields
+    var setIfPresent = function (id, value) {
+      var el = document.getElementById(id);
+      if (el) el.value = value == null ? "" : value;
+    };
+    setIfPresent("id_house_number", c.house_number);
+    setIfPresent("id_district", c.district);
+    setIfPresent("id_region", c.region);
+    setIfPresent("id_year_established", c.year_established);
+    setIfPresent("id_industry_code", c.industry_code);
+    setIfPresent("id_keywords", c.keywords);
+    setIfPresent("id_employee_count_range", c.employee_count_range);
+    setIfPresent("id_contact_email", c.contact_email);
+
+    // Render the stored logo in the modal header (top-right corner) so the
+    // overview matches the "company logo in the upper right" requirement.
+    var logoPreview = document.getElementById("company-logo-preview");
+    if (logoPreview) {
+      if (c.logo_url) {
+        logoPreview.src = c.logo_url;
+        logoPreview.alt = (c.name || "Company") + " logo";
+        logoPreview.style.display = "inline-block";
+      } else {
+        logoPreview.src = "";
+        logoPreview.style.display = "none";
+      }
+    }
+
+    // Certification status pill + "certified by" banner.
+    var certBadge = document.getElementById("company-cert-badge");
+    if (certBadge) {
+      var status = c.certification_status || "uncertified";
+      var label = status.charAt(0).toUpperCase() + status.slice(1);
+      certBadge.textContent = label;
+      certBadge.className = "pill pill-" + status;
+      certBadge.style.display = "inline-block";
+    }
+    var certBanner = document.getElementById("company-certified-by-banner");
+    var certByName = document.getElementById("company-certified-by-name");
+    var certOn = document.getElementById("company-certified-on");
+    if (certBanner && certByName) {
+      if (c.certified_by_name) {
+        certByName.textContent = c.certified_by_name;
+        if (certOn) {
+          certOn.textContent = c.certified_at
+            ? "on " + new Date(c.certified_at).toLocaleDateString()
+            : "";
+        }
+        certBanner.style.display = "block";
+      } else {
+        certBanner.style.display = "none";
+      }
+    }
 
     title.innerText = mode === "view" ? "Company Details" : "Edit Company";
     setReadonly(mode === "view");
@@ -830,8 +959,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
           if (typeof showToast === "function") {
             showToast(
-              (result.data.message || "Company created.") +
-                " Refresh to see it in the correct position.",
+              result.data.message ||
+                "Certification request submitted. An admin will review your company shortly.",
               "success"
             );
           }

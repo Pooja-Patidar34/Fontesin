@@ -1,39 +1,29 @@
 <div class="table-responsive">
-  <table class="table table-hover mb-0">
+  <table class="table table-hover mb-0 payments-table">
     <thead class="bg-light">
       <tr>
-        <th>User</th>
-        <th>Email</th>
-        <th>Payment Reference No.</th>
-        <th>Plan</th>
-        <th>Amount</th>
-        <th>Status</th>
-        <th>Requested</th>
-        <th style="width:180px;">Actions</th>
+        <th class="col-user">User</th>
+        <th class="col-ref">Payment Ref.</th>
+        <th class="col-plan">Plan</th>
+        <th class="col-amount">Amount</th>
+        <th class="col-status">Status</th>
+        <th class="col-requested">Requested</th>
+        <th class="col-actions">Actions</th>
       </tr>
     </thead>
     <tbody>
       {% for sub in subscriptions %}
       <tr>
-        <td>
-          <strong>
-            {% if sub.user %}
-              {{ sub.user.first_name }} {{ sub.user.last_name }}
-            {% else %}
-              -
-            {% endif %}
-          </strong>
-        </td>
-
-        <td>
+        <td class="user-cell" title="{% if sub.user %}{{ sub.user.first_name }} {{ sub.user.last_name }} — {{ sub.user.email }}{% endif %}">
           {% if sub.user %}
-            {{ sub.user.email }}
+            <strong>{{ sub.user.first_name }} {{ sub.user.last_name }}</strong>
+            <span class="muted">{{ sub.user.email }}</span>
           {% else %}
             -
           {% endif %}
         </td>
 
-        <td>
+        <td class="ref-cell" title="{% with inv=sub.invoice_set.all|first %}{% if inv %}{{ inv.invoice_number }}{% endif %}{% endwith %}">
           {% with inv=sub.invoice_set.all|first %}
             {% if inv %}
               <code>{{ inv.invoice_number }}</code>
@@ -43,16 +33,16 @@
           {% endwith %}
         </td>
 
-        <td>
+        <td class="plan-cell">
           {% if sub.plan %}
             <span class="font-weight-bold">{{ sub.plan.name }}</span>
-            <br><small class="text-muted">{{ sub.plan.billing_period }}</small>
+            <small class="text-muted">{{ sub.plan.billing_period }}</small>
           {% else %}
             -
           {% endif %}
         </td>
 
-        <td>
+        <td class="col-amount">
           {% if sub.plan %}
             {{ sub.plan.currency }} {{ sub.plan.price }}
           {% else %}
@@ -60,9 +50,9 @@
           {% endif %}
         </td>
 
-        <td style="text-align:center; vertical-align:middle;">
+        <td class="col-status">
           {% if sub.status == "created" %}
-            <span class="badge badge-warning">Pending Approval</span>
+            <span class="badge badge-warning">Pending</span>
           {% elif sub.status == "active" %}
             <span class="badge badge-success">Approved</span>
           {% elif sub.status == "cancelled" %}
@@ -76,9 +66,9 @@
           {% endif %}
         </td>
 
-        <td style="vertical-align:middle;">{{ sub.created_at|date:"M d, Y H:i" }}</td>
+        <td class="col-requested" title="{{ sub.created_at|date:'M d, Y H:i' }}">{{ sub.created_at|date:"M d, Y" }}</td>
 
-        <td style="vertical-align:middle;">
+        <td class="col-actions">
           <div style="display:flex; align-items:center; gap:.4rem; flex-wrap:nowrap;">
             {% if sub.status == "created" %}
               <form method="post" action="{% url 'payment-approve' sub.id %}" class="m-0" id="approve-form-{{ sub.id }}">
@@ -95,12 +85,6 @@
                   <i class="fas fa-times"></i>
                 </button>
               </form>
-            {% elif sub.status == "active" %}
-              <span class="text-success" style="white-space:nowrap; font-size:.85rem;"><i class="fas fa-check-circle"></i> Approved</span>
-            {% elif sub.status == "cancelled" %}
-              <span class="text-danger" style="white-space:nowrap; font-size:.85rem;"><i class="fas fa-times-circle"></i> Rejected</span>
-            {% else %}
-              <span class="text-muted">-</span>
             {% endif %}
             <button class="btn btn-sm btn-outline-primary edit-sub-btn"
                     data-id="{{ sub.id }}" title="Edit">
@@ -111,7 +95,7 @@
       </tr>
       {% empty %}
       <tr>
-        <td colspan="8" class="text-center text-muted py-4">
+        <td colspan="7" class="text-center text-muted py-4">
           No payment records found
         </td>
       </tr>

@@ -4,12 +4,10 @@
 <tr id="no-companies-row">
   {% if request.user.is_superuser %}
     <td colspan="4" class="text-center text-muted py-4">No companies found</td>
+  {% elif is_free_plan %}
+    <td colspan="2" class="text-center text-muted py-4">No companies found</td>
   {% else %}
-    {% if is_free_plan %}
-      <td colspan="3" class="text-center text-muted py-4">No companies found</td>
-    {% else %}
-      <td colspan="3" class="text-center text-muted py-4">No companies found</td>
-    {% endif %}
+    <td colspan="3" class="text-center text-muted py-4">No companies found</td>
   {% endif %}
 </tr>
 {% endfor %}

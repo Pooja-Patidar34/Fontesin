@@ -1,0 +1,88 @@
+{% comment %}
+  Shared plan-status card. Renders the user's active plan, any pending upgrade
+  request, and an "Upgrade Plan" CTA pointing at /membership/. Used in both
+  the Profile page sidebar and the standalone Plans page.
+
+  Required context:
+    - user_plan            (Plan or None)
+    - subscription         (Subscription or None)
+    - pending_subscription (Subscription or None)
+{% endcomment %}
+
+{% with role_code=request.user.role.code|lower %}
+{% if not request.user.is_superuser and role_code != "consultant" and role_code != "coordinator" and role_code != "franchise" %}
+{% if user_plan %}
+<div class="card" style="border-radius:14px; border:1px solid #e8eef3; box-shadow:0 2px 12px rgba(0,0,0,.06);">
+  <div class="card-body" style="padding:20px;">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
+      <div style="width:40px; height:40px; background:linear-gradient(135deg,#253D51,#2f5270); border-radius:10px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:1rem;">
+        <i class="fas fa-crown"></i>
+      </div>
+      <div>
+        <div style="font-weight:700; color:#1B2E3F; font-size:.92rem;">{{ user_plan.icon }} {{ user_plan.name }} Plan</div>
+        {% if subscription %}
+        <div style="font-size:.75rem; color:#64748b;">
+          Active since {{ subscription.start_date|date:"M d, Y" }}
+          &middot; Expires {{ subscription.end_date|date:"M d, Y" }}
+          &middot; Status: <span style="color:#15803d; font-weight:600;">{{ subscription.get_status_display }}</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% if subscription %}
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+      <span style="background:#dcfce7; color:#15803d; font-weight:600; font-size:.72rem; padding:4px 12px; border-radius:100px;">{{ user_plan.name }}</span>
+    </div>
+    {% endif %}
+    {% if user_plan.code|lower != "global" and not pending_subscription %}
+    <a href="{% url 'membership' %}" class="btn btn-sm" style="background:#253D51; color:#fff; border-radius:8px; font-size:.78rem; font-weight:600; padding:6px 20px; display:inline-flex; align-items:center; gap:6px;">
+      <i class="fas fa-arrow-up"></i> Upgrade Plan
+    </a>
+    <div style="font-size:.72rem; color:#64748b; margin-top:8px;">
+      Pick a higher plan, an invoice will be generated, and an admin will review and approve it.
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if pending_subscription %}
+<div class="card mt-3" style="border-radius:14px; border:1px solid #fde68a; box-shadow:0 2px 12px rgba(0,0,0,.06); background:#fffbeb;">
+  <div class="card-body" style="padding:18px;">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+      <div style="width:36px; height:36px; background:#f59e0b; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0;">
+        <i class="fas fa-hourglass-half"></i>
+      </div>
+      <div>
+        <div style="font-weight:700; color:#92400e; font-size:.88rem;">
+          {{ pending_subscription.plan.icon }} {{ pending_subscription.plan.name }} Plan — Pending
+        </div>
+        <div style="font-size:.72rem; color:#92400e;">
+          Awaiting admin approval. Until then you keep your current {{ user_plan.name }} access.
+        </div>
+      </div>
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <span style="background:#fef3c7; color:#92400e; font-weight:600; font-size:.72rem; padding:4px 12px; border-radius:100px;">
+        Pending Approval
+      </span>
+      <span style="background:#fef3c7; color:#92400e; font-weight:500; font-size:.72rem; padding:4px 12px; border-radius:100px;">
+        Requested {{ pending_subscription.created_at|date:"M d, Y" }}
+      </span>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% else %}
+<div class="card" style="border-radius:14px; border:1px solid #e8eef3; box-shadow:0 2px 12px rgba(0,0,0,.06);">
+  <div class="card-body text-center" style="padding:24px;">
+    <div style="color:#94a3b8; font-size:1.5rem; margin-bottom:8px;"><i class="fas fa-crown"></i></div>
+    <div style="font-weight:600; color:#1B2E3F; font-size:.88rem; margin-bottom:4px;">No Active Plan</div>
+    <div style="font-size:.78rem; color:#64748b; margin-bottom:12px;">Upgrade to unlock premium features</div>
+    <a href="{% url 'membership' %}" class="btn btn-sm" style="background:#253D51; color:#fff; border-radius:8px; font-size:.78rem; font-weight:600; padding:6px 20px;">
+      View Plans
+    </a>
+  </div>
+</div>
+{% endif %}
+{% endif %}
+{% endwith %}

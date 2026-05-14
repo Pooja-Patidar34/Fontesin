@@ -1,28 +1,6 @@
 <tr data-company-id="{{ company.id }}">
 
-  {% if is_free_plan %}
-  <td>
-    {% comment %}
-      Free plan only shows companies the current user is linked to (owner,
-      consultant, primary_users, or partnership). owner_user can be blank for
-      rows imported / created before that field was wired up — fall back to
-      the consultant, and finally the current user, so the column is never
-      empty for a row the user is genuinely associated with.
-    {% endcomment %}
-    {% if company.owner_user %}
-      <strong>{{ company.owner_user.first_name }} {{ company.owner_user.last_name }}</strong>
-    {% elif company.consultant %}
-      <strong>{{ company.consultant.first_name }} {{ company.consultant.last_name }}</strong>
-    {% elif request.user.first_name or request.user.last_name %}
-      <strong>{{ request.user.first_name }} {{ request.user.last_name }}</strong>
-    {% else %}
-      <strong>{{ request.user.email }}</strong>
-    {% endif %}
-  </td>
-  <td class="text-muted">{{ company.name|default:"—" }}</td>
-  {% else %}
   <td><strong>{{ company.name|default:"—" }}</strong></td>
-  {% endif %}
 
   {% if request.user.is_superuser %}
   <td class="text-muted" style="max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"

@@ -8,6 +8,7 @@ from accounts.constants import (
     CompanyClassificationChoices,
     CompanyEntityTypeChoices,
     CountryChoices,
+    EmployeeCountRangeChoices,
     LanguageChoices,
 )
 from accounts.common.active_manager import ActiveManager
@@ -79,8 +80,13 @@ class Company(models.Model):
     )
 
     # ---- Address ----
+    # address_line1 carries the Street; house_number is captured separately so
+    # the UI can render them as two side-by-side fields per the onboarding form.
     address_line1 = models.CharField(max_length=255, null=True, blank=True)
     address_line2 = models.CharField(max_length=255, null=True, blank=True)
+    house_number = models.CharField(max_length=30, null=True, blank=True)
+    district = models.CharField(max_length=120, null=True, blank=True)
+    region = models.CharField(max_length=120, null=True, blank=True)
     city = models.CharField(max_length=150, null=True, blank=True)
     state = models.CharField(max_length=100, null=True, blank=True)
     postal_code = models.CharField(max_length=20, null=True, blank=True)
@@ -89,11 +95,26 @@ class Company(models.Model):
     latitude = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
     longitude = models.DecimalField(max_digits=11, decimal_places=8, null=True, blank=True)
 
+    # ---- Business attributes ----
+    year_established = models.PositiveIntegerField(null=True, blank=True)
+    industry_code = models.CharField(max_length=20, null=True, blank=True)
+    keywords = models.CharField(max_length=500, null=True, blank=True)
+    employee_count_range = models.CharField(
+        max_length=20,
+        choices=EmployeeCountRangeChoices.CHOICES,
+        null=True,
+        blank=True,
+    )
+
     # ---- Contact ----
     phone = models.CharField(max_length=50, null=True, blank=True)
     phone_secondary = models.CharField(max_length=50, null=True, blank=True)
     fax = models.CharField(max_length=50, null=True, blank=True)
     website = models.URLField(max_length=500, null=True, blank=True)
+    contact_email = models.EmailField(max_length=254, null=True, blank=True)
+
+    # ---- Branding ----
+    logo = models.FileField(upload_to="company_logos/", null=True, blank=True)
 
     owner_user = models.ForeignKey("User",null=True,blank=True,related_name="owned_companies",on_delete=models.SET_NULL)
     consultant = models.ForeignKey("User",null=True,blank=True,related_name="consulting_companies",on_delete=models.SET_NULL)

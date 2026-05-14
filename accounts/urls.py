@@ -1,6 +1,6 @@
 from django.urls import path
 from .view.auth import admin_login, admin_logout,register_view,identity_verification_view,apply_view,apply_submit,apply_review_view
-from .view.profile import profile_view, company_search_ajax
+from .view.profile import profile_view, company_search_ajax, plans_view
 from .view.auth import admin_login, admin_logout, register_view, identity_verification_view, forgot_password, verify_otp, reset_password, check_email_exists
 from .view.dashboard import dashboard
 from accounts.view.company import company_list, toggle_company,company_detail_ajax,company_delete,company_filter_autocomplete
@@ -12,7 +12,7 @@ from .view.regions import region_us, region_de, region_cz, region_ae, region_jp,
 from .view.consultant import consultant_companies, consultant_users, coordinator_users, coordinator_companies
 from .view.veriff import CreateVeriffSessionAPIView
 from .view.webhook import veriff_webhook
-from billing.views import invoice_list, plan_history, payment_list, payment_approve, payment_reject, payment_edit, payment_detail_ajax, subscription_list, plan_edit, plan_toggle, commission_list, commission_mark_paid, commission_invoice_detail_ajax
+from billing.views import invoice_list, plan_history, payment_list, payment_approve, payment_reject, payment_edit, payment_detail_ajax, subscription_list, plan_edit, plan_toggle, commission_list, commission_mark_paid, commission_invoice_detail_ajax, commission_invoice_export
 from .view.search import global_search
 from .view.error import access_denied
 from .view.saved_filter import (
@@ -23,6 +23,7 @@ from .view.saved_filter import (
     company_connect,
 )
 from .view.partnership import partnership_list, partnership_action, partnership_cancel
+from .view.certification import certification_list, certification_action
 
 
 urlpatterns = [
@@ -59,6 +60,10 @@ urlpatterns = [
     path("partnerships/<uuid:connection_id>/action/", partnership_action, name="partnership-action"),
     path("partnerships/<uuid:connection_id>/cancel/", partnership_cancel, name="partnership-cancel"),
 
+    # Certifications (consultants only)
+    path("certifications/", certification_list, name="certifications"),
+    path("certifications/<uuid:company_id>/action/", certification_action, name="certification-action"),
+
     # Saved filters (Favorites) — basic business users only
     path("saved-filters/", saved_filter_list, name="saved-filters"),
     path("saved-filters/save/", saved_filter_save, name="saved-filter-save"),
@@ -68,6 +73,7 @@ urlpatterns = [
     path("register/check-email/", check_email_exists, name="check-email"),
     path("profile/", profile_view, name="profile"),
     path("profile/company-search/", company_search_ajax, name="profile-company-search"),
+    path("plans/", plans_view, name="plans"),
     path("subscriptions/", subscription_list, name="subscriptions"),
     path("subscriptions/<int:plan_id>/edit/", plan_edit, name="plan-edit"),
     path("subscriptions/<int:plan_id>/toggle/", plan_toggle, name="plan-toggle"),
@@ -76,6 +82,7 @@ urlpatterns = [
     path("commissions/", commission_list, name="commissions"),
     path("commissions/<int:commission_id>/mark-paid/", commission_mark_paid, name="commission-mark-paid"),
     path("commissions/<int:commission_id>/invoice/", commission_invoice_detail_ajax, name="commission-invoice-detail"),
+    path("commissions/<int:commission_id>/export/", commission_invoice_export, name="commission-invoice-export"),
     path("payments/", payment_list, name="payments"),
     path("payments/<int:subscription_id>/approve/", payment_approve, name="payment-approve"),
     path("payments/<int:subscription_id>/reject/", payment_reject, name="payment-reject"),
