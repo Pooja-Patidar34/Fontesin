@@ -5,6 +5,8 @@ class CompanyClassificationChoices:
     FINANCE = "finance"
     RETAIL = "retail"
     EDUCATION = "education"
+    MARKETING = "marketing"
+    INDUSTRY = "industry"
 
     CHOICES = [
         (MANUFACTURING, "Manufacturing"),
@@ -13,6 +15,8 @@ class CompanyClassificationChoices:
         (FINANCE, "Finance"),
         (RETAIL, "Retail"),
         (EDUCATION, "Education"),
+        (MARKETING, "Marketing"),
+        (INDUSTRY, "Industry"),
     ]
 
 
@@ -99,6 +103,50 @@ class CountryChoices:
         (MX, "Mexico"),
         (KR, "South Korea"),
     ]
+
+    # Countries pinned to the top of search/dropdown UIs. These are the
+    # operating markets right now — everything else still selectable but
+    # appears below the divider.
+    PINNED = ("US", "GB")
+
+
+# ISO-3166-1 alpha-2 → emoji flag (regional indicator pairs). The browser
+# renders these via the OS font; no image assets to ship.
+COUNTRY_FLAGS = {
+    "US": "🇺🇸", "GB": "🇬🇧", "DE": "🇩🇪", "CZ": "🇨🇿", "FR": "🇫🇷",
+    "NL": "🇳🇱", "PL": "🇵🇱", "AT": "🇦🇹", "CH": "🇨🇭", "SE": "🇸🇪",
+    "AE": "🇦🇪", "SG": "🇸🇬", "CA": "🇨🇦", "AU": "🇦🇺", "JP": "🇯🇵",
+    "BR": "🇧🇷", "IN": "🇮🇳", "MX": "🇲🇽", "KR": "🇰🇷",
+}
+
+
+# Legal-form (entity type) options per country. The Company filter UI swaps
+# this list when the user picks a country. Keys are existing
+# CompanyEntityTypeChoices values where possible; new country-specific values
+# are added as strings (no DB migration — `entity_type` is a free CharField
+# with choices, but Django doesn't enforce choices at the DB layer).
+LEGAL_FORMS_BY_COUNTRY = {
+    "US": [
+        ("sole_proprietorship", "Sole Proprietorship"),
+        ("partnership", "Partnership (General)"),
+        ("lp",          "Partnership (Limited / LP)"),
+        ("llp",         "Partnership (Limited Liability / LLP)"),
+        ("llc",         "Limited Liability Company (LLC)"),
+        ("c_corp",      "Corporation (C Corp)"),
+        ("s_corp",      "Corporation (S Corp)"),
+        ("non_profit",  "Nonprofit Organization"),
+    ],
+    "GB": [
+        ("sole_trader", "Sole Trader"),
+        ("partnership", "Partnership"),
+        ("llp",         "Limited Liability Partnership (LLP)"),
+        ("ltd",         "Private Limited Company (Ltd)"),
+        ("plc",         "Public Limited Company (PLC)"),
+        ("social_enterprise", "Social Enterprise"),
+        ("cic",         "Community Interest Company (CIC)"),
+        ("cooperative", "Cooperative"),
+    ],
+}
 
 
 # Primary administrative subdivisions per country (states / provinces /

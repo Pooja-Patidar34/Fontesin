@@ -132,12 +132,19 @@
               {% endif %}
               {% if viewing_as_admin %}
                 {% if c.status == "pending" %}
-                <form method="post" action="{% url 'commission-mark-paid' c.id %}" style="display:inline;">
+                <form method="post" action="{% url 'commission-mark-paid' c.id %}" style="display:inline;" id="commission-paid-form-{{ c.id }}">
                   {% csrf_token %}
-                  <button type="submit" class="btn btn-success btn-mark-paid"
+                  <button type="button" class="btn btn-success btn-mark-paid"
                           title="Mark commission as paid"
-                          onclick="return confirm('Mark this commission as paid? This records the disbursement.');">
-                    <i class="fas fa-check"></i> Paid
+                          onclick="appConfirm({
+                            kind: 'success',
+                            title: 'Mark Commission as Paid?',
+                            text: 'This records the disbursement of <strong>{{ c.commission_amount|floatformat:2 }} {{ c.currency }}</strong> to <strong>{{ c.consultant.email|escapejs }}</strong>. This action cannot be undone.',
+                            okLabel: 'Mark as Paid',
+                            okIcon: 'fa-check',
+                            onConfirm: function(){ document.getElementById('commission-paid-form-{{ c.id }}').submit(); }
+                          })">
+                    <i class="fas fa-check"></i> Mark as Paid
                   </button>
                 </form>
                 {% elif c.status == "paid" %}

@@ -1,9 +1,9 @@
 from django.urls import path
 from .view.auth import admin_login, admin_logout,register_view,identity_verification_view,apply_view,apply_submit,apply_review_view
-from .view.profile import profile_view
+from .view.profile import profile_view, company_search_ajax
 from .view.auth import admin_login, admin_logout, register_view, identity_verification_view, forgot_password, verify_otp, reset_password, check_email_exists
 from .view.dashboard import dashboard
-from accounts.view.company import company_list, toggle_company,company_detail_ajax,company_delete
+from accounts.view.company import company_list, toggle_company,company_detail_ajax,company_delete,company_filter_autocomplete
 from .view.user import user_list, toggle_user, assign_roles,role_list,role_detail_ajax,permission_list,save_role,user_detail_ajax,user_edit,add_user,user_delete
 from .view.audit import audit_logs,audit_log_detail_ajax
 from .view.tenant import tenant_list,toggle_tenant,tenant_detail_ajax,tenant_delete
@@ -30,6 +30,7 @@ urlpatterns = [
     path("logout/", admin_logout, name="logout"),
     path("dashboard/",dashboard, name="dashboard"),
     path("companies/", company_list, name="companies"),
+    path("companies/filter-autocomplete/", company_filter_autocomplete, name="companies-filter-autocomplete"),
     path("companies/<uuid:company_id>/toggle/", toggle_company, name="company-toggle"),
     path("users/", user_list, name="users"),
     path("users/<uuid:user_id>/toggle/",toggle_user,name="user-toggle",),
@@ -66,6 +67,7 @@ urlpatterns = [
     path("register/", register_view, name="register"),
     path("register/check-email/", check_email_exists, name="check-email"),
     path("profile/", profile_view, name="profile"),
+    path("profile/company-search/", company_search_ajax, name="profile-company-search"),
     path("subscriptions/", subscription_list, name="subscriptions"),
     path("subscriptions/<int:plan_id>/edit/", plan_edit, name="plan-edit"),
     path("subscriptions/<int:plan_id>/toggle/", plan_toggle, name="plan-toggle"),

@@ -32,16 +32,24 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => { bar.style.width = width + '%'; }, 300);
   });
 
-  // Password toggle
+  // Password toggle — icon mirrors current state:
+  //   password hidden (type="password")  → eye-slash icon
+  //   password visible (type="text")     → eye icon
   document.querySelectorAll('.password-toggle__btn').forEach(btn => {
+    const input = btn.previousElementSibling;
+    // Normalize legacy emoji buttons to a Font Awesome icon on first render.
+    if (!btn.querySelector('i.fa-eye, i.fa-eye-slash')) {
+      btn.innerHTML = (input && input.type === 'text')
+        ? '<i class="fas fa-eye"></i>'
+        : '<i class="fas fa-eye-slash"></i>';
+    }
     btn.addEventListener('click', () => {
-      const input = btn.previousElementSibling;
       if (input.type === 'password') {
         input.type = 'text';
-        btn.textContent = '🙈';
+        btn.innerHTML = '<i class="fas fa-eye"></i>';
       } else {
         input.type = 'password';
-        btn.textContent = '👁';
+        btn.innerHTML = '<i class="fas fa-eye-slash"></i>';
       }
     });
   });

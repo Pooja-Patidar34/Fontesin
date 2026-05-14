@@ -12,7 +12,11 @@ from django.views.decorators.http import require_POST
 from accounts.models import Company, CompanyConnection, SavedFilter
 
 
-FILTER_FIELDS = ("country", "state", "city")
+FILTER_FIELDS = (
+    "country", "state", "city", "name",
+    "entity_type", "classification",
+    "naics", "keywords",
+)
 
 
 def _plan_code_for_business_user(user):

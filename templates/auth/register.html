@@ -16,6 +16,7 @@
 
   <meta name="description" content="Create your FONTESIN account."/>
 
+  <link rel="stylesheet" href="{% static 'adminlte/plugins/fontawesome-free/css/all.min.css' %}"/>
   <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
 
   <style>
@@ -271,16 +272,16 @@
           <div class="form-group">
             <label class="form-label">Password *</label>
             <div class="password-toggle">
-              <input type="password" name="password" id="reg-pass" class="form-control" maxlength="50" oninput="this.value=this.value.replace(/[^\x20-\x7E]/g,'')"/>
-              <button type="button" class="password-toggle__btn">👁</button>
+              <input type="password" name="password" id="reg-pass" class="form-control" maxlength="50" oninput="this.value=this.value.replace(/[^\x21-\x7E]/g,'')" onkeydown="if(event.key===' '){event.preventDefault();}" onpaste="var el=this;setTimeout(function(){el.value=el.value.replace(/\s+/g,'');},0)"/>
+              <button type="button" class="password-toggle__btn" aria-label="Toggle password visibility"><i class="fas fa-eye-slash"></i></button>
             </div>
           </div>
 
           <div class="form-group">
             <label class="form-label">Confirm Password *</label>
             <div class="password-toggle">
-              <input type="password" name="confirm_password" id="reg-pass2" class="form-control" maxlength="50" oninput="this.value=this.value.replace(/[^\x20-\x7E]/g,'')"/>
-              <button type="button" class="password-toggle__btn">👁</button>
+              <input type="password" name="confirm_password" id="reg-pass2" class="form-control" maxlength="50" oninput="this.value=this.value.replace(/[^\x21-\x7E]/g,'')" onkeydown="if(event.key===' '){event.preventDefault();}" onpaste="var el=this;setTimeout(function(){el.value=el.value.replace(/\s+/g,'');},0)"/>
+              <button type="button" class="password-toggle__btn" aria-label="Toggle password visibility"><i class="fas fa-eye-slash"></i></button>
             </div>
           </div>
 
@@ -343,18 +344,30 @@
             </div>
           </div>
 
-          <div class="form-group">
+          {% comment %}
+            Business users register without a company — they add it from their
+            profile afterwards (avoids forcing them to scroll a 10M+ company
+            dropdown). Other roles still pick the company they're affiliated
+            with at registration time.
+          {% endcomment %}
+          <div class="form-group" id="reg-company-group" style="display:none;">
             <label class="form-label">Company *</label>
-            <select name="company_id" id="reg-company" class="form-control" onchange="toggleOthersCompany()" required>
+            <select name="company_id" id="reg-company" class="form-control">
               <option value="">Select Company</option>
               {% for company in companies %}
               <option value="{{ company.id }}">{{ company.name }}</option>
               {% endfor %}
-              <option value="others" id="others-option">Others</option>
             </select>
-            <small id="others-hint" style="display:none; color: var(--text-secondary); margin-top:6px;">
-              You can create your own company from your profile after registration.
-            </small>
+          </div>
+
+          <div class="form-group" id="reg-company-business-note">
+            <div style="background:#e0f0ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start;">
+              <i class="fas fa-info-circle" style="color:#2b7de9;margin-top:2px;"></i>
+              <div style="font-size:.85rem;color:#1e3a5f;line-height:1.4;">
+                <strong>No company selection needed.</strong><br/>
+                You can register your company from your profile after signing up.
+              </div>
+            </div>
           </div>
 
           <div class="form-group">
@@ -466,27 +479,24 @@
     });
   }
 
-  window.toggleOthersCompany = function() {
-    var sel = document.getElementById('reg-company');
-    var hint = document.getElementById('others-hint');
-    hint.style.display = sel.value === 'others' ? 'block' : 'none';
-  };
-
+  // Toggles whether the company picker (other roles) or the "add it later"
+  // notice (business_user) is shown. Wired to the role radios.
   window.toggleOthersOption = function() {
     var role = document.querySelector('input[name="role"]:checked');
-    var othersOpt = document.getElementById('others-option');
+    var companyGroup = document.getElementById('reg-company-group');
+    var businessNote = document.getElementById('reg-company-business-note');
     var sel = document.getElementById('reg-company');
-    var hint = document.getElementById('others-hint');
 
     if (role && role.value === 'business_user') {
-      othersOpt.style.display = '';
+      // Business users register without a company — set up via profile later.
+      companyGroup.style.display = 'none';
+      businessNote.style.display = '';
+      sel.removeAttribute('required');
+      sel.value = '';
     } else {
-      othersOpt.style.display = 'none';
-      // Reset selection if "others" was selected
-      if (sel.value === 'others') {
-        sel.value = '';
-        hint.style.display = 'none';
-      }
+      companyGroup.style.display = '';
+      businessNote.style.display = 'none';
+      sel.setAttribute('required', 'required');
     }
   };
 
@@ -704,11 +714,15 @@
         return;
       }
 
-      var companyEl = document.getElementById('reg-company');
-      if (!companyEl.value) {
-        showToast("Please select a company before continuing.", "error");
-        companyEl.focus();
-        return;
+      // Company picker is only required for non-business roles. Business
+      // users add their company from the profile page after sign-up.
+      if (selectedRole.value !== 'business_user') {
+        var companyEl = document.getElementById('reg-company');
+        if (!companyEl.value) {
+          showToast("Please select a company before continuing.", "error");
+          companyEl.focus();
+          return;
+        }
       }
     }
 
@@ -769,6 +783,10 @@
   document.getElementById('reg-phone').addEventListener('input', function(e) {
     e.target.value = e.target.value.replace(/[^0-9\s\-]/g, '');
   });
+
+  // Sync the company picker / business-user notice with whichever role radio
+  // is checked at page load (covers browser-retained state on soft refresh).
+  toggleOthersOption();
 </script>
 
 </body>

@@ -63,12 +63,66 @@ POSTAL_CODE_RE = re.compile(r"^(?=.*[A-Za-z0-9])[A-Za-z0-9\s\-]{3,12}$")
 
 
 @login_required
+def company_search_ajax(request):
+    """Type-ahead search for the 'Join existing company' picker on the profile
+    page. Limited to 20 hits, name LIKE — server-side so the dropdown scales
+    past a small directory."""
+    q = (request.GET.get("q") or "").strip()
+    qs = Company.objects.filter(is_active=True)
+    if q:
+        qs = qs.filter(name__icontains=q)
+    qs = qs.order_by("name").values("id", "name", "city", "country", "classification")[:20]
+
+    results = [
+        {
+            "id": str(row["id"]),
+            "name": row["name"],
+            "city": row["city"] or "",
+            "country": row["country"] or "",
+            "classification": row["classification"] or "",
+        }
+        for row in qs
+    ]
+    return JsonResponse({"results": results})
+
+
+@login_required
 def profile_view(request):
     user = request.user
     user_company = user.primary_company
 
     if request.method == "POST":
         form_type = request.POST.get("form_type", "")
+
+        # ---- Join an existing company (alternative to creating one) ----
+        if form_type == "join_company":
+            if user_company is not None:
+                messages.warning(request, "You are already linked to a company.")
+                return redirect("profile")
+
+            company_id = (request.POST.get("company_id") or "").strip()
+            if not company_id:
+                messages.error(request, "Please select a company to join.")
+                return redirect("profile")
+
+            company = Company.objects.filter(id=company_id, is_active=True).first()
+            if not company:
+                messages.error(request, "That company is unavailable. Please pick another.")
+                return redirect("profile")
+
+            user.primary_company = company
+            if company.tenant_id:
+                user.tenant = company.tenant
+            user.save(update_fields=["primary_company", "tenant", "updated_at"])
+
+            UserCompany.objects.get_or_create(
+                user=user,
+                company=company,
+                defaults={"is_primary": True},
+            )
+
+            messages.success(request, f"You're now linked to {company.name}.")
+            return redirect("profile")
 
         # ---- Edit personal profile (available to all users / all plans) ----
         if form_type == "edit_profile":

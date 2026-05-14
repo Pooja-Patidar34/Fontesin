@@ -290,12 +290,14 @@ def register_view(request):
             messages.error(request, "Email already exists")
             return render(request, "auth/register.html", ctx)
 
-        # "Others" is only valid for business_user role
-        if company_id == "others" and role_name != "business_user":
+        # Business users register without a company — they create or join one
+        # from their profile after sign-up. Any company_id POSTed by them is
+        # ignored as a safety net (HTML form no longer sends one).
+        if role_name == "business_user":
             company_id = ""
 
-        # link company (skip if user selected "others" — they'll create one later)
-        if company_id and company_id != "others":
+        # link company (other roles only)
+        if company_id:
             company = Company.objects.filter(id=company_id).first()
             if company:
                 user.primary_company = company

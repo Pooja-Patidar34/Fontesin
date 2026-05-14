@@ -141,23 +141,95 @@
   <!-- Filter bar -->
   <div class="filter-bar">
     <form method="get" id="company-filter-form" autocomplete="off">
+
       <div class="row">
-        <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
-          <label class="small">Country</label>
-          <input type="text" name="country" class="form-control form-control-sm"
-                 value="{{ applied_filters.country|default:'' }}" placeholder="e.g. USA">
+        <!-- Country (mandatory) — pinned: US, UK; flags rendered next to label -->
+        <div class="col-md-4 col-sm-6 mb-2">
+          <label class="small">Country <span class="text-danger">*</span></label>
+          <select name="country" id="flt-country" class="form-control form-control-sm" required>
+            <option value="">-- Select country --</option>
+            <optgroup label="── Primary markets ──">
+              {% for code, label in filter_country_choices.pinned %}
+              <option value="{{ code }}" {% if applied_filters.country == code %}selected{% endif %}>
+                {% if code == "US" %}🇺🇸{% elif code == "GB" %}🇬🇧{% endif %} {{ label }}
+              </option>
+              {% endfor %}
+            </optgroup>
+            <optgroup label="── Other countries ──">
+              {% for code, label in filter_country_choices.others %}
+              <option value="{{ code }}" {% if applied_filters.country == code %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </optgroup>
+          </select>
         </div>
-        <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
+
+        <!-- State (autocomplete; scoped to selected country) -->
+        <div class="col-md-4 col-sm-6 mb-2 fb-ac" data-field="state">
           <label class="small">State / Region</label>
-          <input type="text" name="state" class="form-control form-control-sm"
-                 value="{{ applied_filters.state|default:'' }}" placeholder="e.g. California">
+          <input type="text" name="state" id="flt-state" class="form-control form-control-sm fb-ac-input"
+                 value="{{ applied_filters.state|default:'' }}" placeholder="e.g. Tex…" autocomplete="off">
+          <div class="fb-ac-results"></div>
         </div>
-        <div class="col-md-3 col-sm-6 mb-2 mb-md-0">
+
+        <!-- City (autocomplete) -->
+        <div class="col-md-4 col-sm-6 mb-2 fb-ac" data-field="city">
           <label class="small">City</label>
-          <input type="text" name="city" class="form-control form-control-sm"
-                 value="{{ applied_filters.city|default:'' }}" placeholder="e.g. San Francisco">
+          <input type="text" name="city" id="flt-city" class="form-control form-control-sm fb-ac-input"
+                 value="{{ applied_filters.city|default:'' }}" placeholder="e.g. San Fr…" autocomplete="off">
+          <div class="fb-ac-results"></div>
         </div>
-        <div class="col-md-3 col-sm-6 d-flex align-items-end">
+      </div>
+
+      <div class="row">
+        <!-- Company Name (mandatory) — autocomplete from existing companies -->
+        <div class="col-md-4 col-sm-6 mb-2 fb-ac" data-field="name">
+          <label class="small">Company Name <span class="text-danger">*</span></label>
+          <input type="text" name="name" id="flt-name" class="form-control form-control-sm fb-ac-input"
+                 value="{{ applied_filters.name|default:'' }}" placeholder="e.g. Euro…" autocomplete="off" required>
+          <div class="fb-ac-results"></div>
+        </div>
+
+        <!-- Company type / legal form (dropdown — swapped by country) -->
+        <div class="col-md-4 col-sm-6 mb-2">
+          <label class="small">Company Type (Legal Form)</label>
+          <select name="entity_type" id="flt-entity-type" class="form-control form-control-sm">
+            <option value="">Any</option>
+            <!-- options injected client-side based on selected country -->
+          </select>
+          <small class="text-muted" id="flt-entity-type-hint" style="font-size:.72rem;">Pick a country to see legal forms.</small>
+        </div>
+
+        <!-- Field of activity (classification dropdown) -->
+        <div class="col-md-4 col-sm-6 mb-2">
+          <label class="small">Field of Activity</label>
+          <select name="classification" class="form-control form-control-sm">
+            <option value="">Any</option>
+            {% for value, label in filter_classifications %}
+            <option value="{{ value }}" {% if applied_filters.classification == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <!-- NACE / ISIC / NAICS code -->
+        <div class="col-md-4 col-sm-6 mb-2">
+          <label class="small">NACE / ISIC / NAICS Code</label>
+          <input type="text" name="naics" class="form-control form-control-sm"
+                 value="{{ applied_filters.naics|default:'' }}" placeholder="code or keyword">
+          <small class="text-muted" style="font-size:.72rem;">Bulk import of the official code list is planned.</small>
+        </div>
+
+        <!-- Keywords (free text — search across name, website, registration id) -->
+        <div class="col-md-4 col-sm-6 mb-2">
+          <label class="small">Keywords</label>
+          <input type="text" name="keywords" class="form-control form-control-sm"
+                 value="{{ applied_filters.keywords|default:'' }}" placeholder="words to match">
+          <small class="text-muted" style="font-size:.72rem;">Matches name, website &amp; registration ID.</small>
+        </div>
+
+        <!-- Actions -->
+        <div class="col-md-4 col-sm-6 mb-2 d-flex align-items-end">
           <div class="filter-actions">
             <button type="submit" class="btn btn-sm btn-outline-primary">
               <i class="fas fa-filter mr-1"></i> Apply
@@ -171,11 +243,140 @@
           </div>
         </div>
       </div>
-      <p class="small text-muted mt-2 mb-0">
-        Certification, revenue, and company-size filters are planned for a future release.
-      </p>
     </form>
   </div>
+
+  {{ filter_legal_forms_by_country|json_script:"flt-legal-forms" }}
+  {{ applied_filters.entity_type|default:""|json_script:"flt-applied-entity-type" }}
+
+  <style>
+    .fb-ac { position: relative; }
+    .fb-ac-results {
+      position: absolute; top: calc(100% - 4px); left: 15px; right: 15px;
+      z-index: 30; background: #fff; border: 1px solid #e8eef3;
+      border-radius: 6px; box-shadow: 0 6px 18px rgba(15,23,42,.10);
+      max-height: 240px; overflow-y: auto; display: none;
+    }
+    .fb-ac-result {
+      display: block; width: 100%; padding: 7px 12px; text-align: left;
+      background: #fff; border: none; border-bottom: 1px solid #f0f5f8;
+      font-size: .82rem; color: #1B2E3F; cursor: pointer;
+    }
+    .fb-ac-result:hover, .fb-ac-result.is-focused { background: #f0f5f8; }
+    .fb-ac-empty { padding: 10px 12px; font-size: .8rem; color: #64748b; }
+  </style>
+
+  <script>
+  (function () {
+    var APPLIED = {
+      entity_type: JSON.parse(document.getElementById('flt-applied-entity-type').textContent) || ''
+    };
+    var legalFormsByCountry = JSON.parse(document.getElementById('flt-legal-forms').textContent);
+    var countrySel = document.getElementById('flt-country');
+    var entitySel = document.getElementById('flt-entity-type');
+    var entityHint = document.getElementById('flt-entity-type-hint');
+
+    function rebuildEntityOptions() {
+      var country = countrySel.value;
+      var forms = legalFormsByCountry[country] || [];
+      var currentValue = APPLIED.entity_type || entitySel.value || '';
+      // Wipe and rebuild — only "Any" survives.
+      entitySel.innerHTML = '<option value="">Any</option>';
+      forms.forEach(function (pair) {
+        var opt = document.createElement('option');
+        opt.value = pair[0];
+        opt.textContent = pair[1];
+        if (pair[0] === currentValue) opt.selected = true;
+        entitySel.appendChild(opt);
+      });
+      // Consume the initial value once so re-selecting country doesn't keep
+      // forcing it back.
+      APPLIED.entity_type = '';
+      if (forms.length === 0) {
+        entitySel.disabled = true;
+        entityHint.textContent = country
+          ? 'No legal-form preset for this country yet.'
+          : 'Pick a country to see legal forms.';
+      } else {
+        entitySel.disabled = false;
+        entityHint.textContent = '';
+      }
+    }
+    countrySel.addEventListener('change', rebuildEntityOptions);
+    rebuildEntityOptions();
+
+    // -- Autocomplete for State / City / Company Name ----------------------
+    var debounceTimers = {};
+
+    document.querySelectorAll('.fb-ac').forEach(function (wrap) {
+      var field = wrap.getAttribute('data-field');
+      var input = wrap.querySelector('.fb-ac-input');
+      var resultsBox = wrap.querySelector('.fb-ac-results');
+      var latestRequest = 0;
+
+      function render(items, query) {
+        if (!items.length) {
+          resultsBox.innerHTML = '<div class="fb-ac-empty">' +
+            (query ? 'No matches for "' + esc(query) + '".' : 'Start typing.') +
+            '</div>';
+          resultsBox.style.display = 'block';
+          return;
+        }
+        resultsBox.innerHTML = items.map(function (v) {
+          return '<button type="button" class="fb-ac-result" data-val="' + esc(v) + '">' + esc(v) + '</button>';
+        }).join('');
+        resultsBox.style.display = 'block';
+      }
+
+      function esc(s) {
+        return String(s).replace(/[&<>"']/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+      }
+
+      function fetchSuggestions(q) {
+        var reqId = ++latestRequest;
+        var url = '{% url "companies-filter-autocomplete" %}?field=' + encodeURIComponent(field) +
+                  '&q=' + encodeURIComponent(q);
+        // Scope state results to currently selected country.
+        if (field === 'state' && countrySel.value) {
+          url += '&country=' + encodeURIComponent(countrySel.value);
+        }
+        fetch(url, {
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          credentials: 'same-origin',
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (reqId !== latestRequest) return;
+            render(data.results || [], q);
+          })
+          .catch(function () {/* network — silent */});
+      }
+
+      input.addEventListener('input', function () {
+        var q = input.value.trim();
+        clearTimeout(debounceTimers[field]);
+        if (!q) {
+          resultsBox.style.display = 'none';
+          return;
+        }
+        debounceTimers[field] = setTimeout(function () { fetchSuggestions(q); }, 200);
+      });
+
+      resultsBox.addEventListener('click', function (e) {
+        var btn = e.target.closest('.fb-ac-result');
+        if (!btn) return;
+        input.value = btn.getAttribute('data-val');
+        resultsBox.style.display = 'none';
+      });
+
+      document.addEventListener('click', function (e) {
+        if (!wrap.contains(e.target)) resultsBox.style.display = 'none';
+      });
+    });
+  })();
+  </script>
   {% endif %}
 
   <!-- Table -->

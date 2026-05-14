@@ -209,16 +209,71 @@
       </div>
     </div>
     {% else %}
-    <!-- Create Company Form -->
+    <!-- Company set-up: join existing OR create new -->
     <div class="card">
-      <div class="card-header">
-        <h3 class="card-title"><i class="fas fa-plus-circle mr-2"></i>Create Your Company</h3>
+      <div class="card-header" style="border-bottom:1px solid #e8eef3;">
+        <h3 class="card-title"><i class="fas fa-building mr-2"></i>Set Up Your Company</h3>
       </div>
       <div class="card-body">
         <p class="text-muted" style="font-size:.88rem; margin-bottom:20px;">
-          You don't have a company linked to your account yet. Create one below to get started.
+          You don't have a company linked yet. Join one that's already on the platform, or register a new one.
         </p>
 
+        <ul class="nav nav-tabs" id="companySetupTabs" role="tablist" style="margin-bottom:24px;">
+          <li class="nav-item">
+            <a class="nav-link active" id="join-tab" data-toggle="tab" href="#join-pane" role="tab" aria-controls="join-pane" aria-selected="true">
+              <i class="fas fa-search mr-1"></i> Join Existing Company
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="create-tab" data-toggle="tab" href="#create-pane" role="tab" aria-controls="create-pane" aria-selected="false">
+              <i class="fas fa-plus-circle mr-1"></i> Create New Company
+            </a>
+          </li>
+        </ul>
+
+        <div class="tab-content">
+
+          <!-- JOIN PANE -->
+          <div class="tab-pane fade show active" id="join-pane" role="tabpanel" aria-labelledby="join-tab">
+            <form method="POST" action="{% url 'profile' %}" id="join-company-form">
+              {% csrf_token %}
+              <input type="hidden" name="form_type" value="join_company">
+              <input type="hidden" name="company_id" id="join-company-id">
+
+              <div class="form-group" id="join-company-dropdown" style="position:relative;">
+                <label>Select a Company</label>
+                <input type="text" class="form-control" id="join-company-search"
+                       placeholder="Click to choose a company…" autocomplete="off" readonly>
+                <small class="text-muted">Click to open the list. Type to narrow down (up to 20 matches shown).</small>
+
+                <div id="join-company-results"
+                     style="position:absolute; top:100%; left:0; right:0; z-index:50;
+                            max-height:320px; overflow:auto;
+                            border:1px solid #e8eef3; border-radius:8px;
+                            background:#fff; box-shadow:0 6px 24px rgba(15,23,42,.12);
+                            margin-top:4px; display:none;">
+                  <div style="padding:18px; text-align:center; color:#64748b; font-size:.85rem;">
+                    <i class="fas fa-spinner fa-spin mr-1"></i> Loading companies…
+                  </div>
+                </div>
+              </div>
+
+              <div id="join-company-selected" style="display:none; background:#e0f0ff; border:1px solid #bfdbfe; border-radius:8px; padding:12px 14px; margin-bottom:16px;">
+                <div style="font-size:.78rem; color:#5F7383; text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px;">Selected</div>
+                <div id="join-company-selected-name" style="font-weight:700; color:#1B2E3F;"></div>
+                <div id="join-company-selected-meta" style="font-size:.82rem; color:#64748b;"></div>
+                <button type="button" class="btn btn-link p-0 mt-1" id="join-company-clear" style="font-size:.8rem;">Change selection</button>
+              </div>
+
+              <button type="submit" class="btn btn-primary" id="join-company-submit" disabled>
+                <i class="fas fa-link mr-1"></i> Join Company
+              </button>
+            </form>
+          </div>
+
+          <!-- CREATE PANE -->
+          <div class="tab-pane fade" id="create-pane" role="tabpanel" aria-labelledby="create-tab">
         <form method="POST" action="{% url 'profile' %}" id="create-company-form">
           {% csrf_token %}
           <input type="hidden" name="form_type" value="create_company">
@@ -397,12 +452,148 @@
             <i class="fas fa-building mr-1"></i> Create Company
           </button>
         </form>
-      </div>
+          </div><!-- /#create-pane -->
+
+        </div><!-- /.tab-content -->
+      </div><!-- /.card-body (Set Up Your Company) -->
     </div>
     {% endif %}
 
   </div>
 </div>
+
+{% if not user_company %}
+<script>
+(function () {
+  var dropdownWrap = document.getElementById('join-company-dropdown');
+  var searchInput = document.getElementById('join-company-search');
+  var resultsBox = document.getElementById('join-company-results');
+  var hiddenId = document.getElementById('join-company-id');
+  var selectedBox = document.getElementById('join-company-selected');
+  var selectedName = document.getElementById('join-company-selected-name');
+  var selectedMeta = document.getElementById('join-company-selected-meta');
+  var clearBtn = document.getElementById('join-company-clear');
+  var submitBtn = document.getElementById('join-company-submit');
+  if (!searchInput) return;
+
+  var debounceTimer = null;
+  var latestRequest = 0;
+  var hasLoadedOnce = false;
+
+  function openDropdown() {
+    resultsBox.style.display = 'block';
+    // Drop readonly so the user can type-to-filter once the list is open;
+    // we use readonly only for the closed-state appearance ("click to open").
+    searchInput.removeAttribute('readonly');
+    if (!hasLoadedOnce) {
+      hasLoadedOnce = true;
+      search('');
+    }
+  }
+
+  function closeDropdown() {
+    resultsBox.style.display = 'none';
+    searchInput.setAttribute('readonly', 'readonly');
+    searchInput.value = '';
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function renderResults(items, query) {
+    if (!items.length) {
+      resultsBox.innerHTML =
+        '<div style="padding:18px; text-align:center; color:#64748b; font-size:.85rem;">' +
+        (query ? 'No companies match "' + escapeHtml(query) + '".' : 'No companies available yet.') +
+        '</div>';
+      return;
+    }
+    var html = items.map(function (c) {
+      var meta = [c.city, c.country, c.classification].filter(Boolean).join(' · ');
+      return (
+        '<button type="button" class="join-company-result" data-id="' + escapeHtml(c.id) +
+        '" data-name="' + escapeHtml(c.name) +
+        '" data-meta="' + escapeHtml(meta) +
+        '" style="display:block; width:100%; text-align:left; padding:10px 14px; border:none; border-bottom:1px solid #eef2f7; background:#fff; cursor:pointer;">' +
+        '<div style="font-weight:600; color:#1B2E3F; font-size:.9rem;">' + escapeHtml(c.name) + '</div>' +
+        (meta ? '<div style="font-size:.78rem; color:#64748b;">' + escapeHtml(meta) + '</div>' : '') +
+        '</button>'
+      );
+    }).join('');
+    resultsBox.innerHTML = html;
+  }
+
+  function search(query) {
+    var reqId = ++latestRequest;
+    fetch('{% url "profile-company-search" %}?q=' + encodeURIComponent(query), {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      credentials: 'same-origin',
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        // Drop stale responses — a slower request must not overwrite a newer one.
+        if (reqId !== latestRequest) return;
+        renderResults(data.results || [], query);
+      })
+      .catch(function () {
+        if (reqId !== latestRequest) return;
+        resultsBox.innerHTML = '<div style="padding:18px; text-align:center; color:#b91c1c; font-size:.85rem;">Failed to load companies. Please try again.</div>';
+      });
+  }
+
+  searchInput.addEventListener('input', function () {
+    var q = searchInput.value.trim();
+    clearTimeout(debounceTimer);
+    // Empty query → re-show the full first-page list rather than blanking out.
+    debounceTimer = setTimeout(function () { search(q); }, q ? 250 : 0);
+  });
+
+  // Open the dropdown on click/focus.
+  searchInput.addEventListener('click', openDropdown);
+  searchInput.addEventListener('focus', openDropdown);
+
+  // Close when the user clicks anywhere outside the dropdown.
+  document.addEventListener('click', function (e) {
+    if (!dropdownWrap.contains(e.target)) {
+      resultsBox.style.display = 'none';
+      searchInput.setAttribute('readonly', 'readonly');
+      searchInput.value = '';
+    }
+  });
+
+  // Close on Escape.
+  searchInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      searchInput.blur();
+      closeDropdown();
+    }
+  });
+
+  resultsBox.addEventListener('click', function (e) {
+    var btn = e.target.closest('.join-company-result');
+    if (!btn) return;
+    hiddenId.value = btn.getAttribute('data-id');
+    selectedName.textContent = btn.getAttribute('data-name');
+    var meta = btn.getAttribute('data-meta');
+    selectedMeta.textContent = meta || '';
+    selectedMeta.style.display = meta ? '' : 'none';
+    selectedBox.style.display = '';
+    submitBtn.disabled = false;
+    closeDropdown();
+  });
+
+  clearBtn.addEventListener('click', function () {
+    hiddenId.value = '';
+    selectedBox.style.display = 'none';
+    submitBtn.disabled = true;
+    openDropdown();
+  });
+})();
+</script>
+{% endif %}
 
 <!-- Edit Profile Modal -->
 <div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">

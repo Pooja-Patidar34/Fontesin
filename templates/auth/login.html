@@ -12,6 +12,7 @@
   <link rel="apple-touch-icon" href="{% static 'adminlte/images/icons/icon-192.png' %}"/>
   <title>Log In – FONTESIN</title>
   <meta name="description" content="Log in to your FONTESIN account to access the global business platform."/>
+  <link rel="stylesheet" href="{% static 'adminlte/plugins/fontawesome-free/css/all.min.css' %}"/>
   <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
 
   <style>
@@ -201,7 +202,7 @@
               maxlength="50"
               oninput="this.value=this.value.replace(/[^\x20-\x7E]/g,'')"
             />
-            <button type="button" class="password-toggle__btn" id="toggle-password" aria-label="Toggle password visibility">👁</button>
+            <button type="button" class="password-toggle__btn" id="toggle-password" aria-label="Toggle password visibility"><i class="fas fa-eye-slash"></i></button>
           </div>
         </div>
 

@@ -4,7 +4,13 @@ from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 
 from accounts.models import Company, Tenant, AuditLog, CompanyConnection
-from accounts.constants import CountryChoices, COUNTRY_STATES
+from accounts.constants import (
+    CountryChoices,
+    COUNTRY_STATES,
+    COUNTRY_FLAGS,
+    LEGAL_FORMS_BY_COUNTRY,
+    CompanyClassificationChoices,
+)
 from django.db.models import Q
 from accounts.utils.permissions import has_permission
 from accounts.view.saved_filter import (
@@ -51,6 +57,55 @@ from accounts.forms.company_form import CompanyForm
 
 def _is_ajax(request):
     return request.headers.get("X-Requested-With") == "XMLHttpRequest"
+
+
+def _ordered_country_choices():
+    """Pinned countries (USA, UK) first, the rest alphabetical by name.
+    Used to drive the filter-bar country picker so the active markets are
+    one click away without forcing-hide other countries."""
+    pinned_codes = list(CountryChoices.PINNED)
+    label_by_code = dict(CountryChoices.CHOICES)
+    pinned = [(c, label_by_code[c]) for c in pinned_codes if c in label_by_code]
+    others = sorted(
+        [(c, n) for c, n in CountryChoices.CHOICES if c not in pinned_codes],
+        key=lambda kv: kv[1].lower(),
+    )
+    return {"pinned": pinned, "others": others}
+
+
+@login_required
+def company_filter_autocomplete(request):
+    """Type-ahead source for the Company Database filter bar.
+
+    field=name → matches Company.name
+    field=city → matches Company.city
+    field=state → matches Company.state (also scopes to selected country if
+                  the request includes ?country= so e.g. US state list is
+                  filtered server-side too)
+
+    Capped at 15 hits, always distinct.
+    """
+    field = (request.GET.get("field") or "").strip().lower()
+    q = (request.GET.get("q") or "").strip()
+    country = (request.GET.get("country") or "").strip().upper()
+
+    if field not in {"name", "city", "state"}:
+        return JsonResponse({"results": []})
+
+    qs = Company.objects.filter(is_active=True)
+    if country:
+        qs = qs.filter(country__iexact=country)
+    if q:
+        qs = qs.filter(**{f"{field}__icontains": q})
+
+    values = (
+        qs.exclude(**{f"{field}__isnull": True})
+          .exclude(**{f"{field}__exact": ""})
+          .values_list(field, flat=True)
+          .distinct()
+          .order_by(field)[:15]
+    )
+    return JsonResponse({"results": list(values)})
 
 
 @login_required
@@ -268,29 +323,41 @@ def company_list(request):
                 | Q(usercompany__user=request.user)
             )
 
-            # Basic / Pro / Global business users also get a discovery view:
-            #   basic  → all active companies in the user's registered country
-            #   pro    → all active companies in the user's whole region
-            #   global → all active companies worldwide (no country restriction)
+            # Business-user discovery scope, by plan:
+            #   global → all active companies worldwide
+            #   pro    → all active companies in the user's country
+            #   basic  → all active companies in the user's state (within country)
+            #   free   → same scope as basic; the "no details" restriction is
+            #            applied by the templates via is_free_plan.
             # User.country is an ISO code ("US"); Company.country is free-text,
-            # so match across code + label + common aliases.
+            # so match across code + label + common aliases. User.state_region
+            # holds the user's state; matched case-insensitive against
+            # Company.state.
+            #
+            # Fallbacks: if the user is missing the data needed for their
+            # tier's scope (no country for pro, no state for basic/free), we
+            # widen by one level rather than show an empty list — keeps
+            # existing accounts working until they fill profile in.
             plan_code = _plan_code_for_business_user(request.user)
-            if plan_code == "global":
-                linkage_q = linkage_q | Q(is_active=True)
-            elif plan_code in ("basic", "pro"):
-                user_country = (request.user.country or "").strip().upper()
-                if user_country:
-                    if plan_code == "pro":
-                        region = _region_for_country(user_country)
-                        scope_codes = PLAN_REGIONS.get(region, []) if region else []
-                    else:
-                        scope_codes = [user_country]
+            user_country = (request.user.country or "").strip().upper()
+            user_state = (request.user.state_region or "").strip()
 
-                    if scope_codes:
-                        scope_q = Q()
-                        for code in scope_codes:
-                            scope_q |= _country_match_q(code)
-                        linkage_q = linkage_q | (scope_q & Q(is_active=True))
+            scope_q = None
+            if plan_code == "global":
+                scope_q = Q(is_active=True)
+            elif plan_code == "pro" and user_country:
+                scope_q = _country_match_q(user_country) & Q(is_active=True)
+            elif plan_code in ("basic", "free") and user_country:
+                base = _country_match_q(user_country) & Q(is_active=True)
+                if user_state:
+                    scope_q = base & Q(state__iexact=user_state)
+                else:
+                    # Missing state on profile → fall back to country-wide so
+                    # the user isn't locked out. They can narrow via filter bar.
+                    scope_q = base
+
+            if scope_q is not None:
+                linkage_q = linkage_q | scope_q
 
             queryset = Company.objects.filter(linkage_q).distinct()
 
@@ -317,11 +384,41 @@ def company_list(request):
     can_filter_companies = is_paid_bu or role_code == "consultant"
     applied_filters = {}
     if can_filter_companies:
+        # Match modes vary per field:
+        #   exact      — country (ISO code), entity_type, classification (enum)
+        #   contains   — state, city, name (so "Tex" matches "Texas")
+        #   enrichment — naics lives on the related CompanyEnrichment row
+        #   keywords   — OR across name/website/registration_id
+        EXACT_FIELDS = {"country", "entity_type", "classification"}
+        CONTAINS_FIELDS = {"state", "city", "name"}
+
         for key in FILTER_FIELDS:
             value = (request.GET.get(key) or "").strip()
-            if value:
-                applied_filters[key] = value
+            if not value:
+                continue
+            applied_filters[key] = value
+
+            if key in EXACT_FIELDS:
                 queryset = queryset.filter(**{f"{key}__iexact": value})
+            elif key in CONTAINS_FIELDS:
+                queryset = queryset.filter(**{f"{key}__icontains": value})
+            elif key == "naics":
+                queryset = queryset.filter(
+                    Q(enrichment__naics_code__icontains=value)
+                    | Q(enrichment__naics_description__icontains=value)
+                )
+            elif key == "keywords":
+                # Free-form search — split on whitespace, each token must hit
+                # at least one of the searched columns (AND across tokens,
+                # OR across columns within a token).
+                for token in value.split():
+                    queryset = queryset.filter(
+                        Q(name__icontains=token)
+                        | Q(website__icontains=token)
+                        | Q(registration_id__icontains=token)
+                    )
+
+        queryset = queryset.distinct()
 
     paginator = Paginator(queryset.order_by("name"), 10)
     try:
@@ -393,6 +490,13 @@ def company_list(request):
         # Country → state map consumed by the modal's dependent dropdown JS,
         # rendered server-side via {% json_script %}.
         "country_states": COUNTRY_STATES,
+        # Filter-bar data — countries pinned (US, GB) above the rest with
+        # flags; legal-form options swapped per selected country;
+        # classification list for the Field-of-activity dropdown.
+        "filter_country_choices": _ordered_country_choices(),
+        "filter_country_flags": COUNTRY_FLAGS,
+        "filter_legal_forms_by_country": LEGAL_FORMS_BY_COUNTRY,
+        "filter_classifications": CompanyClassificationChoices.CHOICES,
     }
 
     # AJAX GET (pagination): return only the rendered fragments. The same
