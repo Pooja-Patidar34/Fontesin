@@ -14,3 +14,4 @@ staticfiles/
 
 # Images
 static/adminlte/images/
+imports/

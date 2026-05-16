@@ -133,6 +133,17 @@
         </form>
         {% endif %}
 
+        {% if request.user.is_superuser %}
+        <button class="btn btn-outline-primary btn-sm"
+                type="button"
+                data-toggle="modal"
+                data-bs-toggle="modal"
+                data-target="#importCsvModal"
+                data-bs-target="#importCsvModal">
+          <i class="fas fa-file-csv mr-1"></i> Import CSV
+        </button>
+        {% endif %}
+
         {% if can_manage %}
         <button class="btn btn-primary btn-sm" id="add-company-btn">
           <i class="fas fa-plus mr-1"></i> Add Company
@@ -1077,6 +1088,10 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 </script>
+{% endif %}
+
+{% if request.user.is_superuser %}
+  {% include "dashboard/_company_import_modal.html" %}
 {% endif %}
 
 {% endblock %}

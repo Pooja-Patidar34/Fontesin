@@ -211,6 +211,17 @@ LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/dashboard/"
 LOGOUT_REDIRECT_URL = "/login/"
 
+# Allow up to ~11 GB uploads for the bulk company CSV importer. Files larger
+# than FILE_UPLOAD_MAX_MEMORY_SIZE are streamed to a temp file on disk, so
+# the gunicorn worker never holds the full payload in RAM. Nginx still
+# needs client_max_body_size set to match (see deploy notes).
+DATA_UPLOAD_MAX_MEMORY_SIZE = 11 * 1024 * 1024 * 1024   # 11 GB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 1 * 1024 * 1024            # 1 MB: anything bigger streams to disk
+DATA_UPLOAD_MAX_NUMBER_FIELDS = None                     # unbounded form fields (form will only carry the file)
+FILE_UPLOAD_HANDLERS = [
+    "django.core.files.uploadhandler.TemporaryFileUploadHandler",
+]
+
 
 STATIC_URL = '/static/'
 

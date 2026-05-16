@@ -127,6 +127,14 @@ class Company(models.Model):
     is_active = models.BooleanField(default=True)
     is_deleted = models.BooleanField(default=False)
 
+    # ---- Bulk-import passthrough ----
+    # Catch-all JSONB for columns that arrive via the bulk CSV importer but
+    # don't have a typed home (~95 fields from the InfoGroup-style export).
+    # Known fields are still routed to their typed columns; only the
+    # leftovers land here. Not surfaced in the UI; queryable via
+    # extra_data->>'<key>'.
+    extra_data = models.JSONField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -134,8 +142,9 @@ class Company(models.Model):
     all_objects = models.Manager()
 
     class Meta:
-        unique_together = ("tenant", "name")
         indexes = [
+            # Kept (without the uniqueness constraint) because list views
+            # still filter by tenant first, name second.
             models.Index(fields=["tenant", "name"]),
         ]
         constraints = [
@@ -148,6 +157,13 @@ class Company(models.Model):
                 fields=["registration_id"],
                 condition=Q(registration_id__isnull=False) & ~Q(registration_id__exact=""),
                 name="unique_company_registration_id",
+            ),
+            # Company name is globally unique across the platform. Soft-deleted
+            # rows are excluded so deleting a company frees its name.
+            models.UniqueConstraint(
+                fields=["name"],
+                condition=Q(is_deleted=False),
+                name="unique_company_name_when_active",
             ),
         ]
 
@@ -610,3 +626,52 @@ class CompanyConnection(models.Model):
 
     def __str__(self):
         return f"{self.user.email} → {self.company.name} ({self.status})"
+
+
+class CompanyImportJob(models.Model):
+    STATE_QUEUED = "queued"
+    STATE_RUNNING = "running"
+    STATE_COMPLETED = "completed"
+    STATE_FAILED = "failed"
+    STATE_CHOICES = (
+        (STATE_QUEUED, "Queued"),
+        (STATE_RUNNING, "Running"),
+        (STATE_COMPLETED, "Completed"),
+        (STATE_FAILED, "Failed"),
+    )
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.PROTECT,
+        related_name="company_import_jobs",
+    )
+    target_tenant = models.ForeignKey(
+        Tenant,
+        on_delete=models.PROTECT,
+        related_name="company_import_jobs",
+    )
+    state = models.CharField(max_length=16, choices=STATE_CHOICES, default=STATE_QUEUED)
+
+    filename = models.CharField(max_length=255)
+    file_path = models.CharField(max_length=500)
+    error_log_path = models.CharField(max_length=500, null=True, blank=True)
+
+    total_rows = models.BigIntegerField(default=0)
+    processed_rows = models.BigIntegerField(default=0)
+    inserted_rows = models.BigIntegerField(default=0)
+    skipped_duplicates = models.BigIntegerField(default=0)
+    failed_rows = models.BigIntegerField(default=0)
+
+    error_message = models.TextField(null=True, blank=True)
+
+    started_at = models.DateTimeField(null=True, blank=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["created_by", "-created_at"])]
+
+    def __str__(self):
+        return f"CompanyImportJob {self.id} ({self.state})"

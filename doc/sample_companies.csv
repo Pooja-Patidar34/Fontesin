@@ -1,0 +1,10 @@
+name,registration_id,classification,entity_type,address_line1,address_line2,house_number,district,region,city,state,postal_code,country,latitude,longitude,year_established,industry_code,keywords,employee_count_range,phone,phone_secondary,fax,website,contact_email,certification_status
+Acme Industries Ltd,ACME-001,it_services,ltd,221B Baker Street,,221B,Westminster,Greater London,London,England,NW1 6XE,United Kingdom,51.52376500,-0.15870600,1985,62015,"tech, software",up_to_50,+44-20-7946-0958,,,https://acme.example.com,hello@acme.example.com,uncertified
+Globex Corporation,GLOBEX-77,manufacturing,corp,1 Hacker Way,,1,,California,Menlo Park,CA,94025,United States,37.48495300,-122.14816800,1989,541512,"energy, consulting",up_to_1000,+1-650-555-0199,,,https://globex.example.com,info@globex.example.com,uncertified
+Acme Subsidiary GmbH,ACME-DE-2,finance,gmbh,Hauptstr. 1,,1,Mitte,Berlin,Berlin,Berlin,10115,Germany,52.52000700,13.40495400,2010,70220,consulting,up_to_10,+49-30-1234-567,,,https://de.acme.example.com,de@acme.example.com,uncertified
+Initech LLC,INIT-503,it_services,llc,2401 6th Street,,2401,,Texas,Austin,TX,78702,United States,30.26727500,-97.74305500,2002,541511,"software, devtools",up_to_100,+1-512-555-0177,,,https://initech.example.com,hr@initech.example.com,uncertified
+Wonka Industries,WONKA-1,manufacturing,corp,1 Chocolate Way,,1,,Pennsylvania,Hershey,PA,17033,United States,40.28593000,-76.65000000,1971,311330,"confectionery, manufacturing",over_1000,+1-717-555-0143,,,https://wonka.example.com,golden-ticket@wonka.example.com,uncertified
+Minimal Co,,,,,,,,,,CA,,United States,,,,,,,,,,,,
+Acme Industries Ltd,ACME-001,it_services,ltd,221B Baker Street,,221B,Westminster,Greater London,London,England,NW1 6XE,United Kingdom,51.52376500,-0.15870600,1985,62015,"tech, software",up_to_50,+44-20-7946-0958,,,https://acme.example.com,hello@acme.example.com,uncertified
+,NO-NAME-99,it_services,ltd,Somewhere,,,,,Nowhere,,00000,Nowhereland,,,,,,,,,,,,
+Bad Decimal Co,BAD-DEC-1,it_services,ltd,1 Bad Way,,1,,,Somewhere,SW,00000,United States,not-a-number,not-a-number,2020,,,,,,,,,uncertified

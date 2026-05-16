@@ -439,23 +439,37 @@ def company_list(request):
         queryset = queryset.distinct()
 
     # Order: the user's own companies first (owner_user / primary_company /
-    # consultant), then everyone else, both groups alphabetical by name.
-    # Without this, a newly-approved company is hidden alphabetically across
-    # many pages of discovery rows and feels like a missing approval.
-    from django.db.models import Case, When, IntegerField, Value
+    # consultant), then everyone else. Within each group, newest first so
+    # freshly-added/imported companies surface at the top instead of being
+    # hidden alphabetically across many pages.
+    #
+    # NOTE: we use Exists() for the primary_users membership instead of
+    # Q(primary_users=request.user). The latter forces a LEFT JOIN through
+    # UserCompany and multiplies rows for any company that has more than
+    # one UserCompany row, which surfaced as visible duplicates in the
+    # companies list.
+    from django.db.models import Case, When, IntegerField, Value, Exists, OuterRef
+    from accounts.models import UserCompany
+
+    is_primary_user_for_company = UserCompany.objects.filter(
+        company=OuterRef("pk"),
+        user=request.user,
+    )
     own_q = (
         Q(owner_user=request.user)
         | Q(consultant=request.user)
-        | Q(primary_users=request.user)
+        | Q(_user_is_primary=True)
     )
     queryset = queryset.annotate(
+        _user_is_primary=Exists(is_primary_user_for_company),
+    ).annotate(
         _own_rank=Case(
             When(own_q, then=Value(0)),
             default=Value(1),
             output_field=IntegerField(),
         )
     )
-    paginator = Paginator(queryset.order_by("_own_rank", "name"), 10)
+    paginator = Paginator(queryset.order_by("_own_rank", "-created_at"), 10)
     try:
         page_obj = paginator.page(page_number)
     except PageNotAnInteger:

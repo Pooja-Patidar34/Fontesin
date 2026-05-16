@@ -1,0 +1,264 @@
+{% comment %}
+Bulk CSV import modal — included only for superusers in companies.html.
+Three panes: upload form -> progress bar -> result summary.
+{% endcomment %}
+<div class="modal fade" id="importCsvModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title font-weight-bold mb-0">Bulk Import Companies</h5>
+        <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        {# Pane 1 — upload #}
+        <div id="import-pane-upload">
+          <p class="text-muted small mb-3">
+            Upload a CSV of companies. Required columns:
+            <code>name</code>, <code>country</code>, <code>state</code>.
+            Additional standard columns (address, phone, NAICS / SIC codes,
+            employee &amp; sales ranges, etc.) are optional and stored in
+            their typed fields. Unknown columns are preserved verbatim in
+            <code>Company.extra_data</code> (JSONB). All rows go to the
+            tenant picked below. Duplicates on company <code>name</code> or
+            <code>registration_id</code> are skipped automatically.
+          </p>
+          <p class="small mb-3">
+            Not sure of the format?
+            <a href="{% url 'company-import-sample' %}" download>Download sample CSV</a>.
+          </p>
+          <form id="import-form" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group">
+              <label for="import-tenant" class="small font-weight-bold">Target tenant</label>
+              <select class="form-control" id="import-tenant" name="tenant_id" required>
+                <option value="">Choose a tenant…</option>
+                {% for tenant in tenants %}
+                  <option value="{{ tenant.id }}">{{ tenant.name }}</option>
+                {% endfor %}
+              </select>
+              <small class="form-text text-muted">
+                Every company in the CSV will be created under this tenant.
+              </small>
+            </div>
+            <div class="form-group">
+              <label for="import-csv-file" class="small font-weight-bold">CSV file</label>
+              <input type="file" class="form-control-file" id="import-csv-file" name="csv_file" accept=".csv" required>
+              <small class="form-text text-muted">
+                Large uploads (≥1 GB) may take several minutes. Don't close this tab until the upload finishes.
+              </small>
+            </div>
+            <div id="import-form-error" class="alert alert-danger d-none mt-2 small"></div>
+          </form>
+        </div>
+
+        {# Pane 2 — progress #}
+        <div id="import-pane-progress" class="d-none">
+          <p class="small mb-2">
+            <strong>Importing:</strong>
+            <span id="import-filename"></span>
+          </p>
+          <div class="progress mb-3" style="height: 1.5rem;">
+            <div id="import-progress-bar"
+                 class="progress-bar progress-bar-striped progress-bar-animated"
+                 role="progressbar"
+                 style="width: 0%;">0%</div>
+          </div>
+          <div class="row small">
+            <div class="col-6 col-md-3"><strong>Total:</strong> <span id="stat-total">0</span></div>
+            <div class="col-6 col-md-3"><strong>Processed:</strong> <span id="stat-processed">0</span></div>
+            <div class="col-6 col-md-3 text-success"><strong>Inserted:</strong> <span id="stat-inserted">0</span></div>
+            <div class="col-6 col-md-3 text-warning"><strong>Skipped:</strong> <span id="stat-skipped">0</span></div>
+          </div>
+          <div class="row small mt-1">
+            <div class="col-6 col-md-3 text-danger"><strong>Failed:</strong> <span id="stat-failed">0</span></div>
+          </div>
+          <p class="text-muted small mt-3">
+            You can safely close this window — the import will keep running on the server.
+          </p>
+        </div>
+
+        {# Pane 3 — done #}
+        <div id="import-pane-done" class="d-none">
+          <div id="import-done-summary"></div>
+          <a id="import-errors-link" href="#" class="btn btn-outline-warning btn-sm mt-2 d-none">
+            Download error report
+          </a>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="import-submit-btn">Upload &amp; Import</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  const UPLOAD_URL = "{% url 'company-import-upload' %}";
+  const STATUS_URL_TPL = "{% url 'company-import-status' job_id='00000000-0000-0000-0000-000000000000' %}";
+  const ERRORS_URL_TPL = "{% url 'company-import-errors' job_id='00000000-0000-0000-0000-000000000000' %}";
+  const PLACEHOLDER = "00000000-0000-0000-0000-000000000000";
+
+  const statusUrlFor = (id) => STATUS_URL_TPL.replace(PLACEHOLDER, id);
+  const errorsUrlFor = (id) => ERRORS_URL_TPL.replace(PLACEHOLDER, id);
+
+  const $ = (sel) => document.querySelector(sel);
+  const show = (sel) => $(sel).classList.remove("d-none");
+  const hide = (sel) => $(sel).classList.add("d-none");
+
+  let pollHandle = null;
+
+  function resetModal() {
+    $("#import-form").reset();
+    $("#import-form-error").classList.add("d-none");
+    $("#import-form-error").textContent = "";
+    hide("#import-pane-progress");
+    hide("#import-pane-done");
+    show("#import-pane-upload");
+    $("#import-submit-btn").disabled = false;
+    $("#import-submit-btn").textContent = "Upload & Import";
+    $("#import-submit-btn").classList.remove("d-none");
+    if (pollHandle) {
+      clearInterval(pollHandle);
+      pollHandle = null;
+    }
+  }
+
+  function showError(msg) {
+    const el = $("#import-form-error");
+    el.textContent = msg;
+    el.classList.remove("d-none");
+    $("#import-submit-btn").disabled = false;
+  }
+
+  function startUpload(ev) {
+    ev.preventDefault();
+    const tenantSel = $("#import-tenant");
+    if (!tenantSel.value) {
+      showError("Please choose a target tenant.");
+      return;
+    }
+    const fileInput = $("#import-csv-file");
+    if (!fileInput.files || !fileInput.files.length) {
+      showError("Please choose a CSV file.");
+      return;
+    }
+    const file = fileInput.files[0];
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+      showError("File must be a .csv");
+      return;
+    }
+
+    $("#import-submit-btn").disabled = true;
+    $("#import-submit-btn").textContent = "Uploading…";
+    $("#import-form-error").classList.add("d-none");
+
+    const fd = new FormData();
+    fd.append("tenant_id", tenantSel.value);
+    fd.append("csv_file", file);
+    fd.append("csrfmiddlewaretoken",
+      document.querySelector("#import-form [name=csrfmiddlewaretoken]").value);
+
+    fetch(UPLOAD_URL, { method: "POST", body: fd, credentials: "same-origin" })
+      .then(async (resp) => {
+        if (!resp.ok) {
+          let msg = "Upload failed (HTTP " + resp.status + ")";
+          try {
+            const j = await resp.json();
+            if (j.error) msg = j.error;
+          } catch (e) { /* keep default */ }
+          throw new Error(msg);
+        }
+        return resp.json();
+      })
+      .then((data) => {
+        $("#import-filename").textContent = file.name;
+        $("#stat-total").textContent = (data.total_rows || 0).toLocaleString();
+        hide("#import-pane-upload");
+        show("#import-pane-progress");
+        pollStatus(data.job_id);
+      })
+      .catch((err) => showError(err.message || "Upload failed"));
+  }
+
+  function pollStatus(jobId) {
+    const tick = () => {
+      fetch(statusUrlFor(jobId), { credentials: "same-origin" })
+        .then((r) => r.json())
+        .then((j) => {
+          $("#stat-total").textContent = (j.total_rows || 0).toLocaleString();
+          $("#stat-processed").textContent = (j.processed_rows || 0).toLocaleString();
+          $("#stat-inserted").textContent = (j.inserted_rows || 0).toLocaleString();
+          $("#stat-skipped").textContent = (j.skipped_duplicates || 0).toLocaleString();
+          $("#stat-failed").textContent = (j.failed_rows || 0).toLocaleString();
+
+          const pct = j.total_rows ? Math.min(100, Math.round((j.processed_rows / j.total_rows) * 100)) : 0;
+          const bar = $("#import-progress-bar");
+          bar.style.width = pct + "%";
+          bar.textContent = pct + "%";
+
+          if (j.state === "completed" || j.state === "failed") {
+            clearInterval(pollHandle);
+            pollHandle = null;
+            renderDone(j);
+          }
+        })
+        .catch(() => { /* network blip — keep polling */ });
+    };
+    tick();
+    pollHandle = setInterval(tick, 2000);
+  }
+
+  function renderDone(j) {
+    hide("#import-pane-progress");
+    show("#import-pane-done");
+    $("#import-submit-btn").classList.add("d-none");  // hide submit on done pane
+
+    const summary = $("#import-done-summary");
+    if (j.state === "completed") {
+      summary.innerHTML =
+        '<div class="alert alert-success">' +
+        '<strong>Import complete.</strong> ' +
+        '<br>Inserted: <strong>' + (j.inserted_rows || 0).toLocaleString() + '</strong>' +
+        ' &nbsp; Skipped (duplicates): <strong>' + (j.skipped_duplicates || 0).toLocaleString() + '</strong>' +
+        ' &nbsp; Failed: <strong>' + (j.failed_rows || 0).toLocaleString() + '</strong>' +
+        '</div>';
+    } else {
+      summary.innerHTML =
+        '<div class="alert alert-danger">' +
+        '<strong>Import failed.</strong> ' +
+        '<br><pre class="small mt-2 mb-0">' +
+        (j.error_message ? j.error_message.replace(/</g, "&lt;") : "(no details)") +
+        '</pre></div>';
+    }
+
+    const link = $("#import-errors-link");
+    if (j.has_errors) {
+      link.href = errorsUrlFor(j.job_id);
+      link.classList.remove("d-none");
+    } else {
+      link.classList.add("d-none");
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const modal = $("#importCsvModal");
+    if (!modal) return;
+    $("#import-submit-btn").addEventListener("click", startUpload);
+
+    // Reset state every time the modal is reopened.
+    modal.addEventListener("show.bs.modal", resetModal);
+    // Bootstrap 4 fallback (event name differs).
+    if (window.jQuery) {
+      window.jQuery(modal).on("show.bs.modal", resetModal);
+    }
+  });
+})();
+</script>

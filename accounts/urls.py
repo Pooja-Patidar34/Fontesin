@@ -4,6 +4,12 @@ from .view.profile import profile_view, company_search_ajax, plans_view
 from .view.auth import admin_login, admin_logout, register_view, identity_verification_view, forgot_password, verify_otp, reset_password, check_email_exists
 from .view.dashboard import dashboard
 from accounts.view.company import company_list, toggle_company,company_detail_ajax,company_delete,company_filter_autocomplete
+from accounts.view.company_import import (
+    company_import_upload,
+    company_import_status,
+    company_import_errors,
+    company_import_sample,
+)
 from .view.user import user_list, toggle_user, assign_roles,role_list,role_detail_ajax,permission_list,save_role,user_detail_ajax,user_edit,add_user,user_delete
 from .view.audit import audit_logs,audit_log_detail_ajax
 from .view.tenant import tenant_list,toggle_tenant,tenant_detail_ajax,tenant_delete
@@ -54,6 +60,12 @@ urlpatterns = [
     path("users/add/", add_user, name="add-user"),
     path("companies/<uuid:company_id>/delete/", company_delete, name="company-delete"),
     path("companies/<uuid:company_id>/connect/", company_connect, name="company-connect"),
+
+    # Bulk CSV import (superuser only)
+    path("companies/import/upload/", company_import_upload, name="company-import-upload"),
+    path("companies/import/sample.csv", company_import_sample, name="company-import-sample"),
+    path("companies/import/<uuid:job_id>/status/", company_import_status, name="company-import-status"),
+    path("companies/import/<uuid:job_id>/errors/", company_import_errors, name="company-import-errors"),
 
     # Partnerships (basic-plan business users only)
     path("partnerships/", partnership_list, name="partnerships"),
