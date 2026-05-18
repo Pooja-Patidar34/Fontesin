@@ -47,11 +47,14 @@
      one line, the column was the single biggest contributor to the
      overflow. Stacking takes it from ~340px down to ~110px. */
   .commissions-table .action-stack {
-    display: flex;
+    display: inline-flex;
     flex-direction: column;
     align-items: stretch;
     gap: 4px;
     min-width: 110px;
+    /* `inline-flex` + the cell's text-align:center on the parent <td>
+       centers the whole stack within the Action column instead of
+       leaving it flush-left or stretched edge to edge. */
   }
   .commissions-table .action-stack > .btn,
   .commissions-table .action-stack > form,
@@ -128,7 +131,8 @@
             <th class="text-right" style="white-space:nowrap;">Subscription</th>
             <th class="text-right" style="white-space:nowrap;">Consultant Share</th>
             <th class="text-right" style="white-space:nowrap;">Admin Share</th>
-            <th class="text-right pr-4">Action</th>
+            <th class="text-center" style="white-space:nowrap;">Status</th>
+            <th class="text-center">Action</th>
           </tr>
         </thead>
         <tbody>
@@ -150,7 +154,18 @@
               <strong>{{ c.admin_share|floatformat:2 }} {{ c.currency }}</strong>
               <div class="text-muted small">{{ c.admin_share_percent|floatformat:0 }}%</div>
             </td>
-            <td class="text-right">
+            <td class="text-center" style="white-space:nowrap;">
+              {% if c.status == "pending" %}
+                <span class="badge badge-warning">Pending</span>
+              {% elif c.status == "paid" %}
+                <span class="badge badge-success" title="Paid on {{ c.paid_at|date:'M d, Y' }}">Paid</span>
+              {% elif c.status == "cancelled" %}
+                <span class="badge badge-secondary">Cancelled</span>
+              {% else %}
+                <span class="badge badge-secondary">{{ c.get_status_display }}</span>
+              {% endif %}
+            </td>
+            <td class="text-center">
               <div class="action-stack">
                 {% if c.invoice_id %}
                 <button type="button"
@@ -193,7 +208,7 @@
           </tr>
           {% empty %}
           <tr>
-            <td colspan="{% if viewing_as_admin %}9{% else %}8{% endif %}" class="text-center text-muted py-4">
+            <td colspan="{% if viewing_as_admin %}10{% else %}9{% endif %}" class="text-center text-muted py-4">
               {% if viewing_as_admin %}No commissions recorded yet.{% else %}You haven't earned any commissions yet. They appear here when a business user linked to one of your companies subscribes to a paid plan.{% endif %}
             </td>
           </tr>

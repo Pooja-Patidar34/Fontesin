@@ -1,0 +1,235 @@
+{% extends "base/base.html" %}
+{% block title %}My Companies{% endblock %}
+
+{% block content %}
+<style>
+  .myc-table thead th {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    font-weight: 600;
+    color: #6c757d;
+    background: #f8f9fa;
+  }
+  .myc-table td, .myc-table th { vertical-align: middle !important; }
+  .myc-empty {
+    text-align: center;
+    color: #94a3b8;
+    padding: 3rem 1rem;
+  }
+  .myc-empty .fa-3x { margin-bottom: .75rem; opacity: .5; }
+  .pill {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 100px;
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  .pill-pending     { background: #fef3c7; color: #92400e; }
+  .pill-certified   { background: #dcfce7; color: #166534; }
+  .pill-rejected    { background: #fee2e2; color: #991b1b; }
+  .pill-uncertified { background: #e5e7eb; color: #4b5563; }
+  .pill-inactive    { background: #f1f5f9; color: #475569; }
+</style>
+
+<div class="card card-outline card-primary shadow-sm">
+  <div class="card-header d-flex justify-content-between align-items-center flex-wrap" style="gap:1rem;">
+    <h3 class="card-title font-weight-bold mb-0">
+      <i class="fas fa-folder-open mr-2"></i> My Companies
+    </h3>
+    <span class="text-muted small">
+      Total: {{ total_count }}
+    </span>
+  </div>
+
+  <div class="card-body p-0">
+    {% if companies %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 myc-table">
+        <thead>
+          <tr>
+            <th style="padding-left:1.25rem;">Company</th>
+            <th>Location</th>
+            <th>Registration No.</th>
+            <th>Certification</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th class="text-center">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in companies %}
+          <tr>
+            <td style="padding-left:1.25rem;">
+              <strong>{{ c.name }}</strong>
+              {% if c.classification %}
+              <div class="small text-muted">{{ c.classification }}</div>
+              {% endif %}
+            </td>
+            <td class="small">
+              {{ c.city|default:"—" }}{% if c.country %}, {{ c.country }}{% endif %}
+            </td>
+            <td class="small text-muted">{{ c.registration_id|default:"—" }}</td>
+            <td>
+              {% if c.certification_status == "pending" %}
+                <span class="pill pill-pending">Pending</span>
+              {% elif c.certification_status == "certified" %}
+                <span class="pill pill-certified">Certified</span>
+              {% elif c.certification_status == "rejected" %}
+                <span class="pill pill-rejected">Rejected</span>
+              {% else %}
+                <span class="pill pill-uncertified">Uncertified</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if c.is_active %}
+                <span class="pill pill-certified">Active</span>
+              {% else %}
+                <span class="pill pill-inactive">Inactive</span>
+              {% endif %}
+            </td>
+            <td class="small text-muted">{{ c.created_at|date:"M j, Y" }}</td>
+            <td class="text-center">
+              <button type="button"
+                      class="btn btn-sm btn-outline-secondary view-myc-btn"
+                      data-url="{% url 'company-detail' c.id %}">
+                <i class="fas fa-eye mr-1"></i> View
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="myc-empty">
+      <i class="fas fa-folder-open fa-3x"></i>
+      <p class="mb-1" style="font-weight:600; color:#475569;">No companies yet.</p>
+      <p class="small mb-0">Companies you create will show up here.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if page_obj.has_other_pages %}
+  <div class="card-footer d-flex justify-content-end">
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Previous</span></li>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+          {% if num == page_obj.number %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+          {% else %}
+            <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Next</span></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+</div>
+
+{% comment %}
+  Lightweight side-drawer for the View action. Reuses the same JSON
+  payload the Certifications page reads (company_detail_ajax).
+{% endcomment %}
+<div id="myc-drawer-overlay" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:1050;"></div>
+<aside id="myc-drawer" style="display:none; position:fixed; top:0; right:0; bottom:0; width:min(560px, 92vw); background:#fff; z-index:1055; box-shadow:-12px 0 32px rgba(15,23,42,.18); overflow-y:auto;">
+  <div style="padding:18px 22px; border-bottom:1px solid #e8eef3; display:flex; align-items:center; justify-content:space-between;">
+    <h5 style="margin:0; font-weight:700; color:#1B2E3F;">
+      <i class="fas fa-building mr-2"></i> Company Details
+    </h5>
+    <button type="button" class="btn btn-sm btn-link" id="myc-drawer-close" style="color:#64748b;">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+  <div id="myc-drawer-body" style="padding:18px 22px;">
+    <div class="text-center text-muted py-4">
+      <i class="fas fa-spinner fa-spin"></i> Loading…
+    </div>
+  </div>
+</aside>
+
+<script>
+(function () {
+  var overlay = document.getElementById("myc-drawer-overlay");
+  var drawer  = document.getElementById("myc-drawer");
+  var body    = document.getElementById("myc-drawer-body");
+  var closeBtn = document.getElementById("myc-drawer-close");
+
+  function open() {
+    overlay.style.display = "block";
+    drawer.style.display  = "block";
+  }
+  function close() {
+    overlay.style.display = "none";
+    drawer.style.display  = "none";
+  }
+
+  function row(label, value) {
+    if (!value) return "";
+    return '<div style="display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px solid #f1f5f9;">' +
+      '<span style="color:#64748b; font-size:.82rem;">' + label + '</span>' +
+      '<span style="font-weight:600; color:#1B2E3F; font-size:.85rem; text-align:right;">' + value + '</span>' +
+      '</div>';
+  }
+
+  function renderDetail(d) {
+    var loc = [d.city, d.state, d.country].filter(Boolean).join(", ");
+    var html = '<div style="margin-bottom:14px;">' +
+      '<div style="font-size:1.1rem; font-weight:700; color:#1B2E3F;">' + (d.name || "—") + '</div>' +
+      (d.classification ? '<div style="font-size:.82rem; color:#64748b;">' + d.classification + '</div>' : '') +
+      '</div>';
+    html += row("Registration No.", d.registration_id);
+    html += row("Domain", d.domain);
+    html += row("Website", d.website);
+    html += row("Phone", d.phone);
+    html += row("Email", d.contact_email);
+    html += row("Address", d.address_line1);
+    html += row("City / State", loc);
+    html += row("Postal Code", d.postal_code);
+    html += row("Year founded", d.year_established);
+    html += row("Employees", d.employee_count_range);
+    html += row("Certification", d.certification_status);
+    html += row("Status", d.is_active ? "Active" : "Inactive");
+    body.innerHTML = html || '<div class="text-muted">No additional details.</div>';
+  }
+
+  document.querySelectorAll(".view-myc-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var url = btn.getAttribute("data-url");
+      body.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i> Loading…</div>';
+      open();
+      fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" }, credentials: "same-origin" })
+        .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+        .then(function (d) { renderDetail(d || {}); })
+        .catch(function () {
+          body.innerHTML = '<div class="text-danger small">Could not load company details.</div>';
+        });
+    });
+  });
+
+  overlay.addEventListener("click", close);
+  closeBtn.addEventListener("click", close);
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+})();
+</script>
+{% endblock %}

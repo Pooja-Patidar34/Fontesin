@@ -92,11 +92,18 @@ def admin_context(request):
             # certification request (used by a banner that says "Your company
             # was certified by [Consultant]" / "pending review"). Only the
             # primary company carries this state — secondary linkages don't.
+            #
+            # The banner is gated to the *creator* of the company (owner_user
+            # == request.user). When a business user merely JOINS an
+            # already-existing company, the certification belongs to the
+            # original creator and showing "Your company was certified by …"
+            # is misleading — the joining user didn't file the request and
+            # shouldn't be told they did.
             if is_business_user and getattr(request.user, "primary_company_id", None):
                 primary = Company.all_objects.filter(
                     id=request.user.primary_company_id
                 ).select_related("certified_by").first()
-                if primary:
+                if primary and primary.owner_user_id == request.user.id:
                     bu_certification_status = primary.certification_status or ""
                     if primary.certified_by:
                         bu_certification_consultant_name = (

@@ -483,6 +483,26 @@
             </a>
           </li>
 
+          {% comment %}
+            My Companies — visible to consultants, franchise partners,
+            coordinators, and business users. Shows the companies the
+            current user filed themselves (Company.owner_user == them).
+            Hidden for superusers — they use the full Company Database.
+          {% endcomment %}
+          {% with myc_role=request.user.role.code|lower %}
+          {% if not request.user.is_superuser %}
+            {% if myc_role == "consultant" or myc_role == "franchise" or myc_role == "coordinator" or myc_role == "business_user" %}
+            <li class="nav-item">
+              <a href="{% url 'my-companies' %}"
+                 class="nav-link {% if active_menu == 'my-companies' %}active{% endif %}">
+                <i class="nav-icon fas fa-folder-open"></i>
+                <p>My Companies</p>
+              </a>
+            </li>
+            {% endif %}
+          {% endif %}
+          {% endwith %}
+
           {# Favorites — basic business users only (saved filters + connect) #}
           {% if is_basic_or_pro_business_user %}
           <li class="nav-item">

@@ -989,3 +989,53 @@ def company_detail_ajax(request, company_id):
             "source": enrichment.source if enrichment else None,
         },
     })
+
+
+@login_required
+def my_companies(request):
+    """Personal 'My Companies' page — every company the current user created
+    (i.e. was the `owner_user` when the row was filed).
+
+    Visible to consultants, franchise partners, coordinators, and business
+    users. Read-only listing with status + location, plus a View action
+    that hits the same company-detail drawer the rest of the app uses, so
+    we don't have to reimplement the modal here.
+
+    Superusers fall through to the standard Company Database page — they
+    don't have a personal "my companies" perspective.
+    """
+    user = request.user
+    if user.is_superuser:
+        # No personal view for the platform admin — send them to the
+        # global directory instead of a confusing empty page.
+        return redirect("companies")
+
+    role_code = (user.role.code or "").lower() if user.role else ""
+    allowed_roles = {"consultant", "franchise", "coordinator", "business_user"}
+    if role_code not in allowed_roles:
+        raise PermissionDenied()
+
+    qs = (
+        Company.all_objects
+        .filter(owner_user=user, is_deleted=False)
+        .select_related("tenant", "consultant")
+        .order_by("-created_at")
+    )
+
+    page_number = request.GET.get("page", 1)
+    paginator = Paginator(qs, 10)
+    try:
+        page_obj = paginator.page(page_number)
+    except (PageNotAnInteger, EmptyPage):
+        page_obj = paginator.page(1)
+
+    return render(
+        request,
+        "dashboard/my_companies.html",
+        {
+            "companies": page_obj,
+            "page_obj": page_obj,
+            "total_count": qs.count(),
+            "active_menu": "my-companies",
+        },
+    )

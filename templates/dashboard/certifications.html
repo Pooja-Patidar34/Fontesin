@@ -242,7 +242,7 @@
               <th>Requester</th>
               <th>City</th>
               <th>Submitted</th>
-              <th class="text-right pr-4">Action</th>
+              <th class="text-center">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -264,7 +264,7 @@
                 {{ c.city|default:"—" }}{% if c.country %}, {{ c.country }}{% endif %}
               </td>
               <td class="small text-muted">{{ c.created_at|date:"M j, Y H:i" }}</td>
-              <td class="text-right pr-4">
+              <td class="text-center">
                 <button type="button"
                         class="btn btn-sm btn-outline-secondary view-cert-btn"
                         data-url="{% url 'company-detail' c.id %}">
@@ -315,7 +315,7 @@
               <th>City</th>
               <th>Certified</th>
               <th>Status</th>
-              <th class="text-right pr-4">Action</th>
+              <th class="text-center">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -342,7 +342,7 @@
                 <span class="pill pill-inactive">Inactive</span>
                 {% endif %}
               </td>
-              <td class="text-right pr-4">
+              <td class="text-center">
                 <button type="button"
                         class="btn btn-sm btn-outline-secondary view-cert-btn"
                         data-url="{% url 'company-detail' c.id %}">
@@ -388,7 +388,7 @@
               <th>Requester</th>
               <th>City</th>
               <th>Decision date</th>
-              <th class="text-right pr-4">Action</th>
+              <th class="text-center">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -404,7 +404,7 @@
               </td>
               <td class="small">{{ c.city|default:"—" }}{% if c.country %}, {{ c.country }}{% endif %}</td>
               <td class="small text-muted">{{ c.updated_at|date:"M j, Y" }}</td>
-              <td class="text-right pr-4">
+              <td class="text-center">
                 <button type="button"
                         class="btn btn-sm btn-outline-secondary view-cert-btn"
                         data-url="{% url 'company-detail' c.id %}">

@@ -649,6 +649,13 @@ def maybe_create_commission_for_subscription(sub, now):
     company whose consultant FK is set. Without the latter, users who buy
     a paid plan *before* attaching a consultant-linked company never
     generate the commission, even after the linkage is established.
+
+    Eligibility rule (per current product policy): the company must have
+    been *created by a consultant*. Companies a business user filed
+    themselves don't generate commission, even if a consultant got
+    auto-routed onto them by certification routing — the consultant in
+    that case is only doing certification oversight, not onboarding the
+    customer, and isn't owed a referral fee.
     """
     plan_code = (sub.plan.code or "").lower() if sub.plan_id else ""
     if plan_code in ("", "free"):
@@ -657,6 +664,15 @@ def maybe_create_commission_for_subscription(sub, now):
     business_user = sub.user
     primary_company = getattr(business_user, "primary_company", None)
     if not primary_company or not primary_company.consultant_id:
+        return
+
+    # Only consultant-created companies pay out. Skip the row entirely if
+    # the company's owner (creator) is a business user (or has no role).
+    owner = primary_company.owner_user
+    owner_role_code = ""
+    if owner and owner.role and owner.role.code:
+        owner_role_code = owner.role.code.lower()
+    if owner_role_code != "consultant":
         return
 
     consultant = primary_company.consultant
