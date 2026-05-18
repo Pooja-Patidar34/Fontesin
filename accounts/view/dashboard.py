@@ -1,4 +1,5 @@
 import logging
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.db.models import Sum, Count, Q
@@ -9,7 +10,12 @@ import json
 
 from accounts.models import Tenant, Company, User
 from billing.models import Subscription, Invoice, CommercialPlan
-from billing.utils import get_user_plan, get_active_subscription, has_plan_feature
+from billing.utils import (
+    get_user_plan,
+    get_active_subscription,
+    has_plan_feature,
+    get_deactivated_paid_plan,
+)
 
 logger = logging.getLogger("technical")
 
@@ -302,8 +308,16 @@ def dashboard(request):
         # matching what the Company Database / Users list pages now show.
         tenant = user.tenant
         try:
-            plan = get_user_plan(user)
             subscription = get_active_subscription(user)
+            plan = get_user_plan(user, subscription=subscription)
+            deactivated_plan = get_deactivated_paid_plan(user, subscription=subscription)
+            if deactivated_plan:
+                messages.warning(
+                    request,
+                    f"Your {deactivated_plan.name} plan was deactivated by the admin. "
+                    "You have been moved to the Free plan. "
+                    "Please activate another plan to continue.",
+                )
 
             from django.db.models import Q
             linked_companies = Company.objects.filter(
@@ -328,6 +342,7 @@ def dashboard(request):
                 # Plan info
                 "user_plan": plan,
                 "subscription": subscription,
+                "deactivated_plan": deactivated_plan,
                 "has_company_registry": has_plan_feature(user, "company_registry"),
                 "has_advanced_analytics": has_plan_feature(user, "advanced_analytics"),
                 "has_api_access": has_plan_feature(user, "api_access"),

@@ -120,7 +120,7 @@
   <div class="inv-modal-row">
     <span class="lbl">Billing Period</span>
     <span class="val">
-      {% if invoice.subscription.plan.billing_period == "monthly" %}Monthly{% else %}Annual{% endif %}
+      {% if invoice.subscription.billing_period == "monthly" %}Monthly{% else %}Annual{% endif %}
     </span>
   </div>
   <div class="inv-modal-row">

@@ -314,7 +314,7 @@
         <div class="info-row">
           <span class="info-row__label">Billing Period</span>
           <span class="info-row__value">
-            {% if invoice.subscription.plan.billing_period == "monthly" %}
+            {% if invoice.subscription.billing_period == "monthly" %}
               Monthly (1 month)
             {% else %}
               Annual (12 months)

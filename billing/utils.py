@@ -42,6 +42,55 @@ def get_user_plan(user, subscription=None):
     return subscription.plan if subscription else None
 
 
+def get_deactivated_paid_plan(user, subscription=None):
+    """If the user was auto-moved off a paid plan because an admin
+    deactivated it, return the now-inactive CommercialPlan; otherwise None.
+
+    The admin "deactivate plan" action (see `plan_toggle` /
+    `_move_subscribers_to_free` in billing/views.py) cancels the paid sub
+    and creates a Free sub for the user. We detect that state here by:
+      • the user's *current* active sub is on the Free plan, AND
+      • there's a more recently cancelled sub whose plan is still flagged
+        `is_active=False` (i.e. admin hasn't re-enabled it since), AND
+        that plan isn't Free itself.
+
+    Returning the plan (not just a bool) lets the template name it in the
+    banner: "Your Pro plan was deactivated by the admin."
+    """
+    if subscription is None:
+        subscription = get_active_subscription(user)
+    # If the user is still on a non-Free plan, the helper doesn't apply —
+    # they were not auto-moved.
+    if not subscription or not subscription.plan_id:
+        return None
+    current_code = (subscription.plan.code or "").lower()
+    if current_code != "free":
+        return None
+
+    from billing.models import Subscription
+    last_cancelled = (
+        Subscription.objects
+        .filter(user=user, status="cancelled")
+        .exclude(plan__code__iexact="free")
+        .select_related("plan")
+        .order_by("-end_date", "-updated_at")
+        .first()
+    )
+    if not last_cancelled or not last_cancelled.plan_id:
+        return None
+    # Only flag the auto-move if the previously-held plan is still
+    # deactivated. Once the admin re-enables it, the banner stops — the
+    # user can choose to re-subscribe via the membership page.
+    if last_cancelled.plan.is_active:
+        return None
+    # Defensive: also require end_date to be set (it always is for auto-
+    # moved cancellations, but a manual cancellation without end_date
+    # shouldn't trigger the "deactivated by admin" message).
+    if last_cancelled.end_date is None:
+        return None
+    return last_cancelled.plan
+
+
 def get_plan_feature(user, feature_key, plan=None):
     """
     Get a specific feature value from the user's plan comparison data.

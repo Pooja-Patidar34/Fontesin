@@ -119,6 +119,19 @@ class Subscription(models.Model):
         on_delete=models.PROTECT
     )
 
+    # Snapshot of the plan's billing period at the moment this subscription
+    # was created. We don't read it back off `plan.billing_period` because
+    # an admin editing the plan template later (yearly → monthly) would
+    # otherwise retroactively flip every subscription pointing at that
+    # plan. Defaults to "yearly" so legacy rows without an explicit value
+    # match the most-common case; the migration backfills existing rows
+    # from their plan's current period at one-shot time.
+    billing_period = models.CharField(
+        max_length=10,
+        choices=[("monthly", "Monthly"), ("yearly", "Yearly")],
+        default="yearly",
+    )
+
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,

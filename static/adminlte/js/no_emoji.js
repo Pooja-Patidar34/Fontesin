@@ -3,8 +3,17 @@
    email inputs to RFC-compliant characters only.
    ============================================================ */
 (function () {
-  var EMOJI_RE = /([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|\uD83E[\uDD00-\uDDFF]|[\u2011-\u26FF]|\uD83C[\uDDE6-\uDDFF]|[\u{1F1E6}-\u{1F1FF}]|[\u{1F300}-\u{1FAFF}])/u;
-  var EMOJI_GLOBAL_RE = /([\u2700-\u27BF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|\uD83E[\uDD00-\uDDFF]|[\u2011-\u26FF]|[\u{1F1E6}-\u{1F1FF}]|[\u{1F300}-\u{1FAFF}])/gu;
+  // BMP emoji-bearing ranges are confined to Miscellaneous Symbols (U+2600+)
+  // and Dingbats (U+2700+). The previous lower bound of U+2011 swept in
+  // typographic punctuation \u2014 em-dash (U+2014), en-dash (U+2013), smart
+  // quotes (U+2018-U+201D), ellipsis (U+2026), arrows, math operators,
+  // box drawing, geometric shapes \u2014 and falsely flagged seeded admin copy
+  // (e.g. plan `best_for` text "\u2026within their own state \u2014 limited\u2026") as
+  // an emoji on every form save. The Private Use Area (U+E000-U+F8FF) is
+  // also intentionally excluded because icon fonts (Font Awesome and
+  // similar) live there and would trip the same false positive.
+  var EMOJI_RE = /([\u2700-\u27BF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|\uD83E[\uDD00-\uDDFF]|[\u2600-\u26FF]|\uD83C[\uDDE6-\uDDFF]|[\u{1F1E6}-\u{1F1FF}]|[\u{1F300}-\u{1FAFF}])/u;
+  var EMOJI_GLOBAL_RE = /([\u2700-\u27BF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|\uD83E[\uDD00-\uDDFF]|[\u2600-\u26FF]|[\u{1F1E6}-\u{1F1FF}]|[\u{1F300}-\u{1FAFF}])/gu;
 
   // RFC 5322 local-part allowed atext + dot; plus "@" and domain chars (letters, digits, ".", "-").
   // Permissive-but-bounded: a-z A-Z 0-9 and ! # $ % & ' * + / = ? ^ _ ` { | } ~ . - @

@@ -309,6 +309,21 @@
 
 <!-- MAIN CONTENT -->
 <div class="membership-page">
+  {% if messages %}
+  <div style="margin-bottom:24px;">
+    {% for message in messages %}
+    <div style="border-radius:10px; padding:14px 18px; margin-bottom:10px;
+                {% if 'warning' in message.tags %}background:#fef2f2; border:1px solid #fecaca; color:#991b1b;
+                {% elif 'error' in message.tags %}background:#fee2e2; border:1px solid #fca5a5; color:#7f1d1d;
+                {% elif 'success' in message.tags %}background:#f0fdf4; border:1px solid #bbf7d0; color:#15803d;
+                {% else %}background:#eff6ff; border:1px solid #bfdbfe; color:#1e40af;{% endif %}
+                font-family:'Montserrat',sans-serif; font-size:.85rem; font-weight:600;">
+      {{ message }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
   <div class="membership-header">
     <h1>Choose Your Membership Plan</h1>
     <p>Select the plan that best fits your business needs.</p>

@@ -145,12 +145,12 @@
 
         <ul class="nav nav-tabs" id="companySetupTabs" role="tablist" style="margin-bottom:24px;">
           <li class="nav-item">
-            <a class="nav-link active" id="join-tab" data-toggle="tab" href="#join-pane" role="tab" aria-controls="join-pane" aria-selected="true">
+            <a class="nav-link {% if not open_create_company_tab %}active{% endif %}" id="join-tab" data-toggle="tab" href="#join-pane" role="tab" aria-controls="join-pane" aria-selected="{% if not open_create_company_tab %}true{% else %}false{% endif %}">
               <i class="fas fa-search mr-1"></i> Join Existing Company
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" id="create-tab" data-toggle="tab" href="#create-pane" role="tab" aria-controls="create-pane" aria-selected="false">
+            <a class="nav-link {% if open_create_company_tab %}active{% endif %}" id="create-tab" data-toggle="tab" href="#create-pane" role="tab" aria-controls="create-pane" aria-selected="{% if open_create_company_tab %}true{% else %}false{% endif %}">
               <i class="fas fa-plus-circle mr-1"></i> Create New Company
             </a>
           </li>
@@ -159,7 +159,7 @@
         <div class="tab-content">
 
           <!-- JOIN PANE -->
-          <div class="tab-pane fade show active" id="join-pane" role="tabpanel" aria-labelledby="join-tab">
+          <div class="tab-pane fade {% if not open_create_company_tab %}show active{% endif %}" id="join-pane" role="tabpanel" aria-labelledby="join-tab">
             <form method="POST" action="{% url 'profile' %}" id="join-company-form">
               {% csrf_token %}
               <input type="hidden" name="form_type" value="join_company">
@@ -197,41 +197,72 @@
           </div>
 
           <!-- CREATE PANE -->
-          <div class="tab-pane fade" id="create-pane" role="tabpanel" aria-labelledby="create-tab">
+          <div class="tab-pane fade {% if open_create_company_tab %}show active{% endif %}" id="create-pane" role="tabpanel" aria-labelledby="create-tab">
         <form method="POST" action="{% url 'profile' %}" id="create-company-form" enctype="multipart/form-data">
           {% csrf_token %}
           <input type="hidden" name="form_type" value="create_company">
 
+          {% if create_company_errors %}
+          <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:12px 14px; margin-bottom:16px; color:#991b1b; font-size:.85rem;">
+            <div style="display:flex; align-items:flex-start; gap:10px;">
+              <i class="fas fa-exclamation-triangle" style="margin-top:2px;"></i>
+              <div>
+                <strong>Please fix the following before submitting:</strong>
+                <ul style="margin:6px 0 0 0; padding-left:18px;">
+                  {% for field, msg in create_company_errors.items %}
+                  <li>{{ msg }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
           <div class="form-group">
             <label>Company Name <span class="text-danger">*</span></label>
-            <input type="text" name="company_name" class="form-control" placeholder="Enter company name"
+            <input type="text" name="company_name" class="form-control {% if create_company_errors.company_name %}is-invalid{% endif %}" placeholder="Enter company name"
                    minlength="2" maxlength="100"
                    pattern="(?=.*[A-Za-z\u00C0-\u024F])[A-Za-z\u00C0-\u024F0-9&'.,\-()\s]{2,100}"
                    title="2-100 characters. Letters, digits, spaces, and &amp; ' . , - ( ) only. Must contain at least one letter."
                    value="{{ create_company_form.company_name|default:'' }}"
                    required>
+            {% if create_company_errors.company_name %}
+            <div class="invalid-feedback" style="display:block; font-size:.78rem; color:#dc2626; margin-top:4px;">
+              <i class="fas fa-exclamation-circle mr-1"></i>{{ create_company_errors.company_name }}
+            </div>
+            {% endif %}
           </div>
 
           <div class="form-group">
             <label>Registration No. <span class="text-danger">*</span></label>
-            <input type="text" name="registration_id" class="form-control"
+            <input type="text" name="registration_id" class="form-control {% if create_company_errors.registration_id %}is-invalid{% endif %}"
                    placeholder="e.g. CH123456 / EIN-12-3456789"
                    minlength="2" maxlength="100"
                    pattern="(?=.*[A-Za-z0-9])[A-Za-z0-9\-/._]{2,100}"
                    title="Letters, digits and the symbols - / . _ only (2-100 characters)."
                    value="{{ create_company_form.registration_id|default:'' }}"
                    required>
+            {% if create_company_errors.registration_id %}
+            <div class="invalid-feedback" style="display:block; font-size:.78rem; color:#dc2626; margin-top:4px;">
+              <i class="fas fa-exclamation-circle mr-1"></i>{{ create_company_errors.registration_id }}
+            </div>
+            {% endif %}
             <small class="text-muted">Legal identifier (e.g. company-house number, EIN, CIN). Must be unique.</small>
           </div>
 
           <div class="form-group">
             <label>Domain <span class="text-danger">*</span></label>
-            <input type="text" name="domain" class="form-control" placeholder="e.g. mycompany.com"
+            <input type="text" name="domain" class="form-control {% if create_company_errors.domain %}is-invalid{% endif %}" placeholder="e.g. mycompany.com"
                    minlength="4" maxlength="253"
                    pattern="(?=[A-Za-z0-9.\-]{4,253}$)([A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,}"
                    title="Enter a valid domain like mycompany.com (letters, digits, hyphens and dots; must include a TLD)"
                    value="{{ create_company_form.domain|default:'' }}"
                    required>
+            {% if create_company_errors.domain %}
+            <div class="invalid-feedback" style="display:block; font-size:.78rem; color:#dc2626; margin-top:4px;">
+              <i class="fas fa-exclamation-circle mr-1"></i>{{ create_company_errors.domain }}
+            </div>
+            {% endif %}
             <small class="text-muted">This domain will be linked to your company's tenant.</small>
           </div>
 

@@ -19,9 +19,30 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
 from django.db import models
+from django.utils.http import url_has_allowed_host_and_scheme
 from billing.models import Invoice, Subscription, CommercialPlan, ConsultantCommission
 
 logger = logging.getLogger("technical")
+
+
+def _safe_next_or_default(request, default_name):
+    """Return the form-supplied `next` URL when it's a same-host relative
+    redirect target, otherwise the named-URL default.
+
+    The Payments page injects `?page=N&status=Y` into a hidden `next` field
+    so approve/reject/edit can bounce the admin back to whatever pagination
+    page (and filter tab) they were on — without this, every action snaps
+    the list back to page 1 and they lose their place. We validate against
+    open-redirect by requiring the URL is in-host.
+    """
+    target = (request.POST.get("next") or request.GET.get("next") or "").strip()
+    if target and url_has_allowed_host_and_scheme(
+        url=target,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return redirect(target)
+    return redirect(default_name)
 
 # The admin Edit Plan form only exposes a "Mark as Most Popular" checkbox, not
 # the underlying badge_text / badge_style fields. We treat is_popular as the
@@ -161,7 +182,7 @@ def payment_approve(request, subscription_id):
 
     if sub.status != "created":
         messages.warning(request, "This subscription is not pending approval.")
-        return redirect("payments")
+        return _safe_next_or_default(request, "payments")
 
     now = timezone.now()
 
@@ -177,9 +198,27 @@ def payment_approve(request, subscription_id):
         status="cancelled", end_date=now, updated_at=now
     )
 
+    # Recompute end_date from the approval moment so the user gets the full
+    # paid period starting NOW, not from when they originally submitted.
+    # Previously select_plan set end_date at submission time (start + 1y for
+    # yearly / +1m for monthly), so any days the request sat in the admin
+    # queue silently shortened the subscription — a yearly Pro approved 11
+    # days late ended ~11 months later, not 12. Driving end_date off the
+    # billing_period at approval time fixes that drift.
+    #
+    # We read the period off `sub.billing_period` (a per-subscription
+    # snapshot taken at purchase time), not off `sub.plan.billing_period` —
+    # that way, if the admin edits the plan template between submission and
+    # approval (yearly → monthly), the user still gets the period they
+    # actually bought.
+    from dateutil.relativedelta import relativedelta
     sub.status = "active"
     sub.start_date = now
-    sub.save(update_fields=["status", "start_date", "updated_at"])
+    if sub.billing_period == "monthly":
+        sub.end_date = now + relativedelta(months=1)
+    else:
+        sub.end_date = now + relativedelta(years=1)
+    sub.save(update_fields=["status", "start_date", "end_date", "updated_at"])
 
     # Sync User.subscription_plan to the newly-active plan. select_plan
     # intentionally defers this write for paid upgrades; this is the
@@ -200,10 +239,10 @@ def payment_approve(request, subscription_id):
     # (no real revenue), for users with no primary_company, and for companies
     # whose `consultant` FK is unset. The unique (consultant, subscription)
     # constraint makes this idempotent — re-approval can never double-pay.
-    _maybe_create_commission(sub, now)
+    maybe_create_commission_for_subscription(sub, now)
 
     messages.success(request, f"Subscription for {sub.user.email} has been approved.")
-    return redirect("payments")
+    return _safe_next_or_default(request, "payments")
 
 
 @login_required
@@ -486,8 +525,8 @@ def commission_invoice_export(request, commission_id):
 
     plan_name = sub.plan.name if sub and sub.plan else "—"
     billing_period = (
-        "Monthly" if sub and sub.plan and sub.plan.billing_period == "monthly"
-        else "Annual" if sub and sub.plan else "—"
+        "Monthly" if sub and sub.billing_period == "monthly"
+        else "Annual" if sub else "—"
     )
     sub_user_name = (
         f"{business_user.first_name} {business_user.last_name}".strip()
@@ -601,7 +640,16 @@ def commission_mark_paid(request, commission_id):
     return redirect("commissions")
 
 
-def _maybe_create_commission(sub, now):
+def maybe_create_commission_for_subscription(sub, now):
+    """Create the consultant-commission row for `sub` if all conditions are met.
+
+    Idempotent via the (consultant, subscription) unique constraint, so safe
+    to call from both payment_approve (the live approval path) AND from a
+    backfill path that runs when the user belatedly picks a primary
+    company whose consultant FK is set. Without the latter, users who buy
+    a paid plan *before* attaching a consultant-linked company never
+    generate the commission, even after the linkage is established.
+    """
     plan_code = (sub.plan.code or "").lower() if sub.plan_id else ""
     if plan_code in ("", "free"):
         return
@@ -635,6 +683,49 @@ def _maybe_create_commission(sub, now):
     )
 
 
+# Back-compat alias for internal callers — keep the old underscore name
+# working until every reference is migrated.
+_maybe_create_commission = maybe_create_commission_for_subscription
+
+
+def backfill_consultant_commissions_for_user(user, now=None):
+    """Walk every approved paid subscription the user holds and (re)try
+    commission creation.
+
+    Called at the moment a user gains a consultant linkage on their primary
+    company — either by joining an existing consultant-routed company or
+    by creating one that gets auto-routed. Subs in status 'created'
+    (pending admin approval) are intentionally skipped here: their
+    commission will be generated by payment_approve once it sees the now-
+    present primary_company.consultant_id.
+    """
+    if not user or not getattr(user, "primary_company_id", None):
+        return 0
+    company = user.primary_company
+    if not company or not company.consultant_id:
+        return 0
+
+    when = now or timezone.now()
+    created = 0
+    eligible_subs = (
+        Subscription.objects
+        .filter(user=user, status__in=["active", "trial"])
+        .exclude(plan__code__iexact="free")
+        .select_related("plan")
+    )
+    for sub in eligible_subs:
+        before = ConsultantCommission.objects.filter(
+            consultant_id=company.consultant_id, subscription=sub
+        ).count()
+        maybe_create_commission_for_subscription(sub, when)
+        after = ConsultantCommission.objects.filter(
+            consultant_id=company.consultant_id, subscription=sub
+        ).count()
+        if after > before:
+            created += 1
+    return created
+
+
 @login_required
 @require_POST
 def payment_reject(request, subscription_id):
@@ -645,7 +736,7 @@ def payment_reject(request, subscription_id):
 
     if sub.status != "created":
         messages.warning(request, "This subscription is not pending approval.")
-        return redirect("payments")
+        return _safe_next_or_default(request, "payments")
 
     sub.status = "cancelled"
     sub.save(update_fields=["status", "updated_at"])
@@ -654,7 +745,7 @@ def payment_reject(request, subscription_id):
     Invoice.objects.filter(subscription=sub, status="pending").update(status="failed")
 
     messages.success(request, f"Subscription for {sub.user.email} has been rejected.")
-    return redirect("payments")
+    return _safe_next_or_default(request, "payments")
 
 
 @login_required
@@ -719,7 +810,7 @@ def payment_edit(request, subscription_id):
 
     sub.save()
     messages.success(request, f"Subscription for {sub.user.email} updated successfully.")
-    return redirect("payments")
+    return _safe_next_or_default(request, "payments")
 
 
 @login_required
@@ -772,14 +863,28 @@ def plan_toggle(request, plan_id):
         plan.is_active = not plan.is_active
         plan.save(update_fields=["is_active"])
 
+        moved_count = 0
+        # When a *paid* plan is switched off, anyone currently subscribed to
+        # it loses paid access. We cancel those active/trial subs and move
+        # each user back to the always-on Free tier, so they keep working
+        # with reduced privileges instead of being silently broken. The Free
+        # plan itself is never toggled this way — `subscriptions.html` only
+        # exposes the toggle for paid plans — but we still skip the move
+        # logic for "free" defensively.
+        if not plan.is_active and (plan.code or "").lower() != "free":
+            moved_count = _move_subscribers_to_free(plan)
+
         status = "activated" if plan.is_active else "deactivated"
         msg = f"Plan '{plan.name}' has been {status}."
+        if moved_count:
+            msg += f" {moved_count} active subscriber(s) moved to the Free plan."
 
         if is_ajax:
             return JsonResponse({
                 "ok": True,
                 "is_active": plan.is_active,
                 "message": msg,
+                "moved_count": moved_count,
             })
 
         messages.success(request, msg)
@@ -790,6 +895,66 @@ def plan_toggle(request, plan_id):
         messages.error(request, "Failed to update plan status.")
 
     return redirect("subscriptions")
+
+
+def _move_subscribers_to_free(deactivated_plan):
+    """Cancel every active/trial subscription on `deactivated_plan` and put
+    each affected user on the Free plan. Returns the number of users moved.
+
+    The cancelled rows are left in place (status="cancelled", end_date=now)
+    so the user-side plan card can detect the auto-move and show
+    "your <plan> was deactivated by the admin" until they pick a new plan.
+    """
+    now = timezone.now()
+    free_plan = CommercialPlan.objects.filter(code="free").first()
+    if free_plan is None:
+        logger.warning(
+            "plan_toggle: deactivated plan %s but no Free plan exists — "
+            "subscribers left orphaned.", deactivated_plan.code,
+        )
+        return 0
+
+    affected = list(
+        Subscription.objects
+        .filter(plan=deactivated_plan, status__in=["active", "trial"])
+        .select_related("user")
+    )
+    moved = 0
+    for sub in affected:
+        user = sub.user
+        if user is None:
+            continue
+
+        # Cancel the now-invalid paid sub. This frees the
+        # `unique_active_subscription_per_user` constraint slot so we can
+        # insert the Free replacement on the next line.
+        sub.status = "cancelled"
+        sub.end_date = now
+        sub.save(update_fields=["status", "end_date", "updated_at"])
+
+        # Idempotent guard: if the user somehow already has another active
+        # sub (unlikely given the unique constraint, but possible across
+        # races), skip the Free insert rather than tripping IntegrityError.
+        has_active = Subscription.objects.filter(
+            user=user, status__in=["active", "trial"]
+        ).exists()
+        if not has_active:
+            from dateutil.relativedelta import relativedelta
+            Subscription.objects.create(
+                user=user,
+                plan=free_plan,
+                billing_period=free_plan.billing_period,
+                status="active",
+                start_date=now,
+                end_date=now + relativedelta(years=1),
+            )
+
+        if user.subscription_plan != "free":
+            user.subscription_plan = "free"
+            user.save(update_fields=["subscription_plan"])
+
+        moved += 1
+    return moved
 
 
 @login_required

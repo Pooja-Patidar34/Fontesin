@@ -28,7 +28,6 @@
             <th>Price</th>
             <th>Started</th>
             <th>Ended</th>
-            <th>Auto-renew</th>
           </tr>
         </thead>
         <tbody>
@@ -72,7 +71,7 @@
             <td>
               {% if sub.plan.price %}
                 {{ sub.plan.currency }} {{ sub.plan.price }}
-                <div class="small text-muted">/ {{ sub.plan.billing_period }}</div>
+                <div class="small text-muted">/ {{ sub.billing_period }}</div>
               {% else %}
                 -
               {% endif %}
@@ -87,18 +86,10 @@
                 <span class="text-muted">—</span>
               {% endif %}
             </td>
-
-            <td>
-              {% if sub.auto_renew %}
-                <span class="badge badge-success">On</span>
-              {% else %}
-                <span class="badge badge-secondary">Off</span>
-              {% endif %}
-            </td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="{% if request.user.is_superuser %}7{% else %}6{% endif %}" class="text-center text-muted py-4">
+            <td colspan="{% if request.user.is_superuser %}6{% else %}5{% endif %}" class="text-center text-muted py-4">
               No plan history yet. Your subscriptions will appear here as you upgrade or change plans.
             </td>
           </tr>

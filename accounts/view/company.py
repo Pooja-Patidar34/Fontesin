@@ -280,16 +280,34 @@ def company_list(request):
         else:
             # Surface validation errors (e.g. duplicate name+tenant) so the user sees why the save failed.
             if _is_ajax(request):
+                # Plain {field: [str, ...]} dict — `form.errors` is a Django
+                # ErrorDict/ErrorList structure that doesn't always survive
+                # the JsonResponse serializer cleanly across versions, and
+                # the frontend wants real strings to render inline next to
+                # each input. First-error-only is enough for the modal UI.
+                errors_plain = {}
                 flat_errors = []
                 for field, errs in form.errors.items():
-                    for err in errs:
-                        if field == "__all__":
-                            flat_errors.append(err)
-                        else:
-                            label = form.fields[field].label or field.replace("_", " ").title()
-                            flat_errors.append(f"{label}: {err}")
+                    str_errs = [str(e) for e in errs]
+                    errors_plain[field] = str_errs
+                    if field == "__all__":
+                        flat_errors.extend(str_errs)
+                    else:
+                        label = (
+                            form.fields[field].label
+                            if field in form.fields and form.fields[field].label
+                            else field.replace("_", " ").title()
+                        )
+                        flat_errors.extend(f"{label}: {e}" for e in str_errs)
+                # Always include a specific message — never let the frontend
+                # fall back to "Could not save company. Please check the form."
+                # which tells the user nothing about WHICH field failed.
+                message = (
+                    " ".join(flat_errors)
+                    or "Please correct the highlighted fields and try again."
+                )
                 return JsonResponse(
-                    {"ok": False, "errors": form.errors, "message": " ".join(flat_errors)},
+                    {"ok": False, "errors": errors_plain, "message": message},
                     status=400,
                 )
 

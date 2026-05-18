@@ -20,12 +20,19 @@ class RequirePlanForBusinessUserMiddleware:
     # Paths an unsubscribed business user is allowed to hit. Anything else
     # redirects to /membership/. Names map through reverse() at request time
     # so URL-pattern changes don't break the allow-list.
+    #
+    # `identity-verification` (= /verify/) is critical: register_view sends
+    # every freshly-registered user there to run Veriff KYC *before* they
+    # ever see /membership/. Without this entry the middleware intercepts
+    # the post-registration redirect and bounces business users straight
+    # to /membership/, silently skipping the identity check.
     _ALLOWED_URL_NAMES = (
         "membership",
         "select_plan",
         "logout",
         "login",
         "register",
+        "identity-verification",
         "verify-otp",
         "forgot-password",
         "reset-password",

@@ -98,6 +98,8 @@
     <div class="modal-content">
       <form method="post" id="editSubForm">
         {% csrf_token %}
+        {# Preserve the active filter + page on edit-save redirect too. #}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
         <div class="modal-header">
           <h5 class="modal-title font-weight-bold">Edit Subscription</h5>
           <button type="button" class="close" data-dismiss="modal">&times;</button>

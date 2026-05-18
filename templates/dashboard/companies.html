@@ -246,7 +246,13 @@
         </div>
 
         <!-- Actions -->
-        <div class="col-md-4 col-sm-6 mb-2 d-flex align-items-end">
+        <div class="col-md-4 col-sm-6 mb-2">
+          {# Invisible placeholder label so the button sits at the same     #}
+          {# vertical baseline as the inputs in adjacent cols. Using        #}
+          {# `align-items-end` instead pushed the button below the small    #}
+          {# helper text on NAICS/Keywords — visibly out of line with the   #}
+          {# input row. #}
+          <label class="small" aria-hidden="true" style="visibility:hidden;">&nbsp;</label>
           <div class="filter-actions">
             <button type="submit" class="btn btn-sm btn-outline-primary">
               <i class="fas fa-filter mr-1"></i> Apply
@@ -931,11 +937,51 @@ document.addEventListener("DOMContentLoaded", function () {
     companyForm.classList.add("was-validated");
   });
 
+  // Strip any inline field-error decorations we attached on a prior failed
+  // submit. Called at the start of every submit and whenever the user edits
+  // a previously-errored input.
+  function clearCompanyFieldErrors() {
+    if (!companyForm) return;
+    companyForm
+      .querySelectorAll(".field-error")
+      .forEach(function (el) { el.remove(); });
+    companyForm
+      .querySelectorAll(".is-invalid")
+      .forEach(function (el) { el.classList.remove("is-invalid"); });
+  }
+
+  // Paint a red border + helper text under the input whose `name` matches
+  // `field`, using the first message from the server. We render only one
+  // per field so the modal doesn't blow up vertically when many fields fail.
+  function showCompanyFieldError(field, msg) {
+    if (!companyForm || !field) return false;
+    var input = companyForm.querySelector('[name="' + field + '"]');
+    if (!input) return false;
+    input.classList.add("is-invalid");
+    var hint = document.createElement("div");
+    hint.className = "field-error";
+    hint.style.cssText = "color:#dc2626;font-size:.78rem;margin-top:4px;";
+    hint.innerHTML = '<i class="fas fa-exclamation-circle mr-1"></i>' + msg;
+    if (input.parentElement) input.parentElement.appendChild(hint);
+    // Auto-clear on the next edit so the hint doesn't linger after the
+    // user fixes the value.
+    input.addEventListener(
+      "input",
+      function once() {
+        input.removeEventListener("input", once);
+        input.classList.remove("is-invalid");
+        if (hint.parentElement) hint.remove();
+      }
+    );
+    return true;
+  }
+
   companyForm?.addEventListener("submit", function (e) {
     // Only intercept when creating (no existing company_id).
     if (idField.value) return;
 
     e.preventDefault();
+    clearCompanyFieldErrors();
 
     if (saveBtn) saveBtn.disabled = true;
 
@@ -951,9 +997,13 @@ document.addEventListener("DOMContentLoaded", function () {
       credentials: "same-origin",
     })
       .then(function (res) {
-        return res.json().then(function (data) {
-          return { status: res.status, data: data };
-        });
+        return res.json().then(
+          function (data) { return { status: res.status, data: data }; },
+          // JSON parse failures (e.g. server returned an HTML 500 page)
+          // shouldn't bubble into .catch — keep status so we still show
+          // a useful toast.
+          function () { return { status: res.status, data: {} }; }
+        );
       })
       .then(function (result) {
         if (result.status === 200 && result.data.ok) {
@@ -976,9 +1026,33 @@ document.addEventListener("DOMContentLoaded", function () {
             );
           }
         } else {
-          const msg =
-            result.data.message ||
+          // Render the per-field errors inline so the user sees exactly
+          // which input is wrong without hunting through the toast text.
+          var errors = (result.data && result.data.errors) || {};
+          var fieldOrder = Object.keys(errors);
+          var firstSpecific = null;
+          fieldOrder.forEach(function (field) {
+            var list = errors[field] || [];
+            if (!list.length) return;
+            var first = list[0];
+            // Skip non-field ("__all__") errors — those go into the toast
+            // only since they don't map to a specific input.
+            if (field === "__all__") {
+              if (!firstSpecific) firstSpecific = first;
+              return;
+            }
+            if (showCompanyFieldError(field, first) && !firstSpecific) {
+              firstSpecific = first;
+            }
+          });
+
+          // Toast prefers the most specific text: backend `message` >
+          // first field error > generic fallback.
+          var msg =
+            (result.data && result.data.message) ||
+            firstSpecific ||
             "Could not save company. Please check the form.";
+
           if (typeof showToast === "function") {
             showToast(msg, "error");
           } else {
@@ -996,6 +1070,15 @@ document.addEventListener("DOMContentLoaded", function () {
         if (saveBtn) saveBtn.disabled = false;
       });
   });
+
+  // Wipe inline errors whenever the modal closes or re-opens so a fresh
+  // attempt doesn't start with stale red outlines from the last failure.
+  document
+    .getElementById("companyModal")
+    ?.addEventListener("hidden.bs.modal", clearCompanyFieldErrors);
+  document
+    .getElementById("companyModal")
+    ?.addEventListener("hide.bs.modal", clearCompanyFieldErrors);
 
 });
 </script>

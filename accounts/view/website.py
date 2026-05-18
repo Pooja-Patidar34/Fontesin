@@ -52,6 +52,19 @@ def membership(request):
                 "You can't start another upgrade until that one is approved or rejected.",
             )
 
+        # If the user has been auto-moved from a now-deactivated paid plan
+        # to Free, surface that on the membership page so the "pick a new
+        # plan" CTA carries the right framing.
+        from billing.utils import get_deactivated_paid_plan
+        deactivated_plan = get_deactivated_paid_plan(request.user)
+        if deactivated_plan:
+            messages.warning(
+                request,
+                f"Your {deactivated_plan.name} plan was deactivated by the admin. "
+                "You have been moved to the Free plan. "
+                "Please activate another plan from the options below.",
+            )
+
     plans = CommercialPlan.objects.filter(is_active=True)
 
     comparison_rows = [
@@ -156,6 +169,7 @@ def select_plan(request):
                 Subscription.objects.create(
                     user=user,
                     plan=free_plan,
+                    billing_period=free_plan.billing_period,
                     status="active",
                     start_date=now,
                     end_date=now + relativedelta(years=1),
@@ -164,9 +178,14 @@ def select_plan(request):
                 user.save(update_fields=["subscription_plan"])
 
     # Create the requested subscription (free → active immediately, paid → created).
+    # Snapshot `billing_period` from the plan at creation time — this is what
+    # the bug fix is about: if the admin later edits the plan's billing_period
+    # (yearly → monthly), this user's existing subscription must continue to
+    # display and renew on its *original* cadence, not the plan's new one.
     subscription = Subscription.objects.create(
         user=user,
         plan=plan,
+        billing_period=plan.billing_period,
         status=subscription_status,
         start_date=now,
         end_date=end_date,

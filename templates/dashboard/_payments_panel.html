@@ -36,7 +36,7 @@
         <td class="plan-cell">
           {% if sub.plan %}
             <span class="font-weight-bold">{{ sub.plan.name }}</span>
-            <small class="text-muted">{{ sub.plan.billing_period }}</small>
+            <small class="text-muted">{{ sub.billing_period }}</small>
           {% else %}
             -
           {% endif %}
@@ -71,8 +71,12 @@
         <td class="col-actions">
           <div style="display:flex; align-items:center; gap:.4rem; flex-wrap:nowrap;">
             {% if sub.status == "created" %}
+              {# `next` carries the current page + status filter so the     #}
+              {# approve/reject redirect lands the admin back on the same   #}
+              {# pagination page instead of resetting to page 1.            #}
               <form method="post" action="{% url 'payment-approve' sub.id %}" class="m-0" id="approve-form-{{ sub.id }}">
                 {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
                 <button type="button" class="btn btn-sm btn-success" title="Approve"
                         onclick="appConfirm({kind:'success', title:'Approve Subscription?', text:'Approve subscription for <strong>{{ sub.user.email|escapejs }}</strong>?', okLabel:'Approve', okIcon:'fa-check', onConfirm:function(){document.getElementById('approve-form-{{ sub.id }}').submit();}})">
                   <i class="fas fa-check"></i>
@@ -80,6 +84,7 @@
               </form>
               <form method="post" action="{% url 'payment-reject' sub.id %}" class="m-0" id="reject-form-{{ sub.id }}">
                 {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
                 <button type="button" class="btn btn-sm btn-danger" title="Reject"
                         onclick="appConfirm({kind:'danger', title:'Reject Subscription?', text:'Reject subscription for <strong>{{ sub.user.email|escapejs }}</strong>?', okLabel:'Reject', okIcon:'fa-times', onConfirm:function(){document.getElementById('reject-form-{{ sub.id }}').submit();}})">
                   <i class="fas fa-times"></i>

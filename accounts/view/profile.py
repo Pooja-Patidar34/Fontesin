@@ -28,7 +28,12 @@ INDUSTRY_CODE_RE = re.compile(r"^[A-Za-z0-9.\-]{1,20}$")
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 LOGO_ALLOWED_EXTENSIONS = (".png", ".jpg", ".jpeg", ".svg", ".webp", ".gif")
 LOGO_MAX_BYTES = 5 * 1024 * 1024
-from billing.utils import get_user_plan, get_active_subscription, get_pending_subscription
+from billing.utils import (
+    get_user_plan,
+    get_active_subscription,
+    get_pending_subscription,
+    get_deactivated_paid_plan,
+)
 
 
 def _is_ajax(request):
@@ -94,14 +99,25 @@ def plans_view(request):
     if user.is_superuser or role_code in ("consultant", "coordinator", "franchise"):
         raise PermissionDenied("Plans are only available to subscribing users.")
 
+    subscription = get_active_subscription(user)
+    deactivated_plan = get_deactivated_paid_plan(user, subscription=subscription)
+    if deactivated_plan:
+        messages.warning(
+            request,
+            f"Your {deactivated_plan.name} plan was deactivated by the admin. "
+            "You have been moved to the Free plan. "
+            "Please activate another plan to continue.",
+        )
+
     return render(
         request,
         "dashboard/plans.html",
         {
             "active_menu": "plans",
-            "user_plan": get_user_plan(user),
-            "subscription": get_active_subscription(user),
+            "user_plan": get_user_plan(user, subscription=subscription),
+            "subscription": subscription,
             "pending_subscription": get_pending_subscription(user),
+            "deactivated_plan": deactivated_plan,
         },
     )
 
@@ -164,6 +180,14 @@ def profile_view(request):
                 company=company,
                 defaults={"is_primary": True},
             )
+
+            # Backfill any commissions that should have been created at
+            # plan-approval time but were skipped because the user didn't
+            # have a consultant-linked primary_company yet. Now that the
+            # linkage exists, the admin commission panel should reflect
+            # any already-approved paid subscriptions this user holds.
+            from billing.views import backfill_consultant_commissions_for_user
+            backfill_consultant_commissions_for_user(user)
 
             messages.success(request, f"You're now linked to {company.name}.")
             return redirect("profile")
@@ -252,6 +276,23 @@ def profile_view(request):
         contact_email = request.POST.get("contact_email", "").strip()
         logo_file = request.FILES.get("logo")
 
+        # Helper: fail validation on the Create-Company form. Stashes the
+        # error keyed by field so the template can render it inline next to
+        # the offending input (instead of only as a top-of-page toast), and
+        # flags the "Create New Company" tab to stay open after the
+        # redirect — otherwise the default "Join Existing" tab takes over
+        # and the user thinks the form vanished.
+        def _fail_create_company(message, field=None):
+            messages.error(request, message)
+            errors = request.session.get("create_company_errors") or {}
+            if field:
+                errors[field] = message
+            else:
+                errors.setdefault("_form", message)
+            request.session["create_company_errors"] = errors
+            request.session["open_create_company_tab"] = True
+            return redirect("profile")
+
         # Stash the cleaned values so a validation-failure redirect can
         # repopulate the form on the next GET — losing every field on a
         # single duplicate-domain (or any other) error is hostile UX. The
@@ -286,15 +327,13 @@ def profile_view(request):
         }
 
         if not company_name:
-            messages.error(request, "Company name is required.")
-            return redirect("profile")
+            return _fail_create_company("Company name is required.", field="company_name")
 
         if not COMPANY_NAME_RE.match(company_name):
-            messages.error(
-                request,
+            return _fail_create_company(
                 "Company name must be 2-100 characters and may only contain letters, digits, spaces, and the symbols & ' . , - ( ).",
+                field="company_name",
             )
-            return redirect("profile")
 
         # Strict same-name guard: reject if either an active Company OR an
         # active Tenant with this name already exists. Profile creation
@@ -306,61 +345,54 @@ def profile_view(request):
             Company.objects.filter(name__iexact=company_name).exists()
             or Tenant.objects.filter(name__iexact=company_name).exists()
         ):
-            messages.error(
-                request,
+            return _fail_create_company(
                 "A company with this name already exists. Please choose a different name.",
+                field="company_name",
             )
-            return redirect("profile")
 
         if not registration_id:
-            messages.error(request, "Registration No. is required.")
-            return redirect("profile")
+            return _fail_create_company("Registration No. is required.", field="registration_id")
 
         if not REGISTRATION_ID_RE.match(registration_id):
-            messages.error(
-                request,
+            return _fail_create_company(
                 "Registration No. may only contain letters, digits, and the symbols - / . _ (2-100 characters).",
+                field="registration_id",
             )
-            return redirect("profile")
 
         if Company.objects.filter(registration_id__iexact=registration_id).exists():
-            messages.error(
-                request,
+            return _fail_create_company(
                 "A company with this Registration No. already exists. Registration No. must be unique.",
+                field="registration_id",
             )
-            return redirect("profile")
 
         if not domain:
-            messages.error(request, "Domain is required.")
-            return redirect("profile")
+            return _fail_create_company("Domain is required.", field="domain")
 
         domain = domain.lower()
         if not DOMAIN_RE.match(domain):
-            messages.error(
-                request,
+            return _fail_create_company(
                 "Enter a valid domain like mycompany.com (4-253 characters, letters/digits/hyphens separated by dots, with a TLD of at least 2 letters).",
+                field="domain",
             )
-            return redirect("profile")
 
         # Check if domain already exists (case-insensitive)
         if Tenant.objects.filter(domain__iexact=domain).exists():
-            messages.error(request, "This domain is already taken.")
-            return redirect("profile")
+            return _fail_create_company("This domain is already taken.", field="domain")
 
         if not classification:
-            messages.error(request, "Classification is required.")
-            return redirect("profile")
+            return _fail_create_company("Classification is required.", field="classification")
 
         if classification not in CLASSIFICATION_CODES:
-            messages.error(request, "Please select a valid classification from the list.")
-            return redirect("profile")
+            return _fail_create_company(
+                "Please select a valid classification from the list.",
+                field="classification",
+            )
 
         if website and not WEBSITE_URL_RE.match(website):
-            messages.error(
-                request,
+            return _fail_create_company(
                 "Enter a valid website URL like https://example.com (only letters, digits, and - . _ / in the path).",
+                field="website",
             )
-            return redirect("profile")
 
         def _validate_phone_like(value, label):
             if not PHONE_CHARSET_RE.match(value):
@@ -373,144 +405,141 @@ def profile_view(request):
         if phone:
             err = _validate_phone_like(phone, "Phone")
             if err:
-                messages.error(request, err)
-                return redirect("profile")
+                return _fail_create_company(err, field="company_phone")
 
         if phone_secondary:
             err = _validate_phone_like(phone_secondary, "Secondary phone")
             if err:
-                messages.error(request, err)
-                return redirect("profile")
+                return _fail_create_company(err, field="phone_secondary")
 
         if fax:
             err = _validate_phone_like(fax, "Fax")
             if err:
-                messages.error(request, err)
-                return redirect("profile")
+                return _fail_create_company(err, field="fax")
 
         if address_line1 and not ADDRESS_LINE_RE.match(address_line1):
-            messages.error(
-                request,
+            return _fail_create_company(
                 "Address line 1 may only contain letters, digits, spaces and the symbols , . - / # (3-120 characters).",
+                field="address_line1",
             )
-            return redirect("profile")
 
         if address_line2 and not ADDRESS_LINE_RE.match(address_line2):
-            messages.error(
-                request,
+            return _fail_create_company(
                 "Address line 2 may only contain letters, digits, spaces and the symbols , . - / # (3-120 characters).",
+                field="address_line2",
             )
-            return redirect("profile")
 
         if not city:
-            messages.error(request, "City is required.")
-            return redirect("profile")
+            return _fail_create_company("City is required.", field="city")
 
         if not CITY_NAME_RE.match(city):
-            messages.error(
-                request,
+            return _fail_create_company(
                 "City may only contain letters, spaces, hyphens, apostrophes and periods (2-60 characters).",
+                field="city",
             )
-            return redirect("profile")
 
         # Country comes from the dropdown as an ISO-3166 alpha-2 code (e.g. "US").
         # State must be one of the known subdivisions for that country — both
         # selects are populated from the same map the server uses, so the only
         # way to get a value outside the map is a tampered request.
         if not country:
-            messages.error(request, "Country is required.")
-            return redirect("profile")
+            return _fail_create_company("Country is required.", field="company_country")
 
         country_code = country.upper()
         if country_code not in COUNTRY_LABELS:
-            messages.error(request, "Please select a valid country from the list.")
-            return redirect("profile")
+            return _fail_create_company(
+                "Please select a valid country from the list.",
+                field="company_country",
+            )
         country = country_code
 
         valid_states = COUNTRY_STATES.get(country_code, [])
         if not state:
-            messages.error(request, "State is required.")
-            return redirect("profile")
+            return _fail_create_company("State is required.", field="state")
 
         if valid_states and state not in valid_states:
-            messages.error(
-                request,
+            return _fail_create_company(
                 "Please select a valid state for the chosen country.",
+                field="state",
             )
-            return redirect("profile")
 
         if postal_code and not POSTAL_CODE_RE.match(postal_code):
-            messages.error(
-                request,
+            return _fail_create_company(
                 "Postal code may only contain letters, digits, spaces and hyphens (3-12 characters).",
+                field="postal_code",
             )
-            return redirect("profile")
 
         # ---- New BU-onboarding fields validation ----
         if entity_type and entity_type not in ENTITY_TYPE_CODES:
-            messages.error(request, "Please select a valid legal form from the list.")
-            return redirect("profile")
+            return _fail_create_company(
+                "Please select a valid legal form from the list.",
+                field="entity_type",
+            )
 
         year_established = None
         if year_established_raw:
             try:
                 year_established = int(year_established_raw)
             except ValueError:
-                messages.error(request, "Year of establishment must be a number.")
-                return redirect("profile")
+                return _fail_create_company(
+                    "Year of establishment must be a number.",
+                    field="year_established",
+                )
             current_year = datetime.date.today().year
             if year_established < 1500 or year_established > current_year:
-                messages.error(
-                    request,
+                return _fail_create_company(
                     f"Year of establishment must be between 1500 and {current_year}.",
+                    field="year_established",
                 )
-                return redirect("profile")
 
         if employee_count_range and employee_count_range not in EMPLOYEE_RANGE_CODES:
-            messages.error(request, "Please select a valid employee count range.")
-            return redirect("profile")
+            return _fail_create_company(
+                "Please select a valid employee count range.",
+                field="employee_count_range",
+            )
 
         if region and not REGION_DISTRICT_RE.match(region):
-            messages.error(request, "Region contains invalid characters.")
-            return redirect("profile")
+            return _fail_create_company("Region contains invalid characters.", field="region")
 
         if district and not REGION_DISTRICT_RE.match(district):
-            messages.error(request, "District contains invalid characters.")
-            return redirect("profile")
+            return _fail_create_company("District contains invalid characters.", field="district")
 
         if house_number and not HOUSE_NUMBER_RE.match(house_number):
-            messages.error(
-                request,
+            return _fail_create_company(
                 "House number may only contain letters, digits and the symbols - / and spaces (1-15 characters).",
+                field="house_number",
             )
-            return redirect("profile")
 
         if industry_code and not INDUSTRY_CODE_RE.match(industry_code):
-            messages.error(
-                request,
+            return _fail_create_company(
                 "Industry code may only contain letters, digits, dots and hyphens (1-20 characters).",
+                field="industry_code",
             )
-            return redirect("profile")
 
         if keywords and len(keywords) > 500:
-            messages.error(request, "Keywords must be 500 characters or fewer.")
-            return redirect("profile")
+            return _fail_create_company(
+                "Keywords must be 500 characters or fewer.",
+                field="keywords",
+            )
 
         if contact_email and not EMAIL_RE.match(contact_email):
-            messages.error(request, "Contact email is not a valid email address.")
-            return redirect("profile")
+            return _fail_create_company(
+                "Contact email is not a valid email address.",
+                field="contact_email",
+            )
 
         if logo_file:
             name = (logo_file.name or "").lower()
             if not name.endswith(LOGO_ALLOWED_EXTENSIONS):
-                messages.error(
-                    request,
+                return _fail_create_company(
                     "Logo must be one of: " + ", ".join(LOGO_ALLOWED_EXTENSIONS),
+                    field="logo",
                 )
-                return redirect("profile")
             if getattr(logo_file, "size", 0) > LOGO_MAX_BYTES:
-                messages.error(request, "Logo file must be 5 MB or smaller.")
-                return redirect("profile")
+                return _fail_create_company(
+                    "Logo file must be 5 MB or smaller.",
+                    field="logo",
+                )
 
         # Create tenant internally
         tenant = Tenant.objects.create(
@@ -569,12 +598,35 @@ def profile_view(request):
             defaults={"is_primary": True},
         )
 
+        # Same backfill as the join-company branch: if this user already
+        # had an approved paid subscription before they had a consultant-
+        # linked company, no commission was created at the time. Now that
+        # the routed consultant is attached, create the missing row(s) so
+        # the admin commission panel reflects reality.
+        if company.consultant_id:
+            from billing.views import backfill_consultant_commissions_for_user
+            backfill_consultant_commissions_for_user(user)
+
         request.session.pop("create_company_form", None)
+        request.session.pop("create_company_errors", None)
+        request.session.pop("open_create_company_tab", None)
         messages.success(
             request,
             "Certification request submitted. An admin will review your company shortly.",
         )
         return redirect("profile")
+
+    subscription = get_active_subscription(user)
+    deactivated_plan = get_deactivated_paid_plan(user, subscription=subscription)
+    if deactivated_plan and request.method == "GET":
+        # Surface the warning on the profile page too, so a user landing
+        # straight here knows why their feature set just shrank.
+        messages.warning(
+            request,
+            f"Your {deactivated_plan.name} plan was deactivated by the admin. "
+            "You have been moved to the Free plan. "
+            "Please activate another plan to continue.",
+        )
 
     context = {
         "active_menu": "profile",
@@ -584,12 +636,23 @@ def profile_view(request):
         "employee_count_ranges": EmployeeCountRangeChoices.CHOICES,
         "countries": CountryChoices.CHOICES,
         "country_states": COUNTRY_STATES,
-        "user_plan": get_user_plan(user),
-        "subscription": get_active_subscription(user),
+        "user_plan": get_user_plan(user, subscription=subscription),
+        "subscription": subscription,
         "pending_subscription": get_pending_subscription(user),
+        "deactivated_plan": deactivated_plan,
         # Pop-and-render: the previous POST stashed cleaned values here on a
         # validation-failure redirect; consuming them now means a manual page
         # refresh starts with a blank form again.
         "create_company_form": request.session.pop("create_company_form", None),
+        # Field-level errors keyed by input name (e.g. "registration_id" →
+        # "A company with this Registration No. already exists..."). The
+        # template renders each below its corresponding input so the user
+        # sees the message next to the offending field — not just as a
+        # top-of-page toast on a different tab.
+        "create_company_errors": request.session.pop("create_company_errors", None) or {},
+        # When the last submission failed, force the "Create New Company"
+        # tab to be the active one on render. Otherwise the default "Join
+        # Existing" tab takes over and the user thinks the form vanished.
+        "open_create_company_tab": request.session.pop("open_create_company_tab", False),
     }
     return render(request, "profile/profile.html", context)

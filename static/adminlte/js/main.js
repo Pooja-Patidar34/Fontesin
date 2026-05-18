@@ -102,8 +102,26 @@ const TOAST_TITLES = {
 
 function showToast(message, type, duration) {
   type = type || 'info';
-  duration = duration || 5000;
+  duration = duration || 3500;
   var container = getToastContainer();
+
+  // Belt-and-braces dismissal: setTimeout is the primary trigger, but
+  // browsers throttle setTimeout in inactive/background tabs — so a toast
+  // shown right before the user switches tabs can get stuck visible until
+  // they come back. The progress-bar `animationend` event fires on
+  // rAF-driven CSS animations and survives that throttling, so attaching
+  // it as a fallback guarantees the toast eventually clears.
+  function armDismiss(toastEl, dur) {
+    if (toastEl._dismissTimer) clearTimeout(toastEl._dismissTimer);
+    toastEl._dismissTimer = setTimeout(function () { dismissToast(toastEl); }, dur);
+    var bar = toastEl.querySelector('.app-toast__progress');
+    if (bar) {
+      bar.addEventListener('animationend', function onEnd() {
+        bar.removeEventListener('animationend', onEnd);
+        dismissToast(toastEl);
+      });
+    }
+  }
 
   // Deduplicate: if a toast with the same message+type is already showing,
   // reset its dismiss timer (and replay the slide-in + progress-bar
@@ -115,7 +133,6 @@ function showToast(message, type, duration) {
     var t = existing[i];
     var msgEl = t.querySelector('.app-toast__msg');
     if (msgEl && msgEl.textContent === message) {
-      if (t._dismissTimer) clearTimeout(t._dismissTimer);
       // Re-trigger CSS animations by clearing them, forcing a reflow,
       // then reapplying — without the reflow the browser keeps the old
       // animation state and the keyframes don't replay.
@@ -124,10 +141,8 @@ function showToast(message, type, duration) {
       if (progress) progress.style.animation = 'none';
       void t.offsetWidth;
       t.style.animation = 'toastSlideIn .35s cubic-bezier(.21,1.02,.73,1)';
-      if (progress) progress.style.animation = 'toastProgress 5s linear forwards';
-      (function (toastEl) {
-        toastEl._dismissTimer = setTimeout(function () { dismissToast(toastEl); }, duration);
-      })(t);
+      if (progress) progress.style.animation = 'toastProgress ' + (duration / 1000) + 's linear forwards';
+      armDismiss(t, duration);
       return;
     }
   }
@@ -150,7 +165,13 @@ function showToast(message, type, duration) {
 
   container.appendChild(toast);
 
-  toast._dismissTimer = setTimeout(function() { dismissToast(toast); }, duration);
+  // Sync the progress-bar duration to the dismissal timeout so the visual
+  // countdown always matches the actual time-to-dismiss. The CSS default
+  // is 5s, so anything other than 5s would visually drift without this.
+  var newProgress = toast.querySelector('.app-toast__progress');
+  if (newProgress) newProgress.style.animation = 'toastProgress ' + (duration / 1000) + 's linear forwards';
+
+  armDismiss(toast, duration);
 }
 
 function dismissToast(toast) {
