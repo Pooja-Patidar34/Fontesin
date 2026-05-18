@@ -21,6 +21,24 @@ ALLOWED_HOSTS = config(
 )
 print(f"ALLOWED_HOSTS = {ALLOWED_HOSTS}")
 
+# Origins that are allowed to make cross-origin POST/PUT/PATCH/DELETE
+# requests over HTTPS. Required since Django 4.0 for any HTTPS form post
+# behind a TLS-terminating proxy (Cloudflare → nginx). Driven from the
+# environment so the same code runs in dev, staging, and prod without
+# editing source.
+CSRF_TRUSTED_ORIGINS = config(
+    "CSRF_TRUSTED_ORIGINS",
+    default="",
+    cast=lambda v: [s.strip() for s in v.split(",") if s.strip()],
+)
+
+# Cloudflare and nginx terminate TLS and proxy plain HTTP to gunicorn on
+# 127.0.0.1. Without this header mapping, Django sees `http://` and
+# `request.is_secure()` returns False — which breaks Secure cookies,
+# CSRF on HTTPS POSTs, and redirects to the http:// scheme. nginx is
+# configured to forward the X-Forwarded-Proto header (see runbook).
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 
 
 # Application definition
