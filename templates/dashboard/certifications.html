@@ -560,7 +560,12 @@ document.addEventListener("DOMContentLoaded", function () {
             row("Year Established", c.year_established) +
             row("Employees", c.employee_count_range) +
             row("Primary Line of Business", c.classification) +
-            row("NACE / ISIC Code", c.industry_code) +
+            // Prefer the resolved NACE display ("J6201 — Computer
+            // programming activities"), then NAICS, then the legacy
+            // free-text industry_code for rows that haven't been
+            // migrated to the picker yet.
+            row("NACE Code", c.nace_code_display || c.industry_code) +
+            row("NAICS Code", c.naics_code_display) +
             row("Keywords", c.keywords) +
             row("Address", addressParts) +
             row("Phone", c.phone) +

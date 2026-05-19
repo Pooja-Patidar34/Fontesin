@@ -439,8 +439,22 @@ def company_list(request):
             elif key in CONTAINS_FIELDS:
                 queryset = queryset.filter(**{f"{key}__icontains": value})
             elif key == "naics":
+                # Misnamed historical filter — now covers NACE *and* NAICS.
+                # Match against:
+                #   - the typed NACE FK (Company.nace_code) by code prefix
+                #     OR title substring
+                #   - the typed NAICS FK (Company.naics_code) the same way
+                #   - the legacy free-text Company.industry_code column
+                #     (so older rows still surface)
+                #   - the enrichment row's denormalized NAICS code/desc
+                #     from bulk CSV imports
                 queryset = queryset.filter(
-                    Q(enrichment__naics_code__icontains=value)
+                    Q(nace_code__code__istartswith=value)
+                    | Q(nace_code__title__icontains=value)
+                    | Q(naics_code__code__istartswith=value)
+                    | Q(naics_code__title__icontains=value)
+                    | Q(industry_code__icontains=value)
+                    | Q(enrichment__naics_code__icontains=value)
                     | Q(enrichment__naics_description__icontains=value)
                 )
             elif key == "keywords":
@@ -478,7 +492,10 @@ def company_list(request):
         | Q(consultant=request.user)
         | Q(_user_is_primary=True)
     )
-    queryset = queryset.annotate(
+    # Pull tenant + nace_code in the same query as the rows so the
+    # _company_row.html template can render company.tenant.name and
+    # company.nace_code.code / .title without an extra DB hit per row.
+    queryset = queryset.select_related("tenant", "nace_code").annotate(
         _user_is_primary=Exists(is_primary_user_for_company),
     ).annotate(
         _own_rank=Case(
@@ -896,6 +913,19 @@ def company_detail_ajax(request, company_id):
 
             "year_established": company.year_established,
             "industry_code": company.industry_code,
+            # NACE/NAICS picker payload. The hidden form input takes the
+            # UUID (`nace_code`); the picker's visible "code — title" text
+            # is populated from `nace_code_display`. Both null when unset.
+            "nace_code": str(company.nace_code_id) if company.nace_code_id else None,
+            "nace_code_display": (
+                f"{company.nace_code.code} — {company.nace_code.title}"
+                if company.nace_code_id else None
+            ),
+            "naics_code": str(company.naics_code_id) if company.naics_code_id else None,
+            "naics_code_display": (
+                f"{company.naics_code.code} — {company.naics_code.title}"
+                if company.naics_code_id else None
+            ),
             "keywords": company.keywords,
             "employee_count_range": company.employee_count_range,
 

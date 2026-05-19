@@ -52,6 +52,81 @@ class Tenant(models.Model):
         super().save(*args, **kwargs)
 
 
+class IndustryCodeBase(models.Model):
+    """Shared shape for hierarchical industry classification tables.
+
+    NACE and NAICS are both code-driven hierarchies where the parent is
+    derivable from the code prefix, but storing `parent` explicitly lets
+    us issue tree queries without prefix-matching at every call site.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    code = models.CharField(max_length=20, unique=True)
+    title = models.CharField(max_length=500)
+    description = models.TextField(null=True, blank=True)
+    level = models.PositiveSmallIntegerField()
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+        ordering = ["code"]
+
+    def __str__(self):
+        return f"{self.code} — {self.title}"
+
+
+class NaceCode(IndustryCodeBase):
+    """NACE Rev. 2 (EU industry classification).
+
+    Codes are 1–5 chars without separators (e.g. `A`, `A01`, `A0111`).
+    Level: 1=Section, 2=Division, 3=Group, 4=Class.
+    """
+
+    parent = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        related_name="children",
+        on_delete=models.PROTECT,
+    )
+
+    class Meta(IndustryCodeBase.Meta):
+        verbose_name = "NACE Code"
+        verbose_name_plural = "NACE Codes"
+        indexes = [
+            models.Index(fields=["parent"]),
+            models.Index(fields=["level"]),
+        ]
+
+
+class NaicsCode(IndustryCodeBase):
+    """NAICS 2022 (North American industry classification).
+
+    Codes are 2–6 digit strings, plus a few range codes for top-level
+    sectors (e.g. `31-33`, `44-45`, `48-49`). Level matches digit count
+    for normal codes and is 2 for range codes.
+    """
+
+    parent = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        related_name="children",
+        on_delete=models.PROTECT,
+    )
+
+    class Meta(IndustryCodeBase.Meta):
+        verbose_name = "NAICS Code"
+        verbose_name_plural = "NAICS Codes"
+        indexes = [
+            models.Index(fields=["parent"]),
+            models.Index(fields=["level"]),
+        ]
+
+
 class Company(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
@@ -97,6 +172,31 @@ class Company(models.Model):
 
     # ---- Business attributes ----
     year_established = models.PositiveIntegerField(null=True, blank=True)
+    # Industry classification.
+    #
+    # `nace_code` is the canonical/default (EU NACE Rev.2). `naics_code` is
+    # an optional parallel reference for US/global lookups — the two systems
+    # are not 1:1, so we store both rather than maintain a fake concordance.
+    #
+    # `industry_code` (free text below) is the *legacy* column that the
+    # existing forms, dashboard templates, and bulk importer still write to.
+    # It is being kept until those call sites migrate to the new FKs; new
+    # code should populate the FKs instead. Don't reuse `industry_code` for
+    # anything other than backward-compat reads.
+    nace_code = models.ForeignKey(
+        "NaceCode",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="companies",
+    )
+    naics_code = models.ForeignKey(
+        "NaicsCode",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="companies",
+    )
     industry_code = models.CharField(max_length=20, null=True, blank=True)
     keywords = models.CharField(max_length=500, null=True, blank=True)
     employee_count_range = models.CharField(

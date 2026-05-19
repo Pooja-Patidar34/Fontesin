@@ -102,6 +102,35 @@
   #companyModal .pill-certified { background:#dcfce7; color:#166534; }
   #companyModal .pill-rejected  { background:#fee2e2; color:#991b1b; }
   #companyModal .pill-uncertified { background:#e5e7eb; color:#4b5563; }
+
+  /* NACE / NAICS picker — search input + dropdown + clear button. */
+  .industry-picker { position: relative; }
+  .industry-picker-search { padding-right: 2rem; }
+  .industry-picker-clear {
+    position: absolute; top: 50%; right: .25rem; transform: translateY(-50%);
+    width: 1.5rem; height: 1.5rem; line-height: 1.4rem; padding: 0;
+    background: transparent; border: none; color: #6c757d; font-size: 1.25rem;
+    cursor: pointer; border-radius: 50%;
+  }
+  .industry-picker-clear:hover { color: #dc3545; background: #f1f3f5; }
+  .industry-picker-results {
+    position: absolute; left: 0; right: 0; top: calc(100% + 2px); z-index: 1060;
+    margin: 0; padding: 0; list-style: none;
+    max-height: 260px; overflow-y: auto;
+    background: #fff; border: 1px solid #ced4da; border-radius: .25rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  .industry-picker-results li {
+    padding: .4rem .6rem; cursor: pointer;
+    border-bottom: 1px solid #f1f3f5; font-size: .875rem;
+  }
+  .industry-picker-results li:last-child { border-bottom: none; }
+  .industry-picker-results li:hover,
+  .industry-picker-results li.active { background: #e7f1ff; }
+  .industry-picker-results li.empty {
+    color: #6c757d; cursor: default; font-style: italic;
+  }
+  .industry-picker-results .code { font-weight: 600; margin-right: .35rem; }
 </style>
 
 <div class="card card-outline card-primary shadow-sm">
@@ -229,12 +258,12 @@
       </div>
 
       <div class="row">
-        <!-- NACE / ISIC / NAICS code -->
+        <!-- NACE / NAICS code -->
         <div class="col-md-4 col-sm-6 mb-2">
-          <label class="small">NACE / ISIC / NAICS Code</label>
+          <label class="small">Industry Code (NACE / NAICS)</label>
           <input type="text" name="naics" class="form-control form-control-sm"
-                 value="{{ applied_filters.naics|default:'' }}" placeholder="code or keyword">
-          <small class="text-muted" style="font-size:.72rem;">Bulk import of the official code list is planned.</small>
+                 value="{{ applied_filters.naics|default:'' }}" placeholder="e.g. J62, 541511, software">
+          <small class="text-muted" style="font-size:.72rem;">Matches code prefix or activity keyword on either system.</small>
         </div>
 
         <!-- Keywords (free text — search across name, website, registration id) -->
@@ -413,6 +442,7 @@
             {% if request.user.is_superuser %}
             <th>Tenant</th>
             {% endif %}
+            <th>Industry</th>
             <th>Status</th>
             {% if not is_free_plan %}
             <th class="text-right pr-4">Action</th>
@@ -561,8 +591,43 @@
               {{ form.classification }}
             </div>
             <div class="form-group col-md-6">
-              <label>NACE / ISIC Code</label>
-              {{ form.industry_code }}
+              <label for="nace-picker-search">NACE Code <small class="text-muted">(EU classification)</small></label>
+              <div class="industry-picker" data-system="nace"
+                   data-endpoint="/api/industry-codes/nace/">
+                {{ form.nace_code }}
+                <input type="text"
+                       id="nace-picker-search"
+                       class="form-control industry-picker-search"
+                       autocomplete="off"
+                       placeholder="Start typing a code or activity, e.g. J62 or 'software'">
+                <button type="button"
+                        class="industry-picker-clear"
+                        aria-label="Clear NACE code"
+                        title="Clear"
+                        hidden>&times;</button>
+                <ul class="industry-picker-results" hidden></ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label for="naics-picker-search">NAICS Code <small class="text-muted">(US, optional)</small></label>
+              <div class="industry-picker" data-system="naics"
+                   data-endpoint="/api/industry-codes/naics/">
+                {{ form.naics_code }}
+                <input type="text"
+                       id="naics-picker-search"
+                       class="form-control industry-picker-search"
+                       autocomplete="off"
+                       placeholder="Start typing a code or activity, e.g. 541511">
+                <button type="button"
+                        class="industry-picker-clear"
+                        aria-label="Clear NAICS code"
+                        title="Clear"
+                        hidden>&times;</button>
+                <ul class="industry-picker-results" hidden></ul>
+              </div>
             </div>
           </div>
 
@@ -609,6 +674,13 @@
             {{ form.phone_secondary }}
             {{ form.fax }}
             {{ form.is_active }}
+            {% comment %}
+              Legacy free-text industry code. Kept until downstream call
+              sites migrate to nace_code/naics_code. The picker JS mirrors
+              the chosen NACE code into this field so existing reads keep
+              working.
+            {% endcomment %}
+            {{ form.industry_code }}
           </div>
 
         </div>
@@ -728,6 +800,12 @@ document.addEventListener("DOMContentLoaded", function () {
       modal.find("input[type=text], input[type=url], input[type=email], input[type=number], input[type=tel]").val("");
       activeField.checked = true;
 
+      // Clear industry pickers (hidden FK + visible search box + dropdown).
+      if (window.industryPickers) {
+        window.industryPickers.nace?.clear();
+        window.industryPickers.naics?.clear();
+      }
+
       // Reset the logo file input + hide the header preview when starting a
       // fresh Add Company flow so the previous viewer's image doesn't leak.
       var logoInput = document.getElementById("id_logo");
@@ -801,6 +879,15 @@ document.addEventListener("DOMContentLoaded", function () {
     setIfPresent("id_keywords", c.keywords);
     setIfPresent("id_employee_count_range", c.employee_count_range);
     setIfPresent("id_contact_email", c.contact_email);
+
+    // Industry pickers — set both hidden FK + the visible "code — title"
+    // label. Pickers are initialised below; if the modal opens before
+    // DOMContentLoaded fires (shouldn't happen in practice), the picker
+    // call is a no-op and the next edit will pick the value up.
+    if (window.industryPickers) {
+      window.industryPickers.nace?.setValue(c.nace_code, c.nace_code_display);
+      window.industryPickers.naics?.setValue(c.naics_code, c.naics_code_display);
+    }
 
     // Render the stored logo in the modal header (top-right corner) so the
     // overview matches the "company logo in the upper right" requirement.
@@ -1172,6 +1259,201 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 </script>
 {% endif %}
+
+<script>
+/* ------------------------------------------------------------------ *
+ * Industry code picker (NACE / NAICS)
+ *
+ * Wires the two `.industry-picker` blocks on the Company modal to the
+ * /api/industry-codes/ autocomplete endpoints. Each picker has:
+ *   - a hidden form input holding the chosen NaceCode / NaicsCode UUID
+ *   - a visible search box (debounced; 200ms)
+ *   - a dropdown of results
+ *   - a clear (×) button
+ *
+ * On selection the picker also mirrors the chosen code (e.g. "J6201")
+ * into the legacy #id_industry_code text field, so downstream code that
+ * still reads `Company.industry_code` (CSV importer, certifications
+ * template) keeps working until those call sites migrate.
+ *
+ * Exposed as window.industryPickers.{nace,naics} so the modal's
+ * populate / reset code in the script block above can call
+ * .setValue(uuid, displayText) and .clear().
+ * ------------------------------------------------------------------ */
+(function () {
+  "use strict";
+
+  function debounce(fn, ms) {
+    var t = null;
+    return function () {
+      var args = arguments, ctx = this;
+      clearTimeout(t);
+      t = setTimeout(function () { fn.apply(ctx, args); }, ms);
+    };
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  function IndustryPicker(root) {
+    this.root = root;
+    this.system = root.dataset.system;                 // "nace" or "naics"
+    this.endpoint = root.dataset.endpoint;             // e.g. "/api/industry-codes/nace/"
+    this.hidden = root.querySelector('input[type="hidden"]');
+    this.search = root.querySelector(".industry-picker-search");
+    this.results = root.querySelector(".industry-picker-results");
+    this.clearBtn = root.querySelector(".industry-picker-clear");
+    this.legacyMirror = (this.system === "nace")
+      ? document.getElementById("id_industry_code")
+      : null;
+    this.activeIndex = -1;
+    this.bind();
+  }
+
+  IndustryPicker.prototype.bind = function () {
+    var self = this;
+    var debouncedSearch = debounce(function () { self.fetch(); }, 200);
+
+    this.search.addEventListener("input", function () {
+      // Typing invalidates the current selection — clear the hidden FK
+      // until the user picks a new row. Prevents stale UUIDs being saved
+      // when someone edits the text without re-selecting.
+      self.hidden.value = "";
+      debouncedSearch();
+    });
+
+    this.search.addEventListener("focus", function () {
+      // Re-open results on focus if there's already text typed.
+      if (self.search.value.trim()) self.fetch();
+    });
+
+    this.search.addEventListener("keydown", function (e) {
+      var items = self.results.querySelectorAll("li:not(.empty)");
+      if (!items.length || self.results.hidden) return;
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        self.activeIndex = Math.min(self.activeIndex + 1, items.length - 1);
+        self.highlight(items);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        self.activeIndex = Math.max(self.activeIndex - 1, 0);
+        self.highlight(items);
+      } else if (e.key === "Enter") {
+        if (self.activeIndex >= 0) {
+          e.preventDefault();
+          items[self.activeIndex].click();
+        }
+      } else if (e.key === "Escape") {
+        self.hideResults();
+      }
+    });
+
+    this.clearBtn.addEventListener("click", function () { self.clear(); self.search.focus(); });
+
+    // Click anywhere outside the picker — close the dropdown.
+    document.addEventListener("click", function (e) {
+      if (!self.root.contains(e.target)) self.hideResults();
+    });
+  };
+
+  IndustryPicker.prototype.fetch = function () {
+    var q = this.search.value.trim();
+    if (!q) { this.hideResults(); return; }
+    var self = this;
+    var url = this.endpoint + "?q=" + encodeURIComponent(q) + "&limit=12";
+    fetch(url, {
+      credentials: "same-origin",
+      headers: { "X-Requested-With": "XMLHttpRequest", "Accept": "application/json" },
+    })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function (data) { self.render(data.data || []); })
+      .catch(function (err) { console.warn("industry-picker:", self.system, err); });
+  };
+
+  IndustryPicker.prototype.render = function (rows) {
+    var self = this;
+    this.activeIndex = -1;
+    this.results.innerHTML = "";
+    if (!rows.length) {
+      var empty = document.createElement("li");
+      empty.className = "empty";
+      empty.textContent = "No matches";
+      this.results.appendChild(empty);
+    } else {
+      rows.forEach(function (row) {
+        var li = document.createElement("li");
+        li.innerHTML = '<span class="code">' + escapeHtml(row.code) + '</span>' + escapeHtml(row.title);
+        li.dataset.id = row.id;
+        li.dataset.code = row.code;
+        li.dataset.title = row.title;
+        li.addEventListener("click", function () { self.applySelection(row.id, row.code, row.title); });
+        self.results.appendChild(li);
+      });
+    }
+    this.results.hidden = false;
+  };
+
+  IndustryPicker.prototype.highlight = function (items) {
+    items.forEach(function (it, i) { it.classList.toggle("active", i === this.activeIndex); }, this);
+    var el = items[this.activeIndex];
+    if (el) el.scrollIntoView({ block: "nearest" });
+  };
+
+  IndustryPicker.prototype.applySelection = function (id, code, title) {
+    // The hidden input is a ModelChoiceField that validates against the
+    // UUID primary key, so that's exactly what we store. The visible
+    // search box renders the "code — title" string for the user.
+    this.hidden.value = id;
+    this.search.value = code + " — " + title;
+    this.search.dataset.code = code;
+    this.clearBtn.hidden = false;
+    this.hideResults();
+    if (this.legacyMirror) this.legacyMirror.value = code;
+  };
+
+  IndustryPicker.prototype.setValue = function (uuid, displayText) {
+    // Used by the edit-mode populate path. The detail API returns the
+    // UUID + a pre-formatted "code — title" string, so we can fill both
+    // the hidden input and the visible search box without any extra
+    // fetches.
+    if (!uuid) { this.clear(); return; }
+    this.hidden.value = uuid;
+    this.search.value = displayText || "";
+    var code = (displayText || "").split(" — ")[0] || "";
+    this.search.dataset.code = code;
+    this.clearBtn.hidden = !displayText;
+    if (this.legacyMirror && code) this.legacyMirror.value = code;
+  };
+
+  IndustryPicker.prototype.clear = function () {
+    this.hidden.value = "";
+    this.search.value = "";
+    this.search.dataset.code = "";
+    this.clearBtn.hidden = true;
+    this.hideResults();
+    // Don't clobber industry_code on Add-mode; it's already empty. On
+    // edit-mode Clear, the user explicitly wants to remove it.
+    if (this.legacyMirror) this.legacyMirror.value = "";
+  };
+
+  IndustryPicker.prototype.hideResults = function () {
+    this.results.hidden = true;
+    this.activeIndex = -1;
+  };
+
+  document.addEventListener("DOMContentLoaded", function () {
+    var pickers = {};
+    document.querySelectorAll(".industry-picker").forEach(function (el) {
+      var p = new IndustryPicker(el);
+      pickers[p.system] = p;
+    });
+    window.industryPickers = pickers;
+  });
+})();
+</script>
 
 {% if request.user.is_superuser %}
   {% include "dashboard/_company_import_modal.html" %}

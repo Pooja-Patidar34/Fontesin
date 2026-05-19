@@ -30,7 +30,7 @@ These map 1:1 to the `Company` table. Values are validated against length/type.
 | `latitude` | numeric(10,8) | invalid → row rejected |
 | `longitude` | numeric(11,8) | invalid → row rejected |
 | `year_established` | integer | invalid → row rejected |
-| `industry_code` | varchar(20) | |
+| `industry_code` | varchar(20) | **deprecated** — see "Industry classification" below. Still accepted as free text. |
 | `keywords` | varchar(500) | truncated if too long |
 | `employee_count_range` | choice | |
 | `phone` | varchar(50) | truncated if too long |
@@ -141,3 +141,44 @@ each alias group when populating the typed column.
 > **Note:** `telephone` / `telephone2` / `url` from InfoGroup-style exports
 > are NOT auto-mapped to `phone` / `phone_secondary` / `website` today —
 > they go to `extra_data`. If you want that mapping, ask and I'll add it.
+
+## Industry classification (NACE / NAICS)
+
+Migration `0031_industry_codes` introduced two typed FKs on `Company`
+alongside the legacy free-text `industry_code` column:
+
+- `Company.nace_code` → `accounts_nacecode` (canonical / default, EU NACE Rev.2)
+- `Company.naics_code` → `accounts_naicscode` (parallel US lookup, NAICS 2022)
+
+Both are populated by user pick from the autocomplete endpoints
+`/api/industry-codes/nace/?q=…` and `/api/industry-codes/naics/?q=…`,
+backed by lookup tables seeded via:
+
+```
+python manage.py seed_industry_codes
+```
+
+### Deprecation plan for `industry_code`
+
+`Company.industry_code` (free text, varchar(20)) is the legacy field that
+the existing forms, dashboard templates (it's literally labelled
+"NACE / ISIC Code" in `certifications.html`), and bulk importer write to.
+It's kept for now so nothing breaks while the picker rolls out. Drop it
+in a focused follow-up once these call sites have migrated to `nace_code`:
+
+- `accounts/forms/company_form.py` (field + `clean_industry_code`)
+- `accounts/view/profile.py` (4 references)
+- `accounts/view/company.py` (1 reference)
+- `accounts/management/commands/import_companies.py` (4 references, including raw SQL)
+- `templates/profile/profile.html`, `templates/dashboard/companies.html`, `templates/dashboard/certifications.html`
+- `scripts/gen_test_csv.py`
+
+### Namespace note: `Company.naics_code` vs. `CompanyEnrichment.naics_code`
+
+Two different things share the name:
+
+- `company.naics_code` → typed FK to `NaicsCode` (selected via picker)
+- `company.enrichment.naics_code` → free-text string from CSV import (denormalized enrichment data, unchanged)
+
+The enrichment row stays a denormalized snapshot of the upstream CSV;
+the FK on `Company` is the canonical user-chosen classification.

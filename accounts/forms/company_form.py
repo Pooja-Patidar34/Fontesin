@@ -1,8 +1,9 @@
 import datetime
 import re
+import uuid
 
 from django import forms
-from accounts.models import Company, Tenant
+from accounts.models import Company, NaceCode, NaicsCode, Tenant
 from accounts.constants import (
     CountryChoices,
     EmployeeCountRangeChoices,
@@ -90,6 +91,22 @@ class CompanyForm(forms.ModelForm):
         }),
     )
 
+    # Industry classification — picked via the autocomplete widget in
+    # companies.html, which writes the selected NaceCode/NaicsCode UUID
+    # into these hidden inputs. ModelChoiceField validates the UUID
+    # against the lookup table. Both optional; NACE is the canonical
+    # default per the dashboard onboarding flow.
+    nace_code = forms.ModelChoiceField(
+        queryset=NaceCode.objects.filter(is_active=True),
+        required=False,
+        widget=forms.HiddenInput(attrs={"id": "id_nace_code"}),
+    )
+    naics_code = forms.ModelChoiceField(
+        queryset=NaicsCode.objects.filter(is_active=True),
+        required=False,
+        widget=forms.HiddenInput(attrs={"id": "id_naics_code"}),
+    )
+
     class Meta:
         model = Company
         fields = [
@@ -115,6 +132,8 @@ class CompanyForm(forms.ModelForm):
 
             # ---- Business attributes ----
             "year_established",
+            "nace_code",
+            "naics_code",
             "industry_code",
             "keywords",
             "employee_count_range",
@@ -304,6 +323,33 @@ class CompanyForm(forms.ModelForm):
 
         # Replace Django's default "---------" placeholder with a clearer prompt.
         self.fields["tenant"].empty_label = "Select Tenant"
+
+        # NACE/NAICS picker forgiveness: the JS picker writes a UUID into
+        # the hidden input on selection, but a user who just types a code
+        # like "J62" or "541511" and hits Save (without clicking a
+        # dropdown row) would otherwise submit an empty FK. Resolve any
+        # non-UUID value as a code lookup here, BEFORE ModelChoiceField
+        # validates the field (which requires a valid UUID). Anything
+        # that's neither a UUID nor a known code is passed through and
+        # the field's own validator surfaces a clear error.
+        if self.data:
+            try:
+                data = self.data.copy()  # QueryDict from request.POST → mutable
+            except AttributeError:
+                data = dict(self.data)
+            for field_name, model in (("nace_code", NaceCode), ("naics_code", NaicsCode)):
+                raw = (data.get(field_name) or "").strip()
+                if not raw:
+                    continue
+                try:
+                    uuid.UUID(raw)
+                    continue  # already a UUID, leave alone
+                except (ValueError, AttributeError, TypeError):
+                    pass
+                match = model.objects.filter(code__iexact=raw, is_active=True).first()
+                if match is not None:
+                    data[field_name] = str(match.id)
+            self.data = data
 
         # Address fields and classification are blank=True on the model (so
         # the DB column is nullable), but the admin Add/Edit Company UI

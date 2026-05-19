@@ -9,6 +9,23 @@
   </td>
   {% endif %}
 
+  {% comment %}
+    Industry column: prefer the typed NACE FK; fall back to the legacy
+    industry_code free text so older rows still surface a value while
+    the picker migration is in progress.
+  {% endcomment %}
+  <td class="text-muted" style="max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
+      {% if company.nace_code %}title="{{ company.nace_code.code }} — {{ company.nace_code.title }}"{% endif %}>
+    {% if company.nace_code %}
+      <span class="badge badge-light border" style="font-weight:600;">{{ company.nace_code.code }}</span>
+      <span class="ml-1">{{ company.nace_code.title|truncatechars:32 }}</span>
+    {% elif company.industry_code %}
+      <span class="badge badge-light border">{{ company.industry_code }}</span>
+    {% else %}
+      <span>—</span>
+    {% endif %}
+  </td>
+
   <td>
     {% if company.is_active %}
       <span class="badge badge-success">Active</span>

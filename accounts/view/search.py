@@ -57,9 +57,20 @@ def global_search(request):
                 | Q(usercompany__user=request.user)
             ).distinct()
 
+    # Match on name/city/country plus the typed NACE/NAICS FKs (so a
+    # search for "J62" or "software" surfaces companies tagged with the
+    # matching code) and the legacy free-text industry_code column so
+    # older rows still come up while the picker migration is in progress.
     company_qs = company_qs.filter(
-        Q(name__icontains=q) | Q(city__icontains=q) | Q(country__icontains=q)
-    ).select_related("tenant").order_by("name")
+        Q(name__icontains=q)
+        | Q(city__icontains=q)
+        | Q(country__icontains=q)
+        | Q(nace_code__code__istartswith=q)
+        | Q(nace_code__title__icontains=q)
+        | Q(naics_code__code__istartswith=q)
+        | Q(naics_code__title__icontains=q)
+        | Q(industry_code__icontains=q)
+    ).select_related("tenant", "nace_code").distinct().order_by("name")
 
     user_qs = user_qs.filter(
         Q(email__icontains=q) | Q(first_name__icontains=q) | Q(last_name__icontains=q)
