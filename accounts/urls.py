@@ -108,6 +108,11 @@ urlpatterns = [
     path("reset-password/", reset_password, name="reset-password"),
 
     #static pages
+    # Root URL serves the same home view, so visiting fontesin.com (without
+    # /home/) lands users on the home page directly. The named URL 'home'
+    # stays on /home/ so existing reverse('home') calls keep pointing at
+    # the canonical path.
+    path('', home, name='home_root'),
     path('home/', home, name='home'),  # default landing page
     path('about/', about, name='about'),
     path('worldmap/', worldmap, name='worldmap'),
