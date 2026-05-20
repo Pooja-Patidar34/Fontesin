@@ -45,14 +45,15 @@ class BaseIAMTestCase(TestCase):
             name="Company A",
         )
 
-        # Permissions
-        self.permission_view = Permission.objects.create(
+        # Permissions. company.view and company.manage are seeded by data
+        # migrations 0016/0021, so use get_or_create to avoid IntegrityError.
+        self.permission_view, _ = Permission.objects.get_or_create(
             code="company.view",
-            description="View companies",
+            defaults={"description": "View companies"},
         )
-        self.permission_manage = Permission.objects.create(
+        self.permission_manage, _ = Permission.objects.get_or_create(
             code="company.manage",
-            description="Manage companies",
+            defaults={"description": "Manage companies"},
         )
 
         # Role
@@ -460,10 +461,10 @@ class UserListViewTests(BaseIAMTestCase):
     def setUp(self):
         super().setUp()
 
-        # Add required permission for user.view
-        permission = Permission.objects.create(
+        # Add required permission for user.view (seeded by migration 0017).
+        permission, _ = Permission.objects.get_or_create(
             code="user.view",
-            description="View users",
+            defaults={"description": "View users"},
         )
         self.role.permissions.add(permission)
 
@@ -1026,8 +1027,8 @@ class UserDetailAjaxTests(BaseIAMTestCase):
 
     def setUp(self):
         super().setUp()
-        self.view_perm = Permission.objects.create(
-            code="user.view", description="View users"
+        self.view_perm, _ = Permission.objects.get_or_create(
+            code="user.view", defaults={"description": "View users"},
         )
         self.role.permissions.add(self.view_perm)
 
@@ -1177,7 +1178,9 @@ class AddUserTests(BaseIAMTestCase):
         })
         data = response.json()
         self.assertFalse(data["status"])
-        self.assertIn("Required fields missing", data["message"])
+        # View now lists the missing field names explicitly, e.g.
+        # "Password, First name, Last name are required."
+        self.assertIn("are required", data["message"].lower())
 
     def test_superadmin_requires_tenant(self):
         self.client.login(email="admin@test.com", password="admin123")
@@ -1764,10 +1767,16 @@ class LoginValidationTests(TestCase):
             follow=True,
         )
         msgs = [m.message for m in get_messages(response.wsgi_request)]
-        # Django's ModelBackend rejects inactive users at authenticate(),
-        # so the view may show "Invalid credentials" or "inactive".
+        # Django's ModelBackend rejects inactive users at authenticate(); the
+        # view then shows "deactivated" (correct password) or "Invalid
+        # credentials" (wrong password / unknown email).
         self.assertTrue(
-            any("inactive" in m.lower() or "invalid" in m.lower() for m in msgs)
+            any(
+                "inactive" in m.lower()
+                or "invalid" in m.lower()
+                or "deactivated" in m.lower()
+                for m in msgs
+            )
         )
 
 

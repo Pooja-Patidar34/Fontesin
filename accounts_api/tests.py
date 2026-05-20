@@ -23,11 +23,13 @@ class BaseAPITestCase(TestCase):
 
         self.role = Role.objects.create(name="api_admin", tier_level=1)
 
-        self.perm_view = Permission.objects.create(
-            code="company.view", description="View companies"
+        self.perm_view, _ = Permission.objects.get_or_create(
+            code="company.view",
+            defaults={"description": "View companies"},
         )
-        self.perm_manage = Permission.objects.create(
-            code="company.manage", description="Manage companies"
+        self.perm_manage, _ = Permission.objects.get_or_create(
+            code="company.manage",
+            defaults={"description": "Manage companies"},
         )
         self.role.permissions.add(self.perm_view, self.perm_manage)
 
