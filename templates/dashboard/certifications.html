@@ -270,6 +270,11 @@
                         data-url="{% url 'company-detail' c.id %}">
                   <i class="fas fa-eye mr-1"></i> View
                 </button>
+                <a href="{% url 'companies' %}?open_edit={{ c.id }}&from=certifications"
+                   class="btn btn-sm btn-outline-primary ml-1"
+                   title="Edit company details, then come back to approve">
+                  <i class="fas fa-edit mr-1"></i> Edit
+                </a>
                 <form method="post" action="{% url 'certification-action' c.id %}"
                       class="cert-form d-inline m-0 ml-1">
                   {% csrf_token %}

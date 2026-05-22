@@ -1,10 +1,12 @@
 import logging
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.core.exceptions import PermissionDenied
+from django.http import JsonResponse, HttpResponseBadRequest
+from django.shortcuts import render, get_object_or_404
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
-from datetime import timedelta
+from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import json
 
@@ -18,6 +20,14 @@ from billing.utils import (
 )
 
 logger = logging.getLogger("technical")
+
+
+# Per-consultant productivity targets. Shown on the consultant dashboard
+# and on the Super Admin per-consultant statistics page so a consultant
+# (and their reviewer) can see actual vs expected.
+CONSULTANT_TARGET_CERTS_PER_DAY_MIN = 10
+CONSULTANT_TARGET_CERTS_PER_DAY_MAX = 20
+CONSULTANT_TARGET_SUBS_PER_MONTH = 10
 
 
 @login_required
@@ -303,6 +313,70 @@ def dashboard(request):
         except Exception as e:
             logger.error("Dashboard: tenant_admin metrics failed: %s", e)
 
+    elif user.role and (user.role.code or "").lower() == "consultant":
+        # Consultants get a focused dashboard scoped to their own activity:
+        # certifications they've completed (with a per-day calendar) and
+        # subscriptions sold (commissions earned this month, with a plan
+        # breakdown). System-wide company counts are intentionally hidden —
+        # those are only meaningful for the Super Admin view.
+        try:
+            from billing.models import ConsultantCommission
+            from collections import Counter
+
+            now_local = timezone.localtime(now)
+            today = now_local.date()
+            month_start = now_local.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            if month_start.month == 12:
+                next_month_start = month_start.replace(year=month_start.year + 1, month=1)
+            else:
+                next_month_start = month_start.replace(month=month_start.month + 1)
+
+            cert_qs = Company.all_objects.filter(
+                certified_by=user,
+                certification_status="certified",
+                certified_at__gte=month_start,
+                certified_at__lt=next_month_start,
+            )
+            cert_by_day = Counter()
+            for c in cert_qs.only("certified_at"):
+                day_iso = timezone.localtime(c.certified_at).date().isoformat()
+                cert_by_day[day_iso] += 1
+
+            comm_qs = (
+                ConsultantCommission.objects
+                .filter(
+                    consultant=user,
+                    created_at__gte=month_start,
+                    created_at__lt=next_month_start,
+                )
+                .select_related("subscription__plan")
+            )
+            plan_counter = Counter()
+            for comm in comm_qs:
+                plan = comm.subscription.plan if comm.subscription else None
+                label = plan.name if plan else "Unknown"
+                plan_counter[label] += 1
+            plan_breakdown = sorted(plan_counter.items(), key=lambda kv: kv[1], reverse=True)
+
+            context.update({
+                "is_consultant_dashboard": True,
+                "consultant_cert_total_month": cert_qs.count(),
+                "consultant_cert_today": Company.all_objects.filter(
+                    certified_by=user,
+                    certification_status="certified",
+                    certified_at__date=today,
+                ).count(),
+                "consultant_sub_total_month": comm_qs.count(),
+                "consultant_sub_plan_breakdown": plan_breakdown,
+                "consultant_calendar_month": month_start.strftime("%Y-%m"),
+                "consultant_cert_by_day_json": json.dumps(dict(cert_by_day)),
+                "consultant_target_certs_min": CONSULTANT_TARGET_CERTS_PER_DAY_MIN,
+                "consultant_target_certs_max": CONSULTANT_TARGET_CERTS_PER_DAY_MAX,
+                "consultant_target_subs_month": CONSULTANT_TARGET_SUBS_PER_MONTH,
+            })
+        except Exception as e:
+            logger.error("Dashboard: consultant metrics failed: %s", e)
+
     else:
         # Regular user - show counts scoped to the companies they're linked to,
         # matching what the Company Database / Users list pages now show.
@@ -362,3 +436,165 @@ def dashboard(request):
 
     context["active_menu"] = "dashboard"
     return render(request, "dashboard/index.html", context)
+
+
+def _parse_month(value):
+    """Parse 'YYYY-MM' into (month_start_aware, next_month_start_aware).
+    Returns (None, None) on bad input."""
+    try:
+        dt = datetime.strptime(value, "%Y-%m")
+    except (TypeError, ValueError):
+        return None, None
+    tz = timezone.get_current_timezone()
+    start = timezone.make_aware(dt, tz)
+    nxt = start + relativedelta(months=1)
+    return start, nxt
+
+
+def _parse_date(value):
+    """Parse 'YYYY-MM-DD' into a tz-aware midnight datetime. None on bad input."""
+    try:
+        dt = datetime.strptime(value, "%Y-%m-%d")
+    except (TypeError, ValueError):
+        return None
+    return timezone.make_aware(dt, timezone.get_current_timezone())
+
+
+@login_required
+def consultant_stats(request):
+    """JSON stats for the consultant dashboard's calendar + subscriptions
+    panels. Two query modes:
+
+      1. `?month=YYYY-MM` (default = current month) — month-scoped view used
+         by the consultant's own dashboard calendar.
+      2. `?from=YYYY-MM-DD&to=YYYY-MM-DD` — arbitrary range used by the
+         Super Admin per-consultant statistics page.
+
+    Returns:
+      {
+        from, to,
+        certs: {"YYYY-MM-DD": n, ...},
+        certs_total, certs_avg_per_day,
+        subs_total, subs_by_plan: [{plan, count}, ...],
+        days_in_range,
+        targets: { certs_per_day_min, certs_per_day_max, subs_per_month },
+      }
+
+    Available to the requesting consultant for their own data, and to a
+    superuser passing `?consultant=<uuid>` to view another consultant.
+    """
+    target = request.user
+    consultant_id = request.GET.get("consultant")
+    if consultant_id:
+        if not request.user.is_superuser:
+            raise PermissionDenied()
+        try:
+            target = User.objects.get(id=consultant_id)
+        except User.DoesNotExist:
+            return HttpResponseBadRequest("Unknown consultant")
+    else:
+        role_code = (target.role.code or "").lower() if target.role else ""
+        if role_code != "consultant" and not target.is_superuser:
+            raise PermissionDenied()
+
+    # Resolve the date window. Range params win when provided; otherwise we
+    # fall back to month-grain (or default to the current month).
+    from_param = request.GET.get("from")
+    to_param = request.GET.get("to")
+    if from_param or to_param:
+        start = _parse_date(from_param) if from_param else None
+        end_inclusive = _parse_date(to_param) if to_param else None
+        if not (start and end_inclusive) or end_inclusive < start:
+            return HttpResponseBadRequest("Bad date range")
+        end_exclusive = end_inclusive + timedelta(days=1)
+    else:
+        month_param = request.GET.get("month") or timezone.localtime(timezone.now()).strftime("%Y-%m")
+        start, end_exclusive = _parse_month(month_param)
+        if start is None:
+            return HttpResponseBadRequest("Bad month")
+        end_inclusive = end_exclusive - timedelta(days=1)
+
+    from billing.models import ConsultantCommission
+    from collections import Counter
+
+    cert_qs = Company.all_objects.filter(
+        certified_by=target,
+        certification_status="certified",
+        certified_at__gte=start,
+        certified_at__lt=end_exclusive,
+    ).only("certified_at")
+    cert_by_day = Counter()
+    for c in cert_qs:
+        cert_by_day[timezone.localtime(c.certified_at).date().isoformat()] += 1
+
+    comm_qs = (
+        ConsultantCommission.objects
+        .filter(
+            consultant=target,
+            created_at__gte=start,
+            created_at__lt=end_exclusive,
+        )
+        .select_related("subscription__plan")
+    )
+    plan_counter = Counter()
+    for comm in comm_qs:
+        plan = comm.subscription.plan if comm.subscription else None
+        plan_counter[plan.name if plan else "Unknown"] += 1
+    subs_by_plan = sorted(
+        ({"plan": p, "count": n} for p, n in plan_counter.items()),
+        key=lambda r: r["count"],
+        reverse=True,
+    )
+
+    certs_total = sum(cert_by_day.values())
+    days_in_range = max(1, (end_exclusive.date() - start.date()).days)
+    certs_avg_per_day = round(certs_total / days_in_range, 2)
+
+    return JsonResponse({
+        "from": start.date().isoformat(),
+        "to": end_inclusive.date().isoformat(),
+        "month": start.strftime("%Y-%m"),  # for back-compat with the calendar UI
+        "days_in_range": days_in_range,
+        "certs": dict(cert_by_day),
+        "certs_total": certs_total,
+        "certs_avg_per_day": certs_avg_per_day,
+        "subs_total": comm_qs.count(),
+        "subs_by_plan": subs_by_plan,
+        "targets": {
+            "certs_per_day_min": CONSULTANT_TARGET_CERTS_PER_DAY_MIN,
+            "certs_per_day_max": CONSULTANT_TARGET_CERTS_PER_DAY_MAX,
+            "subs_per_month": CONSULTANT_TARGET_SUBS_PER_MONTH,
+        },
+    })
+
+
+@login_required
+def consultant_statistics_page(request, user_id):
+    """Super Admin view of a single consultant's statistics, with a custom
+    date-range picker. Data is loaded from `consultant_stats` over AJAX so
+    the date-range and month-calendar controls don't trigger a full reload.
+    """
+    if not request.user.is_superuser:
+        raise PermissionDenied()
+
+    consultant = get_object_or_404(User, id=user_id)
+    role_code = (consultant.role.code or "").lower() if consultant.role else ""
+    if role_code != "consultant":
+        raise PermissionDenied("Statistics view is only available for consultant accounts.")
+
+    now_local = timezone.localtime(timezone.now())
+    default_to = now_local.date()
+    default_from = (default_to.replace(day=1))
+
+    context = {
+        "active_menu": "network",
+        "active_submenu": "consultant-users",
+        "consultant": consultant,
+        "default_from": default_from.isoformat(),
+        "default_to": default_to.isoformat(),
+        "default_month": default_from.strftime("%Y-%m"),
+        "target_certs_min": CONSULTANT_TARGET_CERTS_PER_DAY_MIN,
+        "target_certs_max": CONSULTANT_TARGET_CERTS_PER_DAY_MAX,
+        "target_subs_month": CONSULTANT_TARGET_SUBS_PER_MONTH,
+    }
+    return render(request, "dashboard/consultant_statistics.html", context)

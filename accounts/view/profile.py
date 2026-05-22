@@ -222,11 +222,63 @@ def profile_view(request):
             if country and country not in COUNTRY_CODES:
                 return _fail("Please select a valid country from the list.")
 
+            # Snapshot the contact fields BEFORE we mutate `user` so the
+            # post-save fan-out below can detect a real change (vs a no-op
+            # POST that just resubmits the same values).
+            old_first = user.first_name
+            old_last = user.last_name
+            old_phone = user.phone or ""
+
             user.first_name = first_name
             user.last_name = last_name
             user.phone = phone or None
             user.country = country or None
             user.save(update_fields=["first_name", "last_name", "phone", "country", "updated_at"])
+
+            # Consultants are the visible "Certifying Consultant" on the
+            # companies they approved. When they edit their contact info,
+            # the Company view modal already auto-reflects the change (the
+            # data is FK-derived). Notify each affected Business User so
+            # they can see the change in their Notifications tab too.
+            try:
+                role_code_lc = (user.role.code or "").lower() if user.role else ""
+            except Exception:
+                role_code_lc = ""
+            if role_code_lc == "consultant":
+                changed = (
+                    (first_name != old_first)
+                    or (last_name != old_last)
+                    or ((phone or "") != old_phone)
+                )
+                if changed:
+                    try:
+                        from accounts.utils.notifications import notify
+                        from accounts.models import Notification
+
+                        full_name = f"{first_name} {last_name}".strip() or user.email
+                        certified = (
+                            Company.all_objects
+                            .filter(certified_by=user)
+                            .select_related("owner_user")
+                        )
+                        for comp in certified:
+                            owner = comp.owner_user
+                            if not owner or owner.id == user.id:
+                                continue
+                            notify(
+                                recipient=owner,
+                                sender=user,
+                                kind=Notification.KIND_GENERIC,
+                                title="Your certifying consultant's contact info was updated",
+                                body=(
+                                    f"{full_name} updated their contact information. "
+                                    f"You can see the latest details on the {comp.name} company view."
+                                ),
+                                related_company=comp,
+                            )
+                    except Exception:
+                        # Never block the profile save on a notification error.
+                        pass
 
             if ajax:
                 return JsonResponse({
@@ -586,6 +638,13 @@ def profile_view(request):
         if routed_consultant and routed_consultant.id != user.id:
             company.consultant = routed_consultant
             company.save(update_fields=["consultant"])
+
+        # Drop the request into the routed consultant's Messages inbox.
+        try:
+            from accounts.utils.notifications import notify_certification_request
+            notify_certification_request(company, submitted_by=user)
+        except Exception:
+            pass
 
         # Link user to the new tenant and company
         user.tenant = tenant

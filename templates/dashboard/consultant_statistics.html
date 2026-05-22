@@ -1,0 +1,344 @@
+{% extends "base/base.html" %}
+{% block title %}Consultant Statistics — {{ consultant.first_name }} {{ consultant.last_name }}{% endblock %}
+{% block breadcrumb %}
+  Network <span>/ Consultant Users / {{ consultant.first_name }} {{ consultant.last_name }} / Statistics</span>
+{% endblock %}
+
+{% block content %}
+<style>
+  .cs-card {
+    background:#fff;
+    border:1px solid #e8eef3;
+    border-radius:14px;
+    padding:22px 24px;
+    box-shadow:0 1px 4px rgba(0,0,0,.03);
+    margin-bottom:20px;
+  }
+  .cs-card__head {
+    display:flex; align-items:center; justify-content:space-between;
+    gap:12px; flex-wrap:wrap; margin-bottom:14px;
+  }
+  .cs-card__title {
+    font-size:1.05rem; font-weight:800; color:#1B2E3F; margin:0;
+  }
+  .cs-card__sub {
+    font-size:.82rem; color:#64748b; margin-top:2px;
+  }
+  .cs-kpi-row {
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap:14px;
+  }
+  .cs-kpi {
+    background:#f8fafc; border:1px solid #eef2f7; border-radius:12px;
+    padding:14px 16px;
+  }
+  .cs-kpi__label {
+    font-size:.7rem; text-transform:uppercase; letter-spacing:.06em;
+    color:#94a3b8; font-weight:700;
+  }
+  .cs-kpi__value {
+    font-size:1.7rem; font-weight:800; color:#1B2E3F; margin-top:4px;
+  }
+  .cs-kpi__hint {
+    font-size:.78rem; color:#64748b; margin-top:2px;
+  }
+  .cs-kpi__hint--good { color:#16a34a; font-weight:600; }
+  .cs-kpi__hint--miss { color:#b91c1c; font-weight:600; }
+
+  .cs-range {
+    display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;
+  }
+  .cs-range label {
+    display:block; font-size:.7rem; text-transform:uppercase; letter-spacing:.06em;
+    color:#94a3b8; margin:0 0 4px; font-weight:700;
+  }
+  .cs-range input[type="date"] {
+    border:1px solid #e8eef3; border-radius:8px; padding:6px 10px;
+    font-size:.85rem; background:#fff;
+  }
+
+  /* Reuse the calendar styles from the consultant dashboard. */
+  .cs-cal-cell {
+    border:1px solid #eef2f7; border-radius:8px; padding:6px;
+    min-height:54px; background:#f8fafc;
+    display:flex; flex-direction:column; justify-content:space-between;
+    cursor:default;
+  }
+  .cs-cal-cell.clickable { cursor:pointer; background:#fff; }
+  .cs-cal-cell.clickable:hover { border-color:#2b7de9; }
+  .cs-cal-cell.is-today { box-shadow: 0 0 0 2px #2b7de9 inset; }
+  .cs-cal-cell.is-selected { background:#e6f1fc; border-color:#2b7de9; }
+  .cs-cal-cell .cs-cal-day {
+    font-weight:600; color:#475569; font-size:.78rem;
+  }
+  .cs-cal-cell.has-cert .cs-cal-day { color:#1B2E3F; }
+  .cs-cal-cell .cs-cal-count {
+    font-size:.95rem; font-weight:800; color:#2b7de9; align-self:flex-end;
+  }
+  .cs-cal-cell.empty { background:transparent; border-color:transparent; cursor:default; }
+  .cs-cal-head {
+    text-align:center; color:#94a3b8; font-weight:700;
+    font-size:.7rem; text-transform:uppercase; letter-spacing:.06em;
+    padding:4px 0;
+  }
+</style>
+
+<div class="cs-card">
+  <div class="cs-card__head">
+    <div>
+      <h3 class="cs-card__title">
+        {{ consultant.first_name }} {{ consultant.last_name|default:consultant.email }}
+      </h3>
+      <div class="cs-card__sub">
+        <i class="fas fa-envelope mr-1"></i> {{ consultant.email }}
+        {% if consultant.phone %} · <i class="fas fa-phone mr-1"></i> {{ consultant.phone }}{% endif %}
+      </div>
+    </div>
+    <div class="cs-range">
+      <div>
+        <label for="cs-from">From</label>
+        <input type="date" id="cs-from" value="{{ default_from }}">
+      </div>
+      <div>
+        <label for="cs-to">To</label>
+        <input type="date" id="cs-to" value="{{ default_to }}">
+      </div>
+      <button type="button" id="cs-apply-range" class="btn btn-primary btn-sm" style="height:34px;">
+        <i class="fas fa-filter mr-1"></i> Apply
+      </button>
+    </div>
+  </div>
+
+  <div class="cs-kpi-row">
+    <div class="cs-kpi">
+      <div class="cs-kpi__label">Certifications</div>
+      <div class="cs-kpi__value" id="cs-certs-total">—</div>
+      <div class="cs-kpi__hint" id="cs-certs-hint">…</div>
+    </div>
+    <div class="cs-kpi">
+      <div class="cs-kpi__label">Avg / day</div>
+      <div class="cs-kpi__value" id="cs-certs-avg">—</div>
+      <div class="cs-kpi__hint">Target {{ target_certs_min }}–{{ target_certs_max }} per day</div>
+    </div>
+    <div class="cs-kpi">
+      <div class="cs-kpi__label">Subscriptions sold</div>
+      <div class="cs-kpi__value" id="cs-subs-total">—</div>
+      <div class="cs-kpi__hint" id="cs-subs-hint">Target {{ target_subs_month }} per month</div>
+    </div>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns: minmax(0,2fr) minmax(0,1fr); gap:20px;">
+  <div class="cs-card">
+    <div class="cs-card__head">
+      <div>
+        <h3 class="cs-card__title">Certifications calendar</h3>
+        <div class="cs-card__sub" id="cs-cal-title">…</div>
+      </div>
+      <div style="display:flex; gap:6px; align-items:center;">
+        <button type="button" class="btn btn-sm btn-light" id="cs-cal-prev"><i class="fas fa-chevron-left"></i></button>
+        <input type="month" id="cs-cal-month" value="{{ default_month }}"
+               style="border:1px solid #e8eef3; border-radius:8px; padding:4px 8px; font-size:.82rem;">
+        <button type="button" class="btn btn-sm btn-light" id="cs-cal-next"><i class="fas fa-chevron-right"></i></button>
+      </div>
+    </div>
+    <div id="cs-cal-grid" style="display:grid; grid-template-columns: repeat(7, 1fr); gap:4px; font-size:.78rem;"></div>
+    <div id="cs-cal-day-detail" style="margin-top:14px; font-size:.85rem; color:#475569;">
+      Click a day to see how many companies this consultant certified that day.
+    </div>
+  </div>
+
+  <div class="cs-card">
+    <h3 class="cs-card__title">Plans sold in range</h3>
+    <div class="cs-card__sub" id="cs-plan-sub">…</div>
+    <div id="cs-plan-list" style="margin-top:12px;"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var STATS_URL = "{% url 'consultant-stats' %}";
+  var CONSULTANT_ID = "{{ consultant.id }}";
+  var TARGET_DAY_MIN = parseInt("{{ target_certs_min }}", 10);
+  var TARGET_DAY_MAX = parseInt("{{ target_certs_max }}", 10);
+  var TARGET_SUBS_MONTH = parseInt("{{ target_subs_month }}", 10);
+
+  var fromInput  = document.getElementById("cs-from");
+  var toInput    = document.getElementById("cs-to");
+  var applyBtn   = document.getElementById("cs-apply-range");
+
+  var certsTotal = document.getElementById("cs-certs-total");
+  var certsAvg   = document.getElementById("cs-certs-avg");
+  var certsHint  = document.getElementById("cs-certs-hint");
+  var subsTotal  = document.getElementById("cs-subs-total");
+  var subsHint   = document.getElementById("cs-subs-hint");
+  var planSub    = document.getElementById("cs-plan-sub");
+  var planList   = document.getElementById("cs-plan-list");
+
+  var monthInput = document.getElementById("cs-cal-month");
+  var prevBtn    = document.getElementById("cs-cal-prev");
+  var nextBtn    = document.getElementById("cs-cal-next");
+  var grid       = document.getElementById("cs-cal-grid");
+  var dayDetail  = document.getElementById("cs-cal-day-detail");
+  var calTitle   = document.getElementById("cs-cal-title");
+
+  var currentCerts = {};
+  var selectedDay = null;
+  var monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+  function isoDate(y, m, d) {
+    return y + "-" + String(m).padStart(2,"0") + "-" + String(d).padStart(2,"0");
+  }
+
+  function renderCalendar(monthStr, certs) {
+    var parts = monthStr.split("-");
+    var year  = parseInt(parts[0], 10);
+    var month = parseInt(parts[1], 10);
+    calTitle.textContent = monthNames[month - 1] + " " + year;
+
+    var firstDow = new Date(year, month - 1, 1).getDay();
+    var daysInMonth = new Date(year, month, 0).getDate();
+    var todayIso = new Date().toISOString().slice(0, 10);
+
+    grid.innerHTML = "";
+    ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(function (d) {
+      var h = document.createElement("div");
+      h.className = "cs-cal-head";
+      h.textContent = d;
+      grid.appendChild(h);
+    });
+    for (var i = 0; i < firstDow; i++) {
+      var pad = document.createElement("div");
+      pad.className = "cs-cal-cell empty";
+      grid.appendChild(pad);
+    }
+    for (var d = 1; d <= daysInMonth; d++) {
+      var iso = isoDate(year, month, d);
+      var count = certs[iso] || 0;
+      var cell = document.createElement("div");
+      cell.className = "cs-cal-cell clickable" + (count ? " has-cert" : "")
+        + (iso === todayIso ? " is-today" : "")
+        + (iso === selectedDay ? " is-selected" : "");
+      cell.dataset.iso = iso;
+      cell.dataset.count = String(count);
+      var dayEl = document.createElement("div");
+      dayEl.className = "cs-cal-day";
+      dayEl.textContent = d;
+      var countEl = document.createElement("div");
+      countEl.className = "cs-cal-count";
+      countEl.textContent = count ? count : "";
+      cell.appendChild(dayEl);
+      cell.appendChild(countEl);
+      cell.addEventListener("click", function () {
+        selectedDay = this.dataset.iso;
+        renderCalendar(monthInput.value, currentCerts);
+        var n = parseInt(this.dataset.count, 10) || 0;
+        dayDetail.innerHTML = "<strong>" + this.dataset.iso + "</strong>: "
+          + (n === 0 ? "no companies certified" : n + " compan" + (n === 1 ? "y" : "ies") + " certified")
+          + ".";
+      });
+      grid.appendChild(cell);
+    }
+  }
+
+  function applyRangeStats(data) {
+    var certsN = data.certs_total || 0;
+    var avgN   = data.certs_avg_per_day || 0;
+    var subsN  = data.subs_total || 0;
+
+    certsTotal.textContent = certsN;
+    certsAvg.textContent = avgN;
+    certsHint.textContent = "Across " + data.days_in_range + " day" + (data.days_in_range === 1 ? "" : "s");
+    subsTotal.textContent = subsN;
+
+    // Target evaluation. Avg/day vs daily target range; subs vs the
+    // monthly target prorated by the selected range length.
+    var dailyClass = "cs-kpi__hint";
+    var avgHintText = "Target " + TARGET_DAY_MIN + "–" + TARGET_DAY_MAX + " per day";
+    if (avgN >= TARGET_DAY_MIN) {
+      dailyClass += " cs-kpi__hint--good";
+      avgHintText = "✓ Meeting daily target";
+    } else if (certsN > 0) {
+      dailyClass += " cs-kpi__hint--miss";
+      avgHintText = "Below daily target (" + TARGET_DAY_MIN + "–" + TARGET_DAY_MAX + ")";
+    }
+    certsAvg.nextElementSibling.className = dailyClass;
+    certsAvg.nextElementSibling.textContent = avgHintText;
+
+    var months = Math.max(1, data.days_in_range / 30);
+    var expectedSubs = Math.round(TARGET_SUBS_MONTH * months);
+    var subClass = "cs-kpi__hint";
+    var subText = "Expected " + expectedSubs + " in this range (target " + TARGET_SUBS_MONTH + "/mo)";
+    if (subsN >= expectedSubs) {
+      subClass += " cs-kpi__hint--good";
+      subText = "✓ Met expected " + expectedSubs;
+    } else if (subsN > 0) {
+      subClass += " cs-kpi__hint--miss";
+    }
+    subsHint.className = subClass;
+    subsHint.textContent = subText;
+
+    planSub.textContent = data.from + " → " + data.to;
+    var byPlan = data.subs_by_plan || [];
+    if (byPlan.length === 0) {
+      planList.innerHTML = '<div style="color:#94a3b8; font-size:.85rem;">No subscriptions sold in this range.</div>';
+    } else {
+      planList.innerHTML = byPlan.map(function (r) {
+        return '<div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px dashed #eef2f7; font-size:.85rem;">'
+          + '<span style="color:#1B2E3F; font-weight:600;">' + r.plan + '</span>'
+          + '<span style="color:#475569;">' + r.count + '</span>'
+          + '</div>';
+      }).join("");
+    }
+  }
+
+  function loadRange() {
+    var url = STATS_URL
+      + "?consultant=" + encodeURIComponent(CONSULTANT_ID)
+      + "&from=" + encodeURIComponent(fromInput.value)
+      + "&to="   + encodeURIComponent(toInput.value);
+    fetch(url, { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(applyRangeStats)
+      .catch(function (e) { console.error("range stats:", e); });
+  }
+
+  function loadCalendarMonth() {
+    var url = STATS_URL
+      + "?consultant=" + encodeURIComponent(CONSULTANT_ID)
+      + "&month=" + encodeURIComponent(monthInput.value);
+    fetch(url, { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function (data) {
+        currentCerts = data.certs || {};
+        selectedDay = null;
+        renderCalendar(monthInput.value, currentCerts);
+        dayDetail.innerHTML = "Click a day to see how many companies this consultant certified that day.";
+      })
+      .catch(function (e) { console.error("month stats:", e); });
+  }
+
+  applyBtn.addEventListener("click", loadRange);
+  fromInput.addEventListener("change", loadRange);
+  toInput.addEventListener("change", loadRange);
+
+  monthInput.addEventListener("change", loadCalendarMonth);
+  prevBtn.addEventListener("click", function () {
+    var parts = monthInput.value.split("-").map(Number);
+    var d = new Date(parts[0], parts[1] - 2, 1);
+    monthInput.value = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+    loadCalendarMonth();
+  });
+  nextBtn.addEventListener("click", function () {
+    var parts = monthInput.value.split("-").map(Number);
+    var d = new Date(parts[0], parts[1], 1);
+    monthInput.value = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+    loadCalendarMonth();
+  });
+
+  loadRange();
+  loadCalendarMonth();
+})();
+</script>
+{% endblock %}

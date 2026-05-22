@@ -153,6 +153,35 @@ def company_connect(request, company_id):
         defaults={"message": (request.POST.get("message") or "").strip() or None},
     )
 
+    # Drop a notification into the company owner's inbox when a fresh
+    # partnership request is created. No-op on duplicate requests
+    # (created=False) — we don't want to spam the owner.
+    if created and company.owner_user_id and company.owner_user_id != request.user.id:
+        try:
+            from accounts.utils.notifications import notify
+            from accounts.models import Notification
+
+            requester = request.user
+            requester_label = (
+                f"{requester.first_name} {requester.last_name}".strip()
+                or requester.email
+            )
+            notify(
+                recipient=company.owner_user,
+                sender=requester,
+                kind=Notification.KIND_GENERIC,
+                title=f"New partnership request from {requester_label}",
+                body=(
+                    f"{requester_label} has requested a partnership with "
+                    f"{company.name}. Open the Partnerships tab to confirm "
+                    f"or decline."
+                ),
+                link_url=reverse("partnerships"),
+                related_company=company,
+            )
+        except Exception:
+            pass
+
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
         return JsonResponse({
             "ok": True,

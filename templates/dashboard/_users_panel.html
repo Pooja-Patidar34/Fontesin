@@ -5,6 +5,7 @@
         <thead class="bg-light">
           <tr>
             <th>Email</th>
+            {% if show_company_column %}<th>Company</th>{% endif %}
             <th>Status</th>
             <th class="text-right">Actions</th>
           </tr>
@@ -12,15 +13,24 @@
         <tbody>
           {% for user in users %}
           <tr>
-            <td>{{ user.email }}</td>
+            <td>{% if user.email and user.email != "—" %}{{ user.email }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+            {% if show_company_column %}
+            <td class="text-muted" style="max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
+                title="{{ user.contact_companies|join:', ' }}">
+              {{ user.contact_companies|join:", "|default:"—" }}
+            </td>
+            {% endif %}
             <td>
-              {% if user.is_active %}
+              {% if show_company_column and not user.has_contact %}
+                <span class="badge badge-secondary status-badge">No contact</span>
+              {% elif user.is_active %}
                 <span class="badge badge-success status-badge">Active</span>
               {% else %}
                 <span class="badge badge-danger status-badge">Inactive</span>
               {% endif %}
             </td>
             <td class="text-right">
+              {% if user.id %}
               <div class="btn-group">
                 <button class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown">
                   <i class="fas fa-ellipsis-v"></i>
@@ -66,11 +76,14 @@
                   {% endif %}
                 </div>
               </div>
+              {% else %}
+              <span class="text-muted small">—</span>
+              {% endif %}{# /if user.id #}
             </td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="3" class="text-center text-muted py-4">No users found</td>
+            <td colspan="{% if show_company_column %}4{% else %}3{% endif %}" class="text-center text-muted py-4">No users found</td>
           </tr>
           {% endfor %}
         </tbody>

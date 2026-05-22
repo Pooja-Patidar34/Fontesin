@@ -113,6 +113,69 @@ def partnership_action(request, connection_id):
             f"{connection.company.name}."
         )
 
+    # Notify both sides — the requester gets the verdict; the owner gets a
+    # self-confirmation receipt so the action shows up in their own inbox.
+    try:
+        from accounts.utils.notifications import notify
+        from accounts.models import Notification
+
+        approved = decision == "approve"
+        requester = connection.user
+        owner = request.user
+        company_name = connection.company.name
+        owner_label = (
+            f"{owner.first_name} {owner.last_name}".strip() or owner.email
+        )
+        requester_label = (
+            f"{requester.first_name} {requester.last_name}".strip()
+            or requester.email
+        )
+        link = reverse("partnerships")
+
+        if approved:
+            requester_title = f"Partnership with {company_name} was confirmed"
+            requester_body = (
+                f"{owner_label} accepted your partnership request with "
+                f"{company_name}. You now have view access to the company."
+            )
+            owner_title = f"You confirmed the partnership with {requester_label}"
+            owner_body = (
+                f"You accepted {requester_label}'s partnership request with "
+                f"{company_name}."
+            )
+        else:
+            requester_title = f"Partnership with {company_name} was declined"
+            requester_body = (
+                f"{owner_label} declined your partnership request with "
+                f"{company_name}."
+            )
+            owner_title = f"You declined the partnership with {requester_label}"
+            owner_body = (
+                f"You declined {requester_label}'s partnership request with "
+                f"{company_name}."
+            )
+
+        notify(
+            recipient=requester,
+            sender=owner,
+            kind=Notification.KIND_GENERIC,
+            title=requester_title,
+            body=requester_body,
+            link_url=link,
+            related_company=connection.company,
+        )
+        notify(
+            recipient=owner,
+            sender=owner,
+            kind=Notification.KIND_GENERIC,
+            title=owner_title,
+            body=owner_body,
+            link_url=link,
+            related_company=connection.company,
+        )
+    except Exception:
+        pass
+
     if _is_ajax(request):
         return JsonResponse({
             "ok": True,

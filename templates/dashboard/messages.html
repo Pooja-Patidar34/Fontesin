@@ -1,0 +1,232 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}Notifications{% endblock %}
+{% block breadcrumb %}Notifications <span>/ Inbox</span>{% endblock %}
+
+{% block content %}
+<style>
+  .msg-card {
+    background: #fff;
+    border: 1px solid #e8eef3;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.03);
+  }
+  .msg-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 22px;
+    border-bottom: 1px solid #e8eef3;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .msg-header h3 {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #1B2E3F;
+    margin: 0;
+  }
+  .msg-header__sub {
+    font-size: .82rem;
+    color: #64748b;
+    margin-top: 2px;
+  }
+  .msg-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .msg-actions .btn {
+    border-radius: 8px;
+    font-size: .8rem;
+    font-weight: 600;
+    padding: 7px 14px;
+  }
+
+  .msg-list { padding: 6px 0; }
+  .msg-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 22px;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background .15s;
+  }
+  .msg-row:last-child { border-bottom: 0; }
+  .msg-row:hover { background: #f8fafc; }
+  .msg-row.unread { background: #f0f7ff; }
+  .msg-row.unread:hover { background: #e6f1fc; }
+
+  .msg-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+  .msg-icon--cert-request { background: #f59e0b; }
+  .msg-icon--cert-approved { background: #10b981; }
+  .msg-icon--cert-declined { background: #ef4444; }
+  .msg-icon--generic { background: #64748b; }
+
+  .msg-body { flex: 1; min-width: 0; }
+  .msg-title {
+    font-size: .9rem;
+    font-weight: 700;
+    color: #1B2E3F;
+    margin-bottom: 2px;
+  }
+  .msg-row.unread .msg-title { color: #1B2E3F; }
+  .msg-text {
+    font-size: .82rem;
+    color: #475569;
+    line-height: 1.4;
+    margin-bottom: 6px;
+  }
+  .msg-meta {
+    font-size: .72rem;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .msg-meta a {
+    color: #2b7de9;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .msg-meta a:hover { text-decoration: underline; }
+  .msg-unread-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #2b7de9;
+    flex-shrink: 0;
+    margin-top: 6px;
+  }
+  .msg-row-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .msg-icon-btn {
+    background: transparent;
+    border: 0;
+    color: #94a3b8;
+    font-size: .82rem;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: .15s;
+  }
+  .msg-icon-btn:hover { background: #f1f5f9; color: #1B2E3F; }
+  .msg-icon-btn--danger:hover { background: #fee2e2; color: #b91c1c; }
+
+  .msg-empty {
+    text-align: center;
+    padding: 56px 24px;
+    color: #94a3b8;
+  }
+  .msg-empty .fa-2x { margin-bottom: 12px; color: #cbd5e1; }
+  .msg-empty__title {
+    font-size: .95rem;
+    font-weight: 700;
+    color: #475569;
+    margin-bottom: 4px;
+  }
+
+  .msg-unread-pill {
+    background: #2b7de9;
+    color: #fff;
+    font-size: .68rem;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 100px;
+    margin-left: 6px;
+  }
+</style>
+
+<div class="msg-card">
+  <div class="msg-header">
+    <div>
+      <h3>
+        <i class="fas fa-bell mr-1" style="color:#2b7de9;"></i>
+        Notifications
+        {% if unread_count %}<span class="msg-unread-pill">{{ unread_count }} unread</span>{% endif %}
+      </h3>
+      <div class="msg-header__sub">Notifications for your account land here.</div>
+    </div>
+    {% if unread_count %}
+    <div class="msg-actions">
+      <form method="post" action="{% url 'messages-mark-all-read' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-light">
+          <i class="fas fa-check-double mr-1"></i> Mark all read
+        </button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="msg-list">
+    {% for note in notifications %}
+      <div class="msg-row {% if not note.is_read %}unread{% endif %}">
+        {% if not note.is_read %}<div class="msg-unread-dot"></div>{% else %}<div style="width:8px;flex-shrink:0;"></div>{% endif %}
+
+        {% if note.kind == "certification_request" %}
+          <div class="msg-icon msg-icon--cert-request"><i class="fas fa-certificate"></i></div>
+        {% elif note.kind == "certification_approved" %}
+          <div class="msg-icon msg-icon--cert-approved"><i class="fas fa-check"></i></div>
+        {% elif note.kind == "certification_declined" %}
+          <div class="msg-icon msg-icon--cert-declined"><i class="fas fa-times"></i></div>
+        {% else %}
+          <div class="msg-icon msg-icon--generic"><i class="fas fa-bell"></i></div>
+        {% endif %}
+
+        <div class="msg-body">
+          <div class="msg-title">{{ note.title }}</div>
+          {% if note.body %}<div class="msg-text">{{ note.body|linebreaksbr }}</div>{% endif %}
+          <div class="msg-meta">
+            <span><i class="far fa-clock mr-1"></i>{{ note.created_at|date:"M j, Y · g:i a" }}</span>
+            {% if note.sender %}
+              <span>· From {{ note.sender.first_name }} {{ note.sender.last_name|default:note.sender.email }}</span>
+            {% endif %}
+            {% if note.link_url %}
+              <span>·</span>
+              <a href="{{ note.link_url }}">Open</a>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="msg-row-actions">
+          {% if not note.is_read %}
+          <form method="post" action="{% url 'message-mark-read' note.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="msg-icon-btn" title="Mark as read">
+              <i class="fas fa-check"></i>
+            </button>
+          </form>
+          {% endif %}
+          <form method="post" action="{% url 'message-delete' note.id %}" style="display:inline;"
+                onsubmit="return confirm('Delete this notification?');">
+            {% csrf_token %}
+            <button type="submit" class="msg-icon-btn msg-icon-btn--danger" title="Delete">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+    {% empty %}
+      <div class="msg-empty">
+        <i class="fas fa-inbox fa-2x"></i>
+        <div class="msg-empty__title">No notifications yet</div>
+        <div>When you receive a notification, it will show up here.</div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

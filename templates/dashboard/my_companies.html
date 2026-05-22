@@ -97,6 +97,10 @@
                       data-url="{% url 'company-detail' c.id %}">
                 <i class="fas fa-eye mr-1"></i> View
               </button>
+              <a href="{% url 'companies' %}?open_edit={{ c.id }}&from=my-companies"
+                 class="btn btn-sm btn-outline-primary ml-1">
+                <i class="fas fa-edit mr-1"></i> Edit
+              </a>
             </td>
           </tr>
           {% endfor %}
@@ -190,25 +194,56 @@
       '</div>';
   }
 
-  function renderDetail(d) {
+  function sectionHeading(label) {
+    return '<div style="margin:18px 0 6px; font-size:.7rem; text-transform:uppercase; letter-spacing:.06em; color:#94a3b8; font-weight:700;">' + label + '</div>';
+  }
+
+  function renderDetail(payload) {
+    // company_detail_ajax returns { company: {...}, enrichment: {...} };
+    // earlier this function read the wrapper instead of `.company` and
+    // every field came back undefined, leaving the drawer blank.
+    var d = (payload && payload.company) || {};
     var loc = [d.city, d.state, d.country].filter(Boolean).join(", ");
+    var address = [d.address_line1, d.address_line2].filter(Boolean).join(", ");
+    var contactName = [d.contact_first_name, d.contact_last_name].filter(Boolean).join(" ");
+
     var html = '<div style="margin-bottom:14px;">' +
       '<div style="font-size:1.1rem; font-weight:700; color:#1B2E3F;">' + (d.name || "—") + '</div>' +
       (d.classification ? '<div style="font-size:.82rem; color:#64748b;">' + d.classification + '</div>' : '') +
       '</div>';
+
+    html += sectionHeading("Basics");
     html += row("Registration No.", d.registration_id);
-    html += row("Domain", d.domain);
-    html += row("Website", d.website);
-    html += row("Phone", d.phone);
-    html += row("Email", d.contact_email);
-    html += row("Address", d.address_line1);
-    html += row("City / State", loc);
-    html += row("Postal Code", d.postal_code);
+    html += row("Legal Form", d.entity_type);
     html += row("Year founded", d.year_established);
     html += row("Employees", d.employee_count_range);
+    html += row("NACE Code", d.nace_code_display);
+    html += row("NAICS Code", d.naics_code_display);
+    html += row("Keywords", d.keywords);
+
+    html += sectionHeading("Address");
+    html += row("Address", address);
+    html += row("City / State", loc);
+    html += row("Postal Code", d.postal_code);
+
+    html += sectionHeading("Contact");
+    html += row("Contact Person", contactName);
+    html += row("Contact Email", d.contact_email);
+    html += row("Phone", d.phone);
+    html += row("Website", d.website);
+
+    if (d.certifying_consultant) {
+      html += sectionHeading("Certifying Consultant");
+      html += row("Name",  d.certifying_consultant.full_name);
+      html += row("Email", d.certifying_consultant.email);
+      html += row("Phone", d.certifying_consultant.phone);
+    }
+
+    html += sectionHeading("Status");
     html += row("Certification", d.certification_status);
-    html += row("Status", d.is_active ? "Active" : "Inactive");
-    body.innerHTML = html || '<div class="text-muted">No additional details.</div>';
+    html += row("Active", d.is_active ? "Yes" : "No");
+
+    body.innerHTML = html;
   }
 
   document.querySelectorAll(".view-myc-btn").forEach(function (btn) {
@@ -218,7 +253,7 @@
       open();
       fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" }, credentials: "same-origin" })
         .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
-        .then(function (d) { renderDetail(d || {}); })
+        .then(function (payload) { renderDetail(payload); })
         .catch(function () {
           body.innerHTML = '<div class="text-danger small">Could not load company details.</div>';
         });

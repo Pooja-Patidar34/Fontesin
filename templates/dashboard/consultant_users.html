@@ -63,6 +63,13 @@
                       data-row-index="{{ forloop.counter0 }}">
                 <i class="fas fa-eye mr-1"></i> View
               </button>
+              {% if request.user.is_superuser and entity_label == "consultant" %}
+              <a href="{% url 'consultant-statistics' u.id %}"
+                 class="btn btn-sm btn-outline-secondary ml-1"
+                 title="View {{ u.first_name }}'s certification + subscription statistics">
+                <i class="fas fa-chart-line mr-1"></i> Statistics
+              </a>
+              {% endif %}
             </td>
           </tr>
           {% empty %}

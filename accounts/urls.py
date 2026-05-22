@@ -2,7 +2,7 @@ from django.urls import path
 from .view.auth import admin_login, admin_logout,register_view,identity_verification_view,apply_view,apply_submit,apply_review_view
 from .view.profile import profile_view, company_search_ajax, plans_view
 from .view.auth import admin_login, admin_logout, register_view, identity_verification_view, forgot_password, verify_otp, reset_password, check_email_exists
-from .view.dashboard import dashboard
+from .view.dashboard import dashboard, consultant_stats, consultant_statistics_page
 from accounts.view.company import company_list, toggle_company,company_detail_ajax,company_delete,company_filter_autocomplete, my_companies
 from accounts.view.company_import import (
     company_import_upload,
@@ -30,12 +30,20 @@ from .view.saved_filter import (
 )
 from .view.partnership import partnership_list, partnership_action, partnership_cancel
 from .view.certification import certification_list, certification_action
+from .view.notification import (
+    messages_list,
+    message_mark_read,
+    messages_mark_all_read,
+    message_delete,
+)
 
 
 urlpatterns = [
     path("login/", admin_login, name="login"),
     path("logout/", admin_logout, name="logout"),
     path("dashboard/",dashboard, name="dashboard"),
+    path("dashboard/consultant-stats/", consultant_stats, name="consultant-stats"),
+    path("consultants/<uuid:user_id>/statistics/", consultant_statistics_page, name="consultant-statistics"),
     path("companies/", company_list, name="companies"),
     path("my-companies/", my_companies, name="my-companies"),
     path("companies/filter-autocomplete/", company_filter_autocomplete, name="companies-filter-autocomplete"),
@@ -76,6 +84,12 @@ urlpatterns = [
     # Certifications (consultants only)
     path("certifications/", certification_list, name="certifications"),
     path("certifications/<uuid:company_id>/action/", certification_action, name="certification-action"),
+
+    # Messages / notifications (every account type)
+    path("messages/", messages_list, name="messages"),
+    path("messages/mark-all-read/", messages_mark_all_read, name="messages-mark-all-read"),
+    path("messages/<uuid:notification_id>/read/", message_mark_read, name="message-mark-read"),
+    path("messages/<uuid:notification_id>/delete/", message_delete, name="message-delete"),
 
     # Saved filters (Favorites) — basic business users only
     path("saved-filters/", saved_filter_list, name="saved-filters"),

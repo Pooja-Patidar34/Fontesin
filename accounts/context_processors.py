@@ -1,6 +1,6 @@
 import json
 
-from accounts.models import UserRole, Company, CompanyConnection
+from accounts.models import UserRole, Company, CompanyConnection, Notification
 
 
 def admin_context(request):
@@ -20,6 +20,7 @@ def admin_context(request):
     pending_certification_count = 0
     bu_certification_status = ""
     bu_certification_consultant_name = ""
+    unread_message_count = 0
 
     if request.user.is_authenticated:
         if not request.user.is_superuser:
@@ -117,6 +118,14 @@ def admin_context(request):
                 certification_status="pending"
             ).count()
 
+        # Unread in-app messages — every account type sees this badge.
+        try:
+            unread_message_count = Notification.objects.filter(
+                recipient=request.user, is_read=False
+            ).count()
+        except Exception:
+            unread_message_count = 0
+
     return {
         "is_tenant_admin": is_tenant_admin,
         "sidebar_company_count": sidebar_company_count,
@@ -136,4 +145,5 @@ def admin_context(request):
         "pending_certification_count": pending_certification_count,
         "bu_certification_status": bu_certification_status,
         "bu_certification_consultant_name": bu_certification_consultant_name,
+        "unread_message_count": unread_message_count,
     }

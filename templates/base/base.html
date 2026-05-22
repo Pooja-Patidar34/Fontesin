@@ -166,6 +166,25 @@
       margin-left: auto;
     }
 
+    /* Notification counter (Messages link, etc.). A perfect circle for
+       single digits and a soft pill once it grows past 9. */
+    .sidebar-notif-badge {
+      background: #e11d48;
+      color: #fff;
+      font-size: .68rem;
+      font-weight: 700;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 6px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      margin-left: auto;
+      box-shadow: 0 0 0 2px rgba(255,255,255,.06);
+    }
+
     /* Profile section — pinned to the bottom of the flex sidebar body. */
     .sidebar-profile {
       border-top: 1px solid rgba(255,255,255,.08);
@@ -613,14 +632,14 @@
           <li class="nav-header">Administration</li>
           {% endif %}
 
-          <!-- TENANTS (hidden on free plan) -->
+          <!-- FRANCHISES (hidden on free plan) -->
           {% if not is_free_plan %}
           {% if request.user.is_superuser or request.user.role.code|lower == "business_user" %}
           <li class="nav-item">
             <a href="{% url 'tenants' %}"
                class="nav-link {% if active_menu == 'tenants' %}active{% endif %}">
               <i class="nav-icon fas fa-sitemap"></i>
-              <p>Tenants</p>
+              <p>Franchises</p>
             </a>
           </li>
           {% endif %}
@@ -771,31 +790,33 @@
           {% if is_paid_business_user %}
           <li class="nav-item">
             <a href="{% url 'partnerships' %}"
-               class="nav-link {% if active_menu == 'partnerships' %}active{% endif %}">
+               class="nav-link {% if active_menu == 'partnerships' %}active{% endif %}"
+               style="display: flex; align-items: center;">
               <i class="nav-icon fas fa-handshake"></i>
-              <p>Partnerships</p>
+              <p style="flex:1;">Partnerships</p>
+              {% if pending_partnership_count %}
+              <span class="sidebar-notif-badge" aria-label="{{ pending_partnership_count }} pending partnership requests">
+                {% if pending_partnership_count > 9 %}9+{% else %}{{ pending_partnership_count }}{% endif %}
+              </span>
+              {% endif %}
             </a>
           </li>
           {% endif %}
 
-          {# Messages — hidden on free plan; also hidden for business users on basic/pro plans; also hidden for admin / superuser; also hidden for consultants #}
-          {% if not is_free_plan %}
-          {% if not is_basic_or_pro_business_user %}
-          {% if not request.user.is_superuser %}
-          {% if request.user.role.code|lower != "consultant" and request.user.role.code|lower != "coordinator" and request.user.role.code|lower != "franchise" %}
+          {# Notifications — every authenticated account type has an inbox. #}
           <li class="nav-item">
-            <a href="#" data-coming-soon="1" data-feature="messaging"
+            <a href="{% url 'messages' %}"
                class="nav-link {% if active_menu == 'messages' %}active{% endif %}"
                style="display: flex; align-items: center;">
-              <i class="nav-icon fas fa-envelope"></i>
-              <p style="flex:1;">Messages</p>
-              <!-- <span class="sidebar-count-badge">5</span> -->
+              <i class="nav-icon fas fa-bell"></i>
+              <p style="flex:1;">Notifications</p>
+              {% if unread_message_count %}
+              <span class="sidebar-notif-badge" aria-label="{{ unread_message_count }} unread notifications">
+                {% if unread_message_count > 9 %}9+{% else %}{{ unread_message_count }}{% endif %}
+              </span>
+              {% endif %}
             </a>
           </li>
-          {% endif %}
-          {% endif %}
-          {% endif %}
-          {% endif %}
 
           {# Settings — hidden on free plan; also hidden for business users on basic/pro plans; also hidden for admin / superuser; also hidden for consultants #}
           {% if not is_free_plan %}

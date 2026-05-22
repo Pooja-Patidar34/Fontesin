@@ -133,6 +133,19 @@
   .industry-picker-results .code { font-weight: 600; margin-right: .35rem; }
 </style>
 
+{% comment %}
+  Deep-link edit mode: when the page is loaded with ?open_edit=<id>
+  (typically from "Edit" buttons on My Companies / Certifications),
+  visually suppress the Company Database list/filter so only the modal
+  shows. Lets a consultant or BU edit a company without the jarring
+  flash of an unrelated table. On modal close we go back to the
+  referring page.
+{% endcomment %}
+<style id="deep-edit-style">
+  body.deep-edit .card-outline.card-primary { visibility: hidden; }
+  body.deep-edit .content-wrapper { background: #f0f4f8 !important; }
+</style>
+
 <div class="card card-outline card-primary shadow-sm">
 
   <!-- Header -->
@@ -227,11 +240,11 @@
       </div>
 
       <div class="row">
-        <!-- Company Name (mandatory) — autocomplete from existing companies -->
+        <!-- Company Name — autocomplete from existing companies -->
         <div class="col-md-4 col-sm-6 mb-2 fb-ac" data-field="name">
-          <label class="small">Company Name <span class="text-danger">*</span></label>
+          <label class="small">Company Name</label>
           <input type="text" name="name" id="flt-name" class="form-control form-control-sm fb-ac-input"
-                 value="{{ applied_filters.name|default:'' }}" placeholder="e.g. Euro…" autocomplete="off" required>
+                 value="{{ applied_filters.name|default:'' }}" placeholder="e.g. Euro…" autocomplete="off">
           <div class="fb-ac-results"></div>
         </div>
 
@@ -328,9 +341,34 @@
     var entitySel = document.getElementById('flt-entity-type');
     var entityHint = document.getElementById('flt-entity-type-hint');
 
+    // Deduped union of every country's legal forms — used when no country
+    // is selected, so the user can still filter by company type globally
+    // instead of being locked out behind a country-first dropdown.
+    var ALL_LEGAL_FORMS = (function () {
+      var seen = {};
+      var out = [];
+      Object.keys(legalFormsByCountry).forEach(function (cc) {
+        (legalFormsByCountry[cc] || []).forEach(function (pair) {
+          if (!seen[pair[0]]) {
+            seen[pair[0]] = true;
+            out.push(pair);
+          }
+        });
+      });
+      out.sort(function (a, b) { return a[1].localeCompare(b[1]); });
+      return out;
+    })();
+
     function rebuildEntityOptions() {
       var country = countrySel.value;
-      var forms = legalFormsByCountry[country] || [];
+      var forms = (country && legalFormsByCountry[country]) || [];
+      var usingFallback = false;
+      if (forms.length === 0) {
+        // No country picked (or no preset for that country) → fall back to
+        // every known legal form so the dropdown is never an empty stub.
+        forms = ALL_LEGAL_FORMS;
+        usingFallback = true;
+      }
       var currentValue = APPLIED.entity_type || entitySel.value || '';
       // Wipe and rebuild — only "Any" survives.
       entitySel.innerHTML = '<option value="">Any</option>';
@@ -344,13 +382,12 @@
       // Consume the initial value once so re-selecting country doesn't keep
       // forcing it back.
       APPLIED.entity_type = '';
-      if (forms.length === 0) {
-        entitySel.disabled = true;
+      entitySel.disabled = false;
+      if (usingFallback) {
         entityHint.textContent = country
-          ? 'No legal-form preset for this country yet.'
-          : 'Pick a country to see legal forms.';
+          ? 'No preset for this country — showing all legal forms.'
+          : 'Pick a country to narrow the list, or filter globally.';
       } else {
-        entitySel.disabled = false;
         entityHint.textContent = '';
       }
     }
@@ -639,16 +676,66 @@
             </small>
           </div>
 
-          <div class="section-title">Contact</div>
+          <div class="section-title">Contact Person</div>
+
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label>First Name</label>
+              {{ form.contact_first_name }}
+              {% if is_business_user %}
+              <small class="form-text text-muted">Maintained by the certifying consultant.</small>
+              {% endif %}
+            </div>
+            <div class="form-group col-md-6">
+              <label>Last Name</label>
+              {{ form.contact_last_name }}
+              {% if is_business_user %}
+              <small class="form-text text-muted">Maintained by the certifying consultant.</small>
+              {% endif %}
+            </div>
+          </div>
 
           <div class="form-row">
             <div class="form-group col-md-6">
               <label>Contact Email <span class="text-danger">*</span></label>
               {{ form.contact_email }}
+              {% if is_business_user %}
+              <small class="form-text text-muted">Maintained by the certifying consultant.</small>
+              {% endif %}
             </div>
             <div class="form-group col-md-6">
               <label>Phone</label>
               {{ form.phone }}
+            </div>
+          </div>
+
+          {% comment %}
+            Certifying Consultant — read-only block populated from the
+            company's certified_by user (the consultant who approved the
+            certification). The "—" placeholders are filled in by JS via
+            populateCompanyModal when the modal opens. Hidden when the
+            company has no certified_by user (renders empty rows otherwise).
+          {% endcomment %}
+          <div id="company-consultant-section" style="display:none;">
+            <div class="section-title">Certifying Consultant</div>
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label>Name</label>
+                <input type="text" class="form-control" id="company-consultant-name"
+                       readonly disabled aria-readonly="true">
+              </div>
+              <div class="form-group col-md-6">
+                <label>Email</label>
+                <input type="email" class="form-control" id="company-consultant-email"
+                       readonly disabled aria-readonly="true">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label>Phone</label>
+                <input type="text" class="form-control" id="company-consultant-phone"
+                       readonly disabled aria-readonly="true">
+              </div>
             </div>
           </div>
 
@@ -879,6 +966,27 @@ document.addEventListener("DOMContentLoaded", function () {
     setIfPresent("id_keywords", c.keywords);
     setIfPresent("id_employee_count_range", c.employee_count_range);
     setIfPresent("id_contact_email", c.contact_email);
+    setIfPresent("id_contact_first_name", c.contact_first_name);
+    setIfPresent("id_contact_last_name", c.contact_last_name);
+
+    // Populate the read-only Certifying Consultant block from the FK-derived
+    // payload. Hidden when there is no certifying consultant yet.
+    var consultantSection = document.getElementById("company-consultant-section");
+    var consultantData = c.certifying_consultant || null;
+    if (consultantSection) {
+      if (consultantData) {
+        consultantSection.style.display = "block";
+        var setVal = function (id, v) {
+          var el = document.getElementById(id);
+          if (el) el.value = v || "—";
+        };
+        setVal("company-consultant-name", consultantData.full_name);
+        setVal("company-consultant-email", consultantData.email);
+        setVal("company-consultant-phone", consultantData.phone);
+      } else {
+        consultantSection.style.display = "none";
+      }
+    }
 
     // Industry pickers — set both hidden FK + the visible "code — title"
     // label. Pickers are initialised below; if the modal opens before
@@ -949,6 +1057,63 @@ document.addEventListener("DOMContentLoaded", function () {
       .then(function (data) { populateCompanyModal(data.company, mode); })
       .catch(function (err) { console.error(mode + " error:", err); });
   });
+
+  // Deep-link: /companies/?open_edit=<uuid>&from=<origin> auto-opens the
+  // edit modal for that company. Used by the My Companies and Certifications
+  // pages' "Edit" buttons so a consultant or BU can edit without the jarring
+  // flash of the Company Database list. Body gets the .deep-edit class to
+  // hide the list while the modal is open; closing the modal returns to
+  // the origin path encoded in `from`.
+  (function () {
+    var params = new URLSearchParams(window.location.search);
+    var editId = params.get("open_edit");
+    if (!editId) return;
+
+    var origin = (params.get("from") || "").toLowerCase();
+    var ORIGIN_PATHS = {
+      "my-companies":   "/my-companies/",
+      "certifications": "/certifications/",
+    };
+    var returnPath = ORIGIN_PATHS[origin] || "";
+
+    document.body.classList.add("deep-edit");
+    var detailUrl = "/companies/" + editId + "/detail/";
+    fetch(detailUrl, { credentials: "same-origin" })
+      .then(function (res) {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      })
+      .then(function (data) { populateCompanyModal(data.company, "edit"); })
+      .catch(function (err) { console.error("open_edit error:", err); });
+
+    // Modal close → navigate to the origin path. We hook *every* dismiss
+    // path explicitly (X button, Cancel button, backdrop click, Esc key,
+    // and Bootstrap's hidden.bs.modal as a final fallback) because relying
+    // on hidden.bs.modal alone was leaving the user on the hidden-list
+    // page when it didn't fire.
+    var target = returnPath || "/companies/";
+    var navigated = false;
+    function bail() {
+      if (navigated) return;
+      navigated = true;
+      window.location.href = target;
+    }
+    var modalEl = document.getElementById("companyModal");
+    if (modalEl) {
+      modalEl.querySelectorAll('[data-dismiss="modal"]').forEach(function (el) {
+        el.addEventListener("click", function () { bail(); });
+      });
+      // Outside-click on the modal backdrop (Bootstrap closes the modal
+      // when the user clicks the dimmed area outside .modal-dialog).
+      modalEl.addEventListener("click", function (e) {
+        if (e.target === modalEl) bail();
+      });
+      modalEl.addEventListener("hidden.bs.modal", bail);
+    }
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && document.body.classList.contains("deep-edit")) bail();
+    });
+  })();
 
   // --- AJAX pagination ---
   // Pagination links live in #companies-pagination. We fetch the same URL with

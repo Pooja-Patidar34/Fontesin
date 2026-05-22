@@ -185,6 +185,16 @@ def certification_action(request, company_id):
         # Audit failures never block the certification decision.
         pass
 
+    try:
+        from accounts.utils.notifications import notify_certification_decision
+        notify_certification_decision(
+            company,
+            decided_by=request.user,
+            approved=(decision == "approve"),
+        )
+    except Exception:
+        pass
+
     if _is_ajax(request):
         return JsonResponse({
             "ok": True,

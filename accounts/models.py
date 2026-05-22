@@ -207,6 +207,11 @@ class Company(models.Model):
     )
 
     # ---- Contact ----
+    # contact_first_name / contact_last_name name the human point of contact at
+    # the company. They are filled in (and edited) by the certifying consultant
+    # — Business Users can see them in the Company view but cannot change them.
+    contact_first_name = models.CharField(max_length=80, null=True, blank=True)
+    contact_last_name = models.CharField(max_length=80, null=True, blank=True)
     phone = models.CharField(max_length=50, null=True, blank=True)
     phone_secondary = models.CharField(max_length=50, null=True, blank=True)
     fax = models.CharField(max_length=50, null=True, blank=True)
@@ -775,3 +780,67 @@ class CompanyImportJob(models.Model):
 
     def __str__(self):
         return f"CompanyImportJob {self.id} ({self.state})"
+
+
+class Notification(models.Model):
+    """In-app message dropped onto a user's Messages page.
+
+    Used for things like "Company X requested certification" landing in the
+    routed consultant's inbox, or "Your company was certified" landing in the
+    business user's inbox. Every account type sees their own inbox via the
+    same Messages sidebar link.
+    """
+
+    KIND_CERTIFICATION_REQUEST = "certification_request"
+    KIND_CERTIFICATION_APPROVED = "certification_approved"
+    KIND_CERTIFICATION_DECLINED = "certification_declined"
+    KIND_GENERIC = "generic"
+    KIND_CHOICES = (
+        (KIND_CERTIFICATION_REQUEST, "Certification request"),
+        (KIND_CERTIFICATION_APPROVED, "Certification approved"),
+        (KIND_CERTIFICATION_DECLINED, "Certification declined"),
+        (KIND_GENERIC, "Generic"),
+    )
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    recipient = models.ForeignKey(
+        "User",
+        on_delete=models.CASCADE,
+        related_name="notifications",
+    )
+    sender = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        related_name="sent_notifications",
+        null=True,
+        blank=True,
+    )
+    kind = models.CharField(max_length=40, choices=KIND_CHOICES, default=KIND_GENERIC)
+    title = models.CharField(max_length=200)
+    body = models.TextField(blank=True)
+    link_url = models.CharField(max_length=500, blank=True)
+    related_company = models.ForeignKey(
+        "Company",
+        on_delete=models.SET_NULL,
+        related_name="notifications",
+        null=True,
+        blank=True,
+    )
+    is_read = models.BooleanField(default=False)
+    read_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["recipient", "is_read", "-created_at"]),
+        ]
+
+    def __str__(self):
+        return f"Notification({self.kind}) → {self.recipient_id}"
+
+    def mark_read(self):
+        if not self.is_read:
+            self.is_read = True
+            self.read_at = timezone.now()
+            self.save(update_fields=["is_read", "read_at"])

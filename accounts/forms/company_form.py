@@ -139,6 +139,8 @@ class CompanyForm(forms.ModelForm):
             "employee_count_range",
 
             # ---- Contact ----
+            "contact_first_name",
+            "contact_last_name",
             "phone",
             "phone_secondary",
             "fax",
@@ -281,6 +283,18 @@ class CompanyForm(forms.ModelForm):
                 "placeholder": "contact@example.com",
                 "autocomplete": "email",
             }),
+            "contact_first_name": forms.TextInput(attrs={
+                "class": "form-control",
+                "maxlength": "80",
+                "placeholder": "First name",
+                "autocomplete": "given-name",
+            }),
+            "contact_last_name": forms.TextInput(attrs={
+                "class": "form-control",
+                "maxlength": "80",
+                "placeholder": "Last name",
+                "autocomplete": "family-name",
+            }),
 
             # Business attributes
             "year_established": forms.NumberInput(attrs={
@@ -367,6 +381,23 @@ class CompanyForm(forms.ModelForm):
 
         if not user:
             return
+
+        # Business Users may not edit the contact-person fields (First Name,
+        # Last Name, Contact Email) — those are filled in / curated by the
+        # certifying consultant. Mark the form fields disabled so any
+        # submitted value is ignored on save and the existing value is
+        # preserved server-side, even if the inputs were tampered with
+        # client-side. Everything else on the form remains editable for
+        # the BU when viewing their own company.
+        role_code = (user.role.code or "").lower() if getattr(user, "role", None) else ""
+        if not user.is_superuser and role_code == "business_user":
+            for fld in ("contact_first_name", "contact_last_name", "contact_email"):
+                if fld in self.fields:
+                    self.fields[fld].disabled = True
+                    self.fields[fld].widget.attrs["readonly"] = "readonly"
+                    self.fields[fld].widget.attrs["title"] = (
+                        "Maintained by the certifying consultant."
+                    )
 
         if user.is_superuser:
             # Superuser can select any tenant
@@ -659,6 +690,26 @@ class CompanyForm(forms.ModelForm):
                 f"Year of establishment must be between 1500 and {current_year}."
             )
         return year
+
+    def _clean_contact_name(self, field):
+        value = (self.cleaned_data.get(field) or "").strip()
+        if not value:
+            return ""
+        if len(value) < 2:
+            raise forms.ValidationError("Name must be at least 2 characters.")
+        if len(value) > 80:
+            raise forms.ValidationError("Name must be 80 characters or fewer.")
+        if not re.match(r"^[A-Za-zÀ-ɏ][A-Za-zÀ-ɏ\s'\-.]{1,79}$", value):
+            raise forms.ValidationError(
+                "Use letters, spaces, hyphens, apostrophes, or dots only."
+            )
+        return value
+
+    def clean_contact_first_name(self):
+        return self._clean_contact_name("contact_first_name")
+
+    def clean_contact_last_name(self):
+        return self._clean_contact_name("contact_last_name")
 
     def clean_contact_email(self):
         # EmailField already validates the format; we just normalize the case

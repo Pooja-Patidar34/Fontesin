@@ -430,6 +430,254 @@
     </div>
   </div>
 
+  {% if is_consultant_dashboard %}
+  {% comment %}
+    Consultant-specific KPI row — own activity only. System-wide company
+    counts are intentionally hidden; those belong to the Super Admin view.
+  {% endcomment %}
+  <div class="dash-kpi-grid">
+    <div class="dash-kpi">
+      <div class="dash-kpi__icon dash-kpi__icon--green">
+        <i class="fas fa-certificate"></i>
+      </div>
+      <div style="flex:1;">
+        <div class="dash-kpi__value">{{ consultant_cert_total_month|default:"0" }}</div>
+        <div class="dash-kpi__label">Certifications this month</div>
+        <div class="dash-kpi__trend dash-kpi__trend--up">
+          {{ consultant_cert_today|default:"0" }} today
+          <span style="color:#94a3b8; font-weight:500; margin-left:4px;">/ target {{ consultant_target_certs_min }}–{{ consultant_target_certs_max }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="dash-kpi">
+      <div class="dash-kpi__icon dash-kpi__icon--amber">
+        <i class="fas fa-coins"></i>
+      </div>
+      <div style="flex:1;">
+        <div class="dash-kpi__value">{{ consultant_sub_total_month|default:"0" }}</div>
+        <div class="dash-kpi__label">Subscriptions sold this month</div>
+        <div class="dash-kpi__trend dash-kpi__trend--up" id="cs-sub-target-line">
+          <span style="color:#94a3b8; font-weight:500;">{{ consultant_sub_total_month|default:"0" }} of {{ consultant_target_subs_month }} (monthly target)</span>
+        </div>
+        <div style="background:#eef2f7; border-radius:6px; height:6px; margin-top:8px; overflow:hidden;">
+          <div id="cs-sub-target-bar" style="height:100%; background:linear-gradient(90deg,#10b981,#16a34a); border-radius:6px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    var total  = parseInt("{{ consultant_sub_total_month|default:'0' }}", 10) || 0;
+    var target = parseInt("{{ consultant_target_subs_month|default:'10' }}", 10) || 10;
+    var pct = Math.min(100, Math.round((total / target) * 100));
+    var bar = document.getElementById("cs-sub-target-bar");
+    if (bar) bar.style.width = pct + "%";
+  })();
+  </script>
+
+  {# ===== Consultant: per-day certifications calendar + monthly subs ===== #}
+  <div id="consultant-stats" style="display:grid; grid-template-columns: minmax(0,2fr) minmax(0,1fr); gap:20px; margin-bottom:24px;">
+    <div style="background:#fff; border:1px solid #e8eef3; border-radius:14px; padding:20px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px;">
+        <div>
+          <div style="font-size:.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:#94a3b8;">Certifications</div>
+          <div style="font-size:1.05rem; font-weight:800; color:#1B2E3F;" id="cs-cal-title">…</div>
+        </div>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <button type="button" class="btn btn-sm btn-light" id="cs-cal-prev"><i class="fas fa-chevron-left"></i></button>
+          <input type="month" id="cs-cal-month" value="{{ consultant_calendar_month }}" style="border:1px solid #e8eef3; border-radius:8px; padding:4px 8px; font-size:.82rem;">
+          <button type="button" class="btn btn-sm btn-light" id="cs-cal-next"><i class="fas fa-chevron-right"></i></button>
+        </div>
+      </div>
+      <div id="cs-cal-grid" style="display:grid; grid-template-columns: repeat(7, 1fr); gap:4px; font-size:.78rem;"></div>
+      <div id="cs-cal-day-detail" style="margin-top:14px; font-size:.85rem; color:#475569;">
+        Click a day to see how many companies you certified that day.
+      </div>
+    </div>
+
+    <div style="background:#fff; border:1px solid #e8eef3; border-radius:14px; padding:20px;">
+      <div style="font-size:.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:#94a3b8;">Subscriptions sold</div>
+      <div style="font-size:1.05rem; font-weight:800; color:#1B2E3F; margin-bottom:14px;" id="cs-sub-title">…</div>
+      <div id="cs-sub-total" style="font-size:1.6rem; font-weight:800; color:#1B2E3F; margin-bottom:8px;">{{ consultant_sub_total_month|default:"0" }}</div>
+      <div style="font-size:.78rem; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px;">By plan</div>
+      <div id="cs-sub-breakdown">
+        {% if consultant_sub_plan_breakdown %}
+          {% for plan, count in consultant_sub_plan_breakdown %}
+          <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px dashed #eef2f7; font-size:.85rem;">
+            <span style="color:#1B2E3F; font-weight:600;">{{ plan }}</span>
+            <span style="color:#475569;">{{ count }}</span>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div style="color:#94a3b8; font-size:.85rem;">No subscriptions sold in this month yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .cs-cal-cell {
+      border:1px solid #eef2f7;
+      border-radius:8px;
+      padding:6px;
+      min-height:54px;
+      background:#f8fafc;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      cursor:default;
+    }
+    .cs-cal-cell.clickable { cursor:pointer; background:#fff; }
+    .cs-cal-cell.clickable:hover { border-color:#2b7de9; }
+    .cs-cal-cell.is-today { box-shadow: 0 0 0 2px #2b7de9 inset; }
+    .cs-cal-cell.is-selected { background:#e6f1fc; border-color:#2b7de9; }
+    .cs-cal-cell .cs-cal-day {
+      font-weight:600;
+      color:#475569;
+      font-size:.78rem;
+    }
+    .cs-cal-cell.has-cert .cs-cal-day { color:#1B2E3F; }
+    .cs-cal-cell .cs-cal-count {
+      font-size:.95rem;
+      font-weight:800;
+      color:#2b7de9;
+      align-self:flex-end;
+    }
+    .cs-cal-cell.empty { background:transparent; border-color:transparent; cursor:default; }
+    .cs-cal-head {
+      text-align:center;
+      color:#94a3b8;
+      font-weight:700;
+      font-size:.7rem;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      padding:4px 0;
+    }
+  </style>
+
+  <script>
+  (function () {
+    var STATS_URL = "{% url 'consultant-stats' %}";
+    var monthInput = document.getElementById("cs-cal-month");
+    var prevBtn    = document.getElementById("cs-cal-prev");
+    var nextBtn    = document.getElementById("cs-cal-next");
+    var grid       = document.getElementById("cs-cal-grid");
+    var dayDetail  = document.getElementById("cs-cal-day-detail");
+    var calTitle   = document.getElementById("cs-cal-title");
+    var subTitle   = document.getElementById("cs-sub-title");
+    var subTotal   = document.getElementById("cs-sub-total");
+    var subList    = document.getElementById("cs-sub-breakdown");
+    var initialCerts = JSON.parse('{{ consultant_cert_by_day_json|escapejs }}' || '{}');
+    var currentCerts = initialCerts;
+    var selectedDay = null;
+    var monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+    function isoDate(y, m, d) {
+      return y + "-" + String(m).padStart(2,"0") + "-" + String(d).padStart(2,"0");
+    }
+
+    function renderCalendar(monthStr, certs) {
+      var parts = monthStr.split("-");
+      var year  = parseInt(parts[0], 10);
+      var month = parseInt(parts[1], 10);   // 1-12
+      calTitle.textContent = monthNames[month - 1] + " " + year;
+      subTitle.textContent = monthNames[month - 1] + " " + year;
+
+      var firstDow = new Date(year, month - 1, 1).getDay(); // 0=Sun
+      var daysInMonth = new Date(year, month, 0).getDate();
+      var todayIso = new Date().toISOString().slice(0, 10);
+
+      grid.innerHTML = "";
+      ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(function (d) {
+        var h = document.createElement("div");
+        h.className = "cs-cal-head";
+        h.textContent = d;
+        grid.appendChild(h);
+      });
+      for (var i = 0; i < firstDow; i++) {
+        var pad = document.createElement("div");
+        pad.className = "cs-cal-cell empty";
+        grid.appendChild(pad);
+      }
+      for (var d = 1; d <= daysInMonth; d++) {
+        var iso = isoDate(year, month, d);
+        var count = certs[iso] || 0;
+        var cell = document.createElement("div");
+        cell.className = "cs-cal-cell clickable" + (count ? " has-cert" : "")
+          + (iso === todayIso ? " is-today" : "")
+          + (iso === selectedDay ? " is-selected" : "");
+        cell.dataset.iso = iso;
+        cell.dataset.count = String(count);
+        var dayEl = document.createElement("div");
+        dayEl.className = "cs-cal-day";
+        dayEl.textContent = d;
+        var countEl = document.createElement("div");
+        countEl.className = "cs-cal-count";
+        countEl.textContent = count ? count : "";
+        cell.appendChild(dayEl);
+        cell.appendChild(countEl);
+        cell.addEventListener("click", function () {
+          selectedDay = this.dataset.iso;
+          renderCalendar(monthInput.value, currentCerts);
+          var n = parseInt(this.dataset.count, 10) || 0;
+          dayDetail.innerHTML = "<strong>" + this.dataset.iso + "</strong>: "
+            + (n === 0 ? "no companies certified" : n + " compan" + (n === 1 ? "y" : "ies") + " certified")
+            + ".";
+        });
+        grid.appendChild(cell);
+      }
+    }
+
+    function applyStats(data) {
+      currentCerts = data.certs || {};
+      renderCalendar(data.month, currentCerts);
+      subTotal.textContent = data.subs_total || 0;
+      var byPlan = data.subs_by_plan || [];
+      if (byPlan.length === 0) {
+        subList.innerHTML = '<div style="color:#94a3b8; font-size:.85rem;">No subscriptions sold in this month yet.</div>';
+      } else {
+        subList.innerHTML = byPlan.map(function (r) {
+          return '<div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px dashed #eef2f7; font-size:.85rem;">'
+            + '<span style="color:#1B2E3F; font-weight:600;">' + r.plan + '</span>'
+            + '<span style="color:#475569;">' + r.count + '</span>'
+            + '</div>';
+        }).join("");
+      }
+      dayDetail.innerHTML = "Click a day to see how many companies you certified that day.";
+      selectedDay = null;
+    }
+
+    function loadMonth(monthStr) {
+      fetch(STATS_URL + "?month=" + encodeURIComponent(monthStr), {
+        credentials: "same-origin",
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+      })
+        .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+        .then(applyStats)
+        .catch(function (e) { console.error("consultant-stats:", e); });
+    }
+
+    monthInput.addEventListener("change", function () { loadMonth(monthInput.value); });
+    prevBtn.addEventListener("click", function () {
+      var parts = monthInput.value.split("-").map(Number);
+      var d = new Date(parts[0], parts[1] - 2, 1);
+      monthInput.value = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+      loadMonth(monthInput.value);
+    });
+    nextBtn.addEventListener("click", function () {
+      var parts = monthInput.value.split("-").map(Number);
+      var d = new Date(parts[0], parts[1], 1);
+      monthInput.value = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+      loadMonth(monthInput.value);
+    });
+
+    renderCalendar(monthInput.value, initialCerts);
+  })();
+  </script>
+  {% endif %}
+
+  {% if not is_consultant_dashboard %}
   <!-- ================= KPI CARDS ROW 1 ================= -->
   <div class="dash-kpi-grid">
 
@@ -827,9 +1075,11 @@
     </div>
 
   </div>
+  {% endif %}{# /not is_consultant_dashboard — closes the wrapper around the non-consultant KPIs and charts #}
 
 </div>
 
+{% if not is_consultant_dashboard %}
 <!-- ================= CHART SCRIPTS ================= -->
 <script>
 /* ---- Existing Health Chart ---- */
@@ -1084,4 +1334,5 @@ document.addEventListener("DOMContentLoaded", function () {
   {% endif %}
 });
 </script>
+{% endif %}{# /not is_consultant_dashboard for chart scripts #}
 {% endblock %}

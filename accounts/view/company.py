@@ -45,6 +45,45 @@ def _country_match_q(country_code):
     for v in variants:
         q |= Q(country__iexact=v)
     return q
+
+
+def business_user_visible_companies(user):
+    """Companies a business user can see in their Company Database list.
+
+    Mirrors the gating used in `company_list` so anything that needs the
+    same scope (Users page, future Reports) can ask for it without copy-
+    pasting the linkage + plan-discovery query. Returns a queryset; the
+    caller decides how to consume it. Returns an empty queryset for
+    non-business-users (superusers/tenant admins should never call this).
+    """
+    plan_code = _plan_code_for_business_user(user)
+    if plan_code is None:
+        return Company.objects.none()
+
+    linkage_q = (
+        Q(consultant=user)
+        | Q(owner_user=user)
+        | Q(primary_users=user)
+        | Q(usercompany__user=user)
+    )
+
+    user_country = (user.country or "").strip().upper()
+    user_state = (user.state_region or "").strip()
+
+    scope_q = None
+    if plan_code == "global":
+        scope_q = Q(is_active=True)
+    elif plan_code == "pro" and user_country:
+        scope_q = _country_match_q(user_country) & Q(is_active=True)
+    elif plan_code in ("basic", "free") and user_country:
+        base = _country_match_q(user_country) & Q(is_active=True)
+        if user_state:
+            scope_q = base & Q(state__iexact=user_state)
+        else:
+            scope_q = base
+
+    full_q = linkage_q if scope_q is None else (linkage_q | scope_q)
+    return Company.objects.filter(full_q).distinct()
 from accounts.utils.ip import get_client_ip
 from django.urls import reverse
 from django.contrib import messages
@@ -216,6 +255,7 @@ def company_list(request):
             # companies for their own clients bypass this gate (they're the
             # ones doing the certifying), so the toggle only fires for
             # non-consultant authors.
+            emit_cert_notification = False
             if not company_id and creator_role_code != "consultant":
                 company.certification_status = "pending"
                 company.is_active = False
@@ -223,9 +263,17 @@ def company_list(request):
                     routed = find_consultant_for_company(company)
                     if routed and routed.id != request.user.id:
                         company.consultant = routed
+                emit_cert_notification = True
 
             company.save()
             form.save_m2m()
+
+            if emit_cert_notification:
+                try:
+                    from accounts.utils.notifications import notify_certification_request
+                    notify_certification_request(company, submitted_by=request.user)
+                except Exception:
+                    pass
 
             # ---------- AUDIT LOG ----------
             try:
@@ -557,6 +605,21 @@ def company_list(request):
     # -------------------------------
     # RENDER
     # -------------------------------
+    _role_code = (request.user.role.code or "").lower() if request.user.role else ""
+
+    # Deep-link edit: when a user clicks "Edit" from My Companies or the
+    # Certifications queue, we land here with ?open_edit=<id>&from=<origin>
+    # so the modal can pop without the surrounding Company Database UI being
+    # visible. Keep the sidebar highlighted on the origin so it doesn't feel
+    # like the user navigated away from their starting page.
+    _origin = (request.GET.get("from") or "").strip().lower()
+    _active_menu = "companies"
+    if request.GET.get("open_edit"):
+        if _origin == "my-companies":
+            _active_menu = "my-companies"
+        elif _origin == "certifications":
+            _active_menu = "certifications"
+
     context = {
         "companies": page_obj,
         "page_obj": page_obj,
@@ -565,12 +628,15 @@ def company_list(request):
         "form": form,
         "can_manage": has_permission(request.user, "company.manage"),
         "can_view": has_permission(request.user, "company.view"),
-        "active_menu": "companies",
+        "active_menu": _active_menu,
         "next": request.get_full_path(),
         "applied_filters": applied_filters,
         "pending_ids": pending_ids,
         "accepted_ids": accepted_ids,
         "viewable_ids": viewable_ids,
+        # Surface BU role to the modal so it can render the
+        # "Maintained by consultant" helper text on the contact-name inputs.
+        "is_business_user": not request.user.is_superuser and _role_code == "business_user",
         # Country → state map consumed by the modal's dependent dropdown JS,
         # rendered server-side via {% json_script %}.
         "country_states": COUNTRY_STATES,
@@ -934,6 +1000,8 @@ def company_detail_ajax(request, company_id):
             "fax": company.fax,
             "website": company.website,
             "contact_email": company.contact_email,
+            "contact_first_name": company.contact_first_name or "",
+            "contact_last_name": company.contact_last_name or "",
 
             # Absolute URL so the template can render the logo in the modal
             # header regardless of how the page was opened (e.g. via API or
@@ -946,6 +1014,24 @@ def company_detail_ajax(request, company_id):
                 if company.certified_by else None
             ),
             "certified_at": company.certified_at.isoformat() if company.certified_at else None,
+
+            # Certifying consultant snapshot for the read-only "Certifying
+            # Consultant" panel. Sourced live from the User FK so the panel
+            # auto-refreshes when the consultant updates their profile — no
+            # backfill required on the Company row.
+            "certifying_consultant": (
+                {
+                    "first_name": company.certified_by.first_name or "",
+                    "last_name": company.certified_by.last_name or "",
+                    "full_name": (
+                        f"{company.certified_by.first_name} {company.certified_by.last_name}".strip()
+                        or company.certified_by.email
+                    ),
+                    "email": company.certified_by.email,
+                    "phone": company.certified_by.phone or "",
+                }
+                if company.certified_by else None
+            ),
 
             "is_active": company.is_active,
         },
