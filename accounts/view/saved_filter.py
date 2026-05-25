@@ -143,7 +143,10 @@ def saved_filter_apply(request, filter_id):
 @require_POST
 @transaction.atomic
 def company_connect(request, company_id):
-    _require_basic_or_pro_business_user(request.user)
+    # Any Business User (free / basic / pro / global) may send a partnership
+    # request — the company owner approves or declines per the existing flow.
+    if _plan_code_for_business_user(request.user) is None:
+        raise PermissionDenied()
 
     company = get_object_or_404(Company, id=company_id, is_active=True)
 

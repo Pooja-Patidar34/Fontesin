@@ -140,6 +140,13 @@ def admin_context(request):
         "is_paid_business_user": is_paid_business_user,
         # Back-compat alias for existing template gates that haven't been swapped over.
         "is_basic_or_pro_business_user": is_paid_business_user,
+        # True for any BU regardless of plan (free / basic / pro / global).
+        # Used to gate features like Connect that are now available on free.
+        "is_business_user": (
+            request.user.is_authenticated and not request.user.is_superuser
+            and request.user.role is not None
+            and (request.user.role.code or "").lower() == "business_user"
+        ),
         "pending_partnership_count": pending_partnership_count,
         "show_partnership_upgrade_banner": show_partnership_upgrade_banner,
         "pending_certification_count": pending_certification_count,

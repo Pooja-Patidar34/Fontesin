@@ -34,7 +34,6 @@
     {% endif %}
   </td>
 
-  {% if not is_free_plan %}
   <td class="text-right pr-4">
 
     <div class="dropdown d-inline">
@@ -98,7 +97,11 @@
       {% else %}
 
       {% if can_view %}
-        {% if is_basic_or_pro_business_user %}
+        {% if is_business_user %}
+          {% comment %}
+            Every BU plan (free / basic / pro / global) needs an approved
+            partnership before they can View a company they don't own.
+          {% endcomment %}
           {% if company.id in viewable_ids %}
           <button class="dropdown-item view-company-btn text-success"
                   data-url="{% url 'company-detail' company.id %}">
@@ -119,8 +122,11 @@
         {% endif %}
       {% endif %}
 
-      {# Connect — visible for basic, pro, and global business users on companies they don't own. #}
-      {% if is_basic_or_pro_business_user %}
+      {% comment %}
+        Connect — visible for ANY business user (free / basic / pro / global)
+        on companies they don't own.
+      {% endcomment %}
+      {% if is_business_user %}
         {% if company.id in accepted_ids %}
         <button type="button" class="dropdown-item text-success" disabled>
           <i class="fas fa-link mr-2"></i> Connected
@@ -140,8 +146,11 @@
         {% endif %}
       {% endif %}
 
-      {# Basic plan: only View + Connect are allowed. Edit and below are hidden for basic. #}
-      {% if not is_basic_plan %}
+      {% comment %}
+        Free + Basic plans: only View + Connect are allowed. Edit and below
+        are hidden for both.
+      {% endcomment %}
+      {% if not is_basic_plan and not is_free_plan %}
 
       {% if can_manage and not is_pro_plan and not is_global_plan %}
         <button class="dropdown-item edit-company-btn"
@@ -194,6 +203,5 @@
     </div>
 
   </td>
-  {% endif %}
 
 </tr>

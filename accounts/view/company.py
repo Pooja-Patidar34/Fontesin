@@ -70,12 +70,15 @@ def business_user_visible_companies(user):
     user_country = (user.country or "").strip().upper()
     user_state = (user.state_region or "").strip()
 
+    # Discovery scope by plan. Free plan now sees every active company
+    # worldwide (read-only access — actions like View / Connect / Edit
+    # are still gated by plan via is_free_plan in the templates).
     scope_q = None
-    if plan_code == "global":
+    if plan_code in ("global", "free"):
         scope_q = Q(is_active=True)
     elif plan_code == "pro" and user_country:
         scope_q = _country_match_q(user_country) & Q(is_active=True)
-    elif plan_code in ("basic", "free") and user_country:
+    elif plan_code == "basic" and user_country:
         base = _country_match_q(user_country) & Q(is_active=True)
         if user_state:
             scope_q = base & Q(state__iexact=user_state)
@@ -426,12 +429,15 @@ def company_list(request):
             user_country = (request.user.country or "").strip().upper()
             user_state = (request.user.state_region or "").strip()
 
+            # Discovery scope by plan. Free plan now sees every active
+            # company worldwide (read-only — View / Connect / Edit actions
+            # are still gated by is_free_plan in the row templates).
             scope_q = None
-            if plan_code == "global":
+            if plan_code in ("global", "free"):
                 scope_q = Q(is_active=True)
             elif plan_code == "pro" and user_country:
                 scope_q = _country_match_q(user_country) & Q(is_active=True)
-            elif plan_code in ("basic", "free") and user_country:
+            elif plan_code == "basic" and user_country:
                 base = _country_match_q(user_country) & Q(is_active=True)
                 if user_state:
                     scope_q = base & Q(state__iexact=user_state)
@@ -571,7 +577,12 @@ def company_list(request):
 
     pending_ids = set()
     accepted_ids = set()
-    if is_paid_bu:
+    # Compute connection state for any BU (free / basic / pro / global) so the
+    # Connect button can flip to "Connection requested" / "Connected" on rows
+    # the user has already acted on. Previously this was gated to paid BUs
+    # only, which meant free-plan users always saw a fresh "Connect" button
+    # even after sending a request.
+    if role_code == "business_user":
         page_company_ids = [c.id for c in page_obj.object_list]
         for company_id, status in (
             CompanyConnection.objects
