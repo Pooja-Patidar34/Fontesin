@@ -17,6 +17,77 @@
     font-size: 12px;
     font-weight: 600;
 }
+
+/* Inline validation styling for the edit-user modal. Replaces the
+   former alert() popups: invalid fields get a red border and the
+   error renders under the input via .invalid-feedback. */
+#userEditModal .form-control.is-invalid,
+#userEditModal select.is-invalid {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.15rem rgba(220, 53, 69, .25);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23dc3545'%3E%3Cpath d='M3 3 9 9 M9 3 3 9' stroke-width='1.6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.6rem center;
+  background-size: 0.9rem;
+  padding-right: 2rem;
+}
+#userEditModal .invalid-feedback {
+  display: block;
+  color: #dc3545;
+  font-size: .78rem;
+  margin-top: 4px;
+}
+#userEditModal .invalid-feedback::before {
+  content: "\f06a"; /* fa-exclamation-circle */
+  font-family: "Font Awesome 5 Free";
+  font-weight: 900;
+  margin-right: 4px;
+}
+
+/* Searchable dropdown — small custom widget around a native <select>
+   so big company / tenant lists become typeahead-friendly. */
+.searchable-select { position: relative; }
+.searchable-select__input {
+  width: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='%23495057'%3E%3Cpath d='M3 4l3 4 3-4z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.6rem center;
+  background-size: 12px;
+  padding-right: 2rem;
+}
+.searchable-select__menu {
+  display: none;
+  position: absolute;
+  z-index: 2000;
+  left: 0; right: 0; top: 100%;
+  margin-top: 2px;
+  background: #fff;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(15,23,42,.10);
+  max-height: 260px;
+  overflow-y: auto;
+  font-size: .88rem;
+}
+.searchable-select__menu.is-open { display: block; }
+.searchable-select__opt {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f5f8;
+  color: #1B2E3F;
+}
+.searchable-select__opt:last-child { border-bottom: none; }
+.searchable-select__opt:hover,
+.searchable-select__opt.is-focused { background: #f0f5f8; }
+.searchable-select__opt.is-selected {
+  background: #e6f1fc;
+  font-weight: 600;
+}
+.searchable-select__empty {
+  padding: 10px 12px;
+  color: #94a3b8;
+  font-size: .82rem;
+}
 </style>
 
 <div class="card card-outline card-primary shadow-sm">
@@ -490,6 +561,7 @@ function viewUser(userId) {
 
 function editUser(userId) {
   editUserId = userId;
+  _euClearErrors();
 
   // Constrain DOB picker to a realistic range (age 13–120).
   const dobInput = document.getElementById("eu-dob");
@@ -560,7 +632,51 @@ function editUser(userId) {
     });
 }
 
+// Clear an individual field's error styling once the user changes its
+// value — feels more responsive than waiting for the next Save click.
+document.addEventListener("input", function (e) {
+  if (!e.target.matches("#userEditModal .is-invalid")) return;
+  e.target.classList.remove("is-invalid");
+  const fb = e.target.parentNode &&
+    e.target.parentNode.querySelector(":scope > .invalid-feedback");
+  if (fb) fb.remove();
+});
+document.addEventListener("change", function (e) {
+  if (!e.target.matches("#userEditModal .is-invalid")) return;
+  e.target.classList.remove("is-invalid");
+  const fb = e.target.parentNode &&
+    e.target.parentNode.querySelector(":scope > .invalid-feedback");
+  if (fb) fb.remove();
+});
+
+// Inline validation helpers for the edit-user modal. Replaces native
+// alert() popups with red border + per-field error message under the
+// input, matching the rest of the app's form-error UX.
+function _euClearErrors() {
+  document.querySelectorAll("#userEditModal .is-invalid")
+    .forEach(el => el.classList.remove("is-invalid"));
+  document.querySelectorAll("#userEditModal .invalid-feedback")
+    .forEach(el => el.remove());
+}
+
+function _euFieldError(inputEl, message, focus) {
+  if (!inputEl) return;
+  inputEl.classList.add("is-invalid");
+  // Append the error right after the input (or after its wrapper if
+  // the input is wrapped — e.g. select2). Skip if one is already there.
+  const parent = inputEl.parentNode;
+  if (parent && !parent.querySelector(":scope > .invalid-feedback")) {
+    const fb = document.createElement("div");
+    fb.className = "invalid-feedback";
+    fb.textContent = message;
+    parent.appendChild(fb);
+  }
+  if (focus) inputEl.focus();
+}
+
 function saveUserEdit() {
+  _euClearErrors();
+
   const nameInput = document.getElementById("eu-name");
   const phoneInput = document.getElementById("eu-phone");
   const countrySelect = document.getElementById("eu-country");
@@ -568,100 +684,78 @@ function saveUserEdit() {
   const companySelect = document.getElementById("eu-company");
   const roleSelect = document.getElementById("eu-role");
 
+  const errors = [];
+
   const fullName = nameInput.value.trim();
   if (!fullName) {
-    alert("Full name is required.");
-    nameInput.focus();
-    return;
+    errors.push([nameInput, "Full name is required."]);
   }
-  const parts = fullName.split(" ");
+  const parts = (fullName || "").split(" ");
 
   const phoneRaw = phoneInput.value.trim();
   if (!phoneRaw) {
-    alert("Phone is required.");
-    phoneInput.focus();
-    return;
-  }
-  const digitCount = (phoneRaw.match(/\d/g) || []).length;
-  const formatOk = /^\+?[\d\s\-()]{7,20}$/.test(phoneRaw);
-  if (!formatOk || digitCount < 7 || digitCount > 15) {
-    alert("Phone number must contain 7 to 15 digits. It may include a leading + and spaces, hyphens, or parentheses.");
-    phoneInput.focus();
-    return;
+    errors.push([phoneInput, "Phone is required."]);
+  } else {
+    const digitCount = (phoneRaw.match(/\d/g) || []).length;
+    const formatOk = /^\+?[\d\s\-()]{7,20}$/.test(phoneRaw);
+    if (!formatOk || digitCount < 7 || digitCount > 15) {
+      errors.push([phoneInput,
+        "Enter 7–15 digits. Optional leading + and spaces, hyphens or parentheses."]);
+    }
   }
 
-  if (!countrySelect.value) {
-    alert("Country is required.");
-    countrySelect.focus();
-    return;
-  }
-  if (!statusSelect.value) {
-    alert("Status is required.");
-    statusSelect.focus();
-    return;
-  }
-  if (!companySelect.value) {
-    alert("Company is required.");
-    companySelect.focus();
-    return;
-  }
-  if (!roleSelect.value) {
-    alert("Role is required.");
-    roleSelect.focus();
-    return;
-  }
+  if (!countrySelect.value) errors.push([countrySelect, "Country is required."]);
+  if (!statusSelect.value)  errors.push([statusSelect,  "Status is required."]);
+  if (!companySelect.value) errors.push([companySelect, "Company is required."]);
+  if (!roleSelect.value)    errors.push([roleSelect,    "Role is required."]);
 
-  // Optional fields — validated only when filled.
+  // Optional fields — only validated when filled.
   const dobInput = document.getElementById("eu-dob");
   const dobRaw = dobInput.value;
   if (dobRaw) {
     const dobDate = new Date(dobRaw);
     if (isNaN(dobDate.getTime())) {
-      alert("Date of birth is invalid.");
-      dobInput.focus();
-      return;
-    }
-    const now = new Date();
-    let age = now.getFullYear() - dobDate.getFullYear();
-    const m = now.getMonth() - dobDate.getMonth();
-    if (m < 0 || (m === 0 && now.getDate() < dobDate.getDate())) age--;
-    if (age < 13 || age > 120) {
-      alert("Date of birth must correspond to an age between 13 and 120.");
-      dobInput.focus();
-      return;
+      errors.push([dobInput, "Date of birth is invalid."]);
+    } else {
+      const now = new Date();
+      let age = now.getFullYear() - dobDate.getFullYear();
+      const m = now.getMonth() - dobDate.getMonth();
+      if (m < 0 || (m === 0 && now.getDate() < dobDate.getDate())) age--;
+      if (age < 13 || age > 120) {
+        errors.push([dobInput, "Age must be between 13 and 120."]);
+      }
     }
   }
 
   const bioInput = document.getElementById("eu-bio");
   const bioVal = bioInput.value.trim();
   if (bioVal && (bioVal.length < 10 || bioVal.length > 500)) {
-    alert("Bio must be between 10 and 500 characters.");
-    bioInput.focus();
-    return;
+    errors.push([bioInput, "Bio must be 10–500 characters."]);
   }
 
   const notesInput = document.getElementById("eu-notes");
   const notesVal = notesInput.value.trim();
   if (notesVal && (notesVal.length < 5 || notesVal.length > 1000)) {
-    alert("Notes must be between 5 and 1000 characters.");
-    notesInput.focus();
-    return;
+    errors.push([notesInput, "Notes must be 5–1000 characters."]);
   }
 
   const placeRe = /^[A-Za-zÀ-ɏ][A-Za-zÀ-ɏ\s.\-']{1,49}$/;
   const cityInput = document.getElementById("eu-city");
   const cityVal = cityInput.value.trim();
   if (cityVal && !placeRe.test(cityVal)) {
-    alert("City must be 2–50 characters and contain only letters, spaces, dots, hyphens, or apostrophes.");
-    cityInput.focus();
-    return;
+    errors.push([cityInput,
+      "City must be 2–50 letters, spaces, dots, hyphens or apostrophes."]);
   }
 
   const stateInput = document.getElementById("eu-state");
   const stateVal = stateInput.value.trim();
   if (stateVal && !placeRe.test(stateVal)) {
-    alert("State / Region must be 2–50 characters and contain only letters, spaces, dots, hyphens, or apostrophes.");
-    stateInput.focus();
+    errors.push([stateInput,
+      "State / Region must be 2–50 letters, spaces, dots, hyphens or apostrophes."]);
+  }
+
+  if (errors.length) {
+    errors.forEach(([el, msg], i) => _euFieldError(el, msg, i === 0));
     return;
   }
 
@@ -707,13 +801,24 @@ function saveUserEdit() {
   .then(res => res.json().then(data => ({ ok: res.ok, data })))
   .then(({ ok, data }) => {
     if (!ok) {
-      alert((data && data.message) || "Failed to save user.");
+      const msg = (data && data.message) || "Failed to save user.";
+      if (typeof showToast === "function") {
+        showToast(msg, "error");
+      } else {
+        // Last resort — surface in the modal footer area.
+        _euFieldError(nameInput, msg, true);
+      }
       return;
     }
     // refresh list, keep filters
     window.location.href = window.location.pathname + window.location.search;
   })
-  .catch(err => console.error("Save failed:", err));
+  .catch(err => {
+    console.error("Save failed:", err);
+    if (typeof showToast === "function") {
+      showToast("Network error. Please try again.", "error");
+    }
+  });
 }
 
 
@@ -807,6 +912,100 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  /* ========= SEARCHABLE DROPDOWN ========= */
+
+  // Wraps a native <select> with a text input + filterable dropdown panel.
+  // The <select> is kept (hidden) so the form posts the chosen value as
+  // before — no other code needs to change.
+  function makeSearchable(selectEl, opts) {
+    if (!selectEl || selectEl.dataset.searchableMounted === "1") return;
+    selectEl.dataset.searchableMounted = "1";
+
+    var placeholder = (opts && opts.placeholder) || "Search…";
+
+    var wrap = document.createElement("div");
+    wrap.className = "searchable-select";
+    selectEl.parentNode.insertBefore(wrap, selectEl);
+    wrap.appendChild(selectEl);
+    selectEl.style.display = "none";
+    selectEl.setAttribute("aria-hidden", "true");
+
+    var input = document.createElement("input");
+    input.type = "text";
+    input.className = "form-control searchable-select__input";
+    input.placeholder = placeholder;
+    input.autocomplete = "off";
+    wrap.appendChild(input);
+
+    var menu = document.createElement("div");
+    menu.className = "searchable-select__menu";
+    wrap.appendChild(menu);
+
+    function selectedOptionText() {
+      var opt = selectEl.options[selectEl.selectedIndex];
+      return opt && opt.value ? opt.text : "";
+    }
+
+    function syncInputFromSelect() {
+      input.value = selectedOptionText();
+    }
+
+    function buildOptions(filterText) {
+      var q = (filterText || "").trim().toLowerCase();
+      menu.innerHTML = "";
+      var any = false;
+      Array.prototype.forEach.call(selectEl.options, function (opt) {
+        if (!opt.value) return;  // skip the empty placeholder
+        var text = opt.text;
+        if (q && text.toLowerCase().indexOf(q) === -1) return;
+        any = true;
+        var row = document.createElement("div");
+        row.className = "searchable-select__opt";
+        if (opt.value === selectEl.value) row.classList.add("is-selected");
+        row.dataset.value = opt.value;
+        row.textContent = text;
+        row.addEventListener("mousedown", function (e) {
+          e.preventDefault();  // keep focus on input until we close
+          selectEl.value = opt.value;
+          selectEl.dispatchEvent(new Event("change", { bubbles: true }));
+          input.value = text;
+          closeMenu();
+        });
+        menu.appendChild(row);
+      });
+      if (!any) {
+        var empty = document.createElement("div");
+        empty.className = "searchable-select__empty";
+        empty.textContent = q ? "No match for \"" + q + "\"" : "No options";
+        menu.appendChild(empty);
+      }
+    }
+
+    function openMenu() {
+      buildOptions(input.value);
+      menu.classList.add("is-open");
+    }
+    function closeMenu() {
+      menu.classList.remove("is-open");
+      // Restore the input to the selected option's text — typing without
+      // picking shouldn't leave a stale query in the field.
+      syncInputFromSelect();
+    }
+
+    input.addEventListener("focus", openMenu);
+    input.addEventListener("input", function () { buildOptions(input.value); menu.classList.add("is-open"); });
+    input.addEventListener("blur", function () { setTimeout(closeMenu, 120); });
+    input.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") { input.blur(); }
+    });
+
+    // Re-sync when the underlying select is changed programmatically
+    // (e.g. by the Tenant → Company cascade further down the file).
+    selectEl.addEventListener("change", syncInputFromSelect);
+
+    syncInputFromSelect();
+  }
+
   /* ========= INIT CREATE MODAL ========= */
 
   window.openAddUserModal = function () {
@@ -817,6 +1016,11 @@ document.addEventListener("DOMContentLoaded", function () {
     fillSelect(document.getElementById("au-ethnicity"), ENUMS.ethnicity);
     fillSelect(document.getElementById("au-language"), ENUMS.language);
     fillSelect(document.getElementById("au-status"), ENUMS.status);
+
+    // Replace the native company / tenant selects with searchable widgets
+    // the first time the modal opens. Subsequent opens are no-ops.
+    makeSearchable(document.getElementById("au-company"), { placeholder: "Search company…" });
+    makeSearchable(document.getElementById("au-tenant"),  { placeholder: "Search tenant…" });
 
     $('#addUserModal').modal('show');
   };

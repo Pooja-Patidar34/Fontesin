@@ -24,6 +24,34 @@ def region_jp(request):
     return render(request, 'regions/region-jp.html')
 
 
+# Country profiles that don't have full per-country templates yet land on
+# the same "Coming soon" page, which carries enough info (name, flag,
+# planned roll-out year) to set expectations.
+COMING_SOON_REGIONS = {
+    "gb": {"name": "United Kingdom", "flag": "🇬🇧", "status": "Active · Year 1", "status_class": "status-badge--active"},
+    "fr": {"name": "France",         "flag": "🇫🇷", "status": "Active · Year 1", "status_class": "status-badge--active"},
+    "nl": {"name": "Netherlands",    "flag": "🇳🇱", "status": "Active · Year 1", "status_class": "status-badge--active"},
+    "sg": {"name": "Singapore",      "flag": "🇸🇬", "status": "Planned · Year 2", "status_class": "status-badge--planned"},
+    "ca": {"name": "Canada",         "flag": "🇨🇦", "status": "Planned · Year 2", "status_class": "status-badge--planned"},
+    "br": {"name": "Brazil",         "flag": "🇧🇷", "status": "Planned · Year 3", "status_class": "status-badge--planned"},
+    "in": {"name": "India",          "flag": "🇮🇳", "status": "Planned · Year 3", "status_class": "status-badge--planned"},
+}
+
+
+def region_coming_soon(request, code):
+    """Lightweight placeholder for regions that don't yet have a full
+    per-country template. Renders the country name, flag, and planned
+    roll-out so visitors get expectation-setting instead of a 404."""
+    info = COMING_SOON_REGIONS.get((code or "").lower())
+    if not info:
+        from django.http import Http404
+        raise Http404("Unknown region")
+    return render(request, "regions/coming_soon.html", {
+        "country": info,
+        "code": code.upper(),
+    })
+
+
 # Maps the target_region labels from templates/auth/apply.html:773-805 to
 # approximate [lat, lng] so Leaflet can drop a marker. Unknown values fall
 # back to a generic "Other" pin so the consultant still appears on the map.

@@ -287,7 +287,7 @@ def commission_list(request):
     except (PageNotAnInteger, EmptyPage):
         page_obj = paginator.page(1)
 
-    return render(request, "dashboard/commissions.html", {
+    ctx = {
         "commissions": page_obj,
         "page_obj": page_obj,
         "status_filter": status_filter,
@@ -296,7 +296,13 @@ def commission_list(request):
         "pending_by_currency": pending_by_currency,
         "admin_totals_by_currency": admin_totals_by_currency,
         "viewing_as_admin": request.user.is_superuser,
-    })
+    }
+    # AJAX tab / pagination switch → return only the panel partial so the
+    # caller can swap #commissions-panel in place without reloading the
+    # whole dashboard chrome.
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return render(request, "dashboard/_commissions_panel.html", ctx)
+    return render(request, "dashboard/commissions.html", ctx)
 
 
 @login_required

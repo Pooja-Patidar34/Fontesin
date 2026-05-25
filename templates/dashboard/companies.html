@@ -95,6 +95,52 @@
   #companyModal #company-form.was-validated textarea:invalid {
     border-color: #dc3545;
     box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    /* Red cross icon on the right edge of invalid fields. Replaces the
+       built-in browser-quirky placement so it stays consistent. */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23dc3545'%3E%3Cpath d='M3 3 9 9 M9 3 3 9' stroke-width='1.6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
+    background-size: 0.9rem;
+    padding-right: 2rem;
+  }
+
+  /* Suppress Bootstrap's green-check styling. We treat "no error" as the
+     baseline — green ticks on empty optional fields were misleading users
+     into thinking the field was valid when it was simply unfilled. */
+  #companyModal #company-form .form-control:valid,
+  #companyModal #company-form .form-control.is-valid,
+  #companyModal #company-form.was-validated .form-control:valid {
+    background-image: none !important;
+    border-color: #ced4da !important;
+    box-shadow: none !important;
+    padding-right: 0.75rem !important;
+  }
+  #companyModal #company-form .valid-feedback,
+  #companyModal #company-form .valid-tooltip { display: none !important; }
+
+  /* The hand-rolled .is-invalid path uses the same red cross + message
+     styling as the HTML5 :invalid path so client- and server-side
+     validation look identical. */
+  #companyModal #company-form .form-control.is-invalid {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23dc3545'%3E%3Cpath d='M3 3 9 9 M9 3 3 9' stroke-width='1.6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
+    background-size: 0.9rem;
+    padding-right: 2rem;
+  }
+  #companyModal #company-form .invalid-feedback {
+    display: block;
+    color: #dc3545;
+    font-size: .78rem;
+    margin-top: 4px;
+  }
+  #companyModal #company-form .invalid-feedback::before {
+    content: "\f06a";  /* fa-exclamation-circle */
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    margin-right: 4px;
   }
 
   /* Status pills for the company-cert-badge in the modal header. */

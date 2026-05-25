@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,28 +8,28 @@
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <meta name="apple-mobile-web-app-title" content="FONTESIN"/>
-  <link rel="manifest" href="manifest.json"/>
-  <link rel="apple-touch-icon" href="images/icons/icon-192.png"/>
+  <link rel="manifest" href="{% static 'manifest.json' %}"/>
+  <link rel="apple-touch-icon" href="{% static 'adminlte/images/icons/icon-192.png' %}"/>
   <title>Germany – FONTESIN Region</title>
   <meta name="description" content="FONTESIN region profile for Germany: GDP, population, legal forms, credit rating, and business potential."/>
-  <link rel="stylesheet" href="css/style.css"/>
+  <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
 </head>
 <body>
 
 <nav class="navbar">
   <div class="navbar__inner">
-    <a href="index.html" class="navbar__logo"><img src="images/logo_full.png" alt="FONTESIN" height="38"/></a>
+    <a href="{% url 'home' %}" class="navbar__logo"><img src="{% static 'adminlte/images/fontesin-logo.png' %}" alt="FONTESIN" height="38"/></a>
     <div class="navbar__nav">
-      <a href="index.html">Home</a>
-      <a href="world-map.html">World Map</a>
-      <a href="about.html">About</a>
-      <a href="careers.html">Careers</a>
-      <a href="contact.html">Contact</a>
+      <a href="{% url 'home' %}">Home</a>
+      <a href="{% url 'worldmap' %}">World Map</a>
+      <a href="{% url 'about' %}">About</a>
+      <a href="{% url 'career' %}">Careers</a>
+      <a href="{% url 'contact' %}">Contact</a>
     </div>
     <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
     <div class="navbar__actions">
-      <a href="login.html" class="btn btn-outline btn-sm">Log In</a>
-      <a href="register.html" class="btn btn-primary btn-sm">Get Started</a>
+      <a href="{% url 'login' %}" class="btn btn-outline btn-sm">Log In</a>
+      <a href="{% url 'register' %}" class="btn btn-primary btn-sm">Get Started</a>
     </div>
   </div>
 </nav>
@@ -37,9 +38,9 @@
 <section class="country-hero">
   <div class="container">
     <div class="breadcrumb">
-      <a href="index.html">Home</a>
+      <a href="{% url 'home' %}">Home</a>
       <span>/</span>
-      <a href="world-map.html">World Map</a>
+      <a href="{% url 'worldmap' %}">World Map</a>
       <span>/</span>
       <span>Germany</span>
     </div>
@@ -212,8 +213,8 @@
         <p style="color:rgba(199,204,209,.7);max-width:480px;">Apply for franchise, request activation, or contact our regional team to explore opportunities in Germany.</p>
       </div>
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <a href="register.html" class="btn btn--white">Apply for Franchise</a>
-        <a href="contact.html" class="btn btn-outline">Contact HQ</a>
+        <a href="{% url 'register' %}" class="btn btn--white">Apply for Franchise</a>
+        <a href="{% url 'contact' %}" class="btn btn-outline">Contact HQ</a>
       </div>
     </div>
 
@@ -224,33 +225,33 @@
   <div class="container">
     <div class="footer__grid">
       <div>
-        <div class="footer__logo"><img src="images/logo_full.png" alt="FONTESIN" style="height:32px;width:auto;filter:brightness(0) invert(1);margin-bottom:12px;"/></div>
+        <div class="footer__logo"><img src="{% static 'adminlte/images/fontesin-logo.png' %}" alt="FONTESIN" style="height:32px;width:auto;filter:brightness(0) invert(1);margin-bottom:12px;"/></div>
         <p class="footer__brand-desc">A deep-tech global business infrastructure platform connecting companies, professionals, and markets across languages, borders, and systems.</p>
       </div>
       <div>
         <p class="footer__heading">Platform</p>
         <div class="footer__links">
-          <a href="world-map.html">World Map</a>
-          <a href="register.html">Get Started</a>
-          <a href="login.html">Log In</a>
+          <a href="{% url 'worldmap' %}">World Map</a>
+          <a href="{% url 'register' %}">Get Started</a>
+          <a href="{% url 'login' %}">Log In</a>
         </div>
       </div>
       <div>
         <p class="footer__heading">Company</p>
         <div class="footer__links">
-          <a href="about.html">About Us</a>
-          <a href="careers.html">Careers</a>
-          <a href="contact.html">Contact</a>
+          <a href="{% url 'about' %}">About Us</a>
+          <a href="{% url 'career' %}">Careers</a>
+          <a href="{% url 'contact' %}">Contact</a>
         </div>
       </div>
       <div>
         <p class="footer__heading">Regions</p>
         <div class="footer__links">
-          <a href="region-us.html">United States</a>
-          <a href="region-de.html">Germany</a>
-          <a href="region-cz.html">Czech Republic</a>
-          <a href="region-ae.html">UAE</a>
-          <a href="region-jp.html">Japan</a>
+          <a href="{% url 'region_us' %}">United States</a>
+          <a href="{% url 'region_de' %}">Germany</a>
+          <a href="{% url 'region_cz' %}">Czech Republic</a>
+          <a href="{% url 'region_ae' %}">UAE</a>
+          <a href="{% url 'region_jp' %}">Japan</a>
         </div>
       </div>
     </div>
@@ -261,7 +262,7 @@
   </div>
 </footer>
 
-<script src="js/main.js"></script>
+<script src="{% static 'adminlte/js/main.js' %}"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", function() {

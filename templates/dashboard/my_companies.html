@@ -241,7 +241,9 @@
 
     html += sectionHeading("Status");
     html += row("Certification", d.certification_status);
-    html += row("Active", d.is_active ? "Yes" : "No");
+    if (typeof d.is_active === "boolean") {
+      html += row("Active", d.is_active ? "Yes" : "No");
+    }
 
     body.innerHTML = html;
   }

@@ -96,151 +96,9 @@
     </div>
   </div>
 
-  {# Status filter tabs. #}
-  <div class="card-body" style="padding:.75rem 1.25rem; background:#f8f9fa; border-bottom:1px solid #e9ecef;">
-    <div class="d-flex flex-wrap" style="gap:.5rem;">
-      <a href="{% url 'commissions' %}"
-         class="btn btn-sm {% if not status_filter %}btn-primary{% else %}btn-outline-secondary{% endif %}">
-        All
-      </a>
-      <a href="?status=pending"
-         class="btn btn-sm {% if status_filter == 'pending' %}btn-warning{% else %}btn-outline-warning{% endif %}">
-        Pending
-      </a>
-      <a href="?status=paid"
-         class="btn btn-sm {% if status_filter == 'paid' %}btn-success{% else %}btn-outline-success{% endif %}">
-        Paid
-      </a>
-      <a href="?status=cancelled"
-         class="btn btn-sm {% if status_filter == 'cancelled' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
-        Cancelled
-      </a>
-    </div>
+  <div id="commissions-panel">
+    {% include "dashboard/_commissions_panel.html" %}
   </div>
-
-  <div class="card-body p-0">
-    <div class="table-responsive commissions-scroll">
-      <table class="table table-hover mb-0 commissions-table">
-        <thead class="bg-light">
-          <tr>
-            <th>Date</th>
-            {% if viewing_as_admin %}<th>Consultant</th>{% endif %}
-            <th>Business User</th>
-            <th>Company</th>
-            <th>Plan</th>
-            <th class="text-right" style="white-space:nowrap;">Subscription</th>
-            <th class="text-right" style="white-space:nowrap;">Consultant Share</th>
-            <th class="text-right" style="white-space:nowrap;">Admin Share</th>
-            <th class="text-center" style="white-space:nowrap;">Status</th>
-            <th class="text-center">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for c in commissions %}
-          <tr>
-            <td style="white-space:nowrap;">{{ c.created_at|date:"M d, Y" }}</td>
-            {% if viewing_as_admin %}
-            <td class="email-cell" title="{{ c.consultant.email }}">{{ c.consultant.email }}</td>
-            {% endif %}
-            <td class="email-cell" title="{{ c.business_user.email }}">{{ c.business_user.email }}</td>
-            <td class="company-cell" title="{{ c.company.name|default:'-' }}">{{ c.company.name|default:"-" }}</td>
-            <td>{{ c.subscription.plan.name }}</td>
-            <td class="text-right" style="white-space:nowrap;">{{ c.subscription_amount|floatformat:2 }} {{ c.currency }}</td>
-            <td class="text-right" style="white-space:nowrap;">
-              <strong style="color:#15803d;">{{ c.commission_amount|floatformat:2 }} {{ c.currency }}</strong>
-              <div class="text-muted small">{{ c.rate_percent|floatformat:0 }}%</div>
-            </td>
-            <td class="text-right" style="white-space:nowrap;">
-              <strong>{{ c.admin_share|floatformat:2 }} {{ c.currency }}</strong>
-              <div class="text-muted small">{{ c.admin_share_percent|floatformat:0 }}%</div>
-            </td>
-            <td class="text-center" style="white-space:nowrap;">
-              {% if c.status == "pending" %}
-                <span class="badge badge-warning">Pending</span>
-              {% elif c.status == "paid" %}
-                <span class="badge badge-success" title="Paid on {{ c.paid_at|date:'M d, Y' }}">Paid</span>
-              {% elif c.status == "cancelled" %}
-                <span class="badge badge-secondary">Cancelled</span>
-              {% else %}
-                <span class="badge badge-secondary">{{ c.get_status_display }}</span>
-              {% endif %}
-            </td>
-            <td class="text-center">
-              <div class="action-stack">
-                {% if c.invoice_id %}
-                <button type="button"
-                        class="btn btn-outline-primary btn-view-invoice view-commission-invoice"
-                        data-commission-id="{{ c.id }}"
-                        title="View invoice details">
-                  <i class="fas fa-eye"></i> View
-                </button>
-                <a href="{% url 'commission-invoice-export' c.id %}"
-                   class="btn btn-outline-success btn-export-invoice"
-                   title="Download invoice as Excel (.xlsx)">
-                  <i class="fas fa-file-excel"></i> Export
-                </a>
-                {% endif %}
-                {% if viewing_as_admin %}
-                  {% if c.status == "pending" %}
-                  <form method="post" action="{% url 'commission-mark-paid' c.id %}" id="commission-paid-form-{{ c.id }}">
-                    {% csrf_token %}
-                    <button type="button" class="btn btn-success btn-mark-paid"
-                            title="Mark commission as paid"
-                            onclick="appConfirm({
-                              kind: 'success',
-                              title: 'Mark Commission as Paid?',
-                              text: 'This records the disbursement of <strong>{{ c.commission_amount|floatformat:2 }} {{ c.currency }}</strong> to <strong>{{ c.consultant.email|escapejs }}</strong>. This action cannot be undone.',
-                              okLabel: 'Mark as Paid',
-                              okIcon: 'fa-check',
-                              onConfirm: function(){ document.getElementById('commission-paid-form-{{ c.id }}').submit(); }
-                            })">
-                      <i class="fas fa-check"></i> Mark as Paid
-                    </button>
-                  </form>
-                  {% elif c.status == "paid" %}
-                  <span class="badge badge-success" title="Paid on {{ c.paid_at|date:'M d, Y' }}">
-                    <i class="fas fa-check"></i> Paid
-                  </span>
-                  {% endif %}
-                {% endif %}
-              </div>
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="{% if viewing_as_admin %}10{% else %}9{% endif %}" class="text-center text-muted py-4">
-              {% if viewing_as_admin %}No commissions recorded yet.{% else %}You haven't earned any commissions yet. They appear here when a business user linked to one of your companies subscribes to a paid plan.{% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  {% if commissions.paginator.num_pages > 1 %}
-  <div class="card-footer">
-    <ul class="pagination pagination-sm justify-content-end mb-0">
-      {% if commissions.has_previous %}
-        <li class="page-item">
-          <a class="page-link" href="?{% if status_filter %}status={{ status_filter }}&{% endif %}page={{ commissions.previous_page_number }}">Previous</a>
-        </li>
-      {% else %}
-        <li class="page-item disabled"><span class="page-link">Previous</span></li>
-      {% endif %}
-      <li class="page-item active">
-        <span class="page-link">{{ commissions.number }} / {{ commissions.paginator.num_pages }}</span>
-      </li>
-      {% if commissions.has_next %}
-        <li class="page-item">
-          <a class="page-link" href="?{% if status_filter %}status={{ status_filter }}&{% endif %}page={{ commissions.next_page_number }}">Next</a>
-        </li>
-      {% else %}
-        <li class="page-item disabled"><span class="page-link">Next</span></li>
-      {% endif %}
-    </ul>
-  </div>
-  {% endif %}
 
 </div>
 
@@ -280,16 +138,59 @@ document.addEventListener("DOMContentLoaded", function () {
     '<i class="fas fa-spinner fa-spin fa-2x mb-2"></i>' +
     '<div>Loading invoice…</div></div>';
 
-  document.querySelectorAll(".view-commission-invoice").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      var commissionId = btn.getAttribute("data-commission-id");
-      if (!commissionId) return;
+  // Delegated so the click handler survives the AJAX tab/pager swap
+  // (the panel partial gets a fresh set of .view-commission-invoice
+  // buttons every time the user changes filter).
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest(".view-commission-invoice");
+    if (!btn) return;
+    var commissionId = btn.getAttribute("data-commission-id");
+    if (!commissionId) return;
 
-      body.innerHTML = loadingHtml;
-      $("#commissionInvoiceModal").modal("show");
+    body.innerHTML = loadingHtml;
+    $("#commissionInvoiceModal").modal("show");
 
-      fetch("/commissions/" + commissionId + "/invoice/", {
-        headers: { "X-Requested-With": "XMLHttpRequest" },
+    fetch("/commissions/" + commissionId + "/invoice/", {
+      headers: { "X-Requested-With": "XMLHttpRequest" },
+      credentials: "same-origin",
+    })
+      .then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.text();
+      })
+      .then(function (html) {
+        body.innerHTML = html;
+      })
+      .catch(function () {
+        body.innerHTML =
+          '<div class="text-center py-5 text-danger">' +
+          '<i class="fas fa-exclamation-triangle fa-2x mb-2"></i>' +
+          '<div>Failed to load invoice details.</div></div>';
+      });
+  });
+
+  // AJAX-swap the commissions panel on tab / pagination clicks instead
+  // of doing a full page reload. The view returns _commissions_panel.html
+  // when called with X-Requested-With.
+  var panel = document.getElementById("commissions-panel");
+  if (panel) {
+    document.addEventListener("click", function (e) {
+      var link = e.target.closest(
+        "#commissions-panel a.commissions-tab, " +
+        "#commissions-panel .pagination a.page-link"
+      );
+      if (!link) return;
+      // Ignore disabled / inert page-links.
+      if (link.closest(".page-item.disabled") || link.closest(".page-item.active")) return;
+      var href = link.getAttribute("href");
+      if (!href || href === "#") return;
+
+      e.preventDefault();
+      var url = new URL(href, window.location.href).toString();
+
+      panel.style.opacity = ".5";
+      fetch(url, {
+        headers: { "X-Requested-With": "XMLHttpRequest", "Accept": "text/html" },
         credentials: "same-origin",
       })
         .then(function (r) {
@@ -297,16 +198,20 @@ document.addEventListener("DOMContentLoaded", function () {
           return r.text();
         })
         .then(function (html) {
-          body.innerHTML = html;
+          panel.innerHTML = html;
+          panel.style.opacity = "";
+          // Keep the URL bar in sync so refresh / back behave intuitively.
+          window.history.replaceState({}, "", url);
+          panel.scrollIntoView({ behavior: "smooth", block: "start" });
         })
         .catch(function () {
-          body.innerHTML =
-            '<div class="text-center py-5 text-danger">' +
-            '<i class="fas fa-exclamation-triangle fa-2x mb-2"></i>' +
-            '<div>Failed to load invoice details.</div></div>';
+          panel.style.opacity = "";
+          if (typeof showToast === "function") {
+            showToast("Failed to load. Please try again.", "error");
+          }
         });
     });
-  });
+  }
 });
 </script>
 {% endblock %}

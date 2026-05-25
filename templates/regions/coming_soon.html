@@ -1,0 +1,78 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#253D51"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="FONTESIN"/>
+  <link rel="manifest" href="{% static 'manifest.json' %}"/>
+  <link rel="apple-touch-icon" href="{% static 'adminlte/images/icons/icon-192.png' %}"/>
+  <title>{{ country.name }} – FONTESIN Region (coming soon)</title>
+  <meta name="description" content="FONTESIN region profile for {{ country.name }} is being prepared."/>
+  <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar__inner">
+    <a href="{% url 'home' %}" class="navbar__logo"><img src="{% static 'adminlte/images/fontesin-logo.png' %}" alt="FONTESIN" height="38"/></a>
+    <div class="navbar__nav">
+      <a href="{% url 'home' %}">Home</a>
+      <a href="{% url 'worldmap' %}">World Map</a>
+      <a href="{% url 'about' %}">About</a>
+      <a href="{% url 'career' %}">Careers</a>
+      <a href="{% url 'contact' %}">Contact</a>
+    </div>
+    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
+    <div class="navbar__actions">
+      <a href="{% url 'login' %}" class="btn btn-outline btn-sm">Log In</a>
+      <a href="{% url 'register' %}" class="btn btn-primary btn-sm">Get Started</a>
+    </div>
+  </div>
+</nav>
+
+<section class="country-hero">
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="{% url 'home' %}">Home</a>
+      <span>/</span>
+      <a href="{% url 'worldmap' %}">World Map</a>
+      <span>/</span>
+      <span>{{ country.name }}</span>
+    </div>
+    <div class="country-hero__flag">{{ country.flag }}</div>
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:8px;">
+      <h1>{{ country.name }}</h1>
+      <span class="status-badge {{ country.status_class }}">{{ country.status }}</span>
+    </div>
+    <div class="country-hero__meta">
+      <div class="country-hero__meta-item">
+        ISO code · {{ code }}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section--light">
+  <div class="container">
+    <div style="background:#fff;border-radius:12px;padding:48px 32px;text-align:center;border:1px solid rgba(37,61,81,.06);box-shadow:0 2px 8px rgba(0,0,0,.05);max-width:720px;margin:24px auto;">
+      <div style="font-size:3rem;margin-bottom:8px;">{{ country.flag }}</div>
+      <h2 style="margin-bottom:12px;">{{ country.name }} region profile is coming soon</h2>
+      <p style="color:var(--text-secondary, #5F7383);margin-bottom:24px;">
+        We're preparing the full economic and regulatory data for this region. In the meantime, you can
+        explore other regions on the world map or get in touch if you'd like to activate it sooner.
+      </p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <a href="{% url 'worldmap' %}" class="btn btn-outline btn-sm">Back to World Map</a>
+        <a href="{% url 'contact' %}" class="btn btn-primary btn-sm">Request region activation</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script src="{% static 'adminlte/js/main.js' %}"></script>
+</body>
+</html>

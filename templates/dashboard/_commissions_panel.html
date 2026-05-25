@@ -1,0 +1,147 @@
+{# Tabs + table + pagination — extracted so the consultant page can AJAX-
+   swap just this panel when a tab or pager link is clicked, instead of
+   reloading the whole dashboard layout. #}
+<div class="card-body" style="padding:.75rem 1.25rem; background:#f8f9fa; border-bottom:1px solid #e9ecef;">
+  <div class="d-flex flex-wrap" style="gap:.5rem;">
+    <a href="{% url 'commissions' %}"
+       class="btn btn-sm commissions-tab {% if not status_filter %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+      All
+    </a>
+    <a href="?status=pending"
+       class="btn btn-sm commissions-tab {% if status_filter == 'pending' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+      Pending
+    </a>
+    <a href="?status=paid"
+       class="btn btn-sm commissions-tab {% if status_filter == 'paid' %}btn-success{% else %}btn-outline-success{% endif %}">
+      Paid
+    </a>
+    <a href="?status=cancelled"
+       class="btn btn-sm commissions-tab {% if status_filter == 'cancelled' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+      Cancelled
+    </a>
+  </div>
+</div>
+
+<div class="card-body p-0">
+  <div class="table-responsive commissions-scroll">
+    <table class="table table-hover mb-0 commissions-table">
+      <thead class="bg-light">
+        <tr>
+          <th>Date</th>
+          {% if viewing_as_admin %}<th>Consultant</th>{% endif %}
+          <th>Business User</th>
+          <th>Company</th>
+          <th>Plan</th>
+          <th class="text-right" style="white-space:nowrap;">Subscription</th>
+          <th class="text-right" style="white-space:nowrap;">Consultant Share</th>
+          <th class="text-right" style="white-space:nowrap;">Admin Share</th>
+          <th class="text-center" style="white-space:nowrap;">Status</th>
+          <th class="text-center">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in commissions %}
+        <tr>
+          <td style="white-space:nowrap;">{{ c.created_at|date:"M d, Y" }}</td>
+          {% if viewing_as_admin %}
+          <td class="email-cell" title="{{ c.consultant.email }}">{{ c.consultant.email }}</td>
+          {% endif %}
+          <td class="email-cell" title="{{ c.business_user.email }}">{{ c.business_user.email }}</td>
+          <td class="company-cell" title="{{ c.company.name|default:'-' }}">{{ c.company.name|default:"-" }}</td>
+          <td>{{ c.subscription.plan.name }}</td>
+          <td class="text-right" style="white-space:nowrap;">{{ c.subscription_amount|floatformat:2 }} {{ c.currency }}</td>
+          <td class="text-right" style="white-space:nowrap;">
+            <strong style="color:#15803d;">{{ c.commission_amount|floatformat:2 }} {{ c.currency }}</strong>
+            <div class="text-muted small">{{ c.rate_percent|floatformat:0 }}%</div>
+          </td>
+          <td class="text-right" style="white-space:nowrap;">
+            <strong>{{ c.admin_share|floatformat:2 }} {{ c.currency }}</strong>
+            <div class="text-muted small">{{ c.admin_share_percent|floatformat:0 }}%</div>
+          </td>
+          <td class="text-center" style="white-space:nowrap;">
+            {% if c.status == "pending" %}
+              <span class="badge badge-warning">Pending</span>
+            {% elif c.status == "paid" %}
+              <span class="badge badge-success" title="Paid on {{ c.paid_at|date:'M d, Y' }}">Paid</span>
+            {% elif c.status == "cancelled" %}
+              <span class="badge badge-secondary">Cancelled</span>
+            {% else %}
+              <span class="badge badge-secondary">{{ c.get_status_display }}</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            <div class="action-stack">
+              {% if c.invoice_id %}
+              <button type="button"
+                      class="btn btn-outline-primary btn-view-invoice view-commission-invoice"
+                      data-commission-id="{{ c.id }}"
+                      title="View invoice details">
+                <i class="fas fa-eye"></i> View
+              </button>
+              <a href="{% url 'commission-invoice-export' c.id %}"
+                 class="btn btn-outline-success btn-export-invoice"
+                 title="Download invoice as Excel (.xlsx)">
+                <i class="fas fa-file-excel"></i> Export
+              </a>
+              {% endif %}
+              {% if viewing_as_admin %}
+                {% if c.status == "pending" %}
+                <form method="post" action="{% url 'commission-mark-paid' c.id %}" id="commission-paid-form-{{ c.id }}">
+                  {% csrf_token %}
+                  <button type="button" class="btn btn-success btn-mark-paid"
+                          title="Mark commission as paid"
+                          onclick="appConfirm({
+                            kind: 'success',
+                            title: 'Mark Commission as Paid?',
+                            text: 'This records the disbursement of <strong>{{ c.commission_amount|floatformat:2 }} {{ c.currency }}</strong> to <strong>{{ c.consultant.email|escapejs }}</strong>. This action cannot be undone.',
+                            okLabel: 'Mark as Paid',
+                            okIcon: 'fa-check',
+                            onConfirm: function(){ document.getElementById('commission-paid-form-{{ c.id }}').submit(); }
+                          })">
+                    <i class="fas fa-check"></i> Mark as Paid
+                  </button>
+                </form>
+                {% elif c.status == "paid" %}
+                <span class="badge badge-success" title="Paid on {{ c.paid_at|date:'M d, Y' }}">
+                  <i class="fas fa-check"></i> Paid
+                </span>
+                {% endif %}
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="{% if viewing_as_admin %}10{% else %}9{% endif %}" class="text-center text-muted py-4">
+            {% if viewing_as_admin %}No commissions recorded yet.{% else %}You haven't earned any commissions yet. They appear here when a business user linked to one of your companies subscribes to a paid plan.{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if commissions.paginator.num_pages > 1 %}
+<div class="card-footer">
+  <ul class="pagination pagination-sm justify-content-end mb-0">
+    {% if commissions.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?{% if status_filter %}status={{ status_filter }}&{% endif %}page={{ commissions.previous_page_number }}">Previous</a>
+      </li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">Previous</span></li>
+    {% endif %}
+    <li class="page-item active">
+      <span class="page-link">{{ commissions.number }} / {{ commissions.paginator.num_pages }}</span>
+    </li>
+    {% if commissions.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?{% if status_filter %}status={{ status_filter }}&{% endif %}page={{ commissions.next_page_number }}">Next</a>
+      </li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">Next</span></li>
+    {% endif %}
+  </ul>
+</div>
+{% endif %}
