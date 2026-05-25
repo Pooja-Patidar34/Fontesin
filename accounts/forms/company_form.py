@@ -383,14 +383,16 @@ class CompanyForm(forms.ModelForm):
             return
 
         # Business Users may not edit the contact-person fields (First Name,
-        # Last Name, Contact Email) — those are filled in / curated by the
-        # certifying consultant. Mark the form fields disabled so any
-        # submitted value is ignored on save and the existing value is
-        # preserved server-side, even if the inputs were tampered with
-        # client-side. Everything else on the form remains editable for
-        # the BU when viewing their own company.
+        # Last Name, Contact Email) AFTER the company has been created — at
+        # that point those fields belong to the certifying consultant. They
+        # ARE editable on the Add Company form (no saved instance yet) so
+        # the BU can give an initial contact when filing the request; once
+        # saved, the consultant takes over. tenant_id is the reliable
+        # "already saved" signal because Company.id defaults to uuid4 even
+        # for unsaved instances.
         role_code = (user.role.code or "").lower() if getattr(user, "role", None) else ""
-        if not user.is_superuser and role_code == "business_user":
+        instance_is_saved = bool(self.instance and self.instance.tenant_id)
+        if not user.is_superuser and role_code == "business_user" and instance_is_saved:
             for fld in ("contact_first_name", "contact_last_name", "contact_email"):
                 if fld in self.fields:
                     self.fields[fld].disabled = True

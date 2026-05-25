@@ -760,17 +760,28 @@
             populateCompanyModal when the modal opens. Hidden when the
             company has no certified_by user (renders empty rows otherwise).
           {% endcomment %}
-          <div id="company-consultant-section" style="display:none;">
+          <div id="company-consultant-section"{% if not is_business_user %} style="display:none;"{% endif %}>
             <div class="section-title">Certifying Consultant</div>
+            {% if is_business_user %}
+            <small class="form-text text-muted" id="company-consultant-pending"
+                   style="margin-bottom:10px; display:block;">
+              <i class="fas fa-info-circle mr-1"></i>
+              A consultant will be assigned when your certification request is reviewed.
+              Their name and contact details will appear here automatically and are
+              maintained by them &mdash; not editable from your account.
+            </small>
+            {% endif %}
             <div class="form-row">
               <div class="form-group col-md-6">
                 <label>Name</label>
                 <input type="text" class="form-control" id="company-consultant-name"
+                       placeholder="Not yet assigned"
                        readonly disabled aria-readonly="true">
               </div>
               <div class="form-group col-md-6">
                 <label>Email</label>
                 <input type="email" class="form-control" id="company-consultant-email"
+                       placeholder="—"
                        readonly disabled aria-readonly="true">
               </div>
             </div>
@@ -778,6 +789,7 @@
               <div class="form-group col-md-6">
                 <label>Phone</label>
                 <input type="text" class="form-control" id="company-consultant-phone"
+                       placeholder="—"
                        readonly disabled aria-readonly="true">
               </div>
             </div>
@@ -1014,21 +1026,30 @@ document.addEventListener("DOMContentLoaded", function () {
     setIfPresent("id_contact_last_name", c.contact_last_name);
 
     // Populate the read-only Certifying Consultant block from the FK-derived
-    // payload. Hidden when there is no certifying consultant yet.
+    // payload. For BU viewers the section is always visible (the markup
+    // server-renders it; we just toggle the "pending" helper here). For
+    // other roles we hide the section when no consultant is assigned yet.
     var consultantSection = document.getElementById("company-consultant-section");
+    var consultantPending = document.getElementById("company-consultant-pending");
     var consultantData = c.certifying_consultant || null;
     if (consultantSection) {
+      var nameEl  = document.getElementById("company-consultant-name");
+      var emailEl = document.getElementById("company-consultant-email");
+      var phoneEl = document.getElementById("company-consultant-phone");
       if (consultantData) {
         consultantSection.style.display = "block";
-        var setVal = function (id, v) {
-          var el = document.getElementById(id);
-          if (el) el.value = v || "—";
-        };
-        setVal("company-consultant-name", consultantData.full_name);
-        setVal("company-consultant-email", consultantData.email);
-        setVal("company-consultant-phone", consultantData.phone);
+        if (consultantPending) consultantPending.style.display = "none";
+        if (nameEl)  nameEl.value  = consultantData.full_name || "—";
+        if (emailEl) emailEl.value = consultantData.email || "—";
+        if (phoneEl) phoneEl.value = consultantData.phone || "—";
       } else {
-        consultantSection.style.display = "none";
+        // No consultant yet — clear any leftover values from a previous
+        // open. Leave the section visible only when the server rendered it
+        // (i.e. when the viewer is a Business User).
+        if (nameEl)  nameEl.value  = "";
+        if (emailEl) emailEl.value = "";
+        if (phoneEl) phoneEl.value = "";
+        if (consultantPending) consultantPending.style.display = "block";
       }
     }
 

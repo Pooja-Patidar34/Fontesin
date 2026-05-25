@@ -632,9 +632,8 @@
           <li class="nav-header">Administration</li>
           {% endif %}
 
-          <!-- FRANCHISES (hidden on free plan) -->
-          {% if not is_free_plan %}
-          {% if request.user.is_superuser or request.user.role.code|lower == "business_user" %}
+          <!-- FRANCHISES — superuser-only -->
+          {% if request.user.is_superuser %}
           <li class="nav-item">
             <a href="{% url 'tenants' %}"
                class="nav-link {% if active_menu == 'tenants' %}active{% endif %}">
@@ -642,7 +641,6 @@
               <p>Franchises</p>
             </a>
           </li>
-          {% endif %}
           {% endif %}
 
           {# Users (Administration) — hidden on free plan #}
