@@ -6,7 +6,6 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.http import JsonResponse
 from accounts.models import Tenant, Company, UserCompany
-from accounts.utils.certification_routing import find_consultant_for_company
 from accounts.constants import (
     CompanyClassificationChoices,
     CompanyEntityTypeChoices,
@@ -632,14 +631,12 @@ def profile_view(request):
             owner_user=user,
         )
 
-        # Route to a consultant in the same locality so the request lands in
-        # the right reviewer's queue.
-        routed_consultant = find_consultant_for_company(company)
-        if routed_consultant and routed_consultant.id != user.id:
-            company.consultant = routed_consultant
-            company.save(update_fields=["consultant"])
+        # Broadcast model: leave company.consultant unset. The certification
+        # request is visible to every active consultant via the certifications
+        # page; the first one to approve claims ownership (consultant FK is
+        # set at approval time in certification_action).
 
-        # Drop the request into the routed consultant's Messages inbox.
+        # Drop the request into every active consultant's Messages inbox.
         try:
             from accounts.utils.notifications import notify_certification_request
             notify_certification_request(company, submitted_by=user)

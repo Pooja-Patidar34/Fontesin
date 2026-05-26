@@ -38,11 +38,16 @@ def notify(*, recipient, sender=None, kind=Notification.KIND_GENERIC,
 
 
 def notify_certification_request(company, *, submitted_by):
-    """Land a 'Company X requested certification' note in the routed
-    consultant's inbox. No-op if the company has no consultant assigned —
-    the routing layer handles that case separately."""
-    consultant = getattr(company, "consultant", None)
-    if not consultant:
+    """Broadcast a 'Company X requested certification' note to every active
+    consultant. The first consultant to approve the request claims ownership;
+    after that, the company's status flips to 'certified' so it drops off all
+    other consultants' pending queues automatically."""
+    from accounts.models import User
+
+    consultants = User.objects.filter(
+        role__code__iexact="consultant", is_active=True
+    )
+    if not consultants.exists():
         return None
     try:
         link = reverse("certifications")
@@ -54,18 +59,21 @@ def notify_certification_request(company, *, submitted_by):
             f"{submitted_by.first_name} {submitted_by.last_name}".strip()
             or submitted_by.email
         )
-    body = f"{company.name} has requested certification and is awaiting your review."
+    body = f"{company.name} has requested certification and is awaiting review."
     if submitter_label:
         body += f"\nSubmitted by {submitter_label}."
-    return notify(
-        recipient=consultant,
-        sender=submitted_by,
-        kind=Notification.KIND_CERTIFICATION_REQUEST,
-        title=f"New certification request: {company.name}",
-        body=body,
-        link_url=link,
-        related_company=company,
-    )
+    last = None
+    for consultant in consultants:
+        last = notify(
+            recipient=consultant,
+            sender=submitted_by,
+            kind=Notification.KIND_CERTIFICATION_REQUEST,
+            title=f"New certification request: {company.name}",
+            body=body,
+            link_url=link,
+            related_company=company,
+        )
+    return last
 
 
 def notify_certification_decision(company, *, decided_by, approved):

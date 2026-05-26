@@ -81,12 +81,16 @@ def admin_context(request):
                     show_partnership_upgrade_banner = True
 
             # Consultants see a sidebar badge with the number of pending
-            # certification requests in their queue. Use all_objects to
-            # include pending rows that are still is_active=False.
+            # certification requests visible to them: unclaimed requests
+            # (broadcast to all consultants) plus any they have claimed.
+            # Use all_objects so pending rows that are still is_active=False
+            # are still counted.
             if role_code == "consultant":
+                from django.db.models import Q as _Q
                 pending_certification_count = Company.all_objects.filter(
-                    certification_status="pending",
-                    consultant=request.user,
+                    certification_status="pending"
+                ).filter(
+                    _Q(consultant__isnull=True) | _Q(consultant=request.user)
                 ).count()
 
             # Business users see the status of their primary company's

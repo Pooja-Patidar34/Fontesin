@@ -14,6 +14,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
+from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -91,9 +92,13 @@ def certification_list(request):
     # Default: reviewer view. Consultants and superusers only.
     _require_consultant(request.user)
 
+    # Broadcast model: every consultant sees unclaimed pending requests plus
+    # any they've personally claimed. First consultant to approve wins.
     pending_qs = Company.all_objects.filter(certification_status="pending")
     if not request.user.is_superuser:
-        pending_qs = pending_qs.filter(consultant=request.user)
+        pending_qs = pending_qs.filter(
+            Q(consultant__isnull=True) | Q(consultant=request.user)
+        )
     pending = pending_qs.select_related("tenant", "owner_user").order_by("-created_at")
 
     certified_qs = Company.all_objects.filter(
@@ -145,9 +150,15 @@ def certification_action(request, company_id):
         return redirect("certifications")
 
     # Look up against all_objects so deactivated pending rows are still found.
+    # A consultant can act on requests they've claimed AND on any unclaimed
+    # pending request (broadcast model). The transaction + status filter make
+    # this race-safe: if two consultants approve at once, only the first one
+    # finds the row in pending state; the second gets a 404.
     scope = Company.all_objects.filter(certification_status="pending")
     if not request.user.is_superuser:
-        scope = scope.filter(consultant=request.user)
+        scope = scope.filter(
+            Q(consultant__isnull=True) | Q(consultant=request.user)
+        )
 
     company = get_object_or_404(scope, id=company_id)
 
@@ -156,9 +167,15 @@ def certification_action(request, company_id):
         company.is_active = True
         company.certified_by = request.user
         company.certified_at = timezone.now()
-        company.save(update_fields=[
+        # Claim ownership for the approving consultant (drives commission
+        # attribution and the My Companies / consultant_companies views).
+        update_fields = [
             "certification_status", "is_active", "certified_by", "certified_at"
-        ])
+        ]
+        if not company.consultant_id and not request.user.is_superuser:
+            company.consultant = request.user
+            update_fields.append("consultant")
+        company.save(update_fields=update_fields)
         action = "company.certified"
         success_msg = f"Approved certification for {company.name}."
     else:
@@ -218,5 +235,5 @@ def pending_certification_count(user):
         return 0
     qs = Company.all_objects.filter(certification_status="pending")
     if not user.is_superuser:
-        qs = qs.filter(consultant=user)
+        qs = qs.filter(Q(consultant__isnull=True) | Q(consultant=user))
     return qs.count()

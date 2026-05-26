@@ -95,7 +95,6 @@ from django.db import transaction
 from django.template.loader import render_to_string
 
 from accounts.forms.company_form import CompanyForm
-from accounts.utils.certification_routing import find_consultant_for_company
 
 
 def _is_ajax(request):
@@ -252,20 +251,16 @@ def company_list(request):
                 company.consultant = request.user
 
             # New companies created through the BU onboarding form are not yet
-            # vetted — flag them as awaiting consultant certification, hold
-            # them out of the public directory until approved, and route them
-            # to a consultant in the same locality. Consultants who create
-            # companies for their own clients bypass this gate (they're the
-            # ones doing the certifying), so the toggle only fires for
-            # non-consultant authors.
+            # vetted — flag them as awaiting consultant certification and hold
+            # them out of the public directory until approved. The request is
+            # broadcast to every active consultant; the first one to approve
+            # claims ownership of the record (consultant FK is set at approval
+            # time in certification_action). Consultants who create companies
+            # for their own clients bypass this gate.
             emit_cert_notification = False
             if not company_id and creator_role_code != "consultant":
                 company.certification_status = "pending"
                 company.is_active = False
-                if not company.consultant_id:
-                    routed = find_consultant_for_company(company)
-                    if routed and routed.id != request.user.id:
-                        company.consultant = routed
                 emit_cert_notification = True
 
             company.save()
