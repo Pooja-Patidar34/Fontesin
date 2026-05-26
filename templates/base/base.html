@@ -632,13 +632,30 @@
           <li class="nav-header">Administration</li>
           {% endif %}
 
-          <!-- FRANCHISES — superuser-only -->
-          {% if request.user.is_superuser %}
+          <!-- FRANCHISES — visible to superuser and franchise partners -->
+          {% if request.user.is_superuser or request.user.role.code|upper == "FRANCHISE" %}
           <li class="nav-item">
             <a href="{% url 'tenants' %}"
                class="nav-link {% if active_menu == 'tenants' %}active{% endif %}">
               <i class="nav-icon fas fa-sitemap"></i>
               <p>Franchises</p>
+            </a>
+          </li>
+          {% endif %}
+
+          <!-- COORDINATOR REQUESTS — superuser-only -->
+          {% if request.user.is_superuser %}
+          <li class="nav-item">
+            <a href="{% url 'coordinator-requests' %}"
+               class="nav-link {% if active_menu == 'coordinator-requests' %}active{% endif %}"
+               style="display: flex; align-items: center;">
+              <i class="nav-icon fas fa-user-shield"></i>
+              <p style="flex:1;">Coordinator Requests</p>
+              {% if pending_coordinator_request_count %}
+              <span class="sidebar-notif-badge" aria-label="{{ pending_coordinator_request_count }} pending coordinator requests">
+                {% if pending_coordinator_request_count > 9 %}9+{% else %}{{ pending_coordinator_request_count }}{% endif %}
+              </span>
+              {% endif %}
             </a>
           </li>
           {% endif %}
@@ -798,6 +815,29 @@
               </span>
               {% endif %}
             </a>
+          </li>
+          {% endif %}
+
+          {# Become a Coordinator — BU only. Opens the request modal directly. #}
+          {% if is_business_user %}
+          <li class="nav-item">
+            {% if has_pending_coordinator_request %}
+            <a href="#" class="nav-link"
+               style="display: flex; align-items: center; opacity:.7; cursor:default;"
+               onclick="event.preventDefault();"
+               title="Your coordinator request is awaiting Super Admin review.">
+              <i class="nav-icon fas fa-hourglass-half"></i>
+              <p style="flex:1;">Become a Coordinator</p>
+              <span class="sidebar-notif-badge" style="background:#f59e0b;" aria-label="Pending review">…</span>
+            </a>
+            {% else %}
+            <a href="#" class="nav-link"
+               data-toggle="modal" data-target="#requestCoordinatorModal"
+               style="display: flex; align-items: center;">
+              <i class="nav-icon fas fa-user-shield"></i>
+              <p style="flex:1;">Become a Coordinator</p>
+            </a>
+            {% endif %}
           </li>
           {% endif %}
 
@@ -1125,5 +1165,48 @@
     });
   })();
 </script>
+
+{% if is_business_user and not has_pending_coordinator_request %}
+<!-- Request to Become a Coordinator (available from any page via sidebar) -->
+<div class="modal fade" id="requestCoordinatorModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" action="{% url 'coordinator-request-submit' %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title font-weight-bold">
+            <i class="fas fa-user-shield mr-1"></i> Request to become a Coordinator
+          </h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span>&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <p class="small text-muted" style="margin-bottom:14px;">
+            Submit a request to be upgraded to a Coordinator role. A Super Admin will review the details below along with the
+            information you provided during registration, then approve or decline. You will be notified of the decision.
+          </p>
+
+          <div class="form-group">
+            <label>Target region <span class="text-muted small">(country, state, or area you want to coordinate)</span></label>
+            <input type="text" name="target_region" class="form-control" maxlength="200"
+                   placeholder="e.g. United States — Texas">
+          </div>
+
+          <div class="form-group">
+            <label>Motivation <span class="text-danger">*</span></label>
+            <textarea name="motivation" rows="4" class="form-control" required
+                      placeholder="Tell the Super Admin why you'd like to become a Coordinator (experience, network, goals…)"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-light" data-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-sm btn-success">
+            <i class="fas fa-paper-plane mr-1"></i> Submit request
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
 </body>
 </html>

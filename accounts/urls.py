@@ -30,6 +30,11 @@ from .view.saved_filter import (
 )
 from .view.partnership import partnership_list, partnership_action, partnership_cancel
 from .view.certification import certification_list, certification_action
+from .view.coordinator_request import (
+    coordinator_request_submit,
+    coordinator_requests_list,
+    coordinator_request_action,
+)
 from .view.notification import (
     messages_list,
     message_mark_read,
@@ -84,6 +89,11 @@ urlpatterns = [
     # Certifications (consultants only)
     path("certifications/", certification_list, name="certifications"),
     path("certifications/<uuid:company_id>/action/", certification_action, name="certification-action"),
+
+    # Coordinator role requests (BU submit / Super Admin review)
+    path("coordinator-requests/", coordinator_requests_list, name="coordinator-requests"),
+    path("coordinator-requests/submit/", coordinator_request_submit, name="coordinator-request-submit"),
+    path("coordinator-requests/<uuid:request_id>/action/", coordinator_request_action, name="coordinator-request-action"),
 
     # Messages / notifications (every account type)
     path("messages/", messages_list, name="messages"),

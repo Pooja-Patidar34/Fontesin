@@ -794,11 +794,17 @@ class Notification(models.Model):
     KIND_CERTIFICATION_REQUEST = "certification_request"
     KIND_CERTIFICATION_APPROVED = "certification_approved"
     KIND_CERTIFICATION_DECLINED = "certification_declined"
+    KIND_COORDINATOR_REQUEST = "coordinator_request"
+    KIND_COORDINATOR_APPROVED = "coordinator_approved"
+    KIND_COORDINATOR_DECLINED = "coordinator_declined"
     KIND_GENERIC = "generic"
     KIND_CHOICES = (
         (KIND_CERTIFICATION_REQUEST, "Certification request"),
         (KIND_CERTIFICATION_APPROVED, "Certification approved"),
         (KIND_CERTIFICATION_DECLINED, "Certification declined"),
+        (KIND_COORDINATOR_REQUEST, "Coordinator request"),
+        (KIND_COORDINATOR_APPROVED, "Coordinator request approved"),
+        (KIND_COORDINATOR_DECLINED, "Coordinator request declined"),
         (KIND_GENERIC, "Generic"),
     )
 
@@ -844,3 +850,56 @@ class Notification(models.Model):
             self.is_read = True
             self.read_at = timezone.now()
             self.save(update_fields=["is_read", "read_at"])
+
+
+class CoordinatorRequest(models.Model):
+    """A Business User's request to be upgraded to a Coordinator role.
+
+    The BU submits the form from their profile page; the request lands in the
+    Super Admin's Coordinator Requests queue. On approval, the requester's
+    role is switched to COORDINATOR (primary_company linkage is preserved).
+    On decline, the requester remains a Business User and can see the
+    decline reason on their profile.
+    """
+
+    STATUS_PENDING = "pending"
+    STATUS_APPROVED = "approved"
+    STATUS_DECLINED = "declined"
+    STATUS_CHOICES = (
+        (STATUS_PENDING, "Pending"),
+        (STATUS_APPROVED, "Approved"),
+        (STATUS_DECLINED, "Declined"),
+    )
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(
+        "User",
+        on_delete=models.CASCADE,
+        related_name="coordinator_requests",
+    )
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING
+    )
+    target_region = models.CharField(max_length=200, blank=True)
+    motivation = models.TextField(blank=True)
+    decline_reason = models.TextField(blank=True)
+    decided_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        related_name="decided_coordinator_requests",
+        null=True,
+        blank=True,
+    )
+    decided_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["status", "-created_at"]),
+            models.Index(fields=["user", "-created_at"]),
+        ]
+
+    def __str__(self):
+        return f"CoordinatorRequest({self.user_id}, {self.status})"

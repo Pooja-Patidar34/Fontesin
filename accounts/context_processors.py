@@ -18,6 +18,8 @@ def admin_context(request):
     pending_partnership_count = 0
     show_partnership_upgrade_banner = False
     pending_certification_count = 0
+    pending_coordinator_request_count = 0
+    has_pending_coordinator_request = False
     bu_certification_status = ""
     bu_certification_consultant_name = ""
     unread_message_count = 0
@@ -122,6 +124,22 @@ def admin_context(request):
                 certification_status="pending"
             ).count()
 
+        # Pending Coordinator role requests — Super Admin sidebar badge,
+        # plus a flag for the BU profile page to suppress the "Become a
+        # Coordinator" button while their previous request is still pending.
+        try:
+            from accounts.models import CoordinatorRequest
+            if request.user.is_superuser:
+                pending_coordinator_request_count = CoordinatorRequest.objects.filter(
+                    status=CoordinatorRequest.STATUS_PENDING
+                ).count()
+            else:
+                has_pending_coordinator_request = CoordinatorRequest.objects.filter(
+                    user=request.user, status=CoordinatorRequest.STATUS_PENDING
+                ).exists()
+        except Exception:
+            pass
+
         # Unread in-app messages — every account type sees this badge.
         try:
             unread_message_count = Notification.objects.filter(
@@ -154,6 +172,8 @@ def admin_context(request):
         "pending_partnership_count": pending_partnership_count,
         "show_partnership_upgrade_banner": show_partnership_upgrade_banner,
         "pending_certification_count": pending_certification_count,
+        "pending_coordinator_request_count": pending_coordinator_request_count,
+        "has_pending_coordinator_request": has_pending_coordinator_request,
         "bu_certification_status": bu_certification_status,
         "bu_certification_consultant_name": bu_certification_consultant_name,
         "unread_message_count": unread_message_count,

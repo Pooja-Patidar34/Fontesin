@@ -1,0 +1,277 @@
+{% extends "base/base.html" %}
+{% block title %}Coordinator Requests{% endblock %}
+
+{% block content %}
+
+<style>
+  .cr-tabs {
+    display: flex;
+    gap: .25rem;
+    border-bottom: 1px solid #e9ecef;
+    padding: 0 1.25rem;
+    background: #f8f9fa;
+  }
+  .cr-tab {
+    border: 0;
+    background: transparent;
+    padding: .75rem 1rem;
+    font-size: .85rem;
+    font-weight: 600;
+    color: #6c757d;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+  }
+  .cr-tab:hover { color: #1B2E3F; }
+  .cr-tab.active {
+    color: #1B2E3F;
+    border-bottom-color: #4da3ff;
+  }
+  .cr-tab .badge { margin-left: .35rem; font-size: .68rem; }
+  .cr-pane { display: none; }
+  .cr-pane.active { display: block; }
+  .empty-state {
+    text-align: center;
+    color: #94a3b8;
+    padding: 2.5rem 1rem;
+  }
+  .empty-state .fa-2x { margin-bottom: .5rem; }
+  .cr-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px 18px;
+    font-size: .8rem;
+    color: #475569;
+    margin-top: 6px;
+  }
+  .cr-info-grid div span { color: #94a3b8; margin-right: 4px; }
+  .cr-motivation {
+    background: #f8fafc;
+    border: 1px solid #eef2f7;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: .82rem;
+    color: #1f2937;
+    white-space: pre-wrap;
+    margin-top: 8px;
+  }
+  .pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 100px;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  .pill-approved { background: #dcfce7; color: #166534; }
+  .pill-declined { background: #fee2e2; color: #991b1b; }
+</style>
+
+<div class="card card-outline card-primary shadow-sm">
+
+  <div class="card-header">
+    <h3 class="card-title font-weight-bold mb-0">
+      <i class="fas fa-user-shield mr-1"></i> Coordinator Requests
+    </h3>
+    <h5 class="small text-muted mb-0">
+      Business Users requesting to be upgraded to Coordinator. Approve to grant the role, decline to reject the request.
+    </h5>
+  </div>
+
+  <div class="cr-tabs">
+    <button type="button" class="cr-tab active" data-pane="pending">
+      Pending
+      {% if pending %}
+      <span class="badge badge-warning">{{ pending|length }}</span>
+      {% endif %}
+    </button>
+    <button type="button" class="cr-tab" data-pane="approved">
+      Approved
+      {% if approved %}
+      <span class="badge badge-secondary">{{ approved|length }}</span>
+      {% endif %}
+    </button>
+    <button type="button" class="cr-tab" data-pane="declined">
+      Declined
+      {% if declined %}
+      <span class="badge badge-secondary">{{ declined|length }}</span>
+      {% endif %}
+    </button>
+  </div>
+
+  <div class="cr-pane active" id="pane-pending">
+    <div class="card-body p-0">
+      {% if pending %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th style="width:34%;">Requester</th>
+              <th>Registration details</th>
+              <th class="text-right pr-4" style="width:22%;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for req in pending %}
+            <tr>
+              <td>
+                <strong>{{ req.user.first_name }} {{ req.user.last_name }}</strong>
+                <div class="small text-muted">{{ req.user.email }}</div>
+                {% if req.user.phone %}
+                  <div class="small text-muted"><i class="fas fa-phone mr-1"></i>{{ req.user.phone }}</div>
+                {% endif %}
+                <div class="small text-muted mt-1">
+                  Submitted {{ req.created_at|date:"M j, Y H:i" }}
+                </div>
+              </td>
+              <td>
+                <div class="cr-info-grid">
+                  {% if req.user.primary_company %}
+                  <div><span>Company:</span>{{ req.user.primary_company.name }}</div>
+                  {% elif req.user.applied_company_name %}
+                  <div><span>Applied company:</span>{{ req.user.applied_company_name }}</div>
+                  {% endif %}
+                  {% if req.user.country %}<div><span>Country:</span>{{ req.user.country }}</div>{% endif %}
+                  {% if req.user.state_region %}<div><span>State / region:</span>{{ req.user.state_region }}</div>{% endif %}
+                  {% if req.user.nationality %}<div><span>Nationality:</span>{{ req.user.nationality }}</div>{% endif %}
+                  {% if req.user.current_position %}<div><span>Position:</span>{{ req.user.current_position }}</div>{% endif %}
+                  {% if req.user.primary_industry %}<div><span>Industry:</span>{{ req.user.primary_industry }}</div>{% endif %}
+                  {% if req.target_region %}<div><span>Target region:</span>{{ req.target_region }}</div>{% endif %}
+                </div>
+                {% if req.motivation %}
+                <div class="cr-motivation"><strong>Motivation:</strong>{{ "  " }}{{ req.motivation }}</div>
+                {% endif %}
+              </td>
+              <td class="text-right pr-4" style="vertical-align: top;">
+                <form method="post" action="{% url 'coordinator-request-action' req.id %}"
+                      class="d-inline m-0">
+                  {% csrf_token %}
+                  <input type="hidden" name="decision" value="approve">
+                  <button type="submit" class="btn btn-sm btn-success">
+                    <i class="fas fa-check mr-1"></i> Approve
+                  </button>
+                </form>
+                <button type="button" class="btn btn-sm btn-outline-danger ml-1"
+                        onclick="document.getElementById('cr-decline-{{ req.id }}').style.display='block'; this.style.display='none';">
+                  <i class="fas fa-times mr-1"></i> Decline
+                </button>
+                <form id="cr-decline-{{ req.id }}" method="post"
+                      action="{% url 'coordinator-request-action' req.id %}"
+                      style="display:none; margin-top: 8px;">
+                  {% csrf_token %}
+                  <input type="hidden" name="decision" value="decline">
+                  <textarea name="decline_reason" rows="2" class="form-control form-control-sm"
+                            placeholder="Reason (shown to requester)" style="font-size:.78rem;"></textarea>
+                  <button type="submit" class="btn btn-sm btn-danger mt-1">
+                    <i class="fas fa-paper-plane mr-1"></i> Submit decline
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="fas fa-inbox fa-2x"></i>
+        <p class="mb-0">No pending coordinator requests.</p>
+        <p class="small mb-0">
+          When a Business User asks to become a Coordinator, the request appears here.
+        </p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="cr-pane" id="pane-approved">
+    <div class="card-body p-0">
+      {% if approved %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th>Requester</th>
+              <th>Decided</th>
+              <th>By</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for req in approved %}
+            <tr>
+              <td>
+                <strong>{{ req.user.first_name }} {{ req.user.last_name }}</strong>
+                <div class="small text-muted">{{ req.user.email }}</div>
+              </td>
+              <td class="small text-muted">{{ req.decided_at|date:"M j, Y H:i" }}</td>
+              <td class="small text-muted">{{ req.decided_by.email|default:"—" }}</td>
+              <td><span class="pill pill-approved">Approved</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="fas fa-user-check fa-2x"></i>
+        <p class="mb-0">No approved coordinator requests yet.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="cr-pane" id="pane-declined">
+    <div class="card-body p-0">
+      {% if declined %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th>Requester</th>
+              <th>Decided</th>
+              <th>By</th>
+              <th>Reason</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for req in declined %}
+            <tr>
+              <td>
+                <strong>{{ req.user.first_name }} {{ req.user.last_name }}</strong>
+                <div class="small text-muted">{{ req.user.email }}</div>
+              </td>
+              <td class="small text-muted">{{ req.decided_at|date:"M j, Y H:i" }}</td>
+              <td class="small text-muted">{{ req.decided_by.email|default:"—" }}</td>
+              <td class="small text-muted">{{ req.decline_reason|default:"—" }}</td>
+              <td><span class="pill pill-declined">Declined</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="fas fa-user-times fa-2x"></i>
+        <p class="mb-0">No declined coordinator requests.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+<script>
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest(".cr-tab");
+    if (!btn) return;
+    document.querySelectorAll(".cr-tab").forEach(function (t) { t.classList.remove("active"); });
+    document.querySelectorAll(".cr-pane").forEach(function (p) { p.classList.remove("active"); });
+    btn.classList.add("active");
+    var pane = document.getElementById("pane-" + btn.dataset.pane);
+    if (pane) pane.classList.add("active");
+  });
+</script>
+
+{% endblock %}

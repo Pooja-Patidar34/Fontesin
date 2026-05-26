@@ -212,9 +212,10 @@
           </form>
           {% endif %}
           <form method="post" action="{% url 'message-delete' note.id %}" style="display:inline;"
-                onsubmit="return confirm('Delete this notification?');">
+                id="msg-delete-form-{{ note.id }}">
             {% csrf_token %}
-            <button type="submit" class="msg-icon-btn msg-icon-btn--danger" title="Delete">
+            <button type="button" class="msg-icon-btn msg-icon-btn--danger" title="Delete"
+                    onclick="appConfirm({kind:'danger', title:'Delete this notification?', text:'This will permanently remove the notification from your inbox.', okLabel:'Delete', okIcon:'fa-trash', onConfirm:function(){document.getElementById('msg-delete-form-{{ note.id }}').submit();}})">
               <i class="fas fa-trash-alt"></i>
             </button>
           </form>

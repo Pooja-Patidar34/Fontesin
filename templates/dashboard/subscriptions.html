@@ -611,7 +611,7 @@
         } else {
           const msg = (res.data && res.data.message) || 'Failed to update plan status.';
           if (typeof showToast === 'function') showToast(msg, 'error');
-          else alert(msg);
+          else console.error(msg);
         }
       })
       .catch(function () {

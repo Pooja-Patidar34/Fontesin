@@ -26,24 +26,22 @@ def _can_view_staff(user):
 
 
 def _scoped_tenant_qs(qs, user):
-    """Non-superusers are always pinned to their own tenant."""
+    """Tenant scoping for non-superusers. Coordinators see every tenant —
+    they oversee consultants across the platform — so the tenant filter is
+    dropped for them. Everyone else stays pinned to their own tenant."""
     if user.is_superuser:
+        return qs
+    role_code = (user.role.code or "").upper() if user.role else ""
+    if role_code == "COORDINATOR":
         return qs
     return qs.filter(tenant=user.tenant)
 
 
 def _scope_consultants_to_coordinator_region(qs, viewer, target_role):
-    """If a coordinator is viewing CONSULTANT rows, restrict to consultants whose
-    target_region matches the coordinator's own target_region (set during /apply/).
-    No-ops for any other (viewer, target) combination.
-    """
-    viewer_role = (viewer.role.code or "").upper() if viewer.role else ""
-    if viewer_role != "COORDINATOR" or target_role.upper() != "CONSULTANT":
-        return qs
-    region = (viewer.target_region or "").strip()
-    if not region:
-        return qs.none()
-    return qs.filter(target_region__iexact=region)
+    """Region scoping is currently disabled for coordinators viewing consultants:
+    a coordinator sees every consultant in the system, regardless of region.
+    Kept as a hook in case region-based scoping is reintroduced later."""
+    return qs
 
 
 def _render_companies_by_role(request, role_code, *, page_title, owner_label, active_submenu):
@@ -64,8 +62,7 @@ def _render_companies_by_role(request, role_code, *, page_title, owner_label, ac
         .prefetch_related("usercompany_set__company")
         .filter(role__code__iexact=role_code, is_deleted=False)
     )
-    if not request.user.is_superuser:
-        owners = owners.filter(tenant=request.user.tenant)
+    owners = _scoped_tenant_qs(owners, request.user)
     owners = _scope_consultants_to_coordinator_region(owners, request.user, role_code)
 
     rows = {}

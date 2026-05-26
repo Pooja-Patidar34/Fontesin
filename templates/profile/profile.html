@@ -21,6 +21,19 @@
           <i class="fas fa-pencil-alt mr-1"></i> Edit Profile
         </button>
 
+        {% if is_business_user %}
+          {% if has_pending_coordinator_request %}
+          <div class="mt-2" style="font-size:.78rem; color:#92400e; background:#fffbeb; border:1px solid #fcd34d; border-radius:8px; padding:8px 10px; text-align:left;">
+            <i class="fas fa-hourglass-half mr-1"></i>
+            Coordinator request pending Super Admin review.
+          </div>
+          {% else %}
+          <button type="button" class="btn btn-sm btn-outline-success mt-2" data-toggle="modal" data-target="#requestCoordinatorModal">
+            <i class="fas fa-user-shield mr-1"></i> Request to become a Coordinator
+          </button>
+          {% endif %}
+        {% endif %}
+
         <hr>
 
         <table class="table table-borderless table-sm text-left" style="font-size:.88rem; table-layout:fixed; width:100%;">
@@ -824,7 +837,7 @@ document.addEventListener("DOMContentLoaded", function () {
         } else {
           const msg = result.data.message || "Could not update profile.";
           if (typeof showToast === "function") showToast(msg, "error");
-          else alert(msg);
+          else console.error(msg);
           syncSaveBtn();
         }
       })
@@ -903,7 +916,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function showError(msg) {
     if (typeof showToast === "function") showToast(msg, "error");
-    else alert(msg);
+    else console.error(msg);
   }
 
   nameInput.addEventListener("invalid", function (e) {

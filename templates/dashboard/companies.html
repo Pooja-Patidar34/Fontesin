@@ -1373,7 +1373,7 @@ document.addEventListener("DOMContentLoaded", function () {
           if (typeof showToast === "function") {
             showToast(msg, "error");
           } else {
-            alert(msg);
+            console.error(msg);
           }
         }
       })
@@ -1474,11 +1474,11 @@ document.addEventListener("DOMContentLoaded", function () {
         if (res.status === 200 && res.data.ok) {
           modal.modal("hide");
           if (typeof showToast === "function") showToast(res.data.message, "success");
-          else alert(res.data.message);
+          else console.log(res.data.message);
         } else {
           const msg = res.data.message || "Could not save filter.";
           if (typeof showToast === "function") showToast(msg, "error");
-          else alert(msg);
+          else console.error(msg);
         }
       })
       .catch(function () {

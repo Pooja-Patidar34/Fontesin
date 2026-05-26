@@ -35,7 +35,7 @@
                       id="delete-filter-form-{{ sf.id }}" class="m-0">
                   {% csrf_token %}
                   <button type="button" class="btn btn-sm btn-outline-danger"
-                          onclick="if(confirm('Remove this saved filter?')){document.getElementById('delete-filter-form-{{ sf.id }}').submit();}">
+                          onclick="appConfirm({kind:'danger', title:'Remove this saved filter?', text:'The filter will be deleted from your favorites.', okLabel:'Remove', okIcon:'fa-trash', onConfirm:function(){document.getElementById('delete-filter-form-{{ sf.id }}').submit();}})">
                     <i class="fas fa-trash"></i>
                   </button>
                 </form>

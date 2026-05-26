@@ -116,3 +116,78 @@ def notify_certification_decision(company, *, decided_by, approved):
         link_url=link,
         related_company=company,
     )
+
+
+def notify_coordinator_request_submitted(coord_request):
+    """Broadcast a 'BU X requested coordinator role' note to every superuser
+    so any of them can pick up the review."""
+    from accounts.models import User
+
+    requester = coord_request.user
+    requester_label = (
+        f"{requester.first_name} {requester.last_name}".strip()
+        or requester.email
+    )
+    try:
+        link = reverse("coordinator-requests")
+    except NoReverseMatch:
+        link = ""
+    body = f"{requester_label} has requested to become a Coordinator."
+    if coord_request.target_region:
+        body += f"\nTarget region: {coord_request.target_region}."
+    superusers = User.objects.filter(is_superuser=True, is_active=True)
+    last = None
+    for su in superusers:
+        last = notify(
+            recipient=su,
+            sender=requester,
+            kind=Notification.KIND_COORDINATOR_REQUEST,
+            title="New coordinator role request",
+            body=body,
+            link_url=link,
+        )
+    return last
+
+
+def notify_coordinator_request_decision(coord_request, *, approved):
+    """Inform the requesting BU of the Super Admin's decision."""
+    requester = coord_request.user
+    if not requester:
+        return None
+    decider = coord_request.decided_by
+    decider_label = ""
+    if decider:
+        decider_label = (
+            f"{decider.first_name} {decider.last_name}".strip()
+            or decider.email
+        )
+    try:
+        link = reverse("profile")
+    except NoReverseMatch:
+        link = ""
+    if approved:
+        kind = Notification.KIND_COORDINATOR_APPROVED
+        title = "Your Coordinator role has been approved"
+        body = (
+            f"Your request to become a Coordinator was approved"
+            f"{f' by {decider_label}' if decider_label else ''}. "
+            "Sign out and back in to see the Coordinator features in your sidebar."
+        )
+    else:
+        kind = Notification.KIND_COORDINATOR_DECLINED
+        title = "Your Coordinator request was declined"
+        reason = (coord_request.decline_reason or "").strip()
+        body = (
+            f"Your request to become a Coordinator was declined"
+            f"{f' by {decider_label}' if decider_label else ''}."
+        )
+        if reason:
+            body += f"\nReason: {reason}"
+    return notify(
+        recipient=requester,
+        sender=decider,
+        kind=kind,
+        title=title,
+        body=body,
+        link_url=link,
+    )

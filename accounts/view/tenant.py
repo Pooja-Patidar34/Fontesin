@@ -83,13 +83,15 @@ technical_logger = logging.getLogger("technical")
 @login_required
 def tenant_list(request):
 
-    is_business_user = (
-        request.user.role
-        and request.user.role.code
-        and request.user.role.code.lower() == "business_user"
+    role_code = (
+        request.user.role.code.lower()
+        if request.user.role and request.user.role.code
+        else ""
     )
+    is_business_user = role_code == "business_user"
+    is_franchise_partner = role_code == "franchise"
 
-    if not request.user.is_superuser and not is_business_user:
+    if not request.user.is_superuser and not is_business_user and not is_franchise_partner:
         raise PermissionDenied()
 
     if request.method == "POST":
@@ -256,13 +258,15 @@ def toggle_tenant(request, tenant_id):
 
 @login_required
 def tenant_detail_ajax(request, tenant_id):
-    is_business_user = (
-        request.user.role
-        and request.user.role.code
-        and request.user.role.code.lower() == "business_user"
+    role_code = (
+        request.user.role.code.lower()
+        if request.user.role and request.user.role.code
+        else ""
     )
+    is_business_user = role_code == "business_user"
+    is_franchise_partner = role_code == "franchise"
 
-    if not request.user.is_superuser and not is_business_user:
+    if not request.user.is_superuser and not is_business_user and not is_franchise_partner:
         raise PermissionDenied()
 
     if is_business_user and str(tenant_id) != str(request.user.tenant_id):

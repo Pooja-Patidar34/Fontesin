@@ -499,7 +499,7 @@ document.addEventListener("DOMContentLoaded", function () {
           } else {
             var msg = (res.data && res.data.message) || "Action failed.";
             if (typeof showToast === "function") showToast(msg, "error");
-            else alert(msg);
+            else console.error(msg);
             btns.forEach(function (b) { b.disabled = false; });
           }
         })
