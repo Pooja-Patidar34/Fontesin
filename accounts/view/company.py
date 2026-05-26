@@ -299,7 +299,7 @@ def company_list(request):
             success_msg = (
                 "Company updated successfully."
                 if company_id
-                else "Certification request submitted. An admin will review your company shortly."
+                else "Certification request submitted. A consultant will review your company shortly."
             )
 
             if _is_ajax(request):

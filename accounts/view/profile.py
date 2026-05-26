@@ -668,7 +668,7 @@ def profile_view(request):
         request.session.pop("open_create_company_tab", None)
         messages.success(
             request,
-            "Certification request submitted. An admin will review your company shortly.",
+            "Certification request submitted. A consultant will review your company shortly.",
         )
         return redirect("profile")
 
