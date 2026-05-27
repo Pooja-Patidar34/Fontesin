@@ -40,6 +40,7 @@ from .view.notification import (
     message_mark_read,
     messages_mark_all_read,
     message_delete,
+    message_open,
 )
 
 
@@ -99,6 +100,7 @@ urlpatterns = [
     path("messages/", messages_list, name="messages"),
     path("messages/mark-all-read/", messages_mark_all_read, name="messages-mark-all-read"),
     path("messages/<uuid:notification_id>/read/", message_mark_read, name="message-mark-read"),
+    path("messages/<uuid:notification_id>/open/", message_open, name="message-open"),
     path("messages/<uuid:notification_id>/delete/", message_delete, name="message-delete"),
 
     # Saved filters (Favorites) — basic business users only

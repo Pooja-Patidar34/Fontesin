@@ -3,7 +3,25 @@
 
 {% block content %}
 
-<div class="card card-outline card-primary shadow-sm">
+<style>
+  /* Lay the active + pending plan cards (rendered as siblings by the
+     shared `profile/_plan_card.html` partial) side-by-side on the Plans
+     page. Scoped to .plans-cards-row so the Profile page sidebar — which
+     uses the same partial inside a narrow col-md-4 — keeps its vertical
+     stack. Wraps on small screens via flex-wrap. */
+  .plans-cards-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+  .plans-cards-row > .card {
+    flex: 1 1 320px;
+    margin-top: 0 !important;
+  }
+</style>
+
+<div class="card card-outline card-primary shadow-sm mb-4">
   <div class="card-header">
     <h3 class="card-title font-weight-bold mb-0">
       <i class="fas fa-crown mr-1"></i> Plans
@@ -13,9 +31,125 @@
     </h5>
   </div>
 
-  <div class="card-body" style="max-width:640px;">
-    {% include "profile/_plan_card.html" %}
+  <div class="card-body">
+    <div class="plans-cards-row">
+      {% include "profile/_plan_card.html" %}
+    </div>
   </div>
+</div>
+
+<div class="card" style="border-radius:14px; border:1px solid #e8eef3; box-shadow:0 2px 12px rgba(0,0,0,.06);">
+
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <div>
+      <h3 class="card-title font-weight-bold mb-0">
+        <i class="fas fa-history mr-2"></i> Plan History
+      </h3>
+      <p class="small text-muted mb-0 mt-1">
+        Every plan your account has been on, including current and past subscriptions.
+      </p>
+    </div>
+  </div>
+
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="bg-light">
+          <tr>
+            <th>Plan</th>
+            <th>Status</th>
+            <th>Price</th>
+            <th>Started</th>
+            <th>Ended</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sub in subscriptions %}
+          <tr>
+            <td>
+              <strong>{{ sub.plan.name }}</strong>
+              {% if sub.plan.code %}
+                <div class="small text-muted">{{ sub.plan.code|capfirst }}</div>
+              {% endif %}
+            </td>
+            <td>
+              {% if sub.status == "active" %}
+                <span class="badge badge-success">Active</span>
+              {% elif sub.status == "trial" %}
+                <span class="badge badge-info">Trial</span>
+              {% elif sub.status == "created" %}
+                <span class="badge badge-warning">Pending</span>
+              {% elif sub.status == "past_due" %}
+                <span class="badge badge-warning">Past Due</span>
+              {% elif sub.status == "suspended" %}
+                <span class="badge badge-secondary">Suspended</span>
+              {% elif sub.status == "cancelled" %}
+                <span class="badge badge-danger">Cancelled</span>
+              {% else %}
+                <span class="badge badge-secondary">{{ sub.get_status_display }}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if sub.plan.price %}
+                {{ sub.plan.currency }} {{ sub.plan.price }}
+                <div class="small text-muted">/ {{ sub.billing_period }}</div>
+              {% else %}
+                -
+              {% endif %}
+            </td>
+            <td>{{ sub.start_date|date:"M d, Y" }}</td>
+            <td>
+              {% if sub.end_date %}
+                {{ sub.end_date|date:"M d, Y" }}
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center text-muted py-4">
+              No plan history yet. Your subscriptions will appear here as you upgrade or change plans.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if page_obj.paginator.num_pages > 1 %}
+  <div class="card-footer">
+    <ul class="pagination pagination-sm justify-content-end mb-0">
+      {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">Previous</span></li>
+      {% endif %}
+
+      {% for num in page_obj.paginator.page_range %}
+        {% if num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+          {% if num == page_obj.number %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+          {% else %}
+            <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">Next</span></li>
+      {% endif %}
+    </ul>
+  </div>
+  {% endif %}
+
 </div>
 
 {% endblock %}

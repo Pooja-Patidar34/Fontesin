@@ -1,6 +1,8 @@
-{# Tabs + table + pagination — extracted so the consultant page can AJAX-
-   swap just this panel when a tab or pager link is clicked, instead of
-   reloading the whole dashboard layout. #}
+{% comment %}
+Tabs + table + pagination — extracted so the consultant page can AJAX-swap
+just this panel when a tab or pager link is clicked, instead of reloading
+the whole dashboard layout.
+{% endcomment %}
 <div class="card-body" style="padding:.75rem 1.25rem; background:#f8f9fa; border-bottom:1px solid #e9ecef;">
   <div class="d-flex flex-wrap" style="gap:.5rem;">
     <a href="{% url 'commissions' %}"

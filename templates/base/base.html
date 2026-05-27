@@ -445,6 +445,25 @@
           <a class="dropdown-item" href="{% url 'profile' %}" style="border-radius:6px; font-size:.82rem; padding:8px 14px;">
             <i class="fas fa-user mr-2" style="color:#94a3b8;"></i> Profile
           </a>
+          {% if is_business_user %}
+          <div class="dropdown-divider" style="margin:4px 0;"></div>
+          {% if has_pending_coordinator_request %}
+          <a class="dropdown-item" href="#"
+             onclick="event.preventDefault();"
+             title="Your coordinator request is awaiting Super Admin review."
+             style="border-radius:6px; font-size:.82rem; padding:8px 14px; opacity:.7; cursor:default; display:flex; align-items:center;">
+            <i class="fas fa-hourglass-half mr-2" style="color:#f59e0b;"></i>
+            <span style="flex:1;">Become a Coordinator</span>
+            <span style="background:#f59e0b; color:#fff; border-radius:10px; padding:1px 7px; font-size:.65rem; font-weight:700;">…</span>
+          </a>
+          {% else %}
+          <a class="dropdown-item" href="#"
+             data-toggle="modal" data-target="#requestCoordinatorModal"
+             style="border-radius:6px; font-size:.82rem; padding:8px 14px;">
+            <i class="fas fa-user-shield mr-2" style="color:#94a3b8;"></i> Become a Coordinator
+          </a>
+          {% endif %}
+          {% endif %}
           <div class="dropdown-divider" style="margin:4px 0;"></div>
           <a class="dropdown-item" href="{% url 'logout' %}" style="border-radius:6px; font-size:.82rem; padding:8px 14px; color:#e11d48;">
             <i class="fas fa-sign-out-alt mr-2"></i> Logout
@@ -533,16 +552,6 @@
           </li>
           {% endif %}
 
-          {# Create Company Profile — free, basic, pro, and global plans (adds companies beyond the one chosen at signup) #}
-          {% if is_free_plan or is_basic_plan or is_pro_plan or is_global_plan %}
-          <li class="nav-item">
-            <a href="{% url 'companies' %}?new=1"
-               class="nav-link {% if active_menu == 'create-company' %}active{% endif %}">
-              <i class="nav-icon fas fa-plus-circle"></i>
-              <p>Create Company</p>
-            </a>
-          </li>
-          {% endif %}
 
           <!-- Users link for consultant / franchise (sees only their company's users) -->
           {% if request.user.role.code|lower == "consultant" or request.user.role.code|lower == "franchise" %}
@@ -643,20 +652,43 @@
           </li>
           {% endif %}
 
-          <!-- COORDINATOR REQUESTS — superuser-only -->
+          <!-- REQUESTS (parent) — superuser-only. The parent badge shows the
+               aggregated count across every request queue (`pending_requests_total`,
+               built in accounts/context_processors.py). Each child keeps its
+               own per-queue count so admins see the breakdown when the
+               dropdown is open. Future request queues (franchise / partner)
+               plug in here as additional <li> entries. -->
           {% if request.user.is_superuser %}
-          <li class="nav-item">
-            <a href="{% url 'coordinator-requests' %}"
+          <li class="nav-item has-treeview {% if active_menu == 'coordinator-requests' %}menu-open{% endif %}">
+            <a href="#"
                class="nav-link {% if active_menu == 'coordinator-requests' %}active{% endif %}"
                style="display: flex; align-items: center;">
-              <i class="nav-icon fas fa-user-shield"></i>
-              <p style="flex:1;">Coordinator Requests</p>
-              {% if pending_coordinator_request_count %}
-              <span class="sidebar-notif-badge" aria-label="{{ pending_coordinator_request_count }} pending coordinator requests">
-                {% if pending_coordinator_request_count > 9 %}9+{% else %}{{ pending_coordinator_request_count }}{% endif %}
+              <i class="nav-icon fas fa-inbox"></i>
+              <p style="flex:1;">
+                Requests
+                <i class="right fas fa-angle-left"></i>
+              </p>
+              {% if pending_requests_total %}
+              <span class="sidebar-notif-badge" aria-label="{{ pending_requests_total }} pending requests">
+                {% if pending_requests_total > 9 %}9+{% else %}{{ pending_requests_total }}{% endif %}
               </span>
               {% endif %}
             </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="{% url 'coordinator-requests' %}"
+                   class="nav-link {% if active_menu == 'coordinator-requests' %}active{% endif %}"
+                   style="display: flex; align-items: center;">
+                  <i class="fas fa-user-shield nav-icon"></i>
+                  <p style="flex:1;">Coordinator Requests</p>
+                  {% if pending_coordinator_request_count %}
+                  <span class="sidebar-notif-badge" aria-label="{{ pending_coordinator_request_count }} pending coordinator requests">
+                    {% if pending_coordinator_request_count > 9 %}9+{% else %}{{ pending_coordinator_request_count }}{% endif %}
+                  </span>
+                  {% endif %}
+                </a>
+              </li>
+            </ul>
           </li>
           {% endif %}
 
@@ -727,16 +759,6 @@
           </li>
           {% endif %}
 
-          {# Plan History — business users see a timeline of plans their account has been on. #}
-          {% if request.user.role.code|lower == "business_user" %}
-          <li class="nav-item">
-            <a href="{% url 'plan-history' %}"
-               class="nav-link {% if active_menu == 'plan-history' %}active{% endif %}">
-              <i class="nav-icon fas fa-history"></i>
-              <p>Plan History</p>
-            </a>
-          </li>
-          {% endif %}
 
           <!-- <li class="nav-item">
             <a href="{% url 'invoices' %}"
@@ -750,7 +772,7 @@
           <li class="nav-item">
             <a href="{% url 'payments' %}"
                class="nav-link {% if active_menu == 'payments' %}active{% endif %}">
-              <i class="nav-icon fas fa-money-bill-wave"></i>
+              <i class="nav-icon fas fa-file-invoice-dollar"></i>
               <p>Invoices</p>
             </a>
           </li>
@@ -815,29 +837,6 @@
               </span>
               {% endif %}
             </a>
-          </li>
-          {% endif %}
-
-          {# Become a Coordinator — BU only. Opens the request modal directly. #}
-          {% if is_business_user %}
-          <li class="nav-item">
-            {% if has_pending_coordinator_request %}
-            <a href="#" class="nav-link"
-               style="display: flex; align-items: center; opacity:.7; cursor:default;"
-               onclick="event.preventDefault();"
-               title="Your coordinator request is awaiting Super Admin review.">
-              <i class="nav-icon fas fa-hourglass-half"></i>
-              <p style="flex:1;">Become a Coordinator</p>
-              <span class="sidebar-notif-badge" style="background:#f59e0b;" aria-label="Pending review">…</span>
-            </a>
-            {% else %}
-            <a href="#" class="nav-link"
-               data-toggle="modal" data-target="#requestCoordinatorModal"
-               style="display: flex; align-items: center;">
-              <i class="nav-icon fas fa-user-shield"></i>
-              <p style="flex:1;">Become a Coordinator</p>
-            </a>
-            {% endif %}
           </li>
           {% endif %}
 

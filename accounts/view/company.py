@@ -256,9 +256,17 @@ def company_list(request):
             # broadcast to every active consultant; the first one to approve
             # claims ownership of the record (consultant FK is set at approval
             # time in certification_action). Consultants who create companies
-            # for their own clients bypass this gate.
+            # for their own clients bypass this gate. Platform admins
+            # (superusers) also bypass — anything they file is treated as
+            # authoritative and goes straight into the company directory,
+            # auto-certified by the admin who created it.
             emit_cert_notification = False
-            if not company_id and creator_role_code != "consultant":
+            if not company_id and request.user.is_superuser:
+                from django.utils import timezone
+                company.certification_status = "certified"
+                company.certified_by = request.user
+                company.certified_at = timezone.now()
+            elif not company_id and creator_role_code != "consultant":
                 company.certification_status = "pending"
                 company.is_active = False
                 emit_cert_notification = True
@@ -296,11 +304,12 @@ def company_list(request):
                 # Never block core flow for audit failures
                 pass
 
-            success_msg = (
-                "Company updated successfully."
-                if company_id
-                else "Certification request submitted. A consultant will review your company shortly."
-            )
+            if company_id:
+                success_msg = "Company updated successfully."
+            elif request.user.is_superuser or creator_role_code == "consultant":
+                success_msg = "Company created successfully."
+            else:
+                success_msg = "Certification request submitted. A consultant will review your company shortly."
 
             if _is_ajax(request):
                 row_html = render_to_string(

@@ -174,6 +174,11 @@ def admin_context(request):
         "pending_certification_count": pending_certification_count,
         "pending_coordinator_request_count": pending_coordinator_request_count,
         "has_pending_coordinator_request": has_pending_coordinator_request,
+        # Sum of every superuser request queue — drives the red counter on
+        # the sidebar "Requests" parent so admins see one aggregated total
+        # while the dropdown still shows per-queue counts when expanded.
+        # New queues (franchise / partner / etc.) just add themselves here.
+        "pending_requests_total": pending_coordinator_request_count,
         "bu_certification_status": bu_certification_status,
         "bu_certification_consultant_name": bu_certification_consultant_name,
         "unread_message_count": unread_message_count,

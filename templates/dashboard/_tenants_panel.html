@@ -99,7 +99,7 @@
                         id="tenant-delete-form-{{ tenant.id }}">
                     {% csrf_token %}
                     <button type="button" class="dropdown-item text-danger"
-                            onclick="appConfirm({kind:'danger', title:'Delete Tenant?', text:'Are you sure you want to permanently delete this tenant? This action cannot be undone.', okLabel:'Delete', okIcon:'fa-trash', onConfirm:function(){document.getElementById('tenant-delete-form-{{ tenant.id }}').submit();}})">
+                            onclick="appConfirm({kind:'danger', title:'Delete Franchise?', text:'Are you sure you want to permanently delete this franchise? This action cannot be undone.', okLabel:'Delete', okIcon:'fa-trash', onConfirm:function(){document.getElementById('tenant-delete-form-{{ tenant.id }}').submit();}})">
                       <i class="fas fa-trash mr-2"></i> Delete
                     </button>
                   </form>
@@ -119,9 +119,9 @@
           <tr>
             <td colspan="6" class="text-center text-muted py-4">
               {% if search_query %}
-                No tenants match "{{ search_query }}".
+                No franchises match "{{ search_query }}".
               {% else %}
-                No tenants found
+                No franchises found
               {% endif %}
             </td>
           </tr>

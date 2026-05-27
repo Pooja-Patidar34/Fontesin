@@ -195,30 +195,144 @@
 <div class="card card-outline card-primary shadow-sm">
 
   <!-- Header -->
-  <div class="card-header">
-    <div class="d-flex justify-content-between align-items-center flex-wrap" style="gap:1rem;">
+  <div class="card-header" style="display:flex; align-items:center; flex-wrap:wrap; gap:1rem;">
 
-      <h3 class="card-title font-weight-bold mb-0 mr-3">
+      <h3 class="font-weight-bold mb-0" style="margin:0; padding:0; font-size:1.1rem; flex:0 0 auto;">
         Companies
       </h3>
 
-      <div class="d-flex align-items-center ml-auto" style="gap:.75rem;">
+      <div class="d-flex align-items-center" style="gap:.75rem; margin-left:auto;">
 
         {% if request.user.is_superuser %}
-        <form method="get" class="mb-0">
-          <select name="tenant"
-                  class="form-control form-control-sm"
-                  onchange="this.form.submit()">
-            <option value="">All Tenants</option>
-            {% for tenant in tenants %}
-              <option value="{{ tenant.id }}"
-                {% if tenant.id|stringformat:"s" == selected_tenant_id %}selected{% endif %}
-                title="{{ tenant.name }}">
-                {{ tenant.name|truncatechars:35 }}
-              </option>
-            {% endfor %}
-          </select>
+        <form method="get" class="mb-0" id="tenantFilterForm">
+          <div class="searchable-select" data-name="tenant" data-selected="{{ selected_tenant_id|default:'' }}" style="min-width:240px;">
+            <button type="button" class="searchable-select__toggle form-control form-control-sm">
+              <span class="searchable-select__label">All Tenants</span>
+              <span class="searchable-select__caret">&#9662;</span>
+            </button>
+            <div class="searchable-select__panel">
+              <input type="text" class="searchable-select__search form-control form-control-sm" placeholder="Search tenants…" autocomplete="off"/>
+              <div class="searchable-select__options" role="listbox">
+                <div class="searchable-select__option" data-value="" role="option">All Tenants</div>
+                {% for tenant in tenants %}
+                  <div class="searchable-select__option" data-value="{{ tenant.id }}" data-label="{{ tenant.name }}" role="option" title="{{ tenant.name }}">
+                    {{ tenant.name }}
+                  </div>
+                {% endfor %}
+              </div>
+              <div class="searchable-select__empty" style="display:none;">No matches.</div>
+            </div>
+            <input type="hidden" name="tenant" value="{{ selected_tenant_id|default:'' }}"/>
+          </div>
         </form>
+
+        <style>
+          .searchable-select { position: relative; }
+          .searchable-select__toggle {
+            display: flex; align-items: center; justify-content: space-between;
+            width: 100%; text-align: left; cursor: pointer; background: #fff;
+          }
+          .searchable-select__label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+          .searchable-select__caret { color: #6c757d; margin-left: 8px; font-size: 10px; }
+          .searchable-select__panel {
+            display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+            background: #fff; border: 1px solid #ced4da; border-radius: 6px;
+            box-shadow: 0 6px 24px rgba(0,0,0,.12);
+            z-index: 1050; padding: 8px;
+          }
+          .searchable-select.open .searchable-select__panel { display: block; }
+          .searchable-select__search { margin-bottom: 6px; }
+          .searchable-select__options { max-height: 240px; overflow-y: auto; }
+          .searchable-select__option {
+            padding: 7px 10px; border-radius: 4px; cursor: pointer; font-size: 13px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+          }
+          .searchable-select__option:hover,
+          .searchable-select__option.is-active { background: #f0f5f8; }
+          .searchable-select__option.is-selected { background: #e7f1ff; color: #0b5ed7; font-weight: 600; }
+          .searchable-select__option.is-hidden { display: none; }
+          .searchable-select__empty { padding: 10px; font-size: 12px; color: #6c757d; text-align: center; }
+        </style>
+        <script>
+        (function() {
+          function initSearchableSelect(root) {
+            var toggle  = root.querySelector('.searchable-select__toggle');
+            var label   = root.querySelector('.searchable-select__label');
+            var search  = root.querySelector('.searchable-select__search');
+            var options = Array.prototype.slice.call(root.querySelectorAll('.searchable-select__option'));
+            var empty   = root.querySelector('.searchable-select__empty');
+            var hidden  = root.querySelector('input[type="hidden"]');
+            var form    = root.closest('form');
+            var selected = root.getAttribute('data-selected') || '';
+
+            function applySelection(val) {
+              var match = options.find(function(o) { return o.getAttribute('data-value') === val; });
+              options.forEach(function(o) { o.classList.remove('is-selected'); });
+              if (match) {
+                match.classList.add('is-selected');
+                var lbl = match.getAttribute('data-label') || match.textContent.trim();
+                label.textContent = val ? lbl : match.textContent.trim();
+              }
+              hidden.value = val;
+            }
+            applySelection(selected);
+
+            function open() {
+              document.querySelectorAll('.searchable-select.open').forEach(function(el) {
+                if (el !== root) el.classList.remove('open');
+              });
+              root.classList.add('open');
+              search.value = '';
+              filter('');
+              setTimeout(function() { search.focus(); }, 0);
+            }
+            function close() { root.classList.remove('open'); }
+
+            function filter(q) {
+              q = (q || '').trim().toLowerCase();
+              var visible = 0;
+              options.forEach(function(o) {
+                var text = (o.getAttribute('data-label') || o.textContent).toLowerCase();
+                var hit = !q || text.indexOf(q) !== -1;
+                o.classList.toggle('is-hidden', !hit);
+                if (hit) visible++;
+              });
+              empty.style.display = visible === 0 ? 'block' : 'none';
+            }
+
+            function commit(val) {
+              applySelection(val);
+              close();
+              if (form) form.submit();
+            }
+
+            toggle.addEventListener('click', function(e) {
+              e.preventDefault();
+              if (root.classList.contains('open')) close(); else open();
+            });
+            search.addEventListener('input', function() { filter(search.value); });
+            search.addEventListener('keydown', function(e) {
+              if (e.key === 'Escape') { close(); toggle.focus(); }
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                var first = options.find(function(o) { return !o.classList.contains('is-hidden'); });
+                if (first) commit(first.getAttribute('data-value'));
+              }
+            });
+            options.forEach(function(o) {
+              o.addEventListener('click', function() { commit(o.getAttribute('data-value')); });
+            });
+          }
+
+          document.querySelectorAll('#tenantFilterForm .searchable-select').forEach(initSearchableSelect);
+
+          document.addEventListener('click', function(e) {
+            document.querySelectorAll('#tenantFilterForm .searchable-select.open').forEach(function(el) {
+              if (!el.contains(e.target)) el.classList.remove('open');
+            });
+          });
+        })();
+        </script>
         {% endif %}
 
         {% if request.user.is_superuser %}
@@ -239,7 +353,6 @@
         {% endif %}
 
       </div>
-    </div>
   </div>
 
   {% if is_basic_or_pro_business_user or request.user.role.code|lower == "consultant" %}

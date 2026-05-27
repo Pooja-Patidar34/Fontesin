@@ -11,6 +11,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from accounts.models import Notification
@@ -75,4 +76,29 @@ def message_delete(request, notification_id):
     note.delete()
     if _is_ajax(request):
         return JsonResponse({"ok": True})
+    return redirect("messages")
+
+
+@login_required
+def message_open(request, notification_id):
+    """Mark the notification as read, then redirect to its `link_url`.
+
+    Wired to the inbox "Open" link so clicking through to the target page
+    also clears the unread badge. Without this, the badge stayed stuck
+    because the raw `link_url` href bypassed any read-tracking. GET-only
+    on purpose — this is a navigation action, not a state-change form.
+    Falls back to the inbox if the notification has no link, or if the
+    link points off-host (defense against open-redirects via crafted
+    notification payloads).
+    """
+    note = get_object_or_404(Notification, id=notification_id, recipient=request.user)
+    if not note.is_read:
+        note.is_read = True
+        note.read_at = timezone.now()
+        note.save(update_fields=["is_read", "read_at"])
+    target = note.link_url or ""
+    if target and url_has_allowed_host_and_scheme(
+        target, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return redirect(target)
     return redirect("messages")

@@ -1,5 +1,5 @@
 {% extends "base/base.html" %}
-{% block title %}Tenants{% endblock %}
+{% block title %}Franchises{% endblock %}
 
 {% block content %}
 
@@ -8,7 +8,7 @@
   <!-- Header -->
   <div class="card-header d-flex align-items-center">
     <h3 class="card-title font-weight-bold mb-0">
-      Tenants
+      Franchises
     </h3>
 
   <div class="ml-auto d-flex align-items-center">
@@ -20,7 +20,7 @@
               id="tenant-search"
               value="{{ request.GET.q }}"
               class="form-control"
-              placeholder="Search tenant..."
+              placeholder="Search franchise..."
               autocomplete="off">
 
         <div class="input-group-append">
@@ -33,7 +33,7 @@
 
     <button class="btn btn-primary btn-sm shadow-sm"
             id="add-tenant-btn">
-      <i class="fas fa-plus mr-1"></i> Add Tenant
+      <i class="fas fa-plus mr-1"></i> Add Franchise
     </button>
 
   </div>
@@ -57,7 +57,7 @@
 
         <div class="modal-header">
           <h5 class="modal-title font-weight-bold">
-            Add Tenant
+            Add Franchise
           </h5>
           <button type="button" class="close" data-dismiss="modal">
             &times;
@@ -93,7 +93,7 @@
 
           <button type="submit"
                   class="btn btn-primary btn-sm">
-            Save Tenant
+            Save Franchise
           </button>
         </div>
 
@@ -154,7 +154,7 @@
       document.getElementById("id_name").value = "";
       document.getElementById("id_is_active").checked = true;
 
-      document.querySelector(".modal-title").innerText = "Add Tenant";
+      document.querySelector(".modal-title").innerText = "Add Franchise";
 
       setReadonly(false);
 
@@ -176,7 +176,7 @@
         document.getElementById("id_name").value = data.name;
         document.getElementById("id_is_active").checked = data.is_active;
 
-        document.querySelector(".modal-title").innerText = viewBtn ? "Tenant Details" : "Edit Tenant";
+        document.querySelector(".modal-title").innerText = viewBtn ? "Franchise Details" : "Edit Franchise";
         setReadonly(!!viewBtn);
         modal.modal('show');
       });

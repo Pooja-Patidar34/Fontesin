@@ -155,6 +155,7 @@
 
     .action-buttons {
       display: flex; gap: 12px; flex-wrap: wrap;
+      justify-content: center;
     }
     .btn-action {
       display: inline-flex; align-items: center; gap: 8px;
@@ -218,6 +219,29 @@
 </div>
 
 <div class="invoice-page">
+
+  <!-- THANK YOU / CONFIRMATION BANNER -->
+  {% if invoice.subscription.plan.code == 'free' %}
+  <div style="background:linear-gradient(135deg,#f0fdf4 0%,#dcfce7 100%); border:1px solid #bbf7d0; border-radius:16px; padding:28px 32px; margin-bottom:32px; text-align:center;">
+    <div style="font-size:2.5rem; margin-bottom:8px;">&#127881;</div>
+    <h2 style="font-family:'Montserrat',sans-serif; font-weight:800; color:#15803d; font-size:1.4rem; margin:0 0 8px;">
+      Thank You for Choosing FONTESIN!
+    </h2>
+    <p style="color:#166534; font-size:.92rem; margin:0; max-width:560px; margin-left:auto; margin-right:auto; line-height:1.5;">
+      Your Free plan is now active and ready to use. In the future, you can upgrade to one of our paid plans to unlock advanced features and capabilities.
+    </p>
+  </div>
+  {% else %}
+  <div style="background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%); border:1px solid #bfdbfe; border-radius:16px; padding:28px 32px; margin-bottom:32px; text-align:center;">
+    <div style="font-size:2.5rem; margin-bottom:8px;">&#9989;</div>
+    <h2 style="font-family:'Montserrat',sans-serif; font-weight:800; color:#1e40af; font-size:1.4rem; margin:0 0 8px;">
+      Thank You! Your Invoice Has Been Generated
+    </h2>
+    <p style="color:#1e3a8a; font-size:.92rem; margin:0; max-width:580px; margin-left:auto; margin-right:auto; line-height:1.5;">
+      Once your payment is completed, please wait for admin approval. You will receive a confirmation email as soon as your subscription is activated.
+    </p>
+  </div>
+  {% endif %}
 
   <!-- INVOICE CARD -->
   <div class="invoice-card">
@@ -454,24 +478,11 @@
 
   <!-- ACTION BUTTONS -->
   <div class="action-buttons" style="margin-bottom:32px;">
+    <a href="{% url 'logout' %}" class="btn-action btn-action--outline">&larr; Back to Login Page</a>
+    <a href="{% url 'dashboard' %}" class="btn-action btn-action--primary">Go to Dashboard &rarr;</a>
     {% if invoice.subscription.plan.code != 'free' %}
     <button class="btn-action btn-action--print" onclick="window.print()">&#128424; Print / Save as PDF</button>
     {% endif %}
-    <a href="{% url 'login' %}" class="btn-action btn-action--outline">&larr; Back to Login Page</a>
-    {% comment %}
-      Only show "Go to Dashboard" for plans that are immediately active.
-      Paid plans are created with status="created" and need a superuser to
-      approve them. Letting users click through here just hits the dashboard
-      gate (dashboard.py) and bounces them to pending_approval.html, which
-      is a confusing UX. The free plan is auto-activated on creation and
-      can go straight to the dashboard.
-    {% endcomment %}
-    {% if invoice.subscription.status != 'active' %}
-    <span class="btn-action btn-action--outline" style="opacity:.65;cursor:not-allowed;" title="Your subscription is awaiting admin approval. You will receive an email once it's activated.">
-      &#9203; Awaiting Approval
-    </span>
-    {% endif %}
-    <a href="{% url 'login' %}" class="btn-action btn-action--primary">Back to Login &rarr;</a>
   </div>
 
   {% if invoice.subscription.plan.code != 'free' %}

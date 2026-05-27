@@ -83,14 +83,18 @@ POSTAL_CODE_RE = re.compile(r"^(?=.*[A-Za-z0-9])[A-Za-z0-9\s\-]{3,12}$")
 
 @login_required
 def plans_view(request):
-    """Standalone Plans page — same plan-status card the profile sidebar
-    renders, lifted into its own sidebar tab so users don't have to dig
-    into Profile to see / upgrade their subscription.
+    """Standalone Plans page — renders the user's active plan card, the
+    pending-upgrade card, and below them the full subscription history.
 
-    The page reuses ``profile/_plan_card.html`` so the two views never
-    drift. The Upgrade CTA still routes to /membership/ for plan
-    selection; admins approve the request from the existing flow.
+    Folds the former /plan-history/ table into the same page so users have
+    one place to see "what plan am I on now" and "what plans have I been
+    on". The plan card markup is shared via ``profile/_plan_card.html`` so
+    Profile and Plans never drift. History rows are paginated server-side
+    via ?page=.
     """
+    from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+    from billing.models import Subscription
+
     user = request.user
     role_code = (user.role.code or "").lower() if user.role else ""
     # Mirror the profile-card visibility: superusers and staff roles don't
@@ -108,6 +112,20 @@ def plans_view(request):
             "Please activate another plan to continue.",
         )
 
+    # Subscription history — same query the standalone /plan-history/ view
+    # uses, scoped to the current user. Newest first.
+    history_qs = (
+        Subscription.objects
+        .filter(user=user)
+        .select_related("plan", "user")
+        .order_by("-start_date", "-created_at")
+    )
+    paginator = Paginator(history_qs, 10)
+    try:
+        page_obj = paginator.page(request.GET.get("page", 1))
+    except (PageNotAnInteger, EmptyPage):
+        page_obj = paginator.page(1)
+
     return render(
         request,
         "dashboard/plans.html",
@@ -117,6 +135,8 @@ def plans_view(request):
             "subscription": subscription,
             "pending_subscription": get_pending_subscription(user),
             "deactivated_plan": deactivated_plan,
+            "subscriptions": page_obj,
+            "page_obj": page_obj,
         },
     )
 
