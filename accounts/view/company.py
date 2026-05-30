@@ -47,6 +47,80 @@ def _country_match_q(country_code):
     return q
 
 
+def _coordinator_region_code(user):
+    """Resolve the ISO country code of the region a coordinator manages.
+
+    Priority:
+      1. territory_country — an explicit ISO code, if an admin assigned one.
+      2. target_region     — the region the coordinator picked on the
+                             application form. It's stored as a country *label*
+                             (e.g. "United States"), so we map it back to its
+                             ISO code via the CountryChoices labels + aliases.
+      3. country           — the coordinator's own country (ISO code), as a
+                             last-resort fallback.
+
+    Returns the ISO code (e.g. "US") or "" when none can be determined.
+    """
+    territory_country = (user.territory_country or "").strip().upper()
+    if territory_country:
+        return territory_country
+
+    target_region = (user.target_region or "").strip()
+    if target_region:
+        label_to_code = {lbl.lower(): code for code, lbl in CountryChoices.CHOICES}
+        code = label_to_code.get(target_region.lower())
+        if code:
+            return code
+        # Free-text region spellings (e.g. "USA") map through the same alias
+        # table used to match Company.country.
+        for c, aliases in _COUNTRY_ALIASES.items():
+            if target_region.lower() in {a.lower() for a in aliases}:
+                return c
+
+    return (user.country or "").strip().upper()
+
+
+def coordinator_territory_q(user):
+    """Region scope for a coordinator's company access.
+
+    A coordinator oversees a whole territory, so they should see every active
+    company in the region they manage (e.g. the USA coordinator sees all USA
+    companies) — not just the handful they're directly linked to. The managed
+    region is resolved by _coordinator_region_code (territory_country →
+    target_region → country).
+
+    Company.country is free-text while the resolved region is an ISO code, so
+    we match across the code + label + common aliases via _country_match_q.
+    Returns None when the user isn't a coordinator or no region can be
+    determined, so callers can skip widening the scope (a coordinator with no
+    region info keeps their linked-company view rather than getting the entire
+    directory).
+    """
+    role_code = (user.role.code or "").lower() if user.role else ""
+    if role_code != "coordinator":
+        return None
+
+    region_code = _coordinator_region_code(user)
+    if not region_code:
+        return None
+
+    scope_q = _country_match_q(region_code) & Q(is_active=True)
+
+    # State / city narrowing only applies to an explicitly-assigned
+    # territory_country — target_region and country are country-level only.
+    territory_country = (user.territory_country or "").strip().upper()
+    if territory_country:
+        territory_region = (user.territory_region or "").strip()
+        if territory_region:
+            scope_q &= Q(state__iexact=territory_region)
+
+        territory_city = (user.territory_city or "").strip()
+        if territory_city:
+            scope_q &= Q(city__iexact=territory_city)
+
+    return scope_q
+
+
 def business_user_visible_companies(user):
     """Companies a business user can see in their Company Database list.
 
@@ -188,11 +262,19 @@ def company_list(request):
                     tenant=request.user.tenant,
                 )
             else:
-                # Match list-view scoping (linkage-based, cross-tenant).
+                # Editing is linkage-only — a user may edit a company ONLY if
+                # they own it, are its consultant, are a primary user, or are
+                # linked via UserCompany. We deliberately do NOT include
+                # Q(tenant=...) here: business users share the "Default"
+                # tenant with most companies, so a tenant match would let any
+                # business user edit every company in that tenant (e.g. change
+                # the contact person on companies that aren't theirs). Viewing
+                # a wider set is fine; writing is not. Tenant admins
+                # (handled above) keep tenant-wide edit; everyone else is
+                # restricted to their own linked companies.
                 company = get_object_or_404(
                     Company.objects.filter(
-                        Q(tenant=request.user.tenant)
-                        | Q(consultant=request.user)
+                        Q(consultant=request.user)
                         | Q(owner_user=request.user)
                         | Q(primary_users=request.user)
                         | Q(usercompany__user=request.user)
@@ -273,6 +355,28 @@ def company_list(request):
 
             company.save()
             form.save_m2m()
+
+            # Link the new company as the business user's primary company when
+            # they don't have one yet. The Company Database modal previously
+            # set only owner_user, so a company created here showed up under
+            # "My Companies" (owner_user) but never on the user's Profile page,
+            # which reads primary_company. Mirrors the profile Create-Company
+            # flow so both entry points leave the same linkage. Scoped to
+            # business users — a consultant creating a client's company must
+            # not have it become their own primary company.
+            if (
+                not company_id
+                and creator_role_code == "business_user"
+                and not request.user.primary_company_id
+            ):
+                from accounts.models import UserCompany
+                request.user.primary_company = company
+                request.user.save(update_fields=["primary_company"])
+                UserCompany.objects.get_or_create(
+                    user=request.user,
+                    company=company,
+                    defaults={"is_primary": True},
+                )
 
             if emit_cert_notification:
                 try:
@@ -413,6 +517,13 @@ def company_list(request):
                 | Q(primary_users=request.user)
                 | Q(usercompany__user=request.user)
             )
+
+            # Coordinator discovery scope: on top of the companies they're
+            # directly linked to, a coordinator sees every active company in
+            # the region they manage. See coordinator_territory_q for details.
+            coordinator_scope_q = coordinator_territory_q(request.user)
+            if coordinator_scope_q is not None:
+                linkage_q = linkage_q | coordinator_scope_q
 
             # Business-user discovery scope, by plan:
             #   global → all active companies worldwide
@@ -882,14 +993,16 @@ def toggle_company(request, company_id):
             tenant=request.user.tenant,
         )
     else:
-        # Match the edit-path scoping (linkage-based, cross-tenant). Global /
-        # Pro business users can toggle a partner company once the owner has
-        # approved the connection — that approval adds the UserCompany row
-        # picked up by `usercompany__user`.
+        # Match the edit-path scoping: linkage-only, NO tenant clause.
+        # Activating/deactivating is a write, so a user may only toggle a
+        # company they own, consult for, or are linked to — never every
+        # company that happens to share their (often "Default") tenant.
+        # Global / Pro business users can toggle a partner company once the
+        # owner has approved the connection — that approval adds the
+        # UserCompany row picked up by `usercompany__user`.
         company = get_object_or_404(
             Company.objects.filter(
-                Q(tenant=request.user.tenant)
-                | Q(consultant=request.user)
+                Q(consultant=request.user)
                 | Q(owner_user=request.user)
                 | Q(primary_users=request.user)
                 | Q(usercompany__user=request.user)
@@ -959,6 +1072,12 @@ def company_detail_ajax(request, company_id):
             | Q(primary_users=request.user)
             | Q(usercompany__user=request.user)
         )
+
+        # Coordinators can View any company in the region they manage, to
+        # match the territory scope applied to their Company Database list.
+        coordinator_scope_q = coordinator_territory_q(request.user)
+        if coordinator_scope_q is not None:
+            scope_q = scope_q | coordinator_scope_q
 
         company = get_object_or_404(
             Company.objects.filter(scope_q).distinct(),

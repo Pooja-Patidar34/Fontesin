@@ -378,9 +378,9 @@ fetch('{% static "adminlte/images/world-map.svg" %}?v=7')
   });
 
 const COUNTRY_STATUS = {
-  'US': { status: 'active',  year: 1, name: 'United States',         page: 'region-us.html' },
-  'DE': { status: 'active',  year: 1, name: 'Germany',               page: 'region-de.html' },
-  'CZ': { status: 'active',  year: 1, name: 'Czech Republic',        page: 'region-cz.html' },
+  'US': { status: 'active',  year: 1, name: 'United States',         page: '{% url "region_us" %}' },
+  'DE': { status: 'active',  year: 1, name: 'Germany',               page: '{% url "region_de" %}' },
+  'CZ': { status: 'active',  year: 1, name: 'Czech Republic',        page: '{% url "region_cz" %}' },
   'GB': { status: 'active',  year: 1, name: 'United Kingdom',        page: null },
   'FR': { status: 'active',  year: 1, name: 'France',                page: null },
   'NL': { status: 'active',  year: 1, name: 'Netherlands',           page: null },
@@ -388,8 +388,8 @@ const COUNTRY_STATUS = {
   'AT': { status: 'active',  year: 1, name: 'Austria',               page: null },
   'CH': { status: 'active',  year: 1, name: 'Switzerland',           page: null },
   'SE': { status: 'active',  year: 1, name: 'Sweden',                page: null },
-  'AE': { status: 'planned', year: 2, name: 'United Arab Emirates',  page: 'region-ae.html' },
-  'JP': { status: 'planned', year: 3, name: 'Japan',                 page: 'region-jp.html' },
+  'AE': { status: 'planned', year: 2, name: 'United Arab Emirates',  page: '{% url "region_ae" %}' },
+  'JP': { status: 'planned', year: 3, name: 'Japan',                 page: '{% url "region_jp" %}' },
   'SG': { status: 'planned', year: 2, name: 'Singapore',             page: null },
   'CA': { status: 'planned', year: 2, name: 'Canada',                page: null },
   'AU': { status: 'planned', year: 2, name: 'Australia',             page: null },
@@ -437,7 +437,7 @@ function initMap() {
           tooltip.innerHTML = `
             <div class="map-tooltip__name">${info.name}</div>
             <div style="color:${statusColor};font-size:.75rem;">${statusLabel}</div>
-            ${info.page ? '<div style="font-size:.7rem;color:rgba(199,204,209,.6);margin-top:4px;">Click for details →</div>' : ''}
+            <div style="font-size:.7rem;color:rgba(199,204,209,.6);margin-top:4px;">Click for details →</div>
           `;
           tooltip.classList.add('visible');
         }
@@ -456,7 +456,11 @@ function initMap() {
       });
 
       path.addEventListener('click', () => {
-        if (info.page) window.location.href = info.page;
+        // Dedicated region page when one exists (US/DE/CZ/AE/JP); otherwise
+        // the generic per-country "coming soon" page. Either way a click on
+        // any highlighted country lands on a real page instead of 404-ing on
+        // the old relative "region-xx.html" path.
+        window.location.href = info.page || ('/region/' + iso.toLowerCase() + '/coming-soon/');
       });
     }
   });

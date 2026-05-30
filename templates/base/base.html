@@ -553,13 +553,15 @@
           {% endif %}
 
 
-          <!-- Users link for consultant / franchise (sees only their company's users) -->
+          <!-- Users link for consultant / franchise (sees only their company's users).
+               Consultant sees "Certified Users" since their list is the BUs whose
+               companies they've certified. Franchise keeps the generic "Users" label. -->
           {% if request.user.role.code|lower == "consultant" or request.user.role.code|lower == "franchise" %}
           <li class="nav-item">
             <a href="{% url 'users' %}"
                class="nav-link {% if active_menu == 'users' %}active{% endif %}">
               <i class="nav-icon fas fa-users"></i>
-              <p>Users</p>
+              <p>{% if request.user.role.code|lower == "consultant" %}Certified Users{% else %}Users{% endif %}</p>
             </a>
           </li>
           {% endif %}
@@ -771,9 +773,15 @@
           {% if request.user.role.code|lower != "business_user" %}
           <li class="nav-item">
             <a href="{% url 'payments' %}"
-               class="nav-link {% if active_menu == 'payments' %}active{% endif %}">
+               class="nav-link {% if active_menu == 'payments' %}active{% endif %}"
+               style="display: flex; align-items: center;">
               <i class="nav-icon fas fa-file-invoice-dollar"></i>
-              <p>Invoices</p>
+              <p style="flex:1;">Invoices</p>
+              {% if pending_invoice_count %}
+              <span class="sidebar-notif-badge" aria-label="{{ pending_invoice_count }} invoices awaiting approval">
+                {% if pending_invoice_count > 9 %}9+{% else %}{{ pending_invoice_count }}{% endif %}
+              </span>
+              {% endif %}
             </a>
           </li>
 
@@ -1185,9 +1193,45 @@
           </p>
 
           <div class="form-group">
-            <label>Target region <span class="text-muted small">(country, state, or area you want to coordinate)</span></label>
-            <input type="text" name="target_region" class="form-control" maxlength="200"
-                   placeholder="e.g. United States — Texas">
+            <label>Target region <span class="text-danger">*</span> <span class="text-muted small">(region/country you want to coordinate)</span></label>
+            {% comment %}
+              Same region list as the registration application form so an
+              approved request maps cleanly to a country scope (see
+              coordinator_territory_q).
+            {% endcomment %}
+            <select name="target_region" class="form-control" required>
+              <option value="">Select your target region...</option>
+              <optgroup label="Europe">
+                <option>Czech Republic</option>
+                <option>Germany</option>
+                <option>Austria</option>
+                <option>Switzerland</option>
+                <option>Poland</option>
+                <option>France</option>
+                <option>United Kingdom</option>
+                <option>Benelux (Belgium, Netherlands, Luxembourg)</option>
+                <option>Scandinavia</option>
+                <option>Other European country</option>
+              </optgroup>
+              <optgroup label="Middle East &amp; Africa">
+                <option>UAE</option>
+                <option>Saudi Arabia</option>
+                <option>Other MENA country</option>
+              </optgroup>
+              <optgroup label="Asia Pacific">
+                <option>Japan</option>
+                <option>South Korea</option>
+                <option>Australia</option>
+                <option>Other APAC country</option>
+              </optgroup>
+              <optgroup label="Americas">
+                <option>United States</option>
+                <option>Canada</option>
+                <option>Brazil</option>
+                <option>Mexico</option>
+                <option>Other Americas country</option>
+              </optgroup>
+            </select>
           </div>
 
           <div class="form-group">

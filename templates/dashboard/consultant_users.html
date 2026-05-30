@@ -70,6 +70,48 @@
                 <i class="fas fa-chart-line mr-1"></i> Statistics
               </a>
               {% endif %}
+              {% comment %}
+                Super-admin management actions (Edit / Activate-Deactivate /
+                Delete) for any account in this directory, including
+                coordinators. Edit deep-links into the Users-tab edit modal;
+                Activate/Deactivate and Delete reuse the existing user-toggle /
+                user-delete endpoints and redirect back here via ?next=.
+                Gated to superusers — coordinators/franchise viewers of this
+                directory stay read-only.
+              {% endcomment %}
+              {% if request.user.is_superuser and u.id != request.user.id %}
+              <div class="btn-group ml-1">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown">
+                  Action
+                </button>
+                <div class="dropdown-menu dropdown-menu-right shadow-sm">
+                  <a class="dropdown-item" href="{% url 'users' %}?open_edit={{ u.id }}">
+                    <i class="fas fa-edit mr-2 text-warning"></i> Edit
+                  </a>
+                  {% if u.is_active %}
+                  <a class="dropdown-item text-danger"
+                     href="{% url 'user-toggle' u.id %}?next={{ request.get_full_path|urlencode }}">
+                    <i class="fas fa-user-slash mr-2"></i> Deactivate
+                  </a>
+                  {% else %}
+                  <a class="dropdown-item text-success"
+                     href="{% url 'user-toggle' u.id %}?next={{ request.get_full_path|urlencode }}">
+                    <i class="fas fa-user-check mr-2"></i> Activate
+                  </a>
+                  {% endif %}
+                  <div class="dropdown-divider"></div>
+                  <form method="post"
+                        action="{% url 'user-delete' u.id %}?next={{ request.get_full_path|urlencode }}"
+                        id="cu-delete-form-{{ u.id }}" class="m-0">
+                    {% csrf_token %}
+                    <button type="button" class="dropdown-item text-danger"
+                            onclick="appConfirm({kind:'danger', title:'Delete User?', text:'Are you sure you want to permanently delete <strong>{{ u.email|escapejs }}</strong>? This action cannot be undone.', okLabel:'Delete', okIcon:'fa-trash', onConfirm:function(){document.getElementById('cu-delete-form-{{ u.id }}').submit();}})">
+                      <i class="fas fa-trash mr-2"></i> Delete
+                    </button>
+                  </form>
+                </div>
+              </div>
+              {% endif %}
             </td>
           </tr>
           {% empty %}

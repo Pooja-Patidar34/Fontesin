@@ -146,16 +146,26 @@
       </div>
     </div>
     {% else %}
-    <!-- Company set-up: join existing OR create new -->
+    <!-- Company set-up: join existing OR create new.
+         Coordinators, franchise partners, and consultants represent the
+         company they own/operate, so "join existing" doesn't apply to them
+         — they always file a new one. Only business users get both
+         options. Server-side enforced in profile_view() as well. -->
+    {% with role_code=request.user.role.code|lower %}
     <div class="card">
       <div class="card-header" style="border-bottom:1px solid #e8eef3;">
         <h3 class="card-title"><i class="fas fa-building mr-2"></i>Set Up Your Company</h3>
       </div>
       <div class="card-body">
         <p class="text-muted" style="font-size:.88rem; margin-bottom:20px;">
-          You don't have a company linked yet. Join one that's already on the platform, or register a new one.
+          {% if role_code == "consultant" or role_code == "coordinator" or role_code == "franchise" %}
+            You don't have a company linked yet. Register the company you represent below.
+          {% else %}
+            You don't have a company linked yet. Join one that's already on the platform, or register a new one.
+          {% endif %}
         </p>
 
+        {% if not role_code == "consultant" and not role_code == "coordinator" and not role_code == "franchise" %}
         <ul class="nav nav-tabs" id="companySetupTabs" role="tablist" style="margin-bottom:24px;">
           <li class="nav-item">
             <a class="nav-link {% if not open_create_company_tab %}active{% endif %}" id="join-tab" data-toggle="tab" href="#join-pane" role="tab" aria-controls="join-pane" aria-selected="{% if not open_create_company_tab %}true{% else %}false{% endif %}">
@@ -168,9 +178,11 @@
             </a>
           </li>
         </ul>
+        {% endif %}
 
         <div class="tab-content">
 
+          {% if not role_code == "consultant" and not role_code == "coordinator" and not role_code == "franchise" %}
           <!-- JOIN PANE -->
           <div class="tab-pane fade {% if not open_create_company_tab %}show active{% endif %}" id="join-pane" role="tabpanel" aria-labelledby="join-tab">
             <form method="POST" action="{% url 'profile' %}" id="join-company-form">
@@ -208,9 +220,16 @@
               </button>
             </form>
           </div>
+          {% endif %}{# /join pane #}
 
-          <!-- CREATE PANE -->
+          <!-- CREATE PANE — always shown. For consultant / coordinator /
+               franchise it's the only pane (no tabs, no fade animation
+               so the form is immediately visible). -->
+          {% if role_code == "consultant" or role_code == "coordinator" or role_code == "franchise" %}
+          <div class="tab-pane show active" id="create-pane" role="tabpanel">
+          {% else %}
           <div class="tab-pane fade {% if open_create_company_tab %}show active{% endif %}" id="create-pane" role="tabpanel" aria-labelledby="create-tab">
+          {% endif %}
         <form method="POST" action="{% url 'profile' %}" id="create-company-form" enctype="multipart/form-data">
           {% csrf_token %}
           <input type="hidden" name="form_type" value="create_company">
@@ -516,6 +535,7 @@
         </div><!-- /.tab-content -->
       </div><!-- /.card-body (Set Up Your Company) -->
     </div>
+    {% endwith %}{# /role_code #}
     {% endif %}
 
   </div>

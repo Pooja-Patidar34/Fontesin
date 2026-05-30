@@ -70,6 +70,7 @@
   .msg-icon--cert-request { background: #f59e0b; }
   .msg-icon--cert-approved { background: #10b981; }
   .msg-icon--cert-declined { background: #ef4444; }
+  .msg-icon--new-user { background: #3b82f6; }
   .msg-icon--generic { background: #64748b; }
 
   .msg-body { flex: 1; min-width: 0; }
@@ -183,6 +184,8 @@
           <div class="msg-icon msg-icon--cert-approved"><i class="fas fa-check"></i></div>
         {% elif note.kind == "certification_declined" %}
           <div class="msg-icon msg-icon--cert-declined"><i class="fas fa-times"></i></div>
+        {% elif note.kind == "new_user" %}
+          <div class="msg-icon msg-icon--new-user"><i class="fas fa-user-plus"></i></div>
         {% else %}
           <div class="msg-icon msg-icon--generic"><i class="fas fa-bell"></i></div>
         {% endif %}

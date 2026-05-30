@@ -383,22 +383,37 @@ class CompanyForm(forms.ModelForm):
             return
 
         # Business Users may not edit the contact-person fields (First Name,
-        # Last Name, Contact Email) AFTER the company has been created — at
-        # that point those fields belong to the certifying consultant. They
-        # ARE editable on the Add Company form (no saved instance yet) so
-        # the BU can give an initial contact when filing the request; once
-        # saved, the consultant takes over. tenant_id is the reliable
-        # "already saved" signal because Company.id defaults to uuid4 even
-        # for unsaved instances.
+        # Last Name, Contact Email) on companies they DON'T own — at that
+        # point those fields belong to the company's certifying consultant
+        # / owner. The BU's OWN company stays editable so they can keep
+        # their own contact info up to date.
+        #
+        # Contact fields are also editable on the Add Company form (no saved
+        # instance yet) so the BU can give an initial contact when filing
+        # the request; once saved + handed off to a consultant, only the
+        # owner BU and the consultant can change it. tenant_id is the
+        # reliable "already saved" signal because Company.id defaults to
+        # uuid4 even for unsaved instances.
+        #
+        # Because `disabled = True` is enforced server-side (Django ignores
+        # submitted values for disabled fields and keeps the initial value),
+        # a hand-crafted POST from a non-owner BU can't slip contact-field
+        # changes past us either.
         role_code = (user.role.code or "").lower() if getattr(user, "role", None) else ""
         instance_is_saved = bool(self.instance and self.instance.tenant_id)
-        if not user.is_superuser and role_code == "business_user" and instance_is_saved:
+        is_business_user = not user.is_superuser and role_code == "business_user"
+        is_owner = bool(
+            self.instance
+            and getattr(self.instance, "owner_user_id", None) == user.id
+        )
+        if is_business_user and instance_is_saved and not is_owner:
             for fld in ("contact_first_name", "contact_last_name", "contact_email"):
                 if fld in self.fields:
                     self.fields[fld].disabled = True
                     self.fields[fld].widget.attrs["readonly"] = "readonly"
                     self.fields[fld].widget.attrs["title"] = (
-                        "Maintained by the certifying consultant."
+                        "Only the company owner or the certifying consultant "
+                        "can edit these fields."
                     )
 
         if user.is_superuser:

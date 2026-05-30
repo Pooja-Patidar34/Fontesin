@@ -285,18 +285,26 @@ def register_view(request):
                 role=role,
                 phone=phone,
                 country=country,
+                # Identity verification has not happened yet — the account
+                # stays gated on the /verify/ step (see
+                # RequireIdentityVerificationMiddleware) and cannot reach plan
+                # selection or the dashboard until Veriff returns "approved".
+                verification_status="pending",
             )
         except IntegrityError:
             messages.error(request, "Email already exists")
             return render(request, "auth/register.html", ctx)
 
         # Business users register without a company — they create or join one
-        # from their profile after sign-up. Any company_id POSTed by them is
-        # ignored as a safety net (HTML form no longer sends one).
-        if role_name == "business_user":
+        # from their profile after sign-up. Consultants, coordinators, and
+        # franchise partners now follow the same pattern: they register the
+        # company they represent from /profile/ after the application step.
+        # Any company_id POSTed by these roles is ignored as a safety net
+        # (the HTML form no longer sends one — see toggleOthersOption()).
+        if role_name in ("business_user", "consultant", "coordinator", "franchise"):
             company_id = ""
 
-        # link company (other roles only)
+        # link company (other roles only — none today, kept for future roles)
         if company_id:
             company = Company.objects.filter(id=company_id).first()
             if company:
@@ -309,7 +317,35 @@ def register_view(request):
                     is_primary=True
                 )
 
+        # Notify consultants in the new user's region, in parallel with the
+        # existing super-admin notification flow, and surface the details the
+        # user just filled in. Scoped to business-user signups — those are the
+        # prospective clients a regional consultant would follow up with;
+        # consultants/coordinators/franchises aren't leads for other
+        # consultants. Wrapped so a notification hiccup never breaks sign-up.
+        if role_name == "business_user":
+            try:
+                from accounts.utils.notifications import notify_consultants_new_user
+                notify_consultants_new_user(
+                    user,
+                    language=request.POST.get("language", "").strip(),
+                    interest=request.POST.get("interest", "").strip(),
+                )
+            except Exception:
+                pass
+
         login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+
+        # LOCAL TESTING ONLY: when VERIFF_BYPASS is on, skip the Veriff step
+        # entirely — auto-approve the account and send it straight to the next
+        # registration step (application form for consultant / coordinator /
+        # franchise, otherwise plan selection). Off by default in production.
+        if getattr(settings, "VERIFF_BYPASS", False):
+            user.verification_status = "approved"
+            user.save(update_fields=["verification_status"])
+            if role_name in ("consultant", "coordinator", "franchise"):
+                return redirect("apply")
+            return redirect("membership")
 
         # All roles go through Veriff identity verification
         # After verification, consultant/coordinator/franchise → /apply/, others → /membership/
@@ -329,6 +365,15 @@ def identity_verification_view(request):
 
     role_code = user.role.code.lower()
     show_apply_link = role_code in ('consultant', 'coordinator', 'franchise')
+
+    # Already verified — there's nothing to do on this screen, so move the
+    # user on to the next step in the registration flow (per the diagram:
+    # SUCCESSFUL verification → application form for consultant / coordinator
+    # / franchise, otherwise → plan selection). Without this an approved user
+    # who navigates back to /verify/ would be stranded on the start screen.
+    from FontEsin.middleware.require_verification import VERIFIED_STATUSES
+    if (user.verification_status or "") in VERIFIED_STATUSES:
+        return redirect("apply" if show_apply_link else "membership")
 
     return render(
         request,
@@ -448,6 +493,15 @@ def apply_submit(request):
         "Primary industry": primary_industry,
         "Professional summary": professional_summary,
         "Motivation": motivation,
+        # Company Information — these end up on the Company row created below
+        # and become the user's primary_company. Name / Country / Legal Form
+        # already have HTML `required`; the Registration Number was previously
+        # optional but is now mandatory so the company is uniquely identifiable
+        # and admins have something to verify on the certification request.
+        "Company name": applied_company_name,
+        "Company registration number": applied_company_reg_number,
+        "Country of incorporation": applied_country_of_incorporation,
+        "Legal form": applied_legal_form,
     }
     missing = [name for name, value in required_fields.items() if not value]
     if missing:

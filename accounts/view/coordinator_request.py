@@ -49,6 +49,12 @@ def coordinator_request_submit(request):
     target_region = (request.POST.get("target_region") or "").strip()[:200]
     motivation = (request.POST.get("motivation") or "").strip()
 
+    # Target region is now a required dropdown selection — it determines the
+    # region the coordinator will manage once approved.
+    if not target_region:
+        messages.error(request, "Please select the target region you want to coordinate.")
+        return redirect("profile")
+
     coord_request = CoordinatorRequest.objects.create(
         user=request.user,
         status=CoordinatorRequest.STATUS_PENDING,
@@ -136,7 +142,15 @@ def coordinator_request_action(request, request_id):
 
         requester = coord_request.user
         requester.role = coordinator_role
-        requester.save(update_fields=["role"])
+        # Carry the requested region onto the new coordinator so their Company
+        # Database is scoped to that region (coordinator_territory_q resolves
+        # the region from target_region when no explicit territory_country is
+        # set — same as a coordinator who signed up via the registration flow).
+        update_fields = ["role"]
+        if coord_request.target_region and not (requester.target_region or "").strip():
+            requester.target_region = coord_request.target_region
+            update_fields.append("target_region")
+        requester.save(update_fields=update_fields)
 
         coord_request.status = CoordinatorRequest.STATUS_APPROVED
         coord_request.save(update_fields=[

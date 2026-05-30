@@ -72,6 +72,10 @@ MIDDLEWARE = [
     "FontEsin.middleware.error_logging.ErrorLoggingMiddleware",
     "FontEsin.middleware.no_emoji.NoEmojiMiddleware",
     "FontEsin.middleware.no_cache.NoCachePagesMiddleware",
+    # Identity verification gate runs BEFORE the plan gate: an unverified
+    # account is forced onto /verify/ and can't reach plan selection until
+    # Veriff approves it.
+    "FontEsin.middleware.require_verification.RequireIdentityVerificationMiddleware",
     "FontEsin.middleware.require_plan.RequirePlanForBusinessUserMiddleware",
 ]
 
@@ -329,3 +333,11 @@ VERIFF_MASTER_SECRET = config("VERIFF_MASTER_SECRET")
 VERIFF_BASE_URL= config("VERIFF_BASE_URL")
 VERIFF_WEBHOOK_SECRET = config("VERIFF_WEBHOOK_SECRET")
 VERIFF_CALLBACK_URL = config("VERIFF_CALLBACK_URL", default="http://127.0.0.1:8000/membership/")
+
+# LOCAL TESTING ONLY. When True, identity verification is bypassed: new
+# registrations are auto-marked "approved" and the RequireIdentityVerification
+# middleware lets everyone through, so you can register/test without a working
+# Veriff webhook (which can't reach localhost). Defaults to False — never turn
+# this on in production, or the Veriff gate is disabled platform-wide. Enable
+# locally via VERIFF_BYPASS=True in your .env.
+VERIFF_BYPASS = config("VERIFF_BYPASS", default="False").lower() == "true"

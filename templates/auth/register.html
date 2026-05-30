@@ -480,15 +480,19 @@
   }
 
   // Toggles whether the company picker (other roles) or the "add it later"
-  // notice (business_user) is shown. Wired to the role radios.
+  // notice (business_user / consultant / coordinator / franchise) is shown.
+  // Consultants, coordinators, and franchise partners now register without a
+  // company too — they file the company they represent from /profile/ after
+  // sign-up. Wired to the role radios.
+  var ROLES_WITHOUT_COMPANY = ['business_user', 'consultant', 'coordinator', 'franchise'];
   window.toggleOthersOption = function() {
     var role = document.querySelector('input[name="role"]:checked');
     var companyGroup = document.getElementById('reg-company-group');
     var businessNote = document.getElementById('reg-company-business-note');
     var sel = document.getElementById('reg-company');
 
-    if (role && role.value === 'business_user') {
-      // Business users register without a company — set up via profile later.
+    if (role && ROLES_WITHOUT_COMPANY.indexOf(role.value) !== -1) {
+      // Register without a company — set up from /profile/ later.
       companyGroup.style.display = 'none';
       businessNote.style.display = '';
       sel.removeAttribute('required');
@@ -714,9 +718,11 @@
         return;
       }
 
-      // Company picker is only required for non-business roles. Business
-      // users add their company from the profile page after sign-up.
-      if (selectedRole.value !== 'business_user') {
+      // Company picker no longer required for business_user, consultant,
+      // coordinator, or franchise — those roles file (or join) their company
+      // from /profile/ after sign-up. Kept the guard for any future role
+      // that hasn't been added to ROLES_WITHOUT_COMPANY.
+      if (ROLES_WITHOUT_COMPANY.indexOf(selectedRole.value) === -1) {
         var companyEl = document.getElementById('reg-company');
         if (!companyEl.value) {
           showToast("Please select a company before continuing.", "error");

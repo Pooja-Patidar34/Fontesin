@@ -118,6 +118,87 @@ def notify_certification_decision(company, *, decided_by, approved):
     )
 
 
+def notify_consultants_new_user(new_user, *, language="", interest=""):
+    """Tell every active consultant in the new user's region that a new user
+    has registered, and surface the details they filled in at sign-up.
+
+    This runs in parallel with the existing super-admin notification on plan
+    selection — the consultant gets an early heads-up about a prospective
+    client in their territory the moment the account is created.
+
+    Region is matched on country (the only location signal captured at
+    registration — User.country holds an ISO code for both the new user and
+    the consultant). A consultant is "in the region" when their own
+    User.country matches the new user's. The new user themselves is excluded
+    so a consultant signing up never notifies themselves.
+
+    `language` and `interest` are read straight from the registration form by
+    the caller and passed through here so the consultant sees them even though
+    register_view doesn't persist them on the User row.
+    """
+    from accounts.models import User
+
+    country = (getattr(new_user, "country", "") or "").strip()
+    if not country:
+        # No region to route on — nothing to do. (Consultants are matched by
+        # country; without it we'd have to broadcast platform-wide, which is
+        # noise, so we skip instead.)
+        return None
+
+    consultants = (
+        User.objects.filter(
+            role__code__iexact="consultant",
+            is_active=True,
+            country__iexact=country,
+        )
+        .exclude(id=new_user.id)
+    )
+    if not consultants.exists():
+        return None
+
+    user_label = (
+        f"{new_user.first_name} {new_user.last_name}".strip() or new_user.email
+    )
+    role_label = ""
+    if getattr(new_user, "role", None) and new_user.role.name:
+        role_label = new_user.role.name.replace("_", " ").title()
+
+    # Human-readable country name (fall back to the raw code).
+    from accounts.constants import CountryChoices
+    country_label = dict(CountryChoices.CHOICES).get(country.upper(), country)
+
+    # Compose a readable summary of everything the user filled in at sign-up.
+    lines = [
+        f"A new user has registered in your region ({country_label}).",
+        "",
+        f"Name: {user_label}",
+        f"Email: {new_user.email}",
+    ]
+    if getattr(new_user, "phone", ""):
+        prefix = (getattr(new_user, "national_prefix", "") or "").strip()
+        phone = f"+{prefix} {new_user.phone}".strip() if prefix else new_user.phone
+        lines.append(f"Phone: {phone}")
+    lines.append(f"Country: {country_label}")
+    if role_label:
+        lines.append(f"Registering as: {role_label}")
+    if language:
+        lines.append(f"Preferred language: {language}")
+    if interest:
+        lines.append(f"Interest: {interest}")
+    body = "\n".join(lines)
+
+    last = None
+    for consultant in consultants:
+        last = notify(
+            recipient=consultant,
+            sender=new_user,
+            kind=Notification.KIND_NEW_USER,
+            title=f"New user registered in your region: {user_label}",
+            body=body,
+        )
+    return last
+
+
 def notify_coordinator_request_submitted(coord_request):
     """Broadcast a 'BU X requested coordinator role' note to every superuser
     so any of them can pick up the review."""

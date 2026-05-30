@@ -5,6 +5,7 @@ from datetime import timedelta
 from dateutil.relativedelta import relativedelta
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 from django.utils import timezone
 from django.contrib import messages
 
@@ -122,9 +123,6 @@ def select_plan(request):
         messages.error(request, "Invalid plan selected")
         return redirect("membership")
 
-    # Tier check: only allow strictly-higher-tier moves. This is the actual
-    # "upgrade" guard — same plan or a downgrade is a no-op (or worse, would
-    # silently issue a refund-shaped flow we don't support yet).
     from billing.utils import PLAN_TIERS
     current_active = (
         Subscription.objects
@@ -132,14 +130,61 @@ def select_plan(request):
         .select_related("plan")
         .first()
     )
+
+    # Downgrade to Free — allowed and immediate (no payment / admin approval).
+    # The user drops onto the Free tier right away and the paid plan they were
+    # on is superseded. Handled before the upgrade guard below, which would
+    # otherwise reject any non-upgrade move (this is the BASIC → FREE case).
+    if plan.code == "free" and current_active:
+        if (current_active.plan.code or "").lower() == "free":
+            messages.info(request, "You're already on the Free plan.")
+            return redirect("membership")
+
+        now = timezone.now()
+        # Supersede the current active (paid) subscription FIRST, then activate
+        # Free. The DB enforces a single active subscription per user
+        # (unique_active_subscription_per_user), so we must cancel the old row
+        # before inserting the new active one — not after.
+        with transaction.atomic():
+            Subscription.objects.filter(
+                user=user, status="active"
+            ).update(status="cancelled", end_date=now, updated_at=now)
+
+            Subscription.objects.create(
+                user=user,
+                plan=plan,
+                billing_period=plan.billing_period,
+                status="active",
+                start_date=now,
+                end_date=now + relativedelta(years=1),
+            )
+            user.subscription_plan = "free"
+            user.save(update_fields=["subscription_plan"])
+        messages.success(
+            request,
+            f"Your plan has been changed to Free. Your {current_active.plan.name} "
+            "plan has been cancelled.",
+        )
+        return redirect("plans")
+
+    # Upgrade guard: only allow strictly-higher-tier moves. Same plan is a
+    # no-op; a paid→paid downgrade isn't supported yet (it would need a
+    # refund-shaped flow we don't have) — those users can move to Free above.
     if current_active:
         current_tier = PLAN_TIERS.get((current_active.plan.code or "").lower(), -1)
         new_tier = PLAN_TIERS.get((plan.code or "").lower(), -1)
         if new_tier <= current_tier:
-            messages.info(
-                request,
-                f"You're already on the {current_active.plan.name} plan. Pick a higher tier to upgrade.",
-            )
+            if new_tier == current_tier:
+                messages.info(
+                    request,
+                    f"You're already on the {current_active.plan.name} plan.",
+                )
+            else:
+                messages.info(
+                    request,
+                    "Downgrading to a lower paid plan isn't supported yet. "
+                    "You can switch to the Free plan instead.",
+                )
             return redirect("membership")
 
     now = timezone.now()

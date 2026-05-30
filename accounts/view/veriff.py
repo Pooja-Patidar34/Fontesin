@@ -27,14 +27,43 @@ class CreateVeriffSessionAPIView(APIView):
         # Veriff's WAF rejects sessions with non-domain callbacks (bare IPs,
         # localhost, etc.) on live integrations, so only include the field
         # when it points at a real hostname.
-        callback_url = (settings.VERIFF_CALLBACK_URL or "").strip()
+        #
+        # Prefer the CURRENT request's host (so prod traffic redirects back
+        # to the prod domain, dev to dev, etc.) and fall back to the env-var
+        # callback only if the dynamic host can't be used. Without this, a
+        # stale VERIFF_CALLBACK_URL pinned to a dead host would dead-end
+        # every verification — which is exactly the bug we hit when the old
+        # staging IP went away.
+        from urllib.parse import urlparse
+
+        def _is_acceptable_host(host_value):
+            if not host_value:
+                return False
+            if host_value in ("localhost", "127.0.0.1", "0.0.0.0"):
+                return False
+            # Bare-IP detection: strip dots and check it's all digits
+            # (covers IPv4 like "52.53.204.127"). We do NOT reject
+            # IP-as-DNS wrappers like "*.nip.io" because they parse as
+            # real domains — Veriff accepts them.
+            if host_value.replace(".", "").isdigit():
+                return False
+            return True
+
+        callback_url = ""
+        # Build from the live request first so a stale env-var override
+        # can't strand users on a dead host.
+        request_callback = request.build_absolute_uri("/membership/")
+        if _is_acceptable_host(urlparse(request_callback).hostname):
+            callback_url = request_callback
+        else:
+            # Local dev / direct-IP traffic — fall back to the configured
+            # production callback if it's a real domain.
+            env_callback = (settings.VERIFF_CALLBACK_URL or "").strip()
+            if env_callback and _is_acceptable_host(urlparse(env_callback).hostname):
+                callback_url = env_callback
+
         if callback_url:
-            from urllib.parse import urlparse
-            host = urlparse(callback_url).hostname or ""
-            looks_like_ip = host.replace(".", "").isdigit()
-            looks_like_local = host in ("localhost", "127.0.0.1", "0.0.0.0")
-            if host and not looks_like_ip and not looks_like_local:
-                verification["callback"] = callback_url
+            verification["callback"] = callback_url
 
         payload = {"verification": verification}
 

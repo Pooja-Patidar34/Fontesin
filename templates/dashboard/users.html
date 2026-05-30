@@ -111,13 +111,13 @@
       {% if request.user.is_superuser %}
       <div class="searchable-select" data-name="tenant" data-selected="{{ selected_tenant|default:'' }}" style="flex:1 1 0; min-width:0;">
         <button type="button" class="searchable-select__toggle form-control form-control-sm">
-          <span class="searchable-select__label">All Tenants</span>
+          <span class="searchable-select__label">All Franchises</span>
           <span class="searchable-select__caret">&#9662;</span>
         </button>
         <div class="searchable-select__panel">
-          <input type="text" class="searchable-select__search form-control form-control-sm" placeholder="Search tenants…" autocomplete="off"/>
+          <input type="text" class="searchable-select__search form-control form-control-sm" placeholder="Search franchises…" autocomplete="off"/>
           <div class="searchable-select__options" role="listbox">
-            <div class="searchable-select__option" data-value="" role="option">All Tenants</div>
+            <div class="searchable-select__option" data-value="" role="option">All Franchises</div>
             {% for tenant in tenants %}
               <div class="searchable-select__option" data-value="{{ tenant.id }}" data-label="{{ tenant.name }}" role="option" title="{{ tenant.name }}">
                 {{ tenant.name }}
@@ -304,9 +304,9 @@
 
           {% if request.user.is_superuser %}
           <div class="form-group">
-            <label>Tenant *</label>
+            <label>Franchise *</label>
             <select class="form-control" name="tenant" id="au-tenant" required>
-              <option value="">Select Tenant</option>
+              <option value="">Select Franchise</option>
               {% for tenant in tenants %}
                 <option value="{{ tenant.id }}">{{ tenant.name }}</option>
               {% endfor %}
@@ -411,7 +411,7 @@
           <tr><th>Status</th><td id="ud-status"></td></tr>
 
           <!-- Organisation -->
-          <tr><th>Tenant</th><td id="ud-tenant"></td></tr>
+          <tr><th>Franchise</th><td id="ud-tenant"></td></tr>
           <tr><th>Company</th><td id="ud-company"></td></tr>
           <tr><th>Role</th><td id="ud-role"></td></tr>
 
@@ -457,9 +457,9 @@
 
       <div class="modal-body">
 
-        <!-- Tenant (read-only) -->
+        <!-- Franchise (read-only) -->
         <div class="form-group">
-          <label>Tenant</label>
+          <label>Franchise</label>
           <input type="text" class="form-control" id="eu-tenant" readonly>
         </div>
 
@@ -1156,7 +1156,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // Replace the native company / tenant selects with searchable widgets
     // the first time the modal opens. Subsequent opens are no-ops.
     makeSearchable(document.getElementById("au-company"), { placeholder: "Search company…" });
-    makeSearchable(document.getElementById("au-tenant"),  { placeholder: "Search tenant…" });
+    makeSearchable(document.getElementById("au-tenant"),  { placeholder: "Search franchise…" });
 
     $('#addUserModal').modal('show');
   };
@@ -1256,6 +1256,16 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
   }
+
+  // Deep-link: /users/?open_edit=<id> auto-opens the edit modal for that user.
+  // Lets other pages (e.g. the Network > Coordinators/Consultants directory)
+  // send an admin straight into the edit flow for a specific account.
+  try {
+    const _openEditId = new URLSearchParams(window.location.search).get("open_edit");
+    if (_openEditId && typeof editUser === "function") {
+      editUser(_openEditId);
+    }
+  } catch (e) { /* no-op */ }
 
 });
 </script>

@@ -4,7 +4,6 @@ from django.shortcuts import redirect, render
 from django.db.models import Q
 
 from accounts.models import Company, User
-from billing.utils import filter_companies_by_plan_scope
 
 
 PAGE_SIZE = 10
@@ -39,23 +38,39 @@ def global_search(request):
         # Tenant scope still applies for users (own org)
         user_qs = user_qs.filter(tenant=request.user.tenant)
 
-        # Plan-scope filtering only makes sense for business users — they're
-        # the ones with a paid plan that defines a country/region. Other roles
-        # (consultant, coordinator, franchise, tenant_admin) have no plan, so
-        # plan_scope returns mode="none" and zeroes the queryset. For those
-        # roles we scope by linkage instead so they can find any company
-        # they're connected to via their tenant or direct relationships.
+        # Company scope MUST match what the user can see in their Company
+        # Database — otherwise a company that's visible in the list can't be
+        # found by the top search (the original bug). We reuse the exact same
+        # visibility helpers instead of a separate, stricter plan-scope filter:
+        #
+        #   • business_user → business_user_visible_companies (linkage + the
+        #     plan-based discovery scope: free/global see all active companies,
+        #     pro = their country, basic = their state — with country-name
+        #     aliases like "USA"/"US"/"United States").
+        #   • coordinator   → linkage + the region they manage
+        #     (coordinator_territory_q), so region companies are searchable.
+        #   • everyone else → companies they're linked to (tenant / consultant /
+        #     owner / primary / partnership).
+        from accounts.view.company import (
+            business_user_visible_companies,
+            coordinator_territory_q,
+        )
+
         role_code = (request.user.role.code or "").lower() if request.user.role else ""
         if role_code == "business_user":
-            company_qs = filter_companies_by_plan_scope(company_qs, request.user)
+            company_qs = business_user_visible_companies(request.user)
         else:
-            company_qs = company_qs.filter(
+            linkage_q = (
                 Q(tenant=request.user.tenant)
                 | Q(consultant=request.user)
                 | Q(owner_user=request.user)
                 | Q(primary_users=request.user)
                 | Q(usercompany__user=request.user)
-            ).distinct()
+            )
+            coordinator_scope_q = coordinator_territory_q(request.user)
+            if coordinator_scope_q is not None:
+                linkage_q = linkage_q | coordinator_scope_q
+            company_qs = company_qs.filter(linkage_q).distinct()
 
     # Match on name/city/country plus the typed NACE/NAICS FKs (so a
     # search for "J62" or "software" surfaces companies tagged with the

@@ -37,6 +37,17 @@ class RequirePlanForBusinessUserMiddleware:
         "forgot-password",
         "reset-password",
         "check-email",
+        # Public marketing pages reachable from the top navigation. These
+        # are linked from the registration/membership chrome itself, so an
+        # unsubscribed business user must be able to browse them — otherwise
+        # every nav click (Home / World Map / About / Careers / Contact)
+        # gets bounced straight back to /membership/.
+        "home",
+        "home_root",  # bare "/" serves the same home view as /home/
+        "worldmap",
+        "about",
+        "career",
+        "contact",
     )
 
     # Path prefixes always allowed (static, admin login flow, identity

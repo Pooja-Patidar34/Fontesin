@@ -148,6 +148,18 @@ def company_connect(request, company_id):
     if _plan_code_for_business_user(request.user) is None:
         raise PermissionDenied()
 
+    # Block connecting while a paid-plan upgrade is awaiting admin approval.
+    # During that window the user is on temporary Free access (the paid sub is
+    # status="created"); they shouldn't get partnership rights until approved.
+    # This is the server-side counterpart to the disabled "Connect" button.
+    from billing.models import Subscription
+    if Subscription.objects.filter(user=request.user, status="created").exists():
+        msg = "Connecting is available once your plan upgrade is approved."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return JsonResponse({"ok": False, "message": msg}, status=403)
+        messages.error(request, msg)
+        return redirect(request.META.get("HTTP_REFERER") or reverse("companies"))
+
     company = get_object_or_404(Company, id=company_id, is_active=True)
 
     connection, created = CompanyConnection.objects.get_or_create(

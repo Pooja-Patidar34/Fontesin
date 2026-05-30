@@ -23,6 +23,8 @@ def admin_context(request):
     bu_certification_status = ""
     bu_certification_consultant_name = ""
     unread_message_count = 0
+    pending_invoice_count = 0
+    has_pending_paid_upgrade = False
 
     if request.user.is_authenticated:
         if not request.user.is_superuser:
@@ -148,6 +150,33 @@ def admin_context(request):
         except Exception:
             unread_message_count = 0
 
+        # Whether this user has a paid-plan upgrade awaiting admin approval
+        # (a Subscription in "created" state). While pending, the user is on
+        # temporary Free access and partnership "Connect" actions are locked
+        # until approval — the template greys out the Connect button and
+        # company_connect rejects the request server-side.
+        try:
+            from billing.models import Subscription
+            has_pending_paid_upgrade = Subscription.objects.filter(
+                user=request.user, status="created"
+            ).exists()
+        except Exception:
+            has_pending_paid_upgrade = False
+
+        # Pending payment approvals — drives the red badge on the superuser's
+        # "Invoices" sidebar tab. A "new" invoice is a subscription awaiting
+        # admin approval (status="created"); this mirrors the on-page pending
+        # count in billing.views.payment_list. Only the Super Admin approves
+        # payments, so the count is scoped to superusers.
+        if request.user.is_superuser:
+            try:
+                from billing.models import Subscription
+                pending_invoice_count = Subscription.objects.filter(
+                    status="created"
+                ).count()
+            except Exception:
+                pending_invoice_count = 0
+
     return {
         "is_tenant_admin": is_tenant_admin,
         "sidebar_company_count": sidebar_company_count,
@@ -182,4 +211,5 @@ def admin_context(request):
         "bu_certification_status": bu_certification_status,
         "bu_certification_consultant_name": bu_certification_consultant_name,
         "unread_message_count": unread_message_count,
+        "pending_invoice_count": pending_invoice_count,
     }

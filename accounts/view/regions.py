@@ -28,27 +28,51 @@ def region_jp(request):
 # the same "Coming soon" page, which carries enough info (name, flag,
 # planned roll-out year) to set expectations.
 COMING_SOON_REGIONS = {
+    # Active markets (Year 1) shown on the world map without a full template yet.
     "gb": {"name": "United Kingdom", "flag": "🇬🇧", "status": "Active · Year 1", "status_class": "status-badge--active"},
     "fr": {"name": "France",         "flag": "🇫🇷", "status": "Active · Year 1", "status_class": "status-badge--active"},
     "nl": {"name": "Netherlands",    "flag": "🇳🇱", "status": "Active · Year 1", "status_class": "status-badge--active"},
+    "pl": {"name": "Poland",         "flag": "🇵🇱", "status": "Active · Year 1", "status_class": "status-badge--active"},
+    "at": {"name": "Austria",        "flag": "🇦🇹", "status": "Active · Year 1", "status_class": "status-badge--active"},
+    "ch": {"name": "Switzerland",    "flag": "🇨🇭", "status": "Active · Year 1", "status_class": "status-badge--active"},
+    "se": {"name": "Sweden",         "flag": "🇸🇪", "status": "Active · Year 1", "status_class": "status-badge--active"},
+    # Planned expansion markets.
     "sg": {"name": "Singapore",      "flag": "🇸🇬", "status": "Planned · Year 2", "status_class": "status-badge--planned"},
     "ca": {"name": "Canada",         "flag": "🇨🇦", "status": "Planned · Year 2", "status_class": "status-badge--planned"},
+    "au": {"name": "Australia",      "flag": "🇦🇺", "status": "Planned · Year 2", "status_class": "status-badge--planned"},
     "br": {"name": "Brazil",         "flag": "🇧🇷", "status": "Planned · Year 3", "status_class": "status-badge--planned"},
     "in": {"name": "India",          "flag": "🇮🇳", "status": "Planned · Year 3", "status_class": "status-badge--planned"},
+    "mx": {"name": "Mexico",         "flag": "🇲🇽", "status": "Planned · Year 3", "status_class": "status-badge--planned"},
+    "kr": {"name": "South Korea",    "flag": "🇰🇷", "status": "Planned · Year 3", "status_class": "status-badge--planned"},
+    "za": {"name": "South Africa",   "flag": "🇿🇦", "status": "Planned · Year 4", "status_class": "status-badge--planned"},
 }
 
 
 def region_coming_soon(request, code):
     """Lightweight placeholder for regions that don't yet have a full
     per-country template. Renders the country name, flag, and planned
-    roll-out so visitors get expectation-setting instead of a 404."""
-    info = COMING_SOON_REGIONS.get((code or "").lower())
+    roll-out so visitors get expectation-setting instead of a 404.
+
+    Any country code resolves: curated entries above carry a tailored
+    status/flag; anything else falls back to a generic "coming soon" card
+    named from the ISO code (so clicking any country on the world map always
+    lands on a real page, never a 404)."""
+    key = (code or "").lower()
+    info = COMING_SOON_REGIONS.get(key)
     if not info:
-        from django.http import Http404
-        raise Http404("Unknown region")
+        # Generic fallback for any country not explicitly curated. Use the
+        # CountryChoices label for a friendly name when the code is known.
+        from accounts.constants import CountryChoices
+        label = dict(CountryChoices.CHOICES).get((code or "").upper())
+        info = {
+            "name": label or (code or "").upper(),
+            "flag": "🌐",
+            "status": "Coming soon",
+            "status_class": "status-badge--planned",
+        }
     return render(request, "regions/coming_soon.html", {
         "country": info,
-        "code": code.upper(),
+        "code": (code or "").upper(),
     })
 
 

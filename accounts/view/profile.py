@@ -175,6 +175,20 @@ def profile_view(request):
 
         # ---- Join an existing company (alternative to creating one) ----
         if form_type == "join_company":
+            # Consultants, coordinators, and franchise partners represent the
+            # company they own/operate — the join flow doesn't fit their role,
+            # so the UI hides it for them. Mirror the gate server-side so a
+            # crafted POST can't slip past the missing tab.
+            join_blocked_roles = {"consultant", "coordinator", "franchise"}
+            role_code = (user.role.code or "").lower() if user.role else ""
+            if role_code in join_blocked_roles:
+                messages.error(
+                    request,
+                    "Your role represents a single company — please register "
+                    "your company below instead of joining an existing one.",
+                )
+                return redirect("profile")
+
             if user_company is not None:
                 messages.warning(request, "You are already linked to a company.")
                 return redirect("profile")

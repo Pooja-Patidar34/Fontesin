@@ -472,6 +472,20 @@ class User(AbstractBaseUser, PermissionsMixin):
     # ---- Security / KYC ----
     kyc_id_hash = models.CharField(max_length=255, null=True, blank=True)
 
+    # Veriff identity verification. `verification_status` mirrors the status
+    # Veriff reports on its decision webhook — "approved" is the only state
+    # that counts as a passed check; everything else (pending, declined,
+    # resubmission_requested, expired, abandoned) leaves the account gated on
+    # the /verify/ step and out of plan selection / the dashboard. New
+    # registrations start as "pending"; existing accounts were grandfathered
+    # to "approved" in the migration that introduced this field so they don't
+    # get locked out retroactively. See RequireIdentityVerificationMiddleware
+    # for the gate and accounts/view/webhook.py for where it's written.
+    veriff_session_id = models.CharField(max_length=255, null=True, blank=True)
+    verification_status = models.CharField(
+        max_length=30, null=True, blank=True, default="pending"
+    )
+
     # ---- System ----
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -797,6 +811,7 @@ class Notification(models.Model):
     KIND_COORDINATOR_REQUEST = "coordinator_request"
     KIND_COORDINATOR_APPROVED = "coordinator_approved"
     KIND_COORDINATOR_DECLINED = "coordinator_declined"
+    KIND_NEW_USER = "new_user"
     KIND_GENERIC = "generic"
     KIND_CHOICES = (
         (KIND_CERTIFICATION_REQUEST, "Certification request"),
@@ -805,6 +820,7 @@ class Notification(models.Model):
         (KIND_COORDINATOR_REQUEST, "Coordinator request"),
         (KIND_COORDINATOR_APPROVED, "Coordinator request approved"),
         (KIND_COORDINATOR_DECLINED, "Coordinator request declined"),
+        (KIND_NEW_USER, "New user in region"),
         (KIND_GENERIC, "Generic"),
     )
 

@@ -156,7 +156,17 @@ document.addEventListener("DOMContentLoaded", function() {
       .then(function(data) {
         document.getElementById("edit-user-email").value = data.user_email;
         document.getElementById("edit-status").value = data.status;
-        document.getElementById("edit-end-date").value = data.end_date;
+        var endInput = document.getElementById("edit-end-date");
+        endInput.value = data.end_date;
+        // Block picking a past end date. Compute today in LOCAL time (not UTC)
+        // so the picker's minimum matches the user's calendar. If the existing
+        // value is already in the past (e.g. an expired subscription), lower
+        // the min to that value so the form stays submittable when the admin
+        // is only changing the plan/status.
+        var now = new Date();
+        var todayStr = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+          .toISOString().slice(0, 10);
+        endInput.min = (data.end_date && data.end_date < todayStr) ? data.end_date : todayStr;
 
         var planSelect = document.getElementById("edit-plan");
         planSelect.innerHTML = "";

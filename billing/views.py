@@ -808,6 +808,28 @@ def payment_edit(request, subscription_id):
     status = request.POST.get("status")
     end_date = request.POST.get("end_date")
 
+    # Validate the end date BEFORE applying any change, so a bad date aborts
+    # the whole edit cleanly (no half-written plan/status). The end date may
+    # not be moved into the past. We still allow re-submitting an already-past
+    # date unchanged — that happens when an admin edits the plan/status of an
+    # expired subscription without touching the date — but never let them set
+    # a NEW past date.
+    new_end_dt = None
+    if end_date:
+        try:
+            new_end_dt = timezone.make_aware(datetime.strptime(end_date, "%Y-%m-%d"))
+        except ValueError:
+            messages.error(request, "Invalid end date.")
+            return _safe_next_or_default(request, "payments")
+
+        current_end_date = sub.end_date.date() if sub.end_date else None
+        if new_end_dt.date() < timezone.localdate() and new_end_dt.date() != current_end_date:
+            messages.error(
+                request,
+                "End date cannot be in the past. Choose today or a future date.",
+            )
+            return _safe_next_or_default(request, "payments")
+
     if plan_id:
         plan = get_object_or_404(CommercialPlan, id=plan_id, is_active=True)
         sub.plan = plan
@@ -824,11 +846,8 @@ def payment_edit(request, subscription_id):
                 status="paid", paid_at=timezone.now()
             )
 
-    if end_date:
-        try:
-            sub.end_date = timezone.make_aware(datetime.strptime(end_date, "%Y-%m-%d"))
-        except ValueError:
-            pass
+    if new_end_dt is not None:
+        sub.end_date = new_end_dt
 
     sub.save()
     messages.success(request, f"Subscription for {sub.user.email} updated successfully.")

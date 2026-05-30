@@ -221,36 +221,82 @@ def user_list(request):
         if company_id:
             qs = qs.filter(usercompany__company_id=company_id).distinct()
 
-        # Coordinators oversee consultants across the tenant, so they see every
-        # user in their tenant (read-only). Other view-only roles (e.g. consultant,
-        # franchise) see only users who share their own company — either via
-        # User.primary_company or the UserCompany M2M.
+        # Users-tab scoping for non-superusers:
+        #   • Coordinators oversee consultants across the tenant, so they see
+        #     every user in their tenant.
+        #   • Tenant admins likewise see every user in their tenant.
+        #   • Everyone else — business users, consultants, franchise partners —
+        #     only sees users who belong to a company they own or are linked
+        #     to. There is no all-company directory for them: a business user
+        #     sees the users in their own company, nothing more. Only the
+        #     super admin sees every user in the system.
         #
-        # Business users are special: they see one row per *company* in their
-        # visible Company Database scope, and the visible user for each row is
-        # that company's admin (owner_user). This intentionally mirrors the
-        # Company Database list — the Users page is a directory of company
-        # contacts, not a global user directory.
+        # Business users carry the `user.manage` permission, so they can't be
+        # told apart from tenant admins by permission alone — the role check
+        # below is what keeps them scoped to their own company.
         role_code = (request.user.role.code or "").upper() if request.user.role else ""
+        role_name = (request.user.role.name or "").lower() if request.user.role else ""
         is_coordinator = role_code == "COORDINATOR"
-        is_business_user = role_code == "BUSINESS_USER"
+        is_consultant = role_code == "CONSULTANT"
+        is_tenant_admin = role_name == "tenant_admin"
 
         from django.db.models import Q
 
-        if is_business_user:
-            # Marker — handled outside this branch, after pagination, because
-            # the row model is company-driven, not user-driven.
-            qs = None
-        elif not has_permission(request.user, "user.manage") and not is_coordinator:
+        if is_coordinator or is_tenant_admin:
+            # Tenant-wide view — qs is already filtered to the tenant above,
+            # and the optional ?company= filter applied with it.
+            pass
+        elif is_consultant:
+            # Consultant's "Certified Users" page (the sidebar entry is labeled
+            # "Certified Users" for this role): every user whose primary company
+            # — or any linked company via UserCompany — was certified by this
+            # consultant. Mirrors the data model: Company.certified_by → User
+            # with certification_status == "certified". Cross-tenant on purpose:
+            # a consultant can certify companies from any tenant, so we drop
+            # the tenant pre-filter for this branch.
+            certified_company_ids = list(
+                Company.objects.filter(
+                    certified_by=request.user,
+                    certification_status="certified",
+                ).values_list("id", flat=True)
+            )
+            if certified_company_ids:
+                qs = User.objects.filter(
+                    Q(primary_company_id__in=certified_company_ids)
+                    | Q(usercompany__company_id__in=certified_company_ids)
+                ).distinct()
+                # Scope the Companies dropdown to the consultant's certified
+                # companies only — they can't filter/add to companies they
+                # haven't personally certified.
+                companies = (
+                    Company.objects.filter(id__in=certified_company_ids, is_active=True)
+                    .order_by("name")
+                )
+            else:
+                qs = qs.none()
+                companies = Company.objects.none()
+
+            # Honor the ?company= filter, but only within the certified set —
+            # a company_id outside the certified set returns nothing rather
+            # than leaking another company's users.
+            if company_id:
+                certified_id_strs = {str(cid) for cid in certified_company_ids}
+                if company_id in certified_id_strs:
+                    qs = qs.filter(
+                        Q(primary_company_id=company_id)
+                        | Q(usercompany__company_id=company_id)
+                    ).distinct()
+                else:
+                    qs = qs.none()
+        else:
             own_company_ids = list(
                 request.user.usercompany_set.values_list("company_id", flat=True)
             ) if hasattr(request.user, "usercompany_set") else []
             if request.user.primary_company_id:
                 own_company_ids.append(request.user.primary_company_id)
-            # Consultants and owners are also "their company" for dropdown
-            # purposes — without these, a consultant who creates a fresh
-            # company (which sets owner_user/consultant on the new row but no
-            # UserCompany M2M) couldn't see it in the picker.
+            # Companies the user created/owns (or consults for) also count as
+            # "their company" — a freshly-created company sets owner_user /
+            # consultant on the row but may not have a UserCompany M2M yet.
             own_company_ids.extend(
                 Company.objects.filter(
                     Q(consultant=request.user) | Q(owner_user=request.user)
@@ -267,7 +313,7 @@ def user_list(request):
                     | Q(usercompany__company_id__in=own_company_ids)
                 ).distinct()
                 # Scope the Companies dropdown to the user's own companies too,
-                # so business users can't filter/add to companies they don't own.
+                # so they can't filter/add to companies they don't own.
                 companies = (
                     Company.objects.filter(id__in=own_company_ids, is_active=True)
                     .order_by("name")
@@ -276,61 +322,21 @@ def user_list(request):
                 qs = qs.none()
                 companies = Company.objects.none()
 
-    # Business users: build a company-driven list (one row per visible
-    # company). The contact shown is the company's Contact Email — the
-    # same field the Company view modal in the Company Database exposes —
-    # so the Users page is the company-contacts directory, not the global
-    # user directory. The contact is matched against the User table when
-    # possible so we can still expose status / View / Edit; if there is no
-    # matching user, the row is informational only.
+            # Honor the ?company= filter, but only within the user's own scope —
+            # a company_id outside own_company_ids returns nothing rather than
+            # leaking another company's users.
+            if company_id:
+                own_company_id_strs = {str(cid) for cid in own_company_ids}
+                if company_id in own_company_id_strs:
+                    qs = qs.filter(
+                        Q(primary_company_id=company_id)
+                        | Q(usercompany__company_id=company_id)
+                    ).distinct()
+                else:
+                    qs = qs.none()
+
     show_company_column = False
-    if not request.user.is_superuser and request.user.role and \
-            (request.user.role.code or "").upper() == "BUSINESS_USER":
-        from accounts.view.company import business_user_visible_companies
-        from types import SimpleNamespace
-
-        visible_companies = business_user_visible_companies(request.user)
-        if company_id:
-            visible_companies = visible_companies.filter(id=company_id)
-
-        visible_companies = visible_companies.order_by("name")
-
-        # Companies dropdown also mirrors the Company Database scope.
-        companies = visible_companies
-
-        # Bulk-resolve every contact email to its User row (if any) in one
-        # round trip — keeps the per-row template render free of per-company
-        # queries.
-        contact_emails = {
-            (c.contact_email or "").strip().lower()
-            for c in visible_companies
-            if c.contact_email
-        }
-        contact_emails.discard("")
-        contact_users_by_email = {}
-        if contact_emails:
-            for u in User.objects.filter(email__in=list(contact_emails)):
-                contact_users_by_email[u.email.lower()] = u
-
-        rows = []
-        for c in visible_companies:
-            email = (c.contact_email or "").strip()
-            email_lower = email.lower()
-            user = contact_users_by_email.get(email_lower)
-            rows.append(SimpleNamespace(
-                # `id` is the matched contact user's id (None when there's
-                # no User row for this contact email). View/Edit actions are
-                # only rendered when an `id` is present.
-                id=user.id if user else None,
-                email=email if email else "—",
-                is_active=user.is_active if user else c.is_active,
-                has_contact=bool(email),
-                contact_companies=[c.name],
-            ))
-        qs = rows
-        show_company_column = True
-    else:
-        qs = qs.order_by("-created_at")
+    qs = qs.order_by("-created_at")
 
     paginator = Paginator(qs, 10)
 
