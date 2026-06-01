@@ -122,16 +122,12 @@ class CreateVeriffSessionAPIView(APIView):
             },
         }
 
-        # Veriff's WAF rejects sessions with non-domain callbacks (bare IPs,
-        # localhost, etc.) on live integrations, so only include the field
-        # when it points at a real hostname.
-        #
-        # Prefer the CURRENT request's host (so prod traffic redirects back
-        # to the prod domain, dev to dev, etc.) and fall back to the env-var
-        # callback only if the dynamic host can't be used. Without this, a
-        # stale VERIFF_CALLBACK_URL pinned to a dead host would dead-end
-        # every verification — which is exactly the bug we hit when the old
-        # staging IP went away.
+        # Veriff requires the return/callback URL to be (a) a real domain — it
+        # rejects bare IPs / localhost on live integrations — and (b) HTTPS:
+        # a non-https callback fails with {"code":1302,"message":"Only HTTPS
+        # return URLs are allowed."}. Behind Nginx, request.scheme can come
+        # back as "http" when X-Forwarded-Proto isn't propagated, so we must
+        # force https rather than trust request.build_absolute_uri verbatim.
         from urllib.parse import urlparse
 
         def _is_acceptable_host(host_value):
@@ -147,18 +143,23 @@ class CreateVeriffSessionAPIView(APIView):
                 return False
             return True
 
+        def _as_https(url):
+            """Force a callback URL to https — Veriff rejects http (code 1302)."""
+            if url and url.startswith("http://"):
+                return "https://" + url[len("http://"):]
+            return url
+
         callback_url = ""
-        # Build from the live request first so a stale env-var override
-        # can't strand users on a dead host.
-        request_callback = request.build_absolute_uri("/membership/")
-        if _is_acceptable_host(urlparse(request_callback).hostname):
-            callback_url = request_callback
+        # Prefer the explicitly-configured production callback (it's a known
+        # real https domain). Fall back to the live request host — forced to
+        # https — when no usable env value is set (e.g. dev).
+        env_callback = _as_https((settings.VERIFF_CALLBACK_URL or "").strip())
+        if env_callback and _is_acceptable_host(urlparse(env_callback).hostname):
+            callback_url = env_callback
         else:
-            # Local dev / direct-IP traffic — fall back to the configured
-            # production callback if it's a real domain.
-            env_callback = (settings.VERIFF_CALLBACK_URL or "").strip()
-            if env_callback and _is_acceptable_host(urlparse(env_callback).hostname):
-                callback_url = env_callback
+            request_callback = _as_https(request.build_absolute_uri("/membership/"))
+            if _is_acceptable_host(urlparse(request_callback).hostname):
+                callback_url = request_callback
 
         if callback_url:
             verification["callback"] = callback_url
