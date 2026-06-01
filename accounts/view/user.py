@@ -264,6 +264,7 @@ def user_list(request):
                 qs = User.objects.filter(
                     Q(primary_company_id__in=certified_company_ids)
                     | Q(usercompany__company_id__in=certified_company_ids)
+                    | Q(owned_companies__id__in=certified_company_ids)
                 ).distinct()
                 # Scope the Companies dropdown to the consultant's certified
                 # companies only — they can't filter/add to companies they
@@ -285,6 +286,7 @@ def user_list(request):
                     qs = qs.filter(
                         Q(primary_company_id=company_id)
                         | Q(usercompany__company_id=company_id)
+                        | Q(owned_companies__id=company_id)
                     ).distinct()
                 else:
                     qs = qs.none()
