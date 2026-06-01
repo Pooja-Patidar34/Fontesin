@@ -122,14 +122,21 @@ def coordinator_territory_q(user):
 
 
 def business_user_plan_scope_q(user):
-    """Discovery-scope Q for a business user's Company Database list, derived
-    from the canonical billing plan geographic scope
-    (billing.utils.get_user_geographic_scope):
+    """Discovery-scope Q for a business user's Company Database list.
 
-        free   → own domicile country
+    Visibility (which companies show in the list) by plan:
+
+        free   → ALL active companies worldwide (read-only: no View/Connect)
         basic  → selected country
         pro    → region (group of countries, e.g. North America = US/CA/MX)
         global → worldwide
+
+    Free plan deliberately sees the whole directory so users can browse what's
+    available before upgrading — but they get no actual access: the View
+    button stays locked (requires an approved connection) and Connect is a
+    paid-only action, so a free user can never open company details. The
+    paid tiers' geographic scope comes from the canonical billing model
+    (billing.utils.get_user_geographic_scope).
 
     The billing scope yields ISO codes; Company.country is free-text, so each
     code is matched across its code + CountryChoices label + common aliases
@@ -140,6 +147,11 @@ def business_user_plan_scope_q(user):
     this with their linkage query, so None keeps the user's linked-company
     view rather than widening it to the whole directory.
     """
+    # Free plan: full worldwide visibility, no access (gated in templates).
+    plan_code = _plan_code_for_business_user(user)
+    if plan_code == "free":
+        return Q(is_active=True)
+
     scope = get_user_geographic_scope(user)
     mode = scope.get("mode")
 
@@ -244,8 +256,8 @@ def business_user_visible_companies(user):
         | Q(usercompany__user=user)
     )
 
-    # Discovery scope by plan, per the canonical billing geographic scope:
-    #   free   → own domicile country
+    # Discovery scope by plan (see business_user_plan_scope_q):
+    #   free   → all active companies worldwide (read-only)
     #   basic  → selected country
     #   pro    → region (group of countries)
     #   global → worldwide
@@ -653,9 +665,9 @@ def company_list(request):
             if coordinator_scope_q is not None:
                 linkage_q = linkage_q | coordinator_scope_q
 
-            # Business-user discovery scope, by plan, per the canonical
-            # billing geographic scope (billing.utils.get_user_geographic_scope):
-            #   free   → own domicile country
+            # Business-user discovery scope, by plan (see
+            # business_user_plan_scope_q):
+            #   free   → all active companies worldwide (read-only)
             #   basic  → selected country
             #   pro    → region (group of countries, e.g. North America)
             #   global → all active companies worldwide
