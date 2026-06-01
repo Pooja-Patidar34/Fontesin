@@ -19,7 +19,7 @@ from accounts.view.saved_filter import (
     _is_basic_or_pro_business_user,
     _plan_code_for_business_user,
 )
-from billing.utils import PLAN_REGIONS, _region_for_country
+from billing.utils import PLAN_REGIONS, _region_for_country, get_user_geographic_scope
 
 
 # Extra free-text spellings seen in Company.country (mapped by ISO code).
@@ -121,6 +121,109 @@ def coordinator_territory_q(user):
     return scope_q
 
 
+def business_user_plan_scope_q(user):
+    """Discovery-scope Q for a business user's Company Database list, derived
+    from the canonical billing plan geographic scope
+    (billing.utils.get_user_geographic_scope):
+
+        free   → own domicile country
+        basic  → selected country
+        pro    → region (group of countries, e.g. North America = US/CA/MX)
+        global → worldwide
+
+    The billing scope yields ISO codes; Company.country is free-text, so each
+    code is matched across its code + CountryChoices label + common aliases
+    via _country_match_q.
+
+    Returns None when the plan grants no discovery scope — no plan at all, or
+    a country/region plan where the user hasn't set a country yet. Callers OR
+    this with their linkage query, so None keeps the user's linked-company
+    view rather than widening it to the whole directory.
+    """
+    scope = get_user_geographic_scope(user)
+    mode = scope.get("mode")
+
+    if mode == "worldwide":
+        return Q(is_active=True)
+
+    if mode == "none":
+        return None
+
+    # mode == "country" or "region": match every code in the allowed set.
+    countries = [c for c in (scope.get("countries") or []) if c]
+    if not countries:
+        return None
+
+    country_q = Q()
+    for code in countries:
+        country_q |= _country_match_q(code)
+    return country_q & Q(is_active=True)
+
+
+def editable_companies_qs(user):
+    """Companies `user` is allowed to WRITE to (edit / toggle / delete).
+
+    This is intentionally narrower than the view scope. A business user may
+    edit ONLY the company they created (owner_user) — per the product rule
+    "edit your own company, not others". Their primary company created by
+    someone else, partner companies linked via UserCompany, and discovery
+    rows are all view-only for them. Consultants / coordinators / franchise
+    keep the broader linkage write scope (companies they consult for, own, or
+    are linked to). Superusers and tenant admins are handled separately by
+    callers (all companies / tenant-wide).
+    """
+    role_code = (user.role.code or "").lower() if getattr(user, "role", None) else ""
+    if role_code == "business_user":
+        return Company.objects.filter(owner_user=user)
+    return Company.objects.filter(
+        Q(consultant=user)
+        | Q(owner_user=user)
+        | Q(primary_users=user)
+        | Q(usercompany__user=user)
+    ).distinct()
+
+
+def consultant_certification_scope_q(user):
+    """Q matching the pending companies in a consultant's certification queue.
+
+    A certification request is broadcast to every active consultant: the
+    company is saved `certification_status="pending"`, `is_active=False`, and
+    usually `consultant=NULL` until one consultant approves it (which claims
+    ownership). Until then those rows fall outside the normal linkage scope, so
+    a consultant can neither View nor Edit them from the Certifications page —
+    the deep-link detail fetch 404s and the modal never opens.
+
+    This returns the same scope the Certifications queue itself uses
+    (certification.py): pending + (unclaimed OR claimed by this consultant).
+    Returns None for non-consultants so callers can skip widening their scope.
+    """
+    role_code = (user.role.code or "").lower() if getattr(user, "role", None) else ""
+    if role_code != "consultant":
+        return None
+    return Q(certification_status="pending") & (
+        Q(consultant__isnull=True) | Q(consultant=user)
+    )
+
+
+def companies_editable_via_form(user):
+    """Companies a user may open + save in the Company edit modal.
+
+    Extends editable_companies_qs with the consultant's certification queue so
+    a consultant can Edit a pending request from the Certifications page (the
+    "Edit company details, then come back to approve" action) before approving
+    it. Business users stay owner-only; other roles keep their linkage scope.
+
+    Scoped to the edit modal on purpose — toggle/delete keep the narrower
+    editable_companies_qs so a pending row can't be flipped active outside the
+    approve flow.
+    """
+    base = editable_companies_qs(user)
+    cert_q = consultant_certification_scope_q(user)
+    if cert_q is None:
+        return base
+    return Company.objects.filter(Q(pk__in=base.values("pk")) | cert_q).distinct()
+
+
 def business_user_visible_companies(user):
     """Companies a business user can see in their Company Database list.
 
@@ -141,23 +244,14 @@ def business_user_visible_companies(user):
         | Q(usercompany__user=user)
     )
 
-    user_country = (user.country or "").strip().upper()
-    user_state = (user.state_region or "").strip()
-
-    # Discovery scope by plan. Free plan now sees every active company
-    # worldwide (read-only access — actions like View / Connect / Edit
-    # are still gated by plan via is_free_plan in the templates).
-    scope_q = None
-    if plan_code in ("global", "free"):
-        scope_q = Q(is_active=True)
-    elif plan_code == "pro" and user_country:
-        scope_q = _country_match_q(user_country) & Q(is_active=True)
-    elif plan_code == "basic" and user_country:
-        base = _country_match_q(user_country) & Q(is_active=True)
-        if user_state:
-            scope_q = base & Q(state__iexact=user_state)
-        else:
-            scope_q = base
+    # Discovery scope by plan, per the canonical billing geographic scope:
+    #   free   → own domicile country
+    #   basic  → selected country
+    #   pro    → region (group of countries)
+    #   global → worldwide
+    # Read-only restrictions for free plan (View / Connect / Edit) are still
+    # applied by the templates via is_free_plan.
+    scope_q = business_user_plan_scope_q(user)
 
     full_q = linkage_q if scope_q is None else (linkage_q | scope_q)
     return Company.objects.filter(full_q).distinct()
@@ -173,6 +267,43 @@ from accounts.forms.company_form import CompanyForm
 
 def _is_ajax(request):
     return request.headers.get("X-Requested-With") == "XMLHttpRequest"
+
+
+# Origin pages that open the edit modal as a deep link (?open_edit=&from=).
+# Kept in sync with the ORIGIN_PATHS map in companies.html.
+_DEEP_EDIT_ORIGIN_PATHS = {
+    "my-companies": "/my-companies/",
+    "certifications": "/certifications/",
+}
+
+
+def _safe_post_redirect(next_url):
+    """Resolve where to send the user after a successful create/update POST.
+
+    The edit modal is opened as a deep link via
+    ?open_edit=<id>&from=<origin>, and the form's hidden `next` field carries
+    that same full path. Redirecting straight back to it re-triggers the
+    auto-open JS in companies.html, so the modal pops right back up after a
+    save — which reads as "the request didn't go through" (the My Companies
+    "Request Certification" loop). When `open_edit` is present we instead send
+    the user back to the page they came from (My Companies / Certifications),
+    falling back to the bare Company Database list. Any other `next` URL is
+    returned untouched.
+
+    Returns a path string, or None when there's no usable next URL (caller
+    falls back to the "companies" route name).
+    """
+    if not next_url:
+        return None
+
+    from urllib.parse import urlparse, parse_qs
+
+    params = parse_qs(urlparse(next_url).query)
+    if "open_edit" not in params:
+        return next_url
+
+    origin = (params.get("from", [""])[0] or "").lower()
+    return _DEEP_EDIT_ORIGIN_PATHS.get(origin) or "/companies/"
 
 
 def _ordered_country_choices():
@@ -262,23 +393,20 @@ def company_list(request):
                     tenant=request.user.tenant,
                 )
             else:
-                # Editing is linkage-only — a user may edit a company ONLY if
-                # they own it, are its consultant, are a primary user, or are
-                # linked via UserCompany. We deliberately do NOT include
-                # Q(tenant=...) here: business users share the "Default"
-                # tenant with most companies, so a tenant match would let any
-                # business user edit every company in that tenant (e.g. change
-                # the contact person on companies that aren't theirs). Viewing
-                # a wider set is fine; writing is not. Tenant admins
-                # (handled above) keep tenant-wide edit; everyone else is
-                # restricted to their own linked companies.
+                # Write scope is role-aware (see editable_companies_qs):
+                # business users may edit ONLY the company they created
+                # (owner_user) — not their primary company created by someone
+                # else, not partner companies, not the rest of the directory.
+                # Consultants / coordinators / franchise keep the broader
+                # linkage write scope. We deliberately never match on
+                # Q(tenant=...) here: business users share the "Default" tenant
+                # with most companies, so a tenant match would let any business
+                # user edit every company in that tenant. Tenant admins
+                # (handled above) keep tenant-wide edit.
+                # companies_editable_via_form also lets a consultant open + save
+                # a pending request from their Certifications queue (Edit button).
                 company = get_object_or_404(
-                    Company.objects.filter(
-                        Q(consultant=request.user)
-                        | Q(owner_user=request.user)
-                        | Q(primary_users=request.user)
-                        | Q(usercompany__user=request.user)
-                    ).distinct(),
+                    companies_editable_via_form(request.user),
                     id=company_id,
                 )
 
@@ -434,7 +562,7 @@ def company_list(request):
                 })
 
             messages.success(request, success_msg)
-            return redirect(next_url or "companies")
+            return redirect(_safe_post_redirect(next_url) or "companies")
 
         else:
             # Surface validation errors (e.g. duplicate name+tenant) so the user sees why the save failed.
@@ -525,41 +653,21 @@ def company_list(request):
             if coordinator_scope_q is not None:
                 linkage_q = linkage_q | coordinator_scope_q
 
-            # Business-user discovery scope, by plan:
+            # Business-user discovery scope, by plan, per the canonical
+            # billing geographic scope (billing.utils.get_user_geographic_scope):
+            #   free   → own domicile country
+            #   basic  → selected country
+            #   pro    → region (group of countries, e.g. North America)
             #   global → all active companies worldwide
-            #   pro    → all active companies in the user's country
-            #   basic  → all active companies in the user's state (within country)
-            #   free   → same scope as basic; the "no details" restriction is
-            #            applied by the templates via is_free_plan.
-            # User.country is an ISO code ("US"); Company.country is free-text,
-            # so match across code + label + common aliases. User.state_region
-            # holds the user's state; matched case-insensitive against
-            # Company.state.
+            # The "no details" / read-only restriction for free plan is applied
+            # by the row templates via is_free_plan, not here.
             #
-            # Fallbacks: if the user is missing the data needed for their
-            # tier's scope (no country for pro, no state for basic/free), we
-            # widen by one level rather than show an empty list — keeps
-            # existing accounts working until they fill profile in.
-            plan_code = _plan_code_for_business_user(request.user)
-            user_country = (request.user.country or "").strip().upper()
-            user_state = (request.user.state_region or "").strip()
-
-            # Discovery scope by plan. Free plan now sees every active
-            # company worldwide (read-only — View / Connect / Edit actions
-            # are still gated by is_free_plan in the row templates).
-            scope_q = None
-            if plan_code in ("global", "free"):
-                scope_q = Q(is_active=True)
-            elif plan_code == "pro" and user_country:
-                scope_q = _country_match_q(user_country) & Q(is_active=True)
-            elif plan_code == "basic" and user_country:
-                base = _country_match_q(user_country) & Q(is_active=True)
-                if user_state:
-                    scope_q = base & Q(state__iexact=user_state)
-                else:
-                    # Missing state on profile → fall back to country-wide so
-                    # the user isn't locked out. They can narrow via filter bar.
-                    scope_q = base
+            # The billing scope yields ISO codes; Company.country is free-text,
+            # so each code is matched across code + label + aliases inside
+            # business_user_plan_scope_q. It returns None when the plan grants
+            # no discovery scope (no plan, or no country set on a country/region
+            # plan), in which case the user keeps their linkage-only view.
+            scope_q = business_user_plan_scope_q(request.user)
 
             if scope_q is not None:
                 linkage_q = linkage_q | scope_q
@@ -930,15 +1038,24 @@ def company_delete(request, company_id):
         raise PermissionDenied()
 
     # -------------------------------
-    # FETCH COMPANY (TENANT SAFE)
+    # FETCH COMPANY (WRITE-SCOPED)
     # -------------------------------
+    role_name = (request.user.role.name or "").lower() if request.user.role else ""
     if request.user.is_superuser:
         company = get_object_or_404(Company, id=company_id)
-    else:
+    elif role_name == "tenant_admin":
         company = get_object_or_404(
             Company,
             id=company_id,
             tenant=request.user.tenant,
+        )
+    else:
+        # Deleting is a write — restrict to the role-aware write scope so a
+        # business user can only delete the company they created (owner_user),
+        # never another company that happens to share their "Default" tenant.
+        company = get_object_or_404(
+            editable_companies_qs(request.user),
+            id=company_id,
         )
 
     company_name = company.name
@@ -993,20 +1110,13 @@ def toggle_company(request, company_id):
             tenant=request.user.tenant,
         )
     else:
-        # Match the edit-path scoping: linkage-only, NO tenant clause.
-        # Activating/deactivating is a write, so a user may only toggle a
-        # company they own, consult for, or are linked to — never every
-        # company that happens to share their (often "Default") tenant.
-        # Global / Pro business users can toggle a partner company once the
-        # owner has approved the connection — that approval adds the
-        # UserCompany row picked up by `usercompany__user`.
+        # Match the edit-path scoping (editable_companies_qs): activating /
+        # deactivating is a write, so a business user may only toggle the
+        # company they created (owner_user) — never a partner company or
+        # another company that shares their "Default" tenant. Consultants /
+        # coordinators / franchise keep the broader linkage write scope.
         company = get_object_or_404(
-            Company.objects.filter(
-                Q(consultant=request.user)
-                | Q(owner_user=request.user)
-                | Q(primary_users=request.user)
-                | Q(usercompany__user=request.user)
-            ).distinct(),
+            editable_companies_qs(request.user),
             id=company_id,
         )
 
@@ -1079,12 +1189,34 @@ def company_detail_ajax(request, company_id):
         if coordinator_scope_q is not None:
             scope_q = scope_q | coordinator_scope_q
 
+        # Consultants can View a pending request from their Certifications
+        # queue (broadcast/unclaimed or claimed by them) so the Edit deep-link
+        # can load the modal — those rows are is_active=False with
+        # consultant=NULL until approval and otherwise fall outside the scope.
+        cert_scope_q = consultant_certification_scope_q(request.user)
+        if cert_scope_q is not None:
+            scope_q = scope_q | cert_scope_q
+
         company = get_object_or_404(
             Company.objects.filter(scope_q).distinct(),
             id=company_id,
         )
 
     enrichment = getattr(company, "enrichment", None)
+
+    # Whether the requesting user may edit the contact-person fields
+    # (First/Last name + Contact Email). Mirrors the CompanyForm gate: a
+    # business user can only edit the contact person on a company they OWN —
+    # on any other company those fields belong to the owner / certifying
+    # consultant. Staff (superuser / tenant admin) and consultants keep edit
+    # rights. The modal JS uses this to lock the inputs + show the
+    # "Maintained by the certifying consultant" hint on companies the BU
+    # doesn't own. The server-side form is the real enforcement; this just
+    # keeps the UI honest.
+    _role_code = (request.user.role.code or "").lower() if request.user.role else ""
+    _is_business_user = not request.user.is_superuser and _role_code == "business_user"
+    _is_owner = company.owner_user_id == request.user.id
+    can_edit_contact = (not _is_business_user) or _is_owner
 
     return JsonResponse({
         # --------------------
@@ -1093,6 +1225,7 @@ def company_detail_ajax(request, company_id):
         "company": {
             "id": str(company.id),
             "tenant": str(company.tenant.id),
+            "can_edit_contact": can_edit_contact,
             "name": company.name,
             "registration_id": company.registration_id,
             "classification": company.classification,

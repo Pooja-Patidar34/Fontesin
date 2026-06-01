@@ -191,6 +191,19 @@
   body.deep-edit .card-outline.card-primary { visibility: hidden; }
   body.deep-edit .content-wrapper { background: #f0f4f8 !important; }
 </style>
+{% if request.GET.open_edit %}
+{% comment %}
+  Server-rendered for the deep-link (?open_edit=...) so the Company Database
+  list/filter is hidden from the FIRST paint. Without this the JS only adds
+  body.deep-edit on DOMContentLoaded, so the full list + filter bar flashes
+  for a moment before the edit modal opens. This rule isn't gated on the
+  body class, so it applies immediately while the HTML parses.
+{% endcomment %}
+<style>
+  .card-outline.card-primary { visibility: hidden; }
+  .content-wrapper { background: #f0f4f8 !important; }
+</style>
+{% endif %}
 
 <div class="card card-outline card-primary shadow-sm">
 
@@ -840,14 +853,14 @@
               <label>First Name</label>
               {{ form.contact_first_name }}
               {% if is_business_user %}
-              <small class="form-text text-muted">Maintained by the certifying consultant.</small>
+              <small class="form-text text-muted contact-maintained-hint" style="display:none;">Maintained by the certifying consultant.</small>
               {% endif %}
             </div>
             <div class="form-group col-md-6">
               <label>Last Name</label>
               {{ form.contact_last_name }}
               {% if is_business_user %}
-              <small class="form-text text-muted">Maintained by the certifying consultant.</small>
+              <small class="form-text text-muted contact-maintained-hint" style="display:none;">Maintained by the certifying consultant.</small>
               {% endif %}
             </div>
           </div>
@@ -857,7 +870,7 @@
               <label>Contact Email <span class="text-danger">*</span></label>
               {{ form.contact_email }}
               {% if is_business_user %}
-              <small class="form-text text-muted">Maintained by the certifying consultant.</small>
+              <small class="form-text text-muted contact-maintained-hint" style="display:none;">Maintained by the certifying consultant.</small>
               {% endif %}
             </div>
             <div class="form-group col-md-6">
@@ -1081,6 +1094,8 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       setReadonly(false);
+      // Fresh company is the creator's own — contact fields editable, hint hidden.
+      applyContactLock(null, "edit");
       modal.modal('show');
   });
 
@@ -1217,7 +1232,32 @@ document.addEventListener("DOMContentLoaded", function () {
 
     title.innerText = mode === "view" ? "Company Details" : "Edit Company";
     setReadonly(mode === "view");
+    // Lock the contact-person fields for a business user opening a company
+    // they don't own — those fields belong to the owner / certifying
+    // consultant. Runs AFTER setReadonly so the edit-mode unlock doesn't
+    // re-enable them. The server enforces the same rule on save.
+    applyContactLock(c, mode);
     modal.modal("show");
+  }
+
+  // Toggle the contact-person fields + "maintained by consultant" hint based
+  // on the can_edit_contact flag from the detail payload. canEdit is true for
+  // the owner BU and for staff/consultants; false for a BU on someone else's
+  // company. Defaults to editable when the flag is absent (e.g. Add Company).
+  function applyContactLock(c, mode) {
+    var canEdit = !c || c.can_edit_contact !== false;
+    var locked = (mode === "view") || !canEdit;
+    ["id_contact_first_name", "id_contact_last_name", "id_contact_email"].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.readOnly = locked;
+      // Grey out + block input when locked in edit mode (view mode already
+      // applies .view-mode to every field via setReadonly).
+      el.classList.toggle("view-mode", locked);
+    });
+    document.querySelectorAll(".contact-maintained-hint").forEach(function (hint) {
+      hint.style.display = canEdit ? "none" : "";
+    });
   }
 
   // Delegated so handlers survive AJAX-replaced rows.
@@ -1262,7 +1302,12 @@ document.addEventListener("DOMContentLoaded", function () {
         return res.json();
       })
       .then(function (data) { populateCompanyModal(data.company, "edit"); })
-      .catch(function (err) { console.error("open_edit error:", err); });
+      .catch(function (err) {
+        console.error("open_edit error:", err);
+        // Don't strand the user on the hidden (deep-edit) list if the detail
+        // fetch fails — return to the origin page instead of a blank screen.
+        bail();
+      });
 
     // Modal close → navigate to the origin path. We hook *every* dismiss
     // path explicitly (X button, Cancel button, backdrop click, Esc key,

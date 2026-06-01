@@ -123,8 +123,10 @@
       {% endif %}
 
       {% comment %}
-        Connect — visible for ANY business user (free / basic / pro / global)
-        on companies they don't own.
+        Connect — a paid-plan feature (basic / pro / global) on companies the
+        user doesn't own. Free-plan users see the button greyed & disabled;
+        they must upgrade to a paid plan to send connection requests. This
+        mirrors the server-side gate in company_connect.
       {% endcomment %}
       {% if is_business_user %}
         {% if company.id in accepted_ids %}
@@ -134,6 +136,12 @@
         {% elif company.id in pending_ids %}
         <button type="button" class="dropdown-item text-muted" disabled>
           <i class="fas fa-hourglass-half mr-2"></i> Connection requested
+        </button>
+        {% elif is_free_plan %}
+        <button type="button" class="dropdown-item text-success"
+                style="opacity:.45; cursor: not-allowed;" disabled
+                title="Upgrade to a paid plan to connect with companies.">
+          <i class="fas fa-handshake mr-2"></i> Connect
         </button>
         {% else %}
         <form method="post" action="{% url 'company-connect' company.id %}"

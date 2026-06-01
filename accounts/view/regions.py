@@ -48,6 +48,80 @@ COMING_SOON_REGIONS = {
 }
 
 
+# Basic, verifiable country facts for the data-driven region profile page.
+# Keyed by lowercase ISO code. Holds only facts we can state reliably (capital,
+# region, official language(s), currency, rollout status) — no fabricated
+# economic statistics. The five markets with bespoke, data-rich templates
+# (us/de/cz/ae/jp) keep their own pages and are intentionally NOT listed here;
+# everything else on the world map renders through region_profile.html so a
+# click lands on a real country page instead of the "coming soon" placeholder.
+REGION_PROFILES = {
+    # ---- Active markets (Year 1) ----
+    "gb": {"name": "United Kingdom", "flag": "🇬🇧", "capital": "London",   "area": "Europe",
+           "language": "English", "currency": "GBP – Pound Sterling",
+           "status": "Active · Year 1", "status_class": "status-badge--active"},
+    "fr": {"name": "France", "flag": "🇫🇷", "capital": "Paris", "area": "Europe",
+           "language": "French", "currency": "EUR – Euro",
+           "status": "Active · Year 1", "status_class": "status-badge--active"},
+    "nl": {"name": "Netherlands", "flag": "🇳🇱", "capital": "Amsterdam", "area": "Europe",
+           "language": "Dutch", "currency": "EUR – Euro",
+           "status": "Active · Year 1", "status_class": "status-badge--active"},
+    "pl": {"name": "Poland", "flag": "🇵🇱", "capital": "Warsaw", "area": "Europe",
+           "language": "Polish", "currency": "PLN – Polish Złoty",
+           "status": "Active · Year 1", "status_class": "status-badge--active"},
+    "at": {"name": "Austria", "flag": "🇦🇹", "capital": "Vienna", "area": "Europe",
+           "language": "German", "currency": "EUR – Euro",
+           "status": "Active · Year 1", "status_class": "status-badge--active"},
+    "ch": {"name": "Switzerland", "flag": "🇨🇭", "capital": "Bern", "area": "Europe",
+           "language": "German, French, Italian, Romansh", "currency": "CHF – Swiss Franc",
+           "status": "Active · Year 1", "status_class": "status-badge--active"},
+    "se": {"name": "Sweden", "flag": "🇸🇪", "capital": "Stockholm", "area": "Europe",
+           "language": "Swedish", "currency": "SEK – Swedish Krona",
+           "status": "Active · Year 1", "status_class": "status-badge--active"},
+    # ---- Planned expansion markets ----
+    "sg": {"name": "Singapore", "flag": "🇸🇬", "capital": "Singapore", "area": "Asia",
+           "language": "English, Malay, Mandarin, Tamil", "currency": "SGD – Singapore Dollar",
+           "status": "Planned · Year 2", "status_class": "status-badge--planned"},
+    "ca": {"name": "Canada", "flag": "🇨🇦", "capital": "Ottawa", "area": "North America",
+           "language": "English, French", "currency": "CAD – Canadian Dollar",
+           "status": "Planned · Year 2", "status_class": "status-badge--planned"},
+    "au": {"name": "Australia", "flag": "🇦🇺", "capital": "Canberra", "area": "Oceania",
+           "language": "English", "currency": "AUD – Australian Dollar",
+           "status": "Planned · Year 2", "status_class": "status-badge--planned"},
+    "br": {"name": "Brazil", "flag": "🇧🇷", "capital": "Brasília", "area": "South America",
+           "language": "Portuguese", "currency": "BRL – Brazilian Real",
+           "status": "Planned · Year 3", "status_class": "status-badge--planned"},
+    "in": {"name": "India", "flag": "🇮🇳", "capital": "New Delhi", "area": "Asia",
+           "language": "Hindi, English", "currency": "INR – Indian Rupee",
+           "status": "Planned · Year 3", "status_class": "status-badge--planned"},
+    "mx": {"name": "Mexico", "flag": "🇲🇽", "capital": "Mexico City", "area": "North America",
+           "language": "Spanish", "currency": "MXN – Mexican Peso",
+           "status": "Planned · Year 3", "status_class": "status-badge--planned"},
+    "kr": {"name": "South Korea", "flag": "🇰🇷", "capital": "Seoul", "area": "Asia",
+           "language": "Korean", "currency": "KRW – South Korean Won",
+           "status": "Planned · Year 3", "status_class": "status-badge--planned"},
+    "za": {"name": "South Africa", "flag": "🇿🇦", "capital": "Pretoria", "area": "Africa",
+           "language": "English, Afrikaans, Zulu (11 official)", "currency": "ZAR – South African Rand",
+           "status": "Planned · Year 4", "status_class": "status-badge--planned"},
+}
+
+
+def region_detail(request, code):
+    """Data-driven basic country profile for any curated map country that
+    doesn't have a bespoke template. Renders name, flag, ISO, capital, region,
+    language, currency, and rollout status from REGION_PROFILES. Falls back to
+    the lightweight "coming soon" card for ISO codes we haven't curated, so a
+    click on the world map always lands on a real page (never a 404)."""
+    key = (code or "").lower()
+    profile = REGION_PROFILES.get(key)
+    if not profile:
+        return region_coming_soon(request, code)
+    return render(request, "regions/region_profile.html", {
+        "p": profile,
+        "code": key.upper(),
+    })
+
+
 def region_coming_soon(request, code):
     """Lightweight placeholder for regions that don't yet have a full
     per-country template. Renders the country name, flag, and planned

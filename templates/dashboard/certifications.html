@@ -559,6 +559,9 @@ document.addEventListener("DOMContentLoaded", function () {
             c.address_line1, c.house_number, c.district, c.region,
             c.city, c.state, c.postal_code, c.country
           ].filter(function (p) { return p; }).join(", ");
+          var contactPerson = [
+            c.contact_first_name, c.contact_last_name
+          ].filter(function (p) { return p; }).join(" ");
           drawerDetails.innerHTML =
             row("Legal Form", c.entity_type) +
             row("Registration ID", c.registration_id) +
@@ -573,6 +576,7 @@ document.addEventListener("DOMContentLoaded", function () {
             row("NAICS Code", c.naics_code_display) +
             row("Keywords", c.keywords) +
             row("Address", addressParts) +
+            row("Contact Person", contactPerson) +
             row("Phone", c.phone) +
             row("Contact Email", c.contact_email) +
             row("Website", c.website);

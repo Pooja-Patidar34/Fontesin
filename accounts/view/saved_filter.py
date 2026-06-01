@@ -143,10 +143,21 @@ def saved_filter_apply(request, filter_id):
 @require_POST
 @transaction.atomic
 def company_connect(request, company_id):
-    # Any Business User (free / basic / pro / global) may send a partnership
-    # request — the company owner approves or declines per the existing flow.
-    if _plan_code_for_business_user(request.user) is None:
+    # Connecting is a paid-plan feature. Only Basic / Pro / Global business
+    # users may send a partnership request — the company owner then approves
+    # or declines per the existing flow. Free-plan users (and non-business
+    # users) are blocked; the row template greys out their Connect button to
+    # match. This is the server-side counterpart so a free user can't bypass
+    # the disabled button by POSTing directly.
+    plan_code = _plan_code_for_business_user(request.user)
+    if plan_code is None:
         raise PermissionDenied()
+    if plan_code == "free":
+        msg = "Connecting with companies is available on paid plans. Upgrade to connect."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return JsonResponse({"ok": False, "message": msg}, status=403)
+        messages.error(request, msg)
+        return redirect(request.META.get("HTTP_REFERER") or reverse("companies"))
 
     # Block connecting while a paid-plan upgrade is awaiting admin approval.
     # During that window the user is on temporary Free access (the paid sub is

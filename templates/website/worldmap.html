@@ -209,7 +209,7 @@
           </div>
         </a>
 
-        <a href="{% url 'region_coming_soon' 'gb' %}" class="region-card-item">
+        <a href="{% url 'region_detail' 'gb' %}" class="region-card-item">
           <span class="region-card-item__flag">🇬🇧</span>
           <div>
             <div class="region-card-item__name">United Kingdom</div>
@@ -219,7 +219,7 @@
           </div>
         </a>
 
-        <a href="{% url 'region_coming_soon' 'fr' %}" class="region-card-item">
+        <a href="{% url 'region_detail' 'fr' %}" class="region-card-item">
           <span class="region-card-item__flag">🇫🇷</span>
           <div>
             <div class="region-card-item__name">France</div>
@@ -229,7 +229,7 @@
           </div>
         </a>
 
-        <a href="{% url 'region_coming_soon' 'nl' %}" class="region-card-item">
+        <a href="{% url 'region_detail' 'nl' %}" class="region-card-item">
           <span class="region-card-item__flag">🇳🇱</span>
           <div>
             <div class="region-card-item__name">Netherlands</div>
@@ -249,7 +249,7 @@
           </div>
         </a>
 
-        <a href="{% url 'region_coming_soon' 'sg' %}" class="region-card-item">
+        <a href="{% url 'region_detail' 'sg' %}" class="region-card-item">
           <span class="region-card-item__flag">🇸🇬</span>
           <div>
             <div class="region-card-item__name">Singapore</div>
@@ -259,7 +259,7 @@
           </div>
         </a>
 
-        <a href="{% url 'region_coming_soon' 'ca' %}" class="region-card-item">
+        <a href="{% url 'region_detail' 'ca' %}" class="region-card-item">
           <span class="region-card-item__flag">🇨🇦</span>
           <div>
             <div class="region-card-item__name">Canada</div>
@@ -279,7 +279,7 @@
           </div>
         </a>
 
-        <a href="{% url 'region_coming_soon' 'br' %}" class="region-card-item">
+        <a href="{% url 'region_detail' 'br' %}" class="region-card-item">
           <span class="region-card-item__flag">🇧🇷</span>
           <div>
             <div class="region-card-item__name">Brazil</div>
@@ -289,7 +289,7 @@
           </div>
         </a>
 
-        <a href="{% url 'region_coming_soon' 'in' %}" class="region-card-item">
+        <a href="{% url 'region_detail' 'in' %}" class="region-card-item">
           <span class="region-card-item__flag">🇮🇳</span>
           <div>
             <div class="region-card-item__name">India</div>
@@ -337,11 +337,11 @@
       <div>
         <p class="footer__heading">Regions</p>
         <div class="footer__links">
-          <a href="">United States</a>
-          <a href="">Germany</a>
-          <a href="">Czech Republic</a>
-          <a href="">UAE</a>
-          <a href="">Japan</a>
+          <a href="{% url 'region_us' %}">United States</a>
+          <a href="{% url 'region_de' %}">Germany</a>
+          <a href="{% url 'region_cz' %}">Czech Republic</a>
+          <a href="{% url 'region_ae' %}">UAE</a>
+          <a href="{% url 'region_jp' %}">Japan</a>
         </div>
       </div>
     </div>
@@ -457,10 +457,11 @@ function initMap() {
 
       path.addEventListener('click', () => {
         // Dedicated region page when one exists (US/DE/CZ/AE/JP); otherwise
-        // the generic per-country "coming soon" page. Either way a click on
-        // any highlighted country lands on a real page instead of 404-ing on
-        // the old relative "region-xx.html" path.
-        window.location.href = info.page || ('/region/' + iso.toLowerCase() + '/coming-soon/');
+        // the generic data-driven country profile (/region/<iso>/), which
+        // shows basic country facts for curated markets and falls back to the
+        // "coming soon" card for anything uncurated. Either way a click on any
+        // highlighted country lands on a real page.
+        window.location.href = info.page || ('/region/' + iso.toLowerCase() + '/');
       });
     }
   });

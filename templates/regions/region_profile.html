@@ -1,0 +1,166 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#253D51"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="FONTESIN"/>
+  <link rel="manifest" href="{% static 'manifest.json' %}"/>
+  <link rel="apple-touch-icon" href="{% static 'adminlte/images/icons/icon-192.png' %}"/>
+  <title>{{ p.name }} – FONTESIN Region</title>
+  <meta name="description" content="FONTESIN region profile for {{ p.name }}: capital, region, official language, currency, and rollout status."/>
+  <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar__inner">
+    <a href="{% url 'home' %}" class="navbar__logo"><img src="{% static 'adminlte/images/fontesin-logo.png' %}" alt="FONTESIN" height="38"/></a>
+    <div class="navbar__nav">
+      <a href="{% url 'home' %}">Home</a>
+      <a href="{% url 'worldmap' %}">World Map</a>
+      <a href="{% url 'about' %}">About</a>
+      <a href="{% url 'career' %}">Careers</a>
+      <a href="{% url 'contact' %}">Contact</a>
+    </div>
+    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
+    <div class="navbar__actions">
+      <a href="{% url 'login' %}" class="btn btn-outline btn-sm">Log In</a>
+      <a href="{% url 'register' %}" class="btn btn-primary btn-sm">Get Started</a>
+    </div>
+  </div>
+</nav>
+
+<!-- COUNTRY HERO -->
+<section class="country-hero">
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="{% url 'home' %}">Home</a>
+      <span>/</span>
+      <a href="{% url 'worldmap' %}">World Map</a>
+      <span>/</span>
+      <span>{{ p.name }}</span>
+    </div>
+    <div class="country-hero__flag">{{ p.flag }}</div>
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:8px;">
+      <h1>{{ p.name }}</h1>
+      <span class="status-badge {{ p.status_class }}">{{ p.status }}</span>
+    </div>
+    <div class="country-hero__meta">
+      <div class="country-hero__meta-item">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        {{ p.capital }}, {{ p.area }}
+      </div>
+      <div class="country-hero__meta-item">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        {{ p.language }} · {{ p.currency }}
+      </div>
+      <div class="country-hero__meta-item">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        ISO code · {{ code }}
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MAIN CONTENT -->
+<section class="section section--light">
+  <div class="container">
+
+    <!-- About -->
+    <div style="background:#fff;border-radius:12px;padding:28px 32px;margin-bottom:32px;border:1px solid rgba(37,61,81,.06);box-shadow:0 2px 8px rgba(0,0,0,.05);">
+      <h3 style="margin-bottom:12px;">About {{ p.name }}</h3>
+      <p>{{ p.name }} is part of FONTESIN's global rollout ({{ p.status }}). The full economic and regulatory profile for this market is being prepared. Below are the key facts available today.</p>
+    </div>
+
+    <!-- Country Facts -->
+    <h3 style="margin-bottom:20px;">Country Facts</h3>
+    <div class="data-grid">
+      <div class="data-card">
+        <div class="data-card__label">Capital</div>
+        <div class="data-card__value" style="font-size:.95rem;">{{ p.capital }}</div>
+      </div>
+      <div class="data-card">
+        <div class="data-card__label">Region</div>
+        <div class="data-card__value" style="font-size:.95rem;">{{ p.area }}</div>
+      </div>
+      <div class="data-card">
+        <div class="data-card__label">Official Language</div>
+        <div class="data-card__value" style="font-size:.95rem;">{{ p.language }}</div>
+      </div>
+      <div class="data-card">
+        <div class="data-card__label">Currency</div>
+        <div class="data-card__value" style="font-size:.95rem;">{{ p.currency }}</div>
+      </div>
+      <div class="data-card">
+        <div class="data-card__label">ISO Code</div>
+        <div class="data-card__value">{{ code }}</div>
+      </div>
+      <div class="data-card">
+        <div class="data-card__label">Rollout Status</div>
+        <div class="data-card__value" style="font-size:.95rem;">{{ p.status }}</div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div style="background:var(--primary-dark);border-radius:16px;padding:40px;margin-top:48px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;">
+      <div>
+        <h3 style="color:#fff;margin-bottom:8px;">Interested in {{ p.name }}?</h3>
+        <p style="color:rgba(199,204,209,.7);max-width:480px;">Apply for franchise, request activation, or contact our regional team to explore opportunities in {{ p.name }}.</p>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <a href="{% url 'register' %}" class="btn btn--white">Apply for Franchise</a>
+        <a href="{% url 'contact' %}" class="btn btn-outline">Contact HQ</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer__grid">
+      <div>
+        <div class="footer__logo"><img src="{% static 'adminlte/images/fontesin-logo.png' %}" alt="FONTESIN" style="height:32px;width:auto;filter:brightness(0) invert(1);margin-bottom:12px;"/></div>
+        <p class="footer__brand-desc">A deep-tech global business infrastructure platform connecting companies, professionals, and markets across languages, borders, and systems.</p>
+      </div>
+      <div>
+        <p class="footer__heading">Platform</p>
+        <div class="footer__links">
+          <a href="{% url 'worldmap' %}">World Map</a>
+          <a href="{% url 'register' %}">Get Started</a>
+          <a href="{% url 'login' %}">Log In</a>
+        </div>
+      </div>
+      <div>
+        <p class="footer__heading">Company</p>
+        <div class="footer__links">
+          <a href="{% url 'about' %}">About Us</a>
+          <a href="{% url 'career' %}">Careers</a>
+          <a href="{% url 'contact' %}">Contact</a>
+        </div>
+      </div>
+      <div>
+        <p class="footer__heading">Regions</p>
+        <div class="footer__links">
+          <a href="{% url 'region_us' %}">United States</a>
+          <a href="{% url 'region_de' %}">Germany</a>
+          <a href="{% url 'region_cz' %}">Czech Republic</a>
+          <a href="{% url 'region_ae' %}">UAE</a>
+          <a href="{% url 'region_jp' %}">Japan</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span>© 2026 FONTES Inc. All rights reserved.</span>
+      <span>Design by Memento Mori Digital LLC</span>
+    </div>
+  </div>
+</footer>
+
+<script src="{% static 'adminlte/js/main.js' %}"></script>
+</body>
+</html>
