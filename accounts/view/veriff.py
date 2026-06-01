@@ -190,6 +190,12 @@ class CreateVeriffSessionAPIView(APIView):
 
             if request.user.is_authenticated:
                 request.user.veriff_session_id = session_id
+                # Reset any stale state from a previous attempt so /verify/
+                # shows the start screen (not a leftover "submitted"/"declined")
+                # until this fresh session reports back. Never downgrade an
+                # already-approved user.
+                if (request.user.verification_status or "") != "approved":
+                    request.user.verification_status = "pending"
                 request.user.save()
 
             return Response({

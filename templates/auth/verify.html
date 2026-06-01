@@ -374,7 +374,11 @@
     </div>
     <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
     <div class="navbar__actions">
-      <a href="{% url 'login' %}" class="btn btn-outline btn-sm">Log In</a>
+      {# The user is logged in (mid-verification), so "Log In" looped back here
+         via the auth gate. Offer Log Out instead — it clears the session and
+         lands them on the login page, where they can sign in to another
+         account. #}
+      <a href="{% url 'logout' %}" class="btn btn-outline btn-sm">Log Out</a>
     </div>
   </div>
 </nav>

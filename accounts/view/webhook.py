@@ -48,6 +48,19 @@ def veriff_webhook(request):
 
         logger.info("Event webhook received - Action: %s, Session: %s, VendorData: %s", action, session_id, vendor_data)
 
+        # Veriff fires action="submitted" once the user has actually finished
+        # uploading their documents/selfie. Mark the user "submitted" so the
+        # /verify/ page shows the "Verifying…" state and polls for the decision.
+        # A cancelled/abandoned attempt (the user closes Veriff with the ✕)
+        # never sends this event, so those users stay on the start screen.
+        # We don't overwrite an already-approved user.
+        if action == "submitted" and vendor_data:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            User.objects.filter(id=vendor_data).exclude(
+                verification_status="approved"
+            ).update(verification_status="submitted")
+
         return JsonResponse({"success": True})
 
 

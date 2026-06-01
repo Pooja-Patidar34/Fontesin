@@ -389,18 +389,15 @@ def identity_verification_view(request):
     if current_status in VERIFIED_STATUSES:
         return redirect("apply" if show_apply_link else "membership")
 
-    # The user has already started/finished a Veriff session but the decision
-    # isn't "approved" yet (Veriff is still processing — its decision lags the
-    # user clicking "Continue"). Show a "Verifying your identity…" screen that
-    # polls /veriff/status/ and auto-forwards to plan selection the moment the
-    # decision lands, instead of the "Start Verification" screen. Terminal
-    # failures (declined / resubmission_requested / expired / abandoned) drop
-    # back to the start screen so the user can re-attempt.
-    FAILED_STATUSES = ("declined", "resubmission_requested", "expired", "abandoned")
-    verification_in_progress = (
-        bool((user.veriff_session_id or "").strip())
-        and current_status not in FAILED_STATUSES
-    )
+    # Show the "Verifying your identity…" screen ONLY after the user has
+    # actually submitted their documents to Veriff (its "submitted" event
+    # webhook sets verification_status="submitted"). That screen polls
+    # /veriff/status/ and auto-forwards to plan selection once the decision
+    # lands. A user who opened Veriff and closed it with the ✕ never submits,
+    # so their status stays "pending" → they get the start screen (not a
+    # stuck "Verifying" spinner). Declined/expired/etc. also fall to the start
+    # screen so they can re-attempt.
+    verification_in_progress = (current_status == "submitted")
 
     return render(
         request,
