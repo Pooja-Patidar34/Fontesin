@@ -1,3 +1,5 @@
+import hashlib
+import hmac
 import logging
 
 import requests
@@ -8,6 +10,102 @@ from rest_framework.permissions import AllowAny,IsAuthenticated
 from rest_framework import status
 
 logger = logging.getLogger("technical")
+
+
+def sync_veriff_decision(user):
+    """Pull the latest decision for the user's Veriff session straight from
+    Veriff's API and persist it to user.verification_status.
+
+    The registration gate normally learns the outcome from the async decision
+    webhook (accounts/view/webhook.py). But the webhook can be delayed, or
+    unreachable entirely (local dev / IP-only hosts Veriff can't call back
+    into), which strands a freshly-verified user on the /verify/ step — they
+    complete Veriff, get bounced back, and the status is still "pending".
+    Polling the decision endpoint on return closes that gap so approval doesn't
+    depend on the webhook landing first.
+
+    Returns the refreshed status string (e.g. "approved"), or None when there's
+    no session yet or Veriff has no decision / the call fails. Never raises —
+    callers can treat None as "no change".
+    """
+    session_id = (getattr(user, "veriff_session_id", "") or "").strip()
+    if not session_id:
+        return None
+
+    # Veriff signs API reads with HMAC-SHA256 of the session id using the
+    # integration's shared secret (same secret family as the webhook). Try the
+    # master secret first, then fall back to the webhook secret in case the
+    # deployment only set one of the two.
+    secret = (getattr(settings, "VERIFF_MASTER_SECRET", "") or
+              getattr(settings, "VERIFF_WEBHOOK_SECRET", "") or "")
+    if not secret:
+        return None
+
+    signature = hmac.new(
+        secret.encode(), session_id.encode(), hashlib.sha256
+    ).hexdigest()
+
+    url = settings.VERIFF_BASE_URL.rstrip("/") + f"/v1/sessions/{session_id}/decision"
+    headers = {
+        "X-AUTH-CLIENT": settings.VERIFF_API_KEY,
+        "X-HMAC-SIGNATURE": signature,
+        "Content-Type": "application/json",
+    }
+
+    try:
+        resp = requests.get(url, headers=headers, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+    except (requests.exceptions.RequestException, ValueError) as e:
+        logger.warning("Veriff decision poll failed for session %s: %s", session_id, e)
+        return None
+
+    verification = (data or {}).get("verification")
+    if not verification:
+        # No decision recorded yet (still processing) — leave status untouched.
+        return None
+
+    new_status = verification.get("status")
+    if new_status and new_status != (user.verification_status or ""):
+        user.verification_status = new_status
+        user.save(update_fields=["verification_status"])
+        logger.info(
+            "User %s verification synced to %s via decision poll",
+            user.id, new_status,
+        )
+    return new_status
+
+
+class VeriffStatusAPIView(APIView):
+    """Lightweight polling endpoint for the "Verifying your identity…" screen.
+
+    The /verify/ page hits this every few seconds after the user returns from
+    Veriff. It pulls the latest decision straight from Veriff
+    (sync_veriff_decision) and reports back so the page can auto-forward to plan
+    selection the moment the decision lands — instead of leaving the user on
+    the verification step waiting on the async webhook.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from FontEsin.middleware.require_verification import VERIFIED_STATUSES
+
+        current = request.user.verification_status or ""
+        # Only bother Veriff while we're still waiting on a decision.
+        if current not in VERIFIED_STATUSES:
+            synced = sync_veriff_decision(request.user)
+            if synced:
+                current = synced
+
+        # Statuses that mean the user must re-attempt rather than keep waiting.
+        FAILED = ("declined", "resubmission_requested", "expired", "abandoned")
+        approved = current in VERIFIED_STATUSES
+        return Response({
+            "status": current,
+            "approved": approved,
+            "failed": (current in FAILED),
+            "pending": (not approved and current not in FAILED),
+        })
 
 
 class CreateVeriffSessionAPIView(APIView):

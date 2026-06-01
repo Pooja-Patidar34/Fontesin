@@ -16,7 +16,7 @@ from .view.tenant import tenant_list,toggle_tenant,tenant_detail_ajax,tenant_del
 from .view.website import home, about, worldmap, career, contact, membership, select_plan, invoice_detail
 from .view.regions import region_us, region_de, region_cz, region_ae, region_jp, regions_map_view, region_coming_soon, region_detail
 from .view.consultant import consultant_companies, consultant_users, coordinator_users, coordinator_companies
-from .view.veriff import CreateVeriffSessionAPIView
+from .view.veriff import CreateVeriffSessionAPIView, VeriffStatusAPIView
 from .view.webhook import veriff_webhook
 from billing.views import invoice_list, plan_history, payment_list, payment_approve, payment_reject, payment_edit, payment_detail_ajax, subscription_list, plan_edit, plan_toggle, commission_list, commission_mark_paid, commission_invoice_detail_ajax, commission_invoice_export
 from .view.search import global_search
@@ -175,6 +175,7 @@ urlpatterns = [
 
     #veriff
     path("veriff/session/", CreateVeriffSessionAPIView.as_view(),name="veriff-session",),
+    path("veriff/status/", VeriffStatusAPIView.as_view(), name="veriff-status"),
     path("verify/", identity_verification_view, name="identity-verification"),
     path("apply/", apply_view, name="apply"),
     path("apply/submit/", apply_submit, name="apply-submit"),

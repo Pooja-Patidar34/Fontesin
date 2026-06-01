@@ -366,14 +366,41 @@ def identity_verification_view(request):
     role_code = user.role.code.lower()
     show_apply_link = role_code in ('consultant', 'coordinator', 'franchise')
 
+    from FontEsin.middleware.require_verification import VERIFIED_STATUSES
+
+    # A user landing here right after finishing Veriff often hasn't had their
+    # decision webhook processed yet (it's async, and on local/IP-only hosts
+    # Veriff can't call the webhook at all). Without this, they'd see the
+    # "Start Verification" screen again even though they just passed. Pull the
+    # decision straight from Veriff so a completed session is recognised on
+    # return instead of waiting on the webhook.
+    if (user.verification_status or "") not in VERIFIED_STATUSES:
+        from accounts.view.veriff import sync_veriff_decision
+        synced = sync_veriff_decision(user)
+        if synced:
+            user.refresh_from_db(fields=["verification_status"])
+
     # Already verified — there's nothing to do on this screen, so move the
     # user on to the next step in the registration flow (per the diagram:
     # SUCCESSFUL verification → application form for consultant / coordinator
     # / franchise, otherwise → plan selection). Without this an approved user
     # who navigates back to /verify/ would be stranded on the start screen.
-    from FontEsin.middleware.require_verification import VERIFIED_STATUSES
-    if (user.verification_status or "") in VERIFIED_STATUSES:
+    current_status = (user.verification_status or "")
+    if current_status in VERIFIED_STATUSES:
         return redirect("apply" if show_apply_link else "membership")
+
+    # The user has already started/finished a Veriff session but the decision
+    # isn't "approved" yet (Veriff is still processing — its decision lags the
+    # user clicking "Continue"). Show a "Verifying your identity…" screen that
+    # polls /veriff/status/ and auto-forwards to plan selection the moment the
+    # decision lands, instead of the "Start Verification" screen. Terminal
+    # failures (declined / resubmission_requested / expired / abandoned) drop
+    # back to the start screen so the user can re-attempt.
+    FAILED_STATUSES = ("declined", "resubmission_requested", "expired", "abandoned")
+    verification_in_progress = (
+        bool((user.veriff_session_id or "").strip())
+        and current_status not in FAILED_STATUSES
+    )
 
     return render(
         request,
@@ -381,6 +408,8 @@ def identity_verification_view(request):
         {
             "VERIFF_PUBLIC_KEY": settings.VERIFF_API_KEY,
             "show_apply_link": show_apply_link,
+            "verification_in_progress": verification_in_progress,
+            "verification_status": current_status,
         }
     )
 

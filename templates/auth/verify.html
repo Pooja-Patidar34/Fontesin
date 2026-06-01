@@ -403,6 +403,43 @@
 
 <!-- MAIN CONTENT -->
 <div class="verify-page">
+
+  {% if verification_in_progress %}
+  <!-- VERIFYING STATE — shown when the user has finished a Veriff session but
+       the decision isn't final yet. Polls /veriff/status/ and auto-forwards to
+       plan selection once Veriff returns "approved". -->
+  <div class="verify-card" id="verifyingCard"
+       data-status-url="{% url 'veriff-status' %}"
+       data-next-url="{% if show_apply_link %}{% url 'apply' %}{% else %}{% url 'membership' %}{% endif %}">
+    <div class="verify-card__icon">⏳</div>
+    <h1 class="verify-card__title">Verifying your identity…</h1>
+    <p class="verify-card__subtitle">
+      Thanks — we've received your submission. We're confirming your identity
+      with our verification partner. This usually takes a few moments; you'll be
+      taken to the next step automatically once it's done.
+    </p>
+
+    <div class="veriff-scan-bar" style="max-width:360px;margin:0 auto 28px;">
+      <div class="veriff-scan-bar__fill" id="verifyingBar" style="width:25%;"></div>
+    </div>
+
+    <div class="verify-note">
+      🔒 Secured by Veriff · Please keep this page open
+    </div>
+
+    <!-- Failure / retry message (hidden until a terminal decision arrives) -->
+    <div id="verifyingFailed" class="hidden" style="margin-top:24px;">
+      <p style="color:#b91c1c;font-size:.9rem;margin-bottom:16px;">
+        We couldn't confirm your identity. Please try the verification again.
+      </p>
+      <button class="btn-verify" onclick="startVerification()">
+        <span>🔄</span>
+        <span>Retry Identity Verification</span>
+      </button>
+    </div>
+  </div>
+
+  {% else %}
   <div class="verify-card">
     <div class="verify-card__icon">🛡️</div>
     <h1 class="verify-card__title">Identity Verification Required</h1>
@@ -439,6 +476,8 @@
       🔒 Secured by Veriff · Your data is encrypted and never stored
     </div>
   </div>
+  {% endif %}
+
 </div>
 
 <!-- VERIFF MODAL -->
@@ -642,6 +681,68 @@ function confirmVerification() {
 document.getElementById('veriffOverlay').addEventListener('click', function(e) {
   if (e.target === this) closeVeriffModal();
 });
+
+/* ─────────────────────────────────────────────
+   "Verifying…" auto-poll
+   When the user returns from Veriff but the decision isn't final yet, this
+   card is shown. Poll the status endpoint until Veriff returns a decision,
+   then forward to plan selection (approved) or reveal the retry button
+   (declined / expired / etc.).
+   ───────────────────────────────────────────── */
+(function () {
+  var card = document.getElementById('verifyingCard');
+  if (!card) return;
+
+  var statusUrl = card.dataset.statusUrl;
+  var nextUrl   = card.dataset.nextUrl;
+  var bar       = document.getElementById('verifyingBar');
+  var failedBox = document.getElementById('verifyingFailed');
+  var attempts  = 0;
+  var MAX_ATTEMPTS = 60;          // ~5 minutes at 5s intervals
+  var INTERVAL_MS  = 5000;
+
+  function pulseBar() {
+    if (!bar) return;
+    // Creep the progress bar forward so the wait feels alive (caps at 90%).
+    var w = Math.min(90, 25 + attempts * 4);
+    bar.style.width = w + '%';
+  }
+
+  function showFailed() {
+    if (failedBox) failedBox.classList.remove('hidden');
+  }
+
+  function poll() {
+    attempts++;
+    pulseBar();
+    fetch(statusUrl, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.approved) {
+          if (bar) bar.style.width = '100%';
+          window.location.href = nextUrl;
+          return;
+        }
+        if (data.failed) {
+          showFailed();
+          return;                  // stop polling — user must retry
+        }
+        if (attempts >= MAX_ATTEMPTS) {
+          showFailed();
+          return;
+        }
+        setTimeout(poll, INTERVAL_MS);
+      })
+      .catch(function () {
+        if (attempts >= MAX_ATTEMPTS) { showFailed(); return; }
+        setTimeout(poll, INTERVAL_MS);
+      });
+  }
+
+  // Kick off shortly after load so the first poll has a moment for the
+  // decision to land.
+  setTimeout(poll, 1500);
+})();
 </script>
 
 
