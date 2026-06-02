@@ -2,13 +2,18 @@ from django.shortcuts import redirect
 from django.urls import reverse, NoReverseMatch
 
 
-# Veriff verification states that count as "passed". Only an approved
-# decision lets a freshly-registered account leave the /verify/ step and
-# reach plan selection / the dashboard. Every other state Veriff can report
-# (pending, declined, resubmission_requested, expired, abandoned) keeps the
-# account gated — matching the registration diagram where PLAN SELECTION is
-# reachable only on the SUCCESSFUL branch out of VERIFF PROCESS.
+# Veriff verification states that count as fully "verified" (final approval).
 VERIFIED_STATUSES = ("approved",)
+
+# States that let an account PASS the identity gate (reach plan selection /
+# dashboard). We let a user through as soon as they've "submitted" their
+# documents to Veriff — they shouldn't have to sit and wait on Veriff's async
+# decision. The decision still lands later via the webhook and updates
+# verification_status in the DB; a "declined"/"resubmission_requested"/etc.
+# result is NOT in this set, so once that lands the user is re-gated to
+# /verify/ on their next request. "pending" (started but not submitted, or a
+# cancelled attempt) is also not here — those stay on the start screen.
+GATE_PASS_STATUSES = ("approved", "submitted")
 
 
 class RequireIdentityVerificationMiddleware:
@@ -119,8 +124,8 @@ class RequireIdentityVerificationMiddleware:
         if role_name == "tenant_admin":
             return False
 
-        # Already verified — let them through.
-        if (user.verification_status or "") in VERIFIED_STATUSES:
+        # Submitted-or-approved — let them through (no waiting on the decision).
+        if (user.verification_status or "") in GATE_PASS_STATUSES:
             return False
 
         path = request.path or ""

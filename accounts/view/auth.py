@@ -366,47 +366,36 @@ def identity_verification_view(request):
     role_code = user.role.code.lower()
     show_apply_link = role_code in ('consultant', 'coordinator', 'franchise')
 
-    from FontEsin.middleware.require_verification import VERIFIED_STATUSES
+    from FontEsin.middleware.require_verification import GATE_PASS_STATUSES
 
-    # A user landing here right after finishing Veriff often hasn't had their
-    # decision webhook processed yet (it's async, and on local/IP-only hosts
-    # Veriff can't call the webhook at all). Without this, they'd see the
-    # "Start Verification" screen again even though they just passed. Pull the
-    # decision straight from Veriff so a completed session is recognised on
-    # return instead of waiting on the webhook.
-    if (user.verification_status or "") not in VERIFIED_STATUSES:
-        from accounts.view.veriff import sync_veriff_decision
-        synced = sync_veriff_decision(user)
-        if synced:
-            user.refresh_from_db(fields=["verification_status"])
-
-    # Already verified — there's nothing to do on this screen, so move the
-    # user on to the next step in the registration flow (per the diagram:
-    # SUCCESSFUL verification → application form for consultant / coordinator
-    # / franchise, otherwise → plan selection). Without this an approved user
-    # who navigates back to /verify/ would be stranded on the start screen.
+    # Move the user straight to the next step as soon as they've SUBMITTED to
+    # Veriff (status "submitted") or been approved — no waiting on Veriff's
+    # async decision. Consultant/coordinator/franchise → application form;
+    # everyone else → plan selection. The final decision keeps updating in the
+    # DB via the webhook; if it comes back declined/resubmission, the gate
+    # re-catches them on a later request.
     current_status = (user.verification_status or "")
-    if current_status in VERIFIED_STATUSES:
+    if current_status in GATE_PASS_STATUSES:
         return redirect("apply" if show_apply_link else "membership")
 
-    # Show the "Verifying your identity…" screen ONLY after the user has
-    # actually submitted their documents to Veriff (its "submitted" event
-    # webhook sets verification_status="submitted"). That screen polls
-    # /veriff/status/ and auto-forwards to plan selection once the decision
-    # lands. A user who opened Veriff and closed it with the ✕ never submits,
-    # so their status stays "pending" → they get the start screen (not a
-    # stuck "Verifying" spinner). Declined/expired/etc. also fall to the start
-    # screen so they can re-attempt.
-    verification_in_progress = (current_status == "submitted")
+    # Not submitted yet (pending / cancelled / declined / expired). As a
+    # safety net for a just-finished user whose "submitted" event webhook
+    # hasn't landed yet, pull the latest decision straight from Veriff once;
+    # if that already shows them past the gate, forward them on.
+    from accounts.view.veriff import sync_veriff_decision
+    synced = sync_veriff_decision(user)
+    if synced:
+        user.refresh_from_db(fields=["verification_status"])
+        if (user.verification_status or "") in GATE_PASS_STATUSES:
+            return redirect("apply" if show_apply_link else "membership")
 
+    # Otherwise show the start screen so they can begin / re-attempt.
     return render(
         request,
         "auth/verify.html",
         {
             "VERIFF_PUBLIC_KEY": settings.VERIFF_API_KEY,
             "show_apply_link": show_apply_link,
-            "verification_in_progress": verification_in_progress,
-            "verification_status": current_status,
         }
     )
 
