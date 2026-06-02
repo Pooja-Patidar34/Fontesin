@@ -230,6 +230,83 @@ def notify_coordinator_request_submitted(coord_request):
     return last
 
 
+def notify_application_submitted(applicant):
+    """Broadcast a 'X submitted a franchise/coordinator application' note to
+    every active superuser so any of them can review it in the Applications
+    queue. Only used for coordinator/franchise registrations (consultants
+    aren't gated)."""
+    from accounts.models import User
+
+    applicant_label = (
+        f"{applicant.first_name} {applicant.last_name}".strip()
+        or applicant.email
+    )
+    role_label = (applicant.role.name or applicant.role.code or "applicant").replace("_", " ").title() if applicant.role else "applicant"
+    try:
+        link = reverse("applications")
+    except NoReverseMatch:
+        link = ""
+    body = f"{applicant_label} submitted a {role_label} account application and is awaiting your review."
+    if applicant.target_region:
+        body += f"\nTarget region: {applicant.target_region}."
+    superusers = User.objects.filter(is_superuser=True, is_active=True)
+    last = None
+    for su in superusers:
+        last = notify(
+            recipient=su,
+            sender=applicant,
+            kind=Notification.KIND_APPLICATION_REQUEST,
+            title=f"New {role_label} application",
+            body=body,
+            link_url=link,
+        )
+    return last
+
+
+def notify_application_decision(applicant, *, approved):
+    """Inform the applicant of the Super Admin's approve/decline decision on
+    their franchise/coordinator account application."""
+    if not applicant:
+        return None
+    decider = applicant.application_decided_by
+    decider_label = ""
+    if decider:
+        decider_label = (
+            f"{decider.first_name} {decider.last_name}".strip()
+            or decider.email
+        )
+    try:
+        link = reverse("dashboard") if approved else reverse("application-pending")
+    except NoReverseMatch:
+        link = ""
+    if approved:
+        kind = Notification.KIND_APPLICATION_APPROVED
+        title = "Your account application has been approved"
+        body = (
+            f"Your account application was approved"
+            f"{f' by {decider_label}' if decider_label else ''}. "
+            "You now have full access — sign out and back in if your sidebar doesn't update."
+        )
+    else:
+        kind = Notification.KIND_APPLICATION_DECLINED
+        title = "Your account application was declined"
+        reason = (applicant.application_decline_reason or "").strip()
+        body = (
+            f"Your account application was declined"
+            f"{f' by {decider_label}' if decider_label else ''}."
+        )
+        if reason:
+            body += f"\nReason: {reason}"
+    return notify(
+        recipient=applicant,
+        sender=decider,
+        kind=kind,
+        title=title,
+        body=body,
+        link_url=link,
+    )
+
+
 def notify_coordinator_request_decision(coord_request, *, approved):
     """Inform the requesting BU of the Super Admin's decision."""
     requester = coord_request.user

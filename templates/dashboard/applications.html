@@ -1,0 +1,271 @@
+{% extends "base/base.html" %}
+{% block title %}Registration Applications{% endblock %}
+
+{% block content %}
+
+<style>
+  .cr-tabs { display: flex; gap: .25rem; border-bottom: 1px solid #e9ecef; padding: 0 1.25rem; background: #f8f9fa; }
+  .cr-tab { border: 0; background: transparent; padding: .75rem 1rem; font-size: .85rem; font-weight: 600; color: #6c757d; border-bottom: 2px solid transparent; cursor: pointer; }
+  .cr-tab:hover { color: #1B2E3F; }
+  .cr-tab.active { color: #1B2E3F; border-bottom-color: #4da3ff; }
+  .cr-tab .badge { margin-left: .35rem; font-size: .68rem; }
+  .cr-pane { display: none; }
+  .cr-pane.active { display: block; }
+  .empty-state { text-align: center; color: #94a3b8; padding: 2.5rem 1rem; }
+  .empty-state .fa-2x { margin-bottom: .5rem; }
+  .cr-info-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 18px; font-size: .82rem; color: #475569; }
+  .cr-info-grid div span { color: #94a3b8; margin-right: 4px; }
+  .cr-section-title { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #94a3b8; margin: 16px 0 6px; }
+  .cr-motivation { background: #f8fafc; border: 1px solid #eef2f7; border-radius: 8px; padding: 8px 10px; font-size: .82rem; color: #1f2937; white-space: pre-wrap; margin-top: 6px; }
+  .cr-dd-grid { display: grid; grid-template-columns: repeat(1, minmax(0,1fr)); gap: 3px 12px; margin-top: 6px; color: #475569; font-size: .8rem; }
+  .cr-dd-grid .flag-yes { color: #b91c1c; font-weight: 600; }
+  .cr-dd-grid .flag-no { color: #64748b; }
+  .role-tag { display:inline-block; background:#eef2ff; color:#3730a3; font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; padding:2px 8px; border-radius:6px; margin-left:6px; }
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 100px; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+  .pill-approved { background: #dcfce7; color: #166534; }
+  .pill-declined { background: #fee2e2; color: #991b1b; }
+</style>
+
+<div class="card card-outline card-primary shadow-sm">
+
+  <div class="card-header">
+    <h3 class="card-title font-weight-bold mb-0">
+      <i class="fas fa-id-card mr-1"></i> Registration Applications
+    </h3>
+    <h5 class="small text-muted mb-0">
+      New <strong>Franchise Partner</strong> &amp; <strong>Coordinator</strong> sign-ups awaiting approval. (Business Users requesting a Coordinator upgrade appear under <em>Coordinator Upgrade Requests</em>.) Click <strong>View</strong> to see the full application, then Approve or Decline.
+    </h5>
+  </div>
+
+  <div class="cr-tabs">
+    <button type="button" class="cr-tab active" data-pane="pending">
+      Pending {% if pending %}<span class="badge badge-warning">{{ pending|length }}</span>{% endif %}
+    </button>
+    <button type="button" class="cr-tab" data-pane="approved">
+      Approved {% if approved %}<span class="badge badge-secondary">{{ approved|length }}</span>{% endif %}
+    </button>
+    <button type="button" class="cr-tab" data-pane="declined">
+      Declined {% if declined %}<span class="badge badge-secondary">{{ declined|length }}</span>{% endif %}
+    </button>
+  </div>
+
+  <!-- PENDING -->
+  <div class="cr-pane active" id="pane-pending">
+    <div class="card-body p-0">
+      {% if pending %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th>Applicant</th>
+              <th>Submitted</th>
+              <th class="text-right pr-4" style="width:230px;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in pending %}
+            <tr>
+              <td>
+                <strong>{{ u.first_name }} {{ u.last_name }}</strong>
+                <span class="role-tag">{{ u.role.name|default:u.role.code }}</span>
+                <div class="small text-muted">{{ u.email }}</div>
+              </td>
+              <td class="small text-muted">{{ u.updated_at|date:"M j, Y H:i" }}</td>
+              <td class="text-right pr-4" style="white-space:nowrap;">
+                <button type="button" class="btn btn-sm btn-outline-primary"
+                        data-toggle="modal" data-target="#app-modal-{{ u.id }}" title="View full application">
+                  <i class="fas fa-eye mr-1"></i> View
+                </button>
+                <form method="post" action="{% url 'application-action' u.id %}" class="d-inline m-0">
+                  {% csrf_token %}
+                  <input type="hidden" name="decision" value="approve">
+                  <button type="submit" class="btn btn-sm btn-success" title="Approve">
+                    <i class="fas fa-check mr-1"></i> Approve
+                  </button>
+                </form>
+                <form method="post" action="{% url 'application-action' u.id %}" class="d-inline m-0"
+                      onsubmit="var r=prompt('Decline reason (optional — shown to the applicant):'); if(r===null){return false;} this.decline_reason.value=r; return true;">
+                  {% csrf_token %}
+                  <input type="hidden" name="decision" value="decline">
+                  <input type="hidden" name="decline_reason" value="">
+                  <button type="submit" class="btn btn-sm btn-outline-danger" title="Decline">
+                    <i class="fas fa-times mr-1"></i> Decline
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="fas fa-inbox fa-2x"></i>
+        <p class="mb-0">No pending applications.</p>
+        <p class="small mb-0">Franchise &amp; coordinator registrations appear here after the apply form is submitted.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- APPROVED -->
+  <div class="cr-pane" id="pane-approved">
+    <div class="card-body p-0">
+      {% if approved %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr><th>Applicant</th><th>Role</th><th>Decided</th><th>By</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            {% for u in approved %}
+            <tr>
+              <td><strong>{{ u.first_name }} {{ u.last_name }}</strong><div class="small text-muted">{{ u.email }}</div></td>
+              <td class="small text-muted">{{ u.role.name|default:u.role.code }}</td>
+              <td class="small text-muted">{{ u.application_decided_at|date:"M j, Y H:i" }}</td>
+              <td class="small text-muted">{{ u.application_decided_by.email|default:"—" }}</td>
+              <td><span class="pill pill-approved">Approved</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state"><i class="fas fa-user-check fa-2x"></i><p class="mb-0">No approved applications yet.</p></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- DECLINED -->
+  <div class="cr-pane" id="pane-declined">
+    <div class="card-body p-0">
+      {% if declined %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr><th>Applicant</th><th>Role</th><th>Decided</th><th>By</th><th>Reason</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            {% for u in declined %}
+            <tr>
+              <td><strong>{{ u.first_name }} {{ u.last_name }}</strong><div class="small text-muted">{{ u.email }}</div></td>
+              <td class="small text-muted">{{ u.role.name|default:u.role.code }}</td>
+              <td class="small text-muted">{{ u.application_decided_at|date:"M j, Y H:i" }}</td>
+              <td class="small text-muted">{{ u.application_decided_by.email|default:"—" }}</td>
+              <td class="small text-muted">{{ u.application_decline_reason|default:"—" }}</td>
+              <td><span class="pill pill-declined">Declined</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state"><i class="fas fa-user-times fa-2x"></i><p class="mb-0">No declined applications.</p></div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+{% comment %}
+  Per-applicant detail + action modals — kept OUTSIDE the card so the card/
+  table overflow doesn't clip them (otherwise the modal opens "half").
+  modal-dialog-scrollable lets long applications scroll inside the modal.
+{% endcomment %}
+{% for u in pending %}
+<div class="modal fade" id="app-modal-{{ u.id }}" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {{ u.first_name }} {{ u.last_name }}
+          <span class="role-tag">{{ u.role.name|default:u.role.code }}</span>
+        </h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body" style="text-align:left;">
+        <div class="small text-muted mb-2">
+          {{ u.email }}
+          {% if u.phone %} &middot; <i class="fas fa-phone mr-1"></i>{{ u.phone }}{% endif %}
+          {% if u.linkedin_url %} &middot; <a href="{{ u.linkedin_url }}" target="_blank" rel="noopener"><i class="fab fa-linkedin mr-1"></i>LinkedIn</a>{% endif %}
+          <br>Submitted {{ u.updated_at|date:"M j, Y H:i" }}
+        </div>
+
+        <div class="cr-section-title">Applicant &amp; company</div>
+        <div class="cr-info-grid">
+          {% if u.nationality %}<div><span>Nationality:</span>{{ u.nationality }}</div>{% endif %}
+          {% if u.country %}<div><span>Country:</span>{{ u.country }}</div>{% endif %}
+          {% if u.current_position %}<div><span>Position:</span>{{ u.current_position }}</div>{% endif %}
+          {% if u.years_of_experience %}<div><span>Experience:</span>{{ u.years_of_experience }}</div>{% endif %}
+          {% if u.primary_industry %}<div><span>Industry:</span>{{ u.primary_industry }}</div>{% endif %}
+          {% if u.target_region %}<div><span>Target region:</span>{{ u.target_region }}</div>{% endif %}
+          {% if u.franchise_type %}<div><span>Franchise type:</span>{{ u.franchise_type }}</div>{% endif %}
+          {% if u.expected_companies %}<div><span>Expected companies:</span>{{ u.expected_companies }}</div>{% endif %}
+          {% if u.applied_company_name %}<div><span>Company:</span>{{ u.applied_company_name }}</div>{% endif %}
+          {% if u.applied_company_reg_number %}<div><span>Reg. no:</span>{{ u.applied_company_reg_number }}</div>{% endif %}
+          {% if u.applied_country_of_incorporation %}<div><span>Incorporated in:</span>{{ u.applied_country_of_incorporation }}</div>{% endif %}
+          {% if u.applied_legal_form %}<div><span>Legal form:</span>{{ u.applied_legal_form }}</div>{% endif %}
+          {% if u.reference_1 %}<div><span>Reference 1:</span>{{ u.reference_1 }}</div>{% endif %}
+          {% if u.reference_2 %}<div><span>Reference 2:</span>{{ u.reference_2 }}</div>{% endif %}
+        </div>
+
+        {% if u.professional_summary %}
+        <div class="cr-section-title">Professional summary</div>
+        <div class="cr-motivation">{{ u.professional_summary }}</div>
+        {% endif %}
+        {% if u.motivation %}
+        <div class="cr-section-title">Motivation</div>
+        <div class="cr-motivation">{{ u.motivation }}</div>
+        {% endif %}
+        {% if u.network_connections %}
+        <div class="cr-section-title">Network / connections</div>
+        <div class="cr-motivation">{{ u.network_connections }}</div>
+        {% endif %}
+
+        {% if u.dd_data %}
+        <div class="cr-section-title">Due diligence &amp; declarations</div>
+        <div class="cr-dd-grid">
+          <div>Criminal offence: <span class="{% if u.dd_data.criminal_offence == 'yes' %}flag-yes{% else %}flag-no{% endif %}">{{ u.dd_data.criminal_offence|default:"no" }}</span>{% if u.dd_data.criminal_offence_details %} — {{ u.dd_data.criminal_offence_details }}{% endif %}</div>
+          <div>Regulatory sanctions: <span class="{% if u.dd_data.regulatory_sanctions == 'yes' %}flag-yes{% else %}flag-no{% endif %}">{{ u.dd_data.regulatory_sanctions|default:"no" }}</span>{% if u.dd_data.regulatory_sanctions_details %} — {{ u.dd_data.regulatory_sanctions_details }}{% endif %}</div>
+          <div>Politically exposed person: <span class="{% if u.dd_data.is_pep == 'yes' %}flag-yes{% else %}flag-no{% endif %}">{{ u.dd_data.is_pep|default:"no" }}</span></div>
+          <div>Insolvency history: <span class="{% if u.dd_data.insolvency_history == 'yes' %}flag-yes{% else %}flag-no{% endif %}">{{ u.dd_data.insolvency_history|default:"no" }}</span>{% if u.dd_data.insolvency_history_details %} — {{ u.dd_data.insolvency_history_details }}{% endif %}</div>
+          <div>Sufficient financial resources: <span class="flag-no">{{ u.dd_data.sufficient_financial_resources|default:"yes" }}</span></div>
+          <div>Pending legal disputes: <span class="{% if u.dd_data.pending_legal_disputes == 'yes' %}flag-yes{% else %}flag-no{% endif %}">{{ u.dd_data.pending_legal_disputes|default:"no" }}</span>{% if u.dd_data.pending_legal_disputes_details %} — {{ u.dd_data.pending_legal_disputes_details }}{% endif %}</div>
+          <div>Competitor interest: <span class="{% if u.dd_data.competitor_interest == 'yes' %}flag-yes{% else %}flag-no{% endif %}">{{ u.dd_data.competitor_interest|default:"no" }}</span>{% if u.dd_data.competitor_interest_details %} — {{ u.dd_data.competitor_interest_details }}{% endif %}</div>
+          <div>Contractual obligations: <span class="{% if u.dd_data.contractual_obligations == 'yes' %}flag-yes{% else %}flag-no{% endif %}">{{ u.dd_data.contractual_obligations|default:"no" }}</span>{% if u.dd_data.contractual_obligations_details %} — {{ u.dd_data.contractual_obligations_details }}{% endif %}</div>
+          <div>Declared truthful: {{ u.dd_data.declared_truthful|yesno:"yes,no" }} · Accepted terms: {{ u.dd_data.accepted_terms|yesno:"yes,no" }} · AML consent: {{ u.dd_data.consented_aml|yesno:"yes,no" }}</div>
+        </div>
+        {% endif %}
+      </div>
+      <div class="modal-footer" style="justify-content: space-between; gap:8px; flex-wrap:wrap;">
+        <form method="post" action="{% url 'application-action' u.id %}" class="m-0">
+          {% csrf_token %}
+          <input type="hidden" name="decision" value="approve">
+          <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-check mr-1"></i> Approve</button>
+        </form>
+        <form method="post" action="{% url 'application-action' u.id %}" class="m-0 d-flex" style="flex:1; min-width:260px; gap:6px;">
+          {% csrf_token %}
+          <input type="hidden" name="decision" value="decline">
+          <input type="text" name="decline_reason" class="form-control form-control-sm"
+                 placeholder="Decline reason (shown to applicant)">
+          <button type="submit" class="btn btn-danger btn-sm" style="white-space:nowrap;"><i class="fas fa-times mr-1"></i> Decline</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+<script>
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest(".cr-tab");
+    if (!btn) return;
+    document.querySelectorAll(".cr-tab").forEach(function (t) { t.classList.remove("active"); });
+    document.querySelectorAll(".cr-pane").forEach(function (p) { p.classList.remove("active"); });
+    btn.classList.add("active");
+    var pane = document.getElementById("pane-" + btn.dataset.pane);
+    if (pane) pane.classList.add("active");
+  });
+</script>
+
+{% endblock %}

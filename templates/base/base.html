@@ -682,10 +682,23 @@
                    class="nav-link {% if active_menu == 'coordinator-requests' %}active{% endif %}"
                    style="display: flex; align-items: center;">
                   <i class="fas fa-user-shield nav-icon"></i>
-                  <p style="flex:1;">Coordinator Requests</p>
+                  <p style="flex:1;">Coordinator Upgrade Requests</p>
                   {% if pending_coordinator_request_count %}
                   <span class="sidebar-notif-badge" aria-label="{{ pending_coordinator_request_count }} pending coordinator requests">
                     {% if pending_coordinator_request_count > 9 %}9+{% else %}{{ pending_coordinator_request_count }}{% endif %}
+                  </span>
+                  {% endif %}
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{% url 'applications' %}"
+                   class="nav-link {% if active_menu == 'applications' %}active{% endif %}"
+                   style="display: flex; align-items: center;">
+                  <i class="fas fa-id-card nav-icon"></i>
+                  <p style="flex:1;">Registration Applications</p>
+                  {% if pending_application_count %}
+                  <span class="sidebar-notif-badge" aria-label="{{ pending_application_count }} pending applications">
+                    {% if pending_application_count > 9 %}9+{% else %}{{ pending_application_count }}{% endif %}
                   </span>
                   {% endif %}
                 </a>

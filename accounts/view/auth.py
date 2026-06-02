@@ -675,6 +675,16 @@ def apply_submit(request):
         },
     )
 
+    # Coordinator & franchise applications require super-admin approval — notify
+    # every superuser so they can review it in the Applications queue. Scoped to
+    # those two roles (consultants aren't gated, so they don't need a review).
+    if any(r in role_code for r in ("coordinator", "franchise")):
+        try:
+            from accounts.utils.notifications import notify_application_submitted
+            notify_application_submitted(user)
+        except Exception:
+            pass
+
     return redirect("apply-review")
 
 

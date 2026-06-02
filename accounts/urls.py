@@ -30,6 +30,11 @@ from .view.saved_filter import (
 )
 from .view.partnership import partnership_list, partnership_action, partnership_cancel
 from .view.certification import certification_list, certification_action
+from .view.application_review import (
+    application_pending,
+    applications_list,
+    application_action,
+)
 from .view.coordinator_request import (
     coordinator_request_submit,
     coordinator_requests_list,
@@ -180,5 +185,9 @@ urlpatterns = [
     path("apply/", apply_view, name="apply"),
     path("apply/submit/", apply_submit, name="apply-submit"),
     path("apply-review/", apply_review_view, name="apply-review"),
+    # Coordinator / franchise application approval
+    path("application-pending/", application_pending, name="application-pending"),
+    path("applications/", applications_list, name="applications"),
+    path("applications/<uuid:user_id>/action/", application_action, name="application-action"),
 ]
 

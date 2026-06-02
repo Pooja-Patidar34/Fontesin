@@ -466,8 +466,22 @@ class User(AbstractBaseUser, PermissionsMixin):
     reference_1 = models.CharField(max_length=255, null=True, blank=True)
     reference_2 = models.CharField(max_length=255, null=True, blank=True)
 
-    # Application status
+    # Application status. Lifecycle for staff registrations (consultant /
+    # coordinator / franchise): "pending" (registered, apply form not yet
+    # submitted) → "submitted" (apply form done, awaiting super-admin review)
+    # → "approved" / "declined". Only coordinator & franchise are GATED on
+    # this (RequireApplicationApprovalMiddleware) — consultants are not gated.
     application_status = models.CharField(max_length=20, default="pending", null=True, blank=True)
+    # Super-admin review metadata for the application (mirrors CoordinatorRequest).
+    application_decline_reason = models.TextField(null=True, blank=True)
+    application_decided_by = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        related_name="decided_applications",
+        null=True,
+        blank=True,
+    )
+    application_decided_at = models.DateTimeField(null=True, blank=True)
 
     # ---- Security / KYC ----
     kyc_id_hash = models.CharField(max_length=255, null=True, blank=True)
@@ -811,6 +825,9 @@ class Notification(models.Model):
     KIND_COORDINATOR_REQUEST = "coordinator_request"
     KIND_COORDINATOR_APPROVED = "coordinator_approved"
     KIND_COORDINATOR_DECLINED = "coordinator_declined"
+    KIND_APPLICATION_REQUEST = "application_request"
+    KIND_APPLICATION_APPROVED = "application_approved"
+    KIND_APPLICATION_DECLINED = "application_declined"
     KIND_NEW_USER = "new_user"
     KIND_GENERIC = "generic"
     KIND_CHOICES = (
@@ -820,6 +837,9 @@ class Notification(models.Model):
         (KIND_COORDINATOR_REQUEST, "Coordinator request"),
         (KIND_COORDINATOR_APPROVED, "Coordinator request approved"),
         (KIND_COORDINATOR_DECLINED, "Coordinator request declined"),
+        (KIND_APPLICATION_REQUEST, "Account application submitted"),
+        (KIND_APPLICATION_APPROVED, "Account application approved"),
+        (KIND_APPLICATION_DECLINED, "Account application declined"),
         (KIND_NEW_USER, "New user in region"),
         (KIND_GENERIC, "Generic"),
     )

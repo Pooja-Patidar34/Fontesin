@@ -1,6 +1,6 @@
 import json
 
-from accounts.models import UserRole, Company, CompanyConnection, Notification
+from accounts.models import UserRole, Company, CompanyConnection, Notification, User
 
 
 def admin_context(request):
@@ -19,6 +19,7 @@ def admin_context(request):
     show_partnership_upgrade_banner = False
     pending_certification_count = 0
     pending_coordinator_request_count = 0
+    pending_application_count = 0
     has_pending_coordinator_request = False
     bu_certification_status = ""
     bu_certification_consultant_name = ""
@@ -142,6 +143,18 @@ def admin_context(request):
         except Exception:
             pass
 
+        # Pending coordinator / franchise account applications — Super Admin
+        # sidebar badge for the Applications queue.
+        if request.user.is_superuser:
+            try:
+                from django.db.models import Q as _Q
+                pending_application_count = User.objects.filter(
+                    _Q(role__code__iexact="coordinator") | _Q(role__code__iexact="franchise"),
+                    application_status="submitted",
+                ).count()
+            except Exception:
+                pending_application_count = 0
+
         # Unread in-app messages — every account type sees this badge.
         try:
             unread_message_count = Notification.objects.filter(
@@ -202,12 +215,13 @@ def admin_context(request):
         "show_partnership_upgrade_banner": show_partnership_upgrade_banner,
         "pending_certification_count": pending_certification_count,
         "pending_coordinator_request_count": pending_coordinator_request_count,
+        "pending_application_count": pending_application_count,
         "has_pending_coordinator_request": has_pending_coordinator_request,
         # Sum of every superuser request queue — drives the red counter on
         # the sidebar "Requests" parent so admins see one aggregated total
         # while the dropdown still shows per-queue counts when expanded.
         # New queues (franchise / partner / etc.) just add themselves here.
-        "pending_requests_total": pending_coordinator_request_count,
+        "pending_requests_total": pending_coordinator_request_count + pending_application_count,
         "bu_certification_status": bu_certification_status,
         "bu_certification_consultant_name": bu_certification_consultant_name,
         "unread_message_count": unread_message_count,

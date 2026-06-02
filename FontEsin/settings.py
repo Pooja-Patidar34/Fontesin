@@ -77,6 +77,10 @@ MIDDLEWARE = [
     # Veriff approves it.
     "FontEsin.middleware.require_verification.RequireIdentityVerificationMiddleware",
     "FontEsin.middleware.require_plan.RequirePlanForBusinessUserMiddleware",
+    # Coordinator / franchise accounts can't reach the dashboard until a super
+    # admin approves their application. Runs after the verification + plan
+    # gates (Veriff first, then approval).
+    "FontEsin.middleware.require_application_approval.RequireApplicationApprovalMiddleware",
 ]
 
 ROOT_URLCONF = 'FontEsin.urls'

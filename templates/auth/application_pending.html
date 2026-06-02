@@ -1,0 +1,112 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#253D51"/>
+  <title>Application Under Review - FONTESIN</title>
+  <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
+  <style>
+    .pending-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #253D51 0%, #1a2d3d 100%);
+      padding: 24px;
+    }
+    .pending-card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.15);
+      max-width: 540px;
+      width: 100%;
+      padding: 48px 40px;
+      text-align: center;
+    }
+    .pending-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      font-size: 2.2rem;
+    }
+    .pending-icon.review  { background: #fef3c7; }
+    .pending-icon.declined { background: #fee2e2; }
+    .pending-card h2 { color: #253D51; margin-bottom: 12px; font-size: 1.5rem; }
+    .pending-card p { color: #64748b; font-size: .95rem; line-height: 1.7; margin-bottom: 8px; }
+    .role-badge {
+      display: inline-block;
+      background: #f1f5f9;
+      color: #253D51;
+      font-weight: 700;
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-size: .9rem;
+      margin: 16px 0 24px;
+    }
+    .reason-box {
+      text-align: left;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin: 8px 0 24px;
+      font-size: .88rem;
+      line-height: 1.6;
+    }
+    .pending-features { text-align: left; margin: 24px 0; padding: 0; list-style: none; }
+    .pending-features li { padding: 6px 0; font-size: .88rem; color: #64748b; }
+    .pending-features li::before { content: "\2713"; color: #f59e0b; font-weight: 700; margin-right: 10px; }
+    .btn-back {
+      display: inline-block;
+      padding: 12px 32px;
+      background: #253D51;
+      color: #fff;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: .9rem;
+      transition: background .2s;
+    }
+    .btn-back:hover { background: #1a2d3d; color: #fff; }
+  </style>
+</head>
+<body>
+
+<div class="pending-page">
+  <div class="pending-card">
+
+    {% if status == "declined" %}
+      <div class="pending-icon declined">&#10060;</div>
+      <h2>Application Not Approved</h2>
+      {% if role_label %}<div class="role-badge">{{ role_label }} application</div>{% endif %}
+      <p>After review, your account application was not approved by our team.</p>
+      {% if decline_reason %}
+        <div class="reason-box"><strong>Reason:</strong> {{ decline_reason }}</div>
+      {% endif %}
+      <p>If you believe this was a mistake, please contact our team.</p>
+    {% else %}
+      <div class="pending-icon review">&#9203;</div>
+      <h2>Application Under Review</h2>
+      {% if role_label %}<div class="role-badge">{{ role_label }} application</div>{% endif %}
+      <p>Thanks — we've received your application. Our team is reviewing it and will activate your account once approved.</p>
+      <ul class="pending-features">
+        <li>Your application has been submitted</li>
+        <li>A super admin is reviewing your details</li>
+        <li>You'll get full dashboard access once approved</li>
+        <li>You'll be notified of the decision</li>
+      </ul>
+    {% endif %}
+
+    <a href="{% url 'logout' %}" class="btn-back">Back to Login</a>
+  </div>
+</div>
+
+</body>
+</html>
