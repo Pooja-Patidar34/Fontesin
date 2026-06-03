@@ -2,8 +2,13 @@ from django.shortcuts import redirect
 from django.urls import reverse, NoReverseMatch
 
 
-# Roles whose registration must be approved by a super admin before they can
-# use the dashboard. Consultants are intentionally NOT gated.
+# Roles that must complete the apply form after Veriff before reaching the
+# dashboard.
+APPLY_REQUIRED_ROLE_CODES = ("consultant", "coordinator", "franchise")
+
+# Of those, the roles that ALSO need super-admin approval before they get
+# access. A consultant only has to SUBMIT the apply form (no approval); a
+# coordinator / franchise must submit AND be approved.
 GATED_ROLE_CODES = ("coordinator", "franchise")
 
 # application_status that grants full access. Everything else keeps the
@@ -95,11 +100,17 @@ class RequireApplicationApprovalMiddleware:
         role_name = ((role.name or "") if role else "").lower()
         if role_name == "tenant_admin":
             return None
-        if role_code not in GATED_ROLE_CODES:
+        if role_code not in APPLY_REQUIRED_ROLE_CODES:
             return None
 
-        # Approved → full access.
-        if (user.application_status or "") == APPROVED_STATUS:
+        status = (user.application_status or "")
+        needs_approval = role_code in GATED_ROLE_CODES
+
+        # Full access once approved (all roles), or once submitted for roles
+        # that don't need approval (consultant submits → straight to work).
+        if status == APPROVED_STATUS:
+            return None
+        if not needs_approval and status == "submitted":
             return None
 
         path = request.path or ""
@@ -109,9 +120,9 @@ class RequireApplicationApprovalMiddleware:
             if path.startswith(prefix):
                 return None
 
-        # Not approved and trying to reach a gated page. If they've already
-        # submitted (or been declined), send them to the pending/review page;
-        # otherwise send them to the apply form to complete their application.
-        if (user.application_status or "") in ("submitted", "declined"):
+        # Still gated. Coordinator/franchise who've already submitted (or were
+        # declined) wait on the pending-review page; everyone else who hasn't
+        # finished the apply form is sent to complete it.
+        if needs_approval and status in ("submitted", "declined"):
             return "application-pending"
         return "apply"
