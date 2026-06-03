@@ -35,6 +35,22 @@ def contact(request):
 
 
 def membership(request):
+    # Staff roles (consultant / coordinator / franchise) do NOT subscribe to a
+    # plan. The Veriff callback lands every just-verified user on /membership/,
+    # so route these roles to their registration step instead of the plan
+    # catalogue: the apply form if they haven't applied yet, the pending-review
+    # screen if they're a coordinator/franchise awaiting super-admin approval,
+    # otherwise the dashboard. (Business users fall through to the plan page.)
+    if request.user.is_authenticated and request.user.role:
+        _rc = (request.user.role.code or "").lower()
+        if _rc in ("consultant", "coordinator", "franchise"):
+            _status = (request.user.application_status or "").lower()
+            if _status in ("", "pending"):
+                return redirect("apply")
+            if _rc in ("coordinator", "franchise") and _status != "approved":
+                return redirect("application-pending")
+            return redirect("dashboard")
+
     # Don't gate the page itself — users on Free/Basic/Pro need to be able
     # to view plans in order to upgrade. The actual create-subscription
     # decision (same-tier? pending already? unknown plan?) lives in
