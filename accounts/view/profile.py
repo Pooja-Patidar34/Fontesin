@@ -222,6 +222,29 @@ def profile_view(request):
             from billing.views import backfill_consultant_commissions_for_user
             backfill_consultant_commissions_for_user(user)
 
+            # Notify the company's consultant that a Business User selected
+            # their company as their primary, so it lands in the consultant's
+            # Notifications tab. No-op when the company has no consultant or the
+            # joiner somehow is the consultant themselves.
+            if company.consultant_id and company.consultant_id != user.id:
+                try:
+                    from accounts.utils.notifications import notify
+                    from accounts.models import Notification
+                    bu_label = f"{user.first_name} {user.last_name}".strip() or user.email
+                    notify(
+                        recipient=company.consultant,
+                        sender=user,
+                        kind=Notification.KIND_GENERIC,
+                        title=f"{bu_label} joined {company.name}",
+                        body=(
+                            f"{bu_label} ({user.email}) selected your company "
+                            f"{company.name} as their primary company."
+                        ),
+                        related_company=company,
+                    )
+                except Exception:
+                    pass
+
             messages.success(request, f"You're now linked to {company.name}.")
             return redirect("profile")
 
@@ -632,9 +655,17 @@ def profile_view(request):
             domain=domain,
         )
 
-        # Create company linked to the new tenant. New rows enter the
-        # certification queue as "pending" and stay invisible to the public
-        # directory (is_active=False) until a consultant approves them.
+        # A consultant IS the certifying authority, so their own company needs
+        # no certification — auto-certify it (active, certified by themselves,
+        # consultant FK = them) and skip the broadcast. (Superusers likewise
+        # self-certify.) Everyone else's company enters the certification queue
+        # as "pending" and stays out of the public directory (is_active=False)
+        # until a consultant approves it. This stops a consultant from getting
+        # a certification request for a company they just created themselves.
+        from django.utils import timezone
+        creator_role = (user.role.code or "").lower() if user.role else ""
+        self_certifies = user.is_superuser or creator_role == "consultant"
+
         company = Company.objects.create(
             tenant=tenant,
             name=company_name,
@@ -660,22 +691,24 @@ def profile_view(request):
             employee_count_range=employee_count_range or None,
             contact_email=contact_email or None,
             logo=logo_file or None,
-            certification_status="pending",
-            is_active=False,
+            certification_status="certified" if self_certifies else "pending",
+            is_active=True if self_certifies else False,
             owner_user=user,
+            consultant=user if creator_role == "consultant" else None,
+            certified_by=user if self_certifies else None,
+            certified_at=timezone.now() if self_certifies else None,
         )
 
-        # Broadcast model: leave company.consultant unset. The certification
-        # request is visible to every active consultant via the certifications
-        # page; the first one to approve claims ownership (consultant FK is
-        # set at approval time in certification_action).
-
-        # Drop the request into every active consultant's Messages inbox.
-        try:
-            from accounts.utils.notifications import notify_certification_request
-            notify_certification_request(company, submitted_by=user)
-        except Exception:
-            pass
+        # Only non-self-certifying creators trigger the broadcast. The request
+        # is visible to every active consultant via the certifications page;
+        # the first one to approve claims ownership (consultant FK is set at
+        # approval time in certification_action).
+        if not self_certifies:
+            try:
+                from accounts.utils.notifications import notify_certification_request
+                notify_certification_request(company, submitted_by=user)
+            except Exception:
+                pass
 
         # Link user to the new tenant and company
         user.tenant = tenant
@@ -702,7 +735,9 @@ def profile_view(request):
         request.session.pop("open_create_company_tab", None)
         messages.success(
             request,
-            "Certification request submitted. A consultant will review your company shortly.",
+            "Company created successfully."
+            if self_certifies
+            else "Certification request submitted. A consultant will review your company shortly.",
         )
         return redirect("profile")
 

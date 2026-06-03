@@ -98,19 +98,24 @@ def certification_list(request):
     if not request.user.is_superuser:
         pending_qs = pending_qs.filter(
             Q(consultant__isnull=True) | Q(consultant=request.user)
-        )
+        # A consultant can't certify their own company, so never show one they
+        # own in their pending queue.
+        ).exclude(owner_user=request.user)
     pending = pending_qs.select_related("tenant", "owner_user").order_by("-created_at")
 
-    certified_qs = Company.all_objects.filter(
-        certification_status="certified",
-        certified_by=request.user,
-    )
+    # Superusers oversee everything, so they see every certified / rejected
+    # company (mirroring the pending tab). Consultants only see the ones they
+    # personally certified / declined. This also fixes the case where a super
+    # admin declines a request (no consultant FK is set on a superuser decline)
+    # and it would otherwise never appear in the Declined tab.
+    certified_qs = Company.all_objects.filter(certification_status="certified")
+    if not request.user.is_superuser:
+        certified_qs = certified_qs.filter(certified_by=request.user)
     certified = certified_qs.select_related("tenant", "owner_user").order_by("-certified_at")
 
-    rejected_qs = Company.all_objects.filter(
-        certification_status="rejected",
-        consultant=request.user,
-    )
+    rejected_qs = Company.all_objects.filter(certification_status="rejected")
+    if not request.user.is_superuser:
+        rejected_qs = rejected_qs.filter(consultant=request.user)
     rejected = rejected_qs.select_related("tenant", "owner_user").order_by("-updated_at")
 
     return render(
@@ -162,6 +167,17 @@ def certification_action(request, company_id):
 
     company = get_object_or_404(scope, id=company_id)
 
+    # A consultant must never certify (or decline) a company they own — you
+    # can't vet your own submission. Consultant-created companies are
+    # auto-certified at creation so this normally can't arise, but guard the
+    # action server-side too. Superusers are exempt (platform oversight).
+    if not request.user.is_superuser and company.owner_user_id == request.user.id:
+        msg = "You can't certify your own company."
+        if _is_ajax(request):
+            return JsonResponse({"ok": False, "message": msg}, status=403)
+        messages.error(request, msg)
+        return redirect("certifications")
+
     if decision == "approve":
         company.certification_status = "certified"
         company.is_active = True
@@ -181,7 +197,15 @@ def certification_action(request, company_id):
     else:
         company.certification_status = "rejected"
         company.is_active = False
-        company.save(update_fields=["certification_status", "is_active"])
+        update_fields = ["certification_status", "is_active"]
+        # Claim the request for the declining consultant so it appears in their
+        # "Declined" tab (which filters by consultant=request.user). Without
+        # this the declined company keeps consultant=NULL and never shows up.
+        # Mirrors the approve branch.
+        if not company.consultant_id and not request.user.is_superuser:
+            company.consultant = request.user
+            update_fields.append("consultant")
+        company.save(update_fields=update_fields)
         action = "company.certification_declined"
         success_msg = f"Declined certification for {company.name}."
 

@@ -946,8 +946,19 @@ function saveUserEdit() {
       }
       return;
     }
-    // refresh list, keep filters
-    window.location.href = window.location.pathname + window.location.search;
+    // If we were deep-linked here from another tab (?from=…, e.g. the
+    // Consultant/Coordinator Users tab), return to that tab after saving.
+    // Otherwise refresh the Users list keeping filters but dropping open_edit
+    // so the edit modal doesn't auto-reopen on reload.
+    var _p = new URLSearchParams(window.location.search);
+    var _from = _p.get("from");
+    if (_from) {
+      window.location.href = _from;
+    } else {
+      _p.delete("open_edit");
+      var _qs = _p.toString();
+      window.location.href = window.location.pathname + (_qs ? "?" + _qs : "");
+    }
   })
   .catch(err => {
     console.error("Save failed:", err);

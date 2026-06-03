@@ -483,6 +483,7 @@ def company_list(request):
             # authoritative and goes straight into the company directory,
             # auto-certified by the admin who created it.
             emit_cert_notification = False
+            resubmitted_for_certification = False
             if not company_id and request.user.is_superuser:
                 from django.utils import timezone
                 company.certification_status = "certified"
@@ -492,6 +493,24 @@ def company_list(request):
                 company.certification_status = "pending"
                 company.is_active = False
                 emit_cert_notification = True
+            elif (
+                company_id
+                and creator_role_code == "business_user"
+                and (company.certification_status or "").lower() in ("rejected", "uncertified")
+            ):
+                # Resubmission after a decline: the business user updated their
+                # company and clicked "Request Certification" again. Send it
+                # back into the certification queue as a FRESH, unclaimed pending
+                # request (clear the previous declining consultant's claim) so
+                # every active consultant can review the resubmission — otherwise
+                # the request stayed "rejected" and no consultant was notified.
+                company.certification_status = "pending"
+                company.is_active = False
+                company.consultant = None
+                company.certified_by = None
+                company.certified_at = None
+                emit_cert_notification = True
+                resubmitted_for_certification = True
 
             company.save()
             form.save_m2m()
@@ -548,7 +567,9 @@ def company_list(request):
                 # Never block core flow for audit failures
                 pass
 
-            if company_id:
+            if resubmitted_for_certification:
+                success_msg = "Certification request resubmitted. A consultant will review your company shortly."
+            elif company_id:
                 success_msg = "Company updated successfully."
             elif request.user.is_superuser or creator_role_code == "consultant":
                 success_msg = "Company created successfully."
@@ -685,6 +706,13 @@ def company_list(request):
                 linkage_q = linkage_q | scope_q
 
             queryset = Company.objects.filter(linkage_q).distinct()
+
+            # Coordinators must not see UNCERTIFIED companies in the Company
+            # Database — only vetted (certified) companies are shown in their
+            # region. Scoped to coordinators; every other role is unaffected.
+            _role_code = (request.user.role.code or "").lower() if request.user.role else ""
+            if _role_code == "coordinator":
+                queryset = queryset.exclude(certification_status="uncertified")
 
         # Honor the ?tenant=<id> query param for non-superusers too. The
         # Tenants page links each company-count badge to /companies/?tenant=<id>
@@ -1074,9 +1102,19 @@ def company_delete(request, company_id):
     tenant = company.tenant
 
     # -------------------------------
-    # DELETE
+    # DELETE (soft)
     # -------------------------------
-    company.delete()
+    # Soft-delete rather than a hard DB delete. A hard delete fails with a
+    # ProtectedError when the company has protected references such as
+    # ConsultantCommission rows (payout history must not be destroyed). The
+    # Company model is built for soft deletion: `objects` (ActiveManager)
+    # excludes is_deleted=True, and the unique-name constraint is scoped to
+    # is_deleted=False so the name is freed for reuse. So flagging is_deleted
+    # removes the company from every active view while preserving its financial
+    # / audit records.
+    company.is_deleted = True
+    company.is_active = False
+    company.save(update_fields=["is_deleted", "is_active", "updated_at"])
 
     # -------------------------------
     # AUDIT LOG

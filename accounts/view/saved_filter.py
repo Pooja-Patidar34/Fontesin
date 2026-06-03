@@ -179,10 +179,25 @@ def company_connect(request, company_id):
         defaults={"message": (request.POST.get("message") or "").strip() or None},
     )
 
-    # Drop a notification into the company owner's inbox when a fresh
-    # partnership request is created. No-op on duplicate requests
-    # (created=False) — we don't want to spam the owner.
-    if created and company.owner_user_id and company.owner_user_id != request.user.id:
+    # Re-request after a rejection: (user, company) is unique, so a previously
+    # rejected request lingers as a row and get_or_create returns it with
+    # created=False — which previously meant no new request and no owner
+    # notification. Allow the business user to send a fresh request by resetting
+    # a REJECTED connection back to pending (and updating the message). Pending
+    # / accepted connections are left as-is (no spam, no downgrade).
+    resent = False
+    if not created and connection.status == CompanyConnection.STATUS_REJECTED:
+        connection.status = CompanyConnection.STATUS_PENDING
+        new_msg = (request.POST.get("message") or "").strip() or None
+        if new_msg is not None:
+            connection.message = new_msg
+        connection.save()  # bumps updated_at; status back to pending
+        resent = True
+
+    # Drop a notification into the company owner's inbox on a fresh request —
+    # either a brand-new one or a re-sent one after a previous rejection. No-op
+    # on a still-pending / already-accepted duplicate (don't spam the owner).
+    if (created or resent) and company.owner_user_id and company.owner_user_id != request.user.id:
         try:
             from accounts.utils.notifications import notify
             from accounts.models import Notification
@@ -211,17 +226,19 @@ def company_connect(request, company_id):
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
         return JsonResponse({
             "ok": True,
-            "created": created,
+            "created": created or resent,
             "status": connection.status,
             "message": (
-                "Connection request sent." if created
+                "Connection request sent." if (created or resent)
                 else f"Already requested ({connection.get_status_display()})."
             ),
         })
 
     messages.success(
         request,
-        "Connection request sent." if created else "You already requested a connection with this company.",
+        "Connection request sent."
+        if (created or resent)
+        else "You already requested a connection with this company.",
     )
     referer = request.META.get("HTTP_REFERER")
     return redirect(referer or reverse("companies"))

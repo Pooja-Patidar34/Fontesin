@@ -18,6 +18,7 @@ def admin_context(request):
     pending_partnership_count = 0
     show_partnership_upgrade_banner = False
     pending_certification_count = 0
+    new_commission_count = 0
     pending_coordinator_request_count = 0
     pending_application_count = 0
     has_pending_coordinator_request = False
@@ -96,7 +97,22 @@ def admin_context(request):
                     certification_status="pending"
                 ).filter(
                     _Q(consultant__isnull=True) | _Q(consultant=request.user)
+                ).exclude(
+                    # A consultant can't certify their own company — don't count it.
+                    owner_user=request.user
                 ).count()
+
+                # Red counter on the "My Commissions" tab — number of the
+                # consultant's commissions still pending payout. Rises when a
+                # new commission is generated and falls as the admin marks them
+                # paid, so it tracks live commission activity.
+                try:
+                    from billing.models import ConsultantCommission
+                    new_commission_count = ConsultantCommission.objects.filter(
+                        consultant=request.user, status="pending"
+                    ).count()
+                except Exception:
+                    new_commission_count = 0
 
             # Business users see the status of their primary company's
             # certification request (used by a banner that says "Your company
@@ -126,6 +142,17 @@ def admin_context(request):
             pending_certification_count = Company.all_objects.filter(
                 certification_status="pending"
             ).count()
+            # Red counter on the admin "Commissions" tab — all commission
+            # requests still pending payout across every consultant. Rises when
+            # a new commission is generated and falls as the admin marks them
+            # paid, so the admin can see at a glance when one needs action.
+            try:
+                from billing.models import ConsultantCommission
+                new_commission_count = ConsultantCommission.objects.filter(
+                    status="pending"
+                ).count()
+            except Exception:
+                new_commission_count = 0
 
         # Pending Coordinator role requests — Super Admin sidebar badge,
         # plus a flag for the BU profile page to suppress the "Become a
@@ -214,6 +241,7 @@ def admin_context(request):
         "pending_partnership_count": pending_partnership_count,
         "show_partnership_upgrade_banner": show_partnership_upgrade_banner,
         "pending_certification_count": pending_certification_count,
+        "new_commission_count": new_commission_count,
         "pending_coordinator_request_count": pending_coordinator_request_count,
         "pending_application_count": pending_application_count,
         "has_pending_coordinator_request": has_pending_coordinator_request,

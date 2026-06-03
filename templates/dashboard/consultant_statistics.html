@@ -293,7 +293,27 @@
     }
   }
 
+  // Keep the two date pickers consistent: "To" can't be earlier than "From"
+  // and "From" can't be later than "To". Setting min/max disables the invalid
+  // days in the native date picker.
+  function syncDateBounds() {
+    toInput.min = fromInput.value || "";
+    fromInput.max = toInput.value || "";
+  }
+
   function loadRange() {
+    syncDateBounds();
+    // Guard against an invalid range (e.g. a typed-in date) before calling the
+    // API, which would otherwise return "Bad date range".
+    if (fromInput.value && toInput.value && toInput.value < fromInput.value) {
+      if (typeof showToast === "function") {
+        showToast("The 'To' date can't be earlier than the 'From' date.", "error");
+      } else {
+        alert("The 'To' date can't be earlier than the 'From' date.");
+      }
+      toInput.focus();
+      return;
+    }
     var url = STATS_URL
       + "?consultant=" + encodeURIComponent(CONSULTANT_ID)
       + "&from=" + encodeURIComponent(fromInput.value)
@@ -319,6 +339,7 @@
       .catch(function (e) { console.error("month stats:", e); });
   }
 
+  syncDateBounds();  // constrain the pickers from the start
   applyBtn.addEventListener("click", loadRange);
   fromInput.addEventListener("change", loadRange);
   toInput.addEventListener("change", loadRange);

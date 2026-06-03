@@ -819,9 +819,15 @@
           {% if request.user.is_superuser or request.user.role.code|lower == "consultant" %}
           <li class="nav-item">
             <a href="{% url 'commissions' %}"
-               class="nav-link {% if active_menu == 'commissions' %}active{% endif %}">
+               class="nav-link {% if active_menu == 'commissions' %}active{% endif %}"
+               style="display: flex; align-items: center;">
               <i class="nav-icon fas fa-coins"></i>
-              <p>{% if request.user.is_superuser %}Commissions{% else %}My Commissions{% endif %}</p>
+              <p style="flex:1;">{% if request.user.is_superuser %}Commissions{% else %}My Commissions{% endif %}</p>
+              {% if new_commission_count %}
+              <span class="sidebar-notif-badge" aria-label="{{ new_commission_count }} commission requests pending">
+                {% if new_commission_count > 9 %}9+{% else %}{{ new_commission_count }}{% endif %}
+              </span>
+              {% endif %}
             </a>
           </li>
           {% endif %}

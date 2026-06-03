@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.db.models import Q
 from django.shortcuts import render
 
 from accounts.models import User
@@ -267,6 +268,17 @@ def _render_users_by_role(request, role_code, *, page_title, entity_label, activ
     )
     qs = _scoped_tenant_qs(qs, request.user)
     qs = _scope_consultants_to_coordinator_region(qs, request.user, role_code)
+
+    # Search by name / email / company so admins can quickly find a user.
+    search_query = (request.GET.get("q") or "").strip()
+    if search_query:
+        qs = qs.filter(
+            Q(first_name__icontains=search_query)
+            | Q(last_name__icontains=search_query)
+            | Q(email__icontains=search_query)
+            | Q(primary_company__name__icontains=search_query)
+        )
+
     qs = qs.order_by("first_name", "last_name")
 
     paginator = Paginator(qs, 10)
@@ -283,6 +295,8 @@ def _render_users_by_role(request, role_code, *, page_title, entity_label, activ
         "active_submenu": active_submenu,
         "page_title": page_title,
         "entity_label": entity_label,
+        "search_query": search_query,
+        "total_count": paginator.count,
     }
     return render(request, "dashboard/consultant_users.html", context)
 
