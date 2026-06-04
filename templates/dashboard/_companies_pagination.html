@@ -5,7 +5,7 @@
     {% if companies.has_previous %}
       <li class="page-item">
         <a class="page-link"
-           href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ companies.previous_page_number }}">
+           href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}{% if search_q %}q={{ search_q|urlencode }}&{% endif %}page={{ companies.previous_page_number }}">
           Previous
         </a>
       </li>
@@ -18,7 +18,7 @@
     {% if companies.number > 3 %}
       <li class="page-item">
         <a class="page-link"
-           href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page=1">
+           href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}{% if search_q %}q={{ search_q|urlencode }}&{% endif %}page=1">
           1
         </a>
       </li>
@@ -39,7 +39,7 @@
         {% else %}
           <li class="page-item">
             <a class="page-link"
-               href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ num }}">
+               href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}{% if search_q %}q={{ search_q|urlencode }}&{% endif %}page={{ num }}">
               {{ num }}
             </a>
           </li>
@@ -56,7 +56,7 @@
 
       <li class="page-item">
         <a class="page-link"
-           href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ companies.paginator.num_pages }}">
+           href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}{% if search_q %}q={{ search_q|urlencode }}&{% endif %}page={{ companies.paginator.num_pages }}">
           {{ companies.paginator.num_pages }}
         </a>
       </li>
@@ -65,7 +65,7 @@
     {% if companies.has_next %}
       <li class="page-item">
         <a class="page-link"
-           href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}page={{ companies.next_page_number }}">
+           href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}{% if search_q %}q={{ search_q|urlencode }}&{% endif %}page={{ companies.next_page_number }}">
           Next
         </a>
       </li>

@@ -116,12 +116,8 @@
           <div class="form-group">
             <label class="font-weight-bold">Status</label>
             <select class="form-control" name="status" id="edit-status">
-              <option value="created">Pending Approval</option>
-              <option value="active">Active (Approved)</option>
-              <option value="trial">Trial</option>
-              <option value="past_due">Past Due</option>
-              <option value="suspended">Suspended</option>
-              <option value="cancelled">Cancelled (Rejected)</option>
+              <option value="active">Approved</option>
+              <option value="cancelled">Cancelled</option>
             </select>
           </div>
           <div class="form-group">
@@ -155,7 +151,11 @@ document.addEventListener("DOMContentLoaded", function() {
       .then(function(r) { return r.json(); })
       .then(function(data) {
         document.getElementById("edit-user-email").value = data.user_email;
-        document.getElementById("edit-status").value = data.status;
+        // The status dropdown only offers Approved (active) / Cancelled. For
+        // any other current state (e.g. a still-"created" pending payment),
+        // default the selection to Approved so the control never shows blank.
+        var statusSel = document.getElementById("edit-status");
+        statusSel.value = (data.status === "cancelled") ? "cancelled" : "active";
         var endInput = document.getElementById("edit-end-date");
         endInput.value = data.end_date;
         // Block picking a past end date. Compute today in LOCAL time (not UTC)

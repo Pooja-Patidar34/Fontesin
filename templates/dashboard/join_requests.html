@@ -10,6 +10,7 @@
     border-bottom: 1px solid #e9ecef;
     padding: 0 1.25rem;
     background: #f8f9fa;
+    flex-wrap: wrap;
   }
   .jr-tab {
     border: 0;
@@ -55,22 +56,26 @@
   </div>
 
   <div class="jr-tabs">
-    <button type="button" class="jr-tab active" data-pane="incoming">
-      Incoming
+    <button type="button" class="jr-tab active" data-pane="pending">
+      Pending
       {% if incoming_pending %}<span class="badge badge-warning">{{ incoming_pending|length }}</span>{% endif %}
+    </button>
+    <button type="button" class="jr-tab" data-pane="approved">
+      Approved
+      {% if incoming_approved %}<span class="badge badge-success">{{ incoming_approved|length }}</span>{% endif %}
+    </button>
+    <button type="button" class="jr-tab" data-pane="declined">
+      Declined
+      {% if incoming_declined %}<span class="badge badge-danger">{{ incoming_declined|length }}</span>{% endif %}
     </button>
     <button type="button" class="jr-tab" data-pane="outgoing">
       My Requests
       {% if outgoing %}<span class="badge badge-secondary">{{ outgoing|length }}</span>{% endif %}
     </button>
-    <button type="button" class="jr-tab" data-pane="history">
-      History
-      {% if incoming_history %}<span class="badge badge-secondary">{{ incoming_history|length }}</span>{% endif %}
-    </button>
   </div>
 
-  <!-- ============== INCOMING (pending) ============== -->
-  <div class="jr-pane active" id="pane-incoming">
+  <!-- ============== PENDING (incoming, awaiting decision) ============== -->
+  <div class="jr-pane active" id="pane-pending">
     <div class="card-body p-0">
       {% if incoming_pending %}
       <div class="table-responsive">
@@ -98,16 +103,14 @@
               </td>
               <td class="small text-muted">{{ req.created_at|date:"M j, Y H:i" }}</td>
               <td class="text-right pr-4">
-                <form method="post" action="{% url 'join-request-action' req.id %}"
-                      class="jr-form d-inline m-0">
+                <form method="post" action="{% url 'join-request-action' req.id %}" class="d-inline m-0">
                   {% csrf_token %}
                   <input type="hidden" name="decision" value="approve">
                   <button type="submit" class="btn btn-sm btn-success">
                     <i class="fas fa-check mr-1"></i> Approve
                   </button>
                 </form>
-                <form method="post" action="{% url 'join-request-action' req.id %}"
-                      class="jr-form d-inline m-0 ml-1">
+                <form method="post" action="{% url 'join-request-action' req.id %}" class="d-inline m-0 ml-1">
                   {% csrf_token %}
                   <input type="hidden" name="decision" value="decline">
                   <button type="submit" class="btn btn-sm btn-outline-danger">
@@ -132,7 +135,94 @@
     </div>
   </div>
 
-  <!-- ============== OUTGOING ============== -->
+  <!-- ============== APPROVED (incoming, decided) ============== -->
+  <div class="jr-pane" id="pane-approved">
+    <div class="card-body p-0">
+      {% if incoming_approved %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th>Requester</th>
+              <th>Company</th>
+              <th>Status</th>
+              <th>Decided</th>
+              <th class="text-right pr-4">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for req in incoming_approved %}
+            <tr data-request-id="{{ req.id }}">
+              <td>
+                <strong>{{ req.user.first_name }} {{ req.user.last_name }}</strong>
+                <div class="small text-muted">{{ req.user.email }}</div>
+              </td>
+              <td><strong>{{ req.company.name }}</strong></td>
+              <td><span class="pill pill-approved">{{ req.get_status_display }}</span></td>
+              <td class="small text-muted">{{ req.updated_at|date:"M j, Y H:i" }}</td>
+              <td class="text-right pr-4">
+                <form method="post" action="{% url 'join-request-cancel' req.id %}"
+                      class="jr-cancel-form d-inline m-0"
+                      data-confirm="Revoke {{ req.user.email }}'s membership? They'll lose access to {{ req.company.name }}.">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger">
+                    <i class="fas fa-ban mr-1"></i> Revoke
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="fas fa-check-circle fa-2x"></i>
+        <p class="mb-0">No approved requests yet.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ============== DECLINED (incoming, decided) ============== -->
+  <div class="jr-pane" id="pane-declined">
+    <div class="card-body p-0">
+      {% if incoming_declined %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th>Requester</th>
+              <th>Company</th>
+              <th>Status</th>
+              <th>Decided</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for req in incoming_declined %}
+            <tr data-request-id="{{ req.id }}">
+              <td>
+                <strong>{{ req.user.first_name }} {{ req.user.last_name }}</strong>
+                <div class="small text-muted">{{ req.user.email }}</div>
+              </td>
+              <td><strong>{{ req.company.name }}</strong></td>
+              <td><span class="pill pill-declined">{{ req.get_status_display }}</span></td>
+              <td class="small text-muted">{{ req.updated_at|date:"M j, Y H:i" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="fas fa-ban fa-2x"></i>
+        <p class="mb-0">No declined requests.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ============== MY REQUESTS (outgoing) ============== -->
   <div class="jr-pane" id="pane-outgoing">
     <div class="card-body p-0">
       {% if outgoing %}
@@ -193,147 +283,48 @@
     </div>
   </div>
 
-  <!-- ============== HISTORY (decided incoming) ============== -->
-  <div class="jr-pane" id="pane-history">
-    <div class="card-body p-0">
-      {% if incoming_history %}
-      <div class="table-responsive">
-        <table class="table table-hover mb-0">
-          <thead class="bg-light">
-            <tr>
-              <th>Requester</th>
-              <th>Company</th>
-              <th>Status</th>
-              <th>Decided</th>
-              <th class="text-right pr-4">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for req in incoming_history %}
-            <tr data-request-id="{{ req.id }}">
-              <td>
-                <strong>{{ req.user.first_name }} {{ req.user.last_name }}</strong>
-                <div class="small text-muted">{{ req.user.email }}</div>
-              </td>
-              <td><strong>{{ req.company.name }}</strong></td>
-              <td><span class="pill pill-{{ req.status }}">{{ req.get_status_display }}</span></td>
-              <td class="small text-muted">{{ req.updated_at|date:"M j, Y H:i" }}</td>
-              <td class="text-right pr-4">
-                {% if req.status == 'approved' %}
-                <form method="post" action="{% url 'join-request-cancel' req.id %}"
-                      class="jr-cancel-form d-inline m-0"
-                      data-confirm="Revoke {{ req.user.email }}'s membership? They'll lose access to {{ req.company.name }}.">
-                  {% csrf_token %}
-                  <button type="submit" class="btn btn-sm btn-outline-danger">
-                    <i class="fas fa-ban mr-1"></i> Revoke
-                  </button>
-                </form>
-                {% else %}
-                <span class="text-muted small">—</span>
-                {% endif %}
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      {% else %}
-      <div class="empty-state">
-        <i class="fas fa-history fa-2x"></i>
-        <p class="mb-0">No decisions yet.</p>
-      </div>
-      {% endif %}
-    </div>
-  </div>
-
 </div>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
-  // ---- tab switching ----
+  // ---- tab switching (remember the active tab across reloads so the user
+  //      stays where they were after an approve/decline/withdraw) ----
   var tabs = document.querySelectorAll(".jr-tab");
   var panes = document.querySelectorAll(".jr-pane");
-  tabs.forEach(function (t) {
-    t.addEventListener("click", function () {
-      tabs.forEach(function (x) { x.classList.remove("active"); });
-      panes.forEach(function (p) { p.classList.remove("active"); });
-      t.classList.add("active");
-      var pane = document.getElementById("pane-" + t.dataset.pane);
-      if (pane) pane.classList.add("active");
+
+  function activate(paneName) {
+    var matched = false;
+    tabs.forEach(function (x) {
+      var on = x.dataset.pane === paneName;
+      x.classList.toggle("active", on);
+      if (on) matched = true;
     });
-  });
-
-  var csrfToken = document.querySelector("[name=csrfmiddlewaretoken]")?.value || "";
-
-  // ---- AJAX approve / decline ----
-  document.querySelectorAll(".jr-form").forEach(function (form) {
-    form.addEventListener("submit", function (e) {
-      e.preventDefault();
-      var btns = form.querySelectorAll("button");
-      btns.forEach(function (b) { b.disabled = true; });
-
-      fetch(form.getAttribute("action"), {
-        method: "POST",
-        headers: { "X-Requested-With": "XMLHttpRequest", "X-CSRFToken": csrfToken },
-        body: new FormData(form),
-        credentials: "same-origin",
-      })
-        .then(function (r) { return r.json().then(function (d) { return { status: r.status, data: d }; }); })
-        .then(function (res) {
-          if (res.status === 200 && res.data.ok) {
-            if (typeof showToast === "function") showToast(res.data.message, "success");
-            var row = form.closest("tr");
-            if (row) row.remove();
-            var tbody = document.querySelector("#pane-incoming tbody");
-            if (tbody && tbody.children.length === 0) window.location.reload();
-          } else {
-            var msg = (res.data && res.data.message) || "Action failed.";
-            if (typeof showToast === "function") showToast(msg, "error"); else console.error(msg);
-            btns.forEach(function (b) { b.disabled = false; });
-          }
-        })
-        .catch(function () {
-          if (typeof showToast === "function") showToast("Network error. Please try again.", "error");
-          btns.forEach(function (b) { b.disabled = false; });
-        });
+    panes.forEach(function (p) {
+      p.classList.toggle("active", p.id === "pane-" + paneName);
     });
-  });
-
-  // ---- AJAX withdraw / leave / revoke ----
-  function submitCancel(form) {
-    var btns = form.querySelectorAll("button");
-    btns.forEach(function (b) { b.disabled = true; });
-
-    fetch(form.getAttribute("action"), {
-      method: "POST",
-      headers: { "X-Requested-With": "XMLHttpRequest", "X-CSRFToken": csrfToken },
-      body: new FormData(form),
-      credentials: "same-origin",
-    })
-      .then(function (r) { return r.json().then(function (d) { return { status: r.status, data: d }; }); })
-      .then(function (res) {
-        if (res.status === 200 && res.data.ok) {
-          if (typeof showToast === "function") showToast(res.data.message, "success");
-          var row = form.closest("tr");
-          if (row) row.remove();
-          var pane = form.closest(".jr-pane");
-          var tbody = pane && pane.querySelector("tbody");
-          if (tbody && tbody.children.length === 0) window.location.reload();
-        } else {
-          var msg = (res.data && res.data.message) || "Could not cancel.";
-          if (typeof showToast === "function") showToast(msg, "error"); else console.error(msg);
-          btns.forEach(function (b) { b.disabled = false; });
-        }
-      })
-      .catch(function () {
-        if (typeof showToast === "function") showToast("Network error. Please try again.", "error");
-        btns.forEach(function (b) { b.disabled = false; });
-      });
+    return matched;
   }
 
+  var savedPane = null;
+  try { savedPane = sessionStorage.getItem("jrActivePane"); } catch (e) {}
+  if (!savedPane || !activate(savedPane)) {
+    activate("pending");
+  }
+
+  tabs.forEach(function (t) {
+    t.addEventListener("click", function () {
+      activate(t.dataset.pane);
+      try { sessionStorage.setItem("jrActivePane", t.dataset.pane); } catch (e) {}
+    });
+  });
+
+  // ---- Withdraw / Leave / Revoke: confirm, then submit normally so the page
+  //      reloads and the record moves to its correct tab (it never silently
+  //      disappears — decided/decided-against rows stay on file). ----
   document.querySelectorAll(".jr-cancel-form").forEach(function (form) {
     form.addEventListener("submit", function (e) {
+      if (form.dataset.confirmed === "1") return;  // already confirmed
       e.preventDefault();
       var confirmText = form.dataset.confirm || "Cancel this request?";
       appConfirm({
@@ -342,10 +333,17 @@ document.addEventListener("DOMContentLoaded", function () {
         text: confirmText,
         okLabel: 'Confirm',
         okIcon: 'fa-check',
-        onConfirm: function () { submitCancel(form); }
+        onConfirm: function () {
+          form.dataset.confirmed = "1";
+          form.submit();
+        }
       });
     });
   });
+
+  // Approve / Decline forms post normally (no JS needed) — the page reloads,
+  // the request moves to the Approved / Declined tab, and the success toast is
+  // shown via the server message.
 });
 </script>
 

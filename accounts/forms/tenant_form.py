@@ -43,4 +43,15 @@ class TenantForm(forms.ModelForm):
             raise forms.ValidationError(
                 "Tenant name may only contain letters, digits, spaces, and the symbols & ' . , - ( ), and must contain at least one letter."
             )
+        # Reject duplicate franchise names (case-insensitive). The model only
+        # auto-uniquifies `slug`, not `name`, so without this two franchises
+        # could share the same display name. Tenant.objects excludes
+        # soft-deleted rows, so a deleted franchise's name can be reused.
+        duplicates = Tenant.objects.filter(name__iexact=name)
+        if self.instance and self.instance.pk:
+            duplicates = duplicates.exclude(pk=self.instance.pk)
+        if duplicates.exists():
+            raise forms.ValidationError(
+                "A franchise with this name already exists. Please choose a different name."
+            )
         return name

@@ -217,7 +217,26 @@
       <div class="d-flex align-items-center" style="gap:.75rem; margin-left:auto;">
 
         {% if request.user.is_superuser %}
+        {# Admin company search — name / registration no. / classification / location. #}
+        <form method="get" class="mb-0" id="companySearchForm">
+          <div class="input-group input-group-sm" style="width:260px;">
+            <input type="text" name="q" value="{{ search_q|default:'' }}"
+                   class="form-control" placeholder="Search companies…" autocomplete="off">
+            {# Preserve the selected tenant when searching. #}
+            <input type="hidden" name="tenant" value="{{ selected_tenant_id|default:'' }}">
+            <div class="input-group-append">
+              <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i></button>
+              {% if search_q %}
+              <a href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}{% endif %}"
+                 class="btn btn-outline-secondary" title="Clear search">&times;</a>
+              {% endif %}
+            </div>
+          </div>
+        </form>
+
         <form method="get" class="mb-0" id="tenantFilterForm">
+          {# Preserve the active search when switching tenants. #}
+          <input type="hidden" name="q" value="{{ search_q|default:'' }}"/>
           <div class="searchable-select" data-name="tenant" data-selected="{{ selected_tenant_id|default:'' }}" style="min-width:240px;">
             <button type="button" class="searchable-select__toggle form-control form-control-sm">
               <span class="searchable-select__label">All Tenants</span>
@@ -956,10 +975,19 @@
 
         <div class="modal-footer">
           {% if can_manage %}
+          {% comment %} Superusers and consultants don't go through the
+          certification queue when they create a company (admin auto-certifies,
+          consultants create vetted client records), so the create button reads
+          "Create Company" for them and "Request Certification" only for the
+          business users who actually submit a certification request. {% endcomment %}
           <button type="submit"
                   id="save-btn"
                   class="btn btn-primary btn-sm">
+            {% if request.user.is_superuser or request.user.role.code|lower == "consultant" %}
+            <i class="fas fa-plus mr-1"></i> Create Company
+            {% else %}
             <i class="fas fa-certificate mr-1"></i> Request Certification
+            {% endif %}
           </button>
           {% endif %}
         </div>
@@ -1065,13 +1093,30 @@ document.addEventListener("DOMContentLoaded", function () {
 
       idField.value = "";
       title.innerText = "Add Company";
-      // A brand-new company enters the certification queue on submit, so the
-      // create flow keeps the "Request Certification" wording (editing an
-      // existing company resets this to "Save" in populateCompanyModal).
-      if (saveBtn) saveBtn.innerHTML = '<i class="fas fa-certificate mr-1"></i> Request Certification';
+      // Button wording matches who's creating: superusers/consultants create
+      // directly (no certification queue) → "Create Company"; business users
+      // submit a certification request → "Request Certification". (Editing an
+      // existing company resets this to "Save" in populateCompanyModal.)
+      if (saveBtn) {
+        {% if request.user.is_superuser or request.user.role.code|lower == "consultant" %}
+        saveBtn.innerHTML = '<i class="fas fa-plus mr-1"></i> Create Company';
+        {% else %}
+        saveBtn.innerHTML = '<i class="fas fa-certificate mr-1"></i> Request Certification';
+        {% endif %}
+      }
 
       modal.find("input[type=text], input[type=url], input[type=email], input[type=number], input[type=tel]").val("");
       activeField.checked = true;
+
+      // Drop validation styling left over from a previous submit so a fresh
+      // Add Company form doesn't open with red "required" borders on the
+      // (now-empty) Tenant / Company Name / etc. fields.
+      var cfReset = document.getElementById("company-form");
+      if (cfReset) {
+        cfReset.classList.remove("was-validated");
+        cfReset.querySelectorAll(".is-invalid").forEach(function (el) { el.classList.remove("is-invalid"); });
+        cfReset.querySelectorAll(".field-error").forEach(function (el) { el.remove(); });
+      }
 
       // Clear industry pickers (hidden FK + visible search box + dropdown).
       if (window.industryPickers) {
@@ -1211,11 +1256,16 @@ document.addEventListener("DOMContentLoaded", function () {
     // Certification status pill + "certified by" banner.
     var certBadge = document.getElementById("company-cert-badge");
     if (certBadge) {
-      var status = c.certification_status || "uncertified";
-      var label = status.charAt(0).toUpperCase() + status.slice(1);
-      certBadge.textContent = label;
-      certBadge.className = "pill pill-" + status;
-      certBadge.style.display = "inline-block";
+      if (c.owner_is_consultant) {
+        // Consultant-created companies don't go through certification — no pill.
+        certBadge.style.display = "none";
+      } else {
+        var status = c.certification_status || "uncertified";
+        var label = status.charAt(0).toUpperCase() + status.slice(1);
+        certBadge.textContent = label;
+        certBadge.className = "pill pill-" + status;
+        certBadge.style.display = "inline-block";
+      }
     }
     var certBanner = document.getElementById("company-certified-by-banner");
     var certByName = document.getElementById("company-certified-by-name");

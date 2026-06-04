@@ -140,6 +140,7 @@ def join_requests_list(request):
         CompanyJoinRequest.objects
         .filter(user=user)
         .select_related("company")
+        .order_by("-created_at")
     )
 
     owned_company_ids = list(
@@ -149,9 +150,14 @@ def join_requests_list(request):
         CompanyJoinRequest.objects
         .filter(company_id__in=owned_company_ids)
         .select_related("user", "user__primary_company", "company")
+        .order_by("-updated_at")
     )
+    # Split incoming requests by status into their own tabs (Pending / Approved
+    # / Declined). Decided rows are kept on file — they stay visible in the
+    # Approved / Declined tabs and don't vanish when new requests arrive.
     incoming_pending = [r for r in incoming if r.status == CompanyJoinRequest.STATUS_PENDING]
-    incoming_history = [r for r in incoming if r.status != CompanyJoinRequest.STATUS_PENDING]
+    incoming_approved = [r for r in incoming if r.status == CompanyJoinRequest.STATUS_APPROVED]
+    incoming_declined = [r for r in incoming if r.status == CompanyJoinRequest.STATUS_DECLINED]
 
     return render(
         request,
@@ -160,7 +166,8 @@ def join_requests_list(request):
             "active_menu": "join-requests",
             "outgoing": outgoing,
             "incoming_pending": incoming_pending,
-            "incoming_history": incoming_history,
+            "incoming_approved": incoming_approved,
+            "incoming_declined": incoming_declined,
         },
     )
 
@@ -334,6 +341,23 @@ def company_leave(request, company_id):
     # Drop any join-request record so a fresh request can be sent later.
     CompanyJoinRequest.objects.filter(user=user, company=company).delete()
 
+    # Tell the company owner that this member left.
+    if company.owner_user_id and company.owner_user_id != user.id:
+        try:
+            from accounts.utils.notifications import notify
+            who = f"{user.first_name} {user.last_name}".strip() or user.email
+            notify(
+                recipient=company.owner_user,
+                sender=user,
+                kind=Notification.KIND_GENERIC,
+                title=f"{who} left {company.name}",
+                body=f"{who} has left your company {company.name}.",
+                link_url=reverse("join-requests"),
+                related_company=company,
+            )
+        except Exception:
+            pass
+
     msg = f"You've left {company.name}."
     if _is_ajax(request):
         return JsonResponse({"ok": True, "message": msg})
@@ -385,6 +409,9 @@ def join_request_cancel(request, request_id):
 
     company = join_request.company
     was_approved = join_request.status == CompanyJoinRequest.STATUS_APPROVED
+    # Capture the parties before deleting the row so we can notify them after.
+    requester = join_request.user
+    owner = company.owner_user
 
     # Remove the membership the approval created. Keep is_primary=True rows —
     # that's the user's chosen primary company, not a join grant.
@@ -396,6 +423,44 @@ def join_request_cancel(request, request_id):
         ).delete()
 
     join_request.delete()
+
+    # Notify the affected party when an actual membership ends (an approved
+    # request being revoked/left — not a pending withdrawal, where no one had
+    # joined yet):
+    #   * owner revokes  → tell the member their access was removed
+    #   * member leaves  → tell the owner the member left
+    if was_approved:
+        try:
+            from accounts.utils.notifications import notify
+            if is_owner and not is_requester:
+                owner_label = (
+                    f"{owner.first_name} {owner.last_name}".strip() or owner.email
+                ) if owner else "The company owner"
+                notify(
+                    recipient=requester,
+                    sender=request.user,
+                    kind=Notification.KIND_GENERIC,
+                    title=f"Your access to {company.name} was removed",
+                    body=(
+                        f"{owner_label} removed your membership in {company.name}. "
+                        f"You no longer have access to this company."
+                    ),
+                    link_url=reverse("my-companies"),
+                    related_company=company,
+                )
+            elif is_requester and owner and owner.id != requester.id:
+                who = f"{requester.first_name} {requester.last_name}".strip() or requester.email
+                notify(
+                    recipient=owner,
+                    sender=requester,
+                    kind=Notification.KIND_GENERIC,
+                    title=f"{who} left {company.name}",
+                    body=f"{who} has left your company {company.name}.",
+                    link_url=reverse("join-requests"),
+                    related_company=company,
+                )
+        except Exception:
+            pass
 
     if was_approved:
         msg = f"Membership in {company.name} has been removed."

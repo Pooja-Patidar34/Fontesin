@@ -715,6 +715,18 @@ def company_list(request):
             scope_q = business_user_plan_scope_q(request.user)
 
             if scope_q is not None:
+                # Business users discover only VETTED companies: those that are
+                # certified, plus any company that has a consultant attached
+                # (consultant-handled records — visible regardless of cert
+                # status). Uncertified companies owned by other business users,
+                # coordinators, or franchise partners stay out of discovery.
+                # Their OWN + joined companies remain visible via linkage_q
+                # above, whatever their certification status.
+                if role_code == "business_user":
+                    scope_q = scope_q & (
+                        Q(certification_status__iexact="certified")
+                        | Q(consultant__isnull=False)
+                    )
                 linkage_q = linkage_q | scope_q
 
             queryset = Company.objects.filter(linkage_q).distinct()
@@ -797,6 +809,24 @@ def company_list(request):
                         | Q(registration_id__icontains=token)
                     )
 
+        queryset = queryset.distinct()
+
+    # Global free-text search box (shown to the admin in the Company Database
+    # header). Token-based so a multi-word query like "sona private" matches
+    # companies containing both words, and each token may hit the name,
+    # registration id, classification, or location. Applied on top of whatever
+    # role scoping produced `queryset`, so a non-superuser could only ever
+    # search within companies they're already allowed to see.
+    search_q = (request.GET.get("q") or "").strip()
+    if search_q:
+        for token in search_q.split():
+            queryset = queryset.filter(
+                Q(name__icontains=token)
+                | Q(registration_id__icontains=token)
+                | Q(classification__icontains=token)
+                | Q(city__icontains=token)
+                | Q(country__icontains=token)
+            )
         queryset = queryset.distinct()
 
     # Order: the user's own companies first (owner_user / primary_company /
@@ -917,6 +947,7 @@ def company_list(request):
         "active_menu": _active_menu,
         "next": request.get_full_path(),
         "applied_filters": applied_filters,
+        "search_q": search_q,
         "pending_ids": pending_ids,
         "accepted_ids": accepted_ids,
         "viewable_ids": viewable_ids,
@@ -1162,6 +1193,7 @@ def toggle_company(request, company_id):
         raise PermissionDenied()
 
     role_name = (request.user.role.name or "").lower() if request.user.role else ""
+    role_code = (request.user.role.code or "").lower() if request.user.role else ""
 
     if request.user.is_superuser:
         company = get_object_or_404(Company, id=company_id)
@@ -1171,12 +1203,20 @@ def toggle_company(request, company_id):
             id=company_id,
             tenant=request.user.tenant,
         )
+    elif role_code == "consultant":
+        # Consultants have full visibility into the company database (see the
+        # company_list scoping), so they can also activate/deactivate any
+        # company from the list — not just the ones they're directly linked
+        # to. Without this they got a 404 toggling an unlinked company they
+        # could nonetheless see. Default manager resolves both active and
+        # inactive (non-deleted) rows so reactivation works too.
+        company = get_object_or_404(Company, id=company_id)
     else:
         # Match the edit-path scoping (editable_companies_qs): activating /
         # deactivating is a write, so a business user may only toggle the
         # company they created (owner_user) — never a partner company or
-        # another company that shares their "Default" tenant. Consultants /
-        # coordinators / franchise keep the broader linkage write scope.
+        # another company that shares their "Default" tenant. Coordinators /
+        # franchise keep the broader linkage write scope.
         company = get_object_or_404(
             editable_companies_qs(request.user),
             id=company_id,
@@ -1280,6 +1320,15 @@ def company_detail_ajax(request, company_id):
     _is_owner = company.owner_user_id == request.user.id
     can_edit_contact = (not _is_business_user) or _is_owner
 
+    # Companies created by a consultant don't go through the certification
+    # queue (there's no admin/consultant flow to certify them), so the modal
+    # should not show a certification-status pill for them. Flagged here off the
+    # owner's role so the frontend can hide the badge.
+    _owner = company.owner_user
+    owner_is_consultant = bool(
+        _owner and _owner.role_id and (getattr(_owner.role, "code", "") or "").lower() == "consultant"
+    )
+
     return JsonResponse({
         # --------------------
         # Company (Core)
@@ -1337,6 +1386,9 @@ def company_detail_ajax(request, company_id):
             # an internal redirect).
             "logo_url": request.build_absolute_uri(company.logo.url) if company.logo else None,
             "certification_status": company.certification_status,
+            # True when the company was created by a consultant — certification
+            # doesn't apply, so the modal hides the status pill.
+            "owner_is_consultant": owner_is_consultant,
             "certified_by_name": (
                 (f"{company.certified_by.first_name} {company.certified_by.last_name}".strip()
                  or company.certified_by.email)

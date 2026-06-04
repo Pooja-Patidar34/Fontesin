@@ -129,12 +129,19 @@ def tenant_list(request):
                         ip_address=get_client_ip(request),
                     )
             except IntegrityError:
-                duplicate_msg = "A tenant with this name (or a similar one) already exists. Please choose a different name."
+                duplicate_msg = "A franchise with this name (or a similar one) already exists. Please choose a different name."
                 form.add_error("name", duplicate_msg)
                 messages.error(request, duplicate_msg)
             else:
                 messages.success(request, message)
                 return redirect("tenants")
+        else:
+            # Surface validation errors (e.g. duplicate franchise name) as a
+            # toast — the Add Franchise modal is closed once the page re-renders,
+            # so the inline field error alone wouldn't be visible.
+            for field, errs in form.errors.items():
+                for err in errs:
+                    messages.error(request, err)
 
     else:
         form = TenantForm()

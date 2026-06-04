@@ -1015,7 +1015,7 @@
           })();
         </script>
         {% elif bu_certification_status == "rejected" %}
-        <div role="alert" style="background:#fef2f2; border:1px solid #fca5a5; border-left:4px solid #ef4444; border-radius:10px; padding:12px 18px; margin-bottom:16px; display:flex; align-items:center; gap:12px;">
+        <div id="bu-rejected-banner" role="alert" style="background:#fef2f2; border:1px solid #fca5a5; border-left:4px solid #ef4444; border-radius:10px; padding:12px 18px; margin-bottom:16px; display:flex; align-items:center; gap:12px; transition: opacity .4s ease;">
           <div style="width:36px; height:36px; background:#ef4444; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0;">
             <i class="fas fa-times"></i>
           </div>
@@ -1028,6 +1028,17 @@
             </div>
           </div>
         </div>
+        <script>
+          // Auto-dismiss the "declined" banner after a few seconds so it isn't
+          // shown permanently (mirrors the "certified" banner above). The full
+          // status is still available on My Companies / the company view.
+          (function () {
+            var el = document.getElementById("bu-rejected-banner");
+            if (!el) return;
+            setTimeout(function () { el.style.opacity = "0"; }, 8000);
+            setTimeout(function () { el.style.display = "none"; }, 8400);
+          })();
+        </script>
         {% endif %}
 
         {% if show_partnership_upgrade_banner %}

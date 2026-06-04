@@ -840,11 +840,28 @@ def payment_edit(request, subscription_id):
     if status and status in dict(Subscription.STATUS_CHOICES):
         old_status = sub.status
         sub.status = status
-        # If changing to active, mark invoice as paid
+        # If changing to active, supersede any OTHER active subscription for
+        # this user first, then mark the invoice paid. The DB enforces
+        # unique_active_subscription_per_user, so without superseding (e.g. the
+        # Free plan they're currently on, or a previously-approved sub) flipping
+        # this row to "active" raises an IntegrityError — exactly what happened
+        # approving a cancelled subscription. Mirrors payment_approve.
         if status == "active" and old_status != "active":
-            Invoice.objects.filter(subscription=sub, status="pending").update(
-                status="paid", paid_at=timezone.now()
+            now = timezone.now()
+            Subscription.objects.filter(
+                user=sub.user, status="active"
+            ).exclude(pk=sub.pk).update(
+                status="cancelled", end_date=now, updated_at=now
             )
+            Invoice.objects.filter(subscription=sub, status="pending").update(
+                status="paid", paid_at=now
+            )
+            # Sync the user's current plan to the now-active plan.
+            if sub.user and sub.plan_id:
+                new_code = (sub.plan.code or "").lower()
+                if new_code and sub.user.subscription_plan != new_code:
+                    sub.user.subscription_plan = new_code
+                    sub.user.save(update_fields=["subscription_plan"])
 
     if new_end_dt is not None:
         sub.end_date = new_end_dt

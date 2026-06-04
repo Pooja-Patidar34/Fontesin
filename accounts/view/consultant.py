@@ -270,14 +270,20 @@ def _render_users_by_role(request, role_code, *, page_title, entity_label, activ
     qs = _scope_consultants_to_coordinator_region(qs, request.user, role_code)
 
     # Search by name / email / company so admins can quickly find a user.
+    # Match each whitespace-separated token against any of the fields (AND
+    # across tokens, OR across fields) so a full-name query like "Bilbo Pytlik"
+    # matches first_name "Bilbo" + last_name "Pytlik". A plain icontains on the
+    # whole string would look for "Bilbo Pytlik" inside a single field and find
+    # nothing.
     search_query = (request.GET.get("q") or "").strip()
     if search_query:
-        qs = qs.filter(
-            Q(first_name__icontains=search_query)
-            | Q(last_name__icontains=search_query)
-            | Q(email__icontains=search_query)
-            | Q(primary_company__name__icontains=search_query)
-        )
+        for token in search_query.split():
+            qs = qs.filter(
+                Q(first_name__icontains=token)
+                | Q(last_name__icontains=token)
+                | Q(email__icontains=token)
+                | Q(primary_company__name__icontains=token)
+            )
 
     qs = qs.order_by("first_name", "last_name")
 
