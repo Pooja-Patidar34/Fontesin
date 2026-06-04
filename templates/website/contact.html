@@ -138,7 +138,7 @@
           {% endfor %}
         </div>
         {% endif %}
-        <form id="contact-form" method="post" action="{% url 'contact' %}">
+        <form id="fontesin-contact-form" method="post" action="{% url 'contact' %}" novalidate>
           {% csrf_token %}
           <div class="form-row">
             <div class="form-group">
@@ -283,6 +283,88 @@
   </div>
 </footer>
 
+<style>
+  .cf-invalid { border-color:#dc2626 !important; box-shadow:0 0 0 2px rgba(220,38,38,.15) !important; }
+  .cf-error {
+    color:#dc2626; font-size:.8rem; font-weight:600; margin-top:6px;
+    display:flex; align-items:center; gap:6px;
+  }
+  .cf-error::before { content:"\26A0"; font-size:.85rem; }
+</style>
+<script>
+  // Client-side validation for the contact form. The form is `novalidate`, so
+  // these checks (not the browser's default bubbles) drive the feedback: on
+  // submit, every empty/invalid required field gets a red border + a red error
+  // message, and submission is blocked until they're fixed. The server also
+  // re-validates (see accounts.view.website.contact) as the real safety net.
+  (function () {
+    var form = document.getElementById("fontesin-contact-form");
+    if (!form) return;
+
+    var REQUIRED = [
+      { name: "first_name", msg: "Please enter your first name." },
+      { name: "last_name",  msg: "Please enter your last name." },
+      { name: "email",      msg: "Please enter your email address." },
+      { name: "subject",    msg: "Please select a subject." },
+      { name: "message",    msg: "Please enter your message." }
+    ];
+
+    function clearErrors() {
+      form.querySelectorAll(".cf-error").forEach(function (e) { e.remove(); });
+      form.querySelectorAll(".cf-invalid").forEach(function (el) { el.classList.remove("cf-invalid"); });
+    }
+
+    function showError(field, msg) {
+      field.classList.add("cf-invalid");
+      var div = document.createElement("div");
+      div.className = "cf-error";
+      div.textContent = msg;
+      var container = field.closest(".form-group") || field.closest(".checkbox-group") || field.parentNode;
+      container.appendChild(div);
+      // Clear the error as soon as the user fixes the field.
+      var evt = (field.type === "checkbox" || field.tagName === "SELECT") ? "change" : "input";
+      field.addEventListener(evt, function once() {
+        field.removeEventListener(evt, once);
+        field.classList.remove("cf-invalid");
+        if (div.parentNode) div.remove();
+      });
+    }
+
+    form.addEventListener("submit", function (e) {
+      clearErrors();
+      var firstInvalid = null;
+
+      REQUIRED.forEach(function (r) {
+        var el = form.querySelector('[name="' + r.name + '"]');
+        if (el && !el.value.trim()) {
+          showError(el, r.msg);
+          if (!firstInvalid) firstInvalid = el;
+        }
+      });
+
+      // Email format (only when something was typed).
+      var email = form.querySelector('[name="email"]');
+      if (email && email.value.trim() &&
+          !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.value.trim())) {
+        showError(email, "Please enter a valid email address.");
+        if (!firstInvalid) firstInvalid = email;
+      }
+
+      // Privacy consent checkbox.
+      var privacy = document.getElementById("privacy");
+      if (privacy && !privacy.checked) {
+        showError(privacy, "Please agree to the Privacy Policy before sending.");
+        if (!firstInvalid) firstInvalid = privacy;
+      }
+
+      if (firstInvalid) {
+        e.preventDefault();
+        firstInvalid.focus();
+        firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    });
+  })();
+</script>
 <script src="{% static 'adminlte/js/main.js' %}"></script>
   <script>
     if ("serviceWorker" in navigator) {
