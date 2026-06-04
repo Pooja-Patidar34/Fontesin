@@ -137,11 +137,8 @@
         </div>
       </div>
 
-      <!-- Inline SVG world map (loaded via fetch for full JS access) -->
-      <div id="map-container" style="position:relative;">
-        <div id="home-svg-container" style="border-radius:10px;overflow:hidden;background:transparent;"></div>
-        <div class="map-tooltip" id="map-tooltip"></div>
-      </div>
+      <!-- Shared interactive world map — identical to the World Map page. -->
+      {% include "website/_world_map.html" %}
     </div>
 
     <div style="text-align:center;margin-top:32px;">
@@ -313,108 +310,6 @@
 </footer>
 
 <script src="{% static 'adminlte/js/main.js' %}"></script>
-<script>
-// Load world map SVG inline on homepage for full JS color control
-(function() {
-  const container = document.getElementById('home-svg-container');
-  const tooltip   = document.getElementById('map-tooltip');
-  if (!container) return;
-
-  const COUNTRY_STATUS = {
-    'US': { status: 'active',  year: 1, name: 'United States',        page: 'region-us.html' },
-    'DE': { status: 'active',  year: 1, name: 'Germany',              page: 'region-de.html' },
-    'CZ': { status: 'active',  year: 1, name: 'Czech Republic',       page: 'region-cz.html' },
-    'GB': { status: 'active',  year: 1, name: 'United Kingdom',       page: null },
-    'FR': { status: 'active',  year: 1, name: 'France',               page: null },
-    'NL': { status: 'active',  year: 1, name: 'Netherlands',          page: null },
-    'PL': { status: 'active',  year: 1, name: 'Poland',               page: null },
-    'AT': { status: 'active',  year: 1, name: 'Austria',              page: null },
-    'CH': { status: 'active',  year: 1, name: 'Switzerland',          page: null },
-    'SE': { status: 'active',  year: 1, name: 'Sweden',               page: null },
-    'AE': { status: 'planned', year: 2, name: 'United Arab Emirates', page: 'region-ae.html' },
-    'JP': { status: 'planned', year: 3, name: 'Japan',                page: 'region-jp.html' },
-    'SG': { status: 'planned', year: 2, name: 'Singapore',            page: null },
-    'CA': { status: 'planned', year: 2, name: 'Canada',               page: null },
-    'AU': { status: 'planned', year: 2, name: 'Australia',            page: null },
-    'BR': { status: 'planned', year: 3, name: 'Brazil',               page: null },
-    'IN': { status: 'planned', year: 3, name: 'India',                page: null },
-    'ZA': { status: 'planned', year: 4, name: 'South Africa',         page: null },
-    'MX': { status: 'planned', year: 3, name: 'Mexico',               page: null },
-    'KR': { status: 'planned', year: 3, name: 'South Korea',          page: null },
-  };
-
-  // Petroleum blue palette
-  const COLORS = {
-    active:          '#253D51',
-    activeHover:     '#1B2E3F',
-    activeStroke:    '#1B2E3F',
-    planned:         '#5F8FAA',
-    plannedHover:    '#4a7a96',
-    plannedStroke:   '#4a7a96',
-    inactive:        '#D8E4EC',
-    inactiveStroke:  '#b8cdd9',
-  };
-
-  fetch("{% static 'adminlte/images/world-map.svg' %}?v=5")
-    .then(r => r.text())
-    .then(svgText => {
-      container.innerHTML = svgText;
-      const svg = container.querySelector('svg');
-      if (!svg) return;
-      svg.setAttribute('id', 'world-map-svg');
-      svg.style.width = '100%';
-      svg.style.height = 'auto';
-      svg.style.display = 'block';
-
-      svg.querySelectorAll('[data-iso]').forEach(path => {
-        const iso  = path.getAttribute('data-iso');
-        const info = COUNTRY_STATUS[iso];
-
-        if (info) {
-          const baseColor  = info.status === 'active' ? COLORS.active  : COLORS.planned;
-          const hoverColor = info.status === 'active' ? COLORS.activeHover : COLORS.plannedHover;
-          const stroke     = info.status === 'active' ? COLORS.activeStroke : COLORS.plannedStroke;
-          path.style.fill        = baseColor;
-          path.style.stroke      = stroke;
-          path.style.strokeWidth = '0.5';
-          path.style.cursor      = 'pointer';
-          path.style.transition  = 'fill .2s ease';
-
-          path.addEventListener('mouseenter', (e) => {
-            path.style.fill = hoverColor;
-            if (tooltip) {
-              const label = info.status === 'active' ? '● Active' : `◌ Planned – Year ${info.year}`;
-              const color = info.status === 'active' ? '#7dd3fc' : '#93c5fd';
-              tooltip.innerHTML = `<div class="map-tooltip__name">${info.name}</div><div style="color:${color};font-size:.75rem;">${label}</div>${info.page ? '<div style="font-size:.7rem;color:rgba(199,204,209,.6);margin-top:4px;">Click for details →</div>' : ''}`;
-              tooltip.classList.add('visible');
-            }
-          });
-          path.addEventListener('mousemove', (e) => {
-            if (tooltip) {
-              tooltip.style.left = Math.min(e.clientX + 14, window.innerWidth - 200) + 'px';
-              tooltip.style.top  = Math.max(e.clientY - 10, 10) + 'px';
-            }
-          });
-          path.addEventListener('mouseleave', () => {
-            path.style.fill = baseColor;
-            if (tooltip) tooltip.classList.remove('visible');
-          });
-          path.addEventListener('click', () => {
-            if (info.page) window.location.href = info.page;
-          });
-        } else {
-          // Inactive country
-          path.style.fill        = COLORS.inactive;
-          path.style.stroke      = COLORS.inactiveStroke;
-          path.style.strokeWidth = '0.3';
-        }
-      });
-    })
-    .catch(() => {
-      container.innerHTML = '<p style="padding:40px;text-align:center;color:#5F7383;">Map loading...</p>';
-    });
-})();
-</script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", function() {

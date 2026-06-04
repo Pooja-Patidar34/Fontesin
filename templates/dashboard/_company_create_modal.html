@@ -1,0 +1,668 @@
+{% comment %}
+  Reusable "Add Company" modal — the create half of the Company Database
+  modal, hosted on pages that want an in-page create flow (e.g. My
+  Companies) without navigating to /companies/.
+
+  The form submits (AJAX) to the `companies` endpoint, which is the single
+  source of truth for company creation/validation. On success the host page
+  is reloaded so the new row renders in that page's own row format.
+
+  Required context: form, country_states, is_business_user, can_manage,
+  and (optional) tenants / selected_tenant_id for the superuser tenant
+  picker. Trigger by giving any element id="add-company-btn".
+{% endcomment %}
+
+<style>
+  /* Company modal — sizing + section headings (mirrors companies.html). */
+  #companyModal .modal-dialog { margin: 1.5rem auto !important; }
+  #companyModal .modal-body {
+    max-height: calc(100vh - 200px) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    padding: 1rem 1.25rem !important;
+  }
+  #companyModal .form-group { margin-bottom: .75rem; }
+  #companyModal label { font-size: .85rem; font-weight: 600; color: #495057; margin-bottom: .25rem; display: block; }
+  #companyModal .form-control,
+  #companyModal input[type="text"],
+  #companyModal input[type="url"],
+  #companyModal input[type="tel"],
+  #companyModal input[type="email"],
+  #companyModal input[type="number"],
+  #companyModal select {
+    width: 100%;
+    display: block;
+    font-size: .9rem;
+    box-sizing: border-box;
+  }
+  #companyModal .section-title {
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #6c757d;
+    font-weight: 700;
+    margin: 1rem 0 .5rem;
+    padding-bottom: .25rem;
+    border-bottom: 1px solid #e9ecef;
+  }
+  #companyModal .section-title:first-child { margin-top: 0; }
+
+  /* Hold back browser :invalid styling until a submit is attempted. */
+  #companyModal #company-form input:invalid,
+  #companyModal #company-form select:invalid,
+  #companyModal #company-form textarea:invalid {
+    box-shadow: none;
+    border-color: #ced4da;
+  }
+  #companyModal #company-form.was-validated input:invalid,
+  #companyModal #company-form.was-validated select:invalid,
+  #companyModal #company-form.was-validated textarea:invalid {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23dc3545'%3E%3Cpath d='M3 3 9 9 M9 3 3 9' stroke-width='1.6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
+    background-size: 0.9rem;
+    padding-right: 2rem;
+  }
+  #companyModal #company-form .form-control:valid,
+  #companyModal #company-form .form-control.is-valid,
+  #companyModal #company-form.was-validated .form-control:valid {
+    background-image: none !important;
+    border-color: #ced4da !important;
+    box-shadow: none !important;
+    padding-right: 0.75rem !important;
+  }
+  #companyModal #company-form .form-control.is-invalid {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23dc3545'%3E%3Cpath d='M3 3 9 9 M9 3 3 9' stroke-width='1.6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
+    background-size: 0.9rem;
+    padding-right: 2rem;
+  }
+
+  /* NACE / NAICS picker. */
+  .industry-picker { position: relative; }
+  .industry-picker-search { padding-right: 2rem; }
+  .industry-picker-clear {
+    position: absolute; top: 50%; right: .25rem; transform: translateY(-50%);
+    width: 1.5rem; height: 1.5rem; line-height: 1.4rem; padding: 0;
+    background: transparent; border: none; color: #6c757d; font-size: 1.25rem;
+    cursor: pointer; border-radius: 50%;
+  }
+  .industry-picker-clear:hover { color: #dc3545; background: #f1f3f5; }
+  .industry-picker-results {
+    position: absolute; left: 0; right: 0; top: calc(100% + 2px); z-index: 1060;
+    margin: 0; padding: 0; list-style: none;
+    max-height: 260px; overflow-y: auto;
+    background: #fff; border: 1px solid #ced4da; border-radius: .25rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  .industry-picker-results li {
+    padding: .4rem .6rem; cursor: pointer;
+    border-bottom: 1px solid #f1f3f5; font-size: .875rem;
+  }
+  .industry-picker-results li:last-child { border-bottom: none; }
+  .industry-picker-results li:hover,
+  .industry-picker-results li.active { background: #e7f1ff; }
+  .industry-picker-results li.empty {
+    color: #6c757d; cursor: default; font-style: italic;
+  }
+  .industry-picker-results .code { font-weight: 600; margin-right: .35rem; }
+</style>
+
+<!-- ================= ADD COMPANY MODAL ================= -->
+<div class="modal fade" id="companyModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+    <div class="modal-content">
+
+      <form method="post" id="company-form" enctype="multipart/form-data"
+            action="{% url 'companies' %}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+        <input type="hidden" name="company_id" id="company-id-field">
+
+        <div class="modal-header">
+          <h5 class="modal-title font-weight-bold mb-0">Add Company</h5>
+          <button type="button" class="close ml-2" data-dismiss="modal" style="font-size:1.5rem;line-height:1;">&times;</button>
+        </div>
+
+        <div class="modal-body">
+
+          {% if request.user.is_superuser %}
+          <div class="form-group">
+            <label>Tenant <span class="text-danger">*</span></label>
+            {{ form.tenant }}
+          </div>
+          {% else %}
+            {{ form.tenant }}
+          {% endif %}
+
+          <div class="section-title">Basic Info</div>
+
+          <div class="form-group">
+            <label>Company Name <span class="text-danger">*</span></label>
+            {{ form.name }}
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label>Legal Form <span class="text-danger">*</span></label>
+              {{ form.entity_type }}
+            </div>
+            <div class="form-group col-md-6">
+              <label>Registration Number / Company ID</label>
+              {{ form.registration_id }}
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label>Year of Establishment</label>
+              {{ form.year_established }}
+            </div>
+            <div class="form-group col-md-6">
+              <label>Number of Employees</label>
+              {{ form.employee_count_range }}
+            </div>
+          </div>
+
+          <div class="section-title">Address</div>
+
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label>Country <span class="text-danger">*</span></label>
+              {{ form.country }}
+            </div>
+            <div class="form-group col-md-6">
+              <label>State</label>
+              {{ form.state }}
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label>Region</label>
+              {{ form.region }}
+            </div>
+            <div class="form-group col-md-6">
+              <label>City / Municipality <span class="text-danger">*</span></label>
+              {{ form.city }}
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label>District</label>
+              {{ form.district }}
+            </div>
+            <div class="form-group col-md-6">
+              <label>Postal Code</label>
+              {{ form.postal_code }}
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-md-8">
+              <label>Street</label>
+              {{ form.address_line1 }}
+            </div>
+            <div class="form-group col-md-4">
+              <label>House Number</label>
+              {{ form.house_number }}
+            </div>
+          </div>
+
+          <div class="section-title">Business Activity</div>
+
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label>Primary Line of Business <span class="text-danger">*</span></label>
+              {{ form.classification }}
+            </div>
+            <div class="form-group col-md-6">
+              <label for="nace-picker-search">NACE Code <small class="text-muted">(EU classification)</small></label>
+              <div class="industry-picker" data-system="nace"
+                   data-endpoint="/api/industry-codes/nace/">
+                {{ form.nace_code }}
+                <input type="text"
+                       id="nace-picker-search"
+                       class="form-control industry-picker-search"
+                       autocomplete="off"
+                       placeholder="Start typing a code or activity, e.g. J62 or 'software'">
+                <button type="button"
+                        class="industry-picker-clear"
+                        aria-label="Clear NACE code"
+                        title="Clear"
+                        hidden>&times;</button>
+                <ul class="industry-picker-results" hidden></ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label for="naics-picker-search">NAICS Code <small class="text-muted">(US, optional)</small></label>
+              <div class="industry-picker" data-system="naics"
+                   data-endpoint="/api/industry-codes/naics/">
+                {{ form.naics_code }}
+                <input type="text"
+                       id="naics-picker-search"
+                       class="form-control industry-picker-search"
+                       autocomplete="off"
+                       placeholder="Start typing a code or activity, e.g. 541511">
+                <button type="button"
+                        class="industry-picker-clear"
+                        aria-label="Clear NAICS code"
+                        title="Clear"
+                        hidden>&times;</button>
+                <ul class="industry-picker-results" hidden></ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Keywords</label>
+            {{ form.keywords }}
+            <small class="form-text text-muted">
+              Words other users will type to find this company.
+            </small>
+          </div>
+
+          <div class="section-title">Contact Person</div>
+
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label>First Name</label>
+              {{ form.contact_first_name }}
+            </div>
+            <div class="form-group col-md-6">
+              <label>Last Name</label>
+              {{ form.contact_last_name }}
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label>Contact Email <span class="text-danger">*</span></label>
+              {{ form.contact_email }}
+            </div>
+            <div class="form-group col-md-6">
+              <label>Phone</label>
+              {{ form.phone }}
+            </div>
+          </div>
+
+          {% if is_business_user %}
+          <div class="section-title">Certifying Consultant</div>
+          <small class="form-text text-muted" style="margin-bottom:10px; display:block;">
+            <i class="fas fa-info-circle mr-1"></i>
+            A consultant will be assigned when your certification request is reviewed.
+            Their name and contact details will appear automatically and are
+            maintained by them &mdash; not editable from your account.
+          </small>
+          {% endif %}
+
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label>Website</label>
+              {{ form.website }}
+            </div>
+          </div>
+
+          <div class="section-title">Branding</div>
+
+          <div class="form-group">
+            <label>Company Logo</label>
+            {{ form.logo }}
+            <small class="form-text text-muted">
+              PNG, JPG, SVG, WEBP or GIF (max 5 MB). Shown in the company overview.
+            </small>
+          </div>
+
+          <div style="display:none;" aria-hidden="true">
+            {{ form.address_line2 }}
+            {{ form.phone_secondary }}
+            {{ form.fax }}
+            {{ form.is_active }}
+            {{ form.industry_code }}
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          {% if can_manage %}
+          <button type="submit" id="save-btn" class="btn btn-primary btn-sm">
+            <i class="fas fa-certificate mr-1"></i> Request Certification
+          </button>
+          {% endif %}
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>
+
+{% comment %} Country → state map, indexed client-side when a country is picked. {% endcomment %}
+{{ country_states|json_script:"company-country-states" }}
+
+<script>
+// --- Country / State dependent dropdown (same wiring as the Company DB page) ---
+document.addEventListener("DOMContentLoaded", function () {
+  const dataNode = document.getElementById("company-country-states");
+  const countryStates = dataNode ? JSON.parse(dataNode.textContent) : {};
+  const countrySel = document.getElementById("id_country");
+  const stateSel = document.getElementById("id_state");
+  if (!countrySel || !stateSel) return;
+
+  function rebuildStateOptions(countryCode, preserveValue) {
+    const options = (countryCode && countryStates[countryCode]) || [];
+    const currentValue = preserveValue != null ? preserveValue : stateSel.value;
+    if (!options.length) {
+      stateSel.innerHTML = '<option value="">Select State</option>';
+      stateSel.disabled = true;
+      return;
+    }
+    let html = '<option value="">Select State</option>';
+    options.forEach(function (name) {
+      const sel = name === currentValue ? " selected" : "";
+      html += '<option value="' + name + '"' + sel + '>' + name + '</option>';
+    });
+    stateSel.innerHTML = html;
+    stateSel.disabled = false;
+  }
+
+  rebuildStateOptions(countrySel.value);
+  countrySel.addEventListener("change", function () {
+    rebuildStateOptions(countrySel.value, "");
+  });
+});
+</script>
+
+<script>
+// --- Add Company modal: open + AJAX create ---
+document.addEventListener("DOMContentLoaded", function () {
+  const modal = $('#companyModal');
+  const companyForm = document.getElementById("company-form");
+  const saveBtn = document.getElementById("save-btn");
+  if (!companyForm) return;
+
+  // Open + reset the modal for a fresh company.
+  document.getElementById("add-company-btn")?.addEventListener("click", function () {
+    companyForm.reset();
+    companyForm.classList.remove("was-validated");
+    clearCompanyFieldErrors();
+    if (window.industryPickers) {
+      window.industryPickers.nace?.clear();
+      window.industryPickers.naics?.clear();
+    }
+    var logoPreview = document.getElementById("company-logo-preview");
+    if (logoPreview) { logoPreview.src = ""; logoPreview.style.display = "none"; }
+    modal.modal('show');
+  });
+
+  // Defer red invalid-styling until a submit is actually attempted.
+  companyForm.addEventListener("submit", function () {
+    companyForm.classList.add("was-validated");
+  });
+
+  function clearCompanyFieldErrors() {
+    companyForm.querySelectorAll(".field-error").forEach(function (el) { el.remove(); });
+    companyForm.querySelectorAll(".is-invalid").forEach(function (el) { el.classList.remove("is-invalid"); });
+  }
+
+  function showCompanyFieldError(field, msg) {
+    var input = companyForm.querySelector('[name="' + field + '"]');
+    if (!input) return false;
+    input.classList.add("is-invalid");
+    var hint = document.createElement("div");
+    hint.className = "field-error";
+    hint.style.cssText = "color:#dc2626;font-size:.78rem;margin-top:4px;";
+    hint.innerHTML = '<i class="fas fa-exclamation-circle mr-1"></i>' + msg;
+    if (input.parentElement) input.parentElement.appendChild(hint);
+    input.addEventListener("input", function once() {
+      input.removeEventListener("input", once);
+      input.classList.remove("is-invalid");
+      if (hint.parentElement) hint.remove();
+    });
+    return true;
+  }
+
+  // AJAX create -> POST to the companies endpoint. On success reload so the
+  // new row renders in this page's own row format.
+  companyForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    clearCompanyFieldErrors();
+    if (saveBtn) saveBtn.disabled = true;
+
+    var formData = new FormData(companyForm);
+
+    fetch(companyForm.getAttribute("action"), {
+      method: "POST",
+      headers: { "X-Requested-With": "XMLHttpRequest", "Accept": "application/json" },
+      body: formData,
+      credentials: "same-origin",
+    })
+      .then(function (res) {
+        return res.json().then(
+          function (data) { return { status: res.status, data: data }; },
+          function () { return { status: res.status, data: {} }; }
+        );
+      })
+      .then(function (result) {
+        if (result.status === 200 && result.data.ok) {
+          if (typeof showToast === "function") {
+            showToast(
+              result.data.message ||
+                "Certification request submitted. A consultant will review your company shortly.",
+              "success"
+            );
+          }
+          // Reload so the new company appears in the My Companies table.
+          window.location.reload();
+          return;
+        }
+
+        var errors = (result.data && result.data.errors) || {};
+        var firstSpecific = null;
+        Object.keys(errors).forEach(function (field) {
+          var list = errors[field] || [];
+          if (!list.length) return;
+          var first = list[0];
+          if (field === "__all__") {
+            if (!firstSpecific) firstSpecific = first;
+            return;
+          }
+          if (showCompanyFieldError(field, first) && !firstSpecific) {
+            firstSpecific = first;
+          }
+        });
+
+        var msg =
+          (result.data && result.data.message) ||
+          firstSpecific ||
+          "Could not save company. Please check the form.";
+        if (typeof showToast === "function") showToast(msg, "error");
+        else console.error(msg);
+      })
+      .catch(function (err) {
+        console.error("Create company failed:", err);
+        if (typeof showToast === "function") showToast("Network error. Please try again.", "error");
+      })
+      .finally(function () {
+        if (saveBtn) saveBtn.disabled = false;
+      });
+  });
+
+  document.getElementById("companyModal")?.addEventListener("hide.bs.modal", clearCompanyFieldErrors);
+});
+</script>
+
+<script>
+/* ------------------------------------------------------------------ *
+ * Industry code picker (NACE / NAICS) — self-contained; verbatim from
+ * the Company Database page so the create flow behaves identically.
+ * ------------------------------------------------------------------ */
+(function () {
+  "use strict";
+
+  function debounce(fn, ms) {
+    var t = null;
+    return function () {
+      var args = arguments, ctx = this;
+      clearTimeout(t);
+      t = setTimeout(function () { fn.apply(ctx, args); }, ms);
+    };
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  function IndustryPicker(root) {
+    this.root = root;
+    this.system = root.dataset.system;
+    this.endpoint = root.dataset.endpoint;
+    this.hidden = root.querySelector('input[type="hidden"]');
+    this.search = root.querySelector(".industry-picker-search");
+    this.results = root.querySelector(".industry-picker-results");
+    this.clearBtn = root.querySelector(".industry-picker-clear");
+    this.legacyMirror = (this.system === "nace")
+      ? document.getElementById("id_industry_code")
+      : null;
+    this.activeIndex = -1;
+    this.bind();
+  }
+
+  IndustryPicker.prototype.bind = function () {
+    var self = this;
+    var debouncedSearch = debounce(function () { self.fetch(); }, 200);
+
+    this.search.addEventListener("input", function () {
+      self.hidden.value = "";
+      debouncedSearch();
+    });
+
+    this.search.addEventListener("focus", function () {
+      if (self.search.value.trim()) self.fetch();
+    });
+
+    this.search.addEventListener("keydown", function (e) {
+      var items = self.results.querySelectorAll("li:not(.empty)");
+      if (!items.length || self.results.hidden) return;
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        self.activeIndex = Math.min(self.activeIndex + 1, items.length - 1);
+        self.highlight(items);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        self.activeIndex = Math.max(self.activeIndex - 1, 0);
+        self.highlight(items);
+      } else if (e.key === "Enter") {
+        if (self.activeIndex >= 0) {
+          e.preventDefault();
+          items[self.activeIndex].click();
+        }
+      } else if (e.key === "Escape") {
+        self.hideResults();
+      }
+    });
+
+    this.clearBtn.addEventListener("click", function () { self.clear(); self.search.focus(); });
+
+    document.addEventListener("click", function (e) {
+      if (!self.root.contains(e.target)) self.hideResults();
+    });
+  };
+
+  IndustryPicker.prototype.fetch = function () {
+    var q = this.search.value.trim();
+    if (!q) { this.hideResults(); return; }
+    var self = this;
+    var url = this.endpoint + "?q=" + encodeURIComponent(q) + "&limit=12";
+    fetch(url, {
+      credentials: "same-origin",
+      headers: { "X-Requested-With": "XMLHttpRequest", "Accept": "application/json" },
+    })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function (data) { self.render(data.data || []); })
+      .catch(function (err) { console.warn("industry-picker:", self.system, err); });
+  };
+
+  IndustryPicker.prototype.render = function (rows) {
+    var self = this;
+    this.activeIndex = -1;
+    this.results.innerHTML = "";
+    if (!rows.length) {
+      var empty = document.createElement("li");
+      empty.className = "empty";
+      empty.textContent = "No matches";
+      this.results.appendChild(empty);
+    } else {
+      rows.forEach(function (row) {
+        var li = document.createElement("li");
+        li.innerHTML = '<span class="code">' + escapeHtml(row.code) + '</span>' + escapeHtml(row.title);
+        li.dataset.id = row.id;
+        li.dataset.code = row.code;
+        li.dataset.title = row.title;
+        li.addEventListener("click", function () { self.applySelection(row.id, row.code, row.title); });
+        self.results.appendChild(li);
+      });
+    }
+    this.results.hidden = false;
+  };
+
+  IndustryPicker.prototype.highlight = function (items) {
+    items.forEach(function (it, i) { it.classList.toggle("active", i === this.activeIndex); }, this);
+    var el = items[this.activeIndex];
+    if (el) el.scrollIntoView({ block: "nearest" });
+  };
+
+  IndustryPicker.prototype.applySelection = function (id, code, title) {
+    this.hidden.value = id;
+    this.search.value = code + " — " + title;
+    this.search.dataset.code = code;
+    this.clearBtn.hidden = false;
+    this.hideResults();
+    if (this.legacyMirror) this.legacyMirror.value = code;
+  };
+
+  IndustryPicker.prototype.setValue = function (uuid, displayText) {
+    if (!uuid) { this.clear(); return; }
+    this.hidden.value = uuid;
+    this.search.value = displayText || "";
+    var code = (displayText || "").split(" — ")[0] || "";
+    this.search.dataset.code = code;
+    this.clearBtn.hidden = !displayText;
+    if (this.legacyMirror && code) this.legacyMirror.value = code;
+  };
+
+  IndustryPicker.prototype.clear = function () {
+    this.hidden.value = "";
+    this.search.value = "";
+    this.search.dataset.code = "";
+    this.clearBtn.hidden = true;
+    this.hideResults();
+    if (this.legacyMirror) this.legacyMirror.value = "";
+  };
+
+  IndustryPicker.prototype.hideResults = function () {
+    this.results.hidden = true;
+    this.activeIndex = -1;
+  };
+
+  document.addEventListener("DOMContentLoaded", function () {
+    var pickers = {};
+    document.querySelectorAll(".industry-picker").forEach(function (el) {
+      var p = new IndustryPicker(el);
+      pickers[p.system] = p;
+    });
+    window.industryPickers = pickers;
+  });
+})();
+</script>

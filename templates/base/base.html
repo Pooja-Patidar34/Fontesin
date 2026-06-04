@@ -566,6 +566,20 @@
           </li>
           {% endif %}
 
+          {% comment %} Consultant "Users" directory — every active business user on the
+             platform, filterable by name / email / phone. Separate from the
+             "Certified Users" list above (which is scoped to companies the
+             consultant certified). {% endcomment %}
+          {% if request.user.role.code|lower == "consultant" %}
+          <li class="nav-item">
+            <a href="{% url 'business-users' %}"
+               class="nav-link {% if active_menu == 'business-users' %}active{% endif %}">
+              <i class="nav-icon fas fa-user-friends"></i>
+              <p>Users</p>
+            </a>
+          </li>
+          {% endif %}
+
           <!-- Network menu (coordinator + franchise + superuser) -->
           {% if request.user.is_superuser or request.user.role.code|lower == "consultant" or request.user.role.code|lower == "business_user" %}
           <li class="nav-item">
@@ -704,6 +718,24 @@
                 </a>
               </li>
             </ul>
+          </li>
+          {% endif %}
+
+          {% comment %} Messages — website "Contact" form submissions land here. Superuser
+             only; red badge shows the count of unread contact messages. {% endcomment %}
+          {% if request.user.is_superuser %}
+          <li class="nav-item">
+            <a href="{% url 'contact-messages' %}"
+               class="nav-link {% if active_menu == 'contact-messages' %}active{% endif %}"
+               style="display: flex; align-items: center;">
+              <i class="nav-icon fas fa-envelope"></i>
+              <p style="flex:1;">Messages</p>
+              {% if unread_contact_message_count %}
+              <span class="sidebar-notif-badge" aria-label="{{ unread_contact_message_count }} unread messages">
+                {% if unread_contact_message_count > 9 %}9+{% else %}{{ unread_contact_message_count }}{% endif %}
+              </span>
+              {% endif %}
+            </a>
           </li>
           {% endif %}
 
@@ -861,6 +893,24 @@
               {% if pending_partnership_count %}
               <span class="sidebar-notif-badge" aria-label="{{ pending_partnership_count }} pending partnership requests">
                 {% if pending_partnership_count > 9 %}9+{% else %}{{ pending_partnership_count }}{% endif %}
+              </span>
+              {% endif %}
+            </a>
+          </li>
+          {% endif %}
+
+          {% comment %} Join Requests — anyone who owns a company can receive requests
+             from business users wanting to join it. {% endcomment %}
+          {% if owns_any_company %}
+          <li class="nav-item">
+            <a href="{% url 'join-requests' %}"
+               class="nav-link {% if active_menu == 'join-requests' %}active{% endif %}"
+               style="display: flex; align-items: center;">
+              <i class="nav-icon fas fa-user-plus"></i>
+              <p style="flex:1;">Join Requests</p>
+              {% if pending_join_request_count %}
+              <span class="sidebar-notif-badge" aria-label="{{ pending_join_request_count }} pending join requests">
+                {% if pending_join_request_count > 9 %}9+{% else %}{{ pending_join_request_count }}{% endif %}
               </span>
               {% endif %}
             </a>

@@ -327,3 +327,60 @@ def coordinator_users(request):
         entity_label="coordinator",
         active_submenu="coordinator-users",
     )
+
+
+@login_required
+def business_users(request):
+    """Consultant "Users" directory: every ACTIVE business user on the
+    platform, filterable by first name, last name, email, and phone.
+
+    Cross-tenant on purpose — a consultant works with business users across
+    tenants. This is distinct from the consultant's "Certified Users" page
+    (accounts.view.user.user_list), which is scoped to the companies the
+    consultant has personally certified. Read-only listing with a View detail
+    modal. Superusers may open it too (oversight / testing).
+    """
+    role_code = (request.user.role.code or "").lower() if request.user.role else ""
+    if not (request.user.is_superuser or role_code == "consultant"):
+        raise PermissionDenied()
+
+    qs = (
+        User.objects
+        .select_related("role", "primary_company", "tenant")
+        .filter(role__code__iexact="business_user", is_active=True, is_deleted=False)
+    )
+
+    # Single search box — each whitespace-separated token must match at least
+    # one of first name / last name / email / phone (AND across tokens, OR
+    # across fields). This lets "john gmail" match first name John + a gmail
+    # address, while a single token like "john" or "555" still works.
+    search_query = (request.GET.get("q") or "").strip()
+    if search_query:
+        for token in search_query.split():
+            qs = qs.filter(
+                Q(first_name__icontains=token)
+                | Q(last_name__icontains=token)
+                | Q(email__icontains=token)
+                | Q(phone__icontains=token)
+            )
+
+    qs = qs.order_by("first_name", "last_name")
+
+    page_number = request.GET.get("page", 1)
+    paginator = Paginator(qs, 10)
+    try:
+        page_obj = paginator.page(page_number)
+    except (PageNotAnInteger, EmptyPage):
+        page_obj = paginator.page(1)
+
+    context = {
+        "users": page_obj,
+        "users_json": [_serialize_user(u) for u in page_obj],
+        "page_obj": page_obj,
+        "active_menu": "business-users",
+        "page_title": "Users",
+        "entity_label": "business",
+        "search_query": search_query,
+        "total_count": paginator.count,
+    }
+    return render(request, "dashboard/business_users.html", context)

@@ -39,9 +39,20 @@
     <h3 class="card-title font-weight-bold mb-0">
       <i class="fas fa-folder-open mr-2"></i> My Companies
     </h3>
-    <span class="text-muted small">
-      Total: {{ total_count }}
-    </span>
+    <div class="d-flex align-items-center" style="gap:1rem;">
+      <span class="text-muted small">
+        Total: {{ total_count }}
+      </span>
+      {% comment %}
+        Opens the in-page Add Company modal (shared create flow). The modal
+        POSTs to the companies endpoint and reloads this page on success.
+      {% endcomment %}
+      {% if can_manage %}
+      <button type="button" id="add-company-btn" class="btn btn-primary btn-sm">
+        <i class="fas fa-plus mr-1"></i> Add Company
+      </button>
+      {% endif %}
+    </div>
   </div>
 
   <div class="card-body p-0">
@@ -51,6 +62,7 @@
         <thead>
           <tr>
             <th style="padding-left:1.25rem;">Company</th>
+            <th>Relationship</th>
             <th>Location</th>
             <th>Registration No.</th>
             <th>Certification</th>
@@ -66,6 +78,13 @@
               <strong>{{ c.name }}</strong>
               {% if c.classification %}
               <div class="small text-muted">{{ c.classification }}</div>
+              {% endif %}
+            </td>
+            <td>
+              {% if c.owner_user_id == request.user.id %}
+                <span class="pill pill-certified">Owner</span>
+              {% else %}
+                <span class="pill pill-uncertified">Member</span>
               {% endif %}
             </td>
             <td class="small">
@@ -97,10 +116,27 @@
                       data-url="{% url 'company-detail' c.id %}">
                 <i class="fas fa-eye mr-1"></i> View
               </button>
+              {% comment %}
+                Edit is owner-only — business users can edit just the companies
+                they own. Joined (Member) companies are read-only, but the
+                member can Leave (revoke their membership).
+              {% endcomment %}
+              {% if c.owner_user_id == request.user.id %}
               <a href="{% url 'companies' %}?open_edit={{ c.id }}&from=my-companies"
                  class="btn btn-sm btn-outline-primary ml-1">
                 <i class="fas fa-edit mr-1"></i> Edit
               </a>
+              {% else %}
+              <form method="post" action="{% url 'company-leave' c.id %}"
+                    id="myc-leave-form-{{ c.id }}" class="d-inline">
+                {% csrf_token %}
+                <button type="button" class="btn btn-sm btn-outline-danger ml-1"
+                        title="Leave this company"
+                        onclick="appConfirm({kind:'danger', title:'Leave this company?', text:'You will lose access to <strong>{{ c.name|escapejs }}</strong> and it will be removed from your My Companies. You can request to join again later.', okLabel:'Leave', okIcon:'fa-right-from-bracket', onConfirm:function(){document.getElementById('myc-leave-form-{{ c.id }}').submit();}})">
+                  <i class="fas fa-sign-out-alt mr-1"></i> Leave
+                </button>
+              </form>
+              {% endif %}
             </td>
           </tr>
           {% endfor %}
@@ -269,4 +305,9 @@
   });
 })();
 </script>
+
+{% comment %} In-page Add Company modal (shared create flow with the Company Database). {% endcomment %}
+{% if can_manage %}
+  {% include "dashboard/_company_create_modal.html" %}
+{% endif %}
 {% endblock %}

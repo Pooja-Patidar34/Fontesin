@@ -31,6 +31,48 @@ def career(request):
     return render(request, 'website/career.html')
 
 def contact(request):
+    """Public "Contact" page. On POST, persist the enquiry as a ContactMessage
+    and fan a notification out to every superuser so it lands in both the
+    dedicated Messages inbox and the regular notifications badge."""
+    if request.method == "POST":
+        from accounts.models import ContactMessage
+        from accounts.utils.notifications import notify_contact_message
+
+        first_name = (request.POST.get("first_name") or "").strip()
+        last_name = (request.POST.get("last_name") or "").strip()
+        email = (request.POST.get("email") or "").strip()
+        subject = (request.POST.get("subject") or "").strip()
+        message_text = (request.POST.get("message") or "").strip()
+        agreed = request.POST.get("privacy")
+
+        # Server-side enforcement of the required fields (mirrors the client-side
+        # `required` attributes so the rules still hold if JS is bypassed):
+        # first name, last name, email, subject, message, and the privacy
+        # consent checkbox. Phone + company name stay optional.
+        if not (first_name and last_name and email and subject and message_text):
+            messages.error(request, "Please fill in all required fields (marked with *).")
+            return render(request, 'website/contact.html')
+        if not agreed:
+            messages.error(request, "Please agree to the Privacy Policy before sending your message.")
+            return render(request, 'website/contact.html')
+
+        contact_msg = ContactMessage.objects.create(
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            phone=(request.POST.get("phone") or "").strip(),
+            company_name=(request.POST.get("company_name") or "").strip(),
+            subject=subject,
+            message=message_text,
+        )
+        notify_contact_message(contact_msg)
+
+        messages.success(
+            request,
+            "Thanks for reaching out! Your message has been sent — our team will get back to you shortly.",
+        )
+        return redirect("contact")
+
     return render(request, 'website/contact.html')
 
 

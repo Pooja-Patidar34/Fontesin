@@ -1,6 +1,6 @@
 import json
 
-from accounts.models import UserRole, Company, CompanyConnection, Notification, User
+from accounts.models import UserRole, Company, CompanyConnection, CompanyJoinRequest, Notification, User
 
 
 def admin_context(request):
@@ -16,6 +16,8 @@ def admin_context(request):
     is_global_business_user = False
     is_paid_business_user = False
     pending_partnership_count = 0
+    pending_join_request_count = 0
+    owns_any_company = False
     show_partnership_upgrade_banner = False
     pending_certification_count = 0
     new_commission_count = 0
@@ -25,6 +27,7 @@ def admin_context(request):
     bu_certification_status = ""
     bu_certification_consultant_name = ""
     unread_message_count = 0
+    unread_contact_message_count = 0
     pending_invoice_count = 0
     has_pending_paid_upgrade = False
 
@@ -75,9 +78,17 @@ def admin_context(request):
                 owner_user=request.user
             ).values_list("id", flat=True)
             if owned_company_ids:
+                owned_company_ids = list(owned_company_ids)
+                owns_any_company = True
                 pending_partnership_count = CompanyConnection.objects.filter(
-                    company_id__in=list(owned_company_ids),
+                    company_id__in=owned_company_ids,
                     status=CompanyConnection.STATUS_PENDING,
+                ).count()
+                # Pending join requests on companies this user owns — drives the
+                # red badge on the "Join Requests" sidebar tab.
+                pending_join_request_count = CompanyJoinRequest.objects.filter(
+                    company_id__in=owned_company_ids,
+                    status=CompanyJoinRequest.STATUS_PENDING,
                 ).count()
                 # Show the upgrade banner only for users who can't act on the
                 # request right now: free plan, no plan at all, and no other
@@ -190,6 +201,17 @@ def admin_context(request):
         except Exception:
             unread_message_count = 0
 
+        # Unread website contact-form messages — drives the red badge on the
+        # superuser-only "Messages" sidebar tab.
+        if request.user.is_superuser:
+            try:
+                from accounts.models import ContactMessage
+                unread_contact_message_count = ContactMessage.objects.filter(
+                    is_read=False
+                ).count()
+            except Exception:
+                unread_contact_message_count = 0
+
         # Whether this user has a paid-plan upgrade awaiting admin approval
         # (a Subscription in "created" state). While pending, the user is on
         # temporary Free access and partnership "Connect" actions are locked
@@ -239,6 +261,8 @@ def admin_context(request):
             and (request.user.role.code or "").lower() == "business_user"
         ),
         "pending_partnership_count": pending_partnership_count,
+        "pending_join_request_count": pending_join_request_count,
+        "owns_any_company": owns_any_company,
         "show_partnership_upgrade_banner": show_partnership_upgrade_banner,
         "pending_certification_count": pending_certification_count,
         "new_commission_count": new_commission_count,
@@ -253,5 +277,6 @@ def admin_context(request):
         "bu_certification_status": bu_certification_status,
         "bu_certification_consultant_name": bu_certification_consultant_name,
         "unread_message_count": unread_message_count,
+        "unread_contact_message_count": unread_contact_message_count,
         "pending_invoice_count": pending_invoice_count,
     }

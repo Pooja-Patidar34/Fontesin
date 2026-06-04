@@ -167,11 +167,8 @@
     </div>
 
     <div class="map-main">
-      <div style="position:relative;">
-        <!-- Inline SVG world map loaded via JavaScript -->
-        <div id="svg-map-container" style="border-radius:12px;overflow:hidden;background:#f0f5f8;border:1px solid #d4e2ec;"></div>
-        <div class="map-tooltip" id="map-tooltip"></div>
-      </div>
+      <!-- Shared interactive world map — identical to the home page. -->
+      {% include "website/_world_map.html" %}
     </div>
 
     <!-- Region Cards -->
@@ -352,121 +349,8 @@
   </div>
 </footer>
 
-<script>
-// Load SVG inline for interactivity
-fetch('{% static "adminlte/images/world-map.svg" %}?v=7')
-  .then(r => r.text())
-  .then(svgText => {
-    document.getElementById('svg-map-container').innerHTML = svgText;
-    // Force SVG background transparent
-    const svgEl = document.getElementById('world-map-svg');
-    if (svgEl) {
-      svgEl.style.background = 'transparent';
-      // Set all inactive countries to light color
-      svgEl.querySelectorAll('.country-path').forEach(p => {
-        if (!p.style.fill || p.style.fill === '' || p.style.fill === 'rgb(27, 46, 63)' || p.style.fill === '#1B2E3F') {
-          p.style.fill = '#D8E4EC';
-          p.style.stroke = '#b8cdd9';
-        }
-      });
-    }
-    // Now initialize the map
-    initMap();
-  })
-  .catch(() => {
-    document.getElementById('svg-map-container').innerHTML = '<p style="color:#253D51;padding:40px;text-align:center;">Map loading...</p>';
-  });
-
-const COUNTRY_STATUS = {
-  'US': { status: 'active',  year: 1, name: 'United States',         page: '{% url "region_us" %}' },
-  'DE': { status: 'active',  year: 1, name: 'Germany',               page: '{% url "region_de" %}' },
-  'CZ': { status: 'active',  year: 1, name: 'Czech Republic',        page: '{% url "region_cz" %}' },
-  'GB': { status: 'active',  year: 1, name: 'United Kingdom',        page: null },
-  'FR': { status: 'active',  year: 1, name: 'France',                page: null },
-  'NL': { status: 'active',  year: 1, name: 'Netherlands',           page: null },
-  'PL': { status: 'active',  year: 1, name: 'Poland',                page: null },
-  'AT': { status: 'active',  year: 1, name: 'Austria',               page: null },
-  'CH': { status: 'active',  year: 1, name: 'Switzerland',           page: null },
-  'SE': { status: 'active',  year: 1, name: 'Sweden',                page: null },
-  'AE': { status: 'planned', year: 2, name: 'United Arab Emirates',  page: '{% url "region_ae" %}' },
-  'JP': { status: 'planned', year: 3, name: 'Japan',                 page: '{% url "region_jp" %}' },
-  'SG': { status: 'planned', year: 2, name: 'Singapore',             page: null },
-  'CA': { status: 'planned', year: 2, name: 'Canada',                page: null },
-  'AU': { status: 'planned', year: 2, name: 'Australia',             page: null },
-  'BR': { status: 'planned', year: 3, name: 'Brazil',                page: null },
-  'IN': { status: 'planned', year: 3, name: 'India',                 page: null },
-  'ZA': { status: 'planned', year: 4, name: 'South Africa',          page: null },
-  'MX': { status: 'planned', year: 3, name: 'Mexico',                page: null },
-  'KR': { status: 'planned', year: 3, name: 'South Korea',           page: null },
-};
-
-function initMap() {
-  const svg = document.getElementById('world-map-svg');
-  if (!svg) return;
-  const tooltip = document.getElementById('map-tooltip');
-
-  svg.querySelectorAll('[data-iso]').forEach(path => {
-    const iso = path.getAttribute('data-iso');
-    const info = COUNTRY_STATUS[iso];
-
-    if (info) {
-      if (info.status === 'active') {
-        path.style.fill = '#253D51';
-        path.style.stroke = '#1B2E3F';
-        path.style.strokeWidth = '0.5';
-        path.style.strokeDasharray = 'none';
-        path.style.cursor = 'pointer';
-      } else if (info.status === 'planned') {
-        path.style.fill = '#5F8FAA';
-        path.style.stroke = '#4a7a96';
-        path.style.strokeWidth = '0.5';
-        path.style.strokeDasharray = 'none';
-        path.style.cursor = 'pointer';
-      }
-
-      const fillActive  = '#1B2E3F';
-      const fillPlanned = '#4a7a96';
-      const fillRestoreActive  = '#253D51';
-      const fillRestorePlanned = '#5F8FAA';
-
-      path.addEventListener('mouseenter', (e) => {
-        path.style.fill = info.status === 'active' ? fillActive : fillPlanned;
-        if (tooltip) {
-          const statusLabel = info.status === 'active' ? '● Active' : `◌ Planned – Year ${info.year}`;
-          const statusColor = info.status === 'active' ? '#253D51' : '#5F8FAA';
-          tooltip.innerHTML = `
-            <div class="map-tooltip__name">${info.name}</div>
-            <div style="color:${statusColor};font-size:.75rem;">${statusLabel}</div>
-            <div style="font-size:.7rem;color:rgba(199,204,209,.6);margin-top:4px;">Click for details →</div>
-          `;
-          tooltip.classList.add('visible');
-        }
-      });
-
-      path.addEventListener('mousemove', (e) => {
-        if (tooltip) {
-          tooltip.style.left = Math.min(e.clientX + 14, window.innerWidth - 200) + 'px';
-          tooltip.style.top  = Math.max(e.clientY - 10, 10) + 'px';
-        }
-      });
-
-      path.addEventListener('mouseleave', () => {
-        path.style.fill = info.status === 'active' ? fillRestoreActive : fillRestorePlanned;
-        if (tooltip) tooltip.classList.remove('visible');
-      });
-
-      path.addEventListener('click', () => {
-        // Dedicated region page when one exists (US/DE/CZ/AE/JP); otherwise
-        // the generic data-driven country profile (/region/<iso>/), which
-        // shows basic country facts for curated markets and falls back to the
-        // "coming soon" card for anything uncurated. Either way a click on any
-        // highlighted country lands on a real page.
-        window.location.href = info.page || ('/region/' + iso.toLowerCase() + '/');
-      });
-    }
-  });
-}
-</script>
+{% comment %} The interactive world-map script ships with the shared partial included
+   above (templates/website/_world_map.html), so both pages stay identical. {% endcomment %}
 <script src="{% static 'adminlte/js/main.js' %}"></script>
   <script>
     if ("serviceWorker" in navigator) {

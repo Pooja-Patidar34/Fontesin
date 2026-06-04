@@ -761,6 +761,58 @@ class CompanyConnection(models.Model):
         return f"{self.user.email} → {self.company.name} ({self.status})"
 
 
+class CompanyJoinRequest(models.Model):
+    """A Business User's request to JOIN an existing company from their profile.
+
+    Distinct from CompanyConnection (the paid-plan "Connect" / partnership flow
+    triggered off the Companies directory). A join request originates from the
+    profile "Join Existing Company" picker, is open to every business user
+    regardless of plan, and is approved or declined by the target company's
+    owner from the dedicated "Join Requests" tab. On approval the requester is
+    linked to the company via UserCompany so it shows up in their My Companies
+    and they can view its details.
+    """
+
+    STATUS_PENDING = "pending"
+    STATUS_APPROVED = "approved"
+    STATUS_DECLINED = "declined"
+    STATUS_CHOICES = (
+        (STATUS_PENDING, "Pending"),
+        (STATUS_APPROVED, "Approved"),
+        (STATUS_DECLINED, "Declined"),
+    )
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="join_requests"
+    )
+    company = models.ForeignKey(
+        Company, on_delete=models.CASCADE, related_name="join_requests"
+    )
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING
+    )
+    message = models.TextField(blank=True, null=True)
+    reviewed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name="reviewed_join_requests",
+        null=True,
+        blank=True,
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        unique_together = ("user", "company")
+        indexes = [models.Index(fields=["user", "-created_at"])]
+
+    def __str__(self):
+        return f"{self.user.email} ⇒ {self.company.name} ({self.status})"
+
+
 class CompanyImportJob(models.Model):
     STATE_QUEUED = "queued"
     STATE_RUNNING = "running"
@@ -880,6 +932,52 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"Notification({self.kind}) → {self.recipient_id}"
+
+    def mark_read(self):
+        if not self.is_read:
+            self.is_read = True
+            self.read_at = timezone.now()
+            self.save(update_fields=["is_read", "read_at"])
+
+
+class ContactMessage(models.Model):
+    """A message submitted from the public website "Contact" form.
+
+    The landing page contact form lands here so the Super Admin can read and
+    act on enquiries from a dedicated "Messages" inbox in the sidebar. Each
+    submission also fans out a Notification to every active superuser (see
+    accounts.utils.notifications.notify_contact_message) so it surfaces in the
+    regular notifications inbox + badge too.
+
+    Submitters are typically anonymous prospects (not logged-in users), so we
+    store their contact details inline rather than linking to a User.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    first_name = models.CharField(max_length=120, blank=True)
+    last_name = models.CharField(max_length=120, blank=True)
+    email = models.EmailField()
+    phone = models.CharField(max_length=40, blank=True)
+    company_name = models.CharField(max_length=200, blank=True)
+    subject = models.CharField(max_length=120, blank=True)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    read_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["is_read", "-created_at"]),
+        ]
+
+    def __str__(self):
+        who = f"{self.first_name} {self.last_name}".strip() or self.email
+        return f"ContactMessage from {who}"
+
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}".strip() or self.email
 
     def mark_read(self):
         if not self.is_read:

@@ -173,79 +173,44 @@ def profile_view(request):
     if request.method == "POST":
         form_type = request.POST.get("form_type", "")
 
-        # ---- Join an existing company (alternative to creating one) ----
+        # ---- Request to join an existing company ----
+        # A business user picks a company and we send a join request to that
+        # company's owner. The owner approves/declines from the Join Requests
+        # tab; on approval the user is linked via UserCompany (see
+        # accounts/view/join_request.py). This replaces the former instant-link
+        # behaviour — joining now always goes through owner approval.
         if form_type == "join_company":
-            # Consultants, coordinators, and franchise partners represent the
-            # company they own/operate — the join flow doesn't fit their role,
-            # so the UI hides it for them. Mirror the gate server-side so a
-            # crafted POST can't slip past the missing tab.
-            join_blocked_roles = {"consultant", "coordinator", "franchise"}
-            role_code = (user.role.code or "").lower() if user.role else ""
-            if role_code in join_blocked_roles:
-                messages.error(
-                    request,
-                    "Your role represents a single company — please register "
-                    "your company below instead of joining an existing one.",
-                )
-                return redirect("profile")
+            ajax = _is_ajax(request)
 
-            if user_company is not None:
-                messages.warning(request, "You are already linked to a company.")
+            def _join_fail(msg, status=400):
+                if ajax:
+                    return JsonResponse({"ok": False, "message": msg}, status=status)
+                messages.error(request, msg)
                 return redirect("profile")
 
             company_id = (request.POST.get("company_id") or "").strip()
             if not company_id:
-                messages.error(request, "Please select a company to join.")
-                return redirect("profile")
+                return _join_fail("Please select a company to join.")
 
-            company = Company.objects.filter(id=company_id, is_active=True).first()
+            company = Company.objects.filter(id=company_id).first()
             if not company:
-                messages.error(request, "That company is unavailable. Please pick another.")
-                return redirect("profile")
+                return _join_fail("That company is unavailable. Please pick another.")
 
-            user.primary_company = company
-            if company.tenant_id:
-                user.tenant = company.tenant
-            user.save(update_fields=["primary_company", "tenant", "updated_at"])
+            from accounts.view.join_request import create_join_request, JoinRequestError
+            try:
+                create_join_request(
+                    user, company, message=request.POST.get("message")
+                )
+            except JoinRequestError as e:
+                return _join_fail(e.message, status=e.status)
 
-            UserCompany.objects.get_or_create(
-                user=user,
-                company=company,
-                defaults={"is_primary": True},
+            success_msg = (
+                f"Join request sent to {company.name}. You'll be linked once "
+                f"the company owner approves it."
             )
-
-            # Backfill any commissions that should have been created at
-            # plan-approval time but were skipped because the user didn't
-            # have a consultant-linked primary_company yet. Now that the
-            # linkage exists, the admin commission panel should reflect
-            # any already-approved paid subscriptions this user holds.
-            from billing.views import backfill_consultant_commissions_for_user
-            backfill_consultant_commissions_for_user(user)
-
-            # Notify the company's consultant that a Business User selected
-            # their company as their primary, so it lands in the consultant's
-            # Notifications tab. No-op when the company has no consultant or the
-            # joiner somehow is the consultant themselves.
-            if company.consultant_id and company.consultant_id != user.id:
-                try:
-                    from accounts.utils.notifications import notify
-                    from accounts.models import Notification
-                    bu_label = f"{user.first_name} {user.last_name}".strip() or user.email
-                    notify(
-                        recipient=company.consultant,
-                        sender=user,
-                        kind=Notification.KIND_GENERIC,
-                        title=f"{bu_label} joined {company.name}",
-                        body=(
-                            f"{bu_label} ({user.email}) selected your company "
-                            f"{company.name} as their primary company."
-                        ),
-                        related_company=company,
-                    )
-                except Exception:
-                    pass
-
-            messages.success(request, f"You're now linked to {company.name}.")
+            if ajax:
+                return JsonResponse({"ok": True, "message": success_msg})
+            messages.success(request, success_msg)
             return redirect("profile")
 
         # ---- Edit personal profile (available to all users / all plans) ----
@@ -753,9 +718,29 @@ def profile_view(request):
             "Please activate another plan to continue.",
         )
 
+    # Outgoing join requests this user has sent (pending / approved / declined)
+    # so the profile page can show their status next to the join picker.
+    from accounts.models import CompanyJoinRequest
+    my_join_requests = (
+        CompanyJoinRequest.objects
+        .filter(user=user)
+        .select_related("company")
+    )
+
+    # Whether the "join an existing company" picker should be offered. Open to
+    # business users (any plan); roles that represent their own single company
+    # register one instead. Available even when the user already has a company,
+    # so they can join additional ones.
+    role_code = (user.role.code or "").lower() if user.role else ""
+    can_join_company = (
+        not user.is_superuser and role_code == "business_user"
+    )
+
     context = {
         "active_menu": "profile",
         "user_company": user_company,
+        "my_join_requests": my_join_requests,
+        "can_join_company": can_join_company,
         "classifications": CompanyClassificationChoices.CHOICES,
         "entity_types": CompanyEntityTypeChoices.CHOICES,
         "employee_count_ranges": EmployeeCountRangeChoices.CHOICES,

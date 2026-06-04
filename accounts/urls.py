@@ -15,7 +15,7 @@ from .view.audit import audit_logs,audit_log_detail_ajax
 from .view.tenant import tenant_list,toggle_tenant,tenant_detail_ajax,tenant_delete
 from .view.website import home, about, worldmap, career, contact, membership, select_plan, invoice_detail
 from .view.regions import region_us, region_de, region_cz, region_ae, region_jp, regions_map_view, region_coming_soon, region_detail
-from .view.consultant import consultant_companies, consultant_users, coordinator_users, coordinator_companies
+from .view.consultant import consultant_companies, consultant_users, coordinator_users, coordinator_companies, business_users
 from .view.veriff import CreateVeriffSessionAPIView, VeriffStatusAPIView
 from .view.webhook import veriff_webhook
 from billing.views import invoice_list, plan_history, payment_list, payment_approve, payment_reject, payment_edit, payment_detail_ajax, subscription_list, plan_edit, plan_toggle, commission_list, commission_mark_paid, commission_invoice_detail_ajax, commission_invoice_export
@@ -29,6 +29,7 @@ from .view.saved_filter import (
     company_connect,
 )
 from .view.partnership import partnership_list, partnership_action, partnership_cancel
+from .view.join_request import join_requests_list, join_request_action, join_request_cancel, company_leave
 from .view.certification import certification_list, certification_action
 from .view.application_review import (
     application_pending,
@@ -46,6 +47,12 @@ from .view.notification import (
     messages_mark_all_read,
     message_delete,
     message_open,
+)
+from .view.contact_message import (
+    contact_messages_list,
+    contact_message_mark_read,
+    contact_messages_mark_all_read,
+    contact_message_delete,
 )
 
 
@@ -92,6 +99,13 @@ urlpatterns = [
     path("partnerships/<uuid:connection_id>/action/", partnership_action, name="partnership-action"),
     path("partnerships/<uuid:connection_id>/cancel/", partnership_cancel, name="partnership-cancel"),
 
+    # Join requests (business users join existing companies from their profile;
+    # the company owner approves / declines here)
+    path("join-requests/", join_requests_list, name="join-requests"),
+    path("join-requests/<uuid:request_id>/action/", join_request_action, name="join-request-action"),
+    path("join-requests/<uuid:request_id>/cancel/", join_request_cancel, name="join-request-cancel"),
+    path("companies/<uuid:company_id>/leave/", company_leave, name="company-leave"),
+
     # Certifications (consultants only)
     path("certifications/", certification_list, name="certifications"),
     path("certifications/<uuid:company_id>/action/", certification_action, name="certification-action"),
@@ -107,6 +121,12 @@ urlpatterns = [
     path("messages/<uuid:notification_id>/read/", message_mark_read, name="message-mark-read"),
     path("messages/<uuid:notification_id>/open/", message_open, name="message-open"),
     path("messages/<uuid:notification_id>/delete/", message_delete, name="message-delete"),
+
+    # Contact messages (website contact form → Super Admin inbox)
+    path("contact-messages/", contact_messages_list, name="contact-messages"),
+    path("contact-messages/mark-all-read/", contact_messages_mark_all_read, name="contact-messages-mark-all-read"),
+    path("contact-messages/<uuid:message_id>/read/", contact_message_mark_read, name="contact-message-mark-read"),
+    path("contact-messages/<uuid:message_id>/delete/", contact_message_delete, name="contact-message-delete"),
 
     # Saved filters (Favorites) — basic business users only
     path("saved-filters/", saved_filter_list, name="saved-filters"),
@@ -160,6 +180,7 @@ urlpatterns = [
     path('consultants/companies/', consultant_companies, name='consultant-companies'),
     path('consultants/users/', consultant_users, name='consultant-users'),
     path('coordinators/users/', coordinator_users, name='coordinator-users'),
+    path('users/business/', business_users, name='business-users'),
     path('coordinators/companies/', coordinator_companies, name='coordinator-companies'),
 
     #region specific pages

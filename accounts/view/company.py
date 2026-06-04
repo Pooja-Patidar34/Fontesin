@@ -496,14 +496,17 @@ def company_list(request):
             elif (
                 company_id
                 and creator_role_code == "business_user"
-                and (company.certification_status or "").lower() in ("rejected", "uncertified")
+                and (company.certification_status or "").lower() not in ("certified", "pending")
             ):
-                # Resubmission after a decline: the business user updated their
-                # company and clicked "Request Certification" again. Send it
-                # back into the certification queue as a FRESH, unclaimed pending
-                # request (clear the previous declining consultant's claim) so
-                # every active consultant can review the resubmission — otherwise
-                # the request stayed "rejected" and no consultant was notified.
+                # Business user edited a not-yet-certified company and clicked
+                # "Request Certification". This covers every non-certified,
+                # non-pending state — "uncertified" (incl. blank/legacy rows
+                # that only DISPLAY as Uncertified) and "rejected" resubmissions
+                # after a decline. Send it into the certification queue as a
+                # FRESH, unclaimed pending request (clear any previous declining
+                # consultant's claim) so every active consultant is notified and
+                # can review it — otherwise the request stayed put and nobody
+                # was told.
                 company.certification_status = "pending"
                 company.is_active = False
                 company.consultant = None
@@ -568,7 +571,7 @@ def company_list(request):
                 pass
 
             if resubmitted_for_certification:
-                success_msg = "Certification request resubmitted. A consultant will review your company shortly."
+                success_msg = "Certification request sent successfully. A consultant will review your company shortly."
             elif company_id:
                 success_msg = "Company updated successfully."
             elif request.user.is_superuser or creator_role_code == "consultant":
@@ -661,11 +664,20 @@ def company_list(request):
 
     else:
         role_name = (request.user.role.name or "").lower() if request.user.role else ""
+        role_code = (request.user.role.code or "").lower() if request.user.role else ""
         if role_name == "tenant_admin":
             # Tenant admins see every company in their tenant.
             queryset = Company.objects.filter(tenant=request.user.tenant)
+        elif role_code == "consultant":
+            # Consultants get full visibility into the active company database
+            # across the whole system — every active (is_active=True), non-
+            # deleted company, not just the ones they're personally linked to
+            # as consultant/owner. The location filter bar (enabled for
+            # consultants below) lets them narrow this down, and the "own
+            # first" ordering still floats their linked companies to the top.
+            queryset = Company.objects.filter(is_active=True)
         else:
-            # Everyone else (business_user, consultant, coordinator, franchise)
+            # Everyone else (business_user, coordinator, franchise)
             # sees only companies they're directly linked to. No tenant
             # pre-filter because registration lets users pick a company from
             # any tenant, so a linked company may live outside their own tenant.
@@ -1426,17 +1438,23 @@ def company_detail_ajax(request, company_id):
 
 @login_required
 def my_companies(request):
-    """Personal 'My Companies' page — every company the current user created
-    (i.e. was the `owner_user` when the row was filed).
+    """Personal 'My Companies' page — companies the current user created
+    (``owner_user``) plus companies they've JOINED and been approved for
+    (linked via UserCompany, e.g. an approved profile join request or an
+    accepted partnership).
 
     Visible to consultants, franchise partners, coordinators, and business
     users. Read-only listing with status + location, plus a View action
     that hits the same company-detail drawer the rest of the app uses, so
-    we don't have to reimplement the modal here.
+    we don't have to reimplement the modal here. The Edit action is shown
+    only for companies the user owns — joined companies are read-only for
+    business users.
 
     Superusers fall through to the standard Company Database page — they
     don't have a personal "my companies" perspective.
     """
+    from accounts.models import UserCompany
+
     user = request.user
     if user.is_superuser:
         # No personal view for the platform admin — send them to the
@@ -1448,10 +1466,14 @@ def my_companies(request):
     if role_code not in allowed_roles:
         raise PermissionDenied()
 
+    # Companies the user owns OR is a member of (UserCompany link). distinct()
+    # collapses the row a user owns AND has a UserCompany link for.
+    joined_ids = UserCompany.objects.filter(user=user).values_list("company_id", flat=True)
     qs = (
         Company.all_objects
-        .filter(owner_user=user, is_deleted=False)
+        .filter(Q(owner_user=user) | Q(id__in=list(joined_ids)), is_deleted=False)
         .select_related("tenant", "consultant")
+        .distinct()
         .order_by("-created_at")
     )
 
@@ -1470,5 +1492,21 @@ def my_companies(request):
             "page_obj": page_obj,
             "total_count": qs.count(),
             "active_menu": "my-companies",
+            # Gates the "Add Company" button — same permission the Company
+            # Database page uses to show its create action.
+            "can_manage": has_permission(request.user, "company.manage"),
+            # Context for the in-page "Add Company" modal (shared create flow
+            # with the Company Database page). The form POSTs to the
+            # `companies` endpoint; on success the page reloads so the new row
+            # renders in this page's own format.
+            "form": CompanyForm(user=user),
+            "country_states": COUNTRY_STATES,
+            "is_business_user": role_code == "business_user",
+            # Superusers never reach this view (redirected above), so there's
+            # no tenant picker to seed — keep these blank for the modal markup.
+            "tenants": [],
+            "selected_tenant_id": "",
+            # Non-AJAX fallback target after a successful create.
+            "next": request.get_full_path(),
         },
     )

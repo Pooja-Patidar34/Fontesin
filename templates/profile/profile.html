@@ -145,6 +145,27 @@
         </table>
       </div>
     </div>
+
+    {% comment %}
+      Business users can join additional companies even after they already
+      have one. The request is sent to the target company's owner; on approval
+      it shows up in My Companies. (The same picker the no-company setup tab
+      uses — see _join_company_form.html.)
+    {% endcomment %}
+    {% if can_join_company %}
+    <div class="card">
+      <div class="card-header" style="border-bottom:1px solid #e8eef3;">
+        <h3 class="card-title"><i class="fas fa-search mr-2"></i>Join Another Company</h3>
+      </div>
+      <div class="card-body">
+        <p class="text-muted" style="font-size:.88rem; margin-bottom:20px;">
+          Request to join another company that's already on the platform. The
+          company owner approves or declines your request.
+        </p>
+        {% include "profile/_join_company_form.html" %}
+      </div>
+    </div>
+    {% endif %}
     {% else %}
     <!-- Company set-up: join existing OR create new.
          Coordinators, franchise partners, and consultants represent the
@@ -185,40 +206,7 @@
           {% if not role_code == "consultant" and not role_code == "coordinator" and not role_code == "franchise" %}
           <!-- JOIN PANE -->
           <div class="tab-pane fade {% if not open_create_company_tab %}show active{% endif %}" id="join-pane" role="tabpanel" aria-labelledby="join-tab">
-            <form method="POST" action="{% url 'profile' %}" id="join-company-form">
-              {% csrf_token %}
-              <input type="hidden" name="form_type" value="join_company">
-              <input type="hidden" name="company_id" id="join-company-id">
-
-              <div class="form-group" id="join-company-dropdown" style="position:relative;">
-                <label>Select a Company</label>
-                <input type="text" class="form-control" id="join-company-search"
-                       placeholder="Click to choose a company…" autocomplete="off" readonly>
-                <small class="text-muted">Click to open the list. Type to narrow down (up to 20 matches shown).</small>
-
-                <div id="join-company-results"
-                     style="position:absolute; top:100%; left:0; right:0; z-index:50;
-                            max-height:320px; overflow:auto;
-                            border:1px solid #e8eef3; border-radius:8px;
-                            background:#fff; box-shadow:0 6px 24px rgba(15,23,42,.12);
-                            margin-top:4px; display:none;">
-                  <div style="padding:18px; text-align:center; color:#64748b; font-size:.85rem;">
-                    <i class="fas fa-spinner fa-spin mr-1"></i> Loading companies…
-                  </div>
-                </div>
-              </div>
-
-              <div id="join-company-selected" style="display:none; background:#e0f0ff; border:1px solid #bfdbfe; border-radius:8px; padding:12px 14px; margin-bottom:16px;">
-                <div style="font-size:.78rem; color:#5F7383; text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px;">Selected</div>
-                <div id="join-company-selected-name" style="font-weight:700; color:#1B2E3F;"></div>
-                <div id="join-company-selected-meta" style="font-size:.82rem; color:#64748b;"></div>
-                <button type="button" class="btn btn-link p-0 mt-1" id="join-company-clear" style="font-size:.8rem;">Change selection</button>
-              </div>
-
-              <button type="submit" class="btn btn-primary" id="join-company-submit" disabled>
-                <i class="fas fa-link mr-1"></i> Join Company
-              </button>
-            </form>
+            {% include "profile/_join_company_form.html" %}
           </div>
           {% endif %}{# /join pane #}
 
@@ -541,7 +529,7 @@
   </div>
 </div>
 
-{% if not user_company %}
+{% if can_join_company %}
 <script>
 (function () {
   var dropdownWrap = document.getElementById('join-company-dropdown');

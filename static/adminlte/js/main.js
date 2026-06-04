@@ -55,14 +55,12 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Form submit handlers
-  const contactForm = document.getElementById('contact-form');
-  if (contactForm) {
-    contactForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      showNotification('Your message has been sent. We will get back to you shortly.', 'success');
-      contactForm.reset();
-    });
-  }
+  // NOTE: the contact form (#contact-form) deliberately has NO JS submit
+  // handler — it posts natively to the `contact` view so (a) the browser's
+  // built-in "required" validation popups fire on empty required fields and
+  // (b) the message is actually saved + the admin notified. A previous
+  // Pre-MVP stub here called e.preventDefault() and faked a success toast,
+  // which silently swallowed every real submission.
 
   const loginForm = document.getElementById('login-form');
   if (loginForm) {

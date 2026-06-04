@@ -1,0 +1,144 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}Messages{% endblock %}
+{% block breadcrumb %}Messages <span>/ Contact form</span>{% endblock %}
+
+{% block content %}
+<style>
+  .msg-card {
+    background: #fff;
+    border: 1px solid #e8eef3;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.03);
+  }
+  .msg-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 22px;
+    border-bottom: 1px solid #e8eef3;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .msg-header h3 { font-size: 1.05rem; font-weight: 800; color: #1B2E3F; margin: 0; }
+  .msg-header__sub { font-size: .82rem; color: #64748b; margin-top: 2px; }
+  .msg-actions .btn { border-radius: 8px; font-size: .8rem; font-weight: 600; padding: 7px 14px; }
+
+  .msg-unread-pill {
+    background: #2b7de9; color: #fff; font-size: .68rem; font-weight: 700;
+    padding: 2px 9px; border-radius: 100px; margin-left: 6px;
+  }
+
+  .msg-list { padding: 6px 0; }
+  .msg-row {
+    display: flex; align-items: flex-start; gap: 14px;
+    padding: 16px 22px; border-bottom: 1px solid #f1f5f9; transition: background .15s;
+  }
+  .msg-row:last-child { border-bottom: 0; }
+  .msg-row:hover { background: #f8fafc; }
+  .msg-row.unread { background: #f0f7ff; }
+  .msg-row.unread:hover { background: #e6f1fc; }
+
+  .msg-icon {
+    width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: #eef4ff; color: #2b7de9; font-size: 1rem;
+  }
+  .msg-body { flex: 1; min-width: 0; }
+  .msg-title { font-size: .92rem; font-weight: 700; color: #1B2E3F; }
+  .msg-sub { font-size: .8rem; color: #64748b; margin-top: 1px; }
+  .msg-text {
+    font-size: .86rem; color: #334155; margin-top: 8px; white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .msg-meta {
+    margin-top: 8px; font-size: .76rem; color: #94a3b8;
+    display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center;
+  }
+  .msg-meta a { color: #2b7de9; }
+
+  .msg-row-actions { display: flex; gap: 4px; flex-shrink: 0; }
+  .msg-icon-btn {
+    background: transparent; border: none; color: #94a3b8; font-size: .82rem;
+    padding: 6px 8px; border-radius: 6px; cursor: pointer; transition: .15s;
+  }
+  .msg-icon-btn:hover { background: #f1f5f9; color: #1B2E3F; }
+  .msg-icon-btn--danger:hover { background: #fee2e2; color: #b91c1c; }
+
+  .msg-empty { text-align: center; padding: 56px 24px; color: #94a3b8; }
+  .msg-empty .fa-2x { margin-bottom: 12px; color: #cbd5e1; }
+  .msg-empty__title { font-size: .95rem; font-weight: 700; color: #475569; margin-bottom: 4px; }
+</style>
+
+<div class="msg-card">
+  <div class="msg-header">
+    <div>
+      <h3>
+        <i class="fas fa-envelope mr-1" style="color:#2b7de9;"></i>
+        Messages
+        {% if unread_count %}<span class="msg-unread-pill">{{ unread_count }} unread</span>{% endif %}
+      </h3>
+      <div class="msg-header__sub">Enquiries submitted from the website contact form land here.</div>
+    </div>
+    {% if unread_count %}
+    <div class="msg-actions">
+      <form method="post" action="{% url 'contact-messages-mark-all-read' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-light">
+          <i class="fas fa-check-double mr-1"></i> Mark all read
+        </button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="msg-list">
+    {% for msg in contact_messages %}
+      <div class="msg-row {% if not msg.is_read %}unread{% endif %}">
+        <div class="msg-icon"><i class="fas fa-envelope-open-text"></i></div>
+
+        <div class="msg-body">
+          <div class="msg-title">
+            {{ msg.full_name }}
+            {% if msg.subject %}<span class="msg-unread-pill" style="background:#e2e8f0;color:#475569;">{{ msg.subject }}</span>{% endif %}
+          </div>
+          <div class="msg-sub">
+            <a href="mailto:{{ msg.email }}">{{ msg.email }}</a>
+            {% if msg.phone %} · {{ msg.phone }}{% endif %}
+            {% if msg.company_name %} · {{ msg.company_name }}{% endif %}
+          </div>
+          <div class="msg-text">{{ msg.message|linebreaksbr }}</div>
+          <div class="msg-meta">
+            <span><i class="far fa-clock mr-1"></i>{{ msg.created_at|date:"M j, Y · g:i a" }}</span>
+          </div>
+        </div>
+
+        <div class="msg-row-actions">
+          {% if not msg.is_read %}
+          <form method="post" action="{% url 'contact-message-mark-read' msg.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="msg-icon-btn" title="Mark as read">
+              <i class="fas fa-check"></i>
+            </button>
+          </form>
+          {% endif %}
+          <form method="post" action="{% url 'contact-message-delete' msg.id %}" style="display:inline;"
+                id="cmsg-delete-form-{{ msg.id }}">
+            {% csrf_token %}
+            <button type="button" class="msg-icon-btn msg-icon-btn--danger" title="Delete"
+                    onclick="appConfirm({kind:'danger', title:'Delete this message?', text:'This will permanently remove the contact message.', okLabel:'Delete', okIcon:'fa-trash', onConfirm:function(){document.getElementById('cmsg-delete-form-{{ msg.id }}').submit();}})">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+    {% empty %}
+      <div class="msg-empty">
+        <i class="fas fa-inbox fa-2x"></i>
+        <div class="msg-empty__title">No messages yet</div>
+        <div>Messages sent through the website contact form will show up here.</div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

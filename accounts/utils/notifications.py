@@ -199,6 +199,43 @@ def notify_consultants_new_user(new_user, *, language="", interest=""):
     return last
 
 
+def notify_contact_message(contact_msg):
+    """Broadcast a 'New contact message' note to every active superuser so the
+    enquiry shows up in their notifications inbox + badge, alongside the
+    dedicated Messages inbox. `contact_msg` is a ContactMessage row."""
+    from accounts.models import User
+
+    try:
+        link = reverse("contact-messages")
+    except NoReverseMatch:
+        link = ""
+
+    who = contact_msg.full_name
+    lines = [f"{who} sent a message via the website contact form."]
+    if contact_msg.subject:
+        lines.append(f"Subject: {contact_msg.subject}")
+    lines.append(f"Email: {contact_msg.email}")
+    if contact_msg.phone:
+        lines.append(f"Phone: {contact_msg.phone}")
+    if contact_msg.company_name:
+        lines.append(f"Company: {contact_msg.company_name}")
+    lines.append("")
+    lines.append(contact_msg.message)
+    body = "\n".join(lines)
+
+    superusers = User.objects.filter(is_superuser=True, is_active=True)
+    last = None
+    for su in superusers:
+        last = notify(
+            recipient=su,
+            kind=Notification.KIND_GENERIC,
+            title=f"New contact message from {who}",
+            body=body,
+            link_url=link,
+        )
+    return last
+
+
 def notify_coordinator_request_submitted(coord_request):
     """Broadcast a 'BU X requested coordinator role' note to every superuser
     so any of them can pick up the review."""

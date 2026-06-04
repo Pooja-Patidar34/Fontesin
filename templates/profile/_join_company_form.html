@@ -1,0 +1,72 @@
+{% comment %}
+  Reusable "request to join an existing company" picker. Posts to the profile
+  view (form_type=join_company), which forwards to create_join_request() —
+  the company owner then approves/declines from the Join Requests tab.
+
+  Rendered in two mutually exclusive places (the no-company setup tab and the
+  "Join Another Company" card for users who already have a company), so the
+  element IDs are shared and the picker JS binds to whichever is on the page.
+{% endcomment %}
+<form method="POST" action="{% url 'profile' %}" id="join-company-form">
+  {% csrf_token %}
+  <input type="hidden" name="form_type" value="join_company">
+  <input type="hidden" name="company_id" id="join-company-id">
+
+  <div class="form-group" id="join-company-dropdown" style="position:relative;">
+    <label>Select a Company</label>
+    <input type="text" class="form-control" id="join-company-search"
+           placeholder="Click to choose a company…" autocomplete="off" readonly>
+    <small class="text-muted">
+      Your request is sent to the company owner. Once they approve it, the
+      company appears in your <strong>My Companies</strong>.
+    </small>
+
+    <div id="join-company-results"
+         style="position:absolute; top:100%; left:0; right:0; z-index:50;
+                max-height:320px; overflow:auto;
+                border:1px solid #e8eef3; border-radius:8px;
+                background:#fff; box-shadow:0 6px 24px rgba(15,23,42,.12);
+                margin-top:4px; display:none;">
+      <div style="padding:18px; text-align:center; color:#64748b; font-size:.85rem;">
+        <i class="fas fa-spinner fa-spin mr-1"></i> Loading companies…
+      </div>
+    </div>
+  </div>
+
+  <div id="join-company-selected" style="display:none; background:#e0f0ff; border:1px solid #bfdbfe; border-radius:8px; padding:12px 14px; margin-bottom:16px;">
+    <div style="font-size:.78rem; color:#5F7383; text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px;">Selected</div>
+    <div id="join-company-selected-name" style="font-weight:700; color:#1B2E3F;"></div>
+    <div id="join-company-selected-meta" style="font-size:.82rem; color:#64748b;"></div>
+    <button type="button" class="btn btn-link p-0 mt-1" id="join-company-clear" style="font-size:.8rem;">Change selection</button>
+  </div>
+
+  <button type="submit" class="btn btn-primary" id="join-company-submit" disabled>
+    <i class="fas fa-paper-plane mr-1"></i> Send Join Request
+  </button>
+</form>
+
+{% if my_join_requests %}
+<div class="mt-4">
+  <div style="font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; color:#94a3b8; font-weight:700; margin-bottom:8px;">
+    Your join requests
+  </div>
+  <table class="table table-sm table-borderless mb-0" style="font-size:.85rem;">
+    <tbody>
+      {% for jr in my_join_requests %}
+      <tr>
+        <td style="padding-left:0;"><strong>{{ jr.company.name }}</strong></td>
+        <td class="text-right" style="padding-right:0;">
+          {% if jr.status == "pending" %}
+            <span class="badge badge-warning">Pending owner approval</span>
+          {% elif jr.status == "approved" %}
+            <span class="badge badge-success">Approved</span>
+          {% else %}
+            <span class="badge badge-secondary">Declined</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}

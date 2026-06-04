@@ -3001,3 +3001,142 @@ class PasswordResetTokenTests(BaseIAMTestCase):
             is_used=True,
         )
         self.assertFalse(token.is_valid())
+
+
+class CompanyJoinRequestFlowTests(TestCase):
+    """End-to-end: a business user requests to join an existing company from
+    their profile, the owner approves, and the company shows up for the BU."""
+
+    def setUp(self):
+        from django.test import Client
+        from accounts.models import CompanyJoinRequest
+        self.Client = Client
+        self.CompanyJoinRequest = CompanyJoinRequest
+
+        self.bu_role = Role.objects.create(name="Business User", code="business_user", tier_level=5)
+        perm, _ = Permission.objects.get_or_create(code="company.view", defaults={"description": "View"})
+        self.bu_role.permissions.add(perm)
+
+        self.owner_tenant = Tenant.objects.create(name="Owner Tenant", slug="owner-t")
+        self.owner = User.objects.create_user(
+            email="owner@test.com", password="x", role=self.bu_role,
+            tenant=self.owner_tenant, is_active=True,
+        )
+        self.company = Company.objects.create(
+            tenant=self.owner_tenant, name="Target Co", owner_user=self.owner, is_active=True,
+        )
+
+        # Joiner has a tenant (User.tenant is NOT NULL) but no primary company,
+        # so approval adopts the target company as their primary.
+        self.joiner_tenant = Tenant.objects.create(name="Joiner Tenant", slug="joiner-t")
+        self.joiner = User.objects.create_user(
+            email="joiner@test.com", password="x", role=self.bu_role,
+            tenant=self.joiner_tenant, is_active=True,
+        )
+
+    def _create(self, user, company, message=None):
+        from accounts.view.join_request import create_join_request
+        return create_join_request(user, company, message=message)
+
+    def _post(self, view, user, url, data, **kwargs):
+        """Call a view directly with a fully-formed POST request, bypassing the
+        plan/verification middleware that redirects business users in tests."""
+        from django.contrib.messages.storage.fallback import FallbackStorage
+        from django.contrib.sessions.middleware import SessionMiddleware
+        factory = RequestFactory()
+        request = factory.post(url, data)
+        request.user = user
+        SessionMiddleware(lambda r: None).process_request(request)
+        request.session.save()
+        setattr(request, "_messages", FallbackStorage(request))
+        return view(request, **kwargs)
+
+    def _get(self, view, user, url, **kwargs):
+        from django.contrib.messages.storage.fallback import FallbackStorage
+        from django.contrib.sessions.middleware import SessionMiddleware
+        factory = RequestFactory()
+        request = factory.get(url)
+        request.user = user
+        SessionMiddleware(lambda r: None).process_request(request)
+        request.session.save()
+        setattr(request, "_messages", FallbackStorage(request))
+        return view(request, **kwargs)
+
+    def test_request_creates_pending_and_notifies_owner(self):
+        from accounts.models import Notification
+        req = self._create(self.joiner, self.company)
+        self.assertEqual(req.status, self.CompanyJoinRequest.STATUS_PENDING)
+        self.assertTrue(
+            Notification.objects.filter(recipient=self.owner, related_company=self.company).exists()
+        )
+
+    def test_cannot_request_own_company(self):
+        from accounts.view.join_request import JoinRequestError
+        with self.assertRaises(JoinRequestError):
+            self._create(self.owner, self.company)
+
+    def test_duplicate_pending_blocked(self):
+        from accounts.view.join_request import JoinRequestError
+        self._create(self.joiner, self.company)
+        with self.assertRaises(JoinRequestError):
+            self._create(self.joiner, self.company)
+
+    def test_owner_approves_links_joiner_and_sets_primary(self):
+        from accounts.view.join_request import join_request_action
+        req = self._create(self.joiner, self.company)
+        resp = self._post(
+            join_request_action, self.owner,
+            reverse("join-request-action", args=[req.id]),
+            {"decision": "approve"}, request_id=req.id,
+        )
+        self.assertEqual(resp.status_code, 302)
+        req.refresh_from_db()
+        self.joiner.refresh_from_db()
+        self.assertEqual(req.status, self.CompanyJoinRequest.STATUS_APPROVED)
+        self.assertTrue(UserCompany.objects.filter(user=self.joiner, company=self.company).exists())
+        self.assertEqual(self.joiner.primary_company_id, self.company.id)
+
+    def test_my_companies_shows_joined_company(self):
+        from accounts.view.join_request import join_request_action
+        from accounts.view.company import my_companies
+        req = self._create(self.joiner, self.company)
+        self._post(
+            join_request_action, self.owner,
+            reverse("join-request-action", args=[req.id]),
+            {"decision": "approve"}, request_id=req.id,
+        )
+        resp = self._get(my_companies, self.joiner, reverse("my-companies"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Target Co")
+        self.assertContains(resp, "Member")
+
+    def test_non_owner_cannot_approve(self):
+        from accounts.view.join_request import join_request_action
+        from django.http import Http404
+        req = self._create(self.joiner, self.company)
+        stranger = User.objects.create_user(
+            email="stranger@test.com", password="x", role=self.bu_role,
+            tenant=self.joiner_tenant, is_active=True,
+        )
+        with self.assertRaises(Http404):
+            self._post(
+                join_request_action, stranger,
+                reverse("join-request-action", args=[req.id]),
+                {"decision": "approve"}, request_id=req.id,
+            )
+        req.refresh_from_db()
+        self.assertEqual(req.status, self.CompanyJoinRequest.STATUS_PENDING)
+
+    def test_decline_then_resend_reopens(self):
+        from accounts.view.join_request import join_request_action
+        req = self._create(self.joiner, self.company)
+        self._post(
+            join_request_action, self.owner,
+            reverse("join-request-action", args=[req.id]),
+            {"decision": "decline"}, request_id=req.id,
+        )
+        req.refresh_from_db()
+        self.assertEqual(req.status, self.CompanyJoinRequest.STATUS_DECLINED)
+        req2 = self._create(self.joiner, self.company)
+        self.assertEqual(req2.id, req.id)
+        self.assertEqual(req2.status, self.CompanyJoinRequest.STATUS_PENDING)

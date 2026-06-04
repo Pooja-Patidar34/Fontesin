@@ -1065,6 +1065,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
       idField.value = "";
       title.innerText = "Add Company";
+      // A brand-new company enters the certification queue on submit, so the
+      // create flow keeps the "Request Certification" wording (editing an
+      // existing company resets this to "Save" in populateCompanyModal).
+      if (saveBtn) saveBtn.innerHTML = '<i class="fas fa-certificate mr-1"></i> Request Certification';
 
       modal.find("input[type=text], input[type=url], input[type=email], input[type=number], input[type=tel]").val("");
       activeField.checked = true;
@@ -1231,6 +1235,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     title.innerText = mode === "view" ? "Company Details" : "Edit Company";
+    // Editing an existing company is a plain save — the "Request Certification"
+    // wording only fits the Add-Company (new) flow. (Hidden in view mode.)
+    if (saveBtn) saveBtn.innerHTML = '<i class="fas fa-save mr-1"></i> Save';
     setReadonly(mode === "view");
     // Lock the contact-person fields for a business user opening a company
     // they don't own — those fields belong to the owner / certifying
