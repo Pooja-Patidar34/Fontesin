@@ -460,9 +460,17 @@ def company_list(request):
         if form.is_valid():
             company = form.save(commit=False)
 
-            # Enforce tenant safety
+            # Enforce tenant safety: a non-superuser's company always belongs to
+            # their own tenant. Some accounts (e.g. consultants onboarded without
+            # one) have no tenant — fall back to the platform "Default" tenant
+            # (then any active tenant) so creation doesn't fail on the NOT NULL
+            # Company.tenant column with an unhelpful "Could not save" error.
             if not request.user.is_superuser:
-                company.tenant = request.user.tenant
+                company.tenant = (
+                    request.user.tenant
+                    or Tenant.objects.filter(name__iexact="Default", is_active=True).first()
+                    or Tenant.objects.filter(is_active=True).order_by("created_at").first()
+                )
 
             # Auto-link the creator as owner on new rows so the narrow-scope
             # listing (see GET branch below) shows the company they just added.

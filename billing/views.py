@@ -689,7 +689,7 @@ def maybe_create_commission_for_subscription(sub, now):
     rate = Decimal("10.00")
     commission_amount = (invoice.amount * rate / Decimal("100")).quantize(Decimal("0.01"))
 
-    ConsultantCommission.objects.get_or_create(
+    commission, created = ConsultantCommission.objects.get_or_create(
         consultant=consultant,
         subscription=sub,
         defaults={
@@ -703,6 +703,16 @@ def maybe_create_commission_for_subscription(sub, now):
             "status": "pending",
         },
     )
+
+    # On a brand-new commission, notify the consultant who earned it and every
+    # superuser. Wrapped so a notification hiccup never breaks commission
+    # creation / the payment-approval flow that calls this.
+    if created:
+        try:
+            from accounts.utils.notifications import notify_commission_earned
+            notify_commission_earned(commission)
+        except Exception:
+            pass
 
 
 # Back-compat alias for internal callers — keep the old underscore name

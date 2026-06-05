@@ -442,6 +442,12 @@ class CompanyForm(forms.ModelForm):
                 self.instance.tenant if self.instance and self.instance.tenant_id else user.tenant
             )
             self.fields["tenant"].widget = forms.HiddenInput()
+            # The view assigns the tenant for non-superusers (request.user.tenant,
+            # with a default-tenant fallback), so the form shouldn't block when
+            # the hidden field is empty — e.g. a consultant who has no tenant
+            # assigned. Without this, "Add Company" failed with the unhelpful
+            # "Tenant: This field is required." for tenant-less users.
+            self.fields["tenant"].required = False
 
     def clean_name(self):
         # Collapse runs of whitespace ("Acme  Corp" -> "Acme Corp") so the

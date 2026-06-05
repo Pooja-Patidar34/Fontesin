@@ -37,6 +37,54 @@ def notify(*, recipient, sender=None, kind=Notification.KIND_GENERIC,
         return None
 
 
+def notify_commission_earned(commission):
+    """Notify the consultant that they earned a commission, and notify every
+    active superuser too. `commission` is a ConsultantCommission row. Called
+    when a brand-new commission is created."""
+    from accounts.models import User
+
+    consultant = getattr(commission, "consultant", None)
+    if not consultant:
+        return None
+
+    try:
+        link = reverse("commissions")
+    except NoReverseMatch:
+        link = ""
+
+    amount = f"{commission.commission_amount} {commission.currency}"
+    bu = getattr(commission, "business_user", None)
+    bu_label = (
+        (f"{bu.first_name} {bu.last_name}".strip() or bu.email) if bu else "a business user"
+    )
+    company_name = commission.company.name if getattr(commission, "company_id", None) else ""
+    via = f" via {company_name}" if company_name else ""
+
+    # 1) The consultant who earned it.
+    last = notify(
+        recipient=consultant,
+        kind=Notification.KIND_GENERIC,
+        title=f"You earned a commission of {amount}",
+        body=f"A {amount} commission was created from {bu_label}'s subscription{via}.",
+        link_url=link,
+    )
+
+    # 2) Every active superuser (platform oversight).
+    consultant_label = (
+        f"{consultant.first_name} {consultant.last_name}".strip() or consultant.email
+    )
+    for su in User.objects.filter(is_superuser=True, is_active=True):
+        last = notify(
+            recipient=su,
+            sender=consultant,
+            kind=Notification.KIND_GENERIC,
+            title=f"Commission earned: {consultant_label} ({amount})",
+            body=f"{consultant_label} earned a {amount} commission from {bu_label}'s subscription{via}.",
+            link_url=link,
+        )
+    return last
+
+
 def notify_certification_request(company, *, submitted_by):
     """Broadcast a 'Company X requested certification' note to every active
     consultant. The first consultant to approve the request claims ownership;
