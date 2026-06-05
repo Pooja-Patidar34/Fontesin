@@ -899,9 +899,11 @@
           </li>
           {% endif %}
 
-          {% comment %} Join Requests — anyone who owns a company can receive requests
-             from business users wanting to join it. {% endcomment %}
-          {% if owns_any_company %}
+          {% comment %} Join Requests — company owners receive requests from
+             business users wanting to join their company; and any business user
+             can SEND join requests (from the Company Database "Join" action),
+             so they need this tab to track their own outgoing requests too. {% endcomment %}
+          {% if owns_any_company or is_business_user %}
           <li class="nav-item">
             <a href="{% url 'join-requests' %}"
                class="nav-link {% if active_menu == 'join-requests' %}active{% endif %}"

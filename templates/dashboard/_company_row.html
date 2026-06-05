@@ -26,6 +26,19 @@
     {% endif %}
   </td>
 
+  {% if is_business_user %}
+  {% comment %} All business-user plans: limited fields — Location (country /
+     region / city) instead of Status. The Action menu still renders below; the
+     dropdown enables/disables View & Connect per plan (Free: disabled;
+     Basic/Pro/Global: enabled), Join is enabled for all. {% endcomment %}
+  <td class="text-muted">
+    {% if company.city or company.state or company.region or company.country %}
+      {% if company.city %}{{ company.city }}{% endif %}{% if company.state %}{% if company.city %}, {% endif %}{{ company.state }}{% elif company.region %}{% if company.city %}, {% endif %}{{ company.region }}{% endif %}{% if company.country %}{% if company.city or company.state or company.region %}, {% endif %}{{ company.country }}{% endif %}
+    {% else %}
+      <span>—</span>
+    {% endif %}
+  </td>
+  {% else %}
   <td>
     {% if company.is_active %}
       <span class="badge badge-success">Active</span>
@@ -33,6 +46,7 @@
       <span class="badge badge-danger">Inactive</span>
     {% endif %}
   </td>
+  {% endif %}
 
   <td class="text-right pr-4">
 

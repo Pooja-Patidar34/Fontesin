@@ -147,10 +147,18 @@ def business_user_plan_scope_q(user):
     this with their linkage query, so None keeps the user's linked-company
     view rather than widening it to the whole directory.
     """
-    # Free plan: full worldwide visibility, no access (gated in templates).
+    # Free plan: companies in the user's REGISTERED country only, shown with a
+    # limited set of fields and no actions (read-only teaser — see the row /
+    # header templates gated on is_free_plan). Country is the only location
+    # signal captured at sign-up (User.country, an ISO code), matched across
+    # code + label + aliases via _country_match_q. No country set → no discovery
+    # scope (the user keeps their linkage-only view).
     plan_code = _plan_code_for_business_user(user)
     if plan_code == "free":
-        return Q(is_active=True)
+        country = (getattr(user, "country", "") or "").strip()
+        if not country:
+            return None
+        return _country_match_q(country) & Q(is_active=True)
 
     scope = get_user_geographic_scope(user)
     mode = scope.get("mode")
@@ -718,18 +726,10 @@ def company_list(request):
             scope_q = business_user_plan_scope_q(request.user)
 
             if scope_q is not None:
-                # Business users discover only VETTED companies: those that are
-                # certified, plus any company that has a consultant attached
-                # (consultant-handled records — visible regardless of cert
-                # status). Uncertified companies owned by other business users,
-                # coordinators, or franchise partners stay out of discovery.
-                # Their OWN + joined companies remain visible via linkage_q
-                # above, whatever their certification status.
-                if role_code == "business_user":
-                    scope_q = scope_q & (
-                        Q(certification_status__iexact="certified")
-                        | Q(consultant__isnull=False)
-                    )
+                # Business users discover all ACTIVE companies in their plan
+                # scope — certified and uncertified alike (scope_q already pins
+                # is_active=True). Certified companies are active too, so they're
+                # included. Their OWN + joined companies also show via linkage_q.
                 linkage_q = linkage_q | scope_q
 
             queryset = Company.objects.filter(linkage_q).distinct()
@@ -1329,18 +1329,14 @@ def company_detail_ajax(request, company_id):
         # Paid business users (basic / pro / global) can View any company in
         # their plan discovery scope — the always-on "View" button in the list
         # would otherwise 404 here for companies they aren't directly linked to.
-        # Mirrors the list scoping (certified or consultant-handled only); free
-        # plan stays limited to linked/connected companies.
+        # Mirrors the list scoping: all ACTIVE companies in scope (bu_scope_q
+        # already pins is_active=True). Free plan stays limited to linked/
+        # connected companies.
         plan_code = _plan_code_for_business_user(request.user)
         if plan_code in ("basic", "pro", "global"):
             bu_scope_q = business_user_plan_scope_q(request.user)
             if bu_scope_q is not None:
-                scope_q = scope_q | (
-                    bu_scope_q & (
-                        Q(certification_status__iexact="certified")
-                        | Q(consultant__isnull=False)
-                    )
-                )
+                scope_q = scope_q | bu_scope_q
 
         company = get_object_or_404(
             Company.objects.filter(scope_q).distinct(),

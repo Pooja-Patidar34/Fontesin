@@ -715,7 +715,17 @@
             <th>Tenant</th>
             {% endif %}
             <th>Industry</th>
+            {% if is_business_user %}
+            {% comment %} All business-user plans use the limited fields — Location instead
+               of Status. Plans differ only in scope + actions:
+                 Free   = country,  View/Connect disabled, Join enabled
+                 Basic  = country,  all actions enabled
+                 Pro    = region,   all actions enabled
+                 Global = worldwide, all actions enabled {% endcomment %}
+            <th>Location</th>
+            {% else %}
             <th>Status</th>
+            {% endif %}
             <th class="text-right pr-4">Action</th>
           </tr>
         </thead>
