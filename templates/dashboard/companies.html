@@ -49,10 +49,35 @@
     margin: 1.5rem auto !important;
   }
   #companyModal .modal-body {
-    max-height: calc(100vh - 200px) !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch;
     padding: 1rem 1.25rem !important;
+  }
+  /* The header / banner / body / footer live INSIDE the <form>, not directly
+     under .modal-content, which breaks Bootstrap's scrollable-modal flex layout
+     and clipped the footer (Save / Request Certification) on tall companies
+     (worse with the green "Certified by" banner). Make the form the flex column
+     that fills the content height: header/banner/footer stay pinned, the body
+     scrolls within the remaining space so the footer is always visible. */
+  #companyModal .modal-content {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  #companyModal #company-form {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  #companyModal #company-form > .modal-header,
+  #companyModal #company-form > #company-certified-by-banner,
+  #companyModal #company-form > .modal-footer { flex: 0 0 auto; }
+  #companyModal #company-view-body,
+  #companyModal #company-edit-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none !important;
   }
   #companyModal .form-group { margin-bottom: .75rem; }
   #companyModal label { font-size: .85rem; font-weight: 600; color: #495057; margin-bottom: .25rem; display: block; }
