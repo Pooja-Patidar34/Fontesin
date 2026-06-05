@@ -496,17 +496,20 @@ def company_list(request):
             elif (
                 company_id
                 and creator_role_code == "business_user"
-                and (company.certification_status or "").lower() not in ("certified", "pending")
+                and request.POST.get("request_certification")
+                and (company.certification_status or "").lower() != "certified"
             ):
                 # Business user edited a not-yet-certified company and clicked
-                # "Request Certification". This covers every non-certified,
-                # non-pending state — "uncertified" (incl. blank/legacy rows
-                # that only DISPLAY as Uncertified) and "rejected" resubmissions
-                # after a decline. Send it into the certification queue as a
-                # FRESH, unclaimed pending request (clear any previous declining
-                # consultant's claim) so every active consultant is notified and
-                # can review it — otherwise the request stayed put and nobody
-                # was told.
+                # the dedicated "Request Certification" button (the plain "Save"
+                # button omits this flag and just persists the edits without
+                # touching certification). Covers every non-certified state —
+                # "uncertified" (incl. blank/legacy rows that only DISPLAY as
+                # Uncertified), "rejected" resubmissions after a decline, AND
+                # "pending" (the BU updated their details and wants to re-send
+                # the request). Push it into the certification queue as a FRESH,
+                # unclaimed pending request (clearing any prior consultant claim)
+                # so every active consultant is (re)notified. Already-certified
+                # companies are excluded — there's nothing to request.
                 company.certification_status = "pending"
                 company.is_active = False
                 company.consultant = None
@@ -882,6 +885,12 @@ def company_list(request):
 
     pending_ids = set()
     accepted_ids = set()
+    # Join-request state (separate from the Connect/partnership flow above) so
+    # the "Join" action can flip to "Join requested" / "Joined" on rows the BU
+    # has already acted on. pending_join_ids = pending CompanyJoinRequest;
+    # member_company_ids = companies they're already a member of (UserCompany).
+    pending_join_ids = set()
+    member_company_ids = set()
     # Compute connection state for any BU (free / basic / pro / global) so the
     # Connect button can flip to "Connection requested" / "Connected" on rows
     # the user has already acted on. Previously this was gated to paid BUs
@@ -898,6 +907,22 @@ def company_list(request):
                 accepted_ids.add(company_id)
             elif status == CompanyConnection.STATUS_PENDING:
                 pending_ids.add(company_id)
+
+        from accounts.models import CompanyJoinRequest, UserCompany
+        pending_join_ids = set(
+            CompanyJoinRequest.objects
+            .filter(
+                user=request.user,
+                status=CompanyJoinRequest.STATUS_PENDING,
+                company_id__in=page_company_ids,
+            )
+            .values_list("company_id", flat=True)
+        )
+        member_company_ids = set(
+            UserCompany.objects
+            .filter(user=request.user, company_id__in=page_company_ids)
+            .values_list("company_id", flat=True)
+        )
 
     # Companies a paid business user (basic / pro / global) is allowed to
     # "View": companies they're directly linked to (owner, consultant,
@@ -950,6 +975,8 @@ def company_list(request):
         "search_q": search_q,
         "pending_ids": pending_ids,
         "accepted_ids": accepted_ids,
+        "pending_join_ids": pending_join_ids,
+        "member_company_ids": member_company_ids,
         "viewable_ids": viewable_ids,
         # Surface BU role to the modal so it can render the
         # "Maintained by consultant" helper text on the contact-name inputs.
@@ -1298,6 +1325,22 @@ def company_detail_ajax(request, company_id):
         cert_scope_q = consultant_certification_scope_q(request.user)
         if cert_scope_q is not None:
             scope_q = scope_q | cert_scope_q
+
+        # Paid business users (basic / pro / global) can View any company in
+        # their plan discovery scope — the always-on "View" button in the list
+        # would otherwise 404 here for companies they aren't directly linked to.
+        # Mirrors the list scoping (certified or consultant-handled only); free
+        # plan stays limited to linked/connected companies.
+        plan_code = _plan_code_for_business_user(request.user)
+        if plan_code in ("basic", "pro", "global"):
+            bu_scope_q = business_user_plan_scope_q(request.user)
+            if bu_scope_q is not None:
+                scope_q = scope_q | (
+                    bu_scope_q & (
+                        Q(certification_status__iexact="certified")
+                        | Q(consultant__isnull=False)
+                    )
+                )
 
         company = get_object_or_404(
             Company.objects.filter(scope_q).distinct(),

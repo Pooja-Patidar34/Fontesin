@@ -128,6 +128,31 @@ def create_join_request(user, company, message=None):
 
 
 @login_required
+@require_POST
+def company_join(request, company_id):
+    """Send a request to join an existing company straight from the Company
+    Database "Action" menu — mirrors the profile "Join Existing Company" flow.
+    Open to all business-user plans; owner approval is still required. All the
+    guard rules (already owner / already linked / pending request / role) live
+    in create_join_request and surface here as friendly messages."""
+    company = get_object_or_404(Company, id=company_id)
+    try:
+        create_join_request(request.user, company)
+        msg = (
+            f"Join request sent to {company.name}. "
+            f"You'll get access once the owner approves it."
+        )
+        if _is_ajax(request):
+            return JsonResponse({"ok": True, "message": msg})
+        messages.success(request, msg)
+    except JoinRequestError as e:
+        if _is_ajax(request):
+            return JsonResponse({"ok": False, "message": e.message}, status=e.status)
+        messages.error(request, e.message)
+    return redirect(request.META.get("HTTP_REFERER") or "companies")
+
+
+@login_required
 def join_requests_list(request):
     """Owner-facing "Join Requests" tab.
 

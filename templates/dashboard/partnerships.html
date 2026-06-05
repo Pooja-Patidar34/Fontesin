@@ -159,6 +159,7 @@
           <thead class="bg-light">
             <tr>
               <th>Company</th>
+              <th>Contact Person</th>
               <th>Status</th>
               <th>Sent</th>
               <th class="text-right pr-4">Action</th>
@@ -168,6 +169,27 @@
             {% for req in outgoing %}
             <tr data-connection-id="{{ req.id }}">
               <td><strong>{{ req.company.name }}</strong></td>
+              <td>
+                {% comment %} Contact person of the partnered company — only once
+                the partnership is accepted (you have access then). {% endcomment %}
+                {% if req.status == 'accepted' %}
+                  {% if req.company.contact_first_name or req.company.contact_last_name or req.company.contact_email %}
+                    <strong>{{ req.company.contact_first_name }} {{ req.company.contact_last_name }}</strong>
+                    {% if req.company.contact_email %}
+                    <div class="small text-muted">
+                      <a href="mailto:{{ req.company.contact_email }}">{{ req.company.contact_email }}</a>
+                    </div>
+                    {% endif %}
+                    {% if req.company.phone %}
+                    <div class="small text-muted">{{ req.company.phone }}</div>
+                    {% endif %}
+                  {% else %}
+                    <span class="text-muted small">Not provided</span>
+                  {% endif %}
+                {% else %}
+                  <span class="text-muted small">Available once connected</span>
+                {% endif %}
+              </td>
               <td>
                 <span class="pill pill-{{ req.status }}">{{ req.get_status_display }}</span>
               </td>

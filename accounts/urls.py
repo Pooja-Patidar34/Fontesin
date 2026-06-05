@@ -29,7 +29,7 @@ from .view.saved_filter import (
     company_connect,
 )
 from .view.partnership import partnership_list, partnership_action, partnership_cancel
-from .view.join_request import join_requests_list, join_request_action, join_request_cancel, company_leave
+from .view.join_request import join_requests_list, join_request_action, join_request_cancel, company_leave, company_join
 from .view.certification import certification_list, certification_action
 from .view.application_review import (
     application_pending,
@@ -105,6 +105,7 @@ urlpatterns = [
     path("join-requests/<uuid:request_id>/action/", join_request_action, name="join-request-action"),
     path("join-requests/<uuid:request_id>/cancel/", join_request_cancel, name="join-request-cancel"),
     path("companies/<uuid:company_id>/leave/", company_leave, name="company-leave"),
+    path("companies/<uuid:company_id>/join/", company_join, name="company-join"),
 
     # Certifications (consultants only)
     path("certifications/", certification_list, name="certifications"),

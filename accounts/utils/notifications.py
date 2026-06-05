@@ -119,18 +119,14 @@ def notify_certification_decision(company, *, decided_by, approved):
 
 
 def notify_consultants_new_user(new_user, *, language="", interest=""):
-    """Tell every active consultant in the new user's region that a new user
-    has registered, and surface the details they filled in at sign-up.
+    """Tell EVERY active consultant that a new user is now using the system,
+    and surface the details they filled in at sign-up so a consultant can
+    follow up. The notification links to the consultant Users directory where
+    they can search the user and open the full profile.
 
-    This runs in parallel with the existing super-admin notification on plan
-    selection — the consultant gets an early heads-up about a prospective
-    client in their territory the moment the account is created.
-
-    Region is matched on country (the only location signal captured at
-    registration — User.country holds an ISO code for both the new user and
-    the consultant). A consultant is "in the region" when their own
-    User.country matches the new user's. The new user themselves is excluded
-    so a consultant signing up never notifies themselves.
+    Broadcast platform-wide (no region scoping) — any consultant may pick up a
+    new user. The new user themselves is excluded so a consultant signing up
+    never notifies themselves.
 
     `language` and `interest` are read straight from the registration form by
     the caller and passed through here so the consultant sees them even though
@@ -138,19 +134,8 @@ def notify_consultants_new_user(new_user, *, language="", interest=""):
     """
     from accounts.models import User
 
-    country = (getattr(new_user, "country", "") or "").strip()
-    if not country:
-        # No region to route on — nothing to do. (Consultants are matched by
-        # country; without it we'd have to broadcast platform-wide, which is
-        # noise, so we skip instead.)
-        return None
-
     consultants = (
-        User.objects.filter(
-            role__code__iexact="consultant",
-            is_active=True,
-            country__iexact=country,
-        )
+        User.objects.filter(role__code__iexact="consultant", is_active=True)
         .exclude(id=new_user.id)
     )
     if not consultants.exists():
@@ -163,14 +148,19 @@ def notify_consultants_new_user(new_user, *, language="", interest=""):
     if getattr(new_user, "role", None) and new_user.role.name:
         role_label = new_user.role.name.replace("_", " ").title()
 
-    # Human-readable country name (fall back to the raw code).
-    from accounts.constants import CountryChoices
-    country_label = dict(CountryChoices.CHOICES).get(country.upper(), country)
+    # Human-readable country name (fall back to the raw code), if set.
+    country = (getattr(new_user, "country", "") or "").strip()
+    country_label = ""
+    if country:
+        from accounts.constants import CountryChoices
+        country_label = dict(CountryChoices.CHOICES).get(country.upper(), country)
 
-    # Compose a readable summary of everything the user filled in at sign-up.
+    # Compose a readable summary of everything the user filled in at sign-up so
+    # the consultant can check the registration details right from the inbox.
     lines = [
-        f"A new user has registered in your region ({country_label}).",
+        f"{user_label} is using the system.",
         "",
+        "Registration details:",
         f"Name: {user_label}",
         f"Email: {new_user.email}",
     ]
@@ -178,14 +168,24 @@ def notify_consultants_new_user(new_user, *, language="", interest=""):
         prefix = (getattr(new_user, "national_prefix", "") or "").strip()
         phone = f"+{prefix} {new_user.phone}".strip() if prefix else new_user.phone
         lines.append(f"Phone: {phone}")
-    lines.append(f"Country: {country_label}")
+    if country_label:
+        lines.append(f"Country: {country_label}")
     if role_label:
         lines.append(f"Registering as: {role_label}")
     if language:
         lines.append(f"Preferred language: {language}")
     if interest:
         lines.append(f"Interest: {interest}")
+    lines.append("")
+    lines.append("Open the Users tab to view the full profile.")
     body = "\n".join(lines)
+
+    # Link to the consultant "Users" directory so they can search + view the
+    # new user's full registration details.
+    try:
+        link = reverse("business-users")
+    except NoReverseMatch:
+        link = ""
 
     last = None
     for consultant in consultants:
@@ -193,8 +193,9 @@ def notify_consultants_new_user(new_user, *, language="", interest=""):
             recipient=consultant,
             sender=new_user,
             kind=Notification.KIND_NEW_USER,
-            title=f"New user registered in your region: {user_label}",
+            title=f"{user_label} is using the system",
             body=body,
+            link_url=link,
         )
     return last
 

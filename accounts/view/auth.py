@@ -317,12 +317,11 @@ def register_view(request):
                     is_primary=True
                 )
 
-        # Notify consultants in the new user's region, in parallel with the
-        # existing super-admin notification flow, and surface the details the
-        # user just filled in. Scoped to business-user signups — those are the
-        # prospective clients a regional consultant would follow up with;
-        # consultants/coordinators/franchises aren't leads for other
-        # consultants. Wrapped so a notification hiccup never breaks sign-up.
+        # Notify EVERY active consultant that a new business user is using the
+        # system, surfacing the details they just filled in (and a link to the
+        # Users directory to view the full profile). Scoped to business-user
+        # signups — those are the prospective clients a consultant follows up
+        # with. Wrapped so a notification hiccup never breaks sign-up.
         if role_name == "business_user":
             try:
                 from accounts.utils.notifications import notify_consultants_new_user

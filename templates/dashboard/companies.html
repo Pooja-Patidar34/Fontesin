@@ -80,6 +80,25 @@
   }
   #companyModal .section-title:first-child { margin-top: 0; }
 
+  /* Read-only "View" layout (label / value rows instead of input boxes). */
+  #companyModal .cv-title { font-size: 1.15rem; font-weight: 700; color: #1B2E3F; }
+  #companyModal .cv-subtitle { font-size: .85rem; color: #64748b; margin-bottom: 6px; }
+  #companyModal .cv-heading {
+    font-size: .7rem; text-transform: uppercase; letter-spacing: .06em;
+    color: #94a3b8; font-weight: 700; margin: 18px 0 6px;
+    border-bottom: 1px solid #eef2f6; padding-bottom: 4px;
+  }
+  #companyModal .cv-row {
+    display: flex; justify-content: space-between; gap: 14px;
+    padding: 7px 0; border-bottom: 1px solid #f4f6f8;
+  }
+  #companyModal .cv-label { color: #64748b; font-size: .82rem; flex: 0 0 auto; }
+  #companyModal .cv-value {
+    font-weight: 600; color: #1B2E3F; font-size: .85rem;
+    text-align: right; word-break: break-word;
+  }
+  #companyModal .cv-empty { color: #94a3b8; font-style: italic; }
+
   /* Suppress browser :invalid red while the user is still typing — only
      apply the red error styling after a submit attempt (Bootstrap's
      was-validated pattern). Fixes optional fields like FAX showing red
@@ -723,7 +742,12 @@
           <span id="company-certified-on" class="text-muted ml-1"></span>
         </div>
 
-        <div class="modal-body">
+        {% comment %} Read-only details view (shown for the "View" action instead of the
+           editable form below, so company details render as clean text rows,
+           not greyed input boxes). Populated by populateCompanyModal. {% endcomment %}
+        <div class="modal-body" id="company-view-body" style="display:none;"></div>
+
+        <div class="modal-body" id="company-edit-body">
 
           {% if request.user.is_superuser %}
           <div class="form-group">
@@ -989,6 +1013,20 @@
             <i class="fas fa-certificate mr-1"></i> Request Certification
             {% endif %}
           </button>
+
+          {% comment %} Edit-mode only: a business user editing a not-yet-certified
+          company they own gets a second button alongside "Save" to (also) send a
+          certification request to a consultant. Carries name=request_certification
+          so the backend distinguishes a plain save from a cert resubmission.
+          Shown/hidden by populateCompanyModal. {% endcomment %}
+          <button type="submit"
+                  id="request-cert-btn"
+                  name="request_certification"
+                  value="1"
+                  class="btn btn-success btn-sm ml-2"
+                  style="display:none;">
+            <i class="fas fa-certificate mr-1"></i> Request Certification
+          </button>
           {% endif %}
         </div>
 
@@ -1093,6 +1131,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
       idField.value = "";
       title.innerText = "Add Company";
+      // Ensure the editable form is shown (a prior View action may have
+      // swapped in the read-only details view).
+      var addViewBody = document.getElementById("company-view-body");
+      var addEditBody = document.getElementById("company-edit-body");
+      if (addViewBody) addViewBody.style.display = "none";
+      if (addEditBody) addEditBody.style.display = "block";
+      // Add mode uses the single create button — hide the edit-only
+      // "Request Certification" button.
+      var addReqCert = document.getElementById("request-cert-btn");
+      if (addReqCert) addReqCert.style.display = "none";
       // Button wording matches who's creating: superusers/consultants create
       // directly (no certification queue) → "Create Company"; business users
       // submit a certification request → "Request Certification". (Editing an
@@ -1151,6 +1199,67 @@ document.addEventListener("DOMContentLoaded", function () {
   // Auto-open Add Company modal when arriving via "Create Company" sidebar link (?new=1)
   if (new URLSearchParams(window.location.search).get("new") === "1") {
     document.getElementById("add-company-btn")?.click();
+  }
+
+  // Build the read-only "View" layout (clean label/value rows) from the
+  // company detail payload — used instead of the editable form for the View
+  // action so details don't render as greyed input boxes.
+  function renderCompanyView(c) {
+    function esc(s) {
+      return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+    function row(label, value) {
+      if (value === null || value === undefined || value === "") return "";
+      return '<div class="cv-row"><span class="cv-label">' + label + '</span>' +
+             '<span class="cv-value">' + esc(value) + '</span></div>';
+    }
+    function heading(t) { return '<div class="cv-heading">' + t + '</div>'; }
+
+    var loc = [c.city, c.state, c.country].filter(Boolean).join(", ");
+    var address = [c.address_line1, c.address_line2].filter(Boolean).join(", ");
+    var contactName = [c.contact_first_name, c.contact_last_name].filter(Boolean).join(" ");
+
+    var html = '<div class="cv-title">' + esc(c.name || "—") + '</div>';
+    if (c.classification) html += '<div class="cv-subtitle">' + esc(c.classification) + '</div>';
+
+    html += heading("Basic Info");
+    html += row("Legal Form", c.entity_type);
+    html += row("Registration No.", c.registration_id);
+    html += row("Year of Establishment", c.year_established);
+    html += row("Number of Employees", c.employee_count_range);
+    html += row("NACE Code", c.nace_code_display);
+    html += row("NAICS Code", c.naics_code_display);
+    html += row("Keywords", c.keywords);
+
+    html += heading("Address");
+    html += row("Address", address);
+    html += row("House Number", c.house_number);
+    html += row("District", c.district);
+    html += row("Region", c.region);
+    html += row("City / State", loc);
+    html += row("Postal Code", c.postal_code);
+
+    html += heading("Contact");
+    html += row("Contact Person", contactName);
+    html += row("Contact Email", c.contact_email);
+    html += row("Phone", c.phone);
+    html += row("Website", c.website);
+
+    if (c.certifying_consultant) {
+      html += heading("Certifying Consultant");
+      html += row("Name", c.certifying_consultant.full_name);
+      html += row("Email", c.certifying_consultant.email);
+      html += row("Phone", c.certifying_consultant.phone);
+    }
+
+    // Certification status is meaningless for consultant-created companies.
+    if (!c.owner_is_consultant) {
+      html += heading("Status");
+      html += row("Certification", c.certification_status);
+      if (typeof c.is_active === "boolean") html += row("Active", c.is_active ? "Yes" : "No");
+    }
+
+    return html;
   }
 
   function populateCompanyModal(c, mode) {
@@ -1294,6 +1403,36 @@ document.addEventListener("DOMContentLoaded", function () {
     // consultant. Runs AFTER setReadonly so the edit-mode unlock doesn't
     // re-enable them. The server enforces the same rule on save.
     applyContactLock(c, mode);
+
+    // Swap between the clean read-only details view (View action) and the
+    // editable form (Edit action).
+    var viewBody = document.getElementById("company-view-body");
+    var editBody = document.getElementById("company-edit-body");
+    if (mode === "view") {
+      if (viewBody) { viewBody.innerHTML = renderCompanyView(c); viewBody.style.display = "block"; }
+      if (editBody) editBody.style.display = "none";
+      if (saveBtn) saveBtn.style.display = "none";
+    } else {
+      if (viewBody) viewBody.style.display = "none";
+      if (editBody) editBody.style.display = "block";
+      if (saveBtn) saveBtn.style.display = "inline-block";
+    }
+
+    // Edit-mode "Request Certification" button — a business user editing a
+    // company that isn't certified yet gets it alongside "Save" ("Save"
+    // persists edits only; "Request Certification" also (re)sends the request
+    // to consultants). Available for uncertified / rejected AND pending (so the
+    // BU can edit and re-send), hidden only for already-certified companies and
+    // in view/add or for non-business users.
+    var reqCertBtn = document.getElementById("request-cert-btn");
+    if (reqCertBtn) {
+      var certSt = (c.certification_status || "uncertified").toLowerCase();
+      var showReqCert = (mode === "edit")
+        && {{ is_business_user|yesno:"true,false" }}
+        && certSt !== "certified";
+      reqCertBtn.style.display = showReqCert ? "inline-block" : "none";
+    }
+
     modal.modal("show");
   }
 

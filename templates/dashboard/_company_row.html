@@ -99,10 +99,13 @@
       {% if can_view %}
         {% if is_business_user %}
           {% comment %}
-            Every BU plan (free / basic / pro / global) needs an approved
-            partnership before they can View a company they don't own.
+            Paid plans (basic / pro / global) can View any company in their
+            list. Free plan still needs an approved partnership (or to own /
+            be linked to the company) before View unlocks — that's the upgrade
+            incentive. `viewable_ids` covers owned/linked/connected companies
+            so a free user can still view those.
           {% endcomment %}
-          {% if company.id in viewable_ids %}
+          {% if is_paid_business_user or company.id in viewable_ids %}
           <button class="dropdown-item view-company-btn text-success"
                   data-url="{% url 'company-detail' company.id %}">
             <i class="fas fa-eye mr-2"></i> View
@@ -110,7 +113,7 @@
           {% else %}
           <button type="button" class="dropdown-item text-success"
                   style="opacity:.45; cursor: not-allowed;" disabled
-                  title="Send a connection request and wait for approval to view this company.">
+                  title="Upgrade to a paid plan (or connect with this company) to view its details.">
             <i class="fas fa-eye mr-2"></i> View
           </button>
           {% endif %}
@@ -149,6 +152,29 @@
           {% csrf_token %}
           <button type="submit" class="dropdown-item text-success">
             <i class="fas fa-handshake mr-2"></i> Connect
+          </button>
+        </form>
+        {% endif %}
+
+        {% comment %}
+          Join — request to join this company (same flow as the profile's
+          "Join Existing Company"). Open to ALL business-user plans, unlike
+          Connect. Flips to "Join requested" / "Joined" once the user has a
+          pending request or is already a member. Owner approval still required.
+        {% endcomment %}
+        {% if company.id in member_company_ids %}
+        <button type="button" class="dropdown-item text-success" disabled>
+          <i class="fas fa-user-check mr-2"></i> Joined
+        </button>
+        {% elif company.id in pending_join_ids %}
+        <button type="button" class="dropdown-item text-muted" disabled>
+          <i class="fas fa-hourglass-half mr-2"></i> Join requested
+        </button>
+        {% else %}
+        <form method="post" action="{% url 'company-join' company.id %}" class="m-0">
+          {% csrf_token %}
+          <button type="submit" class="dropdown-item text-primary">
+            <i class="fas fa-user-plus mr-2"></i> Join
           </button>
         </form>
         {% endif %}

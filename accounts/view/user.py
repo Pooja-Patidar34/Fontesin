@@ -26,6 +26,7 @@ from accounts.models import (
     Company,
     AuditLog,
     Permission,
+    CompanyJoinRequest,
 )
 from accounts.utils.permissions import has_permission, get_effective_permissions
 from accounts.utils.ip import get_client_ip
@@ -291,31 +292,52 @@ def user_list(request):
                 else:
                     qs = qs.none()
         else:
-            own_company_ids = list(
-                request.user.usercompany_set.values_list("company_id", flat=True)
-            ) if hasattr(request.user, "usercompany_set") else []
+            # "Users assigned to your company" — the BU sees only genuine
+            # MEMBERS of the companies they belong to.
+            #
+            # Membership companies = primary company + companies they own +
+            # companies they JOINED via an approved join request. We deliberately
+            # do NOT use raw UserCompany here: an accepted partnership also
+            # creates a UserCompany row (partnership_action), and a partner is
+            # not a coworker — the partnered company's contact person belongs in
+            # the Partnerships tab, not this list. Basing membership on
+            # primary / owned / approved-join also means a company you both
+            # joined AND partnered with still correctly counts as yours.
+            own_company_ids = set()
             if request.user.primary_company_id:
-                own_company_ids.append(request.user.primary_company_id)
-            # Companies the user created/owns (or consults for) also count as
-            # "their company" — a freshly-created company sets owner_user /
-            # consultant on the row but may not have a UserCompany M2M yet.
-            own_company_ids.extend(
+                own_company_ids.add(request.user.primary_company_id)
+            own_company_ids |= set(
                 Company.objects.filter(
                     Q(consultant=request.user) | Q(owner_user=request.user)
                 ).values_list("id", flat=True)
             )
-            own_company_ids = [cid for cid in own_company_ids if cid]
+            own_company_ids |= set(
+                CompanyJoinRequest.objects.filter(
+                    user=request.user, status=CompanyJoinRequest.STATUS_APPROVED
+                ).values_list("company_id", flat=True)
+            )
+            own_company_ids = {cid for cid in own_company_ids if cid}
+
+            def _members_of(company_ids):
+                """Users who are MEMBERS of the given companies: their primary
+                company is one of them, OR they joined one via an approved join
+                request. (Partnership UserCompany rows are excluded by design,
+                so partners of these companies don't appear.)"""
+                ids = set(
+                    User.objects.filter(primary_company_id__in=company_ids)
+                    .values_list("id", flat=True)
+                )
+                ids |= set(
+                    CompanyJoinRequest.objects.filter(
+                        company_id__in=company_ids,
+                        status=CompanyJoinRequest.STATUS_APPROVED,
+                    ).values_list("user_id", flat=True)
+                )
+                return ids
 
             if own_company_ids:
-                # Drop tenant pre-filter: company linkage can be cross-tenant
-                # (registration lets you pick a company from any tenant), so
-                # gating by shared company alone is the correct scope here.
-                qs = User.objects.filter(
-                    Q(primary_company_id__in=own_company_ids)
-                    | Q(usercompany__company_id__in=own_company_ids)
-                ).distinct()
-                # Scope the Companies dropdown to the user's own companies too,
-                # so they can't filter/add to companies they don't own.
+                qs = User.objects.filter(id__in=_members_of(own_company_ids)).distinct()
+                # Scope the Companies dropdown to the user's own companies too.
                 companies = (
                     Company.objects.filter(id__in=own_company_ids, is_active=True)
                     .order_by("name")
@@ -330,10 +352,7 @@ def user_list(request):
             if company_id:
                 own_company_id_strs = {str(cid) for cid in own_company_ids}
                 if company_id in own_company_id_strs:
-                    qs = qs.filter(
-                        Q(primary_company_id=company_id)
-                        | Q(usercompany__company_id=company_id)
-                    ).distinct()
+                    qs = qs.filter(id__in=_members_of([company_id])).distinct()
                 else:
                     qs = qs.none()
 
