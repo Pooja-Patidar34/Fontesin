@@ -734,6 +734,17 @@ def maybe_create_commission_for_subscription(sub, now):
         },
     )
 
+    # Self-correct the stored company on an existing row. If the plan was
+    # approved BEFORE this plan's company was certified, the commission was
+    # first created against a fallback company (the primary). Once the correct
+    # per-plan company is known (same consultant), fix the stored company so the
+    # commissions table and the displayed name reflect the right company instead
+    # of the "last"/primary one.
+    if not created and commission.company_id != company.id:
+        commission.company = company
+        commission.business_user = business_user
+        commission.save(update_fields=["company", "business_user", "updated_at"])
+
     # On a brand-new commission, notify the consultant who earned it and every
     # superuser. Wrapped so a notification hiccup never breaks commission
     # creation / the payment-approval flow that calls this.
