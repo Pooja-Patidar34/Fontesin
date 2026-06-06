@@ -648,25 +648,64 @@ def commission_mark_paid(request, commission_id):
 
 def _commission_company_for_subscription(user, sub):
     """The company whose certifying consultant earns the commission for this
-    plan (`sub`): the FIRST company the user created DURING this plan's period
-    (created between the subscription's start and end dates). If the user
-    created no company during the period, fall back to their primary company.
+    plan (`sub`): the FIRST CERTIFIED company the user created during this plan's
+    window — from when this plan was initiated up to when the NEXT paid plan was
+    initiated. Falls back to the latest certified company the user had before
+    this plan (carried over), else the primary company.
 
-    This is what makes each plan attribute to "the first company created under
-    that plan" — e.g. a second/upgraded plan pays the consultant who certified
-    the first company created after that plan started, while the first plan
-    falls back to the user's (first/primary) company.
+    Why the window is keyed on the subscription's `created_at` (when the plan
+    was requested) and the NEXT subscription's `created_at`, NOT `start_date`:
+    payment_approve RESETS `start_date` to the approval moment, which is often
+    AFTER the new company was created (user requests the upgrade, creates the
+    company, admin approves later). Keying on `start_date` would then exclude the
+    new company and wrongly fall back to the old/primary one — which is exactly
+    why the commission kept showing the old company name. Using the stable
+    request-time boundaries fixes that.
+
+    "First in window" (not latest) is deliberate: a SECOND/additional company
+    created under the same plan is later than the plan's first company, so it
+    doesn't change the attribution — matching "additional company, same plan =>
+    no change".
     """
     from accounts.models import Company
 
-    qs = Company.objects.filter(owner_user=user)
-    if getattr(sub, "start_date", None):
-        qs = qs.filter(created_at__gte=sub.start_date)
-    if getattr(sub, "end_date", None):
-        qs = qs.filter(created_at__lte=sub.end_date)
-    first_in_period = qs.order_by("created_at").first()
-    if first_in_period:
-        return first_in_period
+    lower = getattr(sub, "created_at", None)
+    # When the user's NEXT paid plan was initiated — caps this plan's window so
+    # each plan claims only companies created during its own tenure.
+    next_sub = (
+        Subscription.objects
+        .filter(user=user, created_at__gt=sub.created_at)
+        .exclude(plan__code__iexact="free")
+        .order_by("created_at")
+        .first()
+    ) if lower else None
+
+    qs = Company.objects.filter(
+        owner_user=user, certification_status__iexact="certified"
+    )
+    if lower:
+        qs = qs.filter(created_at__gte=lower)
+    if next_sub:
+        qs = qs.filter(created_at__lt=next_sub.created_at)
+    first_in_window = qs.order_by("created_at").first()
+    if first_in_window:
+        return first_in_window
+
+    # No certified company created during this plan's window → carry over the
+    # latest certified company from before the plan, else the primary company.
+    if lower:
+        prior = (
+            Company.objects
+            .filter(
+                owner_user=user,
+                certification_status__iexact="certified",
+                created_at__lt=lower,
+            )
+            .order_by("-created_at")
+            .first()
+        )
+        if prior:
+            return prior
     return getattr(user, "primary_company", None)
 
 
@@ -733,6 +772,7 @@ def maybe_create_commission_for_subscription(sub, now):
     correct = ConsultantCommission.objects.filter(
         subscription=sub, consultant=consultant
     ).first()
+    company_corrected = False
     if correct:
         created = False
         commission = correct
@@ -740,6 +780,7 @@ def maybe_create_commission_for_subscription(sub, now):
             commission.company = company
             commission.business_user = business_user
             commission.save(update_fields=["company", "business_user", "updated_at"])
+            company_corrected = True
     else:
         ConsultantCommission.objects.filter(
             subscription=sub, status="pending"
@@ -758,10 +799,13 @@ def maybe_create_commission_for_subscription(sub, now):
         )
         created = True
 
-    # On a brand-new commission, notify the consultant who earned it and every
-    # superuser. Wrapped so a notification hiccup never breaks commission
-    # creation / the payment-approval flow that calls this.
-    if created:
+    # Notify the consultant + every superuser — on a brand-new commission, and
+    # also when an existing one's company was corrected (so the Notifications tab
+    # reflects the right company name, not the old/fallback one). Reassignments
+    # to a different consultant come through the `created` branch (new row), so
+    # the correct consultant is notified there. Wrapped so a notification hiccup
+    # never breaks commission creation / the payment-approval flow.
+    if created or company_corrected:
         try:
             from accounts.utils.notifications import notify_commission_earned
             notify_commission_earned(commission)
