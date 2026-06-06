@@ -145,12 +145,30 @@ def plans_view(request):
 def company_search_ajax(request):
     """Type-ahead search for the 'Join existing company' picker on the profile
     page. Limited to 20 hits, name LIKE — server-side so the dropdown scales
-    past a small directory."""
+    past a small directory.
+
+    Scoped to the user's PLAN, matching the Company Database:
+        free   → registered country
+        basic  → registered country
+        pro    → country's region (group of countries)
+        global → worldwide
+    So a business user can only request to join companies within their plan's
+    geographic reach. No plan scope (e.g. no plan / no country set) → no
+    joinable companies, mirroring the discovery list.
+    """
     q = (request.GET.get("q") or "").strip()
-    qs = Company.objects.filter(is_active=True)
+
+    # Reuse the Company Database's plan-based geographic scope (it already pins
+    # is_active=True). Local import avoids a circular import at module load.
+    from accounts.view.company import business_user_plan_scope_q
+    scope_q = business_user_plan_scope_q(request.user)
+    if scope_q is None:
+        return JsonResponse({"results": []})
+
+    qs = Company.objects.filter(scope_q)
     if q:
         qs = qs.filter(name__icontains=q)
-    qs = qs.order_by("name").values("id", "name", "city", "country", "classification")[:20]
+    qs = qs.order_by("name").values("id", "name", "city", "country", "classification").distinct()[:20]
 
     results = [
         {
