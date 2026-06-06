@@ -26,6 +26,7 @@ def admin_context(request):
     has_pending_coordinator_request = False
     bu_certification_status = ""
     bu_certification_consultant_name = ""
+    bu_certification_company_name = ""
     unread_message_count = 0
     unread_contact_message_count = 0
     pending_invoice_count = 0
@@ -104,7 +105,7 @@ def admin_context(request):
             # are still counted.
             if role_code == "consultant":
                 from django.db.models import Q as _Q
-                pending_certification_count = Company.all_objects.filter(
+                pending_certification_count = Company.objects.filter(
                     certification_status="pending"
                 ).filter(
                     _Q(consultant__isnull=True) | _Q(consultant=request.user)
@@ -136,21 +137,35 @@ def admin_context(request):
             # original creator and showing "Your company was certified by …"
             # is misleading — the joining user didn't file the request and
             # shouldn't be told they did.
-            if is_business_user and getattr(request.user, "primary_company_id", None):
-                primary = Company.all_objects.filter(
-                    id=request.user.primary_company_id
-                ).select_related("certified_by").first()
-                if primary and primary.owner_user_id == request.user.id:
-                    bu_certification_status = primary.certification_status or ""
-                    if primary.certified_by:
+            if is_business_user:
+                # Reflect the MOST RECENT certification event across the
+                # companies this BU OWNS (created) — not just the primary one —
+                # so certifying a SECOND company updates the banner instead of
+                # repeating the first/primary company's status. Ordered by the
+                # decision time (certified_at, else last update). Joined
+                # companies are excluded: the certification belongs to the
+                # company's creator, not someone who merely joined it.
+                owned = list(
+                    Company.objects
+                    .filter(
+                        owner_user=request.user,
+                        certification_status__in=["pending", "certified", "rejected"],
+                    )
+                    .select_related("certified_by")
+                )
+                if owned:
+                    latest = max(owned, key=lambda c: c.certified_at or c.updated_at)
+                    bu_certification_status = latest.certification_status or ""
+                    bu_certification_company_name = latest.name
+                    if latest.certified_by:
                         bu_certification_consultant_name = (
-                            f"{primary.certified_by.first_name} "
-                            f"{primary.certified_by.last_name}"
-                        ).strip() or primary.certified_by.email
+                            f"{latest.certified_by.first_name} "
+                            f"{latest.certified_by.last_name}"
+                        ).strip() or latest.certified_by.email
 
         # Superusers get the global pending count so admins can step in.
         if request.user.is_superuser:
-            pending_certification_count = Company.all_objects.filter(
+            pending_certification_count = Company.objects.filter(
                 certification_status="pending"
             ).count()
             # Red counter on the admin "Commissions" tab — all commission
@@ -276,6 +291,7 @@ def admin_context(request):
         "pending_requests_total": pending_coordinator_request_count + pending_application_count,
         "bu_certification_status": bu_certification_status,
         "bu_certification_consultant_name": bu_certification_consultant_name,
+        "bu_certification_company_name": bu_certification_company_name,
         "unread_message_count": unread_message_count,
         "unread_contact_message_count": unread_contact_message_count,
         "pending_invoice_count": pending_invoice_count,

@@ -987,7 +987,7 @@
           </div>
           <div style="flex:1;">
             <div style="font-weight:700; color:#78350f; font-size:.92rem;">
-              Your company is awaiting certification.
+              {% if bu_certification_company_name %}{{ bu_certification_company_name }}{% else %}Your company{% endif %} is awaiting certification.
             </div>
             <div style="font-size:.82rem; color:#78350f;">
               A consultant is reviewing your request. You'll see your company in the directory once it's approved.
@@ -1001,7 +1001,7 @@
           </div>
           <div style="flex:1;">
             <div style="font-weight:700; color:#065f46; font-size:.92rem;">
-              Your company was certified by {{ bu_certification_consultant_name }}.
+              {% if bu_certification_company_name %}{{ bu_certification_company_name }}{% else %}Your company{% endif %} was certified by {{ bu_certification_consultant_name }}.
             </div>
             <div style="font-size:.82rem; color:#065f46;">
               It is now visible in the public company directory.
@@ -1023,7 +1023,7 @@
           </div>
           <div style="flex:1;">
             <div style="font-weight:700; color:#991b1b; font-size:.92rem;">
-              Your certification request was declined.
+              Certification for {% if bu_certification_company_name %}{{ bu_certification_company_name }}{% else %}your company{% endif %} was declined.
             </div>
             <div style="font-size:.82rem; color:#991b1b;">
               You can update your company details and resubmit from your profile.

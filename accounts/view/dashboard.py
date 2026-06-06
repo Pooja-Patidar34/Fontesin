@@ -331,7 +331,7 @@ def dashboard(request):
             else:
                 next_month_start = month_start.replace(month=month_start.month + 1)
 
-            cert_qs = Company.all_objects.filter(
+            cert_qs = Company.objects.filter(
                 certified_by=user,
                 certification_status="certified",
                 certified_at__gte=month_start,
@@ -361,7 +361,7 @@ def dashboard(request):
             context.update({
                 "is_consultant_dashboard": True,
                 "consultant_cert_total_month": cert_qs.count(),
-                "consultant_cert_today": Company.all_objects.filter(
+                "consultant_cert_today": Company.objects.filter(
                     certified_by=user,
                     certification_status="certified",
                     certified_at__date=today,
@@ -517,7 +517,7 @@ def consultant_stats(request):
     from billing.models import ConsultantCommission
     from collections import Counter
 
-    cert_qs = Company.all_objects.filter(
+    cert_qs = Company.objects.filter(
         certified_by=target,
         certification_status="certified",
         certified_at__gte=start,

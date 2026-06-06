@@ -48,12 +48,14 @@
 {% if my_join_requests %}
 <div class="mt-4">
   <div style="font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; color:#94a3b8; font-weight:700; margin-bottom:8px;">
-    Your join requests
+    Your join requests <span style="color:#cbd5e1;">({{ my_join_requests|length }})</span>
   </div>
   <table class="table table-sm table-borderless mb-0" style="font-size:.85rem;">
     <tbody>
       {% for jr in my_join_requests %}
-      <tr>
+      {# Show the first 3; the rest are hidden behind "View more" so a long
+         list (e.g. 100 pending) stays manageable. #}
+      <tr class="jr-row"{% if forloop.counter > 3 %} data-jr-extra="1" style="display:none;"{% endif %}>
         <td style="padding-left:0;"><strong>{{ jr.company.name }}</strong></td>
         <td class="text-right" style="padding-right:0;">
           {% if jr.status == "pending" %}
@@ -68,5 +70,26 @@
       {% endfor %}
     </tbody>
   </table>
+
+  {% if my_join_requests|length > 3 %}
+  <button type="button" id="jr-view-more-btn" class="btn btn-link p-0 mt-1"
+          style="font-size:.8rem;" data-hidden="{{ my_join_requests|length|add:'-3' }}">
+    View more ({{ my_join_requests|length|add:'-3' }})
+  </button>
+  <script>
+    (function () {
+      var btn = document.getElementById("jr-view-more-btn");
+      if (!btn) return;
+      var expanded = false;
+      btn.addEventListener("click", function () {
+        expanded = !expanded;
+        document.querySelectorAll("[data-jr-extra]").forEach(function (r) {
+          r.style.display = expanded ? "" : "none";
+        });
+        btn.textContent = expanded ? "View less" : ("View more (" + btn.dataset.hidden + ")");
+      });
+    })();
+  </script>
+  {% endif %}
 </div>
 {% endif %}

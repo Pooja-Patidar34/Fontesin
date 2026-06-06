@@ -65,7 +65,7 @@ def certification_list(request):
         # — their primary — but the model allows extras). All three states
         # are surfaced as separate sections so the user can scan history
         # without filtering tabs.
-        owned = Company.all_objects.filter(owner_user=request.user)
+        owned = Company.objects.filter(owner_user=request.user)
 
         pending = owned.filter(
             certification_status="pending"
@@ -94,7 +94,7 @@ def certification_list(request):
 
     # Broadcast model: every consultant sees unclaimed pending requests plus
     # any they've personally claimed. First consultant to approve wins.
-    pending_qs = Company.all_objects.filter(certification_status="pending")
+    pending_qs = Company.objects.filter(certification_status="pending")
     if not request.user.is_superuser:
         pending_qs = pending_qs.filter(
             Q(consultant__isnull=True) | Q(consultant=request.user)
@@ -108,12 +108,12 @@ def certification_list(request):
     # personally certified / declined. This also fixes the case where a super
     # admin declines a request (no consultant FK is set on a superuser decline)
     # and it would otherwise never appear in the Declined tab.
-    certified_qs = Company.all_objects.filter(certification_status="certified")
+    certified_qs = Company.objects.filter(certification_status="certified")
     if not request.user.is_superuser:
         certified_qs = certified_qs.filter(certified_by=request.user)
     certified = certified_qs.select_related("tenant", "owner_user").order_by("-certified_at")
 
-    rejected_qs = Company.all_objects.filter(certification_status="rejected")
+    rejected_qs = Company.objects.filter(certification_status="rejected")
     if not request.user.is_superuser:
         rejected_qs = rejected_qs.filter(consultant=request.user)
     rejected = rejected_qs.select_related("tenant", "owner_user").order_by("-updated_at")
@@ -159,7 +159,7 @@ def certification_action(request, company_id):
     # pending request (broadcast model). The transaction + status filter make
     # this race-safe: if two consultants approve at once, only the first one
     # finds the row in pending state; the second gets a 404.
-    scope = Company.all_objects.filter(certification_status="pending")
+    scope = Company.objects.filter(certification_status="pending")
     if not request.user.is_superuser:
         scope = scope.filter(
             Q(consultant__isnull=True) | Q(consultant=request.user)
@@ -257,7 +257,7 @@ def pending_certification_count(user):
     role_code = (user.role.code or "").lower() if user.role else ""
     if not user.is_superuser and role_code != "consultant":
         return 0
-    qs = Company.all_objects.filter(certification_status="pending")
+    qs = Company.objects.filter(certification_status="pending")
     if not user.is_superuser:
         qs = qs.filter(Q(consultant__isnull=True) | Q(consultant=user))
     return qs.count()

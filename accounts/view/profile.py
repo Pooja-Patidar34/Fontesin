@@ -278,7 +278,7 @@ def profile_view(request):
 
                         full_name = f"{first_name} {last_name}".strip() or user.email
                         certified = (
-                            Company.all_objects
+                            Company.objects
                             .filter(certified_by=user)
                             .select_related("owner_user")
                         )
@@ -725,6 +725,7 @@ def profile_view(request):
         CompanyJoinRequest.objects
         .filter(user=user)
         .select_related("company")
+        .order_by("-created_at")
     )
 
     # Whether the "join an existing company" picker should be offered. Open to
