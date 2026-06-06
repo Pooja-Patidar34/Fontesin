@@ -656,12 +656,14 @@ def maybe_create_commission_for_subscription(sub, now):
     a paid plan *before* attaching a consultant-linked company never
     generate the commission, even after the linkage is established.
 
-    Eligibility rule (per current product policy): the company must have
-    been *created by a consultant*. Companies a business user filed
-    themselves don't generate commission, even if a consultant got
-    auto-routed onto them by certification routing — the consultant in
-    that case is only doing certification oversight, not onboarding the
-    customer, and isn't owed a referral fee.
+    Eligibility rule (current product policy): the commission goes to the
+    consultant who CERTIFIED the business user's company. So the business
+    user's primary company must be CERTIFIED, and its `certified_by` user must
+    be a consultant. The business user creates their own company, it goes to
+    the certification queue, and whichever consultant certifies it earns the
+    10% when the business user's paid plan is approved. (This replaces the old
+    "company created by a consultant" rule — the certifier is now paid, not the
+    creator.)
     """
     plan_code = (sub.plan.code or "").lower() if sub.plan_id else ""
     if plan_code in ("", "free"):
@@ -669,19 +671,22 @@ def maybe_create_commission_for_subscription(sub, now):
 
     business_user = sub.user
     primary_company = getattr(business_user, "primary_company", None)
-    if not primary_company or not primary_company.consultant_id:
+    if not primary_company:
         return
 
-    # Only consultant-created companies pay out. Skip the row entirely if
-    # the company's owner (creator) is a business user (or has no role).
-    owner = primary_company.owner_user
-    owner_role_code = ""
-    if owner and owner.role and owner.role.code:
-        owner_role_code = owner.role.code.lower()
-    if owner_role_code != "consultant":
+    # Pay the consultant who CERTIFIED the company. Only certified companies
+    # with a certifying consultant pay out.
+    if (primary_company.certification_status or "").lower() != "certified":
+        return
+    consultant = primary_company.certified_by
+    if not consultant:
+        return
+    consultant_role = (
+        (consultant.role.code or "").lower() if getattr(consultant, "role", None) else ""
+    )
+    if consultant_role != "consultant":
         return
 
-    consultant = primary_company.consultant
     invoice = Invoice.objects.filter(subscription=sub).order_by("-created_at").first()
     if not invoice:
         return

@@ -236,6 +236,18 @@ def certification_action(request, company_id):
     except Exception:
         pass
 
+    # Commission is owed to the consultant who CERTIFIED the company. If the
+    # company owner (business user) already has an approved paid plan, certifying
+    # their company now makes this consultant eligible — (re)try commission
+    # creation for the owner's paid subscriptions. Idempotent, so safe; also
+    # fires the consultant + super-admin commission notifications.
+    if decision == "approve" and company.owner_user_id:
+        try:
+            from billing.views import backfill_consultant_commissions_for_user
+            backfill_consultant_commissions_for_user(company.owner_user)
+        except Exception:
+            pass
+
     if _is_ajax(request):
         return JsonResponse({
             "ok": True,
