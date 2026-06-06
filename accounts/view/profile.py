@@ -169,6 +169,12 @@ def company_search_ajax(request):
 def profile_view(request):
     user = request.user
     user_company = user.primary_company
+    # A company soft-deleted by the admin must not appear ANYWHERE — including
+    # the profile "My Company" panel, which reads the primary_company FK
+    # directly (list views already filter is_deleted). Treat a deleted primary
+    # company as "no company" so the user sees the Set-Up / Join prompt instead.
+    if user_company and user_company.is_deleted:
+        user_company = None
 
     if request.method == "POST":
         form_type = request.POST.get("form_type", "")

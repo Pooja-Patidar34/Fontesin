@@ -1194,6 +1194,17 @@ def company_delete(request, company_id):
     company.is_active = False
     company.save(update_fields=["is_deleted", "is_active", "updated_at"])
 
+    # Detach the deleted company from users so it disappears EVERYWHERE it's read
+    # via a direct FK/M2M — e.g. the profile "My Company" panel reads
+    # primary_company directly (list views already filter is_deleted). Users
+    # whose primary company was this one are reset to no primary (they'll see the
+    # Set-Up / Join prompt). UserCompany membership rows are removed too. The
+    # owner / consultant / certified_by FKs are left intact for the audit +
+    # commission trail.
+    from accounts.models import User as _User, UserCompany as _UserCompany
+    _User.objects.filter(primary_company=company).update(primary_company=None)
+    _UserCompany.objects.filter(company=company).delete()
+
     # -------------------------------
     # AUDIT LOG
     # -------------------------------
