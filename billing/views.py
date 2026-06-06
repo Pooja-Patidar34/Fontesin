@@ -719,31 +719,44 @@ def maybe_create_commission_for_subscription(sub, now):
     rate = Decimal("10.00")
     commission_amount = (invoice.amount * rate / Decimal("100")).quantize(Decimal("0.01"))
 
-    commission, created = ConsultantCommission.objects.get_or_create(
-        consultant=consultant,
-        subscription=sub,
-        defaults={
-            "business_user": business_user,
-            "company": company,
-            "invoice": invoice,
-            "subscription_amount": invoice.amount,
-            "currency": invoice.currency,
-            "rate_percent": rate,
-            "commission_amount": commission_amount,
-            "status": "pending",
-        },
-    )
-
-    # Self-correct the stored company on an existing row. If the plan was
-    # approved BEFORE this plan's company was certified, the commission was
-    # first created against a fallback company (the primary). Once the correct
-    # per-plan company is known (same consultant), fix the stored company so the
-    # commissions table and the displayed name reflect the right company instead
-    # of the "last"/primary one.
-    if not created and commission.company_id != company.id:
-        commission.company = company
-        commission.business_user = business_user
-        commission.save(update_fields=["company", "business_user", "updated_at"])
+    # Reconcile this subscription's commission so the row reflects the CURRENT
+    # certifier + company for this plan. This matters when the plan is approved
+    # BEFORE the plan's company is certified: the commission first gets created
+    # against a fallback (the primary company / its certifier), then once the
+    # right company is certified we must fix it — including reassigning to a
+    # DIFFERENT consultant if that consultant certified the new company.
+    #
+    #   - Correct consultant already has the row → just fix a stale company name.
+    #   - Otherwise → delete any PENDING fallback row left on this subscription
+    #     for a different consultant, then create the correct one.
+    #   - PAID rows are never touched (a disbursed commission isn't revoked).
+    correct = ConsultantCommission.objects.filter(
+        subscription=sub, consultant=consultant
+    ).first()
+    if correct:
+        created = False
+        commission = correct
+        if commission.company_id != company.id:
+            commission.company = company
+            commission.business_user = business_user
+            commission.save(update_fields=["company", "business_user", "updated_at"])
+    else:
+        ConsultantCommission.objects.filter(
+            subscription=sub, status="pending"
+        ).exclude(consultant=consultant).delete()
+        commission = ConsultantCommission.objects.create(
+            consultant=consultant,
+            subscription=sub,
+            business_user=business_user,
+            company=company,
+            invoice=invoice,
+            subscription_amount=invoice.amount,
+            currency=invoice.currency,
+            rate_percent=rate,
+            commission_amount=commission_amount,
+            status="pending",
+        )
+        created = True
 
     # On a brand-new commission, notify the consultant who earned it and every
     # superuser. Wrapped so a notification hiccup never breaks commission
