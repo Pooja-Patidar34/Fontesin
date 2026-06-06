@@ -642,6 +642,15 @@ def commission_mark_paid(request, commission_id):
     commission.status = "paid"
     commission.paid_at = timezone.now()
     commission.save(update_fields=["status", "paid_at", "updated_at"])
+
+    # Now that it's PAID, send the "earned" notification to the consultant and
+    # every superuser (the pending notification went out at creation time).
+    try:
+        from accounts.utils.notifications import notify_commission_earned
+        notify_commission_earned(commission)
+    except Exception:
+        pass
+
     messages.success(request, f"Commission for {commission.consultant.email} marked as paid.")
     return redirect("commissions")
 
@@ -680,9 +689,13 @@ def _commission_company_for_subscription(user, sub):
         .first()
     ) if lower else None
 
-    qs = Company.objects.filter(
-        owner_user=user, certification_status__iexact="certified"
-    )
+    # NOTE: this window query is intentionally NOT filtered by certification
+    # status. The plan's company is "the first company created during the plan",
+    # certified or not. If it's still pending, maybe_create_commission_for_subscription
+    # holds the commission (its "must be certified" gate) — so NO commission
+    # shows until the consultant certifies it, instead of prematurely falling
+    # back to a previously-certified company.
+    qs = Company.objects.filter(owner_user=user)
     if lower:
         qs = qs.filter(created_at__gte=lower)
     if next_sub:
@@ -691,7 +704,7 @@ def _commission_company_for_subscription(user, sub):
     if first_in_window:
         return first_in_window
 
-    # No certified company created during this plan's window → carry over the
+    # No company created during this plan's window at all → carry over the
     # latest certified company from before the plan, else the primary company.
     if lower:
         prior = (
@@ -799,16 +812,17 @@ def maybe_create_commission_for_subscription(sub, now):
         )
         created = True
 
-    # Notify the consultant + every superuser — on a brand-new commission, and
-    # also when an existing one's company was corrected (so the Notifications tab
-    # reflects the right company name, not the old/fallback one). Reassignments
-    # to a different consultant come through the `created` branch (new row), so
-    # the correct consultant is notified there. Wrapped so a notification hiccup
-    # never breaks commission creation / the payment-approval flow.
+    # Notify the consultant + every superuser that a commission is PENDING — on
+    # a brand-new commission, and also when an existing one's company was
+    # corrected (so the Notifications tab reflects the right company name). The
+    # "earned" notification is sent later, when the super admin marks it PAID
+    # (see commission_mark_paid). Reassignments to a different consultant come
+    # through the `created` branch (new row), so the correct consultant is
+    # notified there. Wrapped so a notification hiccup never breaks the flow.
     if created or company_corrected:
         try:
-            from accounts.utils.notifications import notify_commission_earned
-            notify_commission_earned(commission)
+            from accounts.utils.notifications import notify_commission_pending
+            notify_commission_pending(commission)
         except Exception:
             pass
 

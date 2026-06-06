@@ -37,21 +37,9 @@ def notify(*, recipient, sender=None, kind=Notification.KIND_GENERIC,
         return None
 
 
-def notify_commission_earned(commission):
-    """Notify the consultant that they earned a commission, and notify every
-    active superuser too. `commission` is a ConsultantCommission row. Called
-    when a brand-new commission is created."""
-    from accounts.models import User
-
-    consultant = getattr(commission, "consultant", None)
-    if not consultant:
-        return None
-
-    try:
-        link = reverse("commissions")
-    except NoReverseMatch:
-        link = ""
-
+def _commission_labels(commission):
+    """Shared label bits for commission notifications."""
+    consultant = commission.consultant
     amount = f"{commission.commission_amount} {commission.currency}"
     bu = getattr(commission, "business_user", None)
     bu_label = (
@@ -59,30 +47,84 @@ def notify_commission_earned(commission):
     )
     company_name = commission.company.name if getattr(commission, "company_id", None) else ""
     via = f" via {company_name}" if company_name else ""
+    consultant_label = (
+        f"{consultant.first_name} {consultant.last_name}".strip() or consultant.email
+    )
+    return amount, bu_label, via, consultant_label
 
-    # 1) The consultant who earned it.
+
+def _notify_commission(commission, *, consultant_title, consultant_body, su_title, su_body):
+    """Send a commission notification to the consultant AND every active
+    superuser. Shared by the pending + earned (paid) notifications."""
+    from accounts.models import User
+
+    consultant = getattr(commission, "consultant", None)
+    if not consultant:
+        return None
+    try:
+        link = reverse("commissions")
+    except NoReverseMatch:
+        link = ""
+
     last = notify(
         recipient=consultant,
         kind=Notification.KIND_GENERIC,
-        title=f"You earned a commission of {amount}",
-        body=f"A {amount} commission was created from {bu_label}'s subscription{via}.",
+        title=consultant_title,
+        body=consultant_body,
         link_url=link,
-    )
-
-    # 2) Every active superuser (platform oversight).
-    consultant_label = (
-        f"{consultant.first_name} {consultant.last_name}".strip() or consultant.email
     )
     for su in User.objects.filter(is_superuser=True, is_active=True):
         last = notify(
             recipient=su,
             sender=consultant,
             kind=Notification.KIND_GENERIC,
-            title=f"Commission earned: {consultant_label} ({amount})",
-            body=f"{consultant_label} earned a {amount} commission from {bu_label}'s subscription{via}.",
+            title=su_title,
+            body=su_body,
             link_url=link,
         )
     return last
+
+
+def notify_commission_pending(commission):
+    """A commission was created and is awaiting payout — notify the consultant +
+    every superuser that a PENDING commission exists. The 'earned' notification
+    is sent later, when the super admin marks it paid (notify_commission_earned)."""
+    if not getattr(commission, "consultant", None):
+        return None
+    amount, bu_label, via, consultant_label = _commission_labels(commission)
+    return _notify_commission(
+        commission,
+        consultant_title=f"Commission pending — {amount}",
+        consultant_body=(
+            f"A {amount} commission from {bu_label}'s subscription{via} is pending. "
+            "You'll be notified once it's marked paid."
+        ),
+        su_title=f"Commission pending: {consultant_label} ({amount})",
+        su_body=(
+            f"{consultant_label} has a pending {amount} commission from "
+            f"{bu_label}'s subscription{via}."
+        ),
+    )
+
+
+def notify_commission_earned(commission):
+    """A commission was MARKED PAID — notify the consultant they've earned it,
+    and every superuser. Sent from commission_mark_paid."""
+    if not getattr(commission, "consultant", None):
+        return None
+    amount, bu_label, via, consultant_label = _commission_labels(commission)
+    return _notify_commission(
+        commission,
+        consultant_title=f"You earned a commission of {amount}",
+        consultant_body=(
+            f"Your {amount} commission from {bu_label}'s subscription{via} has been paid."
+        ),
+        su_title=f"Commission paid: {consultant_label} ({amount})",
+        su_body=(
+            f"You marked {consultant_label}'s {amount} commission from "
+            f"{bu_label}'s subscription{via} as paid."
+        ),
+    )
 
 
 def notify_certification_request(company, *, submitted_by):
