@@ -646,39 +646,64 @@ def commission_mark_paid(request, commission_id):
     return redirect("commissions")
 
 
+def _commission_company_for_subscription(user, sub):
+    """The company whose certifying consultant earns the commission for this
+    plan (`sub`): the FIRST company the user created DURING this plan's period
+    (created between the subscription's start and end dates). If the user
+    created no company during the period, fall back to their primary company.
+
+    This is what makes each plan attribute to "the first company created under
+    that plan" — e.g. a second/upgraded plan pays the consultant who certified
+    the first company created after that plan started, while the first plan
+    falls back to the user's (first/primary) company.
+    """
+    from accounts.models import Company
+
+    qs = Company.objects.filter(owner_user=user)
+    if getattr(sub, "start_date", None):
+        qs = qs.filter(created_at__gte=sub.start_date)
+    if getattr(sub, "end_date", None):
+        qs = qs.filter(created_at__lte=sub.end_date)
+    first_in_period = qs.order_by("created_at").first()
+    if first_in_period:
+        return first_in_period
+    return getattr(user, "primary_company", None)
+
+
 def maybe_create_commission_for_subscription(sub, now):
     """Create the consultant-commission row for `sub` if all conditions are met.
 
     Idempotent via the (consultant, subscription) unique constraint, so safe
     to call from both payment_approve (the live approval path) AND from a
-    backfill path that runs when the user belatedly picks a primary
-    company whose consultant FK is set. Without the latter, users who buy
-    a paid plan *before* attaching a consultant-linked company never
-    generate the commission, even after the linkage is established.
+    backfill path that runs when the user belatedly certifies / links a company.
 
-    Eligibility rule (current product policy): the commission goes to the
-    consultant who CERTIFIED the business user's company. So the business
-    user's primary company must be CERTIFIED, and its `certified_by` user must
-    be a consultant. The business user creates their own company, it goes to
-    the certification queue, and whichever consultant certifies it earns the
-    10% when the business user's paid plan is approved. (This replaces the old
-    "company created by a consultant" rule — the certifier is now paid, not the
-    creator.)
+    Eligibility rule (current product policy): each PLAN's commission goes to
+    the consultant who CERTIFIED the FIRST company the business user created
+    DURING that plan's period (see _commission_company_for_subscription; falls
+    back to the primary company when none was created in the period). The chosen
+    company must be certified and its `certified_by` must be a consultant — so a
+    business user creates a company, a consultant certifies it, and that
+    consultant earns 10% when the plan is approved.
     """
     plan_code = (sub.plan.code or "").lower() if sub.plan_id else ""
     if plan_code in ("", "free"):
         return
 
     business_user = sub.user
-    primary_company = getattr(business_user, "primary_company", None)
-    if not primary_company:
+    if not business_user:
         return
 
-    # Pay the consultant who CERTIFIED the company. Only certified companies
-    # with a certifying consultant pay out.
-    if (primary_company.certification_status or "").lower() != "certified":
+    # The company whose certifier is paid for THIS plan (first company created
+    # during the plan period, else the primary company).
+    company = _commission_company_for_subscription(business_user, sub)
+    if not company:
         return
-    consultant = primary_company.certified_by
+
+    # Pay the consultant who CERTIFIED that company. Only certified companies
+    # with a certifying consultant pay out.
+    if (company.certification_status or "").lower() != "certified":
+        return
+    consultant = company.certified_by
     if not consultant:
         return
     consultant_role = (
@@ -699,7 +724,7 @@ def maybe_create_commission_for_subscription(sub, now):
         subscription=sub,
         defaults={
             "business_user": business_user,
-            "company": primary_company,
+            "company": company,
             "invoice": invoice,
             "subscription_amount": invoice.amount,
             "currency": invoice.currency,

@@ -53,8 +53,6 @@
   <table class="table table-sm table-borderless mb-0" style="font-size:.85rem;">
     <tbody>
       {% for jr in my_join_requests %}
-      {# Show the first 3; the rest are hidden behind "View more" so a long
-         list (e.g. 100 pending) stays manageable. #}
       <tr class="jr-row"{% if forloop.counter > 3 %} data-jr-extra="1" style="display:none;"{% endif %}>
         <td style="padding-left:0;"><strong>{{ jr.company.name }}</strong></td>
         <td class="text-right" style="padding-right:0;">
