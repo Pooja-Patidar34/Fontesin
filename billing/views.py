@@ -706,6 +706,20 @@ def _commission_company_for_subscription(user, sub):
 
     # No company created during this plan's window at all → carry over the
     # latest certified company from before the plan, else the primary company.
+    #
+    # BUT a company that ALREADY backs a commission for another (earlier) plan
+    # must never be reused — otherwise the same company pays the consultant a
+    # second time on the next plan (e.g. BU upgrades Basic -> Pro WITHOUT
+    # creating a new company: the Basic company would wrongly generate a Pro
+    # commission too). If every carry-over candidate is already commissioned,
+    # this plan gets NO commission (return None) — which is correct, because no
+    # new company was created during this plan's tenure.
+    used_company_ids = set(
+        ConsultantCommission.objects
+        .filter(business_user=user, status__in=["pending", "paid"])
+        .exclude(subscription=sub)
+        .values_list("company_id", flat=True)
+    )
     if lower:
         prior = (
             Company.objects
@@ -714,12 +728,16 @@ def _commission_company_for_subscription(user, sub):
                 certification_status__iexact="certified",
                 created_at__lt=lower,
             )
+            .exclude(id__in=used_company_ids)
             .order_by("-created_at")
             .first()
         )
         if prior:
             return prior
-    return getattr(user, "primary_company", None)
+    primary = getattr(user, "primary_company", None)
+    if primary and primary.id in used_company_ids:
+        return None
+    return primary
 
 
 def maybe_create_commission_for_subscription(sub, now):
@@ -952,8 +970,10 @@ def payment_edit(request, subscription_id):
             )
             return _safe_next_or_default(request, "payments")
 
+    plan_changed = False
     if plan_id:
         plan = get_object_or_404(CommercialPlan, id=plan_id, is_active=True)
+        plan_changed = sub.plan_id != plan.id
         sub.plan = plan
         if sub.user:
             sub.user.subscription_plan = plan.code
@@ -989,6 +1009,29 @@ def payment_edit(request, subscription_id):
         sub.end_date = new_end_dt
 
     sub.save()
+
+    # If the plan changed, realign the unpaid invoice and any PENDING commission
+    # to the NEW plan's price. Without this, downgrading (e.g. Global -> Basic)
+    # leaves the commission at the old plan's rate, because the commission amount
+    # was copied from the original invoice and is never recomputed otherwise.
+    # Paid invoices/commissions are left untouched as historical records.
+    if plan_changed:
+        new_price = sub.plan.price
+        new_currency = (getattr(sub.plan, "currency", None) or "USD").upper()
+        Invoice.objects.filter(subscription=sub).exclude(status="paid").update(
+            amount=new_price, currency=new_currency
+        )
+        for comm in ConsultantCommission.objects.filter(subscription=sub, status="pending"):
+            comm.subscription_amount = new_price
+            comm.currency = new_currency
+            comm.commission_amount = (
+                new_price * comm.rate_percent / Decimal("100")
+            ).quantize(Decimal("0.01"))
+            comm.save(update_fields=[
+                "subscription_amount", "currency",
+                "commission_amount", "updated_at",
+            ])
+
     messages.success(request, f"Subscription for {sub.user.email} updated successfully.")
     return _safe_next_or_default(request, "payments")
 
