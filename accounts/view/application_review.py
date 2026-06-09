@@ -20,11 +20,17 @@ from django.views.decorators.http import require_POST
 from accounts.models import User, DueDiligence
 
 
-# Roles that go through super-admin application approval (see
-# RequireApplicationApprovalMiddleware.GATED_ROLE_CODES). Role codes are stored
-# case-insensitively in the DB (e.g. "COORDINATOR"), so match with iexact.
-GATED_ROLE_CODES = ("coordinator", "franchise")
-GATED_ROLE_Q = Q(role__code__iexact="coordinator") | Q(role__code__iexact="franchise")
+# Roles that go through super-admin application approval. Imported from the
+# middleware so the gate, the pending screen, and this review queue share ONE
+# source of truth — duplicating it here is exactly what caused a dashboard ⇆
+# application-pending redirect loop when consultants were added to the gate.
+# Role codes are stored case-insensitively in the DB, so match with iexact.
+from FontEsin.middleware.require_application_approval import GATED_ROLE_CODES
+
+_gated_role_qs = [Q(role__code__iexact=_c) for _c in GATED_ROLE_CODES]
+GATED_ROLE_Q = _gated_role_qs[0]
+for _q in _gated_role_qs[1:]:
+    GATED_ROLE_Q |= _q
 
 
 def _role_code(user):

@@ -26,6 +26,16 @@ from accounts.utils.mailer import send_otp_email
 
 logger = logging.getLogger("technical")
 
+# Franchise tiers offered at registration (franchise role only). Stored verbatim
+# on User.franchise_type (a free CharField). The first value is the canonical
+# label shown in the apply mask and the admin Applications queue.
+FRANCHISE_TYPES = (
+    "Master Franchise",
+    "National Franchise",
+    "Regional Franchise",
+    "Micro Franchise",
+)
+
 # def admin_login(request):
 #     if request.user.is_authenticated:
 #         return redirect("dashboard")
@@ -424,27 +434,22 @@ def apply_view(request):
         messages.error(request, "The application form is only available for consultants, coordinators, and franchise partners.")
         return redirect("dashboard")
 
-    # Pre-fill the Company Information section from the company the user picked
-    # at /register/ (primary_company). Fall back to any applied_* values already
-    # saved on the user (e.g. if they reopen the form after a partial submit).
-    pc = user.primary_company
-    prefill = {
-        "company_name": (pc.name if pc else "") or (user.applied_company_name or ""),
-        "company_reg_number": (pc.registration_id if pc else "") or (user.applied_company_reg_number or ""),
-        "country_of_incorporation": (pc.country if pc else "") or (user.applied_country_of_incorporation or ""),
-        "legal_form": (pc.classification if pc else "") or (user.applied_legal_form or ""),
-        "year_founded": user.applied_year_founded or "",
-        "num_employees": user.applied_num_employees or "",
-        "company_website": (pc.website if pc else "") or (user.applied_company_website or ""),
-    }
+    # The application is now just a region (single country) selection — plus a
+    # franchise-type choice for franchise partners. Everything else from the
+    # old multi-page form was dropped per product decision. The selected country
+    # ISO code drives the coordinator's territory scope (see
+    # coordinator_territory_q); we store it on territory_country (+ the readable
+    # label on target_region) at submit time.
+    selected_country = (user.territory_country or "").strip().upper()
 
     return render(request, "auth/apply.html", {
         "role_value": role_value,
         "role_label": role_label,
         "role_icon": role_icon,
-        "prefill": prefill,
-        "year_founded_min": 1800,
-        "year_founded_max": date.today().year,
+        "country_choices": CountryChoices.CHOICES,
+        "franchise_types": FRANCHISE_TYPES,
+        "selected_country": selected_country,
+        "selected_franchise_type": (user.franchise_type or "").strip(),
     })
 
 
@@ -460,229 +465,50 @@ def apply_submit(request):
         return redirect("login")
 
     role_code = user.role.code.lower()
+    is_franchise = "franchise" in role_code
     if not any(r in role_code for r in ('consultant', 'coordinator', 'franchise')):
-        messages.error(request, "The application form is only available for consultants, coordinators, and franchise partners.")
+        messages.error(request, "The application is only available for consultants, coordinators, and franchise partners.")
         return redirect("dashboard")
 
-    # Collect and strip fields
-    first_name = request.POST.get("first_name", "").strip()
-    last_name = request.POST.get("last_name", "").strip()
-    birth_date = request.POST.get("birth_date", "").strip()
-    nationality = request.POST.get("nationality", "").strip()
-    phone = request.POST.get("phone", "").strip()
-    linkedin_url = request.POST.get("linkedin_url", "").strip()
-    address_line1 = request.POST.get("address_line1", "").strip()
-
-    current_position = request.POST.get("current_position", "").strip()
-    years_of_experience = request.POST.get("years_of_experience", "").strip()
-    primary_industry = request.POST.get("primary_industry", "").strip()
-    professional_summary = request.POST.get("professional_summary", "").strip()
-
-    applied_company_name = request.POST.get("applied_company_name", "").strip()
-    applied_company_reg_number = request.POST.get("applied_company_reg_number", "").strip()
-    applied_country_of_incorporation = request.POST.get("applied_country_of_incorporation", "").strip()
-    applied_legal_form = request.POST.get("applied_legal_form", "").strip()
-    year_founded = request.POST.get("applied_year_founded", "").strip()
-    applied_num_employees = request.POST.get("applied_num_employees", "").strip()
-    applied_company_website = request.POST.get("applied_company_website", "").strip()
-
-    target_region = request.POST.get("target_region", "").strip()
+    # The application is now just a single-country region selection (plus a
+    # franchise-type choice for franchise partners). The country ISO code drives
+    # the coordinator's territory scope.
+    region_code = request.POST.get("region_country", "").strip().upper()
     franchise_type = request.POST.get("franchise_type", "").strip()
-    motivation = request.POST.get("motivation", "").strip()
-    network_connections = request.POST.get("network_connections", "").strip()
-    expected_companies = request.POST.get("expected_companies", "").strip()
-    reference_1 = request.POST.get("reference_1", "").strip()
-    reference_2 = request.POST.get("reference_2", "").strip()
 
-    # Validate required fields
-    required_fields = {
-        "First name": first_name,
-        "Last name": last_name,
-        "Date of birth": birth_date,
-        "Nationality": nationality,
-        "Phone": phone,
-        "Address": address_line1,
-        "Current position": current_position,
-        "Years of experience": years_of_experience,
-        "Primary industry": primary_industry,
-        "Professional summary": professional_summary,
-        "Motivation": motivation,
-        # Company Information — these end up on the Company row created below
-        # and become the user's primary_company. Name / Country / Legal Form
-        # already have HTML `required`; the Registration Number was previously
-        # optional but is now mandatory so the company is uniquely identifiable
-        # and admins have something to verify on the certification request.
-        "Company name": applied_company_name,
-        "Company registration number": applied_company_reg_number,
-        "Country of incorporation": applied_country_of_incorporation,
-        "Legal form": applied_legal_form,
-    }
-    missing = [name for name, value in required_fields.items() if not value]
-    if missing:
-        messages.error(request, f"{', '.join(missing)} {'is' if len(missing) == 1 else 'are'} required.")
+    valid_codes = {code for code, _ in CountryChoices.CHOICES}
+    if region_code not in valid_codes:
+        messages.error(request, "Please select your region (country).")
         return redirect("apply")
 
-    # Validate phone length and characters (7-20 chars, digits/+/-/space/parentheses only)
-    phone_digits = re.sub(r"\D", "", phone)
-    if not re.fullmatch(r"[\d+\-\s()]{7,20}", phone) or not (7 <= len(phone_digits) <= 15):
-        messages.error(request, "Phone number must be 7-15 digits (you may include +, spaces, dashes, or parentheses).")
+    if is_franchise and franchise_type not in FRANCHISE_TYPES:
+        messages.error(request, "Please select your franchise type.")
         return redirect("apply")
 
-    # Validate Year Founded if provided. Must be a 4-digit integer between
-    # 1800 and the current year — without this guard, "13" or "20240" would
-    # be saved verbatim because the int() cast below accepts both.
-    applied_year_founded_int = None
-    if year_founded:
-        if not re.fullmatch(r"\d{4}", year_founded):
-            messages.error(request, "Year Founded must be a 4-digit year (e.g. 2015).")
-            return redirect("apply")
-        yf = int(year_founded)
-        current_year = date.today().year
-        if yf < 1800 or yf > current_year:
-            messages.error(
-                request,
-                f"Year Founded must be between 1800 and {current_year}.",
-            )
-            return redirect("apply")
-        applied_year_founded_int = yf
+    # Map the ISO code to its readable label for display/notifications.
+    region_label = dict(CountryChoices.CHOICES).get(region_code, region_code)
 
-    # Age must be consistent with selected years of experience (min working age 16)
-    try:
-        dob = date.fromisoformat(birth_date)
-    except ValueError:
-        messages.error(request, "Enter a valid date of birth.")
-        return redirect("apply")
-
-    today = date.today()
-    age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-    exp_match = re.match(r"^\s*(\d+)", years_of_experience)
-    min_exp = int(exp_match.group(1)) if exp_match else 0
-    required_age = 16 + min_exp
-    if age < required_age:
-        messages.error(
-            request,
-            f"Date of Birth and Years of Experience are inconsistent. Minimum age of {required_age} is expected for the selected experience level.",
-        )
-        return redirect("apply")
-
-    # Validate declarations
-    if not request.POST.get("declared_truthful"):
-        messages.error(request, "You must declare that all information provided is truthful.")
-        return redirect("apply")
-    if not request.POST.get("accepted_terms"):
-        messages.error(request, "You must accept the terms and conditions.")
-        return redirect("apply")
-
-    # Assign validated fields
-    user.first_name = first_name
-    user.last_name = last_name
-    user.birth_date = birth_date or None
-    user.nationality = nationality
-    user.phone = phone
-    user.linkedin_url = linkedin_url
-    user.address_line1 = address_line1
-
-    user.current_position = current_position
-    user.years_of_experience = years_of_experience
-    user.primary_industry = primary_industry
-    user.professional_summary = professional_summary
-
-    user.applied_company_name = applied_company_name
-    user.applied_company_reg_number = applied_company_reg_number
-    user.applied_country_of_incorporation = applied_country_of_incorporation
-    user.applied_legal_form = applied_legal_form
-    user.applied_year_founded = applied_year_founded_int
-    user.applied_num_employees = applied_num_employees
-    user.applied_company_website = applied_company_website
-
-    user.target_region = target_region
-    user.franchise_type = franchise_type
-    user.motivation = motivation
-    user.network_connections = network_connections
-    user.expected_companies = expected_companies
-    user.reference_1 = reference_1
-    user.reference_2 = reference_2
-
-    # Application status
+    # territory_country (the explicit ISO code) is what coordinator_territory_q
+    # reads first, so the coordinator immediately sees the right region once
+    # approved. target_region keeps the human-readable label for the admin
+    # Applications queue and the submission notification.
+    user.territory_country = region_code
+    user.target_region = region_label
+    if is_franchise:
+        user.franchise_type = franchise_type
     user.application_status = "submitted"
+    user.save(update_fields=[
+        "territory_country", "target_region", "franchise_type",
+        "application_status", "updated_at",
+    ])
 
-    user.save()
-
-    # Create (or update) the Company row from applied_company_* so the consultant
-    # can see their own company in the Company Database tab.
-    if applied_company_name:
-        try:
-            company, _ = Company.objects.get_or_create(
-                tenant=user.tenant,
-                name=applied_company_name,
-                defaults={
-                    "registration_id": applied_company_reg_number or None,
-                    "country": applied_country_of_incorporation or None,
-                    "website": applied_company_website or None,
-                    "owner_user": user,
-                    "consultant": user,
-                },
-            )
-            update_fields = []
-            if not company.consultant_id:
-                company.consultant = user
-                update_fields.append("consultant")
-            if not company.owner_user_id:
-                company.owner_user = user
-                update_fields.append("owner_user")
-            if applied_company_reg_number and not company.registration_id:
-                company.registration_id = applied_company_reg_number
-                update_fields.append("registration_id")
-            if applied_country_of_incorporation and not company.country:
-                company.country = applied_country_of_incorporation
-                update_fields.append("country")
-            if applied_company_website and not company.website:
-                company.website = applied_company_website
-                update_fields.append("website")
-            if update_fields:
-                company.save(update_fields=update_fields)
-
-            if not user.primary_company_id:
-                user.primary_company = company
-                user.save(update_fields=["primary_company"])
-        except IntegrityError:
-            # Name collision within tenant that get_or_create couldn't resolve cleanly — skip.
-            pass
-
-    # Save Due Diligence data
-    DueDiligence.objects.update_or_create(
-        user=user,
-        defaults={
-            "criminal_offence": request.POST.get("dd1", "no"),
-            "criminal_offence_details": request.POST.get("dd1_details", ""),
-            "regulatory_sanctions": request.POST.get("dd2", "no"),
-            "regulatory_sanctions_details": request.POST.get("dd2_details", ""),
-            "is_pep": request.POST.get("dd3", "no"),
-            "insolvency_history": request.POST.get("dd4", "no"),
-            "insolvency_history_details": request.POST.get("dd4_details", ""),
-            "sufficient_financial_resources": request.POST.get("dd5", "yes"),
-            "pending_legal_disputes": request.POST.get("dd6", "no"),
-            "pending_legal_disputes_details": request.POST.get("dd6_details", ""),
-            "competitor_interest": request.POST.get("dd7", "no"),
-            "competitor_interest_details": request.POST.get("dd7_details", ""),
-            "contractual_obligations": request.POST.get("dd8", "no"),
-            "contractual_obligations_details": request.POST.get("dd8_details", ""),
-            "declared_truthful": request.POST.get("declared_truthful") == "on",
-            "declared_update": request.POST.get("declared_update") == "on",
-            "accepted_terms": request.POST.get("accepted_terms") == "on",
-            "consented_aml": request.POST.get("consented_aml") == "on",
-        },
-    )
-
-    # Coordinator & franchise applications require super-admin approval — notify
-    # every superuser so they can review it in the Applications queue. Scoped to
-    # those two roles (consultants aren't gated, so they don't need a review).
-    if any(r in role_code for r in ("coordinator", "franchise")):
-        try:
-            from accounts.utils.notifications import notify_application_submitted
-            notify_application_submitted(user)
-        except Exception:
-            pass
+    # All three staff roles now require super-admin approval — notify every
+    # superuser so they can review it in the Applications queue.
+    try:
+        from accounts.utils.notifications import notify_application_submitted
+        notify_application_submitted(user)
+    except Exception:
+        pass
 
     return redirect("apply-review")
 

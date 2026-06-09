@@ -742,12 +742,12 @@ def company_list(request):
 
             queryset = Company.objects.filter(linkage_q).distinct()
 
-            # Coordinators must not see UNCERTIFIED companies in the Company
-            # Database — only vetted (certified) companies are shown in their
-            # region. Scoped to coordinators; every other role is unaffected.
-            _role_code = (request.user.role.code or "").lower() if request.user.role else ""
-            if _role_code == "coordinator":
-                queryset = queryset.exclude(certification_status="uncertified")
+            # Coordinators see ALL active companies in their region — both
+            # certified and uncertified — per product decision (mirrors the
+            # business-user rule that active companies should be visible
+            # regardless of certification). The region scope (coordinator_
+            # territory_q) already constrains to is_active=True in their
+            # territory, so no extra certification filter is applied here.
 
         # Honor the ?tenant=<id> query param for non-superusers too. The
         # Tenants page links each company-count badge to /companies/?tenant=<id>

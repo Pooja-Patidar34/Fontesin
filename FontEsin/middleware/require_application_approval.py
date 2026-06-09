@@ -7,9 +7,11 @@ from django.urls import reverse, NoReverseMatch
 APPLY_REQUIRED_ROLE_CODES = ("consultant", "coordinator", "franchise")
 
 # Of those, the roles that ALSO need super-admin approval before they get
-# access. A consultant only has to SUBMIT the apply form (no approval); a
-# coordinator / franchise must submit AND be approved.
-GATED_ROLE_CODES = ("coordinator", "franchise")
+# access. All three staff roles now submit a region selection AND wait for the
+# super admin to approve/decline before they reach the dashboard. (Existing
+# consultants were grandfathered to "approved" in migration 0043 so the new
+# gate never locks out already-onboarded consultants.)
+GATED_ROLE_CODES = ("consultant", "coordinator", "franchise")
 
 # application_status that grants full access. Everything else keeps the
 # account on the apply form / pending-review screen.
@@ -106,8 +108,10 @@ class RequireApplicationApprovalMiddleware:
         status = (user.application_status or "")
         needs_approval = role_code in GATED_ROLE_CODES
 
-        # Full access once approved (all roles), or once submitted for roles
-        # that don't need approval (consultant submits → straight to work).
+        # Full access once approved. (All apply-required roles now need
+        # approval, so a bare "submitted" no longer grants access — the
+        # not-needs-approval branch is kept only as a defensive fallback for
+        # any future role that submits without requiring review.)
         if status == APPROVED_STATUS:
             return None
         if not needs_approval and status == "submitted":
