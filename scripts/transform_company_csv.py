@@ -23,6 +23,36 @@ RENAMES = {
     "ein": "registration_id",
 }
 
+# Columns to add (or overwrite) with a constant value on every row.
+CONSTANT_COLUMNS = {
+    "certification_status": "certified",
+}
+
+# The edit-form Country dropdown uses ISO codes; normalize the free-text name.
+COUNTRY_NAME_TO_CODE = {
+    "united states": "US", "usa": "US", "u.s.": "US", "us": "US",
+    "united states of america": "US",
+}
+
+# The edit-form State dropdown (COUNTRY_STATES["US"]) uses FULL state names;
+# the InfoGroup data uses 2-letter abbreviations. Map abbr -> full name so the
+# State dropdown can pre-select the value on edit.
+US_STATE_ABBR = {
+    "AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas",
+    "CA": "California", "CO": "Colorado", "CT": "Connecticut", "DE": "Delaware",
+    "DC": "District of Columbia", "FL": "Florida", "GA": "Georgia", "HI": "Hawaii",
+    "ID": "Idaho", "IL": "Illinois", "IN": "Indiana", "IA": "Iowa", "KS": "Kansas",
+    "KY": "Kentucky", "LA": "Louisiana", "ME": "Maine", "MD": "Maryland",
+    "MA": "Massachusetts", "MI": "Michigan", "MN": "Minnesota", "MS": "Mississippi",
+    "MO": "Missouri", "MT": "Montana", "NE": "Nebraska", "NV": "Nevada",
+    "NH": "New Hampshire", "NJ": "New Jersey", "NM": "New Mexico", "NY": "New York",
+    "NC": "North Carolina", "ND": "North Dakota", "OH": "Ohio", "OK": "Oklahoma",
+    "OR": "Oregon", "PA": "Pennsylvania", "RI": "Rhode Island", "SC": "South Carolina",
+    "SD": "South Dakota", "TN": "Tennessee", "TX": "Texas", "UT": "Utah",
+    "VT": "Vermont", "VA": "Virginia", "WA": "Washington", "WV": "West Virginia",
+    "WI": "Wisconsin", "WY": "Wyoming",
+}
+
 # business_type (InfoGroup, upper-cased) -> entity_type choice code (Legal Form).
 # Anything not listed but non-empty falls back to "other".
 ENTITY_TYPE_MAP = {
@@ -50,6 +80,9 @@ def main(inp, outp):
                 out_fields.insert(out_fields.index("business_type") + 1, "entity_type")
             else:
                 out_fields.append("entity_type")
+        for col in CONSTANT_COLUMNS:
+            if col not in out_fields:
+                out_fields.append(col)
 
         rows = []
         unmapped = {}
@@ -64,6 +97,16 @@ def main(inp, outp):
                 nr["entity_type"] = et
             else:
                 nr["entity_type"] = ""
+            for col, val in CONSTANT_COLUMNS.items():
+                nr[col] = val
+            # Normalize country -> ISO code and US state abbr -> full name so the
+            # edit-form Country/State dropdowns can pre-select them.
+            country_raw = (nr.get("country") or "").strip()
+            code = COUNTRY_NAME_TO_CODE.get(country_raw.lower(), country_raw)
+            nr["country"] = code
+            state_raw = (nr.get("state") or "").strip()
+            if code == "US" and state_raw.upper() in US_STATE_ABBR:
+                nr["state"] = US_STATE_ABBR[state_raw.upper()]
             rows.append(nr)
 
     with open(outp, "w", newline="", encoding="utf-8") as f:
