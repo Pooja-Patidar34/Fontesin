@@ -1239,7 +1239,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // Build the read-only "View" layout (clean label/value rows) from the
   // company detail payload — used instead of the editable form for the View
   // action so details don't render as greyed input boxes.
-  function renderCompanyView(c) {
+  function renderCompanyView(c, e) {
     function esc(s) {
       return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
@@ -1263,7 +1263,16 @@ document.addEventListener("DOMContentLoaded", function () {
     html += row("Year of Establishment", c.year_established);
     html += row("Number of Employees", c.employee_count_range);
     html += row("NACE Code", c.nace_code_display);
-    html += row("NAICS Code", c.naics_code_display);
+    // NAICS: prefer the linked NaicsCode FK, but fall back to the imported
+    // enrichment value. The bulk CSV importer populates enrichment.naics_code,
+    // not the FK, so without this fallback imported companies show no NAICS.
+    var naicsDisplay = c.naics_code_display;
+    if (!naicsDisplay && e && e.naics_code) {
+      naicsDisplay = e.naics_description
+        ? (e.naics_code + " — " + e.naics_description)
+        : e.naics_code;
+    }
+    html += row("NAICS Code", naicsDisplay);
     html += row("Keywords", c.keywords);
 
     html += heading("Address");
@@ -1297,7 +1306,7 @@ document.addEventListener("DOMContentLoaded", function () {
     return html;
   }
 
-  function populateCompanyModal(c, mode) {
+  function populateCompanyModal(c, mode, enrichment) {
     idField.value = c.id;
     if (tenantField) tenantField.value = c.tenant;
     nameField.value = c.name;
@@ -1444,7 +1453,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var viewBody = document.getElementById("company-view-body");
     var editBody = document.getElementById("company-edit-body");
     if (mode === "view") {
-      if (viewBody) { viewBody.innerHTML = renderCompanyView(c); viewBody.style.display = "block"; }
+      if (viewBody) { viewBody.innerHTML = renderCompanyView(c, enrichment); viewBody.style.display = "block"; }
       if (editBody) editBody.style.display = "none";
       if (saveBtn) saveBtn.style.display = "none";
     } else {
@@ -1503,7 +1512,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!res.ok) throw new Error("HTTP " + res.status);
         return res.json();
       })
-      .then(function (data) { populateCompanyModal(data.company, mode); })
+      .then(function (data) { populateCompanyModal(data.company, mode, data.enrichment); })
       .catch(function (err) { console.error(mode + " error:", err); });
   });
 

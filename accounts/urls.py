@@ -160,12 +160,14 @@ urlpatterns = [
     path("reset-password/", reset_password, name="reset-password"),
 
     #static pages
-    # Root URL serves the same home view, so visiting fontesin.com (without
-    # /home/) lands users on the home page directly. The named URL 'home'
-    # stays on /home/ so existing reverse('home') calls keep pointing at
-    # the canonical path.
-    path('', home, name='home_root'),
-    path('home/', home, name='home'),  # default landing page
+    # Canonical home is the bare root URL: fontesin.com/ serves index.html
+    # directly (no redirect). The 'home' name maps here, so every
+    # {% url 'home' %} / reverse('home') link keeps users on fontesin.com
+    # instead of bouncing to /home/.
+    path('', home, name='home'),
+    # Legacy /home/ path kept under 'home_root' so old bookmarks/links still
+    # resolve to the same page.
+    path('home/', home, name='home_root'),
     path('about/', about, name='about'),
     path('worldmap/', worldmap, name='worldmap'),
     path('career/', career, name='career'),
