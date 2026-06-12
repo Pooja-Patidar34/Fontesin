@@ -17,6 +17,22 @@ from django.core.management.base import BaseCommand
 from accounts.models import Company, NaicsCode
 
 
+# InfoGroup data uses NAICS 2017 codes; the NaicsCode lookup is seeded with
+# NAICS 2022. These are the 2017->2022 reclassifications seen in the import,
+# so the FK can still be linked to the current-edition code.
+NAICS_2017_TO_2022 = {
+    "315240": "315250",  # Women's/Girls'/Infants' Cut & Sew Apparel Mfg
+    "448120": "458110",  # Women's Clothing Stores -> Clothing Retailers
+    "453220": "459420",  # Gift, Novelty, and Souvenir Stores -> Retailers
+    "453310": "459510",  # Used Merchandise Stores -> Retailers
+    "453998": "459990",  # All Other Misc Store Retailers -> Retailers
+    "515112": "516110",  # Radio Stations -> Radio Broadcasting Stations
+    "519190": "519290",  # All Other Information Services
+    "523930": "523940",  # Investment Advice -> Portfolio Mgmt & Investment Advice
+    "541712": "541715",  # R&D Physical/Eng/Life Sciences (except Biotech)
+}
+
+
 class Command(BaseCommand):
     help = "Set Company.naics_code FK from CompanyEnrichment.naics_code."
 
@@ -51,6 +67,10 @@ class Command(BaseCommand):
             if not raw:
                 continue
             nc = code_map.get(raw)
+            if nc is None:
+                # Fall back to the 2017->2022 reclassification, then look up again.
+                mapped = NAICS_2017_TO_2022.get(raw)
+                nc = code_map.get(mapped) if mapped else None
             if nc is None:
                 unmatched[raw] = unmatched.get(raw, 0) + 1
                 continue
