@@ -1,14 +1,17 @@
 import uuid
 from decimal import Decimal
 from datetime import timedelta
+from unittest import mock
 
 from django.test import TestCase
+from django.db import DatabaseError
 from django.utils import timezone
-from rest_framework.test import APIClient
+from rest_framework.test import APIClient, APIRequestFactory
 
 from accounts.models import (
     Tenant, Company, User, Role, Permission,
     UserRole, UserCompany, UserCompanyRole,
+    NaceCode, NaicsCode,
 )
 from billing.models import CommercialPlan, Subscription
 
@@ -48,7 +51,12 @@ class BaseAPITestCase(TestCase):
             tenant=self.tenant,
         )
 
-        # Give user a plan with company_registry access
+        # Give user a plan with company_registry access.
+        # NOTE: migrations seed a "basic" plan whose `comparison` does NOT
+        # include `company_registry`, so get_or_create returns that seeded
+        # row and ignores `defaults`. We therefore force the feature flag on
+        # explicitly after fetching, otherwise the plan-gate in
+        # CompanyListAPIView.get rejects every non-superuser with 403.
         self.plan, _ = CommercialPlan.objects.get_or_create(
             code="basic",
             defaults={
@@ -57,6 +65,8 @@ class BaseAPITestCase(TestCase):
                 "comparison": {"company_registry": True},
             },
         )
+        self.plan.comparison = {**(self.plan.comparison or {}), "company_registry": True}
+        self.plan.save(update_fields=["comparison"])
         now = timezone.now()
         Subscription.objects.create(
             user=self.user, plan=self.plan, status="active",
@@ -417,3 +427,426 @@ class APIUtilTests(BaseAPITestCase):
             tenant=self.tenant, is_active=True,
         )
         self.assertFalse(can_manage_company(norole))
+
+    def test_can_manage_company_role_without_manage_perm(self):
+        # Role exists but lacks company.manage -> False (covers the final
+        # permissions.filter(...).exists() branch returning False).
+        from accounts_api.utils import can_manage_company
+        bare_role = Role.objects.create(name="util_bare", tier_level=1)
+        user = User.objects.create_user(
+            email="utilbare@test.com", password="test123",
+            tenant=self.tenant, is_active=True,
+        )
+        UserRole.objects.create(user=user, role=bare_role)
+        self.assertFalse(can_manage_company(user))
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# UserProfileAPIView tests
+# ═══════════════════════════════════════════════════════════════════════
+
+class UserProfileAPITests(BaseAPITestCase):
+
+    URL = "/api/profile/"
+
+    def test_unauthenticated_denied(self):
+        response = self.client.get(self.URL)
+        self.assertIn(response.status_code, [401, 403])
+
+    def test_authenticated_returns_profile(self):
+        UserCompany.objects.create(user=self.user, company=self.company)
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(self.URL)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data["status"])
+        data = response.data["data"]
+        self.assertEqual(data["email"], "apiuser@test.com")
+        self.assertEqual(str(data["tenant_id"]), str(self.tenant.id))
+        self.assertEqual(data["role"], "api_admin")
+
+    def test_profile_companies_field_currently_omitted(self):
+        # Characterization test for a known bug: UserProfileSerializer points
+        # `companies` at source="companies_through_user", which is NOT a
+        # relation/attribute on User. Because the field is read-only
+        # (required=False), DRF raises SkipField and silently drops it, so
+        # the linked companies never appear in the response. The endpoint
+        # still returns 200. If/when the serializer source is fixed, update
+        # this test to assert the company list is present.
+        UserCompany.objects.create(user=self.user, company=self.company)
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(self.URL)
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("companies", response.data["data"])
+
+    def test_profile_user_not_found_returns_404(self):
+        self.client.force_authenticate(user=self.user)
+        with mock.patch("accounts_api.view.profile.User.objects") as m:
+            chain = m.select_related.return_value.prefetch_related.return_value
+            chain.get.side_effect = User.DoesNotExist
+            response = self.client.get(self.URL)
+        self.assertEqual(response.status_code, 404)
+        self.assertFalse(response.data["status"])
+
+    def test_profile_database_error_returns_500(self):
+        self.client.force_authenticate(user=self.user)
+        with mock.patch("accounts_api.view.profile.User.objects") as m:
+            chain = m.select_related.return_value.prefetch_related.return_value
+            chain.get.side_effect = DatabaseError("boom")
+            response = self.client.get(self.URL)
+        self.assertEqual(response.status_code, 500)
+        self.assertIn("Database error", response.data["message"])
+
+    def test_profile_unexpected_error_returns_500(self):
+        self.client.force_authenticate(user=self.user)
+        with mock.patch("accounts_api.view.profile.User.objects") as m:
+            chain = m.select_related.return_value.prefetch_related.return_value
+            chain.get.side_effect = RuntimeError("unexpected")
+            response = self.client.get(self.URL)
+        self.assertEqual(response.status_code, 500)
+        self.assertFalse(response.data["status"])
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Industry code helper-function unit tests
+# ═══════════════════════════════════════════════════════════════════════
+
+class IndustryCodeHelperTests(TestCase):
+
+    def test_parse_int_valid(self):
+        from accounts_api.view.industry_codes import _parse_int
+        self.assertEqual(_parse_int("5", default=20), 5)
+
+    def test_parse_int_none_returns_default(self):
+        from accounts_api.view.industry_codes import _parse_int
+        self.assertEqual(_parse_int(None, default=20), 20)
+
+    def test_parse_int_non_numeric_returns_default(self):
+        from accounts_api.view.industry_codes import _parse_int
+        self.assertEqual(_parse_int("abc", default=7), 7)
+
+    def test_parse_int_clamps_to_lower_bound(self):
+        from accounts_api.view.industry_codes import _parse_int
+        self.assertEqual(_parse_int("0", default=20, lower=1, upper=100), 1)
+
+    def test_parse_int_clamps_to_upper_bound(self):
+        from accounts_api.view.industry_codes import _parse_int
+        self.assertEqual(_parse_int("9999", default=20, lower=1, upper=100), 100)
+
+    def test_serialize_without_parent(self):
+        from accounts_api.view.industry_codes import _serialize
+        node = NaceCode.objects.create(code="A", title="Agriculture", level=1)
+        result = _serialize(node)
+        self.assertEqual(result["code"], "A")
+        self.assertEqual(result["title"], "Agriculture")
+        self.assertEqual(result["level"], 1)
+        self.assertIsNone(result["parent_code"])
+        self.assertEqual(result["id"], str(node.id))
+
+    def test_serialize_with_parent(self):
+        from accounts_api.view.industry_codes import _serialize
+        parent = NaceCode.objects.create(code="A", title="Agriculture", level=1)
+        child = NaceCode.objects.create(
+            code="A01", title="Crop production", level=2, parent=parent
+        )
+        result = _serialize(child)
+        self.assertEqual(result["parent_code"], "A")
+
+    def test_search_filters_inactive_and_matches_prefix(self):
+        from accounts_api.view.industry_codes import _search
+        NaceCode.objects.create(code="A", title="Agriculture", level=1)
+        NaceCode.objects.create(code="A01", title="Crop production", level=2)
+        NaceCode.objects.create(
+            code="Z99", title="Hidden", level=1, is_active=False
+        )
+        results = _search(NaceCode, "A", None, None, 20)
+        codes = [n.code for n in results]
+        self.assertIn("A", codes)
+        self.assertIn("A01", codes)
+        self.assertNotIn("Z99", codes)
+
+    def test_search_matches_title_substring(self):
+        from accounts_api.view.industry_codes import _search
+        NaceCode.objects.create(code="A01", title="Crop production", level=2)
+        results = _search(NaceCode, "crop", None, None, 20)
+        self.assertEqual([n.code for n in results], ["A01"])
+
+    def test_search_filters_by_level(self):
+        from accounts_api.view.industry_codes import _search
+        NaceCode.objects.create(code="A", title="Agriculture", level=1)
+        NaceCode.objects.create(code="A01", title="Crop production", level=2)
+        results = _search(NaceCode, "", "2", None, 20)
+        self.assertEqual([n.code for n in results], ["A01"])
+
+    def test_search_invalid_level_is_ignored(self):
+        from accounts_api.view.industry_codes import _search
+        NaceCode.objects.create(code="A", title="Agriculture", level=1)
+        # Non-numeric level -> _parse_int returns None -> no level filter.
+        results = _search(NaceCode, "", "bad", None, 20)
+        self.assertEqual(len(results), 1)
+
+    def test_search_filters_by_parent_code(self):
+        from accounts_api.view.industry_codes import _search
+        parent = NaceCode.objects.create(code="A", title="Agriculture", level=1)
+        NaceCode.objects.create(
+            code="A01", title="Crop production", level=2, parent=parent
+        )
+        results = _search(NaceCode, "", None, "A", 20)
+        self.assertEqual([n.code for n in results], ["A01"])
+
+    def test_search_respects_limit(self):
+        from accounts_api.view.industry_codes import _search
+        for i in range(5):
+            NaceCode.objects.create(code=f"B0{i}", title=f"Code {i}", level=2)
+        results = _search(NaceCode, "B", None, None, 2)
+        self.assertEqual(len(results), 2)
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# NACE / NAICS list endpoint tests
+# ═══════════════════════════════════════════════════════════════════════
+
+class NaceCodeListAPITests(BaseAPITestCase):
+
+    URL = "/api/industry-codes/nace/"
+
+    def setUp(self):
+        super().setUp()
+        self.parent = NaceCode.objects.create(
+            code="A", title="Agriculture", level=1
+        )
+        self.child = NaceCode.objects.create(
+            code="A01", title="Crop production", level=2, parent=self.parent
+        )
+
+    def test_unauthenticated_denied(self):
+        response = self.client.get(self.URL)
+        self.assertIn(response.status_code, [401, 403])
+
+    def test_list_all(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(self.URL)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data["status"])
+        self.assertEqual(len(response.data["data"]), 2)
+
+    def test_search_by_code_prefix(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(self.URL, {"q": "A01"})
+        codes = [r["code"] for r in response.data["data"]]
+        self.assertEqual(codes, ["A01"])
+
+    def test_filter_by_level(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(self.URL, {"level": 2})
+        codes = [r["code"] for r in response.data["data"]]
+        self.assertEqual(codes, ["A01"])
+
+    def test_filter_by_parent_code(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(self.URL, {"parent_code": "A"})
+        codes = [r["code"] for r in response.data["data"]]
+        self.assertEqual(codes, ["A01"])
+
+    def test_limit(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(self.URL, {"limit": 1})
+        self.assertEqual(len(response.data["data"]), 1)
+
+
+class NaicsCodeListAPITests(BaseAPITestCase):
+
+    URL = "/api/industry-codes/naics/"
+
+    def setUp(self):
+        super().setUp()
+        self.parent = NaicsCode.objects.create(
+            code="11", title="Agriculture", level=2
+        )
+        self.child = NaicsCode.objects.create(
+            code="111", title="Crop Production", level=3, parent=self.parent
+        )
+
+    def test_unauthenticated_denied(self):
+        response = self.client.get(self.URL)
+        self.assertIn(response.status_code, [401, 403])
+
+    def test_list_all(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(self.URL)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data["data"]), 2)
+
+    def test_search_by_title(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(self.URL, {"q": "crop"})
+        codes = [r["code"] for r in response.data["data"]]
+        self.assertEqual(codes, ["111"])
+
+    def test_filter_by_parent_code(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(self.URL, {"parent_code": "11"})
+        codes = [r["code"] for r in response.data["data"]]
+        self.assertEqual(codes, ["111"])
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Company view error-handling (DatabaseError / unexpected Exception) tests
+# ═══════════════════════════════════════════════════════════════════════
+
+class CompanyViewErrorHandlingTests(BaseAPITestCase):
+
+    SERIALIZER = "accounts_api.view.companies.CompanyCreateUpdateSerializer"
+
+    # ---- GET ----
+    def test_list_database_error_returns_500(self):
+        self.client.force_authenticate(user=self.superadmin)
+        with mock.patch("accounts_api.view.companies.Company.objects") as m:
+            m.select_related.side_effect = DatabaseError("boom")
+            response = self.client.get("/api/companies/")
+        self.assertEqual(response.status_code, 500)
+        self.assertIn("Database error", response.data["message"])
+
+    def test_list_unexpected_error_returns_500(self):
+        self.client.force_authenticate(user=self.superadmin)
+        with mock.patch("accounts_api.view.companies.Company.objects") as m:
+            m.select_related.side_effect = RuntimeError("boom")
+            response = self.client.get("/api/companies/")
+        self.assertEqual(response.status_code, 500)
+        self.assertIn("Unable to fetch companies", response.data["message"])
+
+    # ---- POST ----
+    def _mock_serializer(self, save_side_effect):
+        patcher = mock.patch(self.SERIALIZER)
+        S = patcher.start()
+        self.addCleanup(patcher.stop)
+        inst = S.return_value
+        inst.is_valid.return_value = True
+        inst.save.side_effect = save_side_effect
+        return S
+
+    def test_create_database_error_returns_500(self):
+        self.client.force_authenticate(user=self.superadmin)
+        self._mock_serializer(DatabaseError("boom"))
+        response = self.client.post(
+            "/api/companies/", {"name": "X", "tenant": str(self.tenant.id)}
+        )
+        self.assertEqual(response.status_code, 500)
+        self.assertIn("Database error", response.data["message"])
+
+    def test_create_unexpected_error_returns_500(self):
+        self.client.force_authenticate(user=self.superadmin)
+        self._mock_serializer(RuntimeError("boom"))
+        response = self.client.post(
+            "/api/companies/", {"name": "X", "tenant": str(self.tenant.id)}
+        )
+        self.assertEqual(response.status_code, 500)
+        self.assertIn("Unable to create company", response.data["message"])
+
+    # ---- PUT ----
+    def test_update_database_error_returns_500(self):
+        self.client.force_authenticate(user=self.superadmin)
+        self._mock_serializer(DatabaseError("boom"))
+        response = self.client.put(
+            f"/api/companies/{self.company.id}/", {"name": "X"}
+        )
+        self.assertEqual(response.status_code, 500)
+        self.assertIn("Database error", response.data["message"])
+
+    def test_update_unexpected_error_returns_500(self):
+        self.client.force_authenticate(user=self.superadmin)
+        self._mock_serializer(RuntimeError("boom"))
+        response = self.client.put(
+            f"/api/companies/{self.company.id}/", {"name": "X"}
+        )
+        self.assertEqual(response.status_code, 500)
+        self.assertIn("Unable to update company", response.data["message"])
+
+    # ---- DETAIL GET ----
+    def test_detail_database_error_returns_500(self):
+        self.client.force_authenticate(user=self.superadmin)
+        with mock.patch("accounts_api.view.companies.Company.objects") as m:
+            m.select_related.return_value.get.side_effect = DatabaseError("boom")
+            response = self.client.get(f"/api/companies/{self.company.id}/detail/")
+        self.assertEqual(response.status_code, 500)
+        self.assertIn("Database error", response.data["message"])
+
+    def test_detail_unexpected_error_returns_500(self):
+        self.client.force_authenticate(user=self.superadmin)
+        with mock.patch("accounts_api.view.companies.Company.objects") as m:
+            m.select_related.return_value.get.side_effect = RuntimeError("boom")
+            response = self.client.get(f"/api/companies/{self.company.id}/detail/")
+        self.assertEqual(response.status_code, 500)
+        self.assertIn("Unable to fetch company details", response.data["message"])
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# CompanyCreateUpdateSerializer.validate_tenant tests
+# ═══════════════════════════════════════════════════════════════════════
+
+class CompanySerializerTests(BaseAPITestCase):
+
+    def _request_for(self, user):
+        request = APIRequestFactory().post("/")
+        request.user = user
+        return request
+
+    def test_validate_tenant_rejects_other_tenant_for_normal_user(self):
+        from accounts_api.serializers.company_serializers import (
+            CompanyCreateUpdateSerializer,
+        )
+        other_tenant = Tenant.objects.create(name="Other S", slug="other-s")
+        serializer = CompanyCreateUpdateSerializer(
+            data={"name": "X", "tenant": str(other_tenant.id)},
+            context={"request": self._request_for(self.user)},
+        )
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("tenant", serializer.errors)
+
+    def test_validate_tenant_allows_own_tenant_for_normal_user(self):
+        from accounts_api.serializers.company_serializers import (
+            CompanyCreateUpdateSerializer,
+        )
+        serializer = CompanyCreateUpdateSerializer(
+            data={"name": "X", "tenant": str(self.tenant.id)},
+            context={"request": self._request_for(self.user)},
+        )
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_validate_tenant_allows_any_tenant_for_superuser(self):
+        from accounts_api.serializers.company_serializers import (
+            CompanyCreateUpdateSerializer,
+        )
+        other_tenant = Tenant.objects.create(name="Other SU", slug="other-su")
+        serializer = CompanyCreateUpdateSerializer(
+            data={"name": "X", "tenant": str(other_tenant.id)},
+            context={"request": self._request_for(self.superadmin)},
+        )
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_validate_tenant_without_request_context(self):
+        from accounts_api.serializers.company_serializers import (
+            CompanyCreateUpdateSerializer,
+        )
+        serializer = CompanyCreateUpdateSerializer(
+            data={"name": "X", "tenant": str(self.tenant.id)},
+        )
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Module import coverage (trivial placeholder modules)
+# ═══════════════════════════════════════════════════════════════════════
+
+class ModuleImportTests(TestCase):
+
+    def test_modules_import(self):
+        import importlib
+        for name in (
+            "accounts_api.views",
+            "accounts_api.models",
+            "accounts_api.admin",
+            "accounts_api.apps",
+            "accounts_api.serializers.profile_serializers",
+            "accounts_api.serializers.company_serializers",
+        ):
+            self.assertIsNotNone(importlib.import_module(name))
