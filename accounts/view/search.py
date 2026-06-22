@@ -48,8 +48,9 @@ def global_search(request):
         #     their selected country, pro = their region, global = all active
         #     companies worldwide — with country-name aliases like
         #     "USA"/"US"/"United States").
-        #   • coordinator   → linkage + the region they manage
-        #     (coordinator_territory_q), so region companies are searchable.
+        #   • coordinator   → linkage + the certified companies in the region
+        #     they manage (coordinator_territory_q), so vetted region companies
+        #     are searchable (uncertified region companies are held out).
         #   • everyone else → companies they're linked to (tenant / consultant /
         #     owner / primary / partnership).
         from accounts.view.company import (

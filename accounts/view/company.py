@@ -83,11 +83,14 @@ def _coordinator_region_code(user):
 def coordinator_territory_q(user):
     """Region scope for a coordinator's company access.
 
-    A coordinator oversees a whole territory, so they should see every active
-    company in the region they manage (e.g. the USA coordinator sees all USA
-    companies) — not just the handful they're directly linked to. The managed
-    region is resolved by _coordinator_region_code (territory_country →
-    target_region → country).
+    A coordinator oversees a whole territory, so they should see every active,
+    CERTIFIED company in the region they manage (e.g. the USA coordinator sees
+    all certified USA companies) — not just the handful they're directly linked
+    to. Uncertified companies are deliberately held out of this discovery scope:
+    a coordinator's Company Database should only surface vetted companies. They
+    still see their OWN / linked companies regardless of certification via the
+    caller's linkage_q. The managed region is resolved by
+    _coordinator_region_code (territory_country → target_region → country).
 
     Company.country is free-text while the resolved region is an ISO code, so
     we match across the code + label + common aliases via _country_match_q.
@@ -104,7 +107,11 @@ def coordinator_territory_q(user):
     if not region_code:
         return None
 
-    scope_q = _country_match_q(region_code) & Q(is_active=True)
+    scope_q = (
+        _country_match_q(region_code)
+        & Q(is_active=True)
+        & Q(certification_status="certified")
+    )
 
     # State / city narrowing only applies to an explicitly-assigned
     # territory_country — target_region and country are country-level only.
@@ -279,7 +286,7 @@ from accounts.utils.ip import get_client_ip
 from django.urls import reverse
 from django.contrib import messages
 from django.http import JsonResponse
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.template.loader import render_to_string
 
 from accounts.forms.company_form import CompanyForm
@@ -534,30 +541,61 @@ def company_list(request):
                 emit_cert_notification = True
                 resubmitted_for_certification = True
 
-            company.save()
-            form.save_m2m()
+            # The form's clean_name / clean_registration_id duplicate checks
+            # run a SELECT before this INSERT, so two near-simultaneous submits
+            # (e.g. a double-click, or two users filing the same company) can
+            # BOTH pass validation and then collide on the DB unique constraint
+            # here. Without this guard the IntegrityError propagates as an
+            # uncaught 500 (HTML), the AJAX caller's res.json() fails, and the
+            # modal shows the generic "Could not save company. Please check the
+            # form." with no clue which field clashed. Catch it and surface the
+            # real reason, highlighting the fields a duplicate would hit.
+            try:
+                with transaction.atomic():
+                    company.save()
+                    form.save_m2m()
 
-            # Link the new company as the business user's primary company when
-            # they don't have one yet. The Company Database modal previously
-            # set only owner_user, so a company created here showed up under
-            # "My Companies" (owner_user) but never on the user's Profile page,
-            # which reads primary_company. Mirrors the profile Create-Company
-            # flow so both entry points leave the same linkage. Scoped to
-            # business users — a consultant creating a client's company must
-            # not have it become their own primary company.
-            if (
-                not company_id
-                and creator_role_code == "business_user"
-                and not request.user.primary_company_id
-            ):
-                from accounts.models import UserCompany
-                request.user.primary_company = company
-                request.user.save(update_fields=["primary_company"])
-                UserCompany.objects.get_or_create(
-                    user=request.user,
-                    company=company,
-                    defaults={"is_primary": True},
+                    # Link the new company as the business user's primary company when
+                    # they don't have one yet. The Company Database modal previously
+                    # set only owner_user, so a company created here showed up under
+                    # "My Companies" (owner_user) but never on the user's Profile page,
+                    # which reads primary_company. Mirrors the profile Create-Company
+                    # flow so both entry points leave the same linkage. Scoped to
+                    # business users — a consultant creating a client's company must
+                    # not have it become their own primary company.
+                    if (
+                        not company_id
+                        and creator_role_code == "business_user"
+                        and not request.user.primary_company_id
+                    ):
+                        from accounts.models import UserCompany
+                        request.user.primary_company = company
+                        request.user.save(update_fields=["primary_company"])
+                        UserCompany.objects.get_or_create(
+                            user=request.user,
+                            company=company,
+                            defaults={"is_primary": True},
+                        )
+            except IntegrityError:
+                dup_message = (
+                    "This company couldn't be saved — a company with the same "
+                    "name or Registration ID already exists. Please review those "
+                    "fields and try again."
                 )
+                if _is_ajax(request):
+                    return JsonResponse(
+                        {
+                            "ok": False,
+                            "errors": {
+                                "name": [dup_message],
+                                "registration_id": [dup_message],
+                            },
+                            "message": dup_message,
+                        },
+                        status=409,
+                    )
+                messages.error(request, dup_message)
+                return redirect(_safe_post_redirect(next_url) or "companies")
 
             if emit_cert_notification:
                 try:
@@ -742,12 +780,12 @@ def company_list(request):
 
             queryset = Company.objects.filter(linkage_q).distinct()
 
-            # Coordinators see ALL active companies in their region — both
-            # certified and uncertified — per product decision (mirrors the
-            # business-user rule that active companies should be visible
-            # regardless of certification). The region scope (coordinator_
-            # territory_q) already constrains to is_active=True in their
-            # territory, so no extra certification filter is applied here.
+            # Coordinators see only active, CERTIFIED companies in their region
+            # (the region scope, coordinator_territory_q, pins both is_active and
+            # certification_status="certified"). Uncertified region companies are
+            # held out of the Company Database so coordinators only browse vetted
+            # companies. Their OWN / linked companies still show via linkage_q
+            # regardless of certification.
 
         # Honor the ?tenant=<id> query param for non-superusers too. The
         # Tenants page links each company-count badge to /companies/?tenant=<id>

@@ -178,14 +178,31 @@ p  { color: var(--text-secondary); line-height: 1.75; }
 .btn--outline:hover,
 .btn-outline:hover { border-color: var(--accent); color: #fff; }
 
+/* Dark outline for LIGHT sections — dark text/border that fills on hover.
+   Use on white/light backgrounds where the default outline (light --accent
+   text) would be invisible and the default :hover (color:#fff) would turn the
+   label white-on-white. Replaces the inline `style="color:var(--primary);
+   border-color:var(--primary)"` overrides, which also silently killed :hover
+   (inline styles beat stylesheet :hover rules). */
+.btn--outline-dark,
+.btn-outline-dark {
+  background: transparent;
+  color: var(--primary);
+  border: 2px solid var(--primary);
+}
+.btn--outline-dark:hover,
+.btn-outline-dark:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+
 .btn--white,
 .btn-white {
   background: #fff;
   color: var(--primary);
   border: 2px solid #fff;
 }
+/* Clear, visible hover: subtle tint plus a lift + shadow (the #fff → bg-light
+   tint alone was imperceptible, so the button felt non-interactive). */
 .btn--white:hover,
-.btn-white:hover { background: var(--bg-light); }
+.btn-white:hover { background: var(--bg-light); box-shadow: var(--shadow-md); transform: translateY(-2px); }
 
 .btn--lg,
 .btn-lg { padding: 14px 32px; font-size: 1rem; }

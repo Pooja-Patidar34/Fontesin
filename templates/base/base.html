@@ -675,9 +675,9 @@
                dropdown is open. Future request queues (franchise / partner)
                plug in here as additional <li> entries. -->
           {% if request.user.is_superuser %}
-          <li class="nav-item has-treeview {% if active_menu == 'coordinator-requests' %}menu-open{% endif %}">
+          <li class="nav-item has-treeview {% if active_menu == 'coordinator-requests' or active_menu == 'applications' %}menu-open{% endif %}">
             <a href="#"
-               class="nav-link {% if active_menu == 'coordinator-requests' %}active{% endif %}"
+               class="nav-link {% if active_menu == 'coordinator-requests' or active_menu == 'applications' %}active{% endif %}"
                style="display: flex; align-items: center;">
               <i class="nav-icon fas fa-inbox"></i>
               <p style="flex:1;">
