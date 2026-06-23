@@ -7,6 +7,19 @@ const CACHE_NAME = 'fontesin-v1';
 const STATIC_CACHE = 'fontesin-static-v1';
 const DYNAMIC_CACHE = 'fontesin-dynamic-v1';
 
+const PWA_DEFAULT_STRINGS = {
+  notificationBody: 'You have a new notification',
+  open: 'Open',
+  dismiss: 'Dismiss',
+};
+let PWA_STRINGS = Object.assign({}, PWA_DEFAULT_STRINGS);
+
+self.addEventListener('message', function(event) {
+  if (event.data && event.data.type === 'PWA_STRINGS' && event.data.strings) {
+    PWA_STRINGS = Object.assign({}, PWA_DEFAULT_STRINGS, event.data.strings);
+  }
+});
+
 // Core files to pre-cache (app shell)
 const PRECACHE_URLS = [
   '/',
@@ -136,14 +149,14 @@ self.addEventListener('push', function(event) {
   const data = event.data ? event.data.json() : {};
   const title = data.title || 'FONTESIN';
   const options = {
-    body: data.body || 'You have a new notification',
+    body: data.body || PWA_STRINGS.notificationBody,
     icon: '/images/icons/icon-192.png',
     badge: '/images/icons/icon-72.png',
     vibrate: [100, 50, 100],
     data: { url: data.url || '/dashboard.html' },
     actions: [
-      { action: 'open', title: 'Open' },
-      { action: 'dismiss', title: 'Dismiss' }
+      { action: 'open', title: PWA_STRINGS.open },
+      { action: 'dismiss', title: PWA_STRINGS.dismiss }
     ]
   };
   event.waitUntil(self.registration.showNotification(title, options));

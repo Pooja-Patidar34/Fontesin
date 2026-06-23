@@ -1,5 +1,6 @@
 {% extends "base/base.html" %}
-{% block title %}{{ page_title|default:"Consultant Users" }}{% endblock %}
+{% load i18n %}
+{% block title %}{% if page_title %}{{ page_title }}{% else %}{% trans "Consultant Users" context "users" %}{% endif %}{% endblock %}
 {% block content %}
 
 <style>
@@ -17,9 +18,9 @@
 
   <div class="card-header d-flex justify-content-between align-items-center">
     <h3 class="card-title font-weight-bold mb-0">
-      <i class="fas fa-user-tie mr-2"></i>{{ page_title|default:"Consultant Users" }}
+      <i class="fas fa-user-tie mr-2"></i>{% if page_title %}{{ page_title }}{% else %}{% trans "Consultant Users" context "users" %}{% endif %}
     </h3>
-    <span class="text-muted small">Total: {{ page_obj.paginator.count }}</span>
+    <span class="text-muted small">{% trans "Total:" context "users" %} {{ page_obj.paginator.count }}</span>
   </div>
 
   {# Search bar — filter by name, email, or company #}
@@ -28,20 +29,20 @@
       <div class="input-group input-group-sm" style="max-width: 380px; width: 100%;">
         <input type="text" name="q" value="{{ search_query|default:'' }}"
                class="form-control"
-               placeholder="Search by name, email, or company…"
-               aria-label="Search {{ entity_label|default:'consultant' }} users">
+               placeholder="{% trans "Search by name, email, or company…" context "users" %}"
+               aria-label="{% blocktrans trimmed with entity=entity_label|default:"consultant" context "users" %}Search {{ entity }} users{% endblocktrans %}">
         <div class="input-group-append">
           <button type="submit" class="btn btn-primary">
             <i class="fas fa-search"></i>
           </button>
           {% if search_query %}
-          <a href="?" class="btn btn-outline-secondary" title="Clear search">&times;</a>
+          <a href="?" class="btn btn-outline-secondary" title="{% trans "Clear search" context "common" %}">&times;</a>
           {% endif %}
         </div>
       </div>
       {% if search_query %}
       <span class="text-muted small ml-2">
-        {{ page_obj.paginator.count }} result{{ page_obj.paginator.count|pluralize }} for &ldquo;{{ search_query }}&rdquo;
+        {% blocktrans trimmed count counter=page_obj.paginator.count with query=search_query context "users" %}{{ counter }} result for &ldquo;{{ query }}&rdquo;{% plural %}{{ counter }} results for &ldquo;{{ query }}&rdquo;{% endblocktrans %}
       </span>
       {% endif %}
     </form>
@@ -52,11 +53,11 @@
       <table class="table table-hover table-sm mb-0">
         <thead class="bg-light">
           <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Company</th>
-            <th>Status</th>
-            <th class="text-right">Action</th>
+            <th>{% trans "Name" context "users" %}</th>
+            <th>{% trans "Email" context "users" %}</th>
+            <th>{% trans "Company" context "users" %}</th>
+            <th>{% trans "Status" context "users" %}</th>
+            <th class="text-right">{% trans "Action" context "common" %}</th>
           </tr>
         </thead>
         <tbody>
@@ -77,22 +78,22 @@
             </td>
             <td>
               {% if u.is_active %}
-                <span class="badge badge-success status-badge">Active</span>
+                <span class="badge badge-success status-badge">{% trans "Active" context "common" %}</span>
               {% else %}
-                <span class="badge badge-danger status-badge">Inactive</span>
+                <span class="badge badge-danger status-badge">{% trans "Inactive" context "common" %}</span>
               {% endif %}
             </td>
             <td class="text-right">
               <button type="button"
                       class="btn btn-sm btn-primary view-cu-btn"
                       data-row-index="{{ forloop.counter0 }}">
-                <i class="fas fa-eye mr-1"></i> View
+                <i class="fas fa-eye mr-1"></i> {% trans "View" context "common" %}
               </button>
               {% if request.user.is_superuser and entity_label == "consultant" %}
               <a href="{% url 'consultant-statistics' u.id %}"
                  class="btn btn-sm btn-outline-secondary ml-1"
-                 title="View {{ u.first_name }}'s certification + subscription statistics">
-                <i class="fas fa-chart-line mr-1"></i> Statistics
+                 title="{% blocktrans trimmed with first_name=u.first_name context "users" %}View {{ first_name }}'s certification + subscription statistics{% endblocktrans %}">
+                <i class="fas fa-chart-line mr-1"></i> {% trans "Statistics" context "users" %}
               </a>
               {% endif %}
               {% comment %}
@@ -107,21 +108,21 @@
               {% if request.user.is_superuser and u.id != request.user.id %}
               <div class="btn-group ml-1">
                 <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown">
-                  Action
+                  {% trans "Action" context "common" %}
                 </button>
                 <div class="dropdown-menu dropdown-menu-right shadow-sm">
                   <a class="dropdown-item" href="{% url 'users' %}?open_edit={{ u.id }}&from={{ request.get_full_path|urlencode }}">
-                    <i class="fas fa-edit mr-2 text-warning"></i> Edit
+                    <i class="fas fa-edit mr-2 text-warning"></i> {% trans "Edit" context "common" %}
                   </a>
                   {% if u.is_active %}
                   <a class="dropdown-item text-danger"
                      href="{% url 'user-toggle' u.id %}?next={{ request.get_full_path|urlencode }}">
-                    <i class="fas fa-user-slash mr-2"></i> Deactivate
+                    <i class="fas fa-user-slash mr-2"></i> {% trans "Deactivate" context "users" %}
                   </a>
                   {% else %}
                   <a class="dropdown-item text-success"
                      href="{% url 'user-toggle' u.id %}?next={{ request.get_full_path|urlencode }}">
-                    <i class="fas fa-user-check mr-2"></i> Activate
+                    <i class="fas fa-user-check mr-2"></i> {% trans "Activate" context "users" %}
                   </a>
                   {% endif %}
                   <div class="dropdown-divider"></div>
@@ -130,8 +131,8 @@
                         id="cu-delete-form-{{ u.id }}" class="m-0">
                     {% csrf_token %}
                     <button type="button" class="dropdown-item text-danger"
-                            onclick="appConfirm({kind:'danger', title:'Delete User?', text:'Are you sure you want to permanently delete <strong>{{ u.email|escapejs }}</strong>? This action cannot be undone.', okLabel:'Delete', okIcon:'fa-trash', onConfirm:function(){document.getElementById('cu-delete-form-{{ u.id }}').submit();}})">
-                      <i class="fas fa-trash mr-2"></i> Delete
+                            onclick="appConfirm({kind:'danger', title:'{% filter escapejs %}{% trans "Delete User?" context "users" %}{% endfilter %}', text:'{% blocktrans trimmed with email=u.email context "users" %}Are you sure you want to permanently delete <strong>{{ email }}</strong>? This action cannot be undone.{% endblocktrans %}', okLabel:'{% filter escapejs %}{% trans "Delete" context "common" %}{% endfilter %}', okIcon:'fa-trash', onConfirm:function(){document.getElementById('cu-delete-form-{{ u.id }}').submit();}})">
+                      <i class="fas fa-trash mr-2"></i> {% trans "Delete" context "common" %}
                     </button>
                   </form>
                 </div>
@@ -142,7 +143,7 @@
           {% empty %}
           <tr>
             <td colspan="5" class="text-center text-muted py-4">
-              No {{ entity_label|default:"consultant" }} users found.
+              {% blocktrans trimmed with entity=entity_label|default:"consultant" context "users" %}No {{ entity }} users found.{% endblocktrans %}
             </td>
           </tr>
           {% endfor %}
@@ -159,10 +160,10 @@
       <ul class="pagination pagination-sm mb-0">
         {% if page_obj.has_previous %}
           <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}">Previous</a>
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}">{% trans "Previous" context "common" %}</a>
           </li>
         {% else %}
-          <li class="page-item disabled"><span class="page-link">Previous</span></li>
+          <li class="page-item disabled"><span class="page-link">{% trans "Previous" context "common" %}</span></li>
         {% endif %}
 
         {% for num in page_obj.paginator.page_range %}
@@ -175,10 +176,10 @@
 
         {% if page_obj.has_next %}
           <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}">Next</a>
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}">{% trans "Next" context "common" %}</a>
           </li>
         {% else %}
-          <li class="page-item disabled"><span class="page-link">Next</span></li>
+          <li class="page-item disabled"><span class="page-link">{% trans "Next" context "common" %}</span></li>
         {% endif %}
       </ul>
     </nav>
@@ -194,93 +195,93 @@
       <div class="modal-header">
         <h5 class="modal-title">
           <i class="fas fa-user-tie mr-2"></i>
-          <span id="cu-modal-title">{{ entity_label|default:"consultant"|capfirst }} Details</span>
+          <span id="cu-modal-title">{% blocktrans trimmed with entity=entity_label|default:"consultant"|capfirst context "users" %}{{ entity }} Details{% endblocktrans %}</span>
         </h5>
         <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
       </div>
 
       <div class="modal-body">
 
-        <h6 class="text-primary font-weight-bold mt-1 mb-2">Identity</h6>
+        <h6 class="text-primary font-weight-bold mt-1 mb-2">{% trans "Identity" context "users" %}</h6>
         <table class="table table-sm table-borderless mb-3">
-          <tr><th style="width: 34%;">Name</th><td id="cu-name"></td></tr>
-          <tr><th>Email</th><td id="cu-email"></td></tr>
-          <tr><th>Status</th><td id="cu-status"></td></tr>
-          <tr><th>Application Status</th><td id="cu-app-status"></td></tr>
-          <tr><th>Sub-Role</th><td id="cu-sub-role"></td></tr>
+          <tr><th style="width: 34%;">{% trans "Name" context "users" %}</th><td id="cu-name"></td></tr>
+          <tr><th>{% trans "Email" context "users" %}</th><td id="cu-email"></td></tr>
+          <tr><th>{% trans "Status" context "users" %}</th><td id="cu-status"></td></tr>
+          <tr><th>{% trans "Application Status" context "users" %}</th><td id="cu-app-status"></td></tr>
+          <tr><th>{% trans "Sub-Role" context "users" %}</th><td id="cu-sub-role"></td></tr>
         </table>
 
-        <h6 class="text-primary font-weight-bold mt-3 mb-2">Personal</h6>
+        <h6 class="text-primary font-weight-bold mt-3 mb-2">{% trans "Personal" context "users" %}</h6>
         <table class="table table-sm table-borderless mb-3">
-          <tr><th style="width: 34%;">Date of Birth</th><td id="cu-dob"></td></tr>
-          <tr><th>Ethnicity</th><td id="cu-ethnicity"></td></tr>
-          <tr><th>Nationality</th><td id="cu-nationality"></td></tr>
-          <tr><th>Preferred Language</th><td id="cu-language"></td></tr>
+          <tr><th style="width: 34%;">{% trans "Date of Birth" context "users" %}</th><td id="cu-dob"></td></tr>
+          <tr><th>{% trans "Ethnicity" context "users" %}</th><td id="cu-ethnicity"></td></tr>
+          <tr><th>{% trans "Nationality" context "users" %}</th><td id="cu-nationality"></td></tr>
+          <tr><th>{% trans "Preferred Language" context "users" %}</th><td id="cu-language"></td></tr>
         </table>
 
-        <h6 class="text-primary font-weight-bold mt-3 mb-2">Contact</h6>
+        <h6 class="text-primary font-weight-bold mt-3 mb-2">{% trans "Contact" context "users" %}</h6>
         <table class="table table-sm table-borderless mb-3">
-          <tr><th style="width: 34%;">Phone</th><td id="cu-phone"></td></tr>
-          <tr><th>LinkedIn</th><td id="cu-linkedin"></td></tr>
+          <tr><th style="width: 34%;">{% trans "Phone" context "users" %}</th><td id="cu-phone"></td></tr>
+          <tr><th>{% trans "LinkedIn" context "users" %}</th><td id="cu-linkedin"></td></tr>
         </table>
 
-        <h6 class="text-primary font-weight-bold mt-3 mb-2">Address</h6>
+        <h6 class="text-primary font-weight-bold mt-3 mb-2">{% trans "Address" context "users" %}</h6>
         <table class="table table-sm table-borderless mb-3">
-          <tr><th style="width: 34%;">Country</th><td id="cu-country"></td></tr>
-          <tr><th>City</th><td id="cu-city"></td></tr>
-          <tr><th>State / Region</th><td id="cu-state"></td></tr>
-          <tr><th>Postal Code</th><td id="cu-postal"></td></tr>
-          <tr><th>Address</th><td id="cu-address"></td></tr>
+          <tr><th style="width: 34%;">{% trans "Country" context "users" %}</th><td id="cu-country"></td></tr>
+          <tr><th>{% trans "City" context "users" %}</th><td id="cu-city"></td></tr>
+          <tr><th>{% trans "State / Region" context "users" %}</th><td id="cu-state"></td></tr>
+          <tr><th>{% trans "Postal Code" context "users" %}</th><td id="cu-postal"></td></tr>
+          <tr><th>{% trans "Address" context "users" %}</th><td id="cu-address"></td></tr>
         </table>
 
-        <h6 class="text-primary font-weight-bold mt-3 mb-2">Territory</h6>
+        <h6 class="text-primary font-weight-bold mt-3 mb-2">{% trans "Territory" context "users" %}</h6>
         <table class="table table-sm table-borderless mb-3">
-          <tr><th style="width: 34%;">Country</th><td id="cu-territory-country"></td></tr>
-          <tr><th>Region</th><td id="cu-territory-region"></td></tr>
-          <tr><th>City</th><td id="cu-territory-city"></td></tr>
+          <tr><th style="width: 34%;">{% trans "Country" context "users" %}</th><td id="cu-territory-country"></td></tr>
+          <tr><th>{% trans "Region" context "users" %}</th><td id="cu-territory-region"></td></tr>
+          <tr><th>{% trans "City" context "users" %}</th><td id="cu-territory-city"></td></tr>
         </table>
 
-        <h6 class="text-primary font-weight-bold mt-3 mb-2">Professional</h6>
+        <h6 class="text-primary font-weight-bold mt-3 mb-2">{% trans "Professional" context "users" %}</h6>
         <table class="table table-sm table-borderless mb-3">
-          <tr><th style="width: 34%;">Current Position</th><td id="cu-position"></td></tr>
-          <tr><th>Years of Experience</th><td id="cu-experience"></td></tr>
-          <tr><th>Primary Industry</th><td id="cu-industry"></td></tr>
-          <tr><th>Professional Summary</th><td id="cu-summary"></td></tr>
+          <tr><th style="width: 34%;">{% trans "Current Position" context "users" %}</th><td id="cu-position"></td></tr>
+          <tr><th>{% trans "Years of Experience" context "users" %}</th><td id="cu-experience"></td></tr>
+          <tr><th>{% trans "Primary Industry" context "users" %}</th><td id="cu-industry"></td></tr>
+          <tr><th>{% trans "Professional Summary" context "users" %}</th><td id="cu-summary"></td></tr>
         </table>
 
-        <h6 class="text-primary font-weight-bold mt-3 mb-2">Company</h6>
+        <h6 class="text-primary font-weight-bold mt-3 mb-2">{% trans "Company" context "users" %}</h6>
         <table class="table table-sm table-borderless mb-3">
-          <tr><th style="width: 34%;">Registered Company</th><td id="cu-company"></td></tr>
-          <tr><th>Applied Company Name</th><td id="cu-app-company-name"></td></tr>
-          <tr><th>Registration Number</th><td id="cu-app-company-reg"></td></tr>
-          <tr><th>Country of Incorporation</th><td id="cu-app-company-country"></td></tr>
-          <tr><th>Legal Form</th><td id="cu-app-company-legal"></td></tr>
-          <tr><th>Year Founded</th><td id="cu-app-company-founded"></td></tr>
-          <tr><th>Number of Employees</th><td id="cu-app-company-employees"></td></tr>
-          <tr><th>Website</th><td id="cu-app-company-website"></td></tr>
+          <tr><th style="width: 34%;">{% trans "Registered Company" context "users" %}</th><td id="cu-company"></td></tr>
+          <tr><th>{% trans "Applied Company Name" context "users" %}</th><td id="cu-app-company-name"></td></tr>
+          <tr><th>{% trans "Registration Number" context "users" %}</th><td id="cu-app-company-reg"></td></tr>
+          <tr><th>{% trans "Country of Incorporation" context "users" %}</th><td id="cu-app-company-country"></td></tr>
+          <tr><th>{% trans "Legal Form" context "users" %}</th><td id="cu-app-company-legal"></td></tr>
+          <tr><th>{% trans "Year Founded" context "users" %}</th><td id="cu-app-company-founded"></td></tr>
+          <tr><th>{% trans "Number of Employees" context "users" %}</th><td id="cu-app-company-employees"></td></tr>
+          <tr><th>{% trans "Website" context "users" %}</th><td id="cu-app-company-website"></td></tr>
         </table>
 
-        <h6 class="text-primary font-weight-bold mt-3 mb-2">Application</h6>
+        <h6 class="text-primary font-weight-bold mt-3 mb-2">{% trans "Application" context "users" %}</h6>
         <table class="table table-sm table-borderless mb-3">
-          <tr><th style="width: 34%;">Target Region</th><td id="cu-target-region"></td></tr>
-          <tr><th>Franchise Type</th><td id="cu-franchise-type"></td></tr>
-          <tr><th>Motivation</th><td id="cu-motivation"></td></tr>
-          <tr><th>Network Connections</th><td id="cu-network"></td></tr>
-          <tr><th>Expected Companies</th><td id="cu-expected"></td></tr>
-          <tr><th>Reference 1</th><td id="cu-ref-1"></td></tr>
-          <tr><th>Reference 2</th><td id="cu-ref-2"></td></tr>
+          <tr><th style="width: 34%;">{% trans "Target Region" context "users" %}</th><td id="cu-target-region"></td></tr>
+          <tr><th>{% trans "Franchise Type" context "users" %}</th><td id="cu-franchise-type"></td></tr>
+          <tr><th>{% trans "Motivation" context "users" %}</th><td id="cu-motivation"></td></tr>
+          <tr><th>{% trans "Network Connections" context "users" %}</th><td id="cu-network"></td></tr>
+          <tr><th>{% trans "Expected Companies" context "users" %}</th><td id="cu-expected"></td></tr>
+          <tr><th>{% trans "Reference 1" context "users" %}</th><td id="cu-ref-1"></td></tr>
+          <tr><th>{% trans "Reference 2" context "users" %}</th><td id="cu-ref-2"></td></tr>
         </table>
 
-        <h6 class="text-primary font-weight-bold mt-3 mb-2">System</h6>
+        <h6 class="text-primary font-weight-bold mt-3 mb-2">{% trans "System" context "users" %}</h6>
         <table class="table table-sm table-borderless mb-0">
-          <tr><th style="width: 34%;">Created</th><td id="cu-created"></td></tr>
-          <tr><th>Updated</th><td id="cu-updated"></td></tr>
+          <tr><th style="width: 34%;">{% trans "Created" context "users" %}</th><td id="cu-created"></td></tr>
+          <tr><th>{% trans "Updated" context "users" %}</th><td id="cu-updated"></td></tr>
         </table>
 
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+        <button class="btn btn-secondary btn-sm" data-dismiss="modal">{% trans "Close" context "common" %}</button>
       </div>
     </div>
   </div>
@@ -288,13 +289,29 @@
 
 <script>
 (function () {
+  window.USER_I18N = window.USER_I18N || {};
+  Object.assign(window.USER_I18N, {
+    active: '{% filter escapejs %}{% trans "Active" context "common" %}{% endfilter %}',
+    inactive: '{% filter escapejs %}{% trans "Inactive" context "common" %}{% endfilter %}',
+    dash: '{% filter escapejs %}{% trans "—" context "common" %}{% endfilter %}',
+  });
+  var g = (typeof gettext === "function") ? gettext : function (s) { return s; };
+  Object.keys(window.USER_I18N).forEach(function (k) {
+    window.USER_I18N[k] = g(window.USER_I18N[k]);
+  });
+})();
+</script>
+
+<script>
+(function () {
+  const I18N = window.USER_I18N || {};
   const dataEl = document.getElementById("cu-rows-data");
   if (!dataEl) return;
   const rows = JSON.parse(dataEl.textContent);
 
   function setText(id, value) {
     const el = document.getElementById(id);
-    if (el) el.textContent = (value === null || value === undefined || value === "") ? "-" : value;
+    if (el) el.textContent = (value === null || value === undefined || value === "") ? (I18N.dash || "-") : value;
   }
 
   function setHtml(id, html) {
@@ -314,7 +331,7 @@
         if (url) {
           el.innerHTML = '<a href="' + url + '" target="_blank" rel="noopener">' + url + '</a>';
         } else {
-          el.textContent = "-";
+          el.textContent = I18N.dash || "-";
         }
       }
 
@@ -332,8 +349,8 @@
       setText("cu-email", row.email);
 
       const statusBadge = row.is_active
-        ? '<span class="badge badge-success">Active</span>'
-        : '<span class="badge badge-danger">Inactive</span>';
+        ? '<span class="badge badge-success">' + (I18N.active || "Active") + '</span>'
+        : '<span class="badge badge-danger">' + (I18N.inactive || "Inactive") + '</span>';
       setHtml("cu-status", statusBadge);
       setText("cu-app-status", row.application_status);
       setText("cu-sub-role", row.consultant_sub_role);
@@ -357,7 +374,7 @@
       setText("cu-state", row.state_region);
       setText("cu-postal", row.postal_code);
       const addressParts = [row.address_line1, row.address_line2].filter(Boolean);
-      setText("cu-address", addressParts.length ? addressParts.join(", ") : "-");
+      setText("cu-address", addressParts.length ? addressParts.join(", ") : (I18N.dash || "-"));
 
       // Territory
       setText("cu-territory-country", row.territory_country);

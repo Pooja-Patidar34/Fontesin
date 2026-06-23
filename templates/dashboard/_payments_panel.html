@@ -1,14 +1,15 @@
+{% load i18n plan_i18n_tags %}
 <div class="table-responsive">
   <table class="table table-hover mb-0 payments-table">
     <thead class="bg-light">
       <tr>
-        <th class="col-user">User</th>
-        <th class="col-ref">Payment Ref.</th>
-        <th class="col-plan">Plan</th>
-        <th class="col-amount">Amount</th>
-        <th class="col-status">Status</th>
-        <th class="col-requested">Requested</th>
-        <th class="col-actions">Actions</th>
+        <th class="col-user">{% trans "User" context "billing" %}</th>
+        <th class="col-ref">{% trans "Payment Ref." context "billing" %}</th>
+        <th class="col-plan">{% trans "Plan" context "billing" %}</th>
+        <th class="col-amount">{% trans "Amount" context "billing" %}</th>
+        <th class="col-status">{% trans "Status" context "billing" %}</th>
+        <th class="col-requested">{% trans "Requested" context "billing" %}</th>
+        <th class="col-actions">{% trans "Actions" context "billing" %}</th>
       </tr>
     </thead>
     <tbody>
@@ -35,7 +36,7 @@
 
         <td class="plan-cell">
           {% if sub.plan %}
-            <span class="font-weight-bold">{{ sub.plan.name }}</span>
+            <span class="font-weight-bold">{{ sub.plan|localized_plan_name_filter }}</span>
             <small class="text-muted">{{ sub.billing_period }}</small>
           {% else %}
             -
@@ -52,15 +53,15 @@
 
         <td class="col-status">
           {% if sub.status == "created" %}
-            <span class="badge badge-warning">Pending</span>
+            <span class="badge badge-warning">{% trans "Pending" context "billing" %}</span>
           {% elif sub.status == "active" %}
-            <span class="badge badge-success">Approved</span>
+            <span class="badge badge-success">{% trans "Approved" context "billing" %}</span>
           {% elif sub.status == "cancelled" %}
-            <span class="badge badge-danger">Rejected</span>
+            <span class="badge badge-danger">{% trans "Rejected" context "billing" %}</span>
           {% elif sub.status == "trial" %}
-            <span class="badge badge-info">Trial</span>
+            <span class="badge badge-info">{% trans "Trial" context "billing" %}</span>
           {% elif sub.status == "suspended" %}
-            <span class="badge badge-secondary">Suspended</span>
+            <span class="badge badge-secondary">{% trans "Suspended" context "billing" %}</span>
           {% else %}
             <span class="badge badge-secondary">{{ sub.status }}</span>
           {% endif %}
@@ -71,28 +72,25 @@
         <td class="col-actions">
           <div style="display:flex; align-items:center; gap:.4rem; flex-wrap:nowrap;">
             {% if sub.status == "created" %}
-              {# `next` carries the current page + status filter so the     #}
-              {# approve/reject redirect lands the admin back on the same   #}
-              {# pagination page instead of resetting to page 1.            #}
               <form method="post" action="{% url 'payment-approve' sub.id %}" class="m-0" id="approve-form-{{ sub.id }}">
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                <button type="button" class="btn btn-sm btn-success" title="Approve"
-                        onclick="appConfirm({kind:'success', title:'Approve Subscription?', text:'Approve subscription for <strong>{{ sub.user.email|escapejs }}</strong>?', okLabel:'Approve', okIcon:'fa-check', onConfirm:function(){document.getElementById('approve-form-{{ sub.id }}').submit();}})">
+                <button type="button" class="btn btn-sm btn-success" title="{% trans "Approve" context "billing" %}"
+                        onclick="appConfirm({kind:'success', title:'{% filter escapejs %}{% trans "Approve Subscription?" context "billing" %}{% endfilter %}', text:'{% filter escapejs %}{% blocktrans trimmed with email=sub.user.email context "billing" %}Approve subscription for <strong>{{ email }}</strong>?{% endblocktrans %}{% endfilter %}', okLabel:'{% filter escapejs %}{% trans "Approve" context "billing" %}{% endfilter %}', okIcon:'fa-check', onConfirm:function(){document.getElementById('approve-form-{{ sub.id }}').submit();}})">
                   <i class="fas fa-check"></i>
                 </button>
               </form>
               <form method="post" action="{% url 'payment-reject' sub.id %}" class="m-0" id="reject-form-{{ sub.id }}">
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                <button type="button" class="btn btn-sm btn-danger" title="Reject"
-                        onclick="appConfirm({kind:'danger', title:'Reject Subscription?', text:'Reject subscription for <strong>{{ sub.user.email|escapejs }}</strong>?', okLabel:'Reject', okIcon:'fa-times', onConfirm:function(){document.getElementById('reject-form-{{ sub.id }}').submit();}})">
+                <button type="button" class="btn btn-sm btn-danger" title="{% trans "Reject" context "billing" %}"
+                        onclick="appConfirm({kind:'danger', title:'{% filter escapejs %}{% trans "Reject Subscription?" context "billing" %}{% endfilter %}', text:'{% filter escapejs %}{% blocktrans trimmed with email=sub.user.email context "billing" %}Reject subscription for <strong>{{ email }}</strong>?{% endblocktrans %}{% endfilter %}', okLabel:'{% filter escapejs %}{% trans "Reject" context "billing" %}{% endfilter %}', okIcon:'fa-times', onConfirm:function(){document.getElementById('reject-form-{{ sub.id }}').submit();}})">
                   <i class="fas fa-times"></i>
                 </button>
               </form>
             {% endif %}
             <button class="btn btn-sm btn-outline-primary edit-sub-btn"
-                    data-id="{{ sub.id }}" title="Edit">
+                    data-id="{{ sub.id }}" title="{% trans "Edit" context "billing" %}">
               <i class="fas fa-edit"></i>
             </button>
           </div>
@@ -101,7 +99,7 @@
       {% empty %}
       <tr>
         <td colspan="7" class="text-center text-muted py-4">
-          No payment records found
+          {% trans "No payment records found" context "billing" %}
         </td>
       </tr>
       {% endfor %}
@@ -114,10 +112,10 @@
   <ul class="pagination pagination-sm justify-content-end mb-0">
     {% if page_obj.has_previous %}
       <li class="page-item">
-        <a class="page-link" href="?status={{ status_filter }}&page={{ page_obj.previous_page_number }}">Previous</a>
+        <a class="page-link" href="?status={{ status_filter }}&page={{ page_obj.previous_page_number }}">{% trans "Previous" context "common" %}</a>
       </li>
     {% else %}
-      <li class="page-item disabled"><span class="page-link">Previous</span></li>
+      <li class="page-item disabled"><span class="page-link">{% trans "Previous" context "common" %}</span></li>
     {% endif %}
 
     {% for num in page_obj.paginator.page_range %}
@@ -132,10 +130,10 @@
 
     {% if page_obj.has_next %}
       <li class="page-item">
-        <a class="page-link" href="?status={{ status_filter }}&page={{ page_obj.next_page_number }}">Next</a>
+        <a class="page-link" href="?status={{ status_filter }}&page={{ page_obj.next_page_number }}">{% trans "Next" context "common" %}</a>
       </li>
     {% else %}
-      <li class="page-item disabled"><span class="page-link">Next</span></li>
+      <li class="page-item disabled"><span class="page-link">{% trans "Next" context "common" %}</span></li>
     {% endif %}
   </ul>
 </div>

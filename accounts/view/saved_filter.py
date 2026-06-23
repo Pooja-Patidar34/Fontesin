@@ -8,6 +8,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
+from django.utils.translation import gettext as _
 
 from accounts.models import Company, CompanyConnection, SavedFilter
 
@@ -84,12 +85,12 @@ def saved_filter_save(request):
 
     name = (request.POST.get("name") or "").strip()
     if not name:
-        return JsonResponse({"ok": False, "message": "Please give this filter a name."}, status=400)
+        return JsonResponse({"ok": False, "message": _("Please give this filter a name.")}, status=400)
 
     filters = _clean_filters(request.POST)
     if not filters:
         return JsonResponse(
-            {"ok": False, "message": "Apply at least one filter (country / state / city) before saving."},
+            {"ok": False, "message": _("Apply at least one filter (country / state / city) before saving.")},
             status=400,
         )
 
@@ -100,14 +101,14 @@ def saved_filter_save(request):
             defaults={"filters": filters},
         )
     except IntegrityError:
-        return JsonResponse({"ok": False, "message": "A filter with that name already exists."}, status=400)
+        return JsonResponse({"ok": False, "message": _("A filter with that name already exists.")}, status=400)
 
     return JsonResponse({
         "ok": True,
         "created": created,
         "id": str(saved.id),
         "name": saved.name,
-        "message": "Filter saved to your Favorites.",
+        "message": _("Filter saved to your Favorites."),
     })
 
 
@@ -121,9 +122,9 @@ def saved_filter_delete(request, filter_id):
     saved.delete()
 
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-        return JsonResponse({"ok": True, "message": "Filter removed."})
+        return JsonResponse({"ok": True, "message": _("Filter removed.")})
 
-    messages.success(request, "Filter removed.")
+    messages.success(request, _("Filter removed."))
     return redirect(reverse("saved-filters"))
 
 
@@ -153,7 +154,7 @@ def company_connect(request, company_id):
     if plan_code is None:
         raise PermissionDenied()
     if plan_code == "free":
-        msg = "Connecting with companies is available on paid plans. Upgrade to connect."
+        msg = _("Connecting with companies is available on paid plans. Upgrade to connect.")
         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return JsonResponse({"ok": False, "message": msg}, status=403)
         messages.error(request, msg)
@@ -165,7 +166,7 @@ def company_connect(request, company_id):
     # This is the server-side counterpart to the disabled "Connect" button.
     from billing.models import Subscription
     if Subscription.objects.filter(user=request.user, status="created").exists():
-        msg = "Connecting is available once your plan upgrade is approved."
+        msg = _("Connecting is available once your plan upgrade is approved.")
         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return JsonResponse({"ok": False, "message": msg}, status=403)
         messages.error(request, msg)
@@ -236,7 +237,7 @@ def company_connect(request, company_id):
 
     messages.success(
         request,
-        "Connection request sent."
+        _("Connection request sent.")
         if (created or resent)
         else "You already requested a connection with this company.",
     )

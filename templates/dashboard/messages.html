@@ -1,7 +1,7 @@
 {% extends "base/base.html" %}
-{% load static %}
-{% block title %}Notifications{% endblock %}
-{% block breadcrumb %}Notifications <span>/ Inbox</span>{% endblock %}
+{% load static i18n %}
+{% block title %}{% trans "Notifications" context "dashboard" %}{% endblock %}
+{% block breadcrumb %}{% trans "Notifications" context "dashboard" %} <span>/ {% trans "Inbox" context "dashboard" %}</span>{% endblock %}
 
 {% block content %}
 <style>
@@ -156,17 +156,17 @@
     <div>
       <h3>
         <i class="fas fa-bell mr-1" style="color:#2b7de9;"></i>
-        Notifications
-        {% if unread_count %}<span class="msg-unread-pill">{{ unread_count }} unread</span>{% endif %}
+        {% trans "Notifications" context "dashboard" %}
+        {% if unread_count %}<span class="msg-unread-pill">{% blocktrans trimmed with count=unread_count context "dashboard" %}{{ count }} unread{% endblocktrans %}</span>{% endif %}
       </h3>
-      <div class="msg-header__sub">Notifications for your account land here.</div>
+      <div class="msg-header__sub">{% trans "Notifications for your account land here." context "dashboard" %}</div>
     </div>
     {% if unread_count %}
     <div class="msg-actions">
       <form method="post" action="{% url 'messages-mark-all-read' %}">
         {% csrf_token %}
         <button type="submit" class="btn btn-light">
-          <i class="fas fa-check-double mr-1"></i> Mark all read
+          <i class="fas fa-check-double mr-1"></i> {% trans "Mark all read" context "dashboard" %}
         </button>
       </form>
     </div>
@@ -196,11 +196,11 @@
           <div class="msg-meta">
             <span><i class="far fa-clock mr-1"></i>{{ note.created_at|date:"M j, Y · g:i a" }}</span>
             {% if note.sender %}
-              <span>· From {{ note.sender.first_name }} {{ note.sender.last_name|default:note.sender.email }}</span>
+              <span>· {% trans "From" context "dashboard" %} {{ note.sender.first_name }} {{ note.sender.last_name|default:note.sender.email }}</span>
             {% endif %}
             {% if note.link_url %}
               <span>·</span>
-              <a href="{% url 'message-open' note.id %}">Open</a>
+              <a href="{% url 'message-open' note.id %}">{% trans "Open" context "common" %}</a>
             {% endif %}
           </div>
         </div>
@@ -209,7 +209,7 @@
           {% if not note.is_read %}
           <form method="post" action="{% url 'message-mark-read' note.id %}" style="display:inline;">
             {% csrf_token %}
-            <button type="submit" class="msg-icon-btn" title="Mark as read">
+            <button type="submit" class="msg-icon-btn" title="{% trans "Mark as read" context "dashboard" %}">
               <i class="fas fa-check"></i>
             </button>
           </form>
@@ -217,8 +217,8 @@
           <form method="post" action="{% url 'message-delete' note.id %}" style="display:inline;"
                 id="msg-delete-form-{{ note.id }}">
             {% csrf_token %}
-            <button type="button" class="msg-icon-btn msg-icon-btn--danger" title="Delete"
-                    onclick="appConfirm({kind:'danger', title:'Delete this notification?', text:'This will permanently remove the notification from your inbox.', okLabel:'Delete', okIcon:'fa-trash', onConfirm:function(){document.getElementById('msg-delete-form-{{ note.id }}').submit();}})">
+            <button type="button" class="msg-icon-btn msg-icon-btn--danger" title="{% trans "Delete" context "common" %}"
+                    onclick="appConfirm({kind:'danger', title:'{% filter escapejs %}{% trans "Delete this notification?" context "dashboard" %}{% endfilter %}', text:'{% filter escapejs %}{% trans "This will permanently remove the notification from your inbox." context "dashboard" %}{% endfilter %}', okLabel:'{% filter escapejs %}{% trans "Delete" context "common" %}{% endfilter %}', okIcon:'fa-trash', onConfirm:function(){document.getElementById('msg-delete-form-{{ note.id }}').submit();}})">
               <i class="fas fa-trash-alt"></i>
             </button>
           </form>
@@ -227,8 +227,8 @@
     {% empty %}
       <div class="msg-empty">
         <i class="fas fa-inbox fa-2x"></i>
-        <div class="msg-empty__title">No notifications yet</div>
-        <div>When you receive a notification, it will show up here.</div>
+        <div class="msg-empty__title">{% trans "No notifications yet" context "dashboard" %}</div>
+        <div>{% trans "When you receive a notification, it will show up here." context "dashboard" %}</div>
       </div>
     {% endfor %}
   </div>

@@ -1,7 +1,7 @@
 
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
@@ -11,8 +11,8 @@
   <meta name="apple-mobile-web-app-title" content="FONTESIN"/>
   <link rel="manifest" href="{% static 'manifest.json' %}"/>
   <link rel="apple-touch-icon" href="{% static 'adminlte/images/icons/icon-192.png' %}"/>
-  <title>Careers – FONTESIN</title>
-  <meta name="description" content="Join the FONTESIN team. We are looking for engineers, product managers, regional coordinators, and business development professionals."/>
+  <title>{% trans "Careers" context "website" %} – FONTESIN</title>
+  <meta name="description" content="{% trans 'Join the FONTESIN team. We are looking for engineers, product managers, regional coordinators, and business development professionals.' context 'website' %}"/>
   <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
   <style>
     .job-detail-modal {
@@ -54,16 +54,16 @@
   <div class="navbar__inner">
     <a href="{% url 'home' %}" class="navbar__logo"><img src="{% static 'adminlte/images/fontesin-logo.png' %}" alt="FONTESIN" height="38"/></a>
     <div class="navbar__nav">
-      <a href="{% url 'home' %}">Home</a>
-      <a href="{% url 'worldmap' %}">World Map</a>
-      <a href="{% url 'about' %}">About</a>
-      <a href="{% url 'career' %}" class="active">Careers</a>
-      <a href="{% url 'contact' %}">Contact</a>
+      <a href="{% url 'home' %}">{% trans "Home" context "website" %}</a>
+      <a href="{% url 'worldmap' %}">{% trans "World Map" context "website" %}</a>
+      <a href="{% url 'about' %}">{% trans "About" context "website" %}</a>
+      <a href="{% url 'career' %}" class="active">{% trans "Careers" context "website" %}</a>
+      <a href="{% url 'contact' %}">{% trans "Contact" context "website" %}</a>
     </div>
-    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
+    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="{% trans 'Menu' context 'website' %}">☰</button>
     <div class="navbar__actions">
-      <a href="{% url 'login' %}" class="btn btn-outline btn-sm">Log In</a>
-      <a href="{% url 'register' %}" class="btn btn-primary btn-sm">Get Started</a>
+      <a href="{% url 'login' %}" class="btn btn-outline btn-sm">{% trans "Log In" context "auth.login" %}</a>
+      <a href="{% url 'register' %}" class="btn btn-primary btn-sm">{% trans "Get Started" context "website" %}</a>
     </div>
   </div>
 </nav>
@@ -72,12 +72,12 @@
 <section class="page-header">
   <div class="container">
     <div class="breadcrumb">
-      <a href="{% url 'home' %}">Home</a>
+      <a href="{% url 'home' %}">{% trans "Home" context "website" %}</a>
       <span>/</span>
-      <span>Careers</span>
+      <span>{% trans "Careers" context "website" %}</span>
     </div>
-    <h1>Join Our Team</h1>
-    <p>We are not looking for employees — we are looking for partners. Join the team building the global infrastructure for trusted business collaboration.</p>
+    <h1>{% trans "Join Our Team" context "website" %}</h1>
+    <p>{% trans "We are not looking for employees — we are looking for partners. Join the team building the global infrastructure for trusted business collaboration." context "website" %}</p>
   </div>
 </section>
 
@@ -87,18 +87,18 @@
     <div class="grid-3">
       <div class="card">
         <div class="card__icon">🌍</div>
-        <h4 class="card__title">Global Impact</h4>
-        <p class="card__text">Work on a platform that will connect millions of companies and professionals across 177+ countries. Your work has real, measurable global reach.</p>
+        <h4 class="card__title">{% trans "Global Impact" context "website" %}</h4>
+        <p class="card__text">{% trans "Work on a platform that will connect millions of companies and professionals across 177+ countries. Your work has real, measurable global reach." context "website" %}</p>
       </div>
       <div class="card">
         <div class="card__icon">🚀</div>
-        <h4 class="card__title">Pre-MVP Stage</h4>
-        <p class="card__text">Join at the ground floor. Shape the product, the culture, and the direction of a deep-tech platform from day one. Pioneer equity available.</p>
+        <h4 class="card__title">{% trans "Pre-MVP Stage" context "website" %}</h4>
+        <p class="card__text">{% trans "Join at the ground floor. Shape the product, the culture, and the direction of a deep-tech platform from day one. Pioneer equity available." context "website" %}</p>
       </div>
       <div class="card">
         <div class="card__icon">🤝</div>
-        <h4 class="card__title">Remote-First</h4>
-        <p class="card__text">Work from anywhere in the world. We are a globally distributed team with async-first communication and flexible working arrangements.</p>
+        <h4 class="card__title">{% trans "Remote-First" context "website" %}</h4>
+        <p class="card__text">{% trans "Work from anywhere in the world. We are a globally distributed team with async-first communication and flexible working arrangements." context "website" %}</p>
       </div>
     </div>
   </div>
@@ -107,154 +107,154 @@
 <!-- OPEN POSITIONS -->
 <section class="section">
   <div class="container">
-    <span class="section-label">Open Positions</span>
-    <h2 class="section-title">Current Opportunities</h2>
-    <p class="section-subtitle">We are actively hiring across engineering, product, business development, and regional operations. All positions are remote-friendly.</p>
+    <span class="section-label">{% trans "Open Positions" context "website" %}</span>
+    <h2 class="section-title">{% trans "Current Opportunities" context "website" %}</h2>
+    <p class="section-subtitle">{% trans "We are actively hiring across engineering, product, business development, and regional operations. All positions are remote-friendly." context "website" %}</p>
 
     <!-- Engineering -->
-    <h3 style="margin-bottom:16px;margin-top:40px;font-size:1.1rem;color:var(--secondary);font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-family:'Montserrat',sans-serif;">Engineering</h3>
+    <h3 style="margin-bottom:16px;margin-top:40px;font-size:1.1rem;color:var(--secondary);font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-family:'Montserrat',sans-serif;">{% trans "Engineering" context "website" %}</h3>
     <div class="job-list">
 
       <div class="job-card">
         <div class="job-card__left">
-          <h4 class="job-card__title">Senior Backend Engineer (FastAPI / Python)</h4>
+          <h4 class="job-card__title">{% trans "Senior Backend Engineer (FastAPI / Python)" context "website" %}</h4>
           <div class="job-card__tags">
-            <span class="tag tag--primary">Engineering</span>
-            <span class="tag tag--green">Full-time</span>
-            <span class="tag">Remote</span>
-            <span class="tag">Python · FastAPI · PostgreSQL</span>
+            <span class="tag tag--primary">{% trans "Engineering" context "website" %}</span>
+            <span class="tag tag--green">{% trans "Full-time" context "website" %}</span>
+            <span class="tag">{% trans "Remote" context "website" %}</span>
+            <span class="tag">{% trans "Python · FastAPI · PostgreSQL" context "website" %}</span>
           </div>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="openJob('backend')">View Details</button>
+        <button class="btn btn-primary btn-sm" onclick="openJob('backend')">{% trans "View Details" context "website" %}</button>
       </div>
 
       <div class="job-card">
         <div class="job-card__left">
-          <h4 class="job-card__title">Frontend Engineer (React / TypeScript)</h4>
+          <h4 class="job-card__title">{% trans "Frontend Engineer (React / TypeScript)" context "website" %}</h4>
           <div class="job-card__tags">
-            <span class="tag tag--primary">Engineering</span>
-            <span class="tag tag--green">Full-time</span>
-            <span class="tag">Remote</span>
-            <span class="tag">React · TypeScript · TailwindCSS</span>
+            <span class="tag tag--primary">{% trans "Engineering" context "website" %}</span>
+            <span class="tag tag--green">{% trans "Full-time" context "website" %}</span>
+            <span class="tag">{% trans "Remote" context "website" %}</span>
+            <span class="tag">{% trans "React · TypeScript · TailwindCSS" context "website" %}</span>
           </div>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="openJob('frontend')">View Details</button>
+        <button class="btn btn-primary btn-sm" onclick="openJob('frontend')">{% trans "View Details" context "website" %}</button>
       </div>
 
       <div class="job-card">
         <div class="job-card__left">
-          <h4 class="job-card__title">DevOps / Infrastructure Engineer</h4>
+          <h4 class="job-card__title">{% trans "DevOps / Infrastructure Engineer" context "website" %}</h4>
           <div class="job-card__tags">
-            <span class="tag tag--primary">Engineering</span>
-            <span class="tag tag--green">Full-time</span>
-            <span class="tag">Remote</span>
-            <span class="tag">Kubernetes · AWS · CI/CD</span>
+            <span class="tag tag--primary">{% trans "Engineering" context "website" %}</span>
+            <span class="tag tag--green">{% trans "Full-time" context "website" %}</span>
+            <span class="tag">{% trans "Remote" context "website" %}</span>
+            <span class="tag">{% trans "Kubernetes · AWS · CI/CD" context "website" %}</span>
           </div>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="openJob('devops')">View Details</button>
+        <button class="btn btn-primary btn-sm" onclick="openJob('devops')">{% trans "View Details" context "website" %}</button>
       </div>
 
       <div class="job-card">
         <div class="job-card__left">
-          <h4 class="job-card__title">AI / ML Engineer</h4>
+          <h4 class="job-card__title">{% trans "AI / ML Engineer" context "website" %}</h4>
           <div class="job-card__tags">
-            <span class="tag tag--primary">Engineering</span>
-            <span class="tag tag--yellow">Contract</span>
-            <span class="tag">Remote</span>
-            <span class="tag">LLM · Python · NLP</span>
+            <span class="tag tag--primary">{% trans "Engineering" context "website" %}</span>
+            <span class="tag tag--yellow">{% trans "Contract" context "website" %}</span>
+            <span class="tag">{% trans "Remote" context "website" %}</span>
+            <span class="tag">{% trans "LLM · Python · NLP" context "website" %}</span>
           </div>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="openJob('ai')">View Details</button>
+        <button class="btn btn-primary btn-sm" onclick="openJob('ai')">{% trans "View Details" context "website" %}</button>
       </div>
 
     </div>
 
     <!-- Product & Design -->
-    <h3 style="margin-bottom:16px;margin-top:40px;font-size:1.1rem;color:var(--secondary);font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-family:'Montserrat',sans-serif;">Product &amp; Design</h3>
+    <h3 style="margin-bottom:16px;margin-top:40px;font-size:1.1rem;color:var(--secondary);font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-family:'Montserrat',sans-serif;">{% trans "Product &amp; Design" context "website" %}</h3>
     <div class="job-list">
 
       <div class="job-card">
         <div class="job-card__left">
-          <h4 class="job-card__title">Product Manager – Platform Core</h4>
+          <h4 class="job-card__title">{% trans "Product Manager – Platform Core" context "website" %}</h4>
           <div class="job-card__tags">
-            <span class="tag tag--primary">Product</span>
-            <span class="tag tag--green">Full-time</span>
-            <span class="tag">Remote</span>
-            <span class="tag">B2B SaaS · Agile · Jira</span>
+            <span class="tag tag--primary">{% trans "Product" context "website" %}</span>
+            <span class="tag tag--green">{% trans "Full-time" context "website" %}</span>
+            <span class="tag">{% trans "Remote" context "website" %}</span>
+            <span class="tag">{% trans "B2B SaaS · Agile · Jira" context "website" %}</span>
           </div>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="openJob('pm')">View Details</button>
+        <button class="btn btn-primary btn-sm" onclick="openJob('pm')">{% trans "View Details" context "website" %}</button>
       </div>
 
       <div class="job-card">
         <div class="job-card__left">
-          <h4 class="job-card__title">UX/UI Designer</h4>
+          <h4 class="job-card__title">{% trans "UX/UI Designer" context "website" %}</h4>
           <div class="job-card__tags">
-            <span class="tag tag--primary">Design</span>
-            <span class="tag tag--yellow">Contract</span>
-            <span class="tag">Remote</span>
-            <span class="tag">Figma · Design Systems</span>
+            <span class="tag tag--primary">{% trans "Design" context "website" %}</span>
+            <span class="tag tag--yellow">{% trans "Contract" context "website" %}</span>
+            <span class="tag">{% trans "Remote" context "website" %}</span>
+            <span class="tag">{% trans "Figma · Design Systems" context "website" %}</span>
           </div>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="openJob('ux')">View Details</button>
+        <button class="btn btn-primary btn-sm" onclick="openJob('ux')">{% trans "View Details" context "website" %}</button>
       </div>
 
     </div>
 
     <!-- Business & Regional -->
-    <h3 style="margin-bottom:16px;margin-top:40px;font-size:1.1rem;color:var(--secondary);font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-family:'Montserrat',sans-serif;">Business &amp; Regional</h3>
+    <h3 style="margin-bottom:16px;margin-top:40px;font-size:1.1rem;color:var(--secondary);font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-family:'Montserrat',sans-serif;">{% trans "Business &amp; Regional" context "website" %}</h3>
     <div class="job-list">
 
       <div class="job-card">
         <div class="job-card__left">
-          <h4 class="job-card__title">Regional Coordinator – Central Europe</h4>
+          <h4 class="job-card__title">{% trans "Regional Coordinator – Central Europe" context "website" %}</h4>
           <div class="job-card__tags">
-            <span class="tag tag--primary">Business</span>
-            <span class="tag tag--green">Full-time</span>
-            <span class="tag">Prague / Remote</span>
-            <span class="tag">CZ · SK · AT · PL</span>
+            <span class="tag tag--primary">{% trans "Business" context "website" %}</span>
+            <span class="tag tag--green">{% trans "Full-time" context "website" %}</span>
+            <span class="tag">{% trans "Prague / Remote" context "website" %}</span>
+            <span class="tag">{% trans "CZ · SK · AT · PL" context "website" %}</span>
           </div>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="openJob('regional-ce')">View Details</button>
+        <button class="btn btn-primary btn-sm" onclick="openJob('regional-ce')">{% trans "View Details" context "website" %}</button>
       </div>
 
       <div class="job-card">
         <div class="job-card__left">
-          <h4 class="job-card__title">Regional Coordinator – Middle East</h4>
+          <h4 class="job-card__title">{% trans "Regional Coordinator – Middle East" context "website" %}</h4>
           <div class="job-card__tags">
-            <span class="tag tag--primary">Business</span>
-            <span class="tag tag--yellow">Contract</span>
-            <span class="tag">Dubai / Remote</span>
-            <span class="tag">UAE · KSA · QA</span>
+            <span class="tag tag--primary">{% trans "Business" context "website" %}</span>
+            <span class="tag tag--yellow">{% trans "Contract" context "website" %}</span>
+            <span class="tag">{% trans "Dubai / Remote" context "website" %}</span>
+            <span class="tag">{% trans "UAE · KSA · QA" context "website" %}</span>
           </div>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="openJob('regional-me')">View Details</button>
+        <button class="btn btn-primary btn-sm" onclick="openJob('regional-me')">{% trans "View Details" context "website" %}</button>
       </div>
 
       <div class="job-card">
         <div class="job-card__left">
-          <h4 class="job-card__title">Business Development Manager – Franchise</h4>
+          <h4 class="job-card__title">{% trans "Business Development Manager – Franchise" context "website" %}</h4>
           <div class="job-card__tags">
-            <span class="tag tag--primary">Business</span>
-            <span class="tag tag--green">Full-time</span>
-            <span class="tag">Remote</span>
-            <span class="tag">Franchise · B2B · Sales</span>
+            <span class="tag tag--primary">{% trans "Business" context "website" %}</span>
+            <span class="tag tag--green">{% trans "Full-time" context "website" %}</span>
+            <span class="tag">{% trans "Remote" context "website" %}</span>
+            <span class="tag">{% trans "Franchise · B2B · Sales" context "website" %}</span>
           </div>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="openJob('biz-dev')">View Details</button>
+        <button class="btn btn-primary btn-sm" onclick="openJob('biz-dev')">{% trans "View Details" context "website" %}</button>
       </div>
 
       <div class="job-card">
         <div class="job-card__left">
-          <h4 class="job-card__title">Business Consultant (Freelance Network)</h4>
+          <h4 class="job-card__title">{% trans "Business Consultant (Freelance Network)" context "website" %}</h4>
           <div class="job-card__tags">
-            <span class="tag tag--primary">Consulting</span>
-            <span class="tag tag--yellow">Freelance</span>
-            <span class="tag">Remote</span>
-            <span class="tag">Multiple Regions</span>
+            <span class="tag tag--primary">{% trans "Consulting" context "website" %}</span>
+            <span class="tag tag--yellow">{% trans "Freelance" context "website" %}</span>
+            <span class="tag">{% trans "Remote" context "website" %}</span>
+            <span class="tag">{% trans "Multiple Regions" context "website" %}</span>
           </div>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="openJob('consultant')">View Details</button>
+        <button class="btn btn-primary btn-sm" onclick="openJob('consultant')">{% trans "View Details" context "website" %}</button>
       </div>
 
     </div>
@@ -264,9 +264,9 @@
 <!-- APPLY CTA -->
 <section class="section section--dark">
   <div class="container text-center">
-    <h2 class="section-title text-white">Don't See Your Role?</h2>
-    <p style="color:rgba(199,204,209,.7);max-width:520px;margin:0 auto 32px;">We are always looking for exceptional people. Send us your profile and tell us how you can contribute to the FONTESIN mission.</p>
-    <a href="{% url 'contact' %}" class="btn btn--white btn-lg">Send Open Application</a>
+    <h2 class="section-title text-white">{% trans "Don't See Your Role?" context "website" %}</h2>
+    <p style="color:rgba(199,204,209,.7);max-width:520px;margin:0 auto 32px;">{% trans "We are always looking for exceptional people. Send us your profile and tell us how you can contribute to the FONTESIN mission." context "website" %}</p>
+    <a href="{% url 'contact' %}" class="btn btn--white btn-lg">{% trans "Send Open Application" context "website" %}</a>
   </div>
 </section>
 
@@ -276,38 +276,38 @@
     <div class="footer__grid">
       <div>
         <div class="footer__logo"><img src="{% static 'adminlte/images/fontesin-logo.png' %}" alt="FONTESIN" style="height:32px;width:auto;filter:brightness(0) invert(1);margin-bottom:12px;"/></div>
-        <p class="footer__brand-desc">A deep-tech global business infrastructure platform connecting companies, professionals, and markets across languages, borders, and systems.</p>
+        <p class="footer__brand-desc">{% trans "A deep-tech global business infrastructure platform connecting companies, professionals, and markets across languages, borders, and systems." context "website" %}</p>
       </div>
       <div>
-        <p class="footer__heading">Platform</p>
+        <p class="footer__heading">{% trans "Platform" context "website" %}</p>
         <div class="footer__links">
-          <a href="{% url 'worldmap' %}">World Map</a>
-          <a href="{% url 'register' %}">Get Started</a>
-          <a href="{% url 'login' %}">Log In</a>
+          <a href="{% url 'worldmap' %}">{% trans "World Map" context "website" %}</a>
+          <a href="{% url 'register' %}">{% trans "Get Started" context "website" %}</a>
+          <a href="{% url 'login' %}">{% trans "Log In" context "auth.login" %}</a>
         </div>
       </div>
       <div>
-        <p class="footer__heading">Company</p>
+        <p class="footer__heading">{% trans "Company" context "website" %}</p>
         <div class="footer__links">
-          <a href="{% url 'about' %}">About Us</a>
-          <a href="{% url 'career' %}">Careers</a>
-          <a href="{% url 'contact' %} ">Contact</a>
+          <a href="{% url 'about' %}">{% trans "About Us" context "website" %}</a>
+          <a href="{% url 'career' %}">{% trans "Careers" context "website" %}</a>
+          <a href="{% url 'contact' %}">{% trans "Contact" context "website" %}</a>
         </div>
       </div>
       <div>
-        <p class="footer__heading">Regions</p>
+        <p class="footer__heading">{% trans "Regions" context "website" %}</p>
         <div class="footer__links">
-          <a href="{% url 'region_us' %}">United States</a>
-          <a href="{% url 'region_de' %}">Germany</a>
-          <a href="{% url 'region_cz' %}">Czech Republic</a>
-          <a href="{% url 'region_ae' %}">UAE</a>
-          <a href="{% url 'region_jp' %}">Japan</a>
+          <a href="{% url 'region_us' %}">{% trans "United States" context "website" %}</a>
+          <a href="{% url 'region_de' %}">{% trans "Germany" context "website" %}</a>
+          <a href="{% url 'region_cz' %}">{% trans "Czech Republic" context "website" %}</a>
+          <a href="{% url 'region_ae' %}">{% trans "UAE" context "website" %}</a>
+          <a href="{% url 'region_jp' %}">{% trans "Japan" context "website" %}</a>
         </div>
       </div>
     </div>
     <div class="footer__bottom">
-      <span>© 2026 FONTES Inc. All rights reserved.</span>
-      <span>Design by Memento Mori Digital LLC</span>
+      <span>{% trans "© 2026 FONTES Inc. All rights reserved." context "website" %}</span>
+      <span>{% trans "Design by Memento Mori Digital LLC" context "website" %}</span>
     </div>
   </div>
 </footer>
@@ -315,82 +315,95 @@
 <!-- JOB DETAIL MODAL -->
 <div class="job-detail-modal" id="job-modal">
   <div class="job-detail-box">
-    <button class="job-detail-close" onclick="closeJob()">✕</button>
+    <button class="job-detail-close" onclick="closeJob()" aria-label="{% trans 'Close' context 'website' %}">✕</button>
     <div id="job-modal-content"></div>
   </div>
 </div>
 
 <script>
+(function () {
+  var g = function (s) { return (typeof gettext === 'function') ? gettext(s) : s; };
+  window.WEBSITE_I18N = {
+    requirements: '{% filter escapejs %}{% trans "Requirements" context "website" %}{% endfilter %}',
+    niceToHave: '{% filter escapejs %}{% trans "Nice to Have" context "website" %}{% endfilter %}',
+    applyForPosition: '{% filter escapejs %}{% trans "Apply for This Position" context "website" %}{% endfilter %}',
+  };
+  Object.keys(window.WEBSITE_I18N).forEach(function (k) {
+    window.WEBSITE_I18N[k] = g(window.WEBSITE_I18N[k]);
+  });
+})();
+</script>
+<script>
 const JOB_DETAILS = {
   backend: {
-    title: 'Senior Backend Engineer (FastAPI / Python)',
-    type: 'Full-time · Remote',
-    desc: 'We are looking for a senior backend engineer to build and maintain the core API infrastructure of the FONTESIN platform. You will work on tenant-isolated data architecture, billing integrations, and real-time data ingestion pipelines.',
-    requirements: ['5+ years Python experience', 'FastAPI or similar async framework', 'PostgreSQL, Redis', 'Microservices architecture', 'REST API design', 'Docker / Kubernetes'],
-    nice: ['Experience with multi-tenant SaaS', 'Knowledge of ABAC security models', 'German or Czech language a plus'],
+    title: '{% filter escapejs %}{% trans "Senior Backend Engineer (FastAPI / Python)" context "website" %}{% endfilter %}',
+    type: '{% filter escapejs %}{% trans "Full-time · Remote" context "website" %}{% endfilter %}',
+    desc: '{% filter escapejs %}{% trans "We are looking for a senior backend engineer to build and maintain the core API infrastructure of the FONTESIN platform. You will work on tenant-isolated data architecture, billing integrations, and real-time data ingestion pipelines." context "website" %}{% endfilter %}',
+    requirements: ['{% filter escapejs %}{% trans "5+ years Python experience" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "FastAPI or similar async framework" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "PostgreSQL, Redis" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Microservices architecture" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "REST API design" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Docker / Kubernetes" context "website" %}{% endfilter %}'],
+    nice: ['{% filter escapejs %}{% trans "Experience with multi-tenant SaaS" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Knowledge of ABAC security models" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "German or Czech language a plus" context "website" %}{% endfilter %}'],
   },
   frontend: {
-    title: 'Frontend Engineer (React / TypeScript)',
-    type: 'Full-time · Remote',
-    desc: 'Build the user-facing platform including the interactive world map, company database UI, onboarding flows, and admin dashboards. You will work closely with the product and design team.',
-    requirements: ['4+ years React experience', 'TypeScript proficiency', 'TailwindCSS or similar', 'REST API integration', 'Responsive design', 'Performance optimization'],
-    nice: ['Next.js experience', 'SVG / D3.js for data visualization', 'i18n / multilingual apps'],
+    title: '{% filter escapejs %}{% trans "Frontend Engineer (React / TypeScript)" context "website" %}{% endfilter %}',
+    type: '{% filter escapejs %}{% trans "Full-time · Remote" context "website" %}{% endfilter %}',
+    desc: '{% filter escapejs %}{% trans "Build the user-facing platform including the interactive world map, company database UI, onboarding flows, and admin dashboards. You will work closely with the product and design team." context "website" %}{% endfilter %}',
+    requirements: ['{% filter escapejs %}{% trans "4+ years React experience" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "TypeScript proficiency" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "TailwindCSS or similar" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "REST API integration" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Responsive design" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Performance optimization" context "website" %}{% endfilter %}'],
+    nice: ['{% filter escapejs %}{% trans "Next.js experience" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "SVG / D3.js for data visualization" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "i18n / multilingual apps" context "website" %}{% endfilter %}'],
   },
   devops: {
-    title: 'DevOps / Infrastructure Engineer',
-    type: 'Full-time · Remote',
-    desc: 'Own the infrastructure, CI/CD pipelines, monitoring, and deployment of the FONTESIN platform across multiple regions. Ensure high availability and security compliance.',
-    requirements: ['Kubernetes (EKS/GKE)', 'Terraform / IaC', 'AWS or GCP', 'CI/CD (GitHub Actions / GitLab)', 'Monitoring (Prometheus / Grafana)', 'Security best practices'],
-    nice: ['SOC2 compliance experience', 'Multi-region deployment', 'Database replication'],
+    title: '{% filter escapejs %}{% trans "DevOps / Infrastructure Engineer" context "website" %}{% endfilter %}',
+    type: '{% filter escapejs %}{% trans "Full-time · Remote" context "website" %}{% endfilter %}',
+    desc: '{% filter escapejs %}{% trans "Own the infrastructure, CI/CD pipelines, monitoring, and deployment of the FONTESIN platform across multiple regions. Ensure high availability and security compliance." context "website" %}{% endfilter %}',
+    requirements: ['{% filter escapejs %}{% trans "Kubernetes (EKS/GKE)" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Terraform / IaC" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "AWS or GCP" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "CI/CD (GitHub Actions / GitLab)" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Monitoring (Prometheus / Grafana)" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Security best practices" context "website" %}{% endfilter %}'],
+    nice: ['{% filter escapejs %}{% trans "SOC2 compliance experience" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Multi-region deployment" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Database replication" context "website" %}{% endfilter %}'],
   },
   ai: {
-    title: 'AI / ML Engineer',
-    type: 'Contract · Remote',
-    desc: 'Develop and integrate AI features including intelligent company matching, multilingual content translation, and business potential scoring algorithms.',
-    requirements: ['Python ML stack (PyTorch / HuggingFace)', 'LLM integration (OpenAI / Anthropic)', 'NLP and text classification', 'API design for AI services', 'Data pipeline experience'],
-    nice: ['Multilingual NLP', 'Recommendation systems', 'RAG architectures'],
+    title: '{% filter escapejs %}{% trans "AI / ML Engineer" context "website" %}{% endfilter %}',
+    type: '{% filter escapejs %}{% trans "Contract · Remote" context "website" %}{% endfilter %}',
+    desc: '{% filter escapejs %}{% trans "Develop and integrate AI features including intelligent company matching, multilingual content translation, and business potential scoring algorithms." context "website" %}{% endfilter %}',
+    requirements: ['{% filter escapejs %}{% trans "Python ML stack (PyTorch / HuggingFace)" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "LLM integration (OpenAI / Anthropic)" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "NLP and text classification" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "API design for AI services" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Data pipeline experience" context "website" %}{% endfilter %}'],
+    nice: ['{% filter escapejs %}{% trans "Multilingual NLP" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Recommendation systems" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "RAG architectures" context "website" %}{% endfilter %}'],
   },
   pm: {
-    title: 'Product Manager – Platform Core',
-    type: 'Full-time · Remote',
-    desc: 'Own the product roadmap for the core platform including company registration, certification, licensing, and the world map module. Work directly with engineering and the founding team.',
-    requirements: ['3+ years B2B SaaS PM experience', 'Agile / Scrum methodology', 'Jira proficiency', 'Data-driven decision making', 'Strong written communication'],
-    nice: ['Experience with marketplace or network products', 'International market experience'],
+    title: '{% filter escapejs %}{% trans "Product Manager – Platform Core" context "website" %}{% endfilter %}',
+    type: '{% filter escapejs %}{% trans "Full-time · Remote" context "website" %}{% endfilter %}',
+    desc: '{% filter escapejs %}{% trans "Own the product roadmap for the core platform including company registration, certification, licensing, and the world map module. Work directly with engineering and the founding team." context "website" %}{% endfilter %}',
+    requirements: ['{% filter escapejs %}{% trans "3+ years B2B SaaS PM experience" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Agile / Scrum methodology" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Jira proficiency" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Data-driven decision making" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Strong written communication" context "website" %}{% endfilter %}'],
+    nice: ['{% filter escapejs %}{% trans "Experience with marketplace or network products" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "International market experience" context "website" %}{% endfilter %}'],
   },
   ux: {
-    title: 'UX/UI Designer',
-    type: 'Contract · Remote',
-    desc: 'Design and refine the FONTESIN user experience across web and mobile. Work within the established brand guidelines to create clear, minimal, and globally usable interfaces.',
-    requirements: ['Figma proficiency', 'Design systems experience', 'UX research skills', 'Responsive design', 'Accessibility standards'],
-    nice: ['B2B platform design experience', 'Data visualization design', 'Motion design'],
+    title: '{% filter escapejs %}{% trans "UX/UI Designer" context "website" %}{% endfilter %}',
+    type: '{% filter escapejs %}{% trans "Contract · Remote" context "website" %}{% endfilter %}',
+    desc: '{% filter escapejs %}{% trans "Design and refine the FONTESIN user experience across web and mobile. Work within the established brand guidelines to create clear, minimal, and globally usable interfaces." context "website" %}{% endfilter %}',
+    requirements: ['{% filter escapejs %}{% trans "Figma proficiency" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Design systems experience" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "UX research skills" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Responsive design" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Accessibility standards" context "website" %}{% endfilter %}'],
+    nice: ['{% filter escapejs %}{% trans "B2B platform design experience" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Data visualization design" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Motion design" context "website" %}{% endfilter %}'],
   },
   'regional-ce': {
-    title: 'Regional Coordinator – Central Europe',
-    type: 'Full-time · Prague / Remote',
-    desc: 'Lead FONTESIN\'s market activation and franchise development across Czech Republic, Slovakia, Austria, and Poland. Build and manage the local consultant network.',
-    requirements: ['Business development experience', 'Czech or Slovak language (native)', 'B2B sales experience', 'Network in Central European business community', 'English proficiency'],
-    nice: ['Franchise industry knowledge', 'Legal entity registration experience'],
+    title: '{% filter escapejs %}{% trans "Regional Coordinator – Central Europe" context "website" %}{% endfilter %}',
+    type: '{% filter escapejs %}{% trans "Full-time · Prague / Remote" context "website" %}{% endfilter %}',
+    desc: '{% filter escapejs %}{% trans "Lead FONTESIN's market activation and franchise development across Czech Republic, Slovakia, Austria, and Poland. Build and manage the local consultant network." context "website" %}{% endfilter %}',
+    requirements: ['{% filter escapejs %}{% trans "Business development experience" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Czech or Slovak language (native)" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "B2B sales experience" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Network in Central European business community" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "English proficiency" context "website" %}{% endfilter %}'],
+    nice: ['{% filter escapejs %}{% trans "Franchise industry knowledge" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Legal entity registration experience" context "website" %}{% endfilter %}'],
   },
   'regional-me': {
-    title: 'Regional Coordinator – Middle East',
-    type: 'Contract · Dubai / Remote',
-    desc: 'Drive FONTESIN\'s expansion into UAE, Saudi Arabia, and Qatar. Establish local partnerships, manage franchise inquiries, and coordinate with HQ on regional activation.',
-    requirements: ['5+ years business experience in the Gulf region', 'Arabic language (preferred)', 'Strong local business network', 'English proficiency', 'Understanding of UAE/KSA business regulations'],
-    nice: ['Free zone company setup experience', 'Fintech or tech industry background'],
+    title: '{% filter escapejs %}{% trans "Regional Coordinator – Middle East" context "website" %}{% endfilter %}',
+    type: '{% filter escapejs %}{% trans "Contract · Dubai / Remote" context "website" %}{% endfilter %}',
+    desc: '{% filter escapejs %}{% trans "Drive FONTESIN's expansion into UAE, Saudi Arabia, and Qatar. Establish local partnerships, manage franchise inquiries, and coordinate with HQ on regional activation." context "website" %}{% endfilter %}',
+    requirements: ['{% filter escapejs %}{% trans "5+ years business experience in the Gulf region" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Arabic language (preferred)" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Strong local business network" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "English proficiency" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Understanding of UAE/KSA business regulations" context "website" %}{% endfilter %}'],
+    nice: ['{% filter escapejs %}{% trans "Free zone company setup experience" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Fintech or tech industry background" context "website" %}{% endfilter %}'],
   },
   'biz-dev': {
-    title: 'Business Development Manager – Franchise',
-    type: 'Full-time · Remote',
-    desc: 'Identify, qualify, and onboard Master Franchise partners across target regions. Manage the full franchise sales cycle from initial inquiry to contract signing.',
-    requirements: ['3+ years franchise or B2B sales experience', 'CRM proficiency', 'Excellent presentation skills', 'International business experience', 'English proficiency'],
-    nice: ['Second language (German, French, Arabic, or Japanese)', 'Legal background a plus'],
+    title: '{% filter escapejs %}{% trans "Business Development Manager – Franchise" context "website" %}{% endfilter %}',
+    type: '{% filter escapejs %}{% trans "Full-time · Remote" context "website" %}{% endfilter %}',
+    desc: '{% filter escapejs %}{% trans "Identify, qualify, and onboard Master Franchise partners across target regions. Manage the full franchise sales cycle from initial inquiry to contract signing." context "website" %}{% endfilter %}',
+    requirements: ['{% filter escapejs %}{% trans "3+ years franchise or B2B sales experience" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "CRM proficiency" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Excellent presentation skills" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "International business experience" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "English proficiency" context "website" %}{% endfilter %}'],
+    nice: ['{% filter escapejs %}{% trans "Second language (German, French, Arabic, or Japanese)" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Legal background a plus" context "website" %}{% endfilter %}'],
   },
   consultant: {
-    title: 'Business Consultant (Freelance Network)',
-    type: 'Freelance · Remote · Multiple Regions',
-    desc: 'Join the FONTESIN consultant network as an independent business advisor. Help local companies get verified, certified, and connected to the global platform.',
-    requirements: ['Business consulting experience', 'Local market knowledge', 'Professional certification or credentials', 'English proficiency', 'Entrepreneurial mindset'],
-    nice: ['Legal or financial advisory background', 'International business experience'],
+    title: '{% filter escapejs %}{% trans "Business Consultant (Freelance Network)" context "website" %}{% endfilter %}',
+    type: '{% filter escapejs %}{% trans "Freelance · Remote · Multiple Regions" context "website" %}{% endfilter %}',
+    desc: '{% filter escapejs %}{% trans "Join the FONTESIN consultant network as an independent business advisor. Help local companies get verified, certified, and connected to the global platform." context "website" %}{% endfilter %}',
+    requirements: ['{% filter escapejs %}{% trans "Business consulting experience" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Local market knowledge" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Professional certification or credentials" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "English proficiency" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "Entrepreneurial mindset" context "website" %}{% endfilter %}'],
+    nice: ['{% filter escapejs %}{% trans "Legal or financial advisory background" context "website" %}{% endfilter %}', '{% filter escapejs %}{% trans "International business experience" context "website" %}{% endfilter %}'],
   },
 };
 
@@ -405,10 +418,10 @@ function openJob(id) {
       <span class="tag tag--green" style="font-size:.78rem;">${job.type}</span>
     </div>
     <p style="margin-bottom:24px;">${job.desc}</p>
-    <h4 style="margin-bottom:12px;">Requirements</h4>
+    <h4 style="margin-bottom:12px;">${window.WEBSITE_I18N.requirements}</h4>
     <ul style="list-style:none;margin-bottom:24px;">${req}</ul>
-    ${nice ? `<h4 style="margin-bottom:12px;">Nice to Have</h4><ul style="list-style:none;margin-bottom:24px;">${nice}</ul>` : ''}
-    <a href="/contact/" class="btn btn-primary w-full" style="display:block;text-align:center;">Apply for This Position</a>
+    ${nice ? `<h4 style="margin-bottom:12px;">${window.WEBSITE_I18N.niceToHave}</h4><ul style="list-style:none;margin-bottom:24px;">${nice}</ul>` : ''}
+    <a href="/contact/" class="btn btn-primary w-full" style="display:block;text-align:center;">${window.WEBSITE_I18N.applyForPosition}</a>
   `;
   document.getElementById('job-modal').classList.add('open');
 }
@@ -422,14 +435,32 @@ document.getElementById('job-modal').addEventListener('click', function(e) {
 });
 </script>
 <script src="{% static 'adminlte/js/main.js' %}"></script>
-  <script>
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", function() {
-        navigator.serviceWorker.register("/sw.js")
-          .then(function(reg) { console.log("[PWA] SW registered:", reg.scope); })
-          .catch(function(err) { console.warn("[PWA] SW registration failed:", err); });
-      });
-    }
-  </script>
+<script>
+(function () {
+  window.PWA_I18N = {
+    notificationBody: '{% filter escapejs %}{% trans "You have a new notification" context "website" %}{% endfilter %}',
+    open: '{% filter escapejs %}{% trans "Open" context "website" %}{% endfilter %}',
+    dismiss: '{% filter escapejs %}{% trans "Dismiss" context "website" %}{% endfilter %}',
+  };
+})();
+</script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function() {
+      navigator.serviceWorker.register("{% static 'adminlte/js/sw.js' %}")
+        .then(function(reg) {
+          function sendStrings() {
+            var sw = reg.active || navigator.serviceWorker.controller;
+            if (sw && window.PWA_I18N) {
+              sw.postMessage({ type: "PWA_STRINGS", strings: window.PWA_I18N });
+            }
+          }
+          sendStrings();
+          navigator.serviceWorker.addEventListener("controllerchange", sendStrings);
+        })
+        .catch(function(err) { console.warn("[PWA] SW registration failed:", err); });
+    });
+  }
+</script>
 </body>
 </html>

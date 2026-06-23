@@ -1,11 +1,11 @@
-{% load static %}
+{% load static i18n i18n_extras %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <meta name="theme-color" content="#253D51"/>
-  <title>Application Under Review - FONTESIN</title>
+  <title>{% trans "Application Under Review" context "auth.application_pending" %} - FONTESIN</title>
   <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
   <style>
     .pending-page {
@@ -15,6 +15,7 @@
       justify-content: center;
       background: linear-gradient(135deg, #253D51 0%, #1a2d3d 100%);
       padding: 24px;
+      position: relative;
     }
     .pending-card {
       background: #fff;
@@ -80,31 +81,33 @@
 <body>
 
 <div class="pending-page">
+  {% include "partials/_auth_lang_switcher.html" %}
+
   <div class="pending-card">
 
     {% if status == "declined" %}
       <div class="pending-icon declined">&#10060;</div>
-      <h2>Application Not Approved</h2>
-      {% if role_label %}<div class="role-badge">{{ role_label }} application</div>{% endif %}
-      <p>After review, your account application was not approved by our team.</p>
+      <h2>{% trans "Application Not Approved" context "auth.application_pending" %}</h2>
+      {% if role_label %}<div class="role-badge">{% blocktrans with role=role_label context "auth.application_pending" %}{{ role }} application{% endblocktrans %}</div>{% endif %}
+      <p>{% trans "After review, your account application was not approved by our team." context "auth.application_pending" %}</p>
       {% if decline_reason %}
-        <div class="reason-box"><strong>Reason:</strong> {{ decline_reason }}</div>
+        <div class="reason-box"><strong>{% trans "Reason:" context "auth.application_pending" %}</strong> {{ decline_reason }}</div>
       {% endif %}
-      <p>If you believe this was a mistake, please contact our team.</p>
+      <p>{% trans "If you believe this was a mistake, please contact our team." context "auth.application_pending" %}</p>
     {% else %}
       <div class="pending-icon review">&#9203;</div>
-      <h2>Application Under Review</h2>
-      {% if role_label %}<div class="role-badge">{{ role_label }} application</div>{% endif %}
-      <p>Thanks — we've received your application. Our team is reviewing it and will activate your account once approved.</p>
+      <h2>{% trans "Application Under Review" context "auth.application_pending" %}</h2>
+      {% if role_label %}<div class="role-badge">{% blocktrans with role=role_label context "auth.application_pending" %}{{ role }} application{% endblocktrans %}</div>{% endif %}
+      <p>{% trans "Thanks — we've received your application. Our team is reviewing it and will activate your account once approved." context "auth.application_pending" %}</p>
       <ul class="pending-features">
-        <li>Your application has been submitted</li>
-        <li>A super admin is reviewing your details</li>
-        <li>You'll get full dashboard access once approved</li>
-        <li>You'll be notified of the decision</li>
+        <li>{% trans "Your application has been submitted" context "auth.application_pending" %}</li>
+        <li>{% trans "A super admin is reviewing your details" context "auth.application_pending" %}</li>
+        <li>{% trans "You'll get full dashboard access once approved" context "auth.application_pending" %}</li>
+        <li>{% trans "You'll be notified of the decision" context "auth.application_pending" %}</li>
       </ul>
     {% endif %}
 
-    <a href="{% url 'logout' %}" class="btn-back">Back to Login</a>
+    <a href="{% url 'logout' %}" class="btn-back">{% trans "Back to Login" context "auth.common" %}</a>
   </div>
 </div>
 

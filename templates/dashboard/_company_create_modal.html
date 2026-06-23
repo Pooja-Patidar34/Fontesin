@@ -1,3 +1,4 @@
+{% load i18n %}
 {% comment %}
   Reusable "Add Company" modal — the create half of the Company Database
   modal, hosted on pages that want an in-page create flow (e.g. My
@@ -125,7 +126,7 @@
         <input type="hidden" name="company_id" id="company-id-field">
 
         <div class="modal-header">
-          <h5 class="modal-title font-weight-bold mb-0">Add Company</h5>
+          <h5 class="modal-title font-weight-bold mb-0">{% trans "Add Company" context "companies" %}</h5>
           <button type="button" class="close ml-2" data-dismiss="modal" style="font-size:1.5rem;line-height:1;">&times;</button>
         </div>
 
@@ -133,97 +134,97 @@
 
           {% if request.user.is_superuser %}
           <div class="form-group">
-            <label>Tenant <span class="text-danger">*</span></label>
+            <label>{% trans "Tenant" context "companies" %} <span class="text-danger">*</span></label>
             {{ form.tenant }}
           </div>
           {% else %}
             {{ form.tenant }}
           {% endif %}
 
-          <div class="section-title">Basic Info</div>
+          <div class="section-title">{% trans "Basic Info" context "companies" %}</div>
 
           <div class="form-group">
-            <label>Company Name <span class="text-danger">*</span></label>
+            <label>{% trans "Company Name" context "companies" %} <span class="text-danger">*</span></label>
             {{ form.name }}
           </div>
 
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label>Legal Form <span class="text-danger">*</span></label>
+              <label>{% trans "Legal Form" context "companies" %} <span class="text-danger">*</span></label>
               {{ form.entity_type }}
             </div>
             <div class="form-group col-md-6">
-              <label>Registration Number / Company ID</label>
+              <label>{% trans "Registration Number / Company ID" context "companies" %}</label>
               {{ form.registration_id }}
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label>Year of Establishment</label>
+              <label>{% trans "Year of Establishment" context "companies" %}</label>
               {{ form.year_established }}
             </div>
             <div class="form-group col-md-6">
-              <label>Number of Employees</label>
+              <label>{% trans "Number of Employees" context "companies" %}</label>
               {{ form.employee_count_range }}
             </div>
           </div>
 
-          <div class="section-title">Address</div>
+          <div class="section-title">{% trans "Address" context "companies" %}</div>
 
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label>Country <span class="text-danger">*</span></label>
+              <label>{% trans "Country" context "companies" %} <span class="text-danger">*</span></label>
               {{ form.country }}
             </div>
             <div class="form-group col-md-6">
-              <label>State</label>
+              <label>{% trans "State" context "companies" %}</label>
               {{ form.state }}
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label>Region</label>
+              <label>{% trans "Region" context "companies" %}</label>
               {{ form.region }}
             </div>
             <div class="form-group col-md-6">
-              <label>City / Municipality <span class="text-danger">*</span></label>
+              <label>{% trans "City / Municipality" context "companies" %} <span class="text-danger">*</span></label>
               {{ form.city }}
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label>District</label>
+              <label>{% trans "District" context "companies" %}</label>
               {{ form.district }}
             </div>
             <div class="form-group col-md-6">
-              <label>Postal Code</label>
+              <label>{% trans "Postal Code" context "companies" %}</label>
               {{ form.postal_code }}
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group col-md-8">
-              <label>Street</label>
+              <label>{% trans "Street" context "companies" %}</label>
               {{ form.address_line1 }}
             </div>
             <div class="form-group col-md-4">
-              <label>House Number</label>
+              <label>{% trans "House Number" context "companies" %}</label>
               {{ form.house_number }}
             </div>
           </div>
 
-          <div class="section-title">Business Activity</div>
+          <div class="section-title">{% trans "Business Activity" context "companies" %}</div>
 
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label>Primary Line of Business <span class="text-danger">*</span></label>
+              <label>{% trans "Primary Line of Business" context "companies" %} <span class="text-danger">*</span></label>
               {{ form.classification }}
             </div>
             <div class="form-group col-md-6">
-              <label for="nace-picker-search">NACE Code <small class="text-muted">(EU classification)</small></label>
+              <label for="nace-picker-search">{% trans "NACE Code" context "companies" %} <small class="text-muted">{% trans "(EU classification)" context "companies" %}</small></label>
               <div class="industry-picker" data-system="nace"
                    data-endpoint="/api/industry-codes/nace/">
                 {{ form.nace_code }}
@@ -231,11 +232,11 @@
                        id="nace-picker-search"
                        class="form-control industry-picker-search"
                        autocomplete="off"
-                       placeholder="Start typing a code or activity, e.g. J62 or 'software'">
+                       placeholder="{% trans "Start typing a code or activity, e.g. J62 or software" context "companies" %}">
                 <button type="button"
                         class="industry-picker-clear"
-                        aria-label="Clear NACE code"
-                        title="Clear"
+                        aria-label="{% trans "Clear NACE code" context "companies" %}"
+                        title="{% trans "Clear" context "common" %}"
                         hidden>&times;</button>
                 <ul class="industry-picker-results" hidden></ul>
               </div>
@@ -244,7 +245,7 @@
 
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label for="naics-picker-search">NAICS Code <small class="text-muted">(US, optional)</small></label>
+              <label for="naics-picker-search">{% trans "NAICS Code" context "companies" %} <small class="text-muted">{% trans "(US, optional)" context "companies" %}</small></label>
               <div class="industry-picker" data-system="naics"
                    data-endpoint="/api/industry-codes/naics/">
                 {{ form.naics_code }}
@@ -252,11 +253,11 @@
                        id="naics-picker-search"
                        class="form-control industry-picker-search"
                        autocomplete="off"
-                       placeholder="Start typing a code or activity, e.g. 541511">
+                       placeholder="{% trans "Start typing a code or activity, e.g. 541511" context "companies" %}">
                 <button type="button"
                         class="industry-picker-clear"
-                        aria-label="Clear NAICS code"
-                        title="Clear"
+                        aria-label="{% trans "Clear NAICS code" context "companies" %}"
+                        title="{% trans "Clear" context "common" %}"
                         hidden>&times;</button>
                 <ul class="industry-picker-results" hidden></ul>
               </div>
@@ -264,61 +265,61 @@
           </div>
 
           <div class="form-group">
-            <label>Keywords</label>
+            <label>{% trans "Keywords" context "companies" %}</label>
             {{ form.keywords }}
             <small class="form-text text-muted">
-              Words other users will type to find this company.
+              {% trans "Words other users will type to find this company." context "companies" %}
             </small>
           </div>
 
-          <div class="section-title">Contact Person</div>
+          <div class="section-title">{% trans "Contact Person" context "companies" %}</div>
 
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label>First Name</label>
+              <label>{% trans "First Name" context "companies" %}</label>
               {{ form.contact_first_name }}
             </div>
             <div class="form-group col-md-6">
-              <label>Last Name</label>
+              <label>{% trans "Last Name" context "companies" %}</label>
               {{ form.contact_last_name }}
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label>Contact Email <span class="text-danger">*</span></label>
+              <label>{% trans "Contact Email" context "companies" %} <span class="text-danger">*</span></label>
               {{ form.contact_email }}
             </div>
             <div class="form-group col-md-6">
-              <label>Phone</label>
+              <label>{% trans "Phone" context "companies" %}</label>
               {{ form.phone }}
             </div>
           </div>
 
           {% if is_business_user %}
-          <div class="section-title">Certifying Consultant</div>
+          <div class="section-title">{% trans "Certifying Consultant" context "companies" %}</div>
           <small class="form-text text-muted" style="margin-bottom:10px; display:block;">
             <i class="fas fa-info-circle mr-1"></i>
-            A consultant will be assigned when your certification request is reviewed.
-            Their name and contact details will appear automatically and are
-            maintained by them &mdash; not editable from your account.
+            {% blocktrans trimmed context "companies" %}
+            A consultant will be assigned when your certification request is reviewed. Their name and contact details will appear automatically and are maintained by them — not editable from your account.
+            {% endblocktrans %}
           </small>
           {% endif %}
 
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label>Website</label>
+              <label>{% trans "Website" context "companies" %}</label>
               {{ form.website }}
             </div>
           </div>
 
-          <div class="section-title">Branding</div>
+          <div class="section-title">{% trans "Branding" context "companies" %}</div>
 
           <div class="form-group">
-            <label>Company Logo</label>
+            <label>{% trans "Company Logo" context "companies" %}</label>
             {{ form.logo }}
             <small class="form-text text-muted">
-              PNG, JPG, SVG, WEBP or GIF (max 5 MB). Shown in the company overview.
+              {% trans "PNG, JPG, SVG, WEBP or GIF (max 5 MB). Shown in the company overview." context "companies" %}
             </small>
           </div>
 
@@ -335,7 +336,7 @@
         <div class="modal-footer">
           {% if can_manage %}
           <button type="submit" id="save-btn" class="btn btn-primary btn-sm">
-            <i class="fas fa-certificate mr-1"></i> Request Certification
+            <i class="fas fa-certificate mr-1"></i> {% trans "Request Certification" context "companies" %}
           </button>
           {% endif %}
         </div>
@@ -350,6 +351,73 @@
 {{ country_states|json_script:"company-country-states" }}
 
 <script>
+(function () {
+  window.COMPANY_I18N = {
+    selectState: '{% filter escapejs %}{% trans "Select State" context "companies" %}{% endfilter %}',
+    addCompany: '{% filter escapejs %}{% trans "Add Company" context "companies" %}{% endfilter %}',
+    createCompany: '{% filter escapejs %}{% trans "Create Company" context "companies" %}{% endfilter %}',
+    requestCertification: '{% filter escapejs %}{% trans "Request Certification" context "companies" %}{% endfilter %}',
+    companyDetails: '{% filter escapejs %}{% trans "Company Details" context "companies" %}{% endfilter %}',
+    editCompany: '{% filter escapejs %}{% trans "Edit Company" context "companies" %}{% endfilter %}',
+    save: '{% filter escapejs %}{% trans "Save" context "common" %}{% endfilter %}',
+    certifiedBy: '{% filter escapejs %}{% trans "Certified by" context "companies" %}{% endfilter %}',
+    on: '{% filter escapejs %}{% trans "on" context "common" %}{% endfilter %}',
+    basicInfo: '{% filter escapejs %}{% trans "Basic Info" context "companies" %}{% endfilter %}',
+    address: '{% filter escapejs %}{% trans "Address" context "companies" %}{% endfilter %}',
+    contact: '{% filter escapejs %}{% trans "Contact" context "companies" %}{% endfilter %}',
+    certifyingConsultant: '{% filter escapejs %}{% trans "Certifying Consultant" context "companies" %}{% endfilter %}',
+    status: '{% filter escapejs %}{% trans "Status" context "companies" %}{% endfilter %}',
+    legalForm: '{% filter escapejs %}{% trans "Legal Form" context "companies" %}{% endfilter %}',
+    registrationNo: '{% filter escapejs %}{% trans "Registration No." context "companies" %}{% endfilter %}',
+    yearOfEstablishment: '{% filter escapejs %}{% trans "Year of Establishment" context "companies" %}{% endfilter %}',
+    numberOfEmployees: '{% filter escapejs %}{% trans "Number of Employees" context "companies" %}{% endfilter %}',
+    naceCode: '{% filter escapejs %}{% trans "NACE Code" context "companies" %}{% endfilter %}',
+    naicsCode: '{% filter escapejs %}{% trans "NAICS Code" context "companies" %}{% endfilter %}',
+    keywords: '{% filter escapejs %}{% trans "Keywords" context "companies" %}{% endfilter %}',
+    houseNumber: '{% filter escapejs %}{% trans "House Number" context "companies" %}{% endfilter %}',
+    district: '{% filter escapejs %}{% trans "District" context "companies" %}{% endfilter %}',
+    region: '{% filter escapejs %}{% trans "Region" context "companies" %}{% endfilter %}',
+    cityState: '{% filter escapejs %}{% trans "City / State" context "companies" %}{% endfilter %}',
+    postalCode: '{% filter escapejs %}{% trans "Postal Code" context "companies" %}{% endfilter %}',
+    contactPerson: '{% filter escapejs %}{% trans "Contact Person" context "companies" %}{% endfilter %}',
+    contactEmail: '{% filter escapejs %}{% trans "Contact Email" context "companies" %}{% endfilter %}',
+    phone: '{% filter escapejs %}{% trans "Phone" context "companies" %}{% endfilter %}',
+    website: '{% filter escapejs %}{% trans "Website" context "companies" %}{% endfilter %}',
+    certification: '{% filter escapejs %}{% trans "Certification" context "companies" %}{% endfilter %}',
+    active: '{% filter escapejs %}{% trans "Active" context "companies" %}{% endfilter %}',
+    yes: '{% filter escapejs %}{% trans "Yes" context "common" %}{% endfilter %}',
+    no: '{% filter escapejs %}{% trans "No" context "common" %}{% endfilter %}',
+    any: '{% filter escapejs %}{% trans "Any" context "common" %}{% endfilter %}',
+    noPresetCountry: '{% filter escapejs %}{% trans "No preset for this country — showing all legal forms." context "companies" %}{% endfilter %}',
+    pickCountryNarrow: '{% filter escapejs %}{% trans "Pick a country to narrow the list, or filter globally." context "companies" %}{% endfilter %}',
+    noMatchesFor: '{% filter escapejs %}{% trans "No matches for" context "companies" %}{% endfilter %}',
+    startTyping: '{% filter escapejs %}{% trans "Start typing." context "companies" %}{% endfilter %}',
+    certSubmitted: '{% filter escapejs %}{% trans "Certification request submitted. A consultant will review your company shortly." context "companies" %}{% endfilter %}',
+    couldNotSave: '{% filter escapejs %}{% trans "Could not save company. Please check the form." context "companies" %}{% endfilter %}',
+    networkError: '{% filter escapejs %}{% trans "Network error. Please try again." context "common" %}{% endfilter %}',
+    companyLogo: '{% filter escapejs %}{% trans "Company" context "companies" %}{% endfilter %}',
+    uploadImport: '{% filter escapejs %}{% trans "Upload & Import" context "companies.import" %}{% endfilter %}',
+    uploading: '{% filter escapejs %}{% trans "Uploading…" context "companies.import" %}{% endfilter %}',
+    chooseTenant: '{% filter escapejs %}{% trans "Please choose a target tenant." context "companies.import" %}{% endfilter %}',
+    chooseCsv: '{% filter escapejs %}{% trans "Please choose a CSV file." context "companies.import" %}{% endfilter %}',
+    mustBeCsv: '{% filter escapejs %}{% trans "File must be a .csv" context "companies.import" %}{% endfilter %}',
+    uploadFailed: '{% filter escapejs %}{% trans "Upload failed" context "companies.import" %}{% endfilter %}',
+    importComplete: '{% filter escapejs %}{% trans "Import complete." context "companies.import" %}{% endfilter %}',
+    inserted: '{% filter escapejs %}{% trans "Inserted:" context "companies.import" %}{% endfilter %}',
+    skippedDuplicates: '{% filter escapejs %}{% trans "Skipped (duplicates):" context "companies.import" %}{% endfilter %}',
+    failed: '{% filter escapejs %}{% trans "Failed:" context "companies.import" %}{% endfilter %}',
+    importFailed: '{% filter escapejs %}{% trans "Import failed." context "companies.import" %}{% endfilter %}',
+    noDetails: '{% filter escapejs %}{% trans "(no details)" context "companies.import" %}{% endfilter %}',
+    noResults: '{% filter escapejs %}{% trans "No results" context "companies" %}{% endfilter %}',
+  };
+  var g = (typeof gettext === "function") ? gettext : function (s) { return s; };
+  Object.keys(window.COMPANY_I18N).forEach(function (k) {
+    window.COMPANY_I18N[k] = g(window.COMPANY_I18N[k]);
+  });
+})();
+</script>
+
+<script>
 // --- Country / State dependent dropdown (same wiring as the Company DB page) ---
 document.addEventListener("DOMContentLoaded", function () {
   const dataNode = document.getElementById("company-country-states");
@@ -362,11 +430,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const options = (countryCode && countryStates[countryCode]) || [];
     const currentValue = preserveValue != null ? preserveValue : stateSel.value;
     if (!options.length) {
-      stateSel.innerHTML = '<option value="">Select State</option>';
+      stateSel.innerHTML = '<option value="">' + COMPANY_I18N.selectState + '</option>';
       stateSel.disabled = true;
       return;
     }
-    let html = '<option value="">Select State</option>';
+    let html = '<option value="">' + COMPANY_I18N.selectState + '</option>';
     options.forEach(function (name) {
       const sel = name === currentValue ? " selected" : "";
       html += '<option value="' + name + '"' + sel + '>' + name + '</option>';
@@ -457,7 +525,7 @@ document.addEventListener("DOMContentLoaded", function () {
           if (typeof showToast === "function") {
             showToast(
               result.data.message ||
-                "Certification request submitted. A consultant will review your company shortly.",
+                COMPANY_I18N.certSubmitted,
               "success"
             );
           }
@@ -484,13 +552,13 @@ document.addEventListener("DOMContentLoaded", function () {
         var msg =
           (result.data && result.data.message) ||
           firstSpecific ||
-          "Could not save company. Please check the form.";
+          COMPANY_I18N.couldNotSave;
         if (typeof showToast === "function") showToast(msg, "error");
         else console.error(msg);
       })
       .catch(function (err) {
         console.error("Create company failed:", err);
-        if (typeof showToast === "function") showToast("Network error. Please try again.", "error");
+        if (typeof showToast === "function") showToast(COMPANY_I18N.networkError, "error");
       })
       .finally(function () {
         if (saveBtn) saveBtn.disabled = false;
@@ -601,7 +669,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!rows.length) {
       var empty = document.createElement("li");
       empty.className = "empty";
-      empty.textContent = "No matches";
+      empty.textContent = COMPANY_I18N.noResults;
       this.results.appendChild(empty);
     } else {
       rows.forEach(function (row) {

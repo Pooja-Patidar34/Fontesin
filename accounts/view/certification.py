@@ -20,6 +20,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
+from django.utils.translation import gettext as _
 
 from accounts.models import AuditLog, Company
 from accounts.utils.ip import get_client_ip
@@ -148,7 +149,7 @@ def certification_action(request, company_id):
 
     decision = (request.POST.get("decision") or "").strip().lower()
     if decision not in ("approve", "decline"):
-        msg = "Invalid action."
+        msg = _("Invalid action.")
         if _is_ajax(request):
             return JsonResponse({"ok": False, "message": msg}, status=400)
         messages.error(request, msg)
@@ -172,7 +173,7 @@ def certification_action(request, company_id):
     # auto-certified at creation so this normally can't arise, but guard the
     # action server-side too. Superusers are exempt (platform oversight).
     if not request.user.is_superuser and company.owner_user_id == request.user.id:
-        msg = "You can't certify your own company."
+        msg = _("You can't certify your own company.")
         if _is_ajax(request):
             return JsonResponse({"ok": False, "message": msg}, status=403)
         messages.error(request, msg)
@@ -193,7 +194,7 @@ def certification_action(request, company_id):
             update_fields.append("consultant")
         company.save(update_fields=update_fields)
         action = "company.certified"
-        success_msg = f"Approved certification for {company.name}."
+        success_msg = _("Approved certification for %(company)s.") % {"company": company.name}
     else:
         company.certification_status = "rejected"
         company.is_active = False
@@ -207,7 +208,7 @@ def certification_action(request, company_id):
             update_fields.append("consultant")
         company.save(update_fields=update_fields)
         action = "company.certification_declined"
-        success_msg = f"Declined certification for {company.name}."
+        success_msg = _("Declined certification for %(company)s.") % {"company": company.name}
 
     try:
         AuditLog.objects.create(

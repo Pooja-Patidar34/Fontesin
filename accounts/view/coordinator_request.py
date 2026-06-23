@@ -14,6 +14,7 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
+from django.utils.translation import gettext as _
 
 from accounts.models import CoordinatorRequest, Role, User
 
@@ -42,7 +43,7 @@ def coordinator_request_submit(request):
     if existing_pending:
         messages.info(
             request,
-            "You already have a pending coordinator request. Please wait for the Super Admin's decision.",
+            _("You already have a pending coordinator request. Please wait for the Super Admin's decision."),
         )
         return redirect("profile")
 
@@ -52,7 +53,7 @@ def coordinator_request_submit(request):
     # Target region is now a required dropdown selection — it determines the
     # region the coordinator will manage once approved.
     if not target_region:
-        messages.error(request, "Please select the target region you want to coordinate.")
+        messages.error(request, _("Please select the target region you want to coordinate."))
         return redirect("profile")
 
     coord_request = CoordinatorRequest.objects.create(
@@ -70,8 +71,8 @@ def coordinator_request_submit(request):
 
     messages.success(
         request,
-        "Your request to become a Coordinator has been submitted. "
-        "The Super Admin will review it shortly.",
+        _("Your request to become a Coordinator has been submitted. "
+          "The Super Admin will review it shortly."),
     )
     return redirect("profile")
 
@@ -120,7 +121,7 @@ def coordinator_request_action(request, request_id):
 
     decision = (request.POST.get("decision") or "").strip().lower()
     if decision not in ("approve", "decline"):
-        messages.error(request, "Invalid action.")
+        messages.error(request, _("Invalid action."))
         return redirect("coordinator-requests")
 
     coord_request = get_object_or_404(
@@ -136,7 +137,7 @@ def coordinator_request_action(request, request_id):
         if not coordinator_role:
             messages.error(
                 request,
-                "Coordinator role is not configured. Create the Coordinator role before approving.",
+                _("Coordinator role is not configured. Create the Coordinator role before approving."),
             )
             return redirect("coordinator-requests")
 
@@ -156,10 +157,10 @@ def coordinator_request_action(request, request_id):
         coord_request.save(update_fields=[
             "status", "decided_by", "decided_at", "updated_at"
         ])
-        success_msg = (
-            f"Approved coordinator role for "
-            f"{requester.first_name or ''} {requester.last_name or requester.email}.".strip()
+        requester_label = (
+            f"{requester.first_name or ''} {requester.last_name or requester.email}".strip()
         )
+        success_msg = _("Approved coordinator role for %(name)s.") % {"name": requester_label}
         approved = True
     else:
         coord_request.status = CoordinatorRequest.STATUS_DECLINED
@@ -167,10 +168,9 @@ def coordinator_request_action(request, request_id):
         coord_request.save(update_fields=[
             "status", "decided_by", "decided_at", "decline_reason", "updated_at"
         ])
-        success_msg = (
-            f"Declined coordinator request from "
-            f"{coord_request.user.email}."
-        )
+        success_msg = _("Declined coordinator request from %(email)s.") % {
+            "email": coord_request.user.email
+        }
         approved = False
 
     try:

@@ -1,6 +1,6 @@
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
@@ -10,8 +10,8 @@
   <meta name="apple-mobile-web-app-title" content="FONTESIN"/>
   <link rel="manifest" href="{% static 'adminlte/manifest.json' %}"/>
   <link rel="apple-touch-icon" href="{% static 'adminlte/images/icons/icon-192.png' %}"/>
-  <title>Verify Code – FONTESIN</title>
-  <meta name="description" content="Enter your verification code to reset your FONTESIN account password."/>
+  <title>{% trans "Verify Code" context "auth.verify_otp" %} – FONTESIN</title>
+  <meta name="description" content="{% trans 'Enter your verification code to reset your FONTESIN account password.' context 'auth.verify_otp' %}"/>
   <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
 
   <style>
@@ -151,7 +151,8 @@
 <body>
 
 <div class="auth-page-bg">
-  <a href="{% url 'forgot-password' %}" class="auth-back">&larr; Back</a>
+  <a href="{% url 'forgot-password' %}" class="auth-back">&larr; {% trans "Back" context "auth.common" %}</a>
+  {% include "partials/_auth_lang_switcher.html" %}
 
   <div class="auth-split">
 
@@ -161,24 +162,24 @@
         <img src="{% static 'adminlte/images/fontesin-logo.png' %}" alt="FONTESIN" style="height:36px;width:auto;filter:brightness(0) invert(1);"/>
       </div>
       <div>
-        <div class="auth-left__title">Enter your verification code</div>
-        <p class="auth-left__desc">We've sent a 6-digit code to your email. Enter it below to verify your identity and reset your password.</p>
+        <div class="auth-left__title">{% trans "Enter your verification code" context "auth.verify_otp" %}</div>
+        <p class="auth-left__desc">{% trans "We've sent a 6-digit code to your email. Enter it below to verify your identity and reset your password." context "auth.verify_otp" %}</p>
         <div class="auth-left__features">
-          <div class="auth-left__feature">Check your inbox and spam folder</div>
-          <div class="auth-left__feature">Code expires in 10 minutes</div>
-          <div class="auth-left__feature">One-time use only</div>
+          <div class="auth-left__feature">{% trans "Check your inbox and spam folder" context "auth.verify_otp" %}</div>
+          <div class="auth-left__feature">{% trans "Code expires in 10 minutes" context "auth.verify_otp" %}</div>
+          <div class="auth-left__feature">{% trans "One-time use only" context "auth.verify_otp" %}</div>
         </div>
       </div>
-      <div style="font-size:.78rem;color:rgba(199,204,209,.35);margin-top:32px;">&copy; 2026 FONTES Inc. &middot; Design by Memento Mori Digital LLC</div>
+      <div style="font-size:.78rem;color:rgba(199,204,209,.35);margin-top:32px;">&copy; 2026 FONTES Inc. &middot; {% trans "Design by Memento Mori Digital LLC" context "auth.common" %}</div>
     </div>
 
     <!-- RIGHT PANEL -->
     <div class="auth-right">
 
       <div style="margin-bottom:32px;">
-        <h2 style="margin-bottom:6px;">Verify Your Code</h2>
+        <h2 style="margin-bottom:6px;">{% trans "Verify Your Code" context "auth.verify_otp" %}</h2>
         <p style="font-size:.9rem;color:var(--text-secondary);">
-          We've sent a 6-digit verification code to <strong>{{ email }}</strong>. Enter it below.
+          {% blocktrans context "auth.verify_otp" %}We've sent a 6-digit verification code to <strong>{{ email }}</strong>. Enter it below.{% endblocktrans %}
         </p>
       </div>
 
@@ -188,7 +189,7 @@
         {% csrf_token %}
 
         <div class="form-group">
-          <label class="form-label" for="id_otp">Verification Code</label>
+          <label class="form-label" for="id_otp">{% trans "Verification Code" context "auth.verify_otp" %}</label>
           <input
             type="text"
             name="otp"
@@ -204,32 +205,36 @@
         </div>
 
         <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;font-size:1rem;margin-top:8px;">
-          Verify Code
+          {% trans "Verify Code" context "auth.verify_otp" %}
         </button>
       </form>
 
       <p style="font-size:.9rem;text-align:center;margin-top:24px;">
-        Didn't receive the code?
+        {% trans "Didn't receive the code?" context "auth.verify_otp" %}
         <a href="{% url 'forgot-password' %}"
            id="resend-link"
            data-resend-url="{% url 'forgot-password' %}"
-           style="color:var(--primary);font-weight:600;">Resend</a>
+           style="color:var(--primary);font-weight:600;">{% trans "Resend" context "auth.verify_otp" %}</a>
       </p>
     </div>
   </div>
 </div>
 
+<script src="{% url 'javascript-catalog' %}"></script>
 <script src="{% static 'adminlte/js/main.js' %}"></script>
 <script src="{% static 'adminlte/js/no_emoji.js' %}"></script>
 <script>
 (function () {
   var COOLDOWN_MS = 60 * 1000;
   var STORAGE_KEY = 'fontesin_resend_otp_at';
+  var RESEND_LABEL = "{% filter escapejs %}{% trans 'Resend' context 'auth.verify_otp' %}{% endfilter %}";
+  var RESEND_COUNTDOWN = "{% filter escapejs %}{% trans 'Resend in __SECONDS__s' context 'auth.verify_otp' %}{% endfilter %}";
+  var RESEND_WAIT_MSG = "{% filter escapejs %}{% trans 'Please wait __SECONDS__s before requesting another code.' context 'auth.verify_otp' %}{% endfilter %}";
 
   var link = document.getElementById('resend-link');
   if (!link) return;
 
-  var originalText = 'Resend';
+  var originalText = RESEND_LABEL;
   var timerId = null;
 
   function notify(msg) {
@@ -260,7 +265,7 @@
         endCountdown();
         return;
       }
-      link.textContent = 'Resend in ' + Math.ceil(left / 1000) + 's';
+      link.textContent = RESEND_COUNTDOWN.replace('__SECONDS__', Math.ceil(left / 1000));
     }
     tick();
     timerId = setInterval(tick, 1000);
@@ -290,7 +295,7 @@
     var left = remaining();
     if (left > 0) {
       e.preventDefault();
-      notify('Please wait ' + Math.ceil(left / 1000) + 's before requesting another code.');
+      notify(RESEND_WAIT_MSG.replace('__SECONDS__', Math.ceil(left / 1000)));
       return;
     }
     localStorage.setItem(STORAGE_KEY, String(Date.now()));

@@ -11,6 +11,7 @@ from django.contrib import messages
 from django.db import IntegrityError, transaction
 from django.db.models import Count, Q
 from django.http import JsonResponse
+from django.utils.translation import gettext as _
 import logging
 
 business_logger = logging.getLogger("business")
@@ -105,11 +106,11 @@ def tenant_list(request):
             tenant = get_object_or_404(Tenant, id=tenant_id)
             form = TenantForm(request.POST, instance=tenant)
             action = "tenant.updated"
-            message = "Tenant updated successfully."
+            message = _("Tenant updated successfully.")
         else:
             form = TenantForm(request.POST)
             action = "tenant.created"
-            message = "Tenant created successfully."
+            message = _("Tenant created successfully.")
 
         if form.is_valid():
             try:
@@ -129,7 +130,7 @@ def tenant_list(request):
                         ip_address=get_client_ip(request),
                     )
             except IntegrityError:
-                duplicate_msg = "A franchise with this name (or a similar one) already exists. Please choose a different name."
+                duplicate_msg = _("A franchise with this name (or a similar one) already exists. Please choose a different name.")
                 form.add_error("name", duplicate_msg)
                 messages.error(request, duplicate_msg)
             else:
@@ -202,14 +203,15 @@ def tenant_list(request):
     try:
         page_obj = paginator.page(page_number)
     except PageNotAnInteger:
-        messages.error(request, "Invalid page number. Showing the first page.")
+        messages.error(request, _("Invalid page number. Showing the first page."))
         querydict = request.GET.copy()
         querydict["page"] = 1
         return redirect(f"{request.path}?{querydict.urlencode()}")
     except EmptyPage:
         messages.error(
             request,
-            f"Page {page_number} doesn't exist. There are only {paginator.num_pages} page(s). Showing the first page.",
+            _("Page %(page)s doesn't exist. There are only %(total)s page(s). Showing the first page.")
+            % {"page": page_number, "total": paginator.num_pages},
         )
         querydict = request.GET.copy()
         querydict["page"] = 1
@@ -318,7 +320,7 @@ def tenant_delete(request, tenant_id):
         tenant.is_deleted = True
         tenant.save(update_fields=["is_deleted"])
 
-        messages.success(request, "Tenant deleted successfully.")
+        messages.success(request, _("Tenant deleted successfully."))
         return redirect("tenants")
 
     return render(

@@ -1,6 +1,6 @@
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-title" content="FONTESIN"/>
   <link rel="manifest" href="{% static 'manifest.json' %}"/>
   <link rel="apple-touch-icon" href="{% static 'adminlte/images/icons/icon-192.png' %}"/>
-  <title>Choose Your Plan – FONTESIN</title>
+  <title>{% trans "Choose Your Plan" context "website" %} – FONTESIN</title>
   <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
@@ -272,15 +272,15 @@
       <img src="{% static 'adminlte/images/logo_full.png' %}" alt="FONTESIN" height="38" style="filter:brightness(0) invert(1);"/>
     </a>
     <div class="navbar__nav">
-      <a href="{% url 'home' %}">Home</a>
-      <a href="{% url 'worldmap' %}">World Map</a>
-      <a href="{% url 'about' %}">About</a>
-      <a href="{% url 'career' %}">Careers</a>
-      <a href="{% url 'contact' %}">Contact</a>
+      <a href="{% url 'home' %}">{% trans "Home" context "website" %}</a>
+      <a href="{% url 'worldmap' %}">{% trans "World Map" context "website" %}</a>
+      <a href="{% url 'about' %}">{% trans "About" context "website" %}</a>
+      <a href="{% url 'career' %}">{% trans "Careers" context "website" %}</a>
+      <a href="{% url 'contact' %}">{% trans "Contact" context "website" %}</a>
     </div>
-    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="Menu">&#9776;</button>
+    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="{% trans 'Menu' context 'website' %}">&#9776;</button>
     <div class="navbar__actions">
-      <a href="{% url 'login' %}" class="btn btn-outline btn-sm">Log In</a>
+      <a href="{% url 'login' %}" class="btn btn-outline btn-sm">{% trans "Log In" context "auth.login" %}</a>
     </div>
   </div>
 </nav>
@@ -290,19 +290,19 @@
   <div class="reg-progress__inner">
     <div class="reg-step reg-step--done">
       <div class="reg-step__num">&#10003;</div>
-      <div class="reg-step__label">Account Info</div>
+      <div class="reg-step__label">{% trans "Account Info" context "website" %}</div>
     </div>
     <div class="reg-step reg-step--done">
       <div class="reg-step__num">&#10003;</div>
-      <div class="reg-step__label">Identity Verified</div>
+      <div class="reg-step__label">{% trans "Identity Verified" context "website" %}</div>
     </div>
     <div class="reg-step reg-step--active">
       <div class="reg-step__num">3</div>
-      <div class="reg-step__label">Choose Plan</div>
+      <div class="reg-step__label">{% trans "Choose Plan" context "website" %}</div>
     </div>
     <div class="reg-step reg-step--pending">
       <div class="reg-step__num">4</div>
-      <div class="reg-step__label">Confirmation</div>
+      <div class="reg-step__label">{% trans "Confirmation" context "website" %}</div>
     </div>
   </div>
 </div>
@@ -325,8 +325,8 @@
   {% endif %}
 
   <div class="membership-header">
-    <h1>Choose Your Membership Plan</h1>
-    <p>Select the plan that best fits your business needs.</p>
+    <h1>{% trans "Choose Your Membership Plan" context "website" %}</h1>
+    <p>{% trans "Select the plan that best fits your business needs." context "website" %}</p>
   </div>
 
   <!-- PLAN CARDS -->
@@ -348,7 +348,7 @@
           <span style="font-size:1rem;color:#9CA3AF;text-decoration:line-through;font-weight:500;">${{ plan.original_price|floatformat:0 }}</span>
           <span class="plan-price__currency">$</span><span class="plan-price__amount">{{ plan.price|floatformat:0|default:"0" }}</span>
           {% if plan.discount_percent %}
-          <span style="background:#16a34a;color:#fff;font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:20px;letter-spacing:.5px;vertical-align:middle;">{{ plan.discount_percent }}% OFF</span>
+          <span style="background:#16a34a;color:#fff;font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:20px;letter-spacing:.5px;vertical-align:middle;">{{ plan.discount_percent }}% {% trans "OFF" context "website" %}</span>
           {% endif %}
         </div>
         {% else %}
@@ -356,16 +356,16 @@
         {% endif %}
 
         {% if plan.code == 'free' %}
-          <div class="plan-price__period">Forever free</div>
+          <div class="plan-price__period">{% trans "Forever free" context "website" %}</div>
         {% else %}
           {% if plan.billing_period == 'monthly' %}
-            <div class="plan-price__period">per month &middot; billed monthly</div>
+            <div class="plan-price__period">{% trans "per month · billed monthly" context "website" %}</div>
           {% else %}
-            <div class="plan-price__period">per year &middot; billed annually</div>
-            <div class="plan-price__monthly">&asymp; ${{ plan.monthly_price|floatformat:2 }} / month</div>
+            <div class="plan-price__period">{% trans "per year · billed annually" context "website" %}</div>
+            <div class="plan-price__monthly">{% blocktrans with monthly=plan.monthly_price|floatformat:2 context "website" %}≈ ${{ monthly }} / month{% endblocktrans %}</div>
           {% endif %}
           {% if plan.savings %}
-          <span class="plan-price__save">Save ${{ plan.savings|floatformat:0 }}{% if plan.original_price %} on regular price{% endif %}</span>
+          <span class="plan-price__save">{% blocktrans with amount=plan.savings|floatformat:0 context "website" %}Save ${{ amount }}{% endblocktrans %}{% if plan.original_price %} {% trans "on regular price" context "website" %}{% endif %}</span>
           {% endif %}
         {% endif %}
       </div>
@@ -392,7 +392,7 @@
         {% endfor %}
       </ul>
 
-      <button class="plan-select-btn">Select {{ plan.name }} Plan</button>
+      <button class="plan-select-btn">{% blocktrans with plan_name=plan.name context "website" %}Select {{ plan_name }} Plan{% endblocktrans %}</button>
     </div>
     {% endfor %}
   </div>
@@ -401,8 +401,8 @@
   {% for plan in plans %}
   <div class="plan-details" id="details-{{ plan.code }}">
     <div class="plan-details__header">
-      <h3>{{ plan.icon }} {{ plan.name }} Plan — Full Details</h3>
-      <span class="price-tag">${{ plan.price|floatformat:0 }} / {% if plan.billing_period == 'monthly' %}month{% else %}year{% endif %}</span>
+      <h3>{{ plan.icon }} {% blocktrans with plan_name=plan.name context "website" %}{{ plan_name }} Plan — Full Details{% endblocktrans %}</h3>
+      <span class="price-tag">{% if plan.billing_period == 'monthly' %}{% blocktrans with price=plan.price|floatformat:0 context "website" %}${{ price }} / month{% endblocktrans %}{% else %}{% blocktrans with price=plan.price|floatformat:0 context "website" %}${{ price }} / year{% endblocktrans %}{% endif %}</span>
     </div>
     <div class="plan-details__body">
       <div class="plan-details__grid">
@@ -424,7 +424,7 @@
       </div>
       {% if plan.best_for %}
       <div style="border-radius:10px;padding:16px;text-align:center;" class="best-for--{{ plan.best_for_style }}">
-        <strong style="font-family:'Montserrat',sans-serif;font-size:.85rem;">&#128161; Best for:</strong>
+        <strong style="font-family:'Montserrat',sans-serif;font-size:.85rem;">&#128161; {% trans "Best for:" context "website" %}</strong>
         <span style="font-size:.82rem;"> {{ plan.best_for }}</span>
       </div>
       {% endif %}
@@ -434,16 +434,16 @@
 
   <!-- COMPARISON TABLE -->
   <div class="comparison-section">
-    <h2>Plan Comparison</h2>
+    <h2>{% trans "Plan Comparison" context "website" %}</h2>
     <div style="overflow-x:auto;">
       <table class="comparison-table">
         <thead>
           <tr>
-            <th>Feature</th>
+            <th>{% trans "Feature" context "website" %}</th>
             {% for plan in plans %}
             <th{% if plan.is_popular %} class="highlight-col"{% endif %}>
               {{ plan.name }}{% if plan.is_popular %} &#11088;{% endif %}
-              <br/><small style="font-weight:400;opacity:.7;">${{ plan.price|floatformat:0 }}/{% if plan.billing_period == 'monthly' %}mo{% else %}yr{% endif %}</small>
+              <br/><small style="font-weight:400;opacity:.7;">${{ plan.price|floatformat:0 }}/{% if plan.billing_period == 'monthly' %}{% trans "mo" context "website" %}{% else %}{% trans "yr" context "website" %}{% endif %}</small>
             </th>
             {% endfor %}
           </tr>
@@ -474,9 +474,9 @@
           </tr>
           {% endfor %}
           <tr>
-            <td><strong>Price</strong></td>
+            <td><strong>{% trans "Price" context "website" %}</strong></td>
             {% for plan in plans %}
-            <td{% if plan.is_popular %} class="highlight"{% endif %}><strong>${{ plan.price|floatformat:0 }}</strong>{% if plan.code != 'free' %} / {% if plan.billing_period == 'monthly' %}month{% else %}year{% endif %}{% endif %}</td>
+            <td{% if plan.is_popular %} class="highlight"{% endif %}><strong>${{ plan.price|floatformat:0 }}</strong>{% if plan.code != 'free' %} / {% if plan.billing_period == 'monthly' %}{% trans "month" context "website" %}{% else %}{% trans "year" context "website" %}{% endif %}{% endif %}</td>
             {% endfor %}
           </tr>
         </tbody>
@@ -487,16 +487,16 @@
   <!-- CTA -->
   <div class="membership-cta">
     <div class="selected-plan-info" id="selectedPlanInfo"></div>
-    <p>Select a plan above to continue. You will receive a Pro Forma Invoice with payment instructions.</p>
+    <p>{% trans "Select a plan above to continue. You will receive a Pro Forma Invoice with payment instructions." context "website" %}</p>
     <form method="POST" action="{% url 'select_plan' %}" id="planForm">
       {% csrf_token %}
       <input type="hidden" name="plan_code" id="planCodeInput" value=""/>
       <button type="submit" class="btn-proceed" id="btnProceed" disabled>
-        Continue to Payment &rarr;
+        {% trans "Continue to Payment" context "website" %} &rarr;
       </button>
     </form>
     <div style="margin-top:16px;font-size:.75rem;color:#8fa5b5;">
-      &#128274; Secure checkout &middot; Bank transfer via Pro Forma Invoice &middot; No credit card required upfront
+      &#128274; {% trans "Secure checkout · Bank transfer via Pro Forma Invoice · No credit card required upfront" context "website" %}
     </div>
   </div>
 </div>
@@ -509,28 +509,41 @@
         <a href="{% url 'home' %}" class="footer__logo">
           <img src="{% static 'adminlte/images/logo_full.png' %}" alt="FONTESIN" height="36" style="filter:brightness(0) invert(1);"/>
         </a>
-        <p class="footer__tagline">Global Business Intelligence Platform</p>
+        <p class="footer__tagline">{% trans "Global Business Intelligence Platform" context "website" %}</p>
       </div>
       <div class="footer__col">
-        <h4>Platform</h4>
-        <a href="{% url 'worldmap' %}">World Map</a>
-        <a href="{% url 'register' %}">Get Started</a>
-        <a href="{% url 'login' %}">Log In</a>
+        <h4>{% trans "Platform" context "website" %}</h4>
+        <a href="{% url 'worldmap' %}">{% trans "World Map" context "website" %}</a>
+        <a href="{% url 'register' %}">{% trans "Get Started" context "website" %}</a>
+        <a href="{% url 'login' %}">{% trans "Log In" context "auth.login" %}</a>
       </div>
       <div class="footer__col">
-        <h4>Company</h4>
-        <a href="{% url 'about' %}">About Us</a>
-        <a href="{% url 'career' %}">Careers</a>
-        <a href="{% url 'contact' %}">Contact</a>
+        <h4>{% trans "Company" context "website" %}</h4>
+        <a href="{% url 'about' %}">{% trans "About Us" context "website" %}</a>
+        <a href="{% url 'career' %}">{% trans "Careers" context "website" %}</a>
+        <a href="{% url 'contact' %}">{% trans "Contact" context "website" %}</a>
       </div>
     </div>
     <div class="footer__bottom">
-      <span>&copy; 2026 FONTES Inc. All rights reserved.</span>
-      <span>Design by Memento Mori Digital LLC</span>
+      <span>{% trans "© 2026 FONTES Inc. All rights reserved." context "website" %}</span>
+      <span>{% trans "Design by Memento Mori Digital LLC" context "website" %}</span>
     </div>
   </div>
 </footer>
 
+<script>
+(function () {
+  var g = function (s) { return (typeof gettext === 'function') ? gettext(s) : s; };
+  window.WEBSITE_I18N = {
+    selectedPrefix: '{% filter escapejs %}{% trans "Selected:" context "website" %}{% endfilter %}',
+    activateFree: '{% filter escapejs %}{% trans "Activate Free Account →" context "website" %}{% endfilter %}',
+    continuePayment: '{% filter escapejs %}{% trans "Continue to Payment →" context "website" %}{% endfilter %}',
+  };
+  Object.keys(window.WEBSITE_I18N).forEach(function (k) {
+    window.WEBSITE_I18N[k] = g(window.WEBSITE_I18N[k]);
+  });
+})();
+</script>
 <script>
 const PLANS = {{ plans_json|safe }};
 let currentPlan = null;
@@ -551,22 +564,40 @@ function selectPlan(planKey) {
   currentPlan = planKey;
   const plan = PLANS[planKey];
   const info = document.getElementById('selectedPlanInfo');
-  info.textContent = '\u2713 Selected: ' + plan.label;
+  info.textContent = '\u2713 ' + window.WEBSITE_I18N.selectedPrefix + ' ' + plan.label;
   info.classList.add('visible');
 
   const btn = document.getElementById('btnProceed');
   btn.disabled = false;
-  btn.textContent = planKey === 'free' ? 'Activate Free Account \u2192' : 'Continue to Payment \u2192';
+  btn.textContent = planKey === 'free' ? window.WEBSITE_I18N.activateFree : window.WEBSITE_I18N.continuePayment;
 
   document.getElementById('planCodeInput').value = planKey;
 }
 </script>
 <script src="{% static 'js/main.js' %}"></script>
 <script>
+(function () {
+  window.PWA_I18N = {
+    notificationBody: '{% filter escapejs %}{% trans "You have a new notification" context "website" %}{% endfilter %}',
+    open: '{% filter escapejs %}{% trans "Open" context "website" %}{% endfilter %}',
+    dismiss: '{% filter escapejs %}{% trans "Dismiss" context "website" %}{% endfilter %}',
+  };
+})();
+</script>
+<script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function() {
-      navigator.serviceWorker.register("/sw.js")
-        .then(function(reg) { console.log("[PWA] SW registered:", reg.scope); })
+      navigator.serviceWorker.register("{% static 'adminlte/js/sw.js' %}")
+        .then(function(reg) {
+          function sendStrings() {
+            var sw = reg.active || navigator.serviceWorker.controller;
+            if (sw && window.PWA_I18N) {
+              sw.postMessage({ type: "PWA_STRINGS", strings: window.PWA_I18N });
+            }
+          }
+          sendStrings();
+          navigator.serviceWorker.addEventListener("controllerchange", sendStrings);
+        })
         .catch(function(err) { console.warn("[PWA] SW registration failed:", err); });
     });
   }

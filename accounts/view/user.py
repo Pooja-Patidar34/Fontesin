@@ -9,6 +9,7 @@ from django.db import IntegrityError, transaction
 from django.http import Http404, JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
+from django.utils.translation import gettext as _
 
 # Optional phone field. If non-empty: 7–15 digits total, with optional leading
 # "+" and spaces, hyphens, or parentheses for formatting (overall 7–20 chars).
@@ -37,7 +38,7 @@ logger = logging.getLogger(__name__)
 @login_required
 def add_user(request):
     if request.method != "POST":
-        return JsonResponse({"status": False, "message": "Invalid request method."}, status=405)
+        return JsonResponse({"status": False, "message": _("Invalid request method.")}, status=405)
 
     data = request.POST
 
@@ -59,9 +60,11 @@ def add_user(request):
     if not last_name:
         missing.append("Last name")
     if missing:
+        fields = ", ".join(missing)
+        verb = _("is") if len(missing) == 1 else _("are")
         return JsonResponse({
             "status": False,
-            "message": f"{', '.join(missing)} {'is' if len(missing) == 1 else 'are'} required.",
+            "message": _("%(fields)s %(verb)s required.") % {"fields": fields, "verb": verb},
         }, status=400)
 
     # --------------------
@@ -69,13 +72,13 @@ def add_user(request):
     # --------------------
     import re as _re
     if not _re.match(r"^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$", email):
-        return JsonResponse({"status": False, "message": "Enter a valid email address."}, status=400)
+        return JsonResponse({"status": False, "message": _("Enter a valid email address.")}, status=400)
 
     if len(password) < 8:
-        return JsonResponse({"status": False, "message": "Password must be at least 8 characters."}, status=400)
+        return JsonResponse({"status": False, "message": _("Password must be at least 8 characters.")}, status=400)
 
     if User.objects.filter(email__iexact=email).exists():
-        return JsonResponse({"status": False, "message": "A user with this email already exists."}, status=400)
+        return JsonResponse({"status": False, "message": _("A user with this email already exists.")}, status=400)
 
     # --------------------
     # Tenant resolution
@@ -83,17 +86,17 @@ def add_user(request):
     if request.user.is_superuser:
         tenant_id = data.get("tenant")
         if not tenant_id:
-            return JsonResponse({"status": False, "message": "Tenant is required."}, status=400)
+            return JsonResponse({"status": False, "message": _("Tenant is required.")}, status=400)
         try:
             tenant = Tenant.objects.get(id=tenant_id)
         except (Tenant.DoesNotExist, ValueError):
-            return JsonResponse({"status": False, "message": "Selected tenant does not exist."}, status=400)
+            return JsonResponse({"status": False, "message": _("Selected tenant does not exist.")}, status=400)
         if not tenant.is_active:
-            return JsonResponse({"status": False, "message": "Selected tenant is inactive."}, status=400)
+            return JsonResponse({"status": False, "message": _("Selected tenant is inactive.")}, status=400)
     else:
         tenant = request.user.tenant
         if not tenant:
-            return JsonResponse({"status": False, "message": "Your account has no tenant assigned."}, status=400)
+            return JsonResponse({"status": False, "message": _("Your account has no tenant assigned.")}, status=400)
 
     # --------------------
     # Company (tenant scoped)
@@ -106,7 +109,7 @@ def add_user(request):
         except (Company.DoesNotExist, ValueError):
             return JsonResponse({
                 "status": False,
-                "message": "Selected company does not exist or does not belong to the chosen tenant.",
+                "message": _("Selected company does not exist or does not belong to the chosen tenant."),
             }, status=400)
 
     # --------------------
@@ -118,7 +121,7 @@ def add_user(request):
         try:
             role = Role.objects.get(id=role_id)
         except (Role.DoesNotExist, ValueError):
-            return JsonResponse({"status": False, "message": "Selected role does not exist."}, status=400)
+            return JsonResponse({"status": False, "message": _("Selected role does not exist.")}, status=400)
 
     # --------------------
     # Create
@@ -176,10 +179,10 @@ def add_user(request):
         logger.exception("Unexpected error creating user")
         return JsonResponse({
             "status": False,
-            "message": "Unable to create user due to an internal error. Please contact support.",
+            "message": _("Unable to create user due to an internal error. Please contact support."),
         }, status=500)
 
-    return JsonResponse({"status": True, "user_id": str(user.id), "message": "User created successfully."})
+    return JsonResponse({"status": True, "user_id": str(user.id), "message": _("User created successfully.")})
 
 @login_required
 def user_list(request):
@@ -368,7 +371,7 @@ def user_list(request):
         if is_ajax:
             page_obj = paginator.page(1)
         else:
-            messages.error(request, "Invalid page number. Showing the first page.")
+            messages.error(request, _("Invalid page number. Showing the first page."))
             querydict = request.GET.copy()
             querydict["page"] = 1
             return redirect(f"{request.path}?{querydict.urlencode()}")
@@ -378,7 +381,8 @@ def user_list(request):
         else:
             messages.error(
                 request,
-                f"Page {page_number} doesn't exist. There are only {paginator.num_pages} page(s). Showing the first page.",
+                _("Page %(page)s doesn't exist. There are only %(total)s page(s). Showing the first page.")
+                % {"page": page_number, "total": paginator.num_pages},
             )
             querydict = request.GET.copy()
             querydict["page"] = 1
@@ -455,7 +459,7 @@ def user_delete(request, user_id):
 
     # Don't let a superuser delete themselves and lock the system out.
     if user.id == request.user.id:
-        messages.error(request, "You cannot delete your own account.")
+        messages.error(request, _("You cannot delete your own account."))
         return redirect(request.GET.get("next") or "users")
 
     email = user.email
@@ -479,7 +483,7 @@ def user_delete(request, user_id):
         # Never block delete on audit failures.
         logger.exception("Failed to write audit log for user.deleted")
 
-    messages.success(request, f"User {email} has been deleted.")
+    messages.success(request, _("User %(email)s has been deleted.") % {"email": email})
     return redirect(request.GET.get("next") or "users")
 
 
@@ -603,7 +607,7 @@ def user_edit(request, user_id):
         raise PermissionDenied()
 
     if request.method != "POST":
-        return JsonResponse({"error": "POST only"}, status=405)
+        return JsonResponse({"error": _("POST only")}, status=405)
 
     try:
         # -------------------------------
@@ -633,12 +637,12 @@ def user_edit(request, user_id):
 
         if not first_name and not last_name:
             return JsonResponse(
-                {"success": False, "message": "Full name is required."},
+                {"success": False, "message": _("Full name is required.")},
                 status=400,
             )
         if not phone_raw:
             return JsonResponse(
-                {"success": False, "message": "Phone is required."},
+                {"success": False, "message": _("Phone is required.")},
                 status=400,
             )
         phone_digits = sum(c.isdigit() for c in phone_raw)
@@ -646,28 +650,28 @@ def user_edit(request, user_id):
             return JsonResponse(
                 {
                     "success": False,
-                    "message": "Phone number must contain 7 to 15 digits. It may include a leading + and spaces, hyphens, or parentheses.",
+                    "message": _("Phone number must contain 7 to 15 digits. It may include a leading + and spaces, hyphens, or parentheses."),
                 },
                 status=400,
             )
         if not country_val:
             return JsonResponse(
-                {"success": False, "message": "Country is required."},
+                {"success": False, "message": _("Country is required.")},
                 status=400,
             )
         if status_val not in ("true", "false"):
             return JsonResponse(
-                {"success": False, "message": "Status is required."},
+                {"success": False, "message": _("Status is required.")},
                 status=400,
             )
         if not company_id:
             return JsonResponse(
-                {"success": False, "message": "Company is required."},
+                {"success": False, "message": _("Company is required.")},
                 status=400,
             )
         if not role_id:
             return JsonResponse(
-                {"success": False, "message": "Role is required."},
+                {"success": False, "message": _("Role is required.")},
                 status=400,
             )
 
@@ -681,7 +685,7 @@ def user_edit(request, user_id):
                 birth_date_value = datetime.strptime(birth_date_raw, "%Y-%m-%d").date()
             except ValueError:
                 return JsonResponse(
-                    {"success": False, "message": "Date of birth is invalid."},
+                    {"success": False, "message": _("Date of birth is invalid.")},
                     status=400,
                 )
             today = date.today()
@@ -692,7 +696,7 @@ def user_edit(request, user_id):
                 return JsonResponse(
                     {
                         "success": False,
-                        "message": "Date of birth must correspond to an age between 13 and 120.",
+                        "message": _("Date of birth must correspond to an age between 13 and 120."),
                     },
                     status=400,
                 )
@@ -700,14 +704,14 @@ def user_edit(request, user_id):
         bio_val = (request.POST.get("bio") or "").strip()
         if bio_val and not (10 <= len(bio_val) <= 500):
             return JsonResponse(
-                {"success": False, "message": "Bio must be between 10 and 500 characters."},
+                {"success": False, "message": _("Bio must be between 10 and 500 characters.")},
                 status=400,
             )
 
         notes_val = (request.POST.get("notes") or "").strip()
         if notes_val and not (5 <= len(notes_val) <= 1000):
             return JsonResponse(
-                {"success": False, "message": "Notes must be between 5 and 1000 characters."},
+                {"success": False, "message": _("Notes must be between 5 and 1000 characters.")},
                 status=400,
             )
 
@@ -716,7 +720,7 @@ def user_edit(request, user_id):
             return JsonResponse(
                 {
                     "success": False,
-                    "message": "City must be 2–50 characters and contain only letters, spaces, dots, hyphens, or apostrophes.",
+                    "message": _("City must be 2–50 characters and contain only letters, spaces, dots, hyphens, or apostrophes."),
                 },
                 status=400,
             )
@@ -726,7 +730,7 @@ def user_edit(request, user_id):
             return JsonResponse(
                 {
                     "success": False,
-                    "message": "State / Region must be 2–50 characters and contain only letters, spaces, dots, hyphens, or apostrophes.",
+                    "message": _("State / Region must be 2–50 characters and contain only letters, spaces, dots, hyphens, or apostrophes."),
                 },
                 status=400,
             )
@@ -775,8 +779,11 @@ def user_edit(request, user_id):
             # -------------------------------
             # Profile
             # -------------------------------
-            user.preferred_language = request.POST.get(
-                "preferred_language", user.preferred_language
+            from FontEsin.middleware.locale import normalize_locale
+
+            lang_raw = request.POST.get("preferred_language", user.preferred_language)
+            user.preferred_language = (
+                normalize_locale(lang_raw) if lang_raw else None
             )
             user.bio = bio_val
             user.notes = notes_val
@@ -848,13 +855,13 @@ def user_edit(request, user_id):
         return JsonResponse(
             {
                 "success": True,
-                "message": "User updated successfully",
+                "message": _("User updated successfully"),
             }
         )
 
     except IntegrityError:
         return JsonResponse(
-            {"success": False, "message": "Email already exists"},
+            {"success": False, "message": _("Email already exists")},
             status=400,
         )
 
@@ -874,7 +881,7 @@ def user_edit(request, user_id):
         return JsonResponse(
             {
                 "success": False,
-                "message": "Unable to update user at the moment",
+                "message": _("Unable to update user at the moment"),
             },
             status=500,
         )
@@ -1082,7 +1089,7 @@ def save_role(request):
     print("Received permission IDs:", permission_ids)
 
     if not role_id:
-        messages.error(request, "Role is required.")
+        messages.error(request, _("Role is required."))
         return redirect("roles")
 
     role = get_object_or_404(Role, id=role_id)
@@ -1109,7 +1116,7 @@ def save_role(request):
         ip_address=get_client_ip(request),
     )
 
-    messages.success(request, "Role permissions updated successfully.")
+    messages.success(request, _("Role permissions updated successfully."))
     return redirect(request.POST.get("next") or "roles")
 
 
@@ -1149,7 +1156,7 @@ def permission_list(request):
 
         if form.is_valid():
             form.save()
-            messages.success(request, "Permission saved successfully.")
+            messages.success(request, _("Permission saved successfully."))
             return redirect("permissions")
 
     else:

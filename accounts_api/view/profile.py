@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from django.db import DatabaseError
 from django.db.models import Prefetch
+from django.utils.translation import gettext as _
 
 from drf_spectacular.utils import (
     extend_schema,
@@ -12,9 +13,10 @@ from drf_spectacular.utils import (
 
 from accounts.models import User, UserCompany
 from accounts_api.serializers.profile_serializers import UserProfileSerializer
+from FontEsin.i18n.drf import APILocaleMixin
 
 
-class UserProfileAPIView(APIView):
+class UserProfileAPIView(APILocaleMixin, APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
@@ -64,7 +66,7 @@ class UserProfileAPIView(APIView):
             return Response(
                 {
                     "status": False,
-                    "message": "User not found",
+                    "message": _("User not found"),
                 },
                 status=status.HTTP_404_NOT_FOUND,
             )
@@ -73,7 +75,7 @@ class UserProfileAPIView(APIView):
             return Response(
                 {
                     "status": False,
-                    "message": "Database error while fetching profile",
+                    "message": _("Database error while fetching profile"),
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
@@ -82,7 +84,7 @@ class UserProfileAPIView(APIView):
             return Response(
                 {
                     "status": False,
-                    "message": "Unable to fetch profile at the moment",
+                    "message": _("Unable to fetch profile at the moment"),
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

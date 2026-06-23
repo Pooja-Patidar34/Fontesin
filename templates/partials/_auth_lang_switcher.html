@@ -1,0 +1,121 @@
+{% load i18n_extras %}
+<div class="auth-lang-switcher">
+  {% language_switcher %}
+</div>
+
+<style>
+  .auth-lang-switcher {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    z-index: 100;
+  }
+
+  .auth-lang-switcher .language-switcher {
+    position: relative;
+    display: inline-block;
+  }
+
+  .auth-lang-switcher .language-switcher__toggle {
+    padding: 6px 10px;
+    gap: 6px;
+    min-width: auto;
+    font-size: 0.8rem;
+    border-radius: 8px;
+    white-space: nowrap;
+  }
+
+  .auth-lang-switcher .language-switcher__icon {
+    display: none;
+  }
+
+  .auth-lang-switcher .language-switcher__menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    left: auto;
+    display: none;
+    float: none;
+    width: auto;
+    min-width: 7.5rem;
+    max-width: 10rem;
+    background: #fff;
+    margin: 0;
+    z-index: 200;
+  }
+
+  .auth-lang-switcher .language-switcher.show .language-switcher__menu {
+    display: block;
+  }
+
+  .auth-lang-switcher .language-switcher__option {
+    background: #fff;
+    color: #1b2e3f;
+  }
+
+  .auth-lang-switcher .language-switcher__option:hover,
+  .auth-lang-switcher .language-switcher__option:focus {
+    background: #f1f5f9;
+    color: #1b2e3f;
+  }
+
+  .auth-lang-switcher .language-switcher__option.active {
+    background: #eff6ff;
+    color: #1d4ed8;
+  }
+
+  @media (max-width: 480px) {
+    .auth-lang-switcher {
+      top: 16px;
+      right: 16px;
+    }
+  }
+</style>
+
+<script>
+(function () {
+  var switchers = document.querySelectorAll(".auth-lang-switcher .language-switcher");
+  if (!switchers.length) {
+    return;
+  }
+
+  function closeAll() {
+    switchers.forEach(function (dropdown) {
+      dropdown.classList.remove("show");
+      var toggle = dropdown.querySelector(".language-switcher__toggle");
+      if (toggle) {
+        toggle.setAttribute("aria-expanded", "false");
+      }
+    });
+  }
+
+  switchers.forEach(function (dropdown) {
+    var toggle = dropdown.querySelector(".language-switcher__toggle");
+    if (!toggle) {
+      return;
+    }
+
+    dropdown.addEventListener("click", function (event) {
+      event.stopPropagation();
+    });
+
+    toggle.addEventListener("click", function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      var isOpen = dropdown.classList.contains("show");
+      closeAll();
+      if (!isOpen) {
+        dropdown.classList.add("show");
+        toggle.setAttribute("aria-expanded", "true");
+      }
+    });
+  });
+
+  document.addEventListener("click", closeAll);
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+      closeAll();
+    }
+  });
+})();
+</script>

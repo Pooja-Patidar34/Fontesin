@@ -1,7 +1,6 @@
-
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
@@ -11,8 +10,8 @@
   <meta name="apple-mobile-web-app-title" content="FONTESIN"/>
   <link rel="manifest" href="{% static 'manifest.json' %}"/>
   <link rel="apple-touch-icon" href="{% static 'adminlte/images/icons/icon-192.png' %}"/>
-  <title>World Map – FONTESIN Global Region Control</title>
-  <meta name="description" content="Interactive world map showing FONTESIN active, planned, and inactive regions across the globe."/>
+  <title>{% trans "World Map" context "website" %} – {% trans "FONTESIN Global Region Control" context "website" %}</title>
+  <meta name="description" content="{% trans 'Interactive world map showing FONTESIN active, planned, and inactive regions across the globe.' context 'website' %}"/>
   <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
   <style>
     .map-page-wrapper {
@@ -117,16 +116,16 @@
   <div class="navbar__inner">
     <a href="{% url 'home' %}" class="navbar__logo"><img src="{% static 'adminlte/images/fontesin-logo.png' %}" alt="FONTESIN" height="38"/></a>
     <div class="navbar__nav">
-      <a href="{% url 'home' %}">Home</a>
-      <a href="{% url 'worldmap' %}" class="active">World Map</a>
-      <a href="{% url 'about' %}">About</a>
-      <a href="{% url 'career' %}">Careers</a>
-      <a href="{% url 'contact' %}">Contact</a>
+      <a href="{% url 'home' %}">{% trans "Home" context "website" %}</a>
+      <a href="{% url 'worldmap' %}" class="active">{% trans "World Map" context "website" %}</a>
+      <a href="{% url 'about' %}">{% trans "About" context "website" %}</a>
+      <a href="{% url 'career' %}">{% trans "Careers" context "website" %}</a>
+      <a href="{% url 'contact' %}">{% trans "Contact" context "website" %}</a>
     </div>
-    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
+    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="{% trans 'Menu' context 'website' %}">☰</button>
     <div class="navbar__actions">
-      <a href="{% url 'login' %}" class="btn btn-outline btn-sm">Log In</a>
-      <a href="{% url 'register' %}" class="btn btn-primary btn-sm">Get Started</a>
+      <a href="{% url 'login' %}" class="btn btn-outline btn-sm">{% trans "Log In" context "auth.login" %}</a>
+      <a href="{% url 'register' %}" class="btn btn-primary btn-sm">{% trans "Get Started" context "website" %}</a>
     </div>
   </div>
 </nav>
@@ -137,32 +136,32 @@
 
     <div class="map-full-header">
       <div class="breadcrumb">
-        <a href="{% url 'home' %}">Home</a>
+        <a href="{% url 'home' %}">{% trans "Home" context "website" %}</a>
         <span>/</span>
-        <span>World Map</span>
+        <span>{% trans "World Map" context "website" %}</span>
       </div>
-      <h1>Region Control &amp; Global Entry Map</h1>
-      <p>The world map is our regional control layer — a live interface for global rollout, licensing, and franchise activation.</p>
+      <h1>{% trans "Region Control &amp; Global Entry Map" context "website" %}</h1>
+      <p>{% trans "The world map is our regional control layer — a live interface for global rollout, licensing, and franchise activation." context "website" %}</p>
     </div>
 
     <div class="map-stats-bar">
       <div class="map-stat">
         <span class="map-stat__dot" style="background:#253D51;"></span>
         <span class="map-stat__count">10</span>
-        <span class="map-stat__label">Active Regions</span>
+        <span class="map-stat__label">{% trans "Active Regions" context "website" %}</span>
       </div>
       <div class="map-stat">
         <span class="map-stat__dot" style="background:#5F8FAA;"></span>
         <span class="map-stat__count">10</span>
-        <span class="map-stat__label">Planned Expansion</span>
+        <span class="map-stat__label">{% trans "Planned Expansion" context "website" %}</span>
       </div>
       <div class="map-stat">
         <span class="map-stat__dot" style="background:#D8E4EC;border:1px solid #b8cdd9;"></span>
         <span class="map-stat__count">157+</span>
-        <span class="map-stat__label">Not Yet Available</span>
+        <span class="map-stat__label">{% trans "Not Yet Available" context "website" %}</span>
       </div>
       <div class="map-stat" style="margin-left:auto;">
-        <span class="map-stat__label" style="color:#5F7383;">Click a highlighted country for details</span>
+        <span class="map-stat__label" style="color:#5F7383;">{% trans "Click a highlighted country for details" context "website" %}</span>
       </div>
     </div>
 
@@ -173,15 +172,15 @@
 
     <!-- Region Cards -->
     <div class="region-cards">
-      <h2>Active &amp; Planned Regions</h2>
+      <h2>{% trans "Active &amp; Planned Regions" context "website" %}</h2>
       <div class="region-card-grid">
 
         <a href="/region/us/" class="region-card-item">
           <span class="region-card-item__flag">🇺🇸</span>
           <div>
-            <div class="region-card-item__name">United States</div>
+            <div class="region-card-item__name">{% trans "United States" context "website" %}</div>
             <div class="region-card-item__info">
-              <span class="status-badge status-badge--active" style="font-size:.7rem;padding:2px 8px;">Active · Year 1</span>
+              <span class="status-badge status-badge--active" style="font-size:.7rem;padding:2px 8px;">{% trans "Active · Year 1" context "website" %}</span>
             </div>
           </div>
         </a>
@@ -189,9 +188,9 @@
         <a href="/region/de/" class="region-card-item">
           <span class="region-card-item__flag">🇩🇪</span>
           <div>
-            <div class="region-card-item__name">Germany</div>
+            <div class="region-card-item__name">{% trans "Germany" context "website" %}</div>
             <div class="region-card-item__info">
-              <span class="status-badge status-badge--active" style="font-size:.7rem;padding:2px 8px;">Active · Year 1</span>
+              <span class="status-badge status-badge--active" style="font-size:.7rem;padding:2px 8px;">{% trans "Active · Year 1" context "website" %}</span>
             </div>
           </div>
         </a>
@@ -199,9 +198,9 @@
         <a href="/region/cz/" class="region-card-item">
           <span class="region-card-item__flag">🇨🇿</span>
           <div>
-            <div class="region-card-item__name">Czech Republic</div>
+            <div class="region-card-item__name">{% trans "Czech Republic" context "website" %}</div>
             <div class="region-card-item__info">
-              <span class="status-badge status-badge--active" style="font-size:.7rem;padding:2px 8px;">Active · Year 1</span>
+              <span class="status-badge status-badge--active" style="font-size:.7rem;padding:2px 8px;">{% trans "Active · Year 1" context "website" %}</span>
             </div>
           </div>
         </a>
@@ -209,9 +208,9 @@
         <a href="{% url 'region_detail' 'gb' %}" class="region-card-item">
           <span class="region-card-item__flag">🇬🇧</span>
           <div>
-            <div class="region-card-item__name">United Kingdom</div>
+            <div class="region-card-item__name">{% trans "United Kingdom" context "website" %}</div>
             <div class="region-card-item__info">
-              <span class="status-badge status-badge--active" style="font-size:.7rem;padding:2px 8px;">Active · Year 1</span>
+              <span class="status-badge status-badge--active" style="font-size:.7rem;padding:2px 8px;">{% trans "Active · Year 1" context "website" %}</span>
             </div>
           </div>
         </a>
@@ -219,9 +218,9 @@
         <a href="{% url 'region_detail' 'fr' %}" class="region-card-item">
           <span class="region-card-item__flag">🇫🇷</span>
           <div>
-            <div class="region-card-item__name">France</div>
+            <div class="region-card-item__name">{% trans "France" context "website" %}</div>
             <div class="region-card-item__info">
-              <span class="status-badge status-badge--active" style="font-size:.7rem;padding:2px 8px;">Active · Year 1</span>
+              <span class="status-badge status-badge--active" style="font-size:.7rem;padding:2px 8px;">{% trans "Active · Year 1" context "website" %}</span>
             </div>
           </div>
         </a>
@@ -229,9 +228,9 @@
         <a href="{% url 'region_detail' 'nl' %}" class="region-card-item">
           <span class="region-card-item__flag">🇳🇱</span>
           <div>
-            <div class="region-card-item__name">Netherlands</div>
+            <div class="region-card-item__name">{% trans "Netherlands" context "website" %}</div>
             <div class="region-card-item__info">
-              <span class="status-badge status-badge--active" style="font-size:.7rem;padding:2px 8px;">Active · Year 1</span>
+              <span class="status-badge status-badge--active" style="font-size:.7rem;padding:2px 8px;">{% trans "Active · Year 1" context "website" %}</span>
             </div>
           </div>
         </a>
@@ -239,9 +238,9 @@
         <a href="/region/ae/" class="region-card-item">
           <span class="region-card-item__flag">🇦🇪</span>
           <div>
-            <div class="region-card-item__name">United Arab Emirates</div>
+            <div class="region-card-item__name">{% trans "United Arab Emirates" context "website" %}</div>
             <div class="region-card-item__info">
-              <span class="status-badge status-badge--planned" style="font-size:.7rem;padding:2px 8px;">Planned · Year 2</span>
+              <span class="status-badge status-badge--planned" style="font-size:.7rem;padding:2px 8px;">{% trans "Planned · Year 2" context "website" %}</span>
             </div>
           </div>
         </a>
@@ -249,9 +248,9 @@
         <a href="{% url 'region_detail' 'sg' %}" class="region-card-item">
           <span class="region-card-item__flag">🇸🇬</span>
           <div>
-            <div class="region-card-item__name">Singapore</div>
+            <div class="region-card-item__name">{% trans "Singapore" context "website" %}</div>
             <div class="region-card-item__info">
-              <span class="status-badge status-badge--planned" style="font-size:.7rem;padding:2px 8px;">Planned · Year 2</span>
+              <span class="status-badge status-badge--planned" style="font-size:.7rem;padding:2px 8px;">{% trans "Planned · Year 2" context "website" %}</span>
             </div>
           </div>
         </a>
@@ -259,9 +258,9 @@
         <a href="{% url 'region_detail' 'ca' %}" class="region-card-item">
           <span class="region-card-item__flag">🇨🇦</span>
           <div>
-            <div class="region-card-item__name">Canada</div>
+            <div class="region-card-item__name">{% trans "Canada" context "website" %}</div>
             <div class="region-card-item__info">
-              <span class="status-badge status-badge--planned" style="font-size:.7rem;padding:2px 8px;">Planned · Year 2</span>
+              <span class="status-badge status-badge--planned" style="font-size:.7rem;padding:2px 8px;">{% trans "Planned · Year 2" context "website" %}</span>
             </div>
           </div>
         </a>
@@ -269,9 +268,9 @@
         <a href="/region/jp/" class="region-card-item">
           <span class="region-card-item__flag">🇯🇵</span>
           <div>
-            <div class="region-card-item__name">Japan</div>
+            <div class="region-card-item__name">{% trans "Japan" context "website" %}</div>
             <div class="region-card-item__info">
-              <span class="status-badge status-badge--planned" style="font-size:.7rem;padding:2px 8px;">Planned · Year 3</span>
+              <span class="status-badge status-badge--planned" style="font-size:.7rem;padding:2px 8px;">{% trans "Planned · Year 3" context "website" %}</span>
             </div>
           </div>
         </a>
@@ -279,9 +278,9 @@
         <a href="{% url 'region_detail' 'br' %}" class="region-card-item">
           <span class="region-card-item__flag">🇧🇷</span>
           <div>
-            <div class="region-card-item__name">Brazil</div>
+            <div class="region-card-item__name">{% trans "Brazil" context "website" %}</div>
             <div class="region-card-item__info">
-              <span class="status-badge status-badge--planned" style="font-size:.7rem;padding:2px 8px;">Planned · Year 3</span>
+              <span class="status-badge status-badge--planned" style="font-size:.7rem;padding:2px 8px;">{% trans "Planned · Year 3" context "website" %}</span>
             </div>
           </div>
         </a>
@@ -289,9 +288,9 @@
         <a href="{% url 'region_detail' 'in' %}" class="region-card-item">
           <span class="region-card-item__flag">🇮🇳</span>
           <div>
-            <div class="region-card-item__name">India</div>
+            <div class="region-card-item__name">{% trans "India" context "website" %}</div>
             <div class="region-card-item__info">
-              <span class="status-badge status-badge--planned" style="font-size:.7rem;padding:2px 8px;">Planned · Year 3</span>
+              <span class="status-badge status-badge--planned" style="font-size:.7rem;padding:2px 8px;">{% trans "Planned · Year 3" context "website" %}</span>
             </div>
           </div>
         </a>
@@ -300,8 +299,8 @@
     </div>
 
     <div style="padding:40px 0 60px;text-align:center;">
-      <p style="color:#5F7383;font-size:.85rem;margin-bottom:16px;">Interested in activating your region?</p>
-      <a href="{% url 'contact' %}" class="btn btn-primary">Request Region Activation</a>
+      <p style="color:#5F7383;font-size:.85rem;margin-bottom:16px;">{% trans "Interested in activating your region?" context "website" %}</p>
+      <a href="{% url 'contact' %}" class="btn btn-primary">{% trans "Request Region Activation" context "website" %}</a>
     </div>
 
   </div>
@@ -313,38 +312,38 @@
     <div class="footer__grid">
       <div>
         <div class="footer__logo"><img src="{% static 'adminlte/images/fontesin-logo.png' %}" alt="FONTESIN" style="height:32px;width:auto;filter:brightness(0) invert(1);margin-bottom:12px;"/></div>
-        <p class="footer__brand-desc">A deep-tech global business infrastructure platform connecting companies, professionals, and markets across languages, borders, and systems.</p>
+        <p class="footer__brand-desc">{% trans "A deep-tech global business infrastructure platform connecting companies, professionals, and markets across languages, borders, and systems." context "website" %}</p>
       </div>
       <div>
-        <p class="footer__heading">Platform</p>
+        <p class="footer__heading">{% trans "Platform" context "website" %}</p>
         <div class="footer__links">
-          <a href="{% url 'worldmap' %}">World Map</a>
-          <a href="{% url 'register' %}">Get Started</a>
-          <a href="{% url 'login' %}">Log In</a>
+          <a href="{% url 'worldmap' %}">{% trans "World Map" context "website" %}</a>
+          <a href="{% url 'register' %}">{% trans "Get Started" context "website" %}</a>
+          <a href="{% url 'login' %}">{% trans "Log In" context "auth.login" %}</a>
         </div>
       </div>
       <div>
-        <p class="footer__heading">Company</p>
+        <p class="footer__heading">{% trans "Company" context "website" %}</p>
         <div class="footer__links">
-          <a href="{% url 'about' %}">About Us</a>
-          <a href="{% url 'career' %}">Careers</a>
-          <a href="{% url 'contact' %}">Contact</a>
+          <a href="{% url 'about' %}">{% trans "About Us" context "website" %}</a>
+          <a href="{% url 'career' %}">{% trans "Careers" context "website" %}</a>
+          <a href="{% url 'contact' %}">{% trans "Contact" context "website" %}</a>
         </div>
       </div>
       <div>
-        <p class="footer__heading">Regions</p>
+        <p class="footer__heading">{% trans "Regions" context "website" %}</p>
         <div class="footer__links">
-          <a href="{% url 'region_us' %}">United States</a>
-          <a href="{% url 'region_de' %}">Germany</a>
-          <a href="{% url 'region_cz' %}">Czech Republic</a>
-          <a href="{% url 'region_ae' %}">UAE</a>
-          <a href="{% url 'region_jp' %}">Japan</a>
+          <a href="{% url 'region_us' %}">{% trans "United States" context "website" %}</a>
+          <a href="{% url 'region_de' %}">{% trans "Germany" context "website" %}</a>
+          <a href="{% url 'region_cz' %}">{% trans "Czech Republic" context "website" %}</a>
+          <a href="{% url 'region_ae' %}">{% trans "UAE" context "website" %}</a>
+          <a href="{% url 'region_jp' %}">{% trans "Japan" context "website" %}</a>
         </div>
       </div>
     </div>
     <div class="footer__bottom">
-      <span>© 2026 FONTES Inc. All rights reserved.</span>
-      <span>Design by Memento Mori Digital LLC</span>
+      <span>{% trans "© 2026 FONTES Inc. All rights reserved." context "website" %}</span>
+      <span>{% trans "Design by Memento Mori Digital LLC" context "website" %}</span>
     </div>
   </div>
 </footer>
@@ -352,14 +351,32 @@
 {% comment %} The interactive world-map script ships with the shared partial included
    above (templates/website/_world_map.html), so both pages stay identical. {% endcomment %}
 <script src="{% static 'adminlte/js/main.js' %}"></script>
-  <script>
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", function() {
-        navigator.serviceWorker.register("/sw.js")
-          .then(function(reg) { console.log("[PWA] SW registered:", reg.scope); })
-          .catch(function(err) { console.warn("[PWA] SW registration failed:", err); });
-      });
-    }
-  </script>
+<script>
+(function () {
+  window.PWA_I18N = {
+    notificationBody: '{% filter escapejs %}{% trans "You have a new notification" context "website" %}{% endfilter %}',
+    open: '{% filter escapejs %}{% trans "Open" context "website" %}{% endfilter %}',
+    dismiss: '{% filter escapejs %}{% trans "Dismiss" context "website" %}{% endfilter %}',
+  };
+})();
+</script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function() {
+      navigator.serviceWorker.register("{% static 'adminlte/js/sw.js' %}")
+        .then(function(reg) {
+          function sendStrings() {
+            var sw = reg.active || navigator.serviceWorker.controller;
+            if (sw && window.PWA_I18N) {
+              sw.postMessage({ type: "PWA_STRINGS", strings: window.PWA_I18N });
+            }
+          }
+          sendStrings();
+          navigator.serviceWorker.addEventListener("controllerchange", sendStrings);
+        })
+        .catch(function(err) { console.warn("[PWA] SW registration failed:", err); });
+    });
+  }
+</script>
 </body>
 </html>

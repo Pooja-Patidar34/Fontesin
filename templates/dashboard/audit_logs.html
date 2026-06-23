@@ -1,5 +1,6 @@
 {% extends "base/base.html" %}
-{% block title %}Audit Logs{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Audit Logs" context "dashboard" %}{% endblock %}
 
 {% block content %}
 
@@ -38,7 +39,7 @@
   <!-- HEADER -->
   <div class="card-header">
     <h3 class="card-title font-weight-bold mb-0">
-      Audit Logs
+      {% trans "Audit Logs" context "dashboard" %}
     </h3>
   </div>
 
@@ -58,7 +59,7 @@
 
       <div class="modal-header">
         <h5 class="modal-title font-weight-bold">
-          Audit Log Detail
+          {% trans "Audit Log Detail" context "dashboard" %}
         </h5>
         <button type="button" class="close" data-dismiss="modal">
           &times;
@@ -67,14 +68,14 @@
 
       <div class="modal-body">
         <table class="table table-bordered table-sm">
-          <tr><th>Actor</th><td id="detail-actor"></td></tr>
-          <tr><th>Action</th><td id="detail-action"></td></tr>
-          <tr><th>Entity Type</th><td id="detail-entity-type"></td></tr>
-          <tr><th>Entity ID</th><td id="detail-entity-id"></td></tr>
-          <tr><th>IP Address</th><td id="detail-ip"></td></tr>
-          <tr><th>Created At</th><td id="detail-created"></td></tr>
+          <tr><th>{% trans "Actor" context "dashboard" %}</th><td id="detail-actor"></td></tr>
+          <tr><th>{% trans "Action" context "common" %}</th><td id="detail-action"></td></tr>
+          <tr><th>{% trans "Entity Type" context "dashboard" %}</th><td id="detail-entity-type"></td></tr>
+          <tr><th>{% trans "Entity ID" context "dashboard" %}</th><td id="detail-entity-id"></td></tr>
+          <tr><th>{% trans "IP Address" context "dashboard" %}</th><td id="detail-ip"></td></tr>
+          <tr><th>{% trans "Created At" context "dashboard" %}</th><td id="detail-created"></td></tr>
           <tr>
-            <th>Metadata</th>
+            <th>{% trans "Metadata" context "dashboard" %}</th>
             <td>
               <pre id="detail-metadata" class="mb-0"></pre>
             </td>
@@ -127,7 +128,7 @@ document.addEventListener("DOMContentLoaded", function () {
     .catch(error => {
       console.error(error);
       if (typeof showToast === "function") {
-        showToast("Failed to load log details.", "error");
+        showToast("{% filter escapejs %}{% trans "Failed to load log details." context "dashboard" %}{% endfilter %}", "error");
       }
     });
   });
@@ -146,7 +147,7 @@ document.addEventListener("DOMContentLoaded", function () {
     })
     .catch(() => {
       if (typeof showToast === "function") {
-        showToast("Failed to load page.", "error");
+        showToast("{% filter escapejs %}{% trans "Failed to load page." context "dashboard" %}{% endfilter %}", "error");
       }
     });
   }

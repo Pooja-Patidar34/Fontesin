@@ -28,7 +28,7 @@
 #                     try:
 #                         UUID(tenant_id)
 #                     except ValueError:
-#                         return Response({"status": False,"message": "Invalid tenant_id"},
+#                         return Response({"status": False,"message": _("Invalid tenant_id")},
 #                             status=status.HTTP_400_BAD_REQUEST
 #                         )
 
@@ -39,14 +39,14 @@
 #                     status=status.HTTP_200_OK
 #                 )
 #             if not user.tenant:
-#                 return Response({"status": False,"message": "User tenant not configured"},
+#                 return Response({"status": False,"message": _("User tenant not configured")},
 #                     status=status.HTTP_403_FORBIDDEN
 #                 )
 
 #             role = get_user_role(user)
 #             if not role:
 #                 return Response(
-#                     {"status": False,"message": "User role not assigned"},
+#                     {"status": False,"message": _("User role not assigned")},
 #                     status=status.HTTP_403_FORBIDDEN
 #                 )
 
@@ -65,7 +65,7 @@
 
 #             if not role.permissions.filter(code="company.view").exists():
 #                 return Response(
-#                     {"status": False,"message": "Permission denied"},
+#                     {"status": False,"message": _("Permission denied")},
 #                     status=status.HTTP_403_FORBIDDEN
 #                 )
 
@@ -83,13 +83,13 @@
 
 #         except DatabaseError:
 #             return Response(
-#                 {"status": False,"message": "Database error while fetching companies"},
+#                 {"status": False,"message": _("Database error while fetching companies")},
 #                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
 #             )
 
 #         except Exception:
 #             return Response(
-#                 {"status": False,"message": "Unable to fetch companies at the moment"},
+#                 {"status": False,"message": _("Unable to fetch companies at the moment")},
 #                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
 #             )
 
@@ -101,7 +101,7 @@
 
 #         if not can_manage_company(user):
 #             return Response(
-#                 {"status": False, "message": "Permission denied"},
+#                 {"status": False, "message": _("Permission denied")},
 #                 status=status.HTTP_403_FORBIDDEN
 #             )
 
@@ -129,13 +129,13 @@
 
 #         except DatabaseError:
 #             return Response(
-#                 {"status": False, "message": "Database error while creating company"},
+#                 {"status": False, "message": _("Database error while creating company")},
 #                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
 #             )
 
 #         except Exception:
 #             return Response(
-#                 {"status": False, "message": "Unable to create company"},
+#                 {"status": False, "message": _("Unable to create company")},
 #                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
 #             )
 
@@ -147,7 +147,7 @@
 
 #         if not can_manage_company(user):
 #             return Response(
-#                 {"status": False, "message": "Permission denied"},
+#                 {"status": False, "message": _("Permission denied")},
 #                 status=status.HTTP_403_FORBIDDEN
 #             )
 
@@ -155,13 +155,13 @@
 #             company = Company.objects.select_related("tenant").get(id=company_id)
 #         except Company.DoesNotExist:
 #             return Response(
-#                 {"status": False, "message": "Company not found"},
+#                 {"status": False, "message": _("Company not found")},
 #                 status=status.HTTP_404_NOT_FOUND
 #             )
 
 #         if not user.is_superuser and company.tenant != user.tenant:
 #             return Response(
-#                 {"status": False,"message": "You cannot modify a company outside your tenant"},
+#                 {"status": False,"message": _("You cannot modify a company outside your tenant")},
 #                 status=status.HTTP_403_FORBIDDEN
 #             )
 
@@ -187,13 +187,13 @@
 
 #         except DatabaseError:
 #             return Response(
-#                 {"status": False, "message": "Database error while updating company"},
+#                 {"status": False, "message": _("Database error while updating company")},
 #                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
 #             )
 
 #         except Exception:
 #             return Response(
-#                 {"status": False, "message": "Unable to update company"},
+#                 {"status": False, "message": _("Unable to update company")},
 #                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
 #             )
 
@@ -210,6 +210,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from django.db import DatabaseError
+from django.utils.translation import gettext as _
 
 from accounts.models import Company
 from accounts_api.serializers.company_serializers import (
@@ -218,9 +219,10 @@ from accounts_api.serializers.company_serializers import (
 )
 from accounts_api.utils import get_user_role, can_manage_company
 from billing.utils import has_plan_feature
+from FontEsin.i18n.drf import APILocaleMixin
 
 
-class CompanyListAPIView(APIView):
+class CompanyListAPIView(APILocaleMixin, APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
@@ -253,7 +255,7 @@ class CompanyListAPIView(APIView):
             # Plan-based access check
             if not user.is_superuser and not has_plan_feature(user, "company_registry"):
                 return Response(
-                    {"status": False, "message": "Company registry access requires Basic plan or higher. Please upgrade your plan."},
+                    {"status": False, "message": _("Company registry access requires Basic plan or higher. Please upgrade your plan.")},
                     status=status.HTTP_403_FORBIDDEN,
                 )
 
@@ -266,7 +268,7 @@ class CompanyListAPIView(APIView):
                         UUID(tenant_id)
                     except ValueError:
                         return Response(
-                            {"status": False, "message": "Invalid tenant_id"},
+                            {"status": False, "message": _("Invalid tenant_id")},
                             status=status.HTTP_400_BAD_REQUEST,
                         )
 
@@ -277,20 +279,20 @@ class CompanyListAPIView(APIView):
 
             if not user.tenant:
                 return Response(
-                    {"status": False, "message": "User tenant not configured"},
+                    {"status": False, "message": _("User tenant not configured")},
                     status=status.HTTP_403_FORBIDDEN,
                 )
 
             role = get_user_role(user)
             if not role:
                 return Response(
-                    {"status": False, "message": "User role not assigned"},
+                    {"status": False, "message": _("User role not assigned")},
                     status=status.HTTP_403_FORBIDDEN,
                 )
 
             if role.name != "tenant_admin" and not role.permissions.filter(code="company.view").exists():
                 return Response(
-                    {"status": False, "message": "Permission denied"},
+                    {"status": False, "message": _("Permission denied")},
                     status=status.HTTP_403_FORBIDDEN,
                 )
 
@@ -300,13 +302,13 @@ class CompanyListAPIView(APIView):
 
         except DatabaseError:
             return Response(
-                {"status": False, "message": "Database error while fetching companies"},
+                {"status": False, "message": _("Database error while fetching companies")},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
         except Exception:
             return Response(
-                {"status": False, "message": "Unable to fetch companies"},
+                {"status": False, "message": _("Unable to fetch companies")},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
@@ -327,7 +329,7 @@ class CompanyListAPIView(APIView):
 
         if not can_manage_company(user):
             return Response(
-                {"status": False, "message": "Permission denied"},
+                {"status": False, "message": _("Permission denied")},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -354,18 +356,18 @@ class CompanyListAPIView(APIView):
 
         except DatabaseError:
             return Response(
-                {"status": False, "message": "Database error while creating company"},
+                {"status": False, "message": _("Database error while creating company")},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
         except Exception:
             return Response(
-                {"status": False, "message": "Unable to create company"},
+                {"status": False, "message": _("Unable to create company")},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
 
-class CompanyUpdateAPIView(APIView):
+class CompanyUpdateAPIView(APILocaleMixin, APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
@@ -395,7 +397,7 @@ class CompanyUpdateAPIView(APIView):
 
         if not can_manage_company(user):
             return Response(
-                {"status": False, "message": "Permission denied"},
+                {"status": False, "message": _("Permission denied")},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -403,7 +405,7 @@ class CompanyUpdateAPIView(APIView):
             company = Company.objects.get(id=company_id)
         except Company.DoesNotExist:
             return Response(
-                {"status": False, "message": "Company not found"},
+                {"status": False, "message": _("Company not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -411,7 +413,7 @@ class CompanyUpdateAPIView(APIView):
             return Response(
                 {
                     "status": False,
-                    "message": "You cannot modify a company outside your tenant",
+                    "message": _("You cannot modify a company outside your tenant"),
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
@@ -437,18 +439,18 @@ class CompanyUpdateAPIView(APIView):
 
         except DatabaseError:
             return Response(
-                {"status": False, "message": "Database error while updating company"},
+                {"status": False, "message": _("Database error while updating company")},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
         except Exception:
             return Response(
-                {"status": False, "message": "Unable to update company"},
+                {"status": False, "message": _("Unable to update company")},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
 
-class CompanyDetailAPIView(APIView):
+class CompanyDetailAPIView(APILocaleMixin, APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
@@ -486,7 +488,7 @@ class CompanyDetailAPIView(APIView):
             # Tenant boundary
             if not user.is_superuser and company.tenant != user.tenant:
                 return Response(
-                    {"status": False, "message": "Permission denied"},
+                    {"status": False, "message": _("Permission denied")},
                     status=status.HTTP_403_FORBIDDEN,
                 )
 
@@ -495,7 +497,7 @@ class CompanyDetailAPIView(APIView):
                 role = get_user_role(user)
                 if not role:
                     return Response(
-                        {"status": False, "message": "User role not assigned"},
+                        {"status": False, "message": _("User role not assigned")},
                         status=status.HTTP_403_FORBIDDEN,
                     )
 
@@ -504,7 +506,7 @@ class CompanyDetailAPIView(APIView):
                     and not role.permissions.filter(code="company.view").exists()
                 ):
                     return Response(
-                        {"status": False, "message": "Permission denied"},
+                        {"status": False, "message": _("Permission denied")},
                         status=status.HTTP_403_FORBIDDEN,
                     )
 
@@ -516,7 +518,7 @@ class CompanyDetailAPIView(APIView):
 
         except Company.DoesNotExist:
             return Response(
-                {"status": False, "message": "Company not found"},
+                {"status": False, "message": _("Company not found")},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -524,7 +526,7 @@ class CompanyDetailAPIView(APIView):
             return Response(
                 {
                     "status": False,
-                    "message": "Database error while fetching company details",
+                    "message": _("Database error while fetching company details"),
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
@@ -533,7 +535,7 @@ class CompanyDetailAPIView(APIView):
             return Response(
                 {
                     "status": False,
-                    "message": "Unable to fetch company details",
+                    "message": _("Unable to fetch company details"),
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

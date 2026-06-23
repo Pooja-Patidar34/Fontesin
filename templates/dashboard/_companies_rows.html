@@ -1,11 +1,12 @@
+{% load i18n %}
 {% for company in companies %}
   {% include "dashboard/_company_row.html" %}
 {% empty %}
 <tr id="no-companies-row">
   {% if request.user.is_superuser %}
-    <td colspan="5" class="text-center text-muted py-4">No companies found</td>
+    <td colspan="5" class="text-center text-muted py-4">{% trans "No companies found" context "companies" %}</td>
   {% else %}
-    <td colspan="4" class="text-center text-muted py-4">No companies found</td>
+    <td colspan="4" class="text-center text-muted py-4">{% trans "No companies found" context "companies" %}</td>
   {% endif %}
 </tr>
 {% endfor %}

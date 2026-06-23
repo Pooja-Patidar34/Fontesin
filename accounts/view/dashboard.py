@@ -6,6 +6,7 @@ from django.http import JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import json
@@ -388,9 +389,10 @@ def dashboard(request):
             if deactivated_plan:
                 messages.warning(
                     request,
-                    f"Your {deactivated_plan.name} plan was deactivated by the admin. "
-                    "You have been moved to the Free plan. "
-                    "Please activate another plan to continue.",
+                    _("Your %(plan)s plan was deactivated by the admin. "
+                      "You have been moved to the Free plan. "
+                      "Please activate another plan to continue.")
+                    % {"plan": deactivated_plan.name},
                 )
 
             from django.db.models import Q

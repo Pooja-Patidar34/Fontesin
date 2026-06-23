@@ -1,7 +1,6 @@
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
-from accounts.models import Company, Tenant
 
-from rest_framework import serializers
 from accounts.models import Company
 
 
@@ -15,7 +14,8 @@ class CompanySerializer(serializers.ModelSerializer):
             "city",
             "country",
         ]
-        
+
+
 class CompanyCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
@@ -45,6 +45,6 @@ class CompanyCreateUpdateSerializer(serializers.ModelSerializer):
         if request and not request.user.is_superuser:
             if value != request.user.tenant:
                 raise serializers.ValidationError(
-                    "You cannot assign a company outside your tenant"
+                    _("You cannot assign a company outside your tenant")
                 )
         return value

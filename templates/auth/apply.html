@@ -1,18 +1,18 @@
-{% load static %}
+{% load static i18n i18n_extras %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <meta name="theme-color" content="#253D51"/>
-  <title>Select your region – FONTESIN</title>
-  <meta name="description" content="Select your operating region to complete your FONTESIN partner registration."/>
+  <title>{% trans "Select your region" context "auth.apply" %} – FONTESIN</title>
+  <meta name="description" content="{% trans 'Select your operating region to complete your FONTESIN partner registration.' context 'auth.apply' %}"/>
   <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', sans-serif; background: #f0f5f8; color: #1a2e3b; min-height: 100vh; display: flex; flex-direction: column; }
+    body { font-family: 'Inter', sans-serif; background: #f0f5f8; color: #1a2e3b; min-height: 100vh; display: flex; flex-direction: column; position: relative; }
 
     .apply-nav {
       background: #1B2E3F; padding: 0 32px; height: 64px;
@@ -70,11 +70,13 @@
   </style>
 </head>
 <body>
+  {% include "partials/_auth_lang_switcher.html" %}
+
   <nav class="apply-nav">
     <div class="apply-nav__logo">
       <img src="{% static 'adminlte/images/fontesin-logo.png' %}" alt="FONTESIN"/>
     </div>
-    <a href="{% url 'logout' %}" class="apply-nav__back">Sign out</a>
+    <a href="{% url 'logout' %}" class="apply-nav__back">{% trans "Sign out" context "auth.common" %}</a>
   </nav>
 
   <div class="apply-wrap">
@@ -88,10 +90,9 @@
       {% endif %}
 
       <span class="apply-badge">{{ role_icon }} {{ role_label }}</span>
-      <h1>Select your region</h1>
+      <h1>{% trans "Select your region" context "auth.apply" %}</h1>
       <p class="sub">
-        Choose the country you'll operate in. Your registration is then sent to
-        the FONTESIN team for approval — you'll be notified once it's reviewed.
+        {% trans "Choose the country you'll operate in. Your registration is then sent to the FONTESIN team for approval — you'll be notified once it's reviewed." context "auth.apply" %}
       </p>
 
       <form method="POST" action="{% url 'apply-submit' %}" id="region-form">
@@ -99,34 +100,33 @@
 
         {% if role_value == 'franchise' %}
         <div class="form-group">
-          <label for="franchise_type">Franchise type <span class="req">*</span></label>
+          <label for="franchise_type">{% trans "Franchise type" context "auth.apply" %} <span class="req">*</span></label>
           <select name="franchise_type" id="franchise_type" required>
-            <option value="" disabled {% if not selected_franchise_type %}selected{% endif %}>Select a franchise type…</option>
-            {% for ft in franchise_types %}
-            <option value="{{ ft }}" {% if ft == selected_franchise_type %}selected{% endif %}>{{ ft }}</option>
+            <option value="" disabled {% if not selected_franchise_type %}selected{% endif %}>{% trans "Select a franchise type…" context "auth.apply" %}</option>
+            {% for value, label in franchise_types %}
+            <option value="{{ value }}" {% if value == selected_franchise_type %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
           </select>
-          <div class="hint">Master, National, Regional, or Micro — defines the scope of your franchise.</div>
+          <div class="hint">{% trans "Master, National, Regional, or Micro — defines the scope of your franchise." context "auth.apply" %}</div>
         </div>
         {% endif %}
 
         <div class="form-group">
-          <label for="region_country">Region (country) <span class="req">*</span></label>
+          <label for="region_country">{% trans "Region (country)" context "auth.apply" %} <span class="req">*</span></label>
           <select name="region_country" id="region_country" required>
-            <option value="" disabled {% if not selected_country %}selected{% endif %}>Select your country…</option>
+            <option value="" disabled {% if not selected_country %}selected{% endif %}>{% trans "Select your country…" context "auth.apply" %}</option>
             {% for code, label in country_choices %}
             <option value="{{ code }}" {% if code == selected_country %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
           </select>
-          <div class="hint">This determines the companies and territory you'll have access to once approved.</div>
+          <div class="hint">{% trans "This determines the companies and territory you'll have access to once approved." context "auth.apply" %}</div>
         </div>
 
-        <button type="submit" class="apply-submit">Submit for approval</button>
+        <button type="submit" class="apply-submit">{% trans "Submit for approval" context "auth.apply" %}</button>
       </form>
 
       <div class="apply-note">
-        After you submit, a FONTESIN administrator will review and approve or
-        decline your registration. You can't access the dashboard until then.
+        {% trans "After you submit, a FONTESIN administrator will review and approve or decline your registration. You can't access the dashboard until then." context "auth.apply" %}
       </div>
     </div>
   </div>

@@ -1,5 +1,6 @@
 {% extends "base/base.html" %}
-{% block title %}Plan History{% endblock %}
+{% load i18n plan_i18n_tags %}
+{% block title %}{% trans "Plan History" context "billing" %}{% endblock %}
 
 {% block content %}
 <div class="card" style="border-radius:14px; border:1px solid #e8eef3; box-shadow:0 2px 12px rgba(0,0,0,.06);">
@@ -7,10 +8,10 @@
   <div class="card-header d-flex justify-content-between align-items-center">
     <div>
       <h3 class="card-title font-weight-bold mb-0">
-        <i class="fas fa-history mr-2"></i> Plan History
+        <i class="fas fa-history mr-2"></i> {% trans "Plan History" context "billing" %}
       </h3>
       <p class="small text-muted mb-0 mt-1">
-        Every plan your account has been on, including current and past subscriptions.
+        {% trans "Every plan your account has been on, including current and past subscriptions." context "billing" %}
       </p>
     </div>
   </div>
@@ -21,13 +22,13 @@
         <thead class="bg-light">
           <tr>
             {% if request.user.is_superuser %}
-            <th>User</th>
+            <th>{% trans "User" context "billing" %}</th>
             {% endif %}
-            <th>Plan</th>
-            <th>Status</th>
-            <th>Price</th>
-            <th>Started</th>
-            <th>Ended</th>
+            <th>{% trans "Plan" context "billing" %}</th>
+            <th>{% trans "Status" context "billing" %}</th>
+            <th>{% trans "Price" context "billing" %}</th>
+            <th>{% trans "Started" context "billing" %}</th>
+            <th>{% trans "Ended" context "billing" %}</th>
           </tr>
         </thead>
         <tbody>
@@ -44,7 +45,7 @@
             {% endif %}
 
             <td>
-              <strong>{{ sub.plan.name }}</strong>
+              <strong>{{ sub.plan|localized_plan_name_filter }}</strong>
               {% if sub.plan.code %}
                 <div class="small text-muted">{{ sub.plan.code|capfirst }}</div>
               {% endif %}
@@ -52,17 +53,17 @@
 
             <td>
               {% if sub.status == "active" %}
-                <span class="badge badge-success">Active</span>
+                <span class="badge badge-success">{% trans "Active" context "billing" %}</span>
               {% elif sub.status == "trial" %}
-                <span class="badge badge-info">Trial</span>
+                <span class="badge badge-info">{% trans "Trial" context "billing" %}</span>
               {% elif sub.status == "created" %}
-                <span class="badge badge-warning">Pending</span>
+                <span class="badge badge-warning">{% trans "Pending" context "billing" %}</span>
               {% elif sub.status == "past_due" %}
-                <span class="badge badge-warning">Past Due</span>
+                <span class="badge badge-warning">{% trans "Past Due" context "billing" %}</span>
               {% elif sub.status == "suspended" %}
-                <span class="badge badge-secondary">Suspended</span>
+                <span class="badge badge-secondary">{% trans "Suspended" context "billing" %}</span>
               {% elif sub.status == "cancelled" %}
-                <span class="badge badge-danger">Cancelled</span>
+                <span class="badge badge-danger">{% trans "Cancelled" context "billing" %}</span>
               {% else %}
                 <span class="badge badge-secondary">{{ sub.get_status_display }}</span>
               {% endif %}
@@ -90,7 +91,7 @@
           {% empty %}
           <tr>
             <td colspan="{% if request.user.is_superuser %}6{% else %}5{% endif %}" class="text-center text-muted py-4">
-              No plan history yet. Your subscriptions will appear here as you upgrade or change plans.
+              {% trans "No plan history yet. Your subscriptions will appear here as you upgrade or change plans." context "billing" %}
             </td>
           </tr>
           {% endfor %}
@@ -104,10 +105,10 @@
     <ul class="pagination pagination-sm justify-content-end mb-0">
       {% if page_obj.has_previous %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}">{% trans "Previous" context "common" %}</a>
         </li>
       {% else %}
-        <li class="page-item disabled"><span class="page-link">Previous</span></li>
+        <li class="page-item disabled"><span class="page-link">{% trans "Previous" context "common" %}</span></li>
       {% endif %}
 
       {% for num in page_obj.paginator.page_range %}
@@ -122,10 +123,10 @@
 
       {% if page_obj.has_next %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}">{% trans "Next" context "common" %}</a>
         </li>
       {% else %}
-        <li class="page-item disabled"><span class="page-link">Next</span></li>
+        <li class="page-item disabled"><span class="page-link">{% trans "Next" context "common" %}</span></li>
       {% endif %}
     </ul>
   </div>

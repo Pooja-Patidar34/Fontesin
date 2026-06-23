@@ -1,5 +1,6 @@
 {% extends "base/base.html" %}
-{% block title %}Franchises{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Franchises" context "dashboard" %}{% endblock %}
 
 {% block content %}
 
@@ -8,7 +9,7 @@
   <!-- Header -->
   <div class="card-header d-flex align-items-center">
     <h3 class="card-title font-weight-bold mb-0">
-      Franchises
+      {% trans "Franchises" context "dashboard" %}
     </h3>
 
   <div class="ml-auto d-flex align-items-center">
@@ -20,7 +21,7 @@
               id="tenant-search"
               value="{{ request.GET.q }}"
               class="form-control"
-              placeholder="Search franchise..."
+              placeholder="{% trans "Search franchise..." context "dashboard" %}"
               autocomplete="off">
 
         <div class="input-group-append">
@@ -33,7 +34,7 @@
 
     <button class="btn btn-primary btn-sm shadow-sm"
             id="add-tenant-btn">
-      <i class="fas fa-plus mr-1"></i> Add Franchise
+      <i class="fas fa-plus mr-1"></i> {% trans "Add Franchise" context "dashboard" %}
     </button>
 
   </div>
@@ -57,7 +58,7 @@
 
         <div class="modal-header">
           <h5 class="modal-title font-weight-bold">
-            Add Franchise
+            {% trans "Add Franchise" context "dashboard" %}
           </h5>
           <button type="button" class="close" data-dismiss="modal">
             &times;
@@ -67,7 +68,7 @@
         <div class="modal-body">
 
           <div class="form-group">
-            <label>Name</label>
+            <label>{% trans "Name" context "common" %}</label>
             {{ form.name }}
             <div id="tenant-name-readonly"
                  style="display:none; margin-top:.25rem; padding:.5rem .75rem;
@@ -78,7 +79,7 @@
           <div class="form-check">
             {{ form.is_active }}
             <label class="form-check-label ml-1">
-              Active
+              {% trans "Active" context "common" %}
             </label>
           </div>
 
@@ -88,12 +89,12 @@
           <button type="button"
                   class="btn btn-secondary btn-sm"
                   data-dismiss="modal">
-            Cancel
+            {% trans "Cancel" context "common" %}
           </button>
 
           <button type="submit"
                   class="btn btn-primary btn-sm">
-            Save Franchise
+            {% trans "Save Franchise" context "dashboard" %}
           </button>
         </div>
 
@@ -118,7 +119,7 @@
           // View mode: hide single-line input, show wrappable display
           nameField.style.display = "none";
           if (nameReadonly) {
-              nameReadonly.textContent = nameField.value || "—";
+              nameReadonly.textContent = nameField.value || "{% filter escapejs %}{% trans "N/A" context "common" %}{% endfilter %}";
               nameReadonly.style.display = "block";
           }
           nameField.readOnly = true;
@@ -154,7 +155,7 @@
       document.getElementById("id_name").value = "";
       document.getElementById("id_is_active").checked = true;
 
-      document.querySelector(".modal-title").innerText = "Add Franchise";
+      document.querySelector(".modal-title").innerText = "{% filter escapejs %}{% trans "Add Franchise" context "dashboard" %}{% endfilter %}";
 
       setReadonly(false);
 
@@ -176,7 +177,7 @@
         document.getElementById("id_name").value = data.name;
         document.getElementById("id_is_active").checked = data.is_active;
 
-        document.querySelector(".modal-title").innerText = viewBtn ? "Franchise Details" : "Edit Franchise";
+        document.querySelector(".modal-title").innerText = viewBtn ? "{% filter escapejs %}{% trans "Franchise Details" context "dashboard" %}{% endfilter %}" : "{% filter escapejs %}{% trans "Edit Franchise" context "dashboard" %}{% endfilter %}";
         setReadonly(!!viewBtn);
         modal.modal('show');
       });
@@ -240,7 +241,7 @@
             .catch(err => {
               console.error("Tenant search failed:", err);
               if (typeof showToast === "function") {
-                showToast("Search failed. Please try again.", "error");
+                showToast("{% filter escapejs %}{% trans "Search failed. Please try again." context "dashboard" %}{% endfilter %}", "error");
               }
             });
       }

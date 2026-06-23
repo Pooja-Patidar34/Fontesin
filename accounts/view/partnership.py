@@ -5,6 +5,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
+from django.utils.translation import gettext as _
 
 from accounts.models import Company, CompanyConnection, UserCompany
 from accounts.view.saved_filter import _require_paid_business_user
@@ -74,8 +75,8 @@ def partnership_action(request, connection_id):
     decision = (request.POST.get("decision") or "").strip().lower()
     if decision not in ("approve", "reject"):
         if _is_ajax(request):
-            return JsonResponse({"ok": False, "message": "Invalid action."}, status=400)
-        messages.error(request, "Invalid action.")
+            return JsonResponse({"ok": False, "message": _("Invalid action.")}, status=400)
+        messages.error(request, _("Invalid action."))
         return redirect("partnerships")
 
     connection = get_object_or_404(
@@ -85,7 +86,7 @@ def partnership_action(request, connection_id):
     )
 
     if connection.status != CompanyConnection.STATUS_PENDING:
-        msg = f"This request was already {connection.get_status_display().lower()}."
+        msg = _("This request was already %(status)s.") % {"status": connection.get_status_display().lower()}
         if _is_ajax(request):
             return JsonResponse({"ok": False, "message": msg}, status=400)
         messages.error(request, msg)
@@ -101,17 +102,15 @@ def partnership_action(request, connection_id):
             company=connection.company,
             defaults={"is_primary": False},
         )
-        msg = (
-            f"Approved {connection.user.email}'s request to connect with "
-            f"{connection.company.name}."
-        )
+        msg = _(
+            "Approved %(email)s's request to connect with %(company)s."
+        ) % {"email": connection.user.email, "company": connection.company.name}
     else:
         connection.status = CompanyConnection.STATUS_REJECTED
         connection.save(update_fields=["status", "updated_at"])
-        msg = (
-            f"Rejected {connection.user.email}'s request to connect with "
-            f"{connection.company.name}."
-        )
+        msg = _(
+            "Rejected %(email)s's request to connect with %(company)s."
+        ) % {"email": connection.user.email, "company": connection.company.name}
 
     # Notify both sides — the requester gets the verdict; the owner gets a
     # self-confirmation receipt so the action shows up in their own inbox.
@@ -212,7 +211,7 @@ def partnership_cancel(request, connection_id):
     is_receiver = connection.company.owner_user_id == request.user.id
 
     if not (is_sender or is_receiver):
-        msg = "You don't have permission to cancel this partnership."
+        msg = _("You don't have permission to cancel this partnership.")
         if _is_ajax(request):
             return JsonResponse({"ok": False, "message": msg}, status=403)
         messages.error(request, msg)
@@ -222,7 +221,7 @@ def partnership_cancel(request, connection_id):
     # requests on their company use approve/reject; rejected ones are final.
     if is_receiver and not is_sender:
         if connection.status != CompanyConnection.STATUS_ACCEPTED:
-            msg = (
+            msg = _(
                 "Only accepted partnerships can be revoked. Use Reject for "
                 "pending requests."
             )
@@ -234,7 +233,7 @@ def partnership_cancel(request, connection_id):
     # Sender may cancel pending or accepted, but not rejected (the decision
     # was made and isn't theirs to undo).
     if is_sender and connection.status == CompanyConnection.STATUS_REJECTED:
-        msg = "This request was rejected and can't be cancelled."
+        msg = _("This request was rejected and can't be cancelled.")
         if _is_ajax(request):
             return JsonResponse({"ok": False, "message": msg}, status=400)
         messages.error(request, msg)
@@ -256,9 +255,9 @@ def partnership_cancel(request, connection_id):
     connection.delete()
 
     if was_accepted:
-        msg = f"Partnership with {company_name} has been ended."
+        msg = _("Partnership with %(company)s has been ended.") % {"company": company_name}
     else:
-        msg = f"Connection request to {company_name} has been cancelled."
+        msg = _("Connection request to %(company)s has been cancelled.") % {"company": company_name}
 
     if _is_ajax(request):
         return JsonResponse({"ok": True, "message": msg})

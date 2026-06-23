@@ -15,6 +15,14 @@
   var EMOJI_RE = /([\u2700-\u27BF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|\uD83E[\uDD00-\uDDFF]|[\u2600-\u26FF]|\uD83C[\uDDE6-\uDDFF]|[\u{1F1E6}-\u{1F1FF}]|[\u{1F300}-\u{1FAFF}])/u;
   var EMOJI_GLOBAL_RE = /([\u2700-\u27BF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|\uD83E[\uDD00-\uDDFF]|[\u2600-\u26FF]|[\u{1F1E6}-\u{1F1FF}]|[\u{1F300}-\u{1FAFF}])/gu;
 
+  function _t(msg, params) {
+    var s = (typeof gettext === 'function') ? gettext(msg) : msg;
+    if (!params) return s;
+    return s.replace(/%\((\w+)\)s/g, function (_, key) {
+      return params[key] != null ? String(params[key]) : '';
+    });
+  }
+
   // RFC 5322 local-part allowed atext + dot; plus "@" and domain chars (letters, digits, ".", "-").
   // Permissive-but-bounded: a-z A-Z 0-9 and ! # $ % & ' * + / = ? ^ _ ` { | } ~ . - @
   var EMAIL_ALLOWED_RE = /^[A-Za-z0-9!#$%&'*+/=?^_`{|}~.\-@]*$/;
@@ -130,17 +138,17 @@
       var val = input.value;
       if (EMOJI_RE.test(val)) {
         input.value = stripInvalidNameChars(stripEmojis(val));
-        notify('Emojis are not allowed in name.');
+        notify(_t('Emojis are not allowed in name.'));
         return;
       }
       if (!NAME_ALLOWED_RE.test(val)) {
         input.value = stripInvalidNameChars(val);
-        notify('Name can only contain letters, spaces, hyphens and apostrophes.');
+        notify(_t('Name can only contain letters, spaces, hyphens and apostrophes.'));
         return;
       }
       if (val.length > NAME_MAX_LENGTH) {
         input.value = val.slice(0, NAME_MAX_LENGTH);
-        notify('Name cannot exceed ' + NAME_MAX_LENGTH + ' characters.');
+        notify(_t('Name cannot exceed %(max)s characters.', { max: NAME_MAX_LENGTH }));
       }
     });
 
@@ -159,10 +167,10 @@
       if (hasEmoji || hasBadChar || wouldOverflow) {
         e.preventDefault();
         notify(hasEmoji
-          ? 'Emojis are not allowed in name.'
+          ? _t('Emojis are not allowed in name.')
           : (hasBadChar
-              ? 'Name can only contain letters, spaces, hyphens and apostrophes.'
-              : 'Name cannot exceed ' + NAME_MAX_LENGTH + ' characters.'));
+              ? _t('Name can only contain letters, spaces, hyphens and apostrophes.')
+              : _t('Name cannot exceed %(max)s characters.', { max: NAME_MAX_LENGTH })));
         var clean = stripInvalidNameChars(stripEmojis(text));
         var available = NAME_MAX_LENGTH - (input.value.length - (end - start));
         if (available < 0) available = 0;
@@ -181,7 +189,7 @@
     input.addEventListener('input', function () {
       if (EMOJI_RE.test(input.value)) {
         input.value = stripEmojis(input.value);
-        notify('Emojis are not allowed in password.');
+        notify(_t('Emojis are not allowed in password.'));
       }
     });
 
@@ -191,7 +199,7 @@
       var text = clip.getData('text');
       if (text && EMOJI_RE.test(text)) {
         e.preventDefault();
-        notify('Emojis are not allowed in password.');
+        notify(_t('Emojis are not allowed in password.'));
         var clean = stripEmojis(text);
         var start = input.selectionStart || 0;
         var end = input.selectionEnd || 0;
@@ -210,12 +218,12 @@
       var val = input.value;
       if (EMOJI_RE.test(val)) {
         input.value = stripEmojis(input.value).replace(EMAIL_DISALLOWED_GLOBAL_RE, '');
-        notify('Emojis are not allowed in email.');
+        notify(_t('Emojis are not allowed in email.'));
         return;
       }
       if (!EMAIL_ALLOWED_RE.test(val)) {
         input.value = stripInvalidEmailChars(val);
-        notify('Email can only contain letters, digits and . _ - + special characters.');
+        notify(_t('Email can only contain letters, digits and . _ - + special characters.'));
       }
     });
 
@@ -229,8 +237,8 @@
       if (hasEmoji || hasBadChar) {
         e.preventDefault();
         notify(hasEmoji
-          ? 'Emojis are not allowed in email.'
-          : 'Email can only contain letters, digits and . _ - + special characters.');
+          ? _t('Emojis are not allowed in email.')
+          : _t('Email can only contain letters, digits and . _ - + special characters.'));
         var clean = stripInvalidEmailChars(stripEmojis(text));
         var start = input.selectionStart || 0;
         var end = input.selectionEnd || 0;
@@ -265,7 +273,7 @@
     function validateDob() {
       if (!input.value) return;
       if (input.value > todayISO()) {
-        notify('Date of Birth cannot be in the future.');
+        notify(_t('Date of Birth cannot be in the future.'));
         input.value = '';
         input.focus();
       }
@@ -294,12 +302,12 @@
       var val = input.value;
       if (EMOJI_RE.test(val)) {
         input.value = stripInvalidPhoneChars(stripEmojis(val));
-        notify('Emojis are not allowed in phone number.');
+        notify(_t('Emojis are not allowed in phone number.'));
         return;
       }
       if (!PHONE_ALLOWED_RE.test(val)) {
         input.value = stripInvalidPhoneChars(val);
-        notify('Phone number can only contain digits, spaces, +, -, ( and ).');
+        notify(_t('Phone number can only contain digits, spaces, +, -, ( and ).'));
       }
     });
 
@@ -313,8 +321,8 @@
       if (hasEmoji || hasBadChar) {
         e.preventDefault();
         notify(hasEmoji
-          ? 'Emojis are not allowed in phone number.'
-          : 'Phone number can only contain digits, spaces, +, -, ( and ).');
+          ? _t('Emojis are not allowed in phone number.')
+          : _t('Phone number can only contain digits, spaces, +, -, ( and ).'));
         var clean = stripInvalidPhoneChars(stripEmojis(text));
         var start = input.selectionStart || 0;
         var end = input.selectionEnd || 0;
@@ -349,12 +357,12 @@
       var val = input.value;
       if (EMOJI_RE.test(val)) {
         input.value = stripInvalidUrlChars(stripEmojis(val));
-        notify('Emojis are not allowed in website URL.');
+        notify(_t('Emojis are not allowed in website URL.'));
         return;
       }
       if (!URL_ALLOWED_RE.test(val)) {
         input.value = stripInvalidUrlChars(val);
-        notify('Website URL contains invalid characters.');
+        notify(_t('Website URL contains invalid characters.'));
       }
     });
 
@@ -368,8 +376,8 @@
       if (hasEmoji || hasBadChar) {
         e.preventDefault();
         notify(hasEmoji
-          ? 'Emojis are not allowed in website URL.'
-          : 'Website URL contains invalid characters.');
+          ? _t('Emojis are not allowed in website URL.')
+          : _t('Website URL contains invalid characters.'));
         var clean = stripInvalidUrlChars(stripEmojis(text));
         var start = input.selectionStart || 0;
         var end = input.selectionEnd || 0;
@@ -383,7 +391,7 @@
       var val = (input.value || '').trim();
       if (!val) { input.style.borderColor = ''; return; }
       if (!WEBSITE_URL_RE.test(val)) {
-        notify('Enter a valid website URL (e.g. https://yourcompany.com).');
+        notify(_t('Enter a valid website URL (e.g. https://yourcompany.com).'));
         input.style.borderColor = '#ef4444';
       } else {
         input.style.borderColor = '';
@@ -412,13 +420,13 @@
       var val = input.value;
       if (EMOJI_RE.test(val)) {
         input.value = stripBadChars(val);
-        notify('Emojis are not allowed in LinkedIn URL.');
+        notify(_t('Emojis are not allowed in LinkedIn URL.'));
         return;
       }
       var cleaned = stripBadChars(val);
       if (cleaned !== val) {
         input.value = cleaned;
-        notify('LinkedIn URL contains invalid characters.');
+        notify(_t('LinkedIn URL contains invalid characters.'));
       }
     });
 
@@ -431,8 +439,8 @@
       if (cleaned !== text) {
         e.preventDefault();
         notify(EMOJI_RE.test(text)
-          ? 'Emojis are not allowed in LinkedIn URL.'
-          : 'LinkedIn URL contains invalid characters.');
+          ? _t('Emojis are not allowed in LinkedIn URL.')
+          : _t('LinkedIn URL contains invalid characters.'));
         var start = input.selectionStart || 0;
         var end = input.selectionEnd || 0;
         input.value = input.value.slice(0, start) + cleaned + input.value.slice(end);
@@ -445,7 +453,7 @@
       var val = (input.value || '').trim();
       if (!val) return;
       if (!LINKEDIN_URL_RE.test(val)) {
-        notify('Enter a valid LinkedIn URL (e.g. https://linkedin.com/in/username).');
+        notify(_t('Enter a valid LinkedIn URL (e.g. https://linkedin.com/in/username).'));
         input.style.borderColor = '#ef4444';
       } else {
         input.style.borderColor = '';
@@ -470,7 +478,7 @@
     el.addEventListener('input', function () {
       if (EMOJI_RE.test(el.value)) {
         el.value = stripEmojis(el.value);
-        notify('Emojis are not allowed.');
+        notify(_t('Emojis are not allowed.'));
       }
     });
 
@@ -480,7 +488,7 @@
       var text = clip.getData('text');
       if (text && EMOJI_RE.test(text)) {
         e.preventDefault();
-        notify('Emojis are not allowed.');
+        notify(_t('Emojis are not allowed.'));
         var clean = stripEmojis(text);
         var start = el.selectionStart || 0;
         var end = el.selectionEnd || 0;
@@ -563,7 +571,7 @@
       for (var i = 0; i < pwInputs.length; i++) {
         if (EMOJI_RE.test(pwInputs[i].value)) {
           e.preventDefault();
-          notify('Emojis are not allowed in password.');
+          notify(_t('Emojis are not allowed in password.'));
           pwInputs[i].focus();
           return;
         }
@@ -575,13 +583,13 @@
         if (!v) continue;
         if (EMOJI_RE.test(v)) {
           e.preventDefault();
-          notify('Emojis are not allowed in email.');
+          notify(_t('Emojis are not allowed in email.'));
           emailInputs[j].focus();
           return;
         }
         if (!EMAIL_ALLOWED_RE.test(v)) {
           e.preventDefault();
-          notify('Email can only contain letters, digits and . _ - + special characters.');
+          notify(_t('Email can only contain letters, digits and . _ - + special characters.'));
           emailInputs[j].focus();
           return;
         }
@@ -594,7 +602,7 @@
         var dv = dobInputs[d].value;
         if (dv && dv > todayStr) {
           e.preventDefault();
-          notify('Date of Birth cannot be in the future.');
+          notify(_t('Date of Birth cannot be in the future.'));
           dobInputs[d].focus();
           return;
         }
@@ -610,13 +618,13 @@
         if (!pv) continue;
         if (EMOJI_RE.test(pv)) {
           e.preventDefault();
-          notify('Emojis are not allowed in phone number.');
+          notify(_t('Emojis are not allowed in phone number.'));
           phoneInputs[p].focus();
           return;
         }
         if (!PHONE_ALLOWED_RE.test(pv)) {
           e.preventDefault();
-          notify('Phone number can only contain digits, spaces, +, -, ( and ).');
+          notify(_t('Phone number can only contain digits, spaces, +, -, ( and ).'));
           phoneInputs[p].focus();
           return;
         }
@@ -632,13 +640,13 @@
         if (!wv) continue;
         if (EMOJI_RE.test(wv)) {
           e.preventDefault();
-          notify('Emojis are not allowed in website URL.');
+          notify(_t('Emojis are not allowed in website URL.'));
           websiteInputs[w].focus();
           return;
         }
         if (!WEBSITE_URL_RE.test(wv)) {
           e.preventDefault();
-          notify('Enter a valid website URL (e.g. https://yourcompany.com).');
+          notify(_t('Enter a valid website URL (e.g. https://yourcompany.com).'));
           websiteInputs[w].focus();
           return;
         }
@@ -650,13 +658,13 @@
         if (!lv) continue;
         if (EMOJI_RE.test(lv)) {
           e.preventDefault();
-          notify('Emojis are not allowed in LinkedIn URL.');
+          notify(_t('Emojis are not allowed in LinkedIn URL.'));
           linkedinInputs[l].focus();
           return;
         }
         if (!LINKEDIN_URL_RE.test(lv)) {
           e.preventDefault();
-          notify('Enter a valid LinkedIn URL (e.g. https://linkedin.com/in/username).');
+          notify(_t('Enter a valid LinkedIn URL (e.g. https://linkedin.com/in/username).'));
           linkedinInputs[l].focus();
           return;
         }
@@ -669,19 +677,19 @@
         if (!nv) continue;
         if (EMOJI_RE.test(nv)) {
           e.preventDefault();
-          notify('Emojis are not allowed in name.');
+          notify(_t('Emojis are not allowed in name.'));
           nameInputs[k].focus();
           return;
         }
         if (!NAME_ALLOWED_RE.test(nv)) {
           e.preventDefault();
-          notify('Name can only contain letters, spaces, hyphens and apostrophes.');
+          notify(_t('Name can only contain letters, spaces, hyphens and apostrophes.'));
           nameInputs[k].focus();
           return;
         }
         if (nv.length > NAME_MAX_LENGTH) {
           e.preventDefault();
-          notify('Name cannot exceed ' + NAME_MAX_LENGTH + ' characters.');
+          notify(_t('Name cannot exceed %(max)s characters.', { max: NAME_MAX_LENGTH }));
           nameInputs[k].focus();
           return;
         }
@@ -695,7 +703,7 @@
         var fv = fld.value;
         if (fv && EMOJI_RE.test(fv)) {
           e.preventDefault();
-          notify('Emojis are not allowed.');
+          notify(_t('Emojis are not allowed.'));
           fld.focus();
           return;
         }

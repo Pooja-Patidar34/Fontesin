@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 import re
 
 from django import forms
@@ -36,12 +37,12 @@ class TenantForm(forms.ModelForm):
     def clean_name(self):
         name = (self.cleaned_data.get("name") or "").strip()
         if len(name) < 2:
-            raise forms.ValidationError("Tenant name must be at least 2 characters.")
+            raise forms.ValidationError(_("Tenant name must be at least 2 characters."))
         if len(name) > 100:
-            raise forms.ValidationError("Tenant name must be 100 characters or fewer.")
+            raise forms.ValidationError(_("Tenant name must be 100 characters or fewer."))
         if not TENANT_NAME_RE.match(name):
             raise forms.ValidationError(
-                "Tenant name may only contain letters, digits, spaces, and the symbols & ' . , - ( ), and must contain at least one letter."
+                _("Tenant name may only contain letters, digits, spaces, and the symbols & ' . , - ( ), and must contain at least one letter.")
             )
         # Reject duplicate franchise names (case-insensitive). The model only
         # auto-uniquifies `slug`, not `name`, so without this two franchises
@@ -52,6 +53,6 @@ class TenantForm(forms.ModelForm):
             duplicates = duplicates.exclude(pk=self.instance.pk)
         if duplicates.exists():
             raise forms.ValidationError(
-                "A franchise with this name already exists. Please choose a different name."
+                _("A franchise with this name already exists. Please choose a different name.")
             )
         return name

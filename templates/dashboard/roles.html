@@ -1,5 +1,6 @@
 {% extends "base/base.html" %}
-{% block title %}Roles{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Roles" context "users" %}{% endblock %}
 
 {% block content %}
 
@@ -7,7 +8,7 @@
 
   <div class="card-header">
     <div class="d-flex justify-content-between align-items-center">
-      <h3 class="card-title font-weight-bold mb-0">Roles</h3>
+      <h3 class="card-title font-weight-bold mb-0">{% trans "Roles" context "users" %}</h3>
 
       <!-- <div class="d-flex align-items-center">
 
@@ -44,12 +45,12 @@
 
         <thead class="bg-light">
           <tr>
-            <th>Name</th>
+            <th>{% trans "Name" context "users" %}</th>
             <!-- {% if request.user.is_superuser %}
             <th>Tenant</th>
             {% endif %} -->
-            <th>Permissions</th>
-            <th class="text-right pr-4">Action</th>
+            <th>{% trans "Permissions" context "users" %}</th>
+            <th class="text-right pr-4">{% trans "Action" context "common" %}</th>
           </tr>
         </thead>
 
@@ -66,11 +67,11 @@
 
             <td>
               <span class="badge badge-info">
-                {{ role.permissions.count }} direct
+                {{ role.permissions.count }} {% trans "direct" context "users" %}
               </span>
               {% if role.base_role %}
               <span class="badge badge-secondary ml-1">
-                {{ role.effective_permission_count }} effective
+                {{ role.effective_permission_count }} {% trans "effective" context "users" %}
               </span>
               {% endif %}
             </td>
@@ -97,7 +98,7 @@
               <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
                       type="button"
                       data-toggle="dropdown">
-                Action
+                {% trans "Action" context "common" %}
               </button>
 
               <div class="dropdown-menu dropdown-menu-right">
@@ -105,14 +106,14 @@
                 {% if can_view %}
                 <button class="dropdown-item view-role-btn"
                         data-url="{% url 'role-detail' role.id %}">
-                  <i class="fas fa-eye mr-2"></i> View
+                  <i class="fas fa-eye mr-2"></i> {% trans "View" context "common" %}
                 </button>
                 {% endif %}
 
                 {% if request.user.is_superuser %}
                 <button class="dropdown-item edit-role-btn"
                         data-url="{% url 'role-detail' role.id %}">
-                  <i class="fas fa-edit mr-2"></i> Edit
+                  <i class="fas fa-edit mr-2"></i> {% trans "Edit" context "common" %}
                 </button>
                 {% endif %}
 
@@ -127,7 +128,7 @@
           <tr>
             <td colspan="{% if request.user.is_superuser %}4{% else %}3{% endif %}"
                 class="text-center text-muted py-4">
-              No roles found
+              {% trans "No roles found" context "users" %}
             </td>
           </tr>
           {% endfor %}
@@ -203,7 +204,7 @@
         <input type="hidden" name="role_id" id="role-id-field">
 
         <div class="modal-header">
-          <h5 class="modal-title font-weight-bold">Role</h5>
+          <h5 class="modal-title font-weight-bold">{% trans "Role" context "users" %}</h5>
           <button type="button" class="close" data-dismiss="modal">&times;</button>
         </div>
 
@@ -224,12 +225,12 @@
           {% endif %} -->
 
           <div class="form-group">
-            <label>Role Name</label>
+            <label>{% trans "Role Name" context "users" %}</label>
             <input type="text" name="name" id="role-name-field" class="form-control">
           </div>
 
           <div class="form-group">
-            <label>Permissions</label>
+            <label>{% trans "Permissions" context "users" %}</label>
             <div class="row">
               {% for permission in permissions %}
               <div class="col-md-4 mb-2">
@@ -252,11 +253,11 @@
 
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
-            Cancel
+            {% trans "Cancel" context "common" %}
           </button>
           {% if can_manage %}
           <button type="submit" id="save-role-btn" class="btn btn-primary btn-sm">
-            Save Role
+            {% trans "Save Role" context "users" %}
           </button>
           {% endif %}
         </div>
@@ -267,10 +268,27 @@
   </div>
 </div>
 
+<script>
+(function () {
+  window.USER_I18N = window.USER_I18N || {};
+  Object.assign(window.USER_I18N, {
+    addRole: '{% filter escapejs %}{% trans "Add Role" context "users" %}{% endfilter %}',
+    viewRole: '{% filter escapejs %}{% trans "View Role" context "users" %}{% endfilter %}',
+    editRole: '{% filter escapejs %}{% trans "Edit Role" context "users" %}{% endfilter %}',
+    role: '{% filter escapejs %}{% trans "Role" context "users" %}{% endfilter %}',
+  });
+  var g = (typeof gettext === "function") ? gettext : function (s) { return s; };
+  Object.keys(window.USER_I18N).forEach(function (k) {
+    window.USER_I18N[k] = g(window.USER_I18N[k]);
+  });
+})();
+</script>
+
 <!-- ================= JS ================= -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
+  const I18N = window.USER_I18N || {};
   const modal = $('#roleModal');
   const title = document.querySelector(".modal-title");
   const idField = document.getElementById("role-id-field");
@@ -303,7 +321,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   document.getElementById("add-role-btn")?.addEventListener("click", function () {
       resetForm();
-      title.innerText = "Add Role";
+      title.innerText = I18N.addRole || "Add Role";
       modal.modal("show");
   });
 
@@ -319,7 +337,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const cb = document.getElementById("perm_" + pid);
             if (cb) cb.checked = true;
         });
-        title.innerText = readonly ? "View Role" : "Edit Role";
+        title.innerText = readonly ? (I18N.viewRole || "View Role") : (I18N.editRole || "Edit Role");
         if (readonly) setReadonly(true);
         modal.modal("show");
       });

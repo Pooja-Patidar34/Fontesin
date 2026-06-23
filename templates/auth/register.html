@@ -1,6 +1,6 @@
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
@@ -12,9 +12,9 @@
   <link rel="manifest" href="{% static 'adminlte/manifest.json' %}"/>
   <link rel="apple-touch-icon" href="{% static 'adminlte/images/icons/icon-192.png' %}"/>
 
-  <title>Register – FONTESIN</title>
+  <title>{% trans "Register" context "auth.register" %} – FONTESIN</title>
 
-  <meta name="description" content="Create your FONTESIN account."/>
+  <meta name="description" content="{% trans 'Create your FONTESIN account.' context 'auth.register' %}"/>
 
   <link rel="stylesheet" href="{% static 'adminlte/plugins/fontawesome-free/css/all.min.css' %}"/>
   <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
@@ -182,7 +182,8 @@
 
 <div class="reg-page">
 
-  <a href="{% url 'home' %}" class="auth-back">← Back to Home</a>
+  <a href="{% url 'home' %}" class="auth-back">← {% trans "Back to Home" context "auth.common" %}</a>
+  {% include "partials/_auth_lang_switcher.html" %}
 
   <div class="reg-container">
     <div class="reg-header">
@@ -190,7 +191,7 @@
         <img src="{% static 'adminlte/images/fontesin-logo.png' %}" alt="FONTESIN"
              style="height:40px;width:auto;filter:brightness(0) invert(1);"/>
       </div>
-      <p>Create your account and join the global business platform</p>
+      <p>{% trans "Create your account and join the global business platform" context "auth.register" %}</p>
     </div>
 
     <div class="reg-card">
@@ -201,15 +202,15 @@
       <div class="reg-steps">
         <div class="reg-step active" id="step-1">
           <div class="reg-step__num">1</div>
-          <div class="reg-step__label">Basic Info</div>
+          <div class="reg-step__label">{% trans "Basic Info" context "auth.register" %}</div>
         </div>
         <div class="reg-step" id="step-2">
           <div class="reg-step__num">2</div>
-          <div class="reg-step__label">Your Role</div>
+          <div class="reg-step__label">{% trans "Your Role" context "auth.register" %}</div>
         </div>
         <div class="reg-step" id="step-3">
           <div class="reg-step__num">3</div>
-          <div class="reg-step__label">Confirm</div>
+          <div class="reg-step__label">{% trans "Confirm" context "auth.register" %}</div>
         </div>
       </div>
 
@@ -219,31 +220,31 @@
         <!-- PHASE 1 -->
         <div class="reg-phase active" id="phase-1">
 
-          <h3 style="margin-bottom:6px; font-weight: 700; font-size: 1.6rem;">Create Your Account</h3>
+          <h3 style="margin-bottom:6px; font-weight: 700; font-size: 1.6rem;">{% trans "Create Your Account" context "auth.register" %}</h3>
           <p style="font-size:.88rem;margin-bottom:28px;">
-            Start with the basics — free, no credit card required.
+            {% trans "Start with the basics — free, no credit card required." context "auth.register" %}
           </p>
 
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">First Name *</label>
+              <label class="form-label">{% trans "First Name" context "auth.register" %} *</label>
               <input type="text" name="first_name" id="reg-fname" class="form-control" placeholder="John" maxlength="50" oninput="this.value=this.value.replace(/\s+/g,' ').replace(/^ /,'')"/>
             </div>
             <div class="form-group">
-              <label class="form-label">Last Name *</label>
+              <label class="form-label">{% trans "Last Name" context "auth.register" %} *</label>
               <input type="text" name="last_name" id="reg-lname" class="form-control" placeholder="Smith" maxlength="50" oninput="this.value=this.value.replace(/\s+/g,' ').replace(/^ /,'')"/>
             </div>
           </div>
 
           <div class="form-group">
-            <label class="form-label">Email Address *</label>
-            <input type="email" name="email" id="reg-email" class="form-control" placeholder="john@company.com" required maxlength="254" pattern="^[a-zA-Z0-9._+\-]+@[a-zA-Z0-9\-]+(\.[a-zA-Z0-9\-]+)*\.[a-zA-Z]{2,10}$" title="Please enter a valid email address (e.g., you@company.com)" oninput="this.value=this.value.replace(/[^a-zA-Z0-9@._+\-]/g,'')"/>
+            <label class="form-label">{% trans "Email Address" context "auth.common" %} *</label>
+            <input type="email" name="email" id="reg-email" class="form-control" placeholder="john@company.com" required maxlength="254" pattern="^[a-zA-Z0-9._+\-]+@[a-zA-Z0-9\-]+(\.[a-zA-Z0-9\-]+)*\.[a-zA-Z]{2,10}$" title="{% trans 'Please enter a valid email address (e.g., you@company.com)' context 'auth.common' %}" oninput="this.value=this.value.replace(/[^a-zA-Z0-9@._+\-]/g,'')"/>
           </div>
 
           <div class="form-group">
-            <label class="form-label">Country *</label>
+            <label class="form-label">{% trans "Country" context "auth.register" %} *</label>
             <select name="country" id="reg-country" class="form-control" onchange="updatePhoneCode()">
-              <option value="">Select your country...</option>
+              <option value="">{% trans "Select your country..." context "auth.register" %}</option>
               {% for code, label in country_choices %}
               <option value="{{ code }}">{{ label }}</option>
               {% endfor %}
@@ -251,7 +252,7 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Phone Number *</label>
+            <label class="form-label">{% trans "Phone Number" context "auth.register" %} *</label>
             <div style="display:flex;gap:8px;">
               <input type="text" id="reg-phone-code" class="form-control" style="width:80px;text-align:center;background:#f0f5f8;font-weight:600;" readonly placeholder="+1"/>
               <input type="tel" name="phone" id="reg-phone" class="form-control" style="flex:1;" placeholder="212 555 0100" maxlength="15"/>
@@ -261,7 +262,7 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Preferred Language</label>
+            <label class="form-label">{% trans "Preferred Language" context "auth.register" %}</label>
             <select name="language" class="form-control">
               {% for code, label in language_choices %}
               <option value="{{ code }}">{{ label }}</option>
@@ -270,28 +271,28 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Password *</label>
+            <label class="form-label">{% trans "Password" context "auth.common" %} *</label>
             <div class="password-toggle">
               <input type="password" name="password" id="reg-pass" class="form-control" maxlength="50" oninput="this.value=this.value.replace(/[^\x21-\x7E]/g,'')" onkeydown="if(event.key===' '){event.preventDefault();}" onpaste="var el=this;setTimeout(function(){el.value=el.value.replace(/\s+/g,'');},0)"/>
-              <button type="button" class="password-toggle__btn" aria-label="Toggle password visibility"><i class="fas fa-eye-slash"></i></button>
+              <button type="button" class="password-toggle__btn" aria-label="{% trans 'Toggle password visibility' context 'auth.common' %}"><i class="fas fa-eye-slash"></i></button>
             </div>
           </div>
 
           <div class="form-group">
-            <label class="form-label">Confirm Password *</label>
+            <label class="form-label">{% trans "Confirm Password" context "auth.register" %} *</label>
             <div class="password-toggle">
               <input type="password" name="confirm_password" id="reg-pass2" class="form-control" maxlength="50" oninput="this.value=this.value.replace(/[^\x21-\x7E]/g,'')" onkeydown="if(event.key===' '){event.preventDefault();}" onpaste="var el=this;setTimeout(function(){el.value=el.value.replace(/\s+/g,'');},0)"/>
-              <button type="button" class="password-toggle__btn" aria-label="Toggle password visibility"><i class="fas fa-eye-slash"></i></button>
+              <button type="button" class="password-toggle__btn" aria-label="{% trans 'Toggle password visibility' context 'auth.common' %}"><i class="fas fa-eye-slash"></i></button>
             </div>
           </div>
 
           <button type="button" class="btn btn-primary" style="width:100%;" onclick="goToPhase(2)">
-            Continue →
+            {% trans "Continue →" context "auth.register" %}
           </button>
 
           <p style="text-align:center;margin-top:16px;">
-            Already have an account?
-            <a href="{% url 'login' %}" class="auth-link">Log in</a>
+            {% trans "Already have an account?" context "auth.register" %}
+            <a href="{% url 'login' %}" class="auth-link">{% trans "Log in" context "auth.common" %}</a>
           </p>
         </div>
 
@@ -299,45 +300,45 @@
         <div class="reg-phase" id="phase-2">
 
           <h3 style="margin-bottom:6px; font-weight: 700; font-size: 1.5rem;">
-            Your Role on FONTESIN
+            {% trans "Your Role on FONTESIN" context "auth.register" %}
           </h3>
           <p style="font-size:.9rem; margin-bottom:24px; color: var(--text-secondary);">
-            Tell us how you plan to use the platform. This helps us tailor your experience.
+            {% trans "Tell us how you plan to use the platform. This helps us tailor your experience." context "auth.register" %}
           </p>
 
           <div class="form-group">
-            <label class="form-label">I am interested in joining as *</label>
+            <label class="form-label">{% trans "I am interested in joining as" context "auth.register" %} *</label>
             <div class="role-grid">
 
               <label class="role-option">
                 <input type="radio" name="role" value="business_user" checked onchange="toggleOthersOption()"/>
                 <div>
-                  <div class="role-option__label">🏢 Business User</div>
-                  <div class="role-option__desc">Register & certify my company</div>
+                  <div class="role-option__label">{% trans "🏢 Business User" context "auth.register" %}</div>
+                  <div class="role-option__desc">{% trans "Register & certify my company" context "auth.register" %}</div>
                 </div>
               </label>
 
               <label class="role-option">
                 <input type="radio" name="role" value="consultant" onchange="toggleOthersOption()"/>
                 <div>
-                  <div class="role-option__label">💼 Consultant</div>
-                  <div class="role-option__desc">Advise companies in my region</div>
+                  <div class="role-option__label">{% trans "💼 Consultant" context "auth.register" %}</div>
+                  <div class="role-option__desc">{% trans "Advise companies in my region" context "auth.register" %}</div>
                 </div>
               </label>
 
               <label class="role-option">
                 <input type="radio" name="role" value="coordinator" onchange="toggleOthersOption()"/>
                 <div>
-                  <div class="role-option__label">🌍 Coordinator</div>
-                  <div class="role-option__desc">Coordinate regional operations</div>
+                  <div class="role-option__label">{% trans "🌍 Coordinator" context "auth.register" %}</div>
+                  <div class="role-option__desc">{% trans "Coordinate regional operations" context "auth.register" %}</div>
                 </div>
               </label>
 
               <label class="role-option">
                 <input type="radio" name="role" value="franchise" onchange="toggleOthersOption()"/>
                 <div>
-                  <div class="role-option__label">🚀 Franchise Partner</div>
-                  <div class="role-option__desc">Master / National / Local franchise</div>
+                  <div class="role-option__label">{% trans "🚀 Franchise Partner" context "auth.register" %}</div>
+                  <div class="role-option__desc">{% trans "Master / National / Local franchise" context "auth.register" %}</div>
                 </div>
               </label>
 
@@ -351,9 +352,9 @@
             with at registration time.
           {% endcomment %}
           <div class="form-group" id="reg-company-group" style="display:none;">
-            <label class="form-label">Company *</label>
+            <label class="form-label">{% trans "Company" context "auth.register" %} *</label>
             <select name="company_id" id="reg-company" class="form-control">
-              <option value="">Select Company</option>
+              <option value="">{% trans "Select Company" context "auth.register" %}</option>
               {% for company in companies %}
               <option value="{{ company.id }}">{{ company.name }}</option>
               {% endfor %}
@@ -364,24 +365,24 @@
             <div style="background:#e0f0ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start;">
               <i class="fas fa-info-circle" style="color:#2b7de9;margin-top:2px;"></i>
               <div style="font-size:.85rem;color:#1e3a5f;line-height:1.4;">
-                <strong>No company selection needed.</strong><br/>
-                You can register your company from your profile after signing up.
+                <strong>{% trans "No company selection needed." context "auth.register" %}</strong><br/>
+                {% trans "You can register your company from your profile after signing up." context "auth.register" %}
               </div>
             </div>
           </div>
 
           <div class="form-group">
-            <label class="form-label">Tell us about your interest</label>
+            <label class="form-label">{% trans "Tell us about your interest" context "auth.register" %}</label>
             <textarea name="interest" class="form-control" rows="4"
-              placeholder="Brief description..."></textarea>
+              placeholder="{% trans 'Brief description...' context 'auth.register' %}"></textarea>
           </div>
 
           <div style="display:flex; gap:12px;">
             <button type="button" class="btn btn-outline" onclick="goToPhase(1)">
-              ← Back
+              ← {% trans "Back" context "auth.common" %}
             </button>
             <button type="button" class="btn btn-primary" onclick="goToPhase(3)">
-              Continue →
+              {% trans "Continue →" context "auth.register" %}
             </button>
           </div>
 
@@ -391,10 +392,10 @@
         <div class="reg-phase" id="phase-3">
 
           <h3 style="margin-bottom:6px; font-weight: 700; font-size: 1.5rem;">
-            Almost Done!
+            {% trans "Almost Done!" context "auth.register" %}
           </h3>
           <p style="font-size:.9rem; margin-bottom:20px; color: var(--text-secondary);">
-            Review and confirm your registration.
+            {% trans "Review and confirm your registration." context "auth.register" %}
           </p>
 
           <div style="
@@ -405,17 +406,17 @@
             font-size: .85rem;
           ">
             <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-              <span>Account Type</span>
-              <strong>FREE (Upgradeable)</strong>
+              <span>{% trans "Account Type" context "auth.register" %}</span>
+              <strong>{% trans "FREE (Upgradeable)" context "auth.register" %}</strong>
             </div>
             <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-              <span>Access Level</span>
-              <strong>Read-only · Company name index</strong>
+              <span>{% trans "Access Level" context "auth.register" %}</span>
+              <strong>{% trans "Read-only · Company name index" context "auth.register" %}</strong>
             </div>
             <div style="display:flex; justify-content:space-between;">
-              <span>Verification</span>
+              <span>{% trans "Verification" context "auth.register" %}</span>
               <strong style="color:#f59e0b;">
-                Identity verification required (Veriff)
+                {% trans "Identity verification required (Veriff)" context "auth.register" %}
               </strong>
             </div>
           </div>
@@ -424,35 +425,35 @@
           <div class="checkbox-group" style="margin-bottom:10px;">
             <input type="checkbox" id="terms" name="terms"/>
             <label for="terms">
-              I agree to the <strong>Terms of Service</strong> and <strong>Privacy Policy</strong> of FONTESIN.
+              {% blocktrans context "auth.register" %}I agree to the <strong>Terms of Service</strong> and <strong>Privacy Policy</strong> of FONTESIN.{% endblocktrans %}
             </label>
           </div>
 
           <div class="checkbox-group" style="margin-bottom:10px;">
             <input type="checkbox" id="gdpr" name="gdpr"/>
             <label for="gdpr">
-              I consent to the processing of my personal data in accordance with GDPR.
+              {% trans "I consent to the processing of my personal data in accordance with GDPR." context "auth.register" %}
             </label>
           </div>
 
           <div class="checkbox-group" style="margin-bottom:20px;">
             <input type="checkbox" id="updates" name="updates"/>
             <label for="updates">
-              I would like to receive updates about FONTESIN platform development (Optional)
+              {% trans "I would like to receive updates about FONTESIN platform development (Optional)" context "auth.register" %}
             </label>
           </div>
 
           <div style="display:flex; gap:12px;">
             <button type="button" class="btn btn-outline" onclick="goToPhase(2)">
-              ← Back
+              ← {% trans "Back" context "auth.common" %}
             </button>
             <button type="button" class="btn btn-primary" id="submit-btn">
-              Create Account & Verify Identity →
+              {% trans "Create Account & Verify Identity →" context "auth.register" %}
             </button>
           </div>
 
           <p style="text-align:center; margin-top:14px; font-size:.75rem; color:var(--text-secondary);">
-            You will receive a verification email after registration.
+            {% trans "You will receive a verification email after registration." context "auth.register" %}
           </p>
 
         </div>
@@ -461,12 +462,13 @@
     </div>
 
     <p style="text-align:center;color:rgba(255,255,255,.4);font-size:.78rem;margin-top:20px;">
-      © 2026 FONTES Inc.
+      © 2026 FONTES Inc. · {% trans "Design by Memento Mori Digital LLC" context "auth.common" %}
     </p>
 
   </div>
 </div>
 
+<script src="{% url 'javascript-catalog' %}"></script>
 <script src="{% static 'adminlte/js/main.js' %}"></script>
 <script src="{% static 'adminlte/js/no_emoji.js' %}"></script>
 
@@ -478,6 +480,8 @@
         .catch(function(err) { console.warn("[PWA] SW registration failed:", err); });
     });
   }
+
+  var FORMAT_PREFIX = "{% filter escapejs %}{% trans 'Format:' context 'auth.register' %}{% endfilter %}";
 
   // Toggles whether the company picker (other roles) or the "add it later"
   // notice (business_user / consultant / coordinator / franchise) is shown.
@@ -542,7 +546,7 @@
     if (info) {
       phoneCodeEl.value = info.code;
       phoneCodeHidden.value = info.code;
-      hint.textContent = 'Format: ' + info.format + ' (' + info.min + (info.min !== info.max ? '-' + info.max : '') + ' digits)';
+      hint.textContent = FORMAT_PREFIX + ' ' + info.format + ' (' + info.min + (info.min !== info.max ? '-' + info.max : '') + ' digits)';
     } else {
       phoneCodeEl.value = '';
       phoneCodeHidden.value = '';
@@ -601,7 +605,7 @@
       for (let field of requiredFields) {
         if (!field.value) {
           field.focus();
-          showToast("Please complete all required fields.", "error");
+          showToast(gettext("Please complete all required fields."), "error");
           return;
         }
       }
@@ -613,13 +617,13 @@
       const nameRegex = /^[A-Za-zÀ-ÖØ-öø-ÿ\s'\-]+$/;
 
       if (emojiRegex.test(fname.value) || !nameRegex.test(fname.value)) {
-        showToast("First name must contain only letters. Digits and emojis are not allowed.", "error");
+        showToast(gettext("First name must contain only letters. Digits and emojis are not allowed."), "error");
         fname.focus();
         return;
       }
 
       if (emojiRegex.test(lname.value) || !nameRegex.test(lname.value)) {
-        showToast("Last name must contain only letters. Digits and emojis are not allowed.", "error");
+        showToast(gettext("Last name must contain only letters. Digits and emojis are not allowed."), "error");
         lname.focus();
         return;
       }
@@ -628,14 +632,14 @@
       const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
 
       if (!emailRegex.test(email.value)) {
-        showToast("Enter a valid email address (e.g. john@company.com).", "error");
+        showToast(gettext("Enter a valid email address (e.g. john@company.com)."), "error");
         email.focus();
         return;
       }
 
       // Country validation
       if (!country.value) {
-        showToast("Please select your country.", "error");
+        showToast(gettext("Please select your country."), "error");
         country.focus();
         return;
       }
@@ -646,13 +650,25 @@
       var phoneRules = PHONE_RULES[countryCode] || { min: 7, max: 15 };
 
       if (!/^[0-9]+$/.test(phoneDigits)) {
-        showToast("Phone number must contain only digits.", "error");
+        showToast(gettext("Phone number must contain only digits."), "error");
         phone.focus();
         return;
       }
 
       if (phoneDigits.length < phoneRules.min || phoneDigits.length > phoneRules.max) {
-        showToast("Phone number for " + (phoneRules.name || countryCode) + " must be " + phoneRules.min + (phoneRules.min !== phoneRules.max ? "-" + phoneRules.max : "") + " digits.", "error");
+        var countryName = phoneRules.name || countryCode;
+        if (phoneRules.min !== phoneRules.max) {
+          showToast(interpolate(gettext("Phone number for %(country)s must be %(min)s-%(max)s digits."), {
+            country: countryName,
+            min: phoneRules.min,
+            max: phoneRules.max
+          }), "error");
+        } else {
+          showToast(interpolate(gettext("Phone number for %(country)s must be %(min)s digits."), {
+            country: countryName,
+            min: phoneRules.min
+          }), "error");
+        }
         phone.focus();
         return;
       }
@@ -665,7 +681,7 @@
 
       // Password length
       if (pass.value.length < 8) {
-        showToast("Password must be at least 8 characters.", "error");
+        showToast(gettext("Password must be at least 8 characters."), "error");
         pass.focus();
         return;
       }
@@ -674,14 +690,14 @@
       const strongPassword = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
 
       if (!strongPassword.test(pass.value)) {
-        showToast("Password must include at least one letter and one number.", "error");
+        showToast(gettext("Password must include at least one letter and one number."), "error");
         pass.focus();
         return;
       }
 
       // Password match
       if (pass.value !== pass2.value) {
-        showToast("Passwords do not match.", "error");
+        showToast(gettext("Passwords do not match."), "error");
         pass2.focus();
         return;
       }
@@ -697,7 +713,7 @@
         .then(function(r) { return r.ok ? r.json() : { exists: false }; })
         .then(function(data) {
           if (data.exists) {
-            showToast("This email is already registered. Please log in or use a different email.", "error");
+            showToast(gettext("This email is already registered. Please log in or use a different email."), "error");
             email.focus();
             return;
           }
@@ -714,7 +730,7 @@
     if (num === 3) {
       var selectedRole = document.querySelector('input[name="role"]:checked');
       if (!selectedRole) {
-        showToast("Please select a role before continuing.", "error");
+        showToast(gettext("Please select a role before continuing."), "error");
         return;
       }
 
@@ -725,7 +741,7 @@
       if (ROLES_WITHOUT_COMPANY.indexOf(selectedRole.value) === -1) {
         var companyEl = document.getElementById('reg-company');
         if (!companyEl.value) {
-          showToast("Please select a company before continuing.", "error");
+          showToast(gettext("Please select a company before continuing."), "error");
           companyEl.focus();
           return;
         }
@@ -752,11 +768,11 @@
   // ✅ KEY FIX: submit button is type="button", manually submit after validation
   document.getElementById('submit-btn').addEventListener('click', function() {
     if (!document.getElementById('terms').checked) {
-      showToast("You must agree to the Terms of Service.", "error");
+      showToast(gettext("You must agree to the Terms of Service."), "error");
       return;
     }
     if (!document.getElementById('gdpr').checked) {
-      showToast("You must consent to GDPR data processing.", "error");
+      showToast(gettext("You must consent to GDPR data processing."), "error");
       return;
     }
 

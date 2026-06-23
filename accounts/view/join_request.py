@@ -18,6 +18,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
+from django.utils.translation import gettext as _
 
 from accounts.models import (
     Company,
@@ -58,21 +59,23 @@ def create_join_request(user, company, message=None):
     """
     if _role_code(user) in JOIN_BLOCKED_ROLES:
         raise JoinRequestError(
-            "Your role represents a single company — please register your "
-            "company instead of joining an existing one.",
+            _(
+                "Your role represents a single company — please register your "
+                "company instead of joining an existing one."
+            ),
             status=403,
         )
 
     if not company.is_active:
-        raise JoinRequestError("That company is unavailable. Please pick another.")
+        raise JoinRequestError(_("That company is unavailable. Please pick another."))
 
     if company.owner_user_id == user.id:
-        raise JoinRequestError("You already own this company.")
+        raise JoinRequestError(_("You already own this company."))
 
     # Already linked (own company at signup, an approved join, or an approved
     # partnership) — nothing to request.
     if UserCompany.objects.filter(user=user, company=company).exists():
-        raise JoinRequestError(f"You're already linked to {company.name}.")
+        raise JoinRequestError(_("You're already linked to %(company)s.") % {"company": company.name})
 
     req, created = CompanyJoinRequest.objects.get_or_create(
         user=user,
@@ -87,10 +90,11 @@ def create_join_request(user, company, message=None):
     if not created:
         if req.status == CompanyJoinRequest.STATUS_PENDING:
             raise JoinRequestError(
-                f"You already have a pending request to join {company.name}."
+                _("You already have a pending request to join %(company)s.")
+                % {"company": company.name}
             )
         if req.status == CompanyJoinRequest.STATUS_APPROVED:
-            raise JoinRequestError(f"You're already linked to {company.name}.")
+            raise JoinRequestError(_("You're already linked to %(company)s.") % {"company": company.name})
         # declined → reopen
         req.status = CompanyJoinRequest.STATUS_PENDING
         req.reviewed_by = None
@@ -138,10 +142,10 @@ def company_join(request, company_id):
     company = get_object_or_404(Company, id=company_id)
     try:
         create_join_request(request.user, company)
-        msg = (
-            f"Join request sent to {company.name}. "
-            f"You'll get access once the owner approves it."
-        )
+        msg = _(
+            "Join request sent to %(company)s. "
+            "You'll get access once the owner approves it."
+        ) % {"company": company.name}
         if _is_ajax(request):
             return JsonResponse({"ok": True, "message": msg})
         messages.success(request, msg)
@@ -206,8 +210,8 @@ def join_request_action(request, request_id):
     decision = (request.POST.get("decision") or "").strip().lower()
     if decision not in ("approve", "decline"):
         if _is_ajax(request):
-            return JsonResponse({"ok": False, "message": "Invalid action."}, status=400)
-        messages.error(request, "Invalid action.")
+            return JsonResponse({"ok": False, "message": _("Invalid action.")}, status=400)
+        messages.error(request, _("Invalid action."))
         return redirect("join-requests")
 
     join_request = get_object_or_404(
@@ -217,7 +221,7 @@ def join_request_action(request, request_id):
     )
 
     if join_request.status != CompanyJoinRequest.STATUS_PENDING:
-        msg = f"This request was already {join_request.get_status_display().lower()}."
+        msg = _("This request was already %(status)s.") % {"status": join_request.get_status_display().lower()}
         if _is_ajax(request):
             return JsonResponse({"ok": False, "message": msg}, status=400)
         messages.error(request, msg)
@@ -256,13 +260,13 @@ def join_request_action(request, request_id):
             except Exception:
                 pass
 
-        msg = f"Approved {requester.email}'s request to join {company.name}."
+        msg = _("Approved %(email)s's request to join %(company)s.") % {"email": requester.email, "company": company.name}
     else:
         join_request.status = CompanyJoinRequest.STATUS_DECLINED
         join_request.reviewed_by = owner
         join_request.reviewed_at = timezone.now()
         join_request.save(update_fields=["status", "reviewed_by", "reviewed_at", "updated_at"])
-        msg = f"Declined {requester.email}'s request to join {company.name}."
+        msg = _("Declined %(email)s's request to join %(company)s.") % {"email": requester.email, "company": company.name}
 
     # Tell the requester the verdict.
     try:
@@ -318,7 +322,7 @@ def company_leave(request, company_id):
     company = get_object_or_404(Company, id=company_id)
 
     if company.owner_user_id == user.id:
-        msg = "You own this company, so you can't leave it."
+        msg = _("You own this company, so you can't leave it.")
         if _is_ajax(request):
             return JsonResponse({"ok": False, "message": msg}, status=400)
         messages.error(request, msg)
@@ -326,7 +330,7 @@ def company_leave(request, company_id):
 
     link = UserCompany.objects.filter(user=user, company=company).first()
     if not link:
-        msg = "You're not a member of this company."
+        msg = _("You're not a member of this company.")
         if _is_ajax(request):
             return JsonResponse({"ok": False, "message": msg}, status=400)
         messages.error(request, msg)
@@ -383,7 +387,7 @@ def company_leave(request, company_id):
         except Exception:
             pass
 
-    msg = f"You've left {company.name}."
+    msg = _("You've left %(company)s.") % {"company": company.name}
     if _is_ajax(request):
         return JsonResponse({"ok": True, "message": msg})
     messages.success(request, msg)
@@ -410,7 +414,7 @@ def join_request_cancel(request, request_id):
     is_owner = join_request.company.owner_user_id == request.user.id
 
     if not (is_requester or is_owner):
-        msg = "You don't have permission to cancel this request."
+        msg = _("You don't have permission to cancel this request.")
         if _is_ajax(request):
             return JsonResponse({"ok": False, "message": msg}, status=403)
         messages.error(request, msg)
@@ -419,14 +423,14 @@ def join_request_cancel(request, request_id):
     # Owner (not also the requester) may only revoke an approved request;
     # pending ones use approve/decline, declined ones are final.
     if is_owner and not is_requester and join_request.status != CompanyJoinRequest.STATUS_APPROVED:
-        msg = "Only approved requests can be revoked. Use Decline for pending requests."
+        msg = _("Only approved requests can be revoked. Use Decline for pending requests.")
         if _is_ajax(request):
             return JsonResponse({"ok": False, "message": msg}, status=400)
         messages.error(request, msg)
         return redirect("join-requests")
 
     if is_requester and join_request.status == CompanyJoinRequest.STATUS_DECLINED:
-        msg = "This request was declined and can't be cancelled."
+        msg = _("This request was declined and can't be cancelled.")
         if _is_ajax(request):
             return JsonResponse({"ok": False, "message": msg}, status=400)
         messages.error(request, msg)
@@ -488,9 +492,9 @@ def join_request_cancel(request, request_id):
             pass
 
     if was_approved:
-        msg = f"Membership in {company.name} has been removed."
+        msg = _("Membership in %(company)s has been removed.") % {"company": company.name}
     else:
-        msg = f"Join request to {company.name} has been withdrawn."
+        msg = _("Join request to %(company)s has been withdrawn.") % {"company": company.name}
 
     if _is_ajax(request):
         return JsonResponse({"ok": True, "message": msg})

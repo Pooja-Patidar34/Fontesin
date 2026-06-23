@@ -1,6 +1,6 @@
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
@@ -10,8 +10,8 @@
   <meta name="apple-mobile-web-app-title" content="FONTESIN"/>
   <link rel="manifest" href="{% static 'manifest.json' %}"/>
   <link rel="apple-touch-icon" href="{% static 'adminlte/images/icons/icon-192.png' %}"/>
-  <title>About Us – FONTESIN</title>
-  <meta name="description" content="Learn about FONTESIN – our mission, team, values, and vision for global business infrastructure."/>
+  <title>{% trans "About Us" context "website" %} – FONTESIN</title>
+  <meta name="description" content="{% trans 'Learn about FONTESIN – our mission, team, values, and vision for global business infrastructure.' context 'website' %}"/>
   <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
 </head>
 <body>
@@ -21,16 +21,16 @@
   <div class="navbar__inner">
     <a href="{% url 'home' %}" class="navbar__logo"><img src="{% static 'adminlte/images/logo_full.png' %}" alt="FONTESIN" height="38"/></a>
     <div class="navbar__nav">
-      <a href="{% url 'home' %}">Home</a>
-      <a href="{% url 'worldmap' %}">World Map</a>
-      <a href="{% url 'about' %}" class="active">About</a>
-      <a href="{% url 'career' %}">Careers</a>
-      <a href="{% url 'contact' %}">Contact</a>
+      <a href="{% url 'home' %}">{% trans "Home" context "website" %}</a>
+      <a href="{% url 'worldmap' %}">{% trans "World Map" context "website" %}</a>
+      <a href="{% url 'about' %}" class="active">{% trans "About" context "website" %}</a>
+      <a href="{% url 'career' %}">{% trans "Careers" context "website" %}</a>
+      <a href="{% url 'contact' %}">{% trans "Contact" context "website" %}</a>
     </div>
-    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
+    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="{% trans 'Menu' context 'website' %}">☰</button>
     <div class="navbar__actions">
-      <a href="{% url 'login' %}" class="btn btn-outline btn-sm">Log In</a>
-      <a href="{% url 'register' %}" class="btn btn-primary btn-sm">Get Started</a>
+      <a href="{% url 'login' %}" class="btn btn-outline btn-sm">{% trans "Log In" context "auth.login" %}</a>
+      <a href="{% url 'register' %}" class="btn btn-primary btn-sm">{% trans "Get Started" context "website" %}</a>
     </div>
   </div>
 </nav>
@@ -39,12 +39,12 @@
 <section class="page-header">
   <div class="container">
     <div class="breadcrumb">
-      <a href="{% url 'home' %}">Home</a>
+      <a href="{% url 'home' %}">{% trans "Home" context "website" %}</a>
       <span>/</span>
-      <span>About Us</span>
+      <span>{% trans "About Us" context "website" %}</span>
     </div>
-    <h1>About FONTESIN</h1>
-    <p>We are building the global infrastructure for trusted business communication, certification, and collaboration — without borders.</p>
+    <h1>{% trans "About FONTESIN" context "website" %}</h1>
+    <p>{% trans "We are building the global infrastructure for trusted business communication, certification, and collaboration — without borders." context "website" %}</p>
   </div>
 </section>
 
@@ -53,42 +53,42 @@
   <div class="container">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;">
       <div>
-        <span class="section-label">Our Mission</span>
-        <h2 class="section-title">Trusted Infrastructure for Global Business</h2>
-        <p style="margin-bottom:20px;">FONTESIN is a deep-tech communication and certification platform designed to create a trusted, decentralized infrastructure for business. We connect companies, professionals, and markets across languages, borders, and systems.</p>
-        <p style="margin-bottom:20px;">Our platform is not just a marketplace — it is a structured ecosystem where every participant is verified, every interaction is traceable, and every market is accessible through a single, unified interface.</p>
-        <p>We are currently in our Pre-MVP phase, onboarding pioneer members, franchise partners, and regional coordinators who will shape the foundation of the platform.</p>
+        <span class="section-label">{% trans "Our Mission" context "website" %}</span>
+        <h2 class="section-title">{% trans "Trusted Infrastructure for Global Business" context "website" %}</h2>
+        <p style="margin-bottom:20px;">{% trans "FONTESIN is a deep-tech communication and certification platform designed to create a trusted, decentralized infrastructure for business. We connect companies, professionals, and markets across languages, borders, and systems." context "website" %}</p>
+        <p style="margin-bottom:20px;">{% trans "Our platform is not just a marketplace — it is a structured ecosystem where every participant is verified, every interaction is traceable, and every market is accessible through a single, unified interface." context "website" %}</p>
+        <p>{% trans "We are currently in our Pre-MVP phase, onboarding pioneer members, franchise partners, and regional coordinators who will shape the foundation of the platform." context "website" %}</p>
       </div>
       <div>
         <div style="background:linear-gradient(135deg,var(--primary-dark),var(--primary-mid));border-radius:16px;padding:40px;color:#fff;">
-          <div style="font-family:'Montserrat',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:24px;color:var(--accent);">Platform Vision</div>
+          <div style="font-family:'Montserrat',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:24px;color:var(--accent);">{% trans "Platform Vision" context "website" %}</div>
           <div style="display:flex;flex-direction:column;gap:20px;">
             <div style="display:flex;gap:16px;">
               <span style="font-size:1.5rem;">🌍</span>
               <div>
-                <div style="font-family:'Montserrat',sans-serif;font-weight:600;margin-bottom:4px;">Global Reach</div>
-                <div style="font-size:.85rem;color:rgba(199,204,209,.7);">177+ countries mapped, 10 active regions, expanding annually.</div>
+                <div style="font-family:'Montserrat',sans-serif;font-weight:600;margin-bottom:4px;">{% trans "Global Reach" context "website" %}</div>
+                <div style="font-size:.85rem;color:rgba(199,204,209,.7);">{% trans "177+ countries mapped, 10 active regions, expanding annually." context "website" %}</div>
               </div>
             </div>
             <div style="display:flex;gap:16px;">
               <span style="font-size:1.5rem;">🔐</span>
               <div>
-                <div style="font-family:'Montserrat',sans-serif;font-weight:600;margin-bottom:4px;">Verified Trust</div>
-                <div style="font-size:.85rem;color:rgba(199,204,209,.7);">KYC-verified users, certified companies, auditable data.</div>
+                <div style="font-family:'Montserrat',sans-serif;font-weight:600;margin-bottom:4px;">{% trans "Verified Trust" context "website" %}</div>
+                <div style="font-size:.85rem;color:rgba(199,204,209,.7);">{% trans "KYC-verified users, certified companies, auditable data." context "website" %}</div>
               </div>
             </div>
             <div style="display:flex;gap:16px;">
               <span style="font-size:1.5rem;">⚡</span>
               <div>
-                <div style="font-family:'Montserrat',sans-serif;font-weight:600;margin-bottom:4px;">Scalable Architecture</div>
-                <div style="font-size:.85rem;color:rgba(199,204,209,.7);">Tenant-isolated, license-controlled, enterprise-grade infrastructure.</div>
+                <div style="font-family:'Montserrat',sans-serif;font-weight:600;margin-bottom:4px;">{% trans "Scalable Architecture" context "website" %}</div>
+                <div style="font-size:.85rem;color:rgba(199,204,209,.7);">{% trans "Tenant-isolated, license-controlled, enterprise-grade infrastructure." context "website" %}</div>
               </div>
             </div>
             <div style="display:flex;gap:16px;">
               <span style="font-size:1.5rem;">🤖</span>
               <div>
-                <div style="font-family:'Montserrat',sans-serif;font-weight:600;margin-bottom:4px;">AI-Powered</div>
-                <div style="font-size:.85rem;color:rgba(199,204,209,.7);">Intelligent matching, multilingual support, automated data ingestion.</div>
+                <div style="font-family:'Montserrat',sans-serif;font-weight:600;margin-bottom:4px;">{% trans "AI-Powered" context "website" %}</div>
+                <div style="font-size:.85rem;color:rgba(199,204,209,.7);">{% trans "Intelligent matching, multilingual support, automated data ingestion." context "website" %}</div>
               </div>
             </div>
           </div>
@@ -101,36 +101,36 @@
 <!-- VALUES -->
 <section class="section section--light">
   <div class="container">
-    <span class="section-label">Our Principles</span>
-    <h2 class="section-title">Four Pillars of FONTESIN</h2>
-    <p class="section-subtitle">Our visual identity and product philosophy are built on four core principles that guide every decision we make.</p>
+    <span class="section-label">{% trans "Our Principles" context "website" %}</span>
+    <h2 class="section-title">{% trans "Four Pillars of FONTESIN" context "website" %}</h2>
+    <p class="section-subtitle">{% trans "Our visual identity and product philosophy are built on four core principles that guide every decision we make." context "website" %}</p>
     <div class="values-grid">
       <div class="value-item">
         <div class="value-item__icon">🛡️</div>
         <div>
-          <h4 class="value-item__title">Trust</h4>
-          <p class="value-item__text">Visual clarity and consistency reinforce the perception of reliability. Every interaction on FONTESIN is backed by verified data and auditable processes.</p>
+          <h4 class="value-item__title">{% trans "Trust" context "website" %}</h4>
+          <p class="value-item__text">{% trans "Visual clarity and consistency reinforce the perception of reliability. Every interaction on FONTESIN is backed by verified data and auditable processes." context "website" %}</p>
         </div>
       </div>
       <div class="value-item">
         <div class="value-item__icon">🏗️</div>
         <div>
-          <h4 class="value-item__title">Infrastructure</h4>
-          <p class="value-item__text">The design feels structured and systematic rather than decorative. We are building the backbone of global business communication, not a consumer app.</p>
+          <h4 class="value-item__title">{% trans "Infrastructure" context "website" %}</h4>
+          <p class="value-item__text">{% trans "The design feels structured and systematic rather than decorative. We are building the backbone of global business communication, not a consumer app." context "website" %}</p>
         </div>
       </div>
       <div class="value-item">
         <div class="value-item__icon">✂️</div>
         <div>
-          <h4 class="value-item__title">Simplicity</h4>
-          <p class="value-item__text">Minimalism supports scalability and global usability. Complex systems should feel simple to use — that is the hardest engineering challenge we embrace.</p>
+          <h4 class="value-item__title">{% trans "Simplicity" context "website" %}</h4>
+          <p class="value-item__text">{% trans "Minimalism supports scalability and global usability. Complex systems should feel simple to use — that is the hardest engineering challenge we embrace." context "website" %}</p>
         </div>
       </div>
       <div class="value-item">
         <div class="value-item__icon">🌐</div>
         <div>
-          <h4 class="value-item__title">Global Neutrality</h4>
-          <p class="value-item__text">The brand functions across cultures and markets without visual bias. FONTESIN is designed for the world — not for a single region or demographic.</p>
+          <h4 class="value-item__title">{% trans "Global Neutrality" context "website" %}</h4>
+          <p class="value-item__text">{% trans "The brand functions across cultures and markets without visual bias. FONTESIN is designed for the world — not for a single region or demographic." context "website" %}</p>
         </div>
       </div>
     </div>
@@ -140,23 +140,23 @@
 <!-- TIMELINE -->
 <section class="section section--dark">
   <div class="container">
-    <span class="section-label text-accent">Development Roadmap</span>
-    <h2 class="section-title text-white">Where We Are Heading</h2>
+    <span class="section-label text-accent">{% trans "Development Roadmap" context "website" %}</span>
+    <h2 class="section-title text-white">{% trans "Where We Are Heading" context "website" %}</h2>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:40px;">
       <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:28px;">
-        <div style="font-family:'Montserrat',sans-serif;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#4ade80;margin-bottom:12px;">Phase 1 · Q4 2025</div>
-        <h4 style="color:#fff;margin-bottom:12px;">MVP Launch</h4>
-        <p style="font-size:.88rem;color:rgba(199,204,209,.7);">Core communication, company registration, certification system, world map, and basic licensing model.</p>
+        <div style="font-family:'Montserrat',sans-serif;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#4ade80;margin-bottom:12px;">{% trans "Phase 1 · Q4 2025" context "website" %}</div>
+        <h4 style="color:#fff;margin-bottom:12px;">{% trans "MVP Launch" context "website" %}</h4>
+        <p style="font-size:.88rem;color:rgba(199,204,209,.7);">{% trans "Core communication, company registration, certification system, world map, and basic licensing model." context "website" %}</p>
       </div>
       <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:28px;">
-        <div style="font-family:'Montserrat',sans-serif;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#fbbf24;margin-bottom:12px;">Phase 2 · Q2 2026</div>
-        <h4 style="color:#fff;margin-bottom:12px;">AI Integration</h4>
-        <p style="font-size:.88rem;color:rgba(199,204,209,.7);">AI-powered matching, multilingual platform, partnership network, billing engine, and regional expansion.</p>
+        <div style="font-family:'Montserrat',sans-serif;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#fbbf24;margin-bottom:12px;">{% trans "Phase 2 · Q2 2026" context "website" %}</div>
+        <h4 style="color:#fff;margin-bottom:12px;">{% trans "AI Integration" context "website" %}</h4>
+        <p style="font-size:.88rem;color:rgba(199,204,209,.7);">{% trans "AI-powered matching, multilingual platform, partnership network, billing engine, and regional expansion." context "website" %}</p>
       </div>
       <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:28px;">
-        <div style="font-family:'Montserrat',sans-serif;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:12px;">Phase 3 · Q4 2026</div>
-        <h4 style="color:#fff;margin-bottom:12px;">Global Rollout</h4>
-        <p style="font-size:.88rem;color:rgba(199,204,209,.7);">Full global deployment, tokenized rewards, franchise ecosystem, and decentralized certification layer.</p>
+        <div style="font-family:'Montserrat',sans-serif;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:12px;">{% trans "Phase 3 · Q4 2026" context "website" %}</div>
+        <h4 style="color:#fff;margin-bottom:12px;">{% trans "Global Rollout" context "website" %}</h4>
+        <p style="font-size:.88rem;color:rgba(199,204,209,.7);">{% trans "Full global deployment, tokenized rewards, franchise ecosystem, and decentralized certification layer." context "website" %}</p>
       </div>
     </div>
   </div>
@@ -165,9 +165,9 @@
 <!-- TEAM -->
 <section class="section">
   <div class="container">
-    <span class="section-label">Our Team</span>
-    <h2 class="section-title">The People Behind FONTESIN</h2>
-    <p class="section-subtitle">A cross-functional team of business leaders, strategists, and regional experts united by a common vision of global business freedom.</p>
+    <span class="section-label">{% trans "Our Team" context "website" %}</span>
+    <h2 class="section-title">{% trans "The People Behind FONTESIN" context "website" %}</h2>
+    <p class="section-subtitle">{% trans "A cross-functional team of business leaders, strategists, and regional experts united by a common vision of global business freedom." context "website" %}</p>
 
     <style>
       .team-grid-real {
@@ -234,67 +234,67 @@
 
       <!-- Scott Kuttos – CEO -->
       <div class="team-card-real">
-        <img class="team-card-real__photo" src="{% static 'adminlte/images/team_scott_kuttos_enhanced.png' %}" alt="Scott Kuttos – CEO"/>
+        <img class="team-card-real__photo" src="{% static 'adminlte/images/team_scott_kuttos_enhanced.png' %}" alt="{% blocktrans context 'website' %}Scott Kuttos – Chief Executive Officer{% endblocktrans %}"/>
         <div class="team-card-real__body">
           <div class="team-card-real__name">Scott Kuttos</div>
-          <div class="team-card-real__role">Chief Executive Officer</div>
-          <p class="team-card-real__bio">Drives the overall vision and strategic direction of FONTESIN. Brings extensive experience in global business development and executive leadership across international markets.</p>
-          <span class="team-card-real__badge">Leadership</span>
+          <div class="team-card-real__role">{% trans "Chief Executive Officer" context "website" %}</div>
+          <p class="team-card-real__bio">{% trans "Drives the overall vision and strategic direction of FONTESIN. Brings extensive experience in global business development and executive leadership across international markets." context "website" %}</p>
+          <span class="team-card-real__badge">{% trans "Leadership" context "website" %}</span>
         </div>
       </div>
 
       <!-- Ondrej Kazmar – COO & Co-founder -->
       <div class="team-card-real">
-        <img class="team-card-real__photo" src="{% static 'adminlte/images/team_ondrej_kazmar.jpg' %}" alt="Ondřej Kazmar – COO &amp; Co-founder"/>
+        <img class="team-card-real__photo" src="{% static 'adminlte/images/team_ondrej_kazmar.jpg' %}" alt="{% blocktrans context 'website' %}Ondřej Kazmar – COO &amp; Co-Founder{% endblocktrans %}"/>
         <div class="team-card-real__body">
           <div class="team-card-real__name">Ondřej Kazmar</div>
-          <div class="team-card-real__role">COO &amp; Co-Founder</div>
-          <p class="team-card-real__bio">Oversees operational excellence and platform rollout strategy. Co-architect of the FONTESIN business model and franchise infrastructure across Central Europe and beyond.</p>
-          <span class="team-card-real__badge">Operations &middot; Co-Founder</span>
+          <div class="team-card-real__role">{% trans "COO &amp; Co-Founder" context "website" %}</div>
+          <p class="team-card-real__bio">{% trans "Oversees operational excellence and platform rollout strategy. Co-architect of the FONTESIN business model and franchise infrastructure across Central Europe and beyond." context "website" %}</p>
+          <span class="team-card-real__badge">{% trans "Operations · Co-Founder" context "website" %}</span>
         </div>
       </div>
 
       <!-- Jakub Ramajz – Co-founder -->
       <div class="team-card-real">
-        <img class="team-card-real__photo" src="{% static 'adminlte/images/team_jakub_ramajz_enhanced.png' %}" alt="Jakub Ramajz – Co-founder"/>
+        <img class="team-card-real__photo" src="{% static 'adminlte/images/team_jakub_ramajz_enhanced.png' %}" alt="{% blocktrans context 'website' %}Jakub Ramajz – Co-Founder{% endblocktrans %}"/>
         <div class="team-card-real__body">
           <div class="team-card-real__name">Jakub Ramajz</div>
-          <div class="team-card-real__role">Co-Founder</div>
-          <p class="team-card-real__bio">One of the founding pillars of FONTESIN. Contributes to the platform's strategic development, partner network, and long-term growth architecture.</p>
-          <span class="team-card-real__badge">Co-Founder</span>
+          <div class="team-card-real__role">{% trans "Co-Founder" context "website" %}</div>
+          <p class="team-card-real__bio">{% trans "One of the founding pillars of FONTESIN. Contributes to the platform's strategic development, partner network, and long-term growth architecture." context "website" %}</p>
+          <span class="team-card-real__badge">{% trans "Co-Founder" context "website" %}</span>
         </div>
       </div>
 
       <!-- Krystof Ramajz – Co-founder -->
       <div class="team-card-real">
-        <img class="team-card-real__photo" src="{% static 'adminlte/images/team_krystof_ramajz_enhanced.png' %}" alt="Kryštof Ramajz – Co-founder"/>
+        <img class="team-card-real__photo" src="{% static 'adminlte/images/team_krystof_ramajz_enhanced.png' %}" alt="{% blocktrans context 'website' %}Kryštof Ramajz – Co-Founder{% endblocktrans %}"/>
         <div class="team-card-real__body">
           <div class="team-card-real__name">Kryštof Ramajz</div>
-          <div class="team-card-real__role">Co-Founder</div>
-          <p class="team-card-real__bio">Shapes the product vision and technological direction of FONTESIN. Focused on building scalable, user-centric solutions for global business collaboration.</p>
-          <span class="team-card-real__badge">Co-Founder</span>
+          <div class="team-card-real__role">{% trans "Co-Founder" context "website" %}</div>
+          <p class="team-card-real__bio">{% trans "Shapes the product vision and technological direction of FONTESIN. Focused on building scalable, user-centric solutions for global business collaboration." context "website" %}</p>
+          <span class="team-card-real__badge">{% trans "Co-Founder" context "website" %}</span>
         </div>
       </div>
 
       <!-- Karel Ramajzl – Strategy Idealist -->
       <div class="team-card-real">
-        <img class="team-card-real__photo" src="{% static 'adminlte/images/team_karel_ramajzl_enhanced.png' %}" alt="Karel Ramajzl – Strategy Idealist"/>
+        <img class="team-card-real__photo" src="{% static 'adminlte/images/team_karel_ramajzl_enhanced.png' %}" alt="{% blocktrans context 'website' %}Karel Ramajzl – Strategy Idealist{% endblocktrans %}"/>
         <div class="team-card-real__body">
           <div class="team-card-real__name">Karel Ramajzl</div>
-          <div class="team-card-real__role">Strategy Idealist</div>
-          <p class="team-card-real__bio">The visionary strategist behind FONTESIN's long-term philosophy. Brings decades of experience in business strategy, market analysis, and ideation for transformative global platforms.</p>
-          <span class="team-card-real__badge">Strategy</span>
+          <div class="team-card-real__role">{% trans "Strategy Idealist" context "website" %}</div>
+          <p class="team-card-real__bio">{% trans "The visionary strategist behind FONTESIN's long-term philosophy. Brings decades of experience in business strategy, market analysis, and ideation for transformative global platforms." context "website" %}</p>
+          <span class="team-card-real__badge">{% trans "Strategy" context "website" %}</span>
         </div>
       </div>
 
       <!-- Ekrem Auinger – Coordinator for Germany -->
       <div class="team-card-real">
-        <img class="team-card-real__photo" src="{% static 'adminlte/images/team_ekrem_auinger_enhanced.png' %}" alt="Ekrem Auinger – Coordinator for Germany"/>
+        <img class="team-card-real__photo" src="{% static 'adminlte/images/team_ekrem_auinger_enhanced.png' %}" alt="{% blocktrans context 'website' %}Ekrem Auinger – Regional Coordinator – Germany{% endblocktrans %}"/>
         <div class="team-card-real__body">
           <div class="team-card-real__name">Ekrem Auinger</div>
-          <div class="team-card-real__role">Regional Coordinator &ndash; Germany</div>
-          <p class="team-card-real__bio">Leads FONTESIN's regional expansion and partner activation in Germany. Bridges the Central European business community with the global FONTESIN network.</p>
-          <span class="team-card-real__badge">Germany Region</span>
+          <div class="team-card-real__role">{% trans "Regional Coordinator – Germany" context "website" %}</div>
+          <p class="team-card-real__bio">{% trans "Leads FONTESIN's regional expansion and partner activation in Germany. Bridges the Central European business community with the global FONTESIN network." context "website" %}</p>
+          <span class="team-card-real__badge">{% trans "Germany Region" context "website" %}</span>
         </div>
       </div>
 
@@ -308,19 +308,19 @@
     <div class="grid-4" style="text-align:center;">
       <div>
         <div style="font-family:'Montserrat',sans-serif;font-size:2.8rem;font-weight:800;color:var(--primary);">177+</div>
-        <div style="font-size:.85rem;color:var(--secondary);font-weight:500;margin-top:4px;">Countries Mapped</div>
+        <div style="font-size:.85rem;color:var(--secondary);font-weight:500;margin-top:4px;">{% trans "Countries Mapped" context "website" %}</div>
       </div>
       <div>
         <div style="font-family:'Montserrat',sans-serif;font-size:2.8rem;font-weight:800;color:var(--primary);">10</div>
-        <div style="font-size:.85rem;color:var(--secondary);font-weight:500;margin-top:4px;">Active Regions</div>
+        <div style="font-size:.85rem;color:var(--secondary);font-weight:500;margin-top:4px;">{% trans "Active Regions" context "website" %}</div>
       </div>
       <div>
         <div style="font-family:'Montserrat',sans-serif;font-size:2.8rem;font-weight:800;color:var(--primary);">200</div>
-        <div style="font-size:.85rem;color:var(--secondary);font-weight:500;margin-top:4px;">Pioneer Members</div>
+        <div style="font-size:.85rem;color:var(--secondary);font-weight:500;margin-top:4px;">{% trans "Pioneer Members" context "website" %}</div>
       </div>
       <div>
         <div style="font-family:'Montserrat',sans-serif;font-size:2.8rem;font-weight:800;color:var(--primary);">4</div>
-        <div style="font-size:.85rem;color:var(--secondary);font-weight:500;margin-top:4px;">License Tiers</div>
+        <div style="font-size:.85rem;color:var(--secondary);font-weight:500;margin-top:4px;">{% trans "License Tiers" context "website" %}</div>
       </div>
     </div>
   </div>
@@ -329,11 +329,11 @@
 <!-- CTA -->
 <section class="section">
   <div class="container text-center">
-    <h2 class="section-title">Join the FONTESIN Movement</h2>
-    <p style="max-width:520px;margin:0 auto 32px;">Be among the first 200 founding members co-creating the future of global business infrastructure.</p>
+    <h2 class="section-title">{% trans "Join the FONTESIN Movement" context "website" %}</h2>
+    <p style="max-width:520px;margin:0 auto 32px;">{% trans "Be among the first 200 founding members co-creating the future of global business infrastructure." context "website" %}</p>
     <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
-      <a href="/register/" class="btn btn-primary btn-lg">Apply Now</a>
-      <a href="/career/" class="btn btn-outline-dark btn-lg">View Open Positions</a>
+      <a href="/register/" class="btn btn-primary btn-lg">{% trans "Apply Now" context "website" %}</a>
+      <a href="/career/" class="btn btn-outline-dark btn-lg">{% trans "View Open Positions" context "website" %}</a>
     </div>
   </div>
 </section>
@@ -344,51 +344,69 @@
     <div class="footer__grid">
       <div>
         <div class="footer__logo"><img src="{% static 'adminlte/images/fontesin-logo.png' %}" alt="FONTESIN" style="height:32px;width:auto;filter:brightness(0) invert(1);margin-bottom:12px;"/></div>
-        <p class="footer__brand-desc">A deep-tech global business infrastructure platform connecting companies, professionals, and markets across languages, borders, and systems.</p>
+        <p class="footer__brand-desc">{% trans "A deep-tech global business infrastructure platform connecting companies, professionals, and markets across languages, borders, and systems." context "website" %}</p>
       </div>
       <div>
-        <p class="footer__heading">Platform</p>
+        <p class="footer__heading">{% trans "Platform" context "website" %}</p>
         <div class="footer__links">
-          <a href="{% url 'worldmap' %}">World Map</a>
-          <a href="{% url 'register' %}">Get Started</a>
-          <a href="{% url 'login' %}">Log In</a>
+          <a href="{% url 'worldmap' %}">{% trans "World Map" context "website" %}</a>
+          <a href="{% url 'register' %}">{% trans "Get Started" context "website" %}</a>
+          <a href="{% url 'login' %}">{% trans "Log In" context "auth.login" %}</a>
         </div>
       </div>
       <div>
-        <p class="footer__heading">Company</p>
+        <p class="footer__heading">{% trans "Company" context "website" %}</p>
         <div class="footer__links">
-          <a href="{% url 'about' %}">About Us</a>
-          <a href="{% url 'career' %}">Careers</a>
-          <a href="{% url 'contact' %}">Contact</a>
+          <a href="{% url 'about' %}">{% trans "About Us" context "website" %}</a>
+          <a href="{% url 'career' %}">{% trans "Careers" context "website" %}</a>
+          <a href="{% url 'contact' %}">{% trans "Contact" context "website" %}</a>
         </div>
       </div>
       <div>
-        <p class="footer__heading">Regions</p>
+        <p class="footer__heading">{% trans "Regions" context "website" %}</p>
         <div class="footer__links">
-          <a href="">United States</a>
-          <a href="">Germany</a>
-          <a href="">Czech Republic</a>
-          <a href="">UAE</a>
-          <a href="">Japan</a>
+          <a href="">{% trans "United States" context "website" %}</a>
+          <a href="">{% trans "Germany" context "website" %}</a>
+          <a href="">{% trans "Czech Republic" context "website" %}</a>
+          <a href="">{% trans "UAE" context "website" %}</a>
+          <a href="">{% trans "Japan" context "website" %}</a>
         </div>
       </div>
     </div>
     <div class="footer__bottom">
-      <span>© 2026 FONTES Inc. All rights reserved.</span>
-      <span>Design by Memento Mori Digital LLC</span>
+      <span>{% trans "© 2026 FONTES Inc. All rights reserved." context "website" %}</span>
+      <span>{% trans "Design by Memento Mori Digital LLC" context "website" %}</span>
     </div>
   </div>
 </footer>
 
-<script src="{% static 'adminlte/js/main.js' % }"></script>
-  <script>
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", function() {
-        navigator.serviceWorker.register("/sw.js")
-          .then(function(reg) { console.log("[PWA] SW registered:", reg.scope); })
-          .catch(function(err) { console.warn("[PWA] SW registration failed:", err); });
-      });
-    }
-  </script>
+<script src="{% static 'adminlte/js/main.js' %}"></script>
+<script>
+(function () {
+  window.PWA_I18N = {
+    notificationBody: '{% filter escapejs %}{% trans "You have a new notification" context "website" %}{% endfilter %}',
+    open: '{% filter escapejs %}{% trans "Open" context "website" %}{% endfilter %}',
+    dismiss: '{% filter escapejs %}{% trans "Dismiss" context "website" %}{% endfilter %}',
+  };
+})();
+</script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function() {
+      navigator.serviceWorker.register("{% static 'adminlte/js/sw.js' %}")
+        .then(function(reg) {
+          function sendStrings() {
+            var sw = reg.active || navigator.serviceWorker.controller;
+            if (sw && window.PWA_I18N) {
+              sw.postMessage({ type: "PWA_STRINGS", strings: window.PWA_I18N });
+            }
+          }
+          sendStrings();
+          navigator.serviceWorker.addEventListener("controllerchange", sendStrings);
+        })
+        .catch(function(err) { console.warn("[PWA] SW registration failed:", err); });
+    });
+  }
+</script>
 </body>
 </html>

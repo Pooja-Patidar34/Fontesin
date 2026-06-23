@@ -1,5 +1,6 @@
 {% extends "base/base.html" %}
-{% block title %}Certifications{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Certifications" context "dashboard" %}{% endblock %}
 
 {% block content %}
 
@@ -121,10 +122,10 @@
 <div class="card card-outline card-primary shadow-sm">
   <div class="card-header">
     <h3 class="card-title font-weight-bold mb-0">
-      <i class="fas fa-certificate mr-1"></i> Certifications :
+      <i class="fas fa-certificate mr-1"></i> {% trans "Certifications" context "dashboard" %} :
     </h3>
     <h5 class="small text-muted mb-0">
-      Review pending certification requests and manage the companies you've already certified.
+      {% blocktrans trimmed context "dashboard" %}Review pending certification requests and manage the companies you've already certified.{% endblocktrans %}
     </h5>
   </div>
 
@@ -135,79 +136,79 @@
       {% if not pending and not certified and not rejected %}
       <div class="empty-state">
         <i class="fas fa-certificate fa-2x"></i>
-        <p class="mb-0">You haven't submitted any certification requests yet.</p>
+        <p class="mb-0">{% trans "You haven't submitted any certification requests yet." context "dashboard" %}</p>
         <p class="small mb-0">
-          Submit a company via <a href="{% url 'profile' %}">your profile</a> or the
-          <a href="{% url 'companies' %}">Company Database</a> to request certification.
+          {% blocktrans trimmed context "dashboard" %}Submit a company via{% endblocktrans %} <a href="{% url 'profile' %}">{% trans "your profile" context "dashboard" %}</a> {% trans "or the" context "dashboard" %}
+          <a href="{% url 'companies' %}">{% trans "Company Database" context "dashboard" %}</a> {% trans "to request certification." context "dashboard" %}
         </p>
       </div>
       {% endif %}
 
       {% if pending %}
-      <div class="bu-section-title">Pending Review</div>
+      <div class="bu-section-title">{% trans "Pending Review" context "dashboard" %}</div>
       {% for c in pending %}
       <div class="bu-status-card">
         <div class="bu-status-icon bg-pending"><i class="fas fa-hourglass-half"></i></div>
         <div style="flex:1;">
           <h6>{{ c.name }}</h6>
           <div class="meta">
-            Submitted {{ c.created_at|date:"M j, Y" }} &middot;
+            {% blocktrans trimmed with date=c.created_at|date:"M j, Y" context "dashboard" %}Submitted {{ date }}{% endblocktrans %} &middot;
             {% if c.consultant %}
-              Assigned to consultant {{ c.consultant.first_name }} {{ c.consultant.last_name }}
+              {% trans "Assigned to consultant" context "dashboard" %} {{ c.consultant.first_name }} {{ c.consultant.last_name }}
             {% else %}
-              Awaiting consultant assignment
+              {% trans "Awaiting consultant assignment" context "dashboard" %}
             {% endif %}
           </div>
           <div class="meta">
             {{ c.city|default:"" }}{% if c.city and c.country %}, {% endif %}{{ c.country|default:"" }}
           </div>
         </div>
-        <span class="pill pill-pending">Pending</span>
+        <span class="pill pill-pending">{% trans "Pending" context "dashboard" %}</span>
       </div>
       {% endfor %}
       {% endif %}
 
       {% if certified %}
-      <div class="bu-section-title">Certified</div>
+      <div class="bu-section-title">{% trans "Certified" context "dashboard" %}</div>
       {% for c in certified %}
       <div class="bu-status-card">
         <div class="bu-status-icon bg-certified"><i class="fas fa-certificate"></i></div>
         <div style="flex:1;">
           <h6>{{ c.name }}</h6>
           <div class="meta">
-            Certified {{ c.certified_at|date:"M j, Y" }}
+            {% blocktrans trimmed with date=c.certified_at|date:"M j, Y" context "dashboard" %}Certified {{ date }}{% endblocktrans %}
             {% if c.certified_by %}
-              by {{ c.certified_by.first_name }} {{ c.certified_by.last_name }}
+              {% trans "by" context "dashboard" %} {{ c.certified_by.first_name }} {{ c.certified_by.last_name }}
             {% endif %}
           </div>
           <div class="meta">
             {{ c.city|default:"" }}{% if c.city and c.country %}, {% endif %}{{ c.country|default:"" }}
           </div>
         </div>
-        <span class="pill pill-certified">Certified</span>
+        <span class="pill pill-certified">{% trans "Certified" context "dashboard" %}</span>
       </div>
       {% endfor %}
       {% endif %}
 
       {% if rejected %}
-      <div class="bu-section-title">Declined</div>
+      <div class="bu-section-title">{% trans "Declined" context "dashboard" %}</div>
       {% for c in rejected %}
       <div class="bu-status-card">
         <div class="bu-status-icon bg-rejected"><i class="fas fa-times"></i></div>
         <div style="flex:1;">
           <h6>{{ c.name }}</h6>
           <div class="meta">
-            Declined {{ c.updated_at|date:"M j, Y" }}
+            {% blocktrans trimmed with date=c.updated_at|date:"M j, Y" context "dashboard" %}Declined {{ date }}{% endblocktrans %}
             {% if c.consultant %}
               by {{ c.consultant.first_name }} {{ c.consultant.last_name }}
             {% endif %}
           </div>
           <div class="meta">
-            Update your company details and resubmit from
-            <a href="{% url 'profile' %}">your profile</a>.
+            {% trans "Update your company details and resubmit from" context "dashboard" %}
+            <a href="{% url 'profile' %}">{% trans "your profile" context "dashboard" %}</a>.
           </div>
         </div>
-        <span class="pill pill-rejected">Declined</span>
+        <span class="pill pill-rejected">{% trans "Declined" context "dashboard" %}</span>
       </div>
       {% endfor %}
       {% endif %}
@@ -221,7 +222,7 @@
       {% if pending %}<span class="badge badge-warning">{{ pending|length }}</span>{% endif %}
     </button>
     <button type="button" class="cert-tab" data-pane="certified">
-      My Certified Companies
+      {% trans "My Certified Companies" context "dashboard" %}
       {% if certified %}<span class="badge badge-success">{{ certified|length }}</span>{% endif %}
     </button>
     <button type="button" class="cert-tab" data-pane="rejected">
@@ -238,11 +239,11 @@
         <table class="table table-hover mb-0">
           <thead class="bg-light">
             <tr>
-              <th>Company</th>
-              <th>Requester</th>
-              <th>City</th>
-              <th>Submitted</th>
-              <th class="text-center">Action</th>
+              <th>{% trans "Company" context "dashboard" %}</th>
+              <th>{% trans "Requester" context "dashboard" %}</th>
+              <th>{% trans "City / Municipality" context "companies" %}</th>
+              <th>{% trans "Submitted" context "dashboard" %}</th>
+              <th class="text-center">{% trans "Action" context "common" %}</th>
             </tr>
           </thead>
           <tbody>
@@ -268,19 +269,19 @@
                 <button type="button"
                         class="btn btn-sm btn-secondary view-cert-btn"
                         data-url="{% url 'company-detail' c.id %}">
-                  <i class="fas fa-eye mr-1"></i> View
+                  <i class="fas fa-eye mr-1"></i> {% trans "View" context "common" %}
                 </button>
                 <a href="{% url 'companies' %}?open_edit={{ c.id }}&from=certifications"
                    class="btn btn-sm btn-primary ml-1"
-                   title="Edit company details, then come back to approve">
-                  <i class="fas fa-edit mr-1"></i> Edit
+                   title="{% filter escapejs %}{% trans 'Edit company details, then come back to approve' context 'dashboard' %}{% endfilter %}">
+                  <i class="fas fa-edit mr-1"></i> {% trans "Edit" context "common" %}
                 </a>
                 <form method="post" action="{% url 'certification-action' c.id %}"
                       class="cert-form d-inline m-0 ml-1">
                   {% csrf_token %}
                   <input type="hidden" name="decision" value="approve">
                   <button type="submit" class="btn btn-sm btn-success">
-                    <i class="fas fa-check mr-1"></i> Approve
+                    <i class="fas fa-check mr-1"></i> {% trans "Approve" context "dashboard" %}
                   </button>
                 </form>
                 <form method="post" action="{% url 'certification-action' c.id %}"
@@ -288,7 +289,7 @@
                   {% csrf_token %}
                   <input type="hidden" name="decision" value="decline">
                   <button type="submit" class="btn btn-sm btn-outline-danger">
-                    <i class="fas fa-times mr-1"></i> Decline
+                    <i class="fas fa-times mr-1"></i> {% trans "Decline" context "dashboard" %}
                   </button>
                 </form>
               </td>
@@ -300,8 +301,8 @@
       {% else %}
       <div class="empty-state">
         <i class="fas fa-inbox fa-2x"></i>
-        <p class="mb-0">No pending certification requests.</p>
-        <p class="small mb-0">New requests routed to you will appear here.</p>
+        <p class="mb-0">{% trans "No pending certification requests." context "dashboard" %}</p>
+        <p class="small mb-0">{% trans "New requests routed to you will appear here." context "dashboard" %}</p>
       </div>
       {% endif %}
     </div>
@@ -315,12 +316,12 @@
         <table class="table table-hover mb-0">
           <thead class="bg-light">
             <tr>
-              <th>Company</th>
-              <th>Owner</th>
-              <th>City</th>
-              <th>Certified</th>
+              <th>{% trans "Company" context "dashboard" %}</th>
+              <th>{% trans "Owner" context "dashboard" %}</th>
+              <th>{% trans "City / Municipality" context "companies" %}</th>
+              <th>{% trans "Certified" context "dashboard" %}</th>
               <th>Status</th>
-              <th class="text-center">Action</th>
+              <th class="text-center">{% trans "Action" context "common" %}</th>
             </tr>
           </thead>
           <tbody>
@@ -344,25 +345,25 @@
                 {% if c.is_active %}
                 <span class="pill pill-certified">Active</span>
                 {% else %}
-                <span class="pill pill-inactive">Inactive</span>
+                <span class="pill pill-inactive">{% trans "Inactive" context "common" %}</span>
                 {% endif %}
               </td>
               <td class="text-center">
                 <button type="button"
                         class="btn btn-sm btn-outline-secondary view-cert-btn"
                         data-url="{% url 'company-detail' c.id %}">
-                  <i class="fas fa-eye mr-1"></i> View
+                  <i class="fas fa-eye mr-1"></i> {% trans "View" context "common" %}
                 </button>
                 <form method="post" action="{% url 'company-toggle' c.id %}"
                       class="d-inline m-0 ml-1">
                   {% csrf_token %}
                   {% if c.is_active %}
                   <button type="submit" class="btn btn-sm btn-outline-warning">
-                    <i class="fas fa-toggle-off mr-1"></i> Deactivate
+                    <i class="fas fa-toggle-off mr-1"></i> {% trans "Deactivate" context "dashboard" %}
                   </button>
                   {% else %}
                   <button type="submit" class="btn btn-sm btn-outline-success">
-                    <i class="fas fa-toggle-on mr-1"></i> Activate
+                    <i class="fas fa-toggle-on mr-1"></i> {% trans "Activate" context "dashboard" %}
                   </button>
                   {% endif %}
                 </form>
@@ -375,7 +376,7 @@
       {% else %}
       <div class="empty-state">
         <i class="fas fa-award fa-2x"></i>
-        <p class="mb-0">You haven't certified any companies yet.</p>
+        <p class="mb-0">{% trans "You haven't certified any companies yet." context "dashboard" %}</p>
       </div>
       {% endif %}
     </div>
@@ -389,11 +390,11 @@
         <table class="table table-hover mb-0">
           <thead class="bg-light">
             <tr>
-              <th>Company</th>
-              <th>Requester</th>
-              <th>City</th>
-              <th>Decision date</th>
-              <th class="text-center">Action</th>
+              <th>{% trans "Company" context "dashboard" %}</th>
+              <th>{% trans "Requester" context "dashboard" %}</th>
+              <th>{% trans "City / Municipality" context "companies" %}</th>
+              <th>{% trans "Decision date" context "dashboard" %}</th>
+              <th class="text-center">{% trans "Action" context "common" %}</th>
             </tr>
           </thead>
           <tbody>
@@ -413,7 +414,7 @@
                 <button type="button"
                         class="btn btn-sm btn-outline-secondary view-cert-btn"
                         data-url="{% url 'company-detail' c.id %}">
-                  <i class="fas fa-eye mr-1"></i> View
+                  <i class="fas fa-eye mr-1"></i> {% trans "View" context "common" %}
                 </button>
               </td>
             </tr>
@@ -424,7 +425,7 @@
       {% else %}
       <div class="empty-state">
         <i class="fas fa-ban fa-2x"></i>
-        <p class="mb-0">No declined requests.</p>
+        <p class="mb-0">{% trans "No declined requests." context "dashboard" %}</p>
       </div>
       {% endif %}
     </div>
@@ -440,7 +441,7 @@
     <img id="cert-drawer-logo" src="" alt="" style="display:none;">
     <div>
       <div id="cert-drawer-name" class="font-weight-bold" style="font-size:1rem;color:#1B2E3F;"></div>
-      <span id="cert-drawer-status" class="pill pill-pending">Pending</span>
+      <span id="cert-drawer-status" class="pill pill-pending">{% trans "Pending" context "dashboard" %}</span>
     </div>
     <button type="button" id="cert-drawer-close"
             class="close ml-auto"
@@ -450,12 +451,45 @@
     <dl id="cert-drawer-details"></dl>
   </div>
   <footer>
-    <button type="button" id="cert-drawer-close-2" class="btn btn-sm btn-outline-secondary">Close</button>
+    <button type="button" id="cert-drawer-close-2" class="btn btn-sm btn-outline-secondary">{% trans "Close" context "common" %}</button>
   </footer>
 </aside>
 
+
+<script>
+(function () {
+  var g = function (s) { return (typeof gettext === 'function') ? gettext(s) : s; };
+  window.DASHBOARD_I18N = window.DASHBOARD_I18N || {};
+  Object.assign(window.DASHBOARD_I18N, {
+    actionFailed: '{% filter escapejs %}{% trans "Action failed." context "dashboard" %}{% endfilter %}',
+    networkError: '{% filter escapejs %}{% trans "Network error. Please try again." context "common" %}{% endfilter %}',
+    couldNotLoadCompany: '{% filter escapejs %}{% trans "Could not load company details." context "companies" %}{% endfilter %}',
+    companyDefault: '{% filter escapejs %}{% trans "Company" context "dashboard" %}{% endfilter %}',
+    legalForm: '{% filter escapejs %}{% trans "Legal Form" context "companies" %}{% endfilter %}',
+    registrationId: '{% filter escapejs %}{% trans "Registration ID" context "companies" %}{% endfilter %}',
+    yearEstablished: '{% filter escapejs %}{% trans "Year Established" context "companies" %}{% endfilter %}',
+    employees: '{% filter escapejs %}{% trans "Employees" context "companies" %}{% endfilter %}',
+    primaryLineOfBusiness: '{% filter escapejs %}{% trans "Primary Line of Business" context "dashboard" %}{% endfilter %}',
+    naceCode: '{% filter escapejs %}{% trans "NACE Code" context "companies" %}{% endfilter %}',
+    naicsCode: '{% filter escapejs %}{% trans "NAICS Code" context "companies" %}{% endfilter %}',
+    keywords: '{% filter escapejs %}{% trans "Keywords" context "companies" %}{% endfilter %}',
+    address: '{% filter escapejs %}{% trans "Address" context "companies" %}{% endfilter %}',
+    contactPerson: '{% filter escapejs %}{% trans "Contact Person" context "companies" %}{% endfilter %}',
+    phone: '{% filter escapejs %}{% trans "Phone" context "companies" %}{% endfilter %}',
+    contactEmail: '{% filter escapejs %}{% trans "Contact Email" context "companies" %}{% endfilter %}',
+    website: '{% filter escapejs %}{% trans "Website" context "companies" %}{% endfilter %}',
+  });
+  Object.keys(window.DASHBOARD_I18N).forEach(function (k) {
+    if (typeof window.DASHBOARD_I18N[k] === 'string') {
+      window.DASHBOARD_I18N[k] = g(window.DASHBOARD_I18N[k]);
+    }
+  });
+})();
+</script>
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+  var i18n = window.DASHBOARD_I18N || {};
   // ---- tab switching ----
   var tabs = document.querySelectorAll(".cert-tab");
   var panes = document.querySelectorAll(".cert-pane");
@@ -497,14 +531,14 @@ document.addEventListener("DOMContentLoaded", function () {
               window.location.reload();
             }
           } else {
-            var msg = (res.data && res.data.message) || "Action failed.";
+            var msg = (res.data && res.data.message) || i18n.actionFailed;
             if (typeof showToast === "function") showToast(msg, "error");
             else console.error(msg);
             btns.forEach(function (b) { b.disabled = false; });
           }
         })
         .catch(function () {
-          if (typeof showToast === "function") showToast("Network error. Please try again.", "error");
+          if (typeof showToast === "function") showToast(i18n.networkError, "error");
           btns.forEach(function (b) { b.disabled = false; });
         });
     });
@@ -545,7 +579,7 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(function (r) { return r.json(); })
         .then(function (data) {
           var c = (data && data.company) || {};
-          drawerName.textContent = c.name || "Company";
+          drawerName.textContent = c.name || i18n.companyDefault;
           drawerStatus.textContent = c.certification_status || "pending";
           drawerStatus.className = "pill pill-" + (c.certification_status || "pending");
           if (c.logo_url) {
@@ -563,29 +597,29 @@ document.addEventListener("DOMContentLoaded", function () {
             c.contact_first_name, c.contact_last_name
           ].filter(function (p) { return p; }).join(" ");
           drawerDetails.innerHTML =
-            row("Legal Form", c.entity_type) +
-            row("Registration ID", c.registration_id) +
-            row("Year Established", c.year_established) +
-            row("Employees", c.employee_count_range) +
-            row("Primary Line of Business", c.classification) +
+            row(i18n.legalForm, c.entity_type) +
+            row(i18n.registrationId, c.registration_id) +
+            row(i18n.yearEstablished, c.year_established) +
+            row(i18n.employees, c.employee_count_range) +
+            row(i18n.primaryLineOfBusiness, c.classification) +
             // Prefer the resolved NACE display ("J6201 — Computer
             // programming activities"), then NAICS, then the legacy
             // free-text industry_code for rows that haven't been
             // migrated to the picker yet.
-            row("NACE Code", c.nace_code_display || c.industry_code) +
-            row("NAICS Code", c.naics_code_display) +
-            row("Keywords", c.keywords) +
-            row("Address", addressParts) +
-            row("Contact Person", contactPerson) +
-            row("Phone", c.phone) +
-            row("Contact Email", c.contact_email) +
-            row("Website", c.website);
+            row(i18n.naceCode, c.nace_code_display || c.industry_code) +
+            row(i18n.naicsCode, c.naics_code_display) +
+            row(i18n.keywords, c.keywords) +
+            row(i18n.address, addressParts) +
+            row(i18n.contactPerson, contactPerson) +
+            row(i18n.phone, c.phone) +
+            row(i18n.contactEmail, c.contact_email) +
+            row(i18n.website, c.website);
           drawer.classList.add("is-open");
           backdrop.classList.add("is-open");
           drawer.setAttribute("aria-hidden", "false");
         })
         .catch(function () {
-          if (typeof showToast === "function") showToast("Could not load company details.", "error");
+          if (typeof showToast === "function") showToast(i18n.couldNotLoadCompany, "error");
         });
     });
   });

@@ -1,0 +1,3155 @@
+# FONTESIN JavaScript translation catalog — English
+msgid ""
+msgstr ""
+"Project-Id-Version: FONTESIN\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-23 00:00+0000\n"
+"PO-Revision-Date: 2026-06-23 00:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: Spanish\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: FontEsin/static/js/djangojs-catalog.js static/adminlte/js/main.js
+msgid "Error"
+msgstr "Error"
+
+#: FontEsin/static/js/djangojs-catalog.js static/adminlte/js/main.js
+msgid "Success"
+msgstr "Éxito"
+
+#: FontEsin/static/js/djangojs-catalog.js static/adminlte/js/main.js
+msgid "Warning"
+msgstr "Advertencia"
+
+#: FontEsin/static/js/djangojs-catalog.js static/adminlte/js/main.js
+msgid "Info"
+msgstr "Información"
+
+#: FontEsin/static/js/djangojs-catalog.js templates/base/base.html
+msgid "Feature coming soon"
+msgstr "Característica próximamente"
+
+#: FontEsin/static/js/djangojs-catalog.js static/adminlte/js/no_emoji.js
+msgid "Emojis are not allowed in name."
+msgstr "No se permiten emojis en el nombre."
+
+#: FontEsin/static/js/djangojs-catalog.js static/adminlte/js/no_emoji.js
+msgid "Name can only contain letters, spaces, hyphens and apostrophes."
+msgstr "El nombre sólo puede contener letras, espacios, guiones y apóstrofes."
+
+#: FontEsin/static/js/djangojs-catalog.js static/adminlte/js/no_emoji.js
+#, python-format
+msgid "Name cannot exceed %(max)s characters."
+msgstr "El nombre no puede exceder los %(max)s caracteres."
+
+#: FontEsin/static/js/djangojs-catalog.js static/adminlte/js/no_emoji.js
+msgid "Emojis are not allowed in password."
+msgstr "No se permiten emojis en la contraseña."
+
+#: FontEsin/static/js/djangojs-catalog.js static/adminlte/js/no_emoji.js
+msgid "Emojis are not allowed in email."
+msgstr "No se permiten emojis en el correo electrónico."
+
+#: FontEsin/static/js/djangojs-catalog.js static/adminlte/js/no_emoji.js
+msgid "Email can only contain letters, digits and . _ - + special characters."
+msgstr ""
+"El correo electrónico sólo puede contener letras, dígitos y . _ - + "
+"caracteres especiales."
+
+#: FontEsin/static/js/djangojs-catalog.js static/adminlte/js/no_emoji.js
+msgid "Date of Birth cannot be in the future."
+msgstr "La fecha de nacimiento no puede ser en el futuro."
+
+#: FontEsin/static/js/djangojs-catalog.js static/adminlte/js/no_emoji.js
+msgid "Emojis are not allowed in phone number."
+msgstr "No se permiten emojis en el número de teléfono."
+
+#: FontEsin/static/js/djangojs-catalog.js static/adminlte/js/no_emoji.js
+msgid "Phone number can only contain digits, spaces, +, -, ( and )."
+msgstr ""
+"El número de teléfono solo puede contener dígitos, espacios, +, -, (y)."
+
+#: FontEsin/static/js/djangojs-catalog.js static/adminlte/js/no_emoji.js
+msgid "Emojis are not allowed in website URL."
+msgstr "No se permiten emojis en la URL del sitio web."
+
+#: FontEsin/static/js/djangojs-catalog.js static/adminlte/js/no_emoji.js
+msgid "Website URL contains invalid characters."
+msgstr "La URL del sitio web contiene caracteres no válidos."
+
+#: FontEsin/static/js/djangojs-catalog.js static/adminlte/js/no_emoji.js
+msgid "Enter a valid website URL (e.g. https://yourcompany.com)."
+msgstr ""
+"Ingrese una URL de sitio web válida (por ejemplo, https://suempresa.com)."
+
+#: FontEsin/static/js/djangojs-catalog.js static/adminlte/js/no_emoji.js
+msgid "Emojis are not allowed in LinkedIn URL."
+msgstr "Los emojis no están permitidos en la URL de LinkedIn."
+
+#: FontEsin/static/js/djangojs-catalog.js static/adminlte/js/no_emoji.js
+msgid "LinkedIn URL contains invalid characters."
+msgstr "La URL de LinkedIn contiene caracteres no válidos."
+
+#: FontEsin/static/js/djangojs-catalog.js static/adminlte/js/no_emoji.js
+msgid "Enter a valid LinkedIn URL (e.g. https://linkedin.com/in/username)."
+msgstr ""
+"Ingrese una URL de LinkedIn válida (por ejemplo, "
+"https://linkedin.com/in/username)."
+
+#: FontEsin/static/js/djangojs-catalog.js static/adminlte/js/no_emoji.js
+msgid "Emojis are not allowed."
+msgstr "No se permiten emojis."
+
+#: FontEsin/static/js/djangojs-catalog.js
+msgid "Unable to start verification session."
+msgstr "No se puede iniciar la sesión de verificación."
+
+#: FontEsin/static/js/djangojs-catalog.js
+msgid "Please complete all required fields."
+msgstr "Por favor complete todos los campos requeridos."
+
+#: FontEsin/static/js/djangojs-catalog.js
+msgid ""
+"First name must contain only letters. Digits and emojis are not allowed."
+msgstr ""
+"El nombre debe contener sólo letras. No se permiten dígitos ni emojis."
+
+#: FontEsin/static/js/djangojs-catalog.js
+msgid ""
+"Last name must contain only letters. Digits and emojis are not allowed."
+msgstr ""
+"El apellido debe contener solo letras. No se permiten dígitos ni emojis."
+
+#: FontEsin/static/js/djangojs-catalog.js
+msgid "Enter a valid email address (e.g. john@company.com)."
+msgstr ""
+"Introduzca una dirección de correo electrónico válida (por ejemplo, "
+"john@company.com)."
+
+#: FontEsin/static/js/djangojs-catalog.js
+msgid "Please select your country."
+msgstr "Por favor seleccione su país."
+
+#: FontEsin/static/js/djangojs-catalog.js
+msgid "Phone number must contain only digits."
+msgstr "El número de teléfono debe contener solo dígitos."
+
+#: FontEsin/static/js/djangojs-catalog.js
+msgid "Phone number for %(country)s must be %(min)s-%(max)s digits."
+msgstr ""
+"El número de teléfono para %(country)s debe tener %(min)s-%(max)s dígitos."
+
+#: FontEsin/static/js/djangojs-catalog.js
+msgid "Phone number for %(country)s must be %(min)s digits."
+msgstr "El número de teléfono para %(country)s debe tener %(min)s dígitos."
+
+#: FontEsin/static/js/djangojs-catalog.js
+msgid "Password must be at least 8 characters."
+msgstr "La contraseña debe tener al menos 8 caracteres."
+
+#: FontEsin/static/js/djangojs-catalog.js
+msgid "Password must include at least one letter and one number."
+msgstr "La contraseña debe incluir al menos una letra y un número."
+
+#: FontEsin/static/js/djangojs-catalog.js
+msgid "Passwords do not match."
+msgstr "Las contraseñas no coinciden."
+
+#: FontEsin/static/js/djangojs-catalog.js
+msgid ""
+"This email is already registered. Please log in or use a different email."
+msgstr ""
+"Este correo electrónico ya está registrado. Por favor inicie sesión o "
+"utilice un correo electrónico diferente."
+
+#: FontEsin/static/js/djangojs-catalog.js
+msgid "Please select a role before continuing."
+msgstr "Seleccione un rol antes de continuar."
+
+#: FontEsin/static/js/djangojs-catalog.js
+msgid "Please select a company before continuing."
+msgstr "Seleccione una empresa antes de continuar."
+
+#: FontEsin/static/js/djangojs-catalog.js
+msgid "You must agree to the Terms of Service."
+msgstr "Debe aceptar los Términos de servicio."
+
+#: FontEsin/static/js/djangojs-catalog.js
+msgid "You must consent to GDPR data processing."
+msgstr "Debe dar su consentimiento para el procesamiento de datos del RGPD."
+
+#: templates\auth\verify_otp.html
+msgctxt "auth.verify_otp"
+msgid "Resend"
+msgstr "Reenviar"
+
+#: templates\auth\verify_otp.html
+msgctxt "auth.verify_otp"
+msgid "Resend in __SECONDS__s"
+msgstr "Reenviar en __SECONDS__s"
+
+#: templates\auth\verify_otp.html
+msgctxt "auth.verify_otp"
+msgid "Please wait __SECONDS__s before requesting another code."
+msgstr "Espere __SECONDS__s antes de solicitar otro código."
+
+#: phase8 accounts/view/website.py
+msgid "Company Certification"
+msgstr "Certificación de la empresa"
+
+#: phase8 accounts/view/website.py
+msgid "Downgrading to a lower paid plan isn't supported yet. "
+msgstr "Aún no se admite la degradación a un plan con pago inferior."
+
+#: phase8 accounts/view/website.py
+msgid "Geographic Access Scope"
+msgstr "Ámbito de acceso geográfico"
+
+#: phase8 accounts/view/website.py
+msgid "Invalid plan selected"
+msgstr "Plan seleccionado no válido"
+
+#: phase8 accounts/view/website.py
+msgid "Invoice not found"
+msgstr "Factura no encontrada"
+
+#: phase8 accounts/view/website.py
+msgid "Messaging"
+msgstr "Mensajería"
+
+#: phase8 accounts/view/website.py
+msgid "Partnerships"
+msgstr "Asociaciones"
+
+#: phase8 accounts/view/website.py
+msgid "Please agree to the Privacy Policy before sending your message."
+msgstr ""
+"Por favor acepte la Política de Privacidad antes de enviar su mensaje."
+
+#: phase8 accounts/view/website.py
+msgid "Please fill in all required fields (marked with *)."
+msgstr "Complete todos los campos obligatorios (marcados con *)."
+
+#: phase8 accounts/view/website.py
+msgid "Profile Visibility"
+msgstr "Visibilidad del perfil"
+
+#: phase8 accounts/view/website.py
+msgid "Saving Databases"
+msgstr "Guardar bases de datos"
+
+#: phase8 accounts/view/website.py
+msgid "Search Scope"
+msgstr "Alcance de la búsqueda"
+
+#: phase8 accounts/view/website.py
+msgid ""
+"Thanks for reaching out! Your message has been sent — our team will get back"
+" to you shortly."
+msgstr ""
+"¡Gracias por comunicarte! Su mensaje ha sido enviado; nuestro equipo se "
+"comunicará con usted en breve."
+
+#: phase8 accounts/view/website.py
+msgid "You're already on the %(plan)s plan."
+msgstr "Ya estás en el plan %(plan)s."
+
+#: phase8 accounts/view/website.py
+msgid "You're already on the Free plan."
+msgstr "Ya estás en el plan gratuito."
+
+#: phase8 accounts/view/website.py
+msgid "Your %(plan)s plan was deactivated by the admin. "
+msgstr "El administrador desactivó su plan %(plan)s."
+
+#: phase8 accounts/view/website.py
+msgid ""
+"Your plan has been changed to Free. Your %(plan)s plan has been cancelled."
+msgstr ""
+"Su plan ha sido cambiado a Gratis. Su plan %(plan)s ha sido cancelado."
+
+#: phase8 accounts/view/website.py
+msgid "Your upgrade to the %(plan)s plan is already pending admin approval."
+msgstr ""
+"Su actualización al plan %(plan)s ya está pendiente de aprobación del "
+"administrador."
+
+#: phase8 accounts/view/website.py
+msgid "Your upgrade to the %(plan)s plan is pending admin approval. "
+msgstr ""
+"Su actualización al plan %(plan)s está pendiente de la aprobación del "
+"administrador."
+
+#: phase8 templates/website/invoice.html
+msgctxt "common"
+msgid "Email"
+msgstr "Correo electrónico"
+
+#: phase8 templates/website/invoice.html
+msgctxt "common"
+msgid "Name"
+msgstr "Nombre"
+
+#: phase8 templates/website/invoice.html
+msgctxt "common"
+msgid "Status"
+msgstr "Estado"
+
+#: phase8 templates/website/contact.html
+msgctxt "common"
+msgid "Subject"
+msgstr "Sujeto"
+
+#: phase8 static/adminlte/manifest.json
+msgctxt "pwa"
+msgid "Browse company database"
+msgstr "Explorar la base de datos de la empresa"
+
+#: phase8 static/adminlte/manifest.json
+msgctxt "pwa"
+msgid "Companies"
+msgstr "Empresas"
+
+#: phase8 static/adminlte/manifest.json
+msgctxt "pwa"
+msgid "Dashboard"
+msgstr "Panel"
+
+#: phase8 static/adminlte/manifest.json
+msgctxt "pwa"
+msgid "Dashboard on desktop"
+msgstr "Panel de control en el escritorio"
+
+#: phase8 static/adminlte/manifest.json
+msgctxt "pwa"
+msgid "Dashboard on mobile"
+msgstr "Panel de control en el móvil"
+
+#: phase8 static/adminlte/manifest.json
+msgctxt "pwa"
+msgid "FONTESIN – Global Business Platform"
+msgstr "FONTESIN – Plataforma Global de Negocios"
+
+#: phase8 static/adminlte/manifest.json
+msgctxt "pwa"
+msgid ""
+"Global business infrastructure platform connecting franchise partners, "
+"consultants and companies across Europe, MENA and APAC."
+msgstr ""
+"Plataforma de infraestructura empresarial global que conecta socios de "
+"franquicia, consultores y empresas de toda Europa, MENA y APAC."
+
+#: phase8 static/adminlte/manifest.json
+msgctxt "pwa"
+msgid "Messages"
+msgstr "Mensajes"
+
+#: phase8 static/adminlte/manifest.json
+msgctxt "pwa"
+msgid "Open messages"
+msgstr "Mensajes abiertos"
+
+#: phase8 static/adminlte/manifest.json
+msgctxt "pwa"
+msgid "Open the main dashboard"
+msgstr "Abra el panel principal"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "${{ price }} / month"
+msgstr "${{ price }} / mes"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "${{ price }} / year"
+msgstr "${{ price }} / año"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "(frozen at invoice creation)"
+msgstr "(congelado en el momento de la creación de la factura)"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "177+ countries mapped, 10 active regions, expanding annually."
+msgstr "Más de 177 países mapeados, 10 regiones activas, en expansión anual."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "3+ years B2B SaaS PM experience"
+msgstr "Más de 3 años de experiencia en gestión de proyectos B2B SaaS"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "3+ years franchise or B2B sales experience"
+msgstr "Más de 3 años de experiencia en franquicias o ventas B2B"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "4+ years React experience"
+msgstr "Más de 4 años de experiencia en React"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "5+ years Python experience"
+msgstr "Más de 5 años de experiencia en Python"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "5+ years business experience in the Gulf region"
+msgstr "Más de 5 años de experiencia empresarial en la región del Golfo."
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "9:00 AM – 6:00 PM EST"
+msgstr "9:00 a. m. a 6:00 p. m. hora del Este"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid ""
+"A cross-functional team of business leaders, strategists, and regional "
+"experts united by a common vision of global business freedom."
+msgstr ""
+"Un equipo multifuncional de líderes empresariales, estrategas y expertos "
+"regionales unidos por una visión común de libertad empresarial global."
+
+#: phase8 templates/website/worldmap.html
+msgctxt "website"
+msgid ""
+"A deep-tech global business infrastructure platform connecting companies, "
+"professionals, and markets across languages, borders, and systems."
+msgstr ""
+"Una plataforma de infraestructura empresarial global de alta tecnología que "
+"conecta empresas, profesionales y mercados a través de idiomas, fronteras y "
+"sistemas."
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid ""
+"A final VAT invoice will be issued and sent to your registered email "
+"address."
+msgstr ""
+"Se emitirá una factura final con IVA y se enviará a su dirección de correo "
+"electrónico registrada."
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "ABA Routing Number"
+msgstr "Número de ruta ABA"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "AI / ML Engineer"
+msgstr "Ingeniero de IA/ML"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "AI Integration"
+msgstr "Integración de IA"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "AI-Powered"
+msgstr "Impulsado por IA"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "AI-Powered Matching"
+msgstr "Emparejamiento impulsado por IA"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid ""
+"AI-powered matching, multilingual platform, partnership network, billing "
+"engine, and regional expansion."
+msgstr ""
+"Emparejamiento impulsado por IA, plataforma multilingüe, red de socios, "
+"motor de facturación y expansión regional."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "API design for AI services"
+msgstr "Diseño de API para servicios de IA"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "AWS or GCP"
+msgstr "AWS o GCP"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "About"
+msgstr "Acerca de"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "About FONTESIN"
+msgstr "Acerca de FONTESIN"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "About Us"
+msgstr "Sobre nosotros"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "Access Model"
+msgstr "Modelo de acceso"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid ""
+"Access to all countries. One active country tenant per session. Full "
+"platform capabilities."
+msgstr ""
+"Acceso a todos los países. Un inquilino de campo activo por sesión. "
+"Capacidades completas de plataforma."
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid ""
+"Access to defined regions. One active country tenant per session. Advanced "
+"filters."
+msgstr ""
+"Acceso a regiones definidas. Un inquilino de campo activo por sesión. "
+"Filtros avanzados."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Accessibility standards"
+msgstr "Estándares de accesibilidad"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Account Info"
+msgstr "Información de cuenta"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Account Kind"
+msgstr "Tipo de cuenta"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "Activate Free Account →"
+msgstr "Activar cuenta gratuita →"
+
+#: phase8 templates/website/_world_map.html
+msgctxt "website"
+msgid "Active"
+msgstr "Activo"
+
+#: phase8 templates/website/worldmap.html
+msgctxt "website"
+msgid "Active &amp; Planned Regions"
+msgstr "Activo y activo Regiones planificadas"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "Active Region"
+msgstr "Región activa"
+
+#: phase8 templates/website/worldmap.html
+msgctxt "website"
+msgid "Active Regions"
+msgstr "Regiones activas"
+
+#: phase8 templates/website/worldmap.html
+msgctxt "website"
+msgid "Active · Year 1"
+msgstr "Activo · Año 1"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Address"
+msgstr "DIRECCIÓN"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Agile / Scrum methodology"
+msgstr "Metodología ágil / Scrum"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Amount"
+msgstr "Cantidad"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Annual (12 months)"
+msgstr "Anual (12 meses)"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Apply Now"
+msgstr "Aplicar ahora"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "Apply for Pioneer Status"
+msgstr "Solicite el estatus de pionero"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Apply for This Position"
+msgstr "Solicite este puesto"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Arabic language (preferred)"
+msgstr "Idioma árabe (preferiblemente)"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "B2B SaaS · Agile · Jira"
+msgstr "B2B SaaS · Ágil · Jira"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "B2B platform design experience"
+msgstr "Experiencia en diseño de plataformas B2B."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "B2B sales experience"
+msgstr "Experiencia en ventas B2B"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "BANK TRANSFER DETAILS"
+msgstr "DETALLES DE LA TRANSFERENCIA BANCARIA"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Back to Login Page"
+msgstr "Volver a la página de inicio de sesión"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Bank Address"
+msgstr "Dirección del banco"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Bank Name"
+msgstr "Nombre del banco"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid ""
+"Be among the first 200 founding members co-creating the future of global "
+"business infrastructure."
+msgstr ""
+"Estar entre los primeros 200 miembros fundadores que cocrean el futuro de la"
+" infraestructura empresarial global."
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "Become a Pioneer Member"
+msgstr "Conviértete en un miembro pionero"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Beneficiary Address"
+msgstr "Dirección del beneficiario"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Beneficiary Name"
+msgstr "Nombre del beneficiario"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "Best for:"
+msgstr "Lo mejor para:"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Billing Period"
+msgstr "Período de facturación"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid ""
+"Blockchain-anchored certification system providing verified badges, "
+"transparent audit trails, and institutional-grade data validation."
+msgstr ""
+"Sistema de certificación anclado en blockchain que proporciona insignias "
+"verificadas, pistas de auditoría transparentes y validación de datos de "
+"nivel institucional."
+
+#: phase8 templates/website/worldmap.html
+msgctxt "website"
+msgid "Brazil"
+msgstr "Brasil"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid ""
+"Build the user-facing platform including the interactive world map, company "
+"database UI, onboarding flows, and admin dashboards. You will work closely "
+"with the product and design team."
+msgstr ""
+"Cree la plataforma orientada al usuario que incluye el mapa mundial "
+"interactivo, la interfaz de usuario de la base de datos de la empresa, los "
+"flujos de incorporación y los paneles de administración. Trabajará en "
+"estrecha colaboración con el equipo de producto y diseño."
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "Built for Global Business Operations"
+msgstr "Creado para operaciones comerciales globales"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Business"
+msgstr "Negocio"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Business &amp; Regional"
+msgstr "Negocios &amp; Regionales"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Business Consultant (Freelance Network)"
+msgstr "Consultor de Negocios (Red Freelance)"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Business Development Manager – Franchise"
+msgstr "Gerente de Desarrollo de Negocios – Franquicias"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Business consulting experience"
+msgstr "Experiencia en consultoría empresarial."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Business development experience"
+msgstr "Experiencia en desarrollo empresarial."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "CI/CD (GitHub Actions / GitLab)"
+msgstr "CI/CD (Acciones de GitHub / GitLab)"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "COO &amp; Co-Founder"
+msgstr "Director de Operaciones &amp; Cofundador"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "CRM proficiency"
+msgstr "Competencia en CRM"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "CZ · SK · AT · PL"
+msgstr "CZ · SK · AT · PL"
+
+#: phase8 templates/website/worldmap.html
+msgctxt "website"
+msgid "Canada"
+msgstr "Canadá"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Careers"
+msgstr "Carreras"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Chief Executive Officer"
+msgstr "Director ejecutivo"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Choose Plan"
+msgstr "Elige Plan"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "Choose Your License"
+msgstr "Elija su licencia"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "Choose Your Membership Plan"
+msgstr "Elija su plan de membresía"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "Choose Your Plan"
+msgstr "Elige tu plan"
+
+#: phase8 templates/website/worldmap.html
+msgctxt "website"
+msgid "Click a highlighted country for details"
+msgstr "Haga clic en un país resaltado para obtener más detalles"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid ""
+"Click any region to view detailed economic data, legal business forms, "
+"credit ratings, and franchise availability."
+msgstr ""
+"Haga clic en cualquier región para ver datos económicos detallados, "
+"formularios comerciales legales, calificaciones crediticias y disponibilidad"
+" de franquicias."
+
+#: phase8 templates/website/_world_map.html
+msgctxt "website"
+msgid "Click for details →"
+msgstr "Haga clic para obtener más detalles →"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Close"
+msgstr "Cerca"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Co-Founder"
+msgstr "Cofundador"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Company"
+msgstr "Compañía"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "Company Database"
+msgstr "Base de datos de la empresa"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Company Name"
+msgstr "nombre de empresa"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Complete Your Bank Transfer"
+msgstr "Complete su transferencia bancaria"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Confirmation"
+msgstr "Confirmación"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Consultant Application"
+msgstr "Solicitud de consultor"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Consulting"
+msgstr "Consultante"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Contact"
+msgstr "Contacto"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Contact Information"
+msgstr "Información del contacto"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "Continue to Payment"
+msgstr "Continuar con el pago"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "Continue to Payment →"
+msgstr "Continuar a Pago →"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Contract"
+msgstr "Contrato"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Contract · Dubai / Remote"
+msgstr "Contrato · Dubai / Remoto"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Contract · Remote"
+msgstr "Contrato · Remoto"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid ""
+"Converted from {{ source_amount }} {{ source_currency }} at rate 1 {{ "
+"source_currency }} = {{ rate }} {{ display_curr }}"
+msgstr ""
+"Convertido de {{ source_amount }} {{ source_currency }} a tasa 1 {{ "
+"source_currency }} = {{ rate }} {{ display_curr }}"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Copied:"
+msgstr "Copiado:"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Copy"
+msgstr "Copiar"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid ""
+"Core communication, company registration, certification system, world map, "
+"and basic licensing model."
+msgstr ""
+"Comunicación central, registro de empresas, sistema de certificación, mapa "
+"mundial y modelo básico de licencia."
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Countries Mapped"
+msgstr "Países mapeados"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Currency"
+msgstr "Divisa"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Current Opportunities"
+msgstr "Oportunidades actuales"
+
+#: phase8 templates/website/worldmap.html
+msgctxt "website"
+msgid "Czech Republic"
+msgstr "República Checa"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Czech or Slovak language (native)"
+msgstr "Idioma checo o eslovaco (nativo)"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Data pipeline experience"
+msgstr "Experiencia en canalización de datos"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Data visualization design"
+msgstr "Diseño de visualización de datos."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Data-driven decision making"
+msgstr "Toma de decisiones basada en datos"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Database replication"
+msgstr "Replicación de bases de datos"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Design"
+msgstr "Diseño"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid ""
+"Design and refine the FONTESIN user experience across web and mobile. Work "
+"within the established brand guidelines to create clear, minimal, and "
+"globally usable interfaces."
+msgstr ""
+"Diseñe y perfeccione la experiencia del usuario de FONTESIN en la web y en "
+"dispositivos móviles. Trabaje dentro de las pautas de marca establecidas "
+"para crear interfaces claras, mínimas y utilizables globalmente."
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Design by Memento Mori Digital LLC"
+msgstr "Diseño de Memento Mori Digital LLC"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Design systems experience"
+msgstr "Experiencia en diseño de sistemas."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "DevOps / Infrastructure Engineer"
+msgstr "Ingeniero DevOps / Infraestructura"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid ""
+"Develop and integrate AI features including intelligent company matching, "
+"multilingual content translation, and business potential scoring algorithms."
+msgstr ""
+"Desarrolle e integre funciones de IA que incluyen emparejamiento inteligente"
+" de empresas, traducción de contenido multilingüe y algoritmos de puntuación"
+" de potencial comercial."
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Development Roadmap"
+msgstr "Hoja de ruta de desarrollo"
+
+#: phase8 static/adminlte/js/sw.js
+msgctxt "website"
+msgid "Dismiss"
+msgstr "Despedir"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Docker / Kubernetes"
+msgstr "Docker/Kubernetes"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Don't See Your Role?"
+msgstr "¿No ves tu papel?"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid ""
+"Drive FONTESIN's expansion into UAE, Saudi Arabia, and Qatar. Establish "
+"local partnerships, manage franchise inquiries, and coordinate with HQ on "
+"regional activation."
+msgstr ""
+"Impulsar la expansión de FONTESIN a Emiratos Árabes Unidos, Arabia Saudita y"
+" Qatar. Establezca asociaciones locales, gestione consultas sobre "
+"franquicias y coordine con la sede central la activación regional."
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid ""
+"Drives the overall vision and strategic direction of FONTESIN. Brings "
+"extensive experience in global business development and executive leadership"
+" across international markets."
+msgstr ""
+"Impulsa la visión general y la dirección estratégica de FONTESIN. Aporta una"
+" amplia experiencia en desarrollo de negocios globales y liderazgo ejecutivo"
+" en mercados internacionales."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Dubai / Remote"
+msgstr "Dubái / Remoto"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Due Date"
+msgstr "Fecha de vencimiento"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Email Address"
+msgstr "Dirección de correo electrónico"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Engineering"
+msgstr "Ingeniería"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "English proficiency"
+msgstr "dominio del ingles"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Entrepreneurial mindset"
+msgstr "Mentalidad emprendedora"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid ""
+"Every country operates as an isolated data tenant. Licenses define access "
+"rights. No cross-tenant data leakage — ever."
+msgstr ""
+"Cada país opera como un inquilino de datos aislado. Las licencias definen "
+"los derechos de acceso. Ninguna fuga de datos entre inquilinos, nunca."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Excellent presentation skills"
+msgstr "Excelentes habilidades de presentación."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Experience with marketplace or network products"
+msgstr "Experiencia con productos de mercado o de red."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Experience with multi-tenant SaaS"
+msgstr "Experiencia con SaaS multiinquilino"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "Explore Our Active Markets"
+msgstr "Explore nuestros mercados activos"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "Explore World Map"
+msgstr "Explorar el mapa mundial"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "FONTESIN Global Business Intelligence Platform"
+msgstr "FONTESIN Plataforma Global de Inteligencia de Negocios"
+
+#: phase8 templates/website/worldmap.html
+msgctxt "website"
+msgid "FONTESIN Global Region Control"
+msgstr "FONTESIN Control de Región Global"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "FONTESIN Headquarters · One World Trade Center, New York"
+msgstr "Sede FONTESIN · One World Trade Center, Nueva York"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid ""
+"FONTESIN is a deep-tech communication and certification platform connecting "
+"companies, professionals, and markets across languages, borders, and "
+"systems."
+msgstr ""
+"FONTESIN es una plataforma de certificación y comunicación de alta "
+"tecnología que conecta empresas, profesionales y mercados a través de "
+"idiomas, fronteras y sistemas."
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid ""
+"FONTESIN is a deep-tech communication and certification platform designed to"
+" create a trusted, decentralized infrastructure for business. We connect "
+"companies, professionals, and markets across languages, borders, and "
+"systems."
+msgstr ""
+"FONTESIN es una plataforma de certificación y comunicación de alta "
+"tecnología diseñada para crear una infraestructura descentralizada y "
+"confiable para las empresas. Conectamos empresas, profesionales y mercados a"
+" través de idiomas, fronteras y sistemas."
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid ""
+"FONTESIN is a deep-tech global business infrastructure platform connecting "
+"companies, professionals, and markets across borders."
+msgstr ""
+"FONTESIN es una plataforma de infraestructura empresarial global de alta "
+"tecnología que conecta empresas, profesionales y mercados a través de "
+"fronteras."
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid ""
+"FONTESIN provides a structured, verified, and scalable infrastructure for "
+"companies and professionals operating across international markets."
+msgstr ""
+"FONTESIN proporciona una infraestructura estructurada, verificada y "
+"escalable para empresas y profesionales que operan en mercados "
+"internacionales."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "FastAPI or similar async framework"
+msgstr "FastAPI o marco asíncrono similar"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "Feature"
+msgstr "Característica"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Figma proficiency"
+msgstr "competencia en figma"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Figma · Design Systems"
+msgstr "Figma · Sistemas de diseño"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Fintech or tech industry background"
+msgstr "Experiencia en tecnología financiera o industria tecnológica"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "First Name"
+msgstr "Nombre de pila"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "Forever free"
+msgstr "libre para siempre"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Four Pillars of FONTESIN"
+msgstr "Cuatro Pilares de FONTESIN"
+
+#: phase8 templates/website/worldmap.html
+msgctxt "website"
+msgid "France"
+msgstr "Francia"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Franchise & Partners"
+msgstr "Franquicia y socios"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Franchise Inquiry"
+msgstr "Consulta de franquicia"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Franchise industry knowledge"
+msgstr "Conocimiento de la industria de franquicias."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Franchise · B2B · Sales"
+msgstr "Franquicia · B2B · Ventas"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Free zone company setup experience"
+msgstr "Experiencia en instalación de empresa en zona franca."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Freelance"
+msgstr "Independiente"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Freelance · Remote · Multiple Regions"
+msgstr "Freelance · Remoto · Múltiples Regiones"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid ""
+"From free exploration to full global access — FONTESIN scales with your "
+"ambitions."
+msgstr ""
+"Desde la exploración gratuita hasta el acceso global total: FONTESIN crece "
+"según sus ambiciones."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Frontend Engineer (React / TypeScript)"
+msgstr "Ingeniero Frontend (React/TypeScript)"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid ""
+"Full access to one country tenant. Unlimited saved selections. Company "
+"details visible."
+msgstr ""
+"Acceso completo a un inquilino de país. Selecciones guardadas ilimitadas. "
+"Detalles de la empresa visibles."
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid ""
+"Full global deployment, tokenized rewards, franchise ecosystem, and "
+"decentralized certification layer."
+msgstr ""
+"Implementación global completa, recompensas tokenizadas, ecosistema de "
+"franquicia y capa de certificación descentralizada."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Full-time"
+msgstr "Jornada completa"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Full-time · Prague / Remote"
+msgstr "Tiempo completo · Praga / Remoto"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Full-time · Remote"
+msgstr "Tiempo completo · Remoto"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "General Inquiry"
+msgstr "Consulta general"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "German or Czech language a plus"
+msgstr "Idioma alemán o checo un plus."
+
+#: phase8 templates/website/worldmap.html
+msgctxt "website"
+msgid "Germany"
+msgstr "Alemania"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Germany Region"
+msgstr "Región de Alemania"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Get In Touch"
+msgstr "Ponte en contacto"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Get Started"
+msgstr "Empezar"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "Get Started Free"
+msgstr "Comience gratis"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid ""
+"Get in touch with FONTESIN. Contact us for franchise inquiries, "
+"partnerships, investor relations, or general questions."
+msgstr ""
+"Póngase en contacto con FONTESIN. Contáctenos para consultas sobre "
+"franquicias, asociaciones, relaciones con inversionistas o preguntas "
+"generales."
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "Global Business"
+msgstr "Negocios globales"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "Global Business Infrastructure Platform"
+msgstr "Plataforma de infraestructura empresarial global"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Global Business Intelligence Platform"
+msgstr "Plataforma global de inteligencia empresarial"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Global Impact"
+msgstr "Impacto global"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Global Neutrality"
+msgstr "Neutralidad global"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Global Reach"
+msgstr "Alcance global"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "Global Region Control"
+msgstr "Control de región global"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Global Rollout"
+msgstr "Lanzamiento global"
+
+#: phase8 templates/website/upgrade_required.html
+msgctxt "website"
+msgid "Go Back"
+msgstr "Volver"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Go to Dashboard"
+msgstr "Ir al panel"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Headquarters"
+msgstr "Sede"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Home"
+msgstr "Hogar"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid ""
+"I agree to the processing of my personal data in accordance with FONTESIN's "
+"Privacy Policy."
+msgstr ""
+"Acepto el tratamiento de mis datos personales de acuerdo con la Política de "
+"Privacidad de FONTESIN."
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "INVOICE DETAILS"
+msgstr "DETALLES DE LA FACTURA"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid ""
+"Identify, qualify, and onboard Master Franchise partners across target "
+"regions. Manage the full franchise sales cycle from initial inquiry to "
+"contract signing."
+msgstr ""
+"Identifique, califique e incorpore socios de Master Franchise en las "
+"regiones objetivo. Gestione el ciclo completo de ventas de la franquicia "
+"desde la consulta inicial hasta la firma del contrato."
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Identity Verified"
+msgstr "Identidad verificada"
+
+#: phase8 templates/website/worldmap.html
+msgctxt "website"
+msgid "India"
+msgstr "India"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Infrastructure"
+msgstr "Infraestructura"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid ""
+"Intelligent algorithms match companies, consultants, and franchise "
+"opportunities based on sector, region, and business profile."
+msgstr ""
+"Los algoritmos inteligentes relacionan empresas, consultores y oportunidades"
+" de franquicia según el sector, la región y el perfil comercial."
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Intelligent matching, multilingual support, automated data ingestion."
+msgstr ""
+"Coincidencia inteligente, soporte multilingüe, ingesta de datos "
+"automatizada."
+
+#: phase8 templates/website/worldmap.html
+msgctxt "website"
+msgid ""
+"Interactive world map showing FONTESIN active, planned, and inactive regions"
+" across the globe."
+msgstr ""
+"Mapa mundial interactivo que muestra las regiones activas, planificadas e "
+"inactivas de FONTESIN en todo el mundo."
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid ""
+"Interactive world map with live region status — Active, Planned, and "
+"Inactive markets. Direct entry point for investors, franchisees, and "
+"partners."
+msgstr ""
+"Mapa mundial interactivo con estado de región en vivo: mercados activos, "
+"planificados e inactivos. Punto de entrada directo para inversores, "
+"franquiciados y socios."
+
+#: phase8 templates/website/worldmap.html
+msgctxt "website"
+msgid "Interested in activating your region?"
+msgstr "¿Interesado en activar su región?"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Interested in becoming a Master Franchise or regional partner?"
+msgstr ""
+"¿Está interesado en convertirse en Master Franquicia o socio regional?"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "International business experience"
+msgstr "Experiencia en negocios internacionales"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "International market experience"
+msgstr "Experiencia en el mercado internacional"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Investor Relations"
+msgstr "Relaciones con inversores"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Invoice Number"
+msgstr "Número de factura"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Issue Date"
+msgstr "Fecha de asunto"
+
+#: phase8 templates/website/worldmap.html
+msgctxt "website"
+msgid "Japan"
+msgstr "Japón"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Jira proficiency"
+msgstr "Competencia con Jira"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Join Our Team"
+msgstr "Únase a nuestro equipo"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid ""
+"Join at the ground floor. Shape the product, the culture, and the direction "
+"of a deep-tech platform from day one. Pioneer equity available."
+msgstr ""
+"Únase en la planta baja. Dé forma al producto, la cultura y la dirección de "
+"una plataforma de tecnología profunda desde el primer día. Capital pionero "
+"disponible."
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Join the FONTESIN Movement"
+msgstr "Únete al Movimiento FONTESIN"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid ""
+"Join the FONTESIN consultant network as an independent business advisor. "
+"Help local companies get verified, certified, and connected to the global "
+"platform."
+msgstr ""
+"Únase a la red de consultores FONTESIN como asesor empresarial "
+"independiente. Ayude a las empresas locales a obtener la verificación, la "
+"certificación y la conexión a la plataforma global."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid ""
+"Join the FONTESIN team. We are looking for engineers, product managers, "
+"regional coordinators, and business development professionals."
+msgstr ""
+"Únete al equipo de FONTESIN. Buscamos ingenieros, gerentes de producto, "
+"coordinadores regionales y profesionales de desarrollo empresarial."
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "Join the Movement"
+msgstr "Únase al movimiento"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "KYC-verified users, certified companies, auditable data."
+msgstr ""
+"Usuarios verificados por KYC, empresas certificadas, datos auditables."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Knowledge of ABAC security models"
+msgstr "Conocimiento de los modelos de seguridad ABAC."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Kubernetes (EKS/GKE)"
+msgstr "Kubernetes (EKS/GKE)"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Kubernetes · AWS · CI/CD"
+msgstr "Kubernetes · AWS · CI/CD"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "LLM integration (OpenAI / Anthropic)"
+msgstr "Integración LLM (OpenAI / Antrópico)"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "LLM · Python · NLP"
+msgstr "LLM · Python · PNL"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Last Name"
+msgstr "Apellido"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid ""
+"Lead FONTESIN's market activation and franchise development across Czech "
+"Republic, Slovakia, Austria, and Poland. Build and manage the local "
+"consultant network."
+msgstr ""
+"Liderar la activación de mercado y el desarrollo de franquicias de FONTESIN "
+"en República Checa, Eslovaquia, Austria y Polonia. Construir y gestionar la "
+"red de consultores locales."
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Leadership"
+msgstr "Liderazgo"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid ""
+"Leads FONTESIN's regional expansion and partner activation in Germany. "
+"Bridges the Central European business community with the global FONTESIN "
+"network."
+msgstr ""
+"Lidera la expansión regional y activación de socios de FONTESIN en Alemania."
+" Une la comunidad empresarial de Europa Central con la red global FONTESIN."
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "Learn About Us"
+msgstr "Aprenda sobre nosotros"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid ""
+"Learn about FONTESIN – our mission, team, values, and vision for global "
+"business infrastructure."
+msgstr ""
+"Conozca más sobre FONTESIN: nuestra misión, equipo, valores y visión para la"
+" infraestructura empresarial global."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Legal background a plus"
+msgstr "Antecedentes legales una ventaja"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Legal entity registration experience"
+msgstr "Experiencia en registro de personas jurídicas."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Legal or financial advisory background"
+msgstr "Experiencia en asesoría legal o financiera."
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "License Tiers"
+msgstr "Niveles de licencia"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "Live Global Expansion Map"
+msgstr "Mapa de expansión global en vivo"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Local market knowledge"
+msgstr "Conocimiento del mercado local."
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Looking for investment opportunities or financial information?"
+msgstr "¿Busca oportunidades de inversión o información financiera?"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "MVP Launch"
+msgstr "Lanzamiento del MVP"
+
+#: phase8 templates/website/_world_map.html
+msgctxt "website"
+msgid "Map loading..."
+msgstr "Cargando mapa..."
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Media inquiries, press releases, and interview requests."
+msgstr ""
+"Consultas de medios, comunicados de prensa y solicitudes de entrevistas."
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "Menu"
+msgstr "Menú"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Message"
+msgstr "Mensaje"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Microservices architecture"
+msgstr "Arquitectura de microservicios"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid ""
+"Minimalism supports scalability and global usability. Complex systems should"
+" feel simple to use — that is the hardest engineering challenge we embrace."
+msgstr ""
+"El minimalismo respalda la escalabilidad y la usabilidad global. Los "
+"sistemas complejos deben parecer fáciles de usar; ese es el desafío de "
+"ingeniería más difícil que aceptamos."
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Monday – Friday"
+msgstr "Lunes – Viernes"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Monitoring (Prometheus / Grafana)"
+msgstr "Monitoreo (Prometheus / Grafana)"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Monthly (1 month)"
+msgstr "Mensual (1 mes)"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "More regions coming soon."
+msgstr "Más regiones próximamente."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Motion design"
+msgstr "diseño de movimiento"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Multi-region deployment"
+msgstr "Implementación multirregional"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Multilingual NLP"
+msgstr "PNL multilingüe"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Multiple Regions"
+msgstr "Varias regiones"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Must be included in payment reference"
+msgstr "Debe incluirse en la referencia de pago."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "NLP and text classification"
+msgstr "PNL y clasificación de textos"
+
+#: phase8 templates/website/worldmap.html
+msgctxt "website"
+msgid "Netherlands"
+msgstr "Países Bajos"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Network in Central European business community"
+msgstr "Red en la comunidad empresarial de Europa Central"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Next.js experience"
+msgstr "Experiencia con Next.js"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Nice to Have"
+msgstr "Es bueno tenerlo"
+
+#: phase8 templates/website/worldmap.html
+msgctxt "website"
+msgid "Not Yet Available"
+msgstr "Aún no disponible"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Note:"
+msgstr "Nota:"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "OFF"
+msgstr "APAGADO"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Office Hours"
+msgstr "Horario de oficina"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid ""
+"Once your payment is completed, please wait for admin approval. You will "
+"receive a confirmation email as soon as your subscription is activated."
+msgstr ""
+"Una vez que se complete el pago, espere la aprobación del administrador. "
+"Recibirá un correo electrónico de confirmación tan pronto como se active su "
+"suscripción."
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid ""
+"One of the founding pillars of FONTESIN. Contributes to the platform's "
+"strategic development, partner network, and long-term growth architecture."
+msgstr ""
+"Uno de los pilares fundacionales de FONTESIN. Contribuye al desarrollo "
+"estratégico de la plataforma, la red de socios y la arquitectura de "
+"crecimiento a largo plazo."
+
+#: phase8 static/adminlte/js/sw.js
+msgctxt "website"
+msgid "Open"
+msgstr "Abierto"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "Open Full Interactive Map"
+msgstr "Abrir mapa interactivo completo"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Open Positions"
+msgstr "Posiciones abiertas"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Operations · Co-Founder"
+msgstr "Operaciones · Cofundador"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Our Location"
+msgstr "Nuestra Ubicación"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Our Mission"
+msgstr "Nuestra Misión"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Our Principles"
+msgstr "Nuestros principios"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Our Team"
+msgstr "Nuestro equipo"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid ""
+"Our finance team will verify your payment and activate your subscription. "
+"You will receive a confirmation email."
+msgstr ""
+"Nuestro equipo de finanzas verificará su pago y activará su suscripción. "
+"Recibirás un correo electrónico de confirmación."
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid ""
+"Our platform is not just a marketplace — it is a structured ecosystem where "
+"every participant is verified, every interaction is traceable, and every "
+"market is accessible through a single, unified interface."
+msgstr ""
+"Nuestra plataforma no es solo un mercado: es un ecosistema estructurado "
+"donde cada participante es verificado, cada interacción es rastreable y se "
+"puede acceder a cada mercado a través de una interfaz única y unificada."
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid ""
+"Our visual identity and product philosophy are built on four core principles"
+" that guide every decision we make."
+msgstr ""
+"Nuestra identidad visual y filosofía de producto se basan en cuatro "
+"principios básicos que guían cada decisión que tomamos."
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid ""
+"Oversees operational excellence and platform rollout strategy. Co-architect "
+"of the FONTESIN business model and franchise infrastructure across Central "
+"Europe and beyond."
+msgstr ""
+"Supervisa la excelencia operativa y la estrategia de implementación de la "
+"plataforma. Co-arquitecto del modelo de negocio de FONTESIN y de la "
+"infraestructura de franquicias en Europa Central y más allá."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid ""
+"Own the infrastructure, CI/CD pipelines, monitoring, and deployment of the "
+"FONTESIN platform across multiple regions. Ensure high availability and "
+"security compliance."
+msgstr ""
+"Sea propietario de la infraestructura, los canales de CI/CD, el monitoreo y "
+"la implementación de la plataforma FONTESIN en múltiples regiones. Garantice"
+" la alta disponibilidad y el cumplimiento de la seguridad."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid ""
+"Own the product roadmap for the core platform including company "
+"registration, certification, licensing, and the world map module. Work "
+"directly with engineering and the founding team."
+msgstr ""
+"Sea propietario de la hoja de ruta del producto para la plataforma central, "
+"incluido el registro de la empresa, la certificación, la concesión de "
+"licencias y el módulo de mapa mundial. Trabajar directamente con la "
+"ingeniería y el equipo fundador."
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "PAYMENT IDENTIFICATION (REQUIRED)"
+msgstr "IDENTIFICACIÓN DE PAGO (REQUERIDA)"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Paid"
+msgstr "Pagado"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "Partnership Network"
+msgstr "Red de asociación"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Partnership Request"
+msgstr "Solicitud de asociación"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Payment Confirmation (1–3 Business Days)"
+msgstr "Confirmación de pago (1 a 3 días hábiles)"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Payment Reference / Note"
+msgstr "Referencia/Nota de Pago"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Pending Payment"
+msgstr "Pago Pendiente"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Performance optimization"
+msgstr "Optimización del rendimiento"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Phase 1 · Q4 2025"
+msgstr "Fase 1 · 4T 2025"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Phase 2 · Q2 2026"
+msgstr "Fase 2 · T2 2026"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Phase 3 · Q4 2026"
+msgstr "Fase 3 · 4T 2026"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Phone"
+msgstr "Teléfono"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Phone Number"
+msgstr "Número de teléfono"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Pioneer Members"
+msgstr "Miembros pioneros"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Plan"
+msgstr "Plan"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "Plan Comparison"
+msgstr "Comparación de planes"
+
+#: phase8 templates/website/worldmap.html
+msgctxt "website"
+msgid "Planned Expansion"
+msgstr "Expansión planificada"
+
+#: phase8 templates/website/worldmap.html
+msgctxt "website"
+msgid "Planned · Year 2"
+msgstr "Planificado · Año 2"
+
+#: phase8 templates/website/worldmap.html
+msgctxt "website"
+msgid "Planned · Year 3"
+msgstr "Planificado · Año 3"
+
+#: phase8 templates/website/_world_map.html
+msgctxt "website"
+msgid "Planned – Year"
+msgstr "Planificado – Año"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "Planned – Year 2"
+msgstr "Planificado – Año 2"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "Planned – Year 3"
+msgstr "Planificado – Año 3"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Platform"
+msgstr "Plataforma"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "Platform Capabilities"
+msgstr "Capacidades de la plataforma"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Platform Vision"
+msgstr "Visión de plataforma"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Please agree to the Privacy Policy before sending."
+msgstr "Por favor acepte la Política de Privacidad antes de enviar."
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Please enter a valid email address."
+msgstr "Por favor, introduce una dirección de correo electrónico válida."
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Please enter your email address."
+msgstr "Por favor ingrese su dirección de correo electrónico."
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Please enter your first name."
+msgstr "Por favor ingrese su nombre."
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Please enter your last name."
+msgstr "Por favor ingrese su apellido."
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Please enter your message."
+msgstr "Por favor ingrese su mensaje."
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Please select a subject."
+msgstr "Por favor seleccione un tema."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "PostgreSQL, Redis"
+msgstr "PostgreSQL, Redis"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Prague / Remote"
+msgstr "Praga / Remoto"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Pre-MVP Stage"
+msgstr "Etapa previa al MVP"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "Pre-MVP · Now Onboarding Partners"
+msgstr "Pre-MVP · Ahora incorporando socios"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Press & Media"
+msgstr "Prensa y medios"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "Price"
+msgstr "Precio"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Print / Save as PDF"
+msgstr "Imprimir / Guardar como PDF"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Pro Forma Invoice"
+msgstr "Factura de proforma"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Product"
+msgstr "Producto"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Product &amp; Design"
+msgstr "Producto &amp; Diseño"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Product Manager – Platform Core"
+msgstr "Gerente de Producto – Núcleo de Plataforma"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Professional certification or credentials"
+msgstr "Certificación o credenciales profesionales"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Python ML stack (PyTorch / HuggingFace)"
+msgstr "Pila de Python ML (PyTorch/HuggingFace)"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Python · FastAPI · PostgreSQL"
+msgstr "Python · FastAPI · PostgreSQL"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "RAG architectures"
+msgstr "arquitecturas RAG"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "REST API design"
+msgstr "Diseño de API REST"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "REST API integration"
+msgstr "Integración de API REST"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "React · TypeScript · TailwindCSS"
+msgstr "Reaccionar · TypeScript · TailwindCSS"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "Read-only company name index. Max 1 saved selection. No active tenant."
+msgstr ""
+"Índice de nombres de empresas de solo lectura. Máximo 1 selección guardada. "
+"Ningún inquilino activo."
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Receive Final Invoice"
+msgstr "Recibir factura final"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Recommendation systems"
+msgstr "Sistemas de recomendación"
+
+#: phase8 templates/website/worldmap.html
+msgctxt "website"
+msgid "Region Control &amp; Global Entry Map"
+msgstr "Control de región &amp; Mapa de entrada global"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "Region Control Layer"
+msgstr "Capa de control de región"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Regional Coordinator – Central Europe"
+msgstr "Coordinador Regional – Europa Central"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Regional Coordinator – Germany"
+msgstr "Coordinador Regional – Alemania"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Regional Coordinator – Middle East"
+msgstr "Coordinador Regional – Medio Oriente"
+
+#: phase8 templates/website/worldmap.html
+msgctxt "website"
+msgid "Regions"
+msgstr "Regiones"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Remittance Reference"
+msgstr "Referencia de remesas"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Remote"
+msgstr "Remoto"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Remote-First"
+msgstr "Remoto primero"
+
+#: phase8 templates/website/worldmap.html
+msgctxt "website"
+msgid "Request Region Activation"
+msgstr "Solicitar activación de región"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Requirements"
+msgstr "Requisitos"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Responsive design"
+msgstr "Diseño responsivo"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Role"
+msgstr "Role"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "SOC2 compliance experience"
+msgstr "Experiencia en cumplimiento de SOC2"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "SUBSCRIBER (BUYER)"
+msgstr "SUSCRIPTOR (COMPRADOR)"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "SUBSCRIPTION DETAILS"
+msgstr "DETALLES DE SUSCRIPCIÓN"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "SUPPLIER (PAYEE)"
+msgstr "PROVEEDOR (BENEFICIO)"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "SVG / D3.js for data visualization"
+msgstr "SVG/D3.js para visualización de datos"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "SWIFT / BIC"
+msgstr "SWIFT/BIC"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "Save ${{ amount }}"
+msgstr "Ahorre ${{ amount }}"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Scalable Architecture"
+msgstr "Arquitectura escalable"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid ""
+"Searchable, tenant-isolated company registry with legal form classification,"
+" NACE codes, certifications, and verified business profiles."
+msgstr ""
+"Registro de empresas con capacidad de búsqueda y aislado de inquilinos con "
+"clasificación de forma jurídica, códigos NACE, certificaciones y perfiles "
+"comerciales verificados."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Second language (German, French, Arabic, or Japanese)"
+msgstr "Segundo idioma (alemán, francés, árabe o japonés)"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid ""
+"Secure checkout · Bank transfer via Pro Forma Invoice · No credit card "
+"required upfront"
+msgstr ""
+"Pago seguro · Transferencia bancaria mediante factura pro forma · No se "
+"requiere tarjeta de crédito por adelantado"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Security best practices"
+msgstr "Mejores prácticas de seguridad"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid ""
+"Select a plan above to continue. You will receive a Pro Forma Invoice with "
+"payment instructions."
+msgstr ""
+"Seleccione un plan arriba para continuar. Recibirá una factura pro forma con"
+" instrucciones de pago."
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Select a topic..."
+msgstr "Seleccione un tema..."
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "Select the plan that best fits your business needs."
+msgstr ""
+"Selecciona el plan que mejor se ajuste a las necesidades de tu negocio."
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "Select {{ plan_name }} Plan"
+msgstr "Seleccione Plan {{ plan_name }}"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "Selected:"
+msgstr "Seleccionado:"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Send Message"
+msgstr "Enviar mensaje"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Send Open Application"
+msgstr "Enviar solicitud abierta"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Send Us a Message"
+msgstr "Envíanos un mensaje"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid ""
+"Send the exact amount to the bank account above. Include your Variable "
+"Symbol (VS) in the payment reference."
+msgstr ""
+"Envíe el monto exacto a la cuenta bancaria arriba. Incluye tu Símbolo "
+"Variable (VS) en la referencia de pago."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Senior Backend Engineer (FastAPI / Python)"
+msgstr "Ingeniero Senior de Backend (FastAPI/Python)"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid ""
+"Shapes the product vision and technological direction of FONTESIN. Focused "
+"on building scalable, user-centric solutions for global business "
+"collaboration."
+msgstr ""
+"Conforma la visión de producto y dirección tecnológica de FONTESIN. Centrado"
+" en la creación de soluciones escalables y centradas en el usuario para la "
+"colaboración empresarial global."
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Simplicity"
+msgstr "Sencillez"
+
+#: phase8 templates/website/worldmap.html
+msgctxt "website"
+msgid "Singapore"
+msgstr "Singapur"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Specific Inquiries"
+msgstr "Consultas específicas"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Specific Symbol (SS)"
+msgstr "Símbolo específico (SS)"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "Start for Free"
+msgstr "Comience gratis"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Strategy"
+msgstr "Estrategia"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Strategy Idealist"
+msgstr "Idealista de estrategia"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Strong local business network"
+msgstr "Fuerte red de negocios locales"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Strong written communication"
+msgstr "Fuerte comunicación escrita"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid ""
+"Structured partnership requests, mutual visibility after acceptance, and "
+"direct 1:1 messaging within a secure, role-based environment."
+msgstr ""
+"Solicitudes de asociación estructuradas, visibilidad mutua después de la "
+"aceptación y mensajería directa 1:1 dentro de un entorno seguro basado en "
+"roles."
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Subscription End"
+msgstr "Fin de suscripción"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Subscription Start"
+msgstr "Inicio de suscripción"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "TailwindCSS or similar"
+msgstr "TailwindCSS o similar"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Technical Support"
+msgstr "Apoyo técnico"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "Tenant-Based Security"
+msgstr "Seguridad basada en inquilinos"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Tenant-isolated, license-controlled, enterprise-grade infrastructure."
+msgstr ""
+"Infraestructura de nivel empresarial, aislada por inquilinos y controlada "
+"por licencia."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Terraform / IaC"
+msgstr "Terraforma / IaC"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Thank You for Choosing FONTESIN!"
+msgstr "¡Gracias por elegir FONTESIN!"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Thank You! Your Invoice Has Been Generated"
+msgstr "¡Gracias! Su factura ha sido generada"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "The People Behind FONTESIN"
+msgstr "La gente detrás de FONTESIN"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid ""
+"The brand functions across cultures and markets without visual bias. "
+"FONTESIN is designed for the world — not for a single region or demographic."
+msgstr ""
+"La marca funciona en culturas y mercados sin prejuicios visuales. FONTESIN "
+"está diseñado para el mundo, no para una sola región o grupo demográfico."
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid ""
+"The design feels structured and systematic rather than decorative. We are "
+"building the backbone of global business communication, not a consumer app."
+msgstr ""
+"El diseño parece estructurado y sistemático más que decorativo. Estamos "
+"construyendo la columna vertebral de la comunicación empresarial global, no "
+"una aplicación para el consumidor."
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid ""
+"The visionary strategist behind FONTESIN's long-term philosophy. Brings "
+"decades of experience in business strategy, market analysis, and ideation "
+"for transformative global platforms."
+msgstr ""
+"El estratega visionario detrás de la filosofía de largo plazo de FONTESIN. "
+"Aporta décadas de experiencia en estrategia empresarial, análisis de mercado"
+" e ideación de plataformas globales transformadoras."
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid ""
+"The world map is not a visualization — it is our regional control layer. A "
+"live interface for global rollout, licensing, and franchise activation."
+msgstr ""
+"El mapa mundial no es una visualización, es nuestra capa de control "
+"regional. Una interfaz en vivo para implementación global, concesión de "
+"licencias y activación de franquicias."
+
+#: phase8 templates/website/worldmap.html
+msgctxt "website"
+msgid ""
+"The world map is our regional control layer — a live interface for global "
+"rollout, licensing, and franchise activation."
+msgstr ""
+"El mapa mundial es nuestra capa de control regional: una interfaz en vivo "
+"para el despliegue global, la concesión de licencias y la activación de "
+"franquicias."
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid ""
+"This Pro Forma Invoice is not a tax document. A final VAT invoice will be "
+"issued after payment confirmation. For international wire transfers, please "
+"ensure all bank charges are covered by the sender (OUR). For questions "
+"regarding your payment, contact <strong>billing@fontesin.com</strong> with "
+"your invoice number."
+msgstr ""
+"Esta Factura Pro Forma no es un documento fiscal. Se emitirá una factura "
+"final con IVA después de la confirmación del pago. Para transferencias "
+"bancarias internacionales, asegúrese de que todos los cargos bancarios estén"
+" cubiertos por el remitente (OUR). Si tiene preguntas sobre su pago, "
+"comuníquese con <strong>billing@fontesin.com</strong> con su número de "
+"factura."
+
+#: phase8 templates/website/upgrade_required.html
+msgctxt "website"
+msgid "This feature is not available on your current plan. Upgrade to"
+msgstr "Esta función no está disponible en su plan actual. Actualizar a"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Total Amount Due"
+msgstr "Monto total adeudado"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Trust"
+msgstr "Confianza"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "Trust & Certification"
+msgstr "Confianza y certificación"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Trusted Infrastructure for Global Business"
+msgstr "Infraestructura confiable para negocios globales"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "TypeScript proficiency"
+msgstr "Dominio de TypeScript"
+
+#: phase8 templates/website/worldmap.html
+msgctxt "website"
+msgid "UAE"
+msgstr "Emiratos Árabes Unidos"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "UAE · KSA · QA"
+msgstr "EAU · KSA · Control de calidad"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "UX research skills"
+msgstr "Habilidades de investigación de UX"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "UX/UI Designer"
+msgstr "Diseñador UX/UI"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "Understanding of UAE/KSA business regulations"
+msgstr "Comprensión de las regulaciones comerciales de los EAU/KSA"
+
+#: phase8 templates/website/worldmap.html
+msgctxt "website"
+msgid "United Arab Emirates"
+msgstr "Emiratos Árabes Unidos"
+
+#: phase8 templates/website/worldmap.html
+msgctxt "website"
+msgid "United Kingdom"
+msgstr "Reino Unido"
+
+#: phase8 templates/website/worldmap.html
+msgctxt "website"
+msgid "United States"
+msgstr "Estados Unidos"
+
+#: phase8 templates/website/upgrade_required.html
+msgctxt "website"
+msgid "Upgrade Required"
+msgstr "Actualización requerida"
+
+#: phase8 templates/website/upgrade_required.html
+msgctxt "website"
+msgid "Upgrade Your Plan"
+msgstr "Actualice su plan"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Upon payment confirmation"
+msgstr "Al confirmar el pago"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Variable Symbol (VS)"
+msgstr "Símbolo variable (VS)"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Verified Trust"
+msgstr "Confianza verificada"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "View All Regions"
+msgstr "Ver todas las regiones"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "View Details"
+msgstr "Ver detalles"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "View Open Positions"
+msgstr "Ver posiciones abiertas"
+
+#: phase8 templates/website/upgrade_required.html
+msgctxt "website"
+msgid "View Plans & Upgrade"
+msgstr "Ver planes y actualizar"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "View full map for expansion timeline."
+msgstr "Vea el mapa completo para conocer el cronograma de expansión."
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid ""
+"Visual clarity and consistency reinforce the perception of reliability. "
+"Every interaction on FONTESIN is backed by verified data and auditable "
+"processes."
+msgstr ""
+"La claridad visual y la consistencia refuerzan la percepción de "
+"confiabilidad. Cada interacción en FONTESIN está respaldada por datos "
+"verificados y procesos auditables."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid ""
+"We are actively hiring across engineering, product, business development, "
+"and regional operations. All positions are remote-friendly."
+msgstr ""
+"Estamos contratando activamente en ingeniería, productos, desarrollo "
+"comercial y operaciones regionales. Todas las posiciones son remotas."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid ""
+"We are always looking for exceptional people. Send us your profile and tell "
+"us how you can contribute to the FONTESIN mission."
+msgstr ""
+"Siempre estamos buscando personas excepcionales. Envíanos tu perfil y "
+"cuéntanos cómo puedes contribuir a la misión de FONTESIN."
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid ""
+"We are building a global micro-community of 200 visionaries, experts, and "
+"pioneers shaping the future of digital business collaboration."
+msgstr ""
+"Estamos construyendo una microcomunidad global de 200 visionarios, expertos "
+"y pioneros que dan forma al futuro de la colaboración empresarial digital."
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid ""
+"We are building the global infrastructure for trusted business "
+"communication, certification, and collaboration — without borders."
+msgstr ""
+"Estamos construyendo la infraestructura global para una comunicación, "
+"certificación y colaboración empresarial confiable, sin fronteras."
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid ""
+"We are currently in our Pre-MVP phase, onboarding pioneer members, franchise"
+" partners, and regional coordinators who will shape the foundation of the "
+"platform."
+msgstr ""
+"Actualmente nos encontramos en nuestra fase Pre-MVP, incorporando miembros "
+"pioneros, socios de franquicia y coordinadores regionales que darán forma a "
+"las bases de la plataforma."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid ""
+"We are looking for a senior backend engineer to build and maintain the core "
+"API infrastructure of the FONTESIN platform. You will work on tenant-"
+"isolated data architecture, billing integrations, and real-time data "
+"ingestion pipelines."
+msgstr ""
+"Buscamos un ingeniero backend senior para construir y mantener la "
+"infraestructura API central de la plataforma FONTESIN. Trabajará en la "
+"arquitectura de datos aislados de inquilinos, integraciones de facturación y"
+" canalizaciones de ingesta de datos en tiempo real."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid ""
+"We are not looking for employees — we are looking for partners. Join the "
+"team building the global infrastructure for trusted business collaboration."
+msgstr ""
+"No buscamos empleados, buscamos socios. Únase al equipo que construye la "
+"infraestructura global para una colaboración empresarial confiable."
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "Website"
+msgstr "Sitio web"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "What Happens Next?"
+msgstr "¿Qué pasa después?"
+
+#: phase8 templates/website/about.html
+msgctxt "website"
+msgid "Where We Are Heading"
+msgstr "Hacia dónde nos dirigimos"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid ""
+"Whether you are an investor, franchise partner, consultant, or simply "
+"curious — we would love to hear from you."
+msgstr ""
+"Si es inversor, socio de franquicia, consultor o simplemente tiene "
+"curiosidad, nos encantaría saber de usted."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid ""
+"Work from anywhere in the world. We are a globally distributed team with "
+"async-first communication and flexible working arrangements."
+msgstr ""
+"Trabaja desde cualquier parte del mundo. Somos un equipo distribuido "
+"globalmente con comunicación asíncrona y acuerdos de trabajo flexibles."
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid ""
+"Work on a platform that will connect millions of companies and professionals"
+" across 177+ countries. Your work has real, measurable global reach."
+msgstr ""
+"Trabaje en una plataforma que conectará a millones de empresas y "
+"profesionales en más de 177 países. Su trabajo tiene un alcance global real "
+"y mensurable."
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "World Map"
+msgstr "Mapa mundial"
+
+#: phase8 static/adminlte/js/sw.js
+msgctxt "website"
+msgid "You have a new notification"
+msgstr "Tienes una nueva notificación"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid ""
+"You must include this reference in the wire's \"Memo\" / Section 70 field. "
+"If space is short, include as much as possible."
+msgstr ""
+"Debe incluir esta referencia en el campo \"Memo\"/Sección 70 de la "
+"transferencia. Si el espacio es corto, incluya tanto como sea posible."
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid ""
+"Your Free plan is now active and ready to use. In the future, you can "
+"upgrade to one of our paid plans to unlock advanced features and "
+"capabilities."
+msgstr ""
+"Su plan gratuito ahora está activo y listo para usar. En el futuro, puede "
+"actualizar a uno de nuestros planes pagos para desbloquear funciones y "
+"capacidades avanzadas."
+
+#: phase8 templates/website/upgrade_required.html
+msgctxt "website"
+msgid "Your current plan: <strong>No Plan</strong>"
+msgstr "Su plan actual: <strong>Sin plan</strong>"
+
+#: phase8 templates/website/upgrade_required.html
+msgctxt "website"
+msgid "Your current plan: <strong>{{ plan_name }}</strong>"
+msgstr "Su plan actual: <strong>{{ plan_name }}</strong>"
+
+#: phase8 templates/website/upgrade_required.html
+msgctxt "website"
+msgid "a higher plan"
+msgstr "un plan superior"
+
+#: phase8 templates/website/career.html
+msgctxt "website"
+msgid "i18n / multilingual apps"
+msgstr "i18n / aplicaciones multilingües"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "mo"
+msgstr "mes"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "month"
+msgstr "mes"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "on regular price"
+msgstr "en precio regular"
+
+#: phase8 templates/website/upgrade_required.html
+msgctxt "website"
+msgid "or higher"
+msgstr "o superior"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "per month · billed monthly"
+msgstr "por mes · facturado mensualmente"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "per year · billed annually"
+msgstr "por año · facturado anualmente"
+
+#: phase8 templates/website/upgrade_required.html
+msgctxt "website"
+msgid "to unlock this feature."
+msgstr "para desbloquear esta función."
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "year"
+msgstr "año"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "yr"
+msgstr "año"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "{{ plan_name }} Plan"
+msgstr "Plan {{ plan_name }}"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "{{ plan_name }} Plan — Full Details"
+msgstr "Plan {{ plan_name }}: detalles completos"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "© 2026 FONTES Inc. All rights reserved."
+msgstr "© 2026 FONTES Inc. Todos los derechos reservados."
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "— Domestic US (USD)"
+msgstr "— Nacional de EE. UU. (USD)"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "— International Wire (EUR)"
+msgstr "— Transferencia internacional (EUR)"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "— International Wire (USD)"
+msgstr "— Transferencia internacional (USD)"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "≈ ${{ monthly }} / month"
+msgstr "≈ ${{ monthly }} / mes"
+
+#: phase8 templates/website/_world_map.html
+msgctxt "website"
+msgid "Australia"
+msgstr "Australia"
+
+#: phase8 templates/website/_world_map.html
+msgctxt "website"
+msgid "Austria"
+msgstr "Austria"
+
+#: phase8 templates/website/_world_map.html
+msgctxt "website"
+msgid "Mexico"
+msgstr "México"
+
+#: phase8 templates/website/_world_map.html
+msgctxt "website"
+msgid "Poland"
+msgstr "Polonia"
+
+#: phase8 templates/website/_world_map.html
+msgctxt "website"
+msgid "South Africa"
+msgstr "Sudáfrica"
+
+#: phase8 templates/website/_world_map.html
+msgctxt "website"
+msgid "South Korea"
+msgstr "Corea del Sur"
+
+#: phase8 templates/website/_world_map.html
+msgctxt "website"
+msgid "Sweden"
+msgstr "Suecia"
+
+#: phase8 templates/website/_world_map.html
+msgctxt "website"
+msgid "Switzerland"
+msgstr "Suiza"
+
+#: phase8 templates/website/about.html
+msgid "Ekrem Auinger – Regional Coordinator – Germany"
+msgstr "Ekrem Auinger – Coordinador Regional – Alemania"
+
+#: phase8 templates/website/about.html
+msgid "Jakub Ramajz – Co-Founder"
+msgstr "Jakub Ramajz – Cofundador"
+
+#: phase8 templates/website/about.html
+msgid "Karel Ramajzl – Strategy Idealist"
+msgstr "Karel Ramajzl – Idealista de estrategia"
+
+#: phase8 templates/website/about.html
+msgid "Kryštof Ramajz – Co-Founder"
+msgstr "Kryštof Ramajz – Cofundador"
+
+#: phase8 templates/website/about.html
+msgid "Ondřej Kazmar – COO &amp; Co-Founder"
+msgstr "Ondřej Kazmar – Director de Operaciones &amp; Cofundador"
+
+#: phase8 templates/website/about.html
+msgid "Scott Kuttos – Chief Executive Officer"
+msgstr "Scott Kuttos – Director ejecutivo"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "+1 212 555 0100"
+msgstr "+1 212 555 0100"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "FONTES Inc."
+msgstr "FONTES Inc."
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "FONTESIN HQ · One World Trade Center, NYC"
+msgstr "Sede de FONTESIN · One World Trade Center, Nueva York"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "FONTESIN Headquarters – One World Trade Center, New York, NY 10007"
+msgstr "Sede de FONTESIN – One World Trade Center, Nueva York, NY 10007"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "FREE"
+msgstr "GRATIS"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "GDP: $27.36T · Population: 335M · Rating: AA+"
+msgstr ""
+"PIB: 27,36 billones de dólares · Población: 335 millones · Calificación: AA+"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "GDP: $330.5B · Population: 10.9M · Rating: AA-"
+msgstr ""
+"PIB: 330.500 millones de dólares · Población: 10,9 millones · Calificación: "
+"AA-"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "GDP: $4.21T · Population: 124.5M · Rating: A+"
+msgstr ""
+"PIB: 4,21 billones de dólares · Población: 124,5 millones · Calificación: A+"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "GDP: $4.46T · Population: 84.6M · Rating: AAA"
+msgstr ""
+"PIB: 4,46 billones de dólares · Población: 84,6 millones · Calificación: AAA"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "GDP: $509.2B · Population: 9.8M · Rating: AA-"
+msgstr ""
+"PIB: 509.200 millones de dólares · Población: 9,8 millones · Calificación: "
+"AA-"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "GLOBAL"
+msgstr "GLOBAL"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "John"
+msgstr "John"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "LOCAL"
+msgstr "LOCAL"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "One World Trade Center – FONTESIN Headquarters, New York"
+msgstr "One World Trade Center – Sede FONTESIN, Nueva York"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid ""
+"One World Trade Center, Suite 8500, Floor 85, New York, NY 10007 · "
+"<strong>+1 (212) 220-7417</strong> · <a href=\"https://www.fontesin.com\" "
+"target=\"_blank\" style=\"color:var(--primary);\">www.fontesin.com</a>"
+msgstr ""
+"One World Trade Center, Suite 8500, Piso 85, Nueva York, NY 10007 · "
+"<strong>+1 (212) 220-7417</strong> · <a href=\"https://www.fontesin.com\" "
+"target=\"_blank\" style=\"color:var(--primary);\">www.fontesin.com</a>"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid ""
+"One World Trade Center, Suite 8500<br/>Floor 85, New York, NY 10007, USA"
+msgstr ""
+"One World Trade Center, Suite 8500<br/>Piso 85, Nueva York, NY 10007, EE. "
+"UU."
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid ""
+"One World Trade Center<br/>\n"
+"Suite 8500, Floor 85<br/>\n"
+"New York, NY 10007<br/>\n"
+"United States\n"
+msgstr ""
+"Un World Trade Center<br/>\n"
+"Suite 8500, Piso 85<br/>\n"
+"Nueva York, Nueva York 10007<br/>\n"
+"Estados Unidos"
+
+#: phase8 templates/website/index.html
+msgctxt "website"
+msgid "PRO"
+msgstr "PRO"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Please enter a valid email address (e.g., you@company.com)"
+msgstr ""
+"Ingrese una dirección de correo electrónico válida (por ejemplo, "
+"usted@empresa.com)"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Smith"
+msgstr "Herrero"
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Tell us about your inquiry, project, or how we can help..."
+msgstr "Cuéntanos tu consulta, proyecto o cómo podemos ayudarte..."
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "Your Company Ltd."
+msgstr "Su empresa Ltd."
+
+#: phase8 templates/website/contact.html
+msgctxt "website"
+msgid "john@company.com"
+msgstr "juan@empresa.com"

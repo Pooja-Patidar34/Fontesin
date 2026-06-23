@@ -1,10 +1,9 @@
 {% extends "base/base.html" %}
-{% block title %}Commissions{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Commissions" context "billing" %}{% endblock %}
 
 {% block content %}
 <style>
-  /* Local table tightening so 9 columns + a Mark-Paid button fit without
-     the right edge clipping. Scoped to this page via .commissions-table. */
   .commissions-table th,
   .commissions-table td {
     padding: 0.5rem 0.6rem !important;
@@ -30,31 +29,17 @@
     font-size: .75rem;
     white-space: nowrap;
   }
-  /* base.html globally sets `.table-responsive { overflow: visible
-     !important }` so app-wide dropdowns aren't clipped. That kills the
-     horizontal scrollbar Bootstrap provides — which is fine for narrow
-     tables but lets the 9-column commissions table spill past the card
-     and get clipped by an ancestor (the Action column's Mark-as-Paid
-     button ends up half off-screen). This page-scoped wrapper restores
-     horizontal scrolling without touching the global rule. */
   .commissions-scroll {
     overflow-x: auto !important;
     overflow-y: visible !important;
     -webkit-overflow-scrolling: touch;
   }
-  /* Stack the per-row action buttons vertically so the Action column
-     stays narrow. With three buttons (View / Export / Mark as Paid) on
-     one line, the column was the single biggest contributor to the
-     overflow. Stacking takes it from ~340px down to ~110px. */
   .commissions-table .action-stack {
     display: inline-flex;
     flex-direction: column;
     align-items: stretch;
     gap: 4px;
     min-width: 110px;
-    /* `inline-flex` + the cell's text-align:center on the parent <td>
-       centers the whole stack within the Action column instead of
-       leaving it flush-left or stretched edge to edge. */
   }
   .commissions-table .action-stack > .btn,
   .commissions-table .action-stack > form,
@@ -67,29 +52,25 @@
   <div class="card-header">
     <div class="d-flex justify-content-between align-items-center flex-wrap" style="gap:1rem;">
       <h3 class="card-title font-weight-bold mb-0">
-        {% if viewing_as_admin %}All Commissions{% else %}My Commissions{% endif %}
+        {% if viewing_as_admin %}{% trans "All Commissions" context "billing" %}{% else %}{% trans "My Commissions" context "billing" %}{% endif %}
       </h3>
 
-      {% comment %}
-        Totals strip — one chip per currency for consultant share, admin share,
-        and pending-only consultant share. Admin chip is only shown to admins.
-      {% endcomment %}
       <div class="d-flex flex-wrap" style="gap:.5rem;">
         {% for currency, amount in totals_by_currency.items %}
           <span class="badge" style="background:#dcfce7; color:#15803d; font-weight:600; font-size:.78rem; padding:6px 14px; border-radius:100px;">
-            Consultant {{ currency }}: {{ amount|floatformat:2 }}
+            {% blocktrans trimmed with currency=currency amount=amount|floatformat:2 context "billing" %}Consultant {{ currency }}: {{ amount }}{% endblocktrans %}
           </span>
         {% endfor %}
         {% if viewing_as_admin %}
           {% for currency, amount in admin_totals_by_currency.items %}
             <span class="badge" style="background:#dbeafe; color:#1d4ed8; font-weight:600; font-size:.78rem; padding:6px 14px; border-radius:100px;">
-              Admin {{ currency }}: {{ amount|floatformat:2 }}
+              {% blocktrans trimmed with currency=currency amount=amount|floatformat:2 context "billing" %}Admin {{ currency }}: {{ amount }}{% endblocktrans %}
             </span>
           {% endfor %}
         {% endif %}
         {% for currency, amount in pending_by_currency.items %}
           <span class="badge" style="background:#fef3c7; color:#92400e; font-weight:600; font-size:.78rem; padding:6px 14px; border-radius:100px;">
-            Pending {{ currency }}: {{ amount|floatformat:2 }}
+            {% blocktrans trimmed with currency=currency amount=amount|floatformat:2 context "billing" %}Pending {{ currency }}: {{ amount }}{% endblocktrans %}
           </span>
         {% endfor %}
       </div>
@@ -108,24 +89,40 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title font-weight-bold" id="commissionInvoiceModalLabel">
-          <i class="fas fa-file-invoice mr-2"></i> Invoice Details
+          <i class="fas fa-file-invoice mr-2"></i> {% trans "Invoice Details" context "billing" %}
         </h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <button type="button" class="close" data-dismiss="modal" aria-label="{% trans "Close" context "common" %}">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <div class="modal-body" id="commissionInvoiceModalBody">
         <div class="text-center py-5 text-muted">
           <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
-          <div>Loading invoice…</div>
+          <div>{% trans "Loading invoice…" context "billing" %}</div>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Close" context "common" %}</button>
       </div>
     </div>
   </div>
 </div>
+
+<script>
+(function () {
+  window.BILLING_I18N = window.BILLING_I18N || {};
+  Object.assign(window.BILLING_I18N, {
+    loadingInvoice: '{% filter escapejs %}{% trans "Loading invoice…" context "billing" %}{% endfilter %}',
+    failedLoadInvoice: '{% filter escapejs %}{% trans "Failed to load invoice details." context "billing" %}{% endfilter %}',
+    failedLoad: '{% filter escapejs %}{% trans "Failed to load. Please try again." context "billing" %}{% endfilter %}',
+    networkError: '{% filter escapejs %}{% trans "Network error. Please try again." context "common" %}{% endfilter %}',
+  });
+  var g = (typeof gettext === "function") ? gettext : function (s) { return s; };
+  Object.keys(window.BILLING_I18N).forEach(function (k) {
+    window.BILLING_I18N[k] = g(window.BILLING_I18N[k]);
+  });
+})();
+</script>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
@@ -136,11 +133,8 @@ document.addEventListener("DOMContentLoaded", function () {
   var loadingHtml =
     '<div class="text-center py-5 text-muted">' +
     '<i class="fas fa-spinner fa-spin fa-2x mb-2"></i>' +
-    '<div>Loading invoice…</div></div>';
+    '<div>' + BILLING_I18N.loadingInvoice + '</div></div>';
 
-  // Delegated so the click handler survives the AJAX tab/pager swap
-  // (the panel partial gets a fresh set of .view-commission-invoice
-  // buttons every time the user changes filter).
   document.addEventListener("click", function (e) {
     var btn = e.target.closest(".view-commission-invoice");
     if (!btn) return;
@@ -165,13 +159,10 @@ document.addEventListener("DOMContentLoaded", function () {
         body.innerHTML =
           '<div class="text-center py-5 text-danger">' +
           '<i class="fas fa-exclamation-triangle fa-2x mb-2"></i>' +
-          '<div>Failed to load invoice details.</div></div>';
+          '<div>' + BILLING_I18N.failedLoadInvoice + '</div></div>';
       });
   });
 
-  // AJAX-swap the commissions panel on tab / pagination clicks instead
-  // of doing a full page reload. The view returns _commissions_panel.html
-  // when called with X-Requested-With.
   var panel = document.getElementById("commissions-panel");
   if (panel) {
     document.addEventListener("click", function (e) {
@@ -180,7 +171,6 @@ document.addEventListener("DOMContentLoaded", function () {
         "#commissions-panel .pagination a.page-link"
       );
       if (!link) return;
-      // Ignore disabled / inert page-links.
       if (link.closest(".page-item.disabled") || link.closest(".page-item.active")) return;
       var href = link.getAttribute("href");
       if (!href || href === "#") return;
@@ -200,14 +190,13 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(function (html) {
           panel.innerHTML = html;
           panel.style.opacity = "";
-          // Keep the URL bar in sync so refresh / back behave intuitively.
           window.history.replaceState({}, "", url);
           panel.scrollIntoView({ behavior: "smooth", block: "start" });
         })
         .catch(function () {
           panel.style.opacity = "";
           if (typeof showToast === "function") {
-            showToast("Failed to load. Please try again.", "error");
+            showToast(BILLING_I18N.failedLoad, "error");
           }
         });
     });

@@ -1,12 +1,13 @@
 {% extends "base/base.html" %}
-{% block title %}Favorites{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Favorites" context "dashboard" %}{% endblock %}
 
 {% block content %}
 
 <div class="card card-outline card-primary shadow-sm">
   <div class="card-header">
     <h3 class="card-title font-weight-bold mb-0">
-      <i class="far fa-star mr-1"></i> Saved Filters
+      <i class="far fa-star mr-1"></i> {% trans "Saved Filters" context "dashboard" %}
     </h3>
   </div>
 
@@ -22,20 +23,20 @@
                   {% for key, value in sf.filters.items %}
                     <span class="text-capitalize">{{ key }}</span>: <strong>{{ value }}</strong>{% if not forloop.last %} · {% endif %}
                   {% empty %}
-                    <em>No criteria</em>
+                    <em>{% trans "No criteria" context "dashboard" %}</em>
                   {% endfor %}
                 </div>
               </div>
 
               <div class="d-flex align-items-center" style="gap:.5rem;">
                 <a href="{% url 'saved-filter-apply' sf.id %}" class="btn btn-sm btn-primary">
-                  <i class="fas fa-external-link-alt mr-1"></i> Open in Companies
+                  <i class="fas fa-external-link-alt mr-1"></i> {% trans "Open in Companies" context "dashboard" %}
                 </a>
                 <form method="post" action="{% url 'saved-filter-delete' sf.id %}"
                       id="delete-filter-form-{{ sf.id }}" class="m-0">
                   {% csrf_token %}
                   <button type="button" class="btn btn-sm btn-outline-danger"
-                          onclick="appConfirm({kind:'danger', title:'Remove this saved filter?', text:'The filter will be deleted from your favorites.', okLabel:'Remove', okIcon:'fa-trash', onConfirm:function(){document.getElementById('delete-filter-form-{{ sf.id }}').submit();}})">
+                          onclick="appConfirm({kind:'danger', title:'{% filter escapejs %}{% trans "Remove this saved filter?" context "dashboard" %}{% endfilter %}', text:'{% filter escapejs %}{% trans "The filter will be deleted from your favorites." context "dashboard" %}{% endfilter %}', okLabel:'{% filter escapejs %}{% trans "Remove" context "dashboard" %}{% endfilter %}', okIcon:'fa-trash', onConfirm:function(){document.getElementById('delete-filter-form-{{ sf.id }}').submit();}})">
                     <i class="fas fa-trash"></i>
                   </button>
                 </form>
@@ -47,10 +48,10 @@
     {% else %}
       <div class="p-4 text-center text-muted">
         <i class="far fa-star fa-2x mb-2"></i>
-        <p class="mb-1">No favorites yet.</p>
+        <p class="mb-1">{% trans "No favorites yet." context "dashboard" %}</p>
         <p class="small mb-0">
-          Apply filters on the <a href="{% url 'companies' %}">Companies</a> page and click
-          <strong>Save to Favorites</strong> to pin a view here.
+          {% trans "Apply filters on the" context "dashboard" %} <a href="{% url 'companies' %}">{% trans "Companies" context "dashboard" %}</a> {% trans "page and click" context "dashboard" %}
+          <strong>{% trans "Save to Favorites" context "dashboard" %}</strong> {% trans "to pin a view here." context "dashboard" %}
         </p>
       </div>
     {% endif %}

@@ -1,3 +1,4 @@
+{% load i18n %}
 {% comment %}
 Bulk CSV import modal — included only for superusers in companies.html.
 Three panes: upload form -> progress bar -> result summary.
@@ -6,8 +7,8 @@ Three panes: upload form -> progress bar -> result summary.
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title font-weight-bold mb-0">Bulk Import Companies</h5>
-        <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close">
+        <h5 class="modal-title font-weight-bold mb-0">{% trans "Bulk Import Companies" context "companies.import" %}</h5>
+        <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="{% trans "Close" context "common" %}">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
@@ -16,38 +17,37 @@ Three panes: upload form -> progress bar -> result summary.
         {# Pane 1 — upload #}
         <div id="import-pane-upload">
           <p class="text-muted small mb-3">
+            {% blocktrans trimmed context "companies.import" %}
             Upload a CSV of companies. Required columns:
+            {% endblocktrans %}
             <code>name</code>, <code>country</code>, <code>state</code>.
-            Additional standard columns (address, phone, NAICS / SIC codes,
-            employee &amp; sales ranges, etc.) are optional and stored in
-            their typed fields. Unknown columns are preserved verbatim in
-            <code>Company.extra_data</code> (JSONB). All rows go to the
-            tenant picked below. Duplicates on company <code>name</code> or
-            <code>registration_id</code> are skipped automatically.
+            {% blocktrans trimmed context "companies.import" %}
+            Additional standard columns (address, phone, NAICS / SIC codes, employee and sales ranges, etc.) are optional and stored in their typed fields. Unknown columns are preserved verbatim in Company.extra_data (JSONB). All rows go to the tenant picked below. Duplicates on company name or registration_id are skipped automatically.
+            {% endblocktrans %}
           </p>
           <p class="small mb-3">
-            Not sure of the format?
-            <a href="{% url 'company-import-sample' %}" download>Download sample CSV</a>.
+            {% trans "Not sure of the format?" context "companies.import" %}
+            <a href="{% url 'company-import-sample' %}" download>{% trans "Download sample CSV" context "companies.import" %}</a>.
           </p>
           <form id="import-form" enctype="multipart/form-data">
             {% csrf_token %}
             <div class="form-group">
-              <label for="import-tenant" class="small font-weight-bold">Target tenant</label>
+              <label for="import-tenant" class="small font-weight-bold">{% trans "Target tenant" context "companies.import" %}</label>
               <select class="form-control" id="import-tenant" name="tenant_id" required>
-                <option value="">Choose a tenant…</option>
+                <option value="">{% trans "Choose a tenant…" context "companies.import" %}</option>
                 {% for tenant in tenants %}
                   <option value="{{ tenant.id }}">{{ tenant.name }}</option>
                 {% endfor %}
               </select>
               <small class="form-text text-muted">
-                Every company in the CSV will be created under this tenant.
+                {% trans "Every company in the CSV will be created under this tenant." context "companies.import" %}
               </small>
             </div>
             <div class="form-group">
-              <label for="import-csv-file" class="small font-weight-bold">CSV file</label>
+              <label for="import-csv-file" class="small font-weight-bold">{% trans "CSV file" context "companies.import" %}</label>
               <input type="file" class="form-control-file" id="import-csv-file" name="csv_file" accept=".csv" required>
               <small class="form-text text-muted">
-                Large uploads (≥1 GB) may take several minutes. Don't close this tab until the upload finishes.
+                {% trans "Large uploads (≥1 GB) may take several minutes. Don't close this tab until the upload finishes." context "companies.import" %}
               </small>
             </div>
             <div id="import-form-error" class="alert alert-danger d-none mt-2 small"></div>
@@ -57,7 +57,7 @@ Three panes: upload form -> progress bar -> result summary.
         {# Pane 2 — progress #}
         <div id="import-pane-progress" class="d-none">
           <p class="small mb-2">
-            <strong>Importing:</strong>
+            <strong>{% trans "Importing:" context "companies.import" %}</strong>
             <span id="import-filename"></span>
           </p>
           <div class="progress mb-3" style="height: 1.5rem;">
@@ -67,16 +67,16 @@ Three panes: upload form -> progress bar -> result summary.
                  style="width: 0%;">0%</div>
           </div>
           <div class="row small">
-            <div class="col-6 col-md-3"><strong>Total:</strong> <span id="stat-total">0</span></div>
-            <div class="col-6 col-md-3"><strong>Processed:</strong> <span id="stat-processed">0</span></div>
-            <div class="col-6 col-md-3 text-success"><strong>Inserted:</strong> <span id="stat-inserted">0</span></div>
-            <div class="col-6 col-md-3 text-warning"><strong>Skipped:</strong> <span id="stat-skipped">0</span></div>
+            <div class="col-6 col-md-3"><strong>{% trans "Total:" context "companies.import" %}</strong> <span id="stat-total">0</span></div>
+            <div class="col-6 col-md-3"><strong>{% trans "Processed:" context "companies.import" %}</strong> <span id="stat-processed">0</span></div>
+            <div class="col-6 col-md-3 text-success"><strong>{% trans "Inserted:" context "companies.import" %}</strong> <span id="stat-inserted">0</span></div>
+            <div class="col-6 col-md-3 text-warning"><strong>{% trans "Skipped:" context "companies.import" %}</strong> <span id="stat-skipped">0</span></div>
           </div>
           <div class="row small mt-1">
-            <div class="col-6 col-md-3 text-danger"><strong>Failed:</strong> <span id="stat-failed">0</span></div>
+            <div class="col-6 col-md-3 text-danger"><strong>{% trans "Failed:" context "companies.import" %}</strong> <span id="stat-failed">0</span></div>
           </div>
           <p class="text-muted small mt-3">
-            You can safely close this window — the import will keep running on the server.
+            {% trans "You can safely close this window — the import will keep running on the server." context "companies.import" %}
           </p>
         </div>
 
@@ -84,18 +84,85 @@ Three panes: upload form -> progress bar -> result summary.
         <div id="import-pane-done" class="d-none">
           <div id="import-done-summary"></div>
           <a id="import-errors-link" href="#" class="btn btn-outline-warning btn-sm mt-2 d-none">
-            Download error report
+            {% trans "Download error report" context "companies.import" %}
           </a>
         </div>
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary" id="import-submit-btn">Upload &amp; Import</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" data-bs-dismiss="modal">{% trans "Close" context "common" %}</button>
+        <button type="button" class="btn btn-primary" id="import-submit-btn">{% trans "Upload & Import" context "companies.import" %}</button>
       </div>
     </div>
   </div>
 </div>
+
+<script>
+(function () {
+  window.COMPANY_I18N = {
+    selectState: '{% filter escapejs %}{% trans "Select State" context "companies" %}{% endfilter %}',
+    addCompany: '{% filter escapejs %}{% trans "Add Company" context "companies" %}{% endfilter %}',
+    createCompany: '{% filter escapejs %}{% trans "Create Company" context "companies" %}{% endfilter %}',
+    requestCertification: '{% filter escapejs %}{% trans "Request Certification" context "companies" %}{% endfilter %}',
+    companyDetails: '{% filter escapejs %}{% trans "Company Details" context "companies" %}{% endfilter %}',
+    editCompany: '{% filter escapejs %}{% trans "Edit Company" context "companies" %}{% endfilter %}',
+    save: '{% filter escapejs %}{% trans "Save" context "common" %}{% endfilter %}',
+    certifiedBy: '{% filter escapejs %}{% trans "Certified by" context "companies" %}{% endfilter %}',
+    on: '{% filter escapejs %}{% trans "on" context "common" %}{% endfilter %}',
+    basicInfo: '{% filter escapejs %}{% trans "Basic Info" context "companies" %}{% endfilter %}',
+    address: '{% filter escapejs %}{% trans "Address" context "companies" %}{% endfilter %}',
+    contact: '{% filter escapejs %}{% trans "Contact" context "companies" %}{% endfilter %}',
+    certifyingConsultant: '{% filter escapejs %}{% trans "Certifying Consultant" context "companies" %}{% endfilter %}',
+    status: '{% filter escapejs %}{% trans "Status" context "companies" %}{% endfilter %}',
+    legalForm: '{% filter escapejs %}{% trans "Legal Form" context "companies" %}{% endfilter %}',
+    registrationNo: '{% filter escapejs %}{% trans "Registration No." context "companies" %}{% endfilter %}',
+    yearOfEstablishment: '{% filter escapejs %}{% trans "Year of Establishment" context "companies" %}{% endfilter %}',
+    numberOfEmployees: '{% filter escapejs %}{% trans "Number of Employees" context "companies" %}{% endfilter %}',
+    naceCode: '{% filter escapejs %}{% trans "NACE Code" context "companies" %}{% endfilter %}',
+    naicsCode: '{% filter escapejs %}{% trans "NAICS Code" context "companies" %}{% endfilter %}',
+    keywords: '{% filter escapejs %}{% trans "Keywords" context "companies" %}{% endfilter %}',
+    houseNumber: '{% filter escapejs %}{% trans "House Number" context "companies" %}{% endfilter %}',
+    district: '{% filter escapejs %}{% trans "District" context "companies" %}{% endfilter %}',
+    region: '{% filter escapejs %}{% trans "Region" context "companies" %}{% endfilter %}',
+    cityState: '{% filter escapejs %}{% trans "City / State" context "companies" %}{% endfilter %}',
+    postalCode: '{% filter escapejs %}{% trans "Postal Code" context "companies" %}{% endfilter %}',
+    contactPerson: '{% filter escapejs %}{% trans "Contact Person" context "companies" %}{% endfilter %}',
+    contactEmail: '{% filter escapejs %}{% trans "Contact Email" context "companies" %}{% endfilter %}',
+    phone: '{% filter escapejs %}{% trans "Phone" context "companies" %}{% endfilter %}',
+    website: '{% filter escapejs %}{% trans "Website" context "companies" %}{% endfilter %}',
+    certification: '{% filter escapejs %}{% trans "Certification" context "companies" %}{% endfilter %}',
+    active: '{% filter escapejs %}{% trans "Active" context "companies" %}{% endfilter %}',
+    yes: '{% filter escapejs %}{% trans "Yes" context "common" %}{% endfilter %}',
+    no: '{% filter escapejs %}{% trans "No" context "common" %}{% endfilter %}',
+    any: '{% filter escapejs %}{% trans "Any" context "common" %}{% endfilter %}',
+    noPresetCountry: '{% filter escapejs %}{% trans "No preset for this country — showing all legal forms." context "companies" %}{% endfilter %}',
+    pickCountryNarrow: '{% filter escapejs %}{% trans "Pick a country to narrow the list, or filter globally." context "companies" %}{% endfilter %}',
+    noMatchesFor: '{% filter escapejs %}{% trans "No matches for" context "companies" %}{% endfilter %}',
+    startTyping: '{% filter escapejs %}{% trans "Start typing." context "companies" %}{% endfilter %}',
+    certSubmitted: '{% filter escapejs %}{% trans COMPANY_I18N.certSubmitted context "companies" %}{% endfilter %}',
+    couldNotSave: '{% filter escapejs %}{% trans COMPANY_I18N.couldNotSave context "companies" %}{% endfilter %}',
+    networkError: '{% filter escapejs %}{% trans "Network error. Please try again." context "common" %}{% endfilter %}',
+    companyLogo: '{% filter escapejs %}{% trans "Company" context "companies" %}{% endfilter %}',
+    uploadImport: '{% filter escapejs %}{% trans "Upload & Import" context "companies.import" %}{% endfilter %}',
+    uploading: '{% filter escapejs %}{% trans "Uploading…" context "companies.import" %}{% endfilter %}',
+    chooseTenant: '{% filter escapejs %}{% trans "Please choose a target tenant." context "companies.import" %}{% endfilter %}',
+    chooseCsv: '{% filter escapejs %}{% trans "Please choose a CSV file." context "companies.import" %}{% endfilter %}',
+    mustBeCsv: '{% filter escapejs %}{% trans "File must be a .csv" context "companies.import" %}{% endfilter %}',
+    uploadFailed: '{% filter escapejs %}{% trans "Upload failed" context "companies.import" %}{% endfilter %}',
+    importComplete: '{% filter escapejs %}{% trans "Import complete." context "companies.import" %}{% endfilter %}',
+    inserted: '{% filter escapejs %}{% trans "Inserted:" context "companies.import" %}{% endfilter %}',
+    skippedDuplicates: '{% filter escapejs %}{% trans "Skipped (duplicates):" context "companies.import" %}{% endfilter %}',
+    failed: '{% filter escapejs %}{% trans "Failed:" context "companies.import" %}{% endfilter %}',
+    importFailed: '{% filter escapejs %}{% trans "Import failed." context "companies.import" %}{% endfilter %}',
+    noDetails: '{% filter escapejs %}{% trans "(no details)" context "companies.import" %}{% endfilter %}',
+    noResults: '{% filter escapejs %}{% trans "No results" context "companies" %}{% endfilter %}',
+  };
+  var g = (typeof gettext === "function") ? gettext : function (s) { return s; };
+  Object.keys(window.COMPANY_I18N).forEach(function (k) {
+    window.COMPANY_I18N[k] = g(window.COMPANY_I18N[k]);
+  });
+})();
+</script>
 
 <script>
 (function () {
@@ -123,7 +190,7 @@ Three panes: upload form -> progress bar -> result summary.
     hide("#import-pane-done");
     show("#import-pane-upload");
     $("#import-submit-btn").disabled = false;
-    $("#import-submit-btn").textContent = "Upload & Import";
+    $("#import-submit-btn").textContent = COMPANY_I18N.uploadImport;
     $("#import-submit-btn").classList.remove("d-none");
     if (pollHandle) {
       clearInterval(pollHandle);
@@ -142,22 +209,22 @@ Three panes: upload form -> progress bar -> result summary.
     ev.preventDefault();
     const tenantSel = $("#import-tenant");
     if (!tenantSel.value) {
-      showError("Please choose a target tenant.");
+      showError(COMPANY_I18N.chooseTenant);
       return;
     }
     const fileInput = $("#import-csv-file");
     if (!fileInput.files || !fileInput.files.length) {
-      showError("Please choose a CSV file.");
+      showError(COMPANY_I18N.chooseCsv);
       return;
     }
     const file = fileInput.files[0];
     if (!file.name.toLowerCase().endsWith(".csv")) {
-      showError("File must be a .csv");
+      showError(COMPANY_I18N.mustBeCsv);
       return;
     }
 
     $("#import-submit-btn").disabled = true;
-    $("#import-submit-btn").textContent = "Uploading…";
+    $("#import-submit-btn").textContent = COMPANY_I18N.uploading;
     $("#import-form-error").classList.add("d-none");
 
     const fd = new FormData();
@@ -169,7 +236,7 @@ Three panes: upload form -> progress bar -> result summary.
     fetch(UPLOAD_URL, { method: "POST", body: fd, credentials: "same-origin" })
       .then(async (resp) => {
         if (!resp.ok) {
-          let msg = "Upload failed (HTTP " + resp.status + ")";
+          let msg = COMPANY_I18N.uploadFailed + " (HTTP " + resp.status + ")";
           try {
             const j = await resp.json();
             if (j.error) msg = j.error;
@@ -185,7 +252,7 @@ Three panes: upload form -> progress bar -> result summary.
         show("#import-pane-progress");
         pollStatus(data.job_id);
       })
-      .catch((err) => showError(err.message || "Upload failed"));
+      .catch((err) => showError(err.message || COMPANY_I18N.uploadFailed));
   }
 
   function pollStatus(jobId) {
@@ -225,17 +292,17 @@ Three panes: upload form -> progress bar -> result summary.
     if (j.state === "completed") {
       summary.innerHTML =
         '<div class="alert alert-success">' +
-        '<strong>Import complete.</strong> ' +
-        '<br>Inserted: <strong>' + (j.inserted_rows || 0).toLocaleString() + '</strong>' +
-        ' &nbsp; Skipped (duplicates): <strong>' + (j.skipped_duplicates || 0).toLocaleString() + '</strong>' +
-        ' &nbsp; Failed: <strong>' + (j.failed_rows || 0).toLocaleString() + '</strong>' +
+        '<strong>' + COMPANY_I18N.importComplete + '</strong> ' +
+        '<br>' + COMPANY_I18N.inserted + ' <strong>' + (j.inserted_rows || 0).toLocaleString() + '</strong>' +
+        ' &nbsp; ' + COMPANY_I18N.skippedDuplicates + ' <strong>' + (j.skipped_duplicates || 0).toLocaleString() + '</strong>' +
+        ' &nbsp; ' + COMPANY_I18N.failed + ' <strong>' + (j.failed_rows || 0).toLocaleString() + '</strong>' +
         '</div>';
     } else {
       summary.innerHTML =
         '<div class="alert alert-danger">' +
-        '<strong>Import failed.</strong> ' +
+        '<strong>' + COMPANY_I18N.importFailed + '</strong> ' +
         '<br><pre class="small mt-2 mb-0">' +
-        (j.error_message ? j.error_message.replace(/</g, "&lt;") : "(no details)") +
+        (j.error_message ? j.error_message.replace(/</g, "&lt;") : COMPANY_I18N.noDetails) +
         '</pre></div>';
     }
 

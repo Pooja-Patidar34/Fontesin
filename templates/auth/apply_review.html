@@ -1,16 +1,16 @@
-{% load static %}
+{% load static i18n i18n_extras %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <meta name="theme-color" content="#253D51"/>
-  <title>Application Submitted – FONTESIN</title>
+  <title>{% trans "Application Submitted" context "auth.apply_review" %} – FONTESIN</title>
   <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', sans-serif; background: #f0f5f8; color: #1a2e3b; }
+    body { font-family: 'Inter', sans-serif; background: #f0f5f8; color: #1a2e3b; position: relative; }
 
     /* NAV */
     .review-nav {
@@ -266,6 +266,8 @@
 </head>
 <body>
 
+{% include "partials/_auth_lang_switcher.html" %}
+
 <!-- NAV -->
 <nav class="review-nav">
   <div class="review-nav__logo">
@@ -276,10 +278,9 @@
 <!-- HERO -->
 <div class="review-hero">
   <div class="review-hero__icon">&#9203;</div>
-  <h1 class="review-hero__title">Application Submitted!</h1>
+  <h1 class="review-hero__title">{% trans "Application Submitted!" context "auth.apply_review" %}</h1>
   <p class="review-hero__desc">
-    Thank you for applying to join FONTESIN. Your application is now
-    under review by our team. We will contact you within <strong>5&ndash;10 business days</strong>.
+    {% blocktrans context "auth.apply_review" %}Thank you for applying to join FONTESIN. Your application is now under review by our team. We will contact you within <strong>5&ndash;10 business days</strong>.{% endblocktrans %}
   </p>
 </div>
 
@@ -289,28 +290,28 @@
   <!-- APPLICATION STATUS CARD -->
   <div class="review-card">
     <div class="review-card__header">
-      <div class="review-card__title">Application Status</div>
-      <span class="status-badge status-badge--review">Under Review</span>
+      <div class="review-card__title">{% trans "Application Status" context "auth.apply_review" %}</div>
+      <span class="status-badge status-badge--review">{% trans "Under Review" context "auth.apply_review" %}</span>
     </div>
     <div class="review-info">
       <div class="review-info__row">
-        <span class="review-info__label">Application Reference</span>
+        <span class="review-info__label">{% trans "Application Reference" context "auth.apply_review" %}</span>
         <span class="review-info__ref" id="app-ref"></span>
       </div>
       <div class="review-info__row">
-        <span class="review-info__label">Role Applied For</span>
-        <span class="review-info__value">&#128188; {{ role_label|default:"Consultant" }}</span>
+        <span class="review-info__label">{% trans "Role Applied For" context "auth.apply_review" %}</span>
+        <span class="review-info__value">&#128188; {% if role_label %}{{ role_label }}{% else %}{% trans "Consultant" context "auth.apply_review" %}{% endif %}</span>
       </div>
       <div class="review-info__row">
-        <span class="review-info__label">Submission Date</span>
+        <span class="review-info__label">{% trans "Submission Date" context "auth.apply_review" %}</span>
         <span class="review-info__value" id="submit-date"></span>
       </div>
       <div class="review-info__row">
-        <span class="review-info__label">Identity Verification</span>
-        <span class="review-info__value" style="color:#16a34a;">&#10003; Verified</span>
+        <span class="review-info__label">{% trans "Identity Verification" context "auth.apply_review" %}</span>
+        <span class="review-info__value" style="color:#16a34a;">&#10003; {% trans "Verified" context "auth.apply_review" %}</span>
       </div>
       <div class="review-info__row">
-        <span class="review-info__label">Expected Decision</span>
+        <span class="review-info__label">{% trans "Expected Decision" context "auth.apply_review" %}</span>
         <span class="review-info__value" id="expected-date"></span>
       </div>
     </div>
@@ -318,38 +319,38 @@
 
   <!-- REVIEW PROCESS TIMELINE -->
   <div class="review-card">
-    <div class="review-card__title" style="margin-bottom:20px;">&#128203; Review Process</div>
+    <div class="review-card__title" style="margin-bottom:20px;">&#128203; {% trans "Review Process" context "auth.apply_review" %}</div>
     <div class="review-timeline">
       <div class="review-timeline__item">
         <div class="review-timeline__dot review-timeline__dot--done">&#10003;</div>
         <div class="review-timeline__text">
-          <div class="review-timeline__title">Application Received</div>
-          <div class="review-timeline__desc">Your registration and selected region have been received and logged in our system.</div>
-          <div class="review-timeline__meta">Completed &middot; Today</div>
+          <div class="review-timeline__title">{% trans "Application Received" context "auth.apply_review" %}</div>
+          <div class="review-timeline__desc">{% trans "Your registration and selected region have been received and logged in our system." context "auth.apply_review" %}</div>
+          <div class="review-timeline__meta">{% trans "Completed · Today" context "auth.apply_review" %}</div>
         </div>
       </div>
       <div class="review-timeline__item">
         <div class="review-timeline__dot review-timeline__dot--done">&#10003;</div>
         <div class="review-timeline__text">
-          <div class="review-timeline__title">Identity Verification</div>
-          <div class="review-timeline__desc">Your identity has been successfully verified through Veriff.</div>
-          <div class="review-timeline__meta">Completed &middot; Today</div>
+          <div class="review-timeline__title">{% trans "Identity Verification" context "auth.apply_review" %}</div>
+          <div class="review-timeline__desc">{% trans "Your identity has been successfully verified through Veriff." context "auth.apply_review" %}</div>
+          <div class="review-timeline__meta">{% trans "Completed · Today" context "auth.apply_review" %}</div>
         </div>
       </div>
       <div class="review-timeline__item">
         <div class="review-timeline__dot review-timeline__dot--active">3</div>
         <div class="review-timeline__text">
-          <div class="review-timeline__title">Admin Review</div>
-          <div class="review-timeline__desc">A FONTESIN administrator is reviewing your registration and will approve or decline it.</div>
-          <div class="review-timeline__meta">In Progress</div>
+          <div class="review-timeline__title">{% trans "Admin Review" context "auth.apply_review" %}</div>
+          <div class="review-timeline__desc">{% trans "A FONTESIN administrator is reviewing your registration and will approve or decline it." context "auth.apply_review" %}</div>
+          <div class="review-timeline__meta">{% trans "In Progress" context "auth.apply_review" %}</div>
         </div>
       </div>
       <div class="review-timeline__item">
         <div class="review-timeline__dot review-timeline__dot--pending">4</div>
         <div class="review-timeline__text">
-          <div class="review-timeline__title">Decision &amp; Access</div>
-          <div class="review-timeline__desc">You will be notified by email with the outcome. Once approved, you get full access to your dashboard.</div>
-          <div class="review-timeline__meta">Pending</div>
+          <div class="review-timeline__title">{% trans "Decision & Access" context "auth.apply_review" %}</div>
+          <div class="review-timeline__desc">{% trans "You will be notified by email with the outcome. Once approved, you get full access to your dashboard." context "auth.apply_review" %}</div>
+          <div class="review-timeline__meta">{% trans "Pending" context "auth.apply_review" %}</div>
         </div>
       </div>
     </div>
@@ -357,32 +358,32 @@
 
   <!-- WHAT HAPPENS NEXT -->
   <div class="review-card">
-    <div class="review-card__title" style="margin-bottom:16px;">&#128233; What Happens Next?</div>
+    <div class="review-card__title" style="margin-bottom:16px;">&#128233; {% trans "What Happens Next?" context "auth.apply_review" %}</div>
     <ul class="review-next__list">
       <li class="review-next__item">
         <span class="review-next__arrow">&rarr;</span>
-        <span>A FONTESIN <strong>administrator</strong> will review your registration and the region you selected.</span>
+        <span>{% blocktrans context "auth.apply_review" %}A FONTESIN <strong>administrator</strong> will review your registration and the region you selected.{% endblocktrans %}</span>
       </li>
       <li class="review-next__item">
         <span class="review-next__arrow">&rarr;</span>
-        <span>If additional information is needed, we will <strong>contact you directly</strong> by email or phone.</span>
+        <span>{% blocktrans context "auth.apply_review" %}If additional information is needed, we will <strong>contact you directly</strong> by email or phone.{% endblocktrans %}</span>
       </li>
       <li class="review-next__item">
         <span class="review-next__arrow">&rarr;</span>
-        <span>You will receive a <strong>decision notification</strong> once your registration is approved or declined.</span>
+        <span>{% blocktrans context "auth.apply_review" %}You will receive a <strong>decision notification</strong> once your registration is approved or declined.{% endblocktrans %}</span>
       </li>
       <li class="review-next__item">
         <span class="review-next__arrow">&rarr;</span>
-        <span>Once <strong>approved</strong>, you get full access to your dashboard — just sign in to get started.</span>
+        <span>{% blocktrans context "auth.apply_review" %}Once <strong>approved</strong>, you get full access to your dashboard — just sign in to get started.{% endblocktrans %}</span>
       </li>
     </ul>
   </div>
 
   <!-- CONTACT BANNER -->
   <div class="review-contact">
-    <div class="review-contact__title">Questions About Your Application?</div>
+    <div class="review-contact__title">{% trans "Questions About Your Application?" context "auth.apply_review" %}</div>
     <div class="review-contact__desc">
-      Our partner onboarding team is available Monday&ndash;Friday, 9:00&ndash;18:00 EST. Please include your application reference number in all correspondence.
+      {% trans "Our partner onboarding team is available Monday–Friday, 9:00–18:00 EST. Please include your application reference number in all correspondence." context "auth.apply_review" %}
     </div>
     <a href="mailto:partners@fontesin.com" class="review-contact__email">
       &#9993; partners@fontesin.com
@@ -391,20 +392,24 @@
 
   <!-- ACTIONS -->
   <div class="review-actions">
-    <a href="{% url 'home' %}" class="review-btn review-btn--outline">&larr; Back to Homepage</a>
-    <a href="{% url 'login' %}" class="review-btn review-btn--primary">Log In to Your Account &rarr;</a>
+    <a href="{% url 'home' %}" class="review-btn review-btn--outline">&larr; {% trans "Back to Homepage" context "auth.common" %}</a>
+    <a href="{% url 'login' %}" class="review-btn review-btn--primary">{% trans "Log In to Your Account" context "auth.apply_review" %} &rarr;</a>
   </div>
 
 </div>
 
 <script>
+var locale = '{{ LANGUAGE_CODE }}';
+var atLabel = '{% trans "at" context "auth.apply_review" %}';
+var byLabel = '{% trans "By" context "auth.apply_review" %}';
+
 // Set submission date with time
 var now = new Date();
 var dateOpts = { year: 'numeric', month: 'long', day: 'numeric' };
 var timeOpts = { hour: '2-digit', minute: '2-digit', hour12: true };
-var dateStr = now.toLocaleDateString('en-US', dateOpts);
-var timeStr = now.toLocaleTimeString('en-US', timeOpts);
-document.getElementById('submit-date').textContent = dateStr + ' at ' + timeStr;
+var dateStr = now.toLocaleDateString(locale, dateOpts);
+var timeStr = now.toLocaleTimeString(locale, timeOpts);
+document.getElementById('submit-date').textContent = dateStr + ' ' + atLabel + ' ' + timeStr;
 
 // Generate application reference (APP-YYYY-NNNNN)
 var appRef = 'APP-' + now.getFullYear() + '-' + (Math.floor(10000 + Math.random() * 90000));
@@ -422,7 +427,7 @@ function addBusinessDays(date, days) {
   return result;
 }
 var expectedDate = addBusinessDays(now, 10);
-document.getElementById('expected-date').textContent = 'By ' + expectedDate.toLocaleDateString('en-US', dateOpts);
+document.getElementById('expected-date').textContent = byLabel + ' ' + expectedDate.toLocaleDateString(locale, dateOpts);
 </script>
 <script src="{% static 'adminlte/js/no_emoji.js' %}"></script>
 
