@@ -40,7 +40,9 @@ def _country_match_q(country_code):
     variants = [country_code]
     label = dict(CountryChoices.CHOICES).get(country_code)
     if label:
-        variants.append(label)
+        # CountryChoices labels are gettext_lazy proxies; psycopg2 cannot
+        # adapt __proxy__ objects as SQL bind parameters.
+        variants.append(str(label))
     variants.extend(_COUNTRY_ALIASES.get(country_code, ()))
     q = Q()
     for v in variants:

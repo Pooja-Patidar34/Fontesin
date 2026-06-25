@@ -261,11 +261,13 @@
 
       <div class="d-flex align-items-center" style="gap:.75rem; margin-left:auto;">
 
-        {# Company search — name / registration no. / classification / location.
-           Shown to admins and coordinators (coordinators have no location filter
-           bar, so this is their only way to find a specific company). The
-           backend `q` search is role-agnostic and intersects with the user's
-           existing scope, so it only ever searches companies they may see. #}
+        {% comment %}
+        Company search — name / registration no. / classification / location.
+        Shown to admins and coordinators (coordinators have no location filter
+        bar, so this is their only way to find a specific company). The
+        backend `q` search is role-agnostic and intersects with the user's
+        existing scope, so it only ever searches companies they may see.
+        {% endcomment %}
         {% if request.user.is_superuser or request.user.role.code|lower == "coordinator" %}
         <form method="get" class="mb-0" id="companySearchForm">
           <div class="input-group input-group-sm" style="width:260px;">
