@@ -297,12 +297,12 @@ msgstr "E-Mail"
 #: phase8 templates/website/invoice.html
 msgctxt "common"
 msgid "Name"
-msgstr "[formeller Sie] Name"
+msgstr "Name"
 
 #: phase8 templates/website/invoice.html
 msgctxt "common"
 msgid "Status"
-msgstr "[formeller Sie] Status"
+msgstr "Status"
 
 #: phase8 templates/website/contact.html
 msgctxt "common"
@@ -322,7 +322,7 @@ msgstr "Unternehmen"
 #: phase8 static/adminlte/manifest.json
 msgctxt "pwa"
 msgid "Dashboard"
-msgstr "Armaturenbrett"
+msgstr "Dashboard"
 
 #: phase8 static/adminlte/manifest.json
 msgctxt "pwa"
@@ -365,13 +365,13 @@ msgstr "Öffnen Sie das Haupt-Dashboard"
 
 #: phase8 templates/website/membership.html
 msgctxt "website"
-msgid "${{ price }} / month"
-msgstr "${{ price }} / Monat"
+msgid "$%(price)s / month"
+msgstr "$%(price)s / Monat"
 
 #: phase8 templates/website/membership.html
 msgctxt "website"
-msgid "${{ price }} / year"
-msgstr "${{ price }} / Jahr"
+msgid "$%(price)s / year"
+msgstr "$%(price)s / Jahr"
 
 #: phase8 templates/website/invoice.html
 msgctxt "website"
@@ -676,7 +676,7 @@ msgstr "Am besten für:"
 #: phase8 templates/website/invoice.html
 msgctxt "website"
 msgid "Billing Period"
-msgstr "[formelles Sie] Abrechnungszeitraum"
+msgstr "Abrechnungszeitraum"
 
 #: phase8 templates/website/index.html
 msgctxt "website"
@@ -828,17 +828,17 @@ msgstr "Mitbegründer"
 #: phase8 templates/website/invoice.html
 msgctxt "website"
 msgid "Company"
-msgstr "[formelles Sie] Unternehmen"
+msgstr "Unternehmen"
 
 #: phase8 templates/website/index.html
 msgctxt "website"
 msgid "Company Database"
-msgstr "Firmendatenbank"
+msgstr "Unternehmensdatenbank"
 
 #: phase8 templates/website/invoice.html
 msgctxt "website"
 msgid "Company Name"
-msgstr "Name der Firma"
+msgstr "Unternehmensname"
 
 #: phase8 templates/website/invoice.html
 msgctxt "website"
@@ -898,11 +898,11 @@ msgstr "Vertrag · Remote"
 #: phase8 templates/website/invoice.html
 msgctxt "website"
 msgid ""
-"Converted from {{ source_amount }} {{ source_currency }} at rate 1 {{ "
-"source_currency }} = {{ rate }} {{ display_curr }}"
+"Converted from %(source_amount)s %(source_currency)s at rate 1 "
+"%(source_currency)s = %(rate)s %(display_curr)s"
 msgstr ""
-"Umgerechnet von {{ source_amount }} {{ source_currency }} mit Rate 1 {{ "
-"source_currency }} = {{ rate }} {{ display_curr }}"
+"Umgerechnet von %(source_amount)s %(source_currency)s mit Rate 1 "
+"%(source_currency)s = %(rate)s %(display_curr)s"
 
 #: phase8 templates/website/invoice.html
 msgctxt "website"
@@ -1060,7 +1060,7 @@ msgstr "Dubai / abgelegen"
 #: phase8 templates/website/invoice.html
 msgctxt "website"
 msgid "Due Date"
-msgstr "[formelles Sie] Fälligkeitsdatum"
+msgstr "Fälligkeitsdatum"
 
 #: phase8 templates/website/contact.html
 msgctxt "website"
@@ -1275,7 +1275,7 @@ msgid ""
 "details visible."
 msgstr ""
 "Voller Zugriff auf einen Landmieter. Unbegrenzte gespeicherte Auswahl. "
-"Firmendetails sichtbar."
+"Unternehmensdetails sichtbar."
 
 #: phase8 templates/website/about.html
 msgctxt "website"
@@ -1403,7 +1403,7 @@ msgstr "Hauptsitz"
 #: phase8 templates/website/invoice.html
 msgctxt "website"
 msgid "Home"
-msgstr "Heim"
+msgstr "Startseite"
 
 #: phase8 templates/website/contact.html
 msgctxt "website"
@@ -1511,12 +1511,12 @@ msgstr "Investor Relations"
 #: phase8 templates/website/invoice.html
 msgctxt "website"
 msgid "Invoice Number"
-msgstr "[formelle Sie] Rechnungsnummer"
+msgstr "Rechnungsnummer"
 
 #: phase8 templates/website/invoice.html
 msgctxt "website"
 msgid "Issue Date"
-msgstr "[formelles Sie] Ausgabedatum"
+msgstr "Ausgabedatum"
 
 #: phase8 templates/website/worldmap.html
 msgctxt "website"
@@ -2012,7 +2012,7 @@ msgstr "Pioniermitglieder"
 #: phase8 templates/website/invoice.html
 msgctxt "website"
 msgid "Plan"
-msgstr "[formeller Sie] Plan"
+msgstr "Plan"
 
 #: phase8 templates/website/membership.html
 msgctxt "website"
@@ -2193,8 +2193,8 @@ msgstr "Reagieren · TypeScript · TailwindCSS"
 msgctxt "website"
 msgid "Read-only company name index. Max 1 saved selection. No active tenant."
 msgstr ""
-"Schreibgeschützter Firmennamenindex. Maximal 1 gespeicherte Auswahl. Kein "
-"aktiver Mieter."
+"Schreibgeschützter Unternehmensnamenindex. Maximal 1 gespeicherte Auswahl. "
+"Kein aktiver Mieter."
 
 #: phase8 templates/website/invoice.html
 msgctxt "website"
@@ -2303,8 +2303,8 @@ msgstr "SWIFT / BIC"
 
 #: phase8 templates/website/membership.html
 msgctxt "website"
-msgid "Save ${{ amount }}"
-msgstr "Sparen Sie ${{ amount }}"
+msgid "Save $%(amount)s"
+msgstr "Sparen Sie $%(amount)s"
 
 #: phase8 templates/website/about.html
 msgctxt "website"
@@ -2363,8 +2363,8 @@ msgstr ""
 
 #: phase8 templates/website/membership.html
 msgctxt "website"
-msgid "Select {{ plan_name }} Plan"
-msgstr "Wählen Sie den {{ plan_name }}-Plan aus"
+msgid "Select %(plan_name)s Plan"
+msgstr "Wählen Sie den %(plan_name)s-Plan aus"
 
 #: phase8 templates/website/membership.html
 msgctxt "website"
@@ -2870,8 +2870,8 @@ msgstr "Ihr aktueller Plan: <strong>Kein Plan</strong>"
 
 #: phase8 templates/website/upgrade_required.html
 msgctxt "website"
-msgid "Your current plan: <strong>{{ plan_name }}</strong>"
-msgstr "Ihr aktueller Plan: <strong>{{ plan_name }}</strong>"
+msgid "Your current plan: <strong>%(plan_name)s</strong>"
+msgstr "Ihr aktueller Plan: <strong>%(plan_name)s</strong>"
 
 #: phase8 templates/website/upgrade_required.html
 msgctxt "website"
@@ -2930,13 +2930,13 @@ msgstr "Jahr"
 
 #: phase8 templates/website/invoice.html
 msgctxt "website"
-msgid "{{ plan_name }} Plan"
-msgstr "{{ plan_name }} Plan"
+msgid "%(plan_name)s Plan"
+msgstr "%(plan_name)s Plan"
 
 #: phase8 templates/website/membership.html
 msgctxt "website"
-msgid "{{ plan_name }} Plan — Full Details"
-msgstr "{{ plan_name }}-Plan – Vollständige Details"
+msgid "%(plan_name)s Plan — Full Details"
+msgstr "%(plan_name)s-Plan – Vollständige Details"
 
 #: phase8 templates/website/invoice.html
 msgctxt "website"
@@ -2960,8 +2960,8 @@ msgstr "— Internationale Überweisung (USD)"
 
 #: phase8 templates/website/membership.html
 msgctxt "website"
-msgid "≈ ${{ monthly }} / month"
-msgstr "≈ ${{ monthly }} / Monat"
+msgid "≈ $%(monthly)s / month"
+msgstr "≈ $%(monthly)s / Monat"
 
 #: phase8 templates/website/_world_map.html
 msgctxt "website"
@@ -3159,9 +3159,58 @@ msgstr ""
 #: phase8 templates/website/contact.html
 msgctxt "website"
 msgid "Your Company Ltd."
-msgstr "Ihre Firma Ltd."
+msgstr "Ihre Unternehmen Ltd."
 
 #: phase8 templates/website/contact.html
 msgctxt "website"
 msgid "john@company.com"
 msgstr "john@company.com"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "$%(price)s / month"
+msgstr "$%(price)s / Monat"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "$%(price)s / year"
+msgstr "$%(price)s / Jahr"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid ""
+"Converted from %(source_amount)s %(source_currency)s at rate 1 "
+"%(source_currency)s = %(rate)s %(display_curr)s"
+msgstr ""
+"Umgerechnet von %(source_amount)s %(source_currency)s zum Kurs 1 "
+"%(source_currency)s = %(rate)s %(display_curr)s"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "Save $%(amount)s"
+msgstr "Sparen Sie $%(amount)s"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "Select %(plan_name)s Plan"
+msgstr "%(plan_name)s-Plan auswählen"
+
+#: phase8 templates/website/upgrade_required.html
+msgctxt "website"
+msgid "Your current plan: <strong>%(plan_name)s</strong>"
+msgstr "Ihr aktueller Plan: <strong>%(plan_name)s</strong>"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "%(plan_name)s Plan"
+msgstr "%(plan_name)s-Plan"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "%(plan_name)s Plan — Full Details"
+msgstr "%(plan_name)s-Plan — Alle Details"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "≈ $%(monthly)s / month"
+msgstr "≈ $%(monthly)s / Monat"

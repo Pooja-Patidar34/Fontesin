@@ -47,7 +47,7 @@ msgstr "Suchen"
 #: templates/base/base.html
 msgctxt "common"
 msgid "Cancel"
-msgstr "Stornieren"
+msgstr "Abbrechen"
 
 #: templates/base/base.html
 msgctxt "common"
@@ -72,7 +72,7 @@ msgstr "Upgrade-Plan"
 #: templates/base/base.html
 msgctxt "nav"
 msgid "Dashboard"
-msgstr "Armaturenbrett"
+msgstr "Dashboard"
 
 #: templates/base/base.html
 msgctxt "nav"
@@ -119,12 +119,12 @@ msgstr "Überblick"
 #: templates/base/base.html
 msgctxt "sidebar"
 msgid "Dashboard"
-msgstr "Armaturenbrett"
+msgstr "Dashboard"
 
 #: templates/base/base.html
 msgctxt "sidebar"
 msgid "Company Database"
-msgstr "Firmendatenbank"
+msgstr "Unternehmensdatenbank"
 
 #: templates/base/base.html
 msgctxt "sidebar"
@@ -348,7 +348,7 @@ msgstr "Ihr Unternehmen wurde von %(consultant)s zertifiziert."
 #: templates/base/base.html
 msgctxt "banner"
 msgid "It is now visible in the public company directory."
-msgstr "Es ist jetzt im öffentlichen Firmenverzeichnis sichtbar."
+msgstr "Es ist jetzt im öffentlichen Unternehmensverzeichnis sichtbar."
 
 #: templates/base/base.html
 #, python-format
@@ -952,7 +952,7 @@ msgstr ""
 #: templates/auth/login.html
 msgctxt "auth.login"
 msgid "Tenant-isolated company database"
-msgstr "Mieter-isolierte Firmendatenbank"
+msgstr "Mieter-isolierte Unternehmensdatenbank"
 
 #: templates/auth/login.html
 msgctxt "auth.login"
@@ -1079,7 +1079,7 @@ msgstr ""
 #: templates/auth/register.html
 msgctxt "auth.register"
 msgid "Basic Info"
-msgstr "Grunddaten"
+msgstr "Grundinformationen"
 
 #: templates/auth/register.html
 msgctxt "auth.register"
@@ -1270,7 +1270,7 @@ msgstr "Zugriffsebene"
 #: templates/auth/register.html
 msgctxt "auth.register"
 msgid "Read-only · Company name index"
-msgstr "Schreibgeschützt · Firmennamenindex"
+msgstr "Schreibgeschützt · Unternehmensnamenindex"
 
 #: templates/auth/register.html
 msgctxt "auth.register"
@@ -1435,7 +1435,7 @@ msgstr "Identitätsprüfung"
 #: templates/auth/verify.html
 msgctxt "auth.verify"
 msgid "Home"
-msgstr "Heim"
+msgstr "Startseite"
 
 #: templates/auth/verify.html
 msgctxt "auth.verify"
@@ -1587,7 +1587,7 @@ msgstr "Identität bestätigt"
 #: templates/auth/verify.html
 msgctxt "auth.verify"
 msgid "Cancel"
-msgstr "Stornieren"
+msgstr "Abbrechen"
 
 #: templates/auth/verify.html
 msgctxt "auth.verify"
@@ -2214,7 +2214,7 @@ msgstr ""
 msgid ""
 "A company with this name already exists. Please choose a different name."
 msgstr ""
-"Eine Firma mit diesem Namen existiert bereits. Bitte wählen Sie einen "
+"Eine Unternehmen mit diesem Namen existiert bereits. Bitte wählen Sie einen "
 "anderen Namen."
 
 #: phase4
@@ -2409,72 +2409,74 @@ msgstr "Community Interest Company (CIC)"
 
 #: phase4
 msgid "Company created successfully."
-msgstr "Firma erfolgreich gegründet."
+msgstr "Unternehmen erfolgreich gegründet."
 
 #: phase4
 msgid "Company deleted successfully."
-msgstr "Firma erfolgreich gelöscht."
+msgstr "Unternehmen erfolgreich gelöscht."
 
 #: phase4
 msgid "Company is required."
-msgstr "Firma ist erforderlich."
+msgstr "Unternehmen ist erforderlich."
 
 #: phase4
 msgid "Company name is required and cannot be only spaces."
 msgstr ""
-"Der Firmenname ist erforderlich und darf nicht nur aus Leerzeichen bestehen."
+"Der Unternehmensname ist erforderlich und darf nicht nur aus Leerzeichen "
+"bestehen."
 
 #: phase4
 msgid "Company name is required."
-msgstr "Firmenname ist erforderlich."
+msgstr "Unternehmensname ist erforderlich."
 
 #: phase4
 msgid ""
 "Company name may only contain letters, digits, spaces, and the symbols & ' ."
 " , - ( ), and must contain at least one letter."
 msgstr ""
-"Der Firmenname darf nur Buchstaben, Ziffern, Leerzeichen und die Symbole & '"
-" enthalten. , - ( ) und muss mindestens einen Buchstaben enthalten."
+"Der Unternehmensname darf nur Buchstaben, Ziffern, Leerzeichen und die "
+"Symbole & ' enthalten. , - ( ) und muss mindestens einen Buchstaben "
+"enthalten."
 
 #: phase4
 msgid "Company name must be 100 characters or fewer."
-msgstr "Der Firmenname darf maximal 100 Zeichen lang sein."
+msgstr "Der Unternehmensname darf maximal 100 Zeichen lang sein."
 
 #: phase4
 msgid ""
 "Company name must be 2-100 characters and may only contain letters, digits, "
 "spaces, and the symbols & ' . , - ( )."
 msgstr ""
-"Der Firmenname muss zwischen 2 und 100 Zeichen lang sein und darf nur "
+"Der Unternehmensname muss zwischen 2 und 100 Zeichen lang sein und darf nur "
 "Buchstaben, Ziffern, Leerzeichen und die Symbole & ' enthalten. , - ( )."
 
 #: phase4
 msgid "Company name must be at least 2 characters."
-msgstr "Der Firmenname muss mindestens 2 Zeichen lang sein."
+msgstr "Der Unternehmensname muss mindestens 2 Zeichen lang sein."
 
 #: phase4
 msgid "Company not found"
-msgstr "Firma nicht gefunden"
+msgstr "Unternehmen nicht gefunden"
 
 #: phase4
 msgid ""
 "Company registry access requires Basic plan or higher. Please upgrade your "
 "plan."
 msgstr ""
-"Der Firmenregister-Zugriff erfordert den Basic-Plan oder höher. Bitte "
+"Der Unternehmensregister-Zugriff erfordert den Basic-Plan oder höher. Bitte "
 "upgraden Sie Ihren Plan."
 
 #: phase4
 msgid "Company saved successfully."
-msgstr "Firma erfolgreich gespeichert."
+msgstr "Unternehmen erfolgreich gespeichert."
 
 #: phase4
 msgid "Company updated successfully."
-msgstr "Firma erfolgreich aktualisiert."
+msgstr "Unternehmen erfolgreich aktualisiert."
 
 #: phase4
 msgid "Company: %(company)s"
-msgstr "Firma: %(company)s"
+msgstr "Unternehmen: %(company)s"
 
 #: phase4
 msgid "Connecting is available once your plan upgrade is approved."
@@ -2546,7 +2548,7 @@ msgstr "Datenbankfehler beim Abrufen von Unternehmen"
 
 #: phase4
 msgid "Database error while fetching company details"
-msgstr "Datenbankfehler beim Abrufen der Firmendetails"
+msgstr "Datenbankfehler beim Abrufen der Unternehmensdetails"
 
 #: phase4
 msgid "Database error while fetching profile"
@@ -3342,7 +3344,7 @@ msgstr "Die Genehmigung dieses Abonnements steht nicht aus."
 
 #: phase4
 msgid "Unable to create company"
-msgstr "Firma kann nicht erstellt werden"
+msgstr "Unternehmen kann nicht erstellt werden"
 
 #: phase4
 msgid ""
@@ -3369,7 +3371,7 @@ msgstr "Das Profil kann derzeit nicht abgerufen werden"
 
 #: phase4
 msgid "Unable to update company"
-msgstr "Firma kann nicht aktualisiert werden"
+msgstr "Unternehmen kann nicht aktualisiert werden"
 
 #: phase4
 msgid "Unable to update user at the moment"
@@ -3468,7 +3470,7 @@ msgstr "Sie können Ihr eigenes Unternehmen nicht zertifizieren."
 
 #: phase4
 msgid "You cannot assign a company outside your tenant"
-msgstr "Sie können keine Firma außerhalb Ihres Mieters beauftragen"
+msgstr "Sie können keine Unternehmen außerhalb Ihres Mieters beauftragen"
 
 #: phase4
 msgid "You cannot delete your own account."
@@ -3666,9 +3668,9 @@ msgid ""
 "You will lose access to <strong>%(company_name)s</strong> and it will be "
 "removed from your My Companies. You can request to join again later."
 msgstr ""
-"Sie verlieren den Zugriff auf <strong>%(company_name)s</strong> und es "
-"wird aus Ihren „Meine Unternehmen“ entfernt. Sie können später einen "
-"erneuten Beitrittsantrag stellen."
+"Sie verlieren den Zugriff auf <strong>%(company_name)s</strong> und es wird "
+"aus Ihren „Meine Unternehmen“ entfernt. Sie können später einen erneuten "
+"Beitrittsantrag stellen."
 
 #: phase5 templates/dashboard/_company_import_modal.html
 msgctxt "companies.import"
@@ -3683,8 +3685,8 @@ msgstr ""
 " und Vertriebsbereiche usw.) sind optional und werden in ihren typisierten "
 "Feldern gespeichert. Unbekannte Spalten werden wörtlich in "
 "Company.extra_data (JSONB) beibehalten. Alle Zeilen gehen an den unten "
-"ausgewählten Mieter. Duplikate beim Firmennamen oder der Registrierungs-ID "
-"werden automatisch übersprungen."
+"ausgewählten Mieter. Duplikate beim Unternehmensnamen oder der "
+"Registrierungs-ID werden automatisch übersprungen."
 
 #: phase5 templates/dashboard/_company_import_modal.html
 msgctxt "companies.import"
@@ -3812,7 +3814,7 @@ msgstr "Aktiv"
 #: phase5 templates/dashboard/my_companies.html
 msgctxt "companies"
 msgid "Add Company"
-msgstr "Firma hinzufügen"
+msgstr "Unternehmen hinzufügen"
 
 #: phase5 templates/dashboard/consultant_companies.html
 msgctxt "companies"
@@ -3836,7 +3838,7 @@ msgstr ""
 #: phase5 templates/dashboard/_company_import_modal.html
 msgctxt "companies"
 msgid "Basic Info"
-msgstr "Grundlegende Informationen"
+msgstr "Grundinformationen"
 
 #: phase5 templates/dashboard/my_companies.html
 msgctxt "companies"
@@ -3925,22 +3927,22 @@ msgstr "Von Ihnen erstellte Unternehmen werden hier angezeigt."
 #: phase5 templates/dashboard/consultant_companies.html
 msgctxt "companies"
 msgid "Company"
-msgstr "[formelles Sie] Unternehmen"
+msgstr "Unternehmen"
 
 #: phase5 templates/dashboard/consultant_companies.html
 msgctxt "companies"
 msgid "Company Details"
-msgstr "Firmendetails"
+msgstr "Unternehmensdetails"
 
 #: phase5 templates/dashboard/_company_create_modal.html
 msgctxt "companies"
 msgid "Company Logo"
-msgstr "Firmenlogo"
+msgstr "Unternehmenslogo"
 
 #: phase5 templates/dashboard/_company_create_modal.html
 msgctxt "companies"
 msgid "Company Name"
-msgstr "Name der Firma"
+msgstr "Unternehmensname"
 
 #: phase5 templates/dashboard/companies.html
 msgctxt "companies"
@@ -3985,7 +3987,7 @@ msgstr "Ansprechpartner"
 #: phase5 templates/dashboard/my_companies.html
 msgctxt "companies"
 msgid "Could not load company details."
-msgstr "Firmendetails konnten nicht geladen werden."
+msgstr "Unternehmensdetails konnten nicht geladen werden."
 
 #: phase5 templates/dashboard/_company_create_modal.html
 msgctxt "companies"
@@ -4022,7 +4024,7 @@ msgstr "Deaktivieren"
 #: phase5 templates/dashboard/_company_row.html
 msgctxt "companies"
 msgid "Delete Company?"
-msgstr "Firma löschen?"
+msgstr "Unternehmen löschen?"
 
 #: phase5 templates/dashboard/_company_import_modal.html
 msgctxt "companies"
@@ -4032,7 +4034,7 @@ msgstr "Bezirk"
 #: phase5 templates/dashboard/_company_import_modal.html
 msgctxt "companies"
 msgid "Edit Company"
-msgstr "Firma bearbeiten"
+msgstr "Unternehmen bearbeiten"
 
 #: phase5 templates/dashboard/companies.html
 msgctxt "companies"
@@ -4112,7 +4114,7 @@ msgstr "Verlassen"
 #: phase5 templates/dashboard/my_companies.html
 msgctxt "companies"
 msgid "Leave this company"
-msgstr "Verlassen Sie diese Firma"
+msgstr "Verlassen Sie diese Unternehmen"
 
 #: phase5 templates/dashboard/my_companies.html
 msgctxt "companies"
@@ -4168,17 +4170,17 @@ msgstr "NAICS-Code"
 #: phase5 templates/dashboard/my_companies.html
 msgctxt "companies"
 msgid "Name"
-msgstr "[formeller Sie] Name"
+msgstr "Name"
 
 #: phase5 templates/dashboard/_companies_rows.html
 msgctxt "companies"
 msgid "No companies found"
-msgstr "Keine Firmen gefunden"
+msgstr "Keine Unternehmen gefunden"
 
 #: phase5 templates/dashboard/consultant_companies.html
 msgctxt "companies"
 msgid "No companies found."
-msgstr "Keine Firmen gefunden."
+msgstr "Keine Unternehmen gefunden."
 
 #: phase5 templates/dashboard/my_companies.html
 msgctxt "companies"
@@ -4220,7 +4222,7 @@ msgstr "Eigentümer"
 msgctxt "companies"
 msgid "PNG, JPG, SVG, WEBP or GIF (max 5 MB). Shown in the company overview."
 msgstr ""
-"PNG, JPG, SVG, WEBP oder GIF (max. 5 MB). Wird in der Firmenübersicht "
+"PNG, JPG, SVG, WEBP oder GIF (max. 5 MB). Wird in der Unternehmensübersicht "
 "angezeigt."
 
 #: phase5 templates/dashboard/my_companies.html
@@ -4272,7 +4274,7 @@ msgstr "Registrierungsnr."
 #: phase5 templates/dashboard/_company_create_modal.html
 msgctxt "companies"
 msgid "Registration Number / Company ID"
-msgstr "Registrierungsnummer/Firmen-ID"
+msgstr "Registrierungsnummer/Unternehmen-ID"
 
 #: phase5 templates/dashboard/my_companies.html
 msgctxt "companies"
@@ -4340,7 +4342,7 @@ msgstr "Bundesland/Region"
 #: phase5 templates/dashboard/consultant_companies.html
 msgctxt "companies"
 msgid "Status"
-msgstr "[formeller Sie] Status"
+msgstr "Status"
 
 #: phase5 templates/dashboard/_company_create_modal.html
 msgctxt "companies"
@@ -4591,19 +4593,19 @@ msgstr ""
 
 #: phase6 billing/views.py
 msgid "Admin Share"
-msgstr "[formelle Sie] Admin-Freigabe"
+msgstr "Admin-Anteil"
 
 #: phase6 billing/views.py
 msgid "Annual"
-msgstr "[formelles Sie] Jährlich"
+msgstr "Jährlich"
 
 #: phase6 billing/views.py
 msgid "Billing Period"
-msgstr "[formelles Sie] Abrechnungszeitraum"
+msgstr "Abrechnungszeitraum"
 
 #: phase6 billing/views.py
 msgid "Commission"
-msgstr "[formelle Sie] Kommission"
+msgstr "Kommission"
 
 #: phase6 billing/views.py
 msgid "Commission Status"
@@ -4611,15 +4613,15 @@ msgstr "Kommissionsstatus"
 
 #: phase6 billing/views.py
 msgid "Company"
-msgstr "[formelles Sie] Unternehmen"
+msgstr "Unternehmen"
 
 #: phase6 billing/views.py
 msgid "Consultant Share"
-msgstr "[formelle Sie] Berater teilen"
+msgstr "Berateranteil"
 
 #: phase6 billing/views.py
 msgid "Due Date"
-msgstr "[formelles Sie] Fälligkeitsdatum"
+msgstr "Fälligkeitsdatum"
 
 #: phase6 billing/views.py
 msgid "FONTESIN  ·  Invoice %(number)s"
@@ -4627,27 +4629,27 @@ msgstr "FONTESIN · Rechnung %(number)s"
 
 #: phase6 billing/views.py
 msgid "FX"
-msgstr "[formelles Sie] FX"
+msgstr "FX"
 
 #: phase6 billing/views.py
 msgid "Invoice"
-msgstr "[formelle Sie] Rechnung"
+msgstr "Rechnung"
 
 #: phase6 billing/views.py
 msgid "Invoice Number"
-msgstr "[formelle Sie] Rechnungsnummer"
+msgstr "Rechnungsnummer"
 
 #: phase6 billing/views.py
 msgid "Issue Date"
-msgstr "[formelles Sie] Ausgabedatum"
+msgstr "Ausgabedatum"
 
 #: phase6 billing/views.py
 msgid "Monthly"
-msgstr "[formelles Sie] Monatlich"
+msgstr "Monatlich"
 
 #: phase6 billing/views.py
 msgid "Name"
-msgstr "[formeller Sie] Name"
+msgstr "Name"
 
 #: phase6 billing/views.py
 msgid "Paid At"
@@ -4655,23 +4657,23 @@ msgstr "Bezahlt bei"
 
 #: phase6 billing/views.py
 msgid "Period End"
-msgstr "[formelles Sie] Periodenende"
+msgstr "Periodenende"
 
 #: phase6 billing/views.py
 msgid "Period Start"
-msgstr "[formelles Sie] Periodenbeginn"
+msgstr "Periodenbeginn"
 
 #: phase6 billing/views.py
 msgid "Plan"
-msgstr "[formeller Sie] Plan"
+msgstr "Plan"
 
 #: phase6 billing/views.py
 msgid "Plan & Period"
-msgstr "[formelle Sie] Plan & Zeitraum"
+msgstr "Plan & Zeitraum"
 
 #: phase6 billing/views.py
 msgid "Rate"
-msgstr "[formelle Sie] Bewerten"
+msgstr "Satz"
 
 #: phase6 billing/views.py
 msgid "Source Amount"
@@ -4679,7 +4681,7 @@ msgstr "Quellbetrag"
 
 #: phase6 billing/views.py
 msgid "Status"
-msgstr "[formeller Sie] Status"
+msgstr "Status"
 
 #: phase6 billing/views.py
 msgid "Subscriber"
@@ -4691,7 +4693,7 @@ msgstr "Gesamtbetrag"
 
 #: phase6 billing/plan_i18n.py
 msgid "billing.plan.{code}"
-msgstr "[formelle Sie] billing.plan.{code}"
+msgstr "billing.plan.{code}"
 
 #: phase6 templates/dashboard/_commission_invoice_modal.html
 msgctxt "billing"
@@ -4760,7 +4762,7 @@ msgstr ""
 #: phase6 templates/dashboard/_commission_invoice_modal.html
 msgctxt "billing"
 msgid "Admin Share"
-msgstr "[formelle Sie] Admin-Freigabe"
+msgstr "Admin-Anteil"
 
 #: phase6 templates/dashboard/commissions.html
 msgctxt "billing"
@@ -4785,7 +4787,7 @@ msgstr "Menge"
 #: phase6 templates/dashboard/_commission_invoice_modal.html
 msgctxt "billing"
 msgid "Annual"
-msgstr "[formelles Sie] Jährlich"
+msgstr "Jährlich"
 
 #: phase6 templates/dashboard/_payments_panel.html
 msgctxt "billing"
@@ -4815,8 +4817,8 @@ msgstr "Sind Sie sicher, dass Sie die Funktion deaktivieren möchten?"
 #: phase6 templates/profile/_plan_card.html
 msgctxt "billing"
 msgid ""
-"Awaiting admin approval. Until then you keep your current %(current_plan)s"
-" access."
+"Awaiting admin approval. Until then you keep your current %(current_plan)s "
+"access."
 msgstr ""
 "Warten auf die Genehmigung durch den Administrator. Bis dahin behalten Sie "
 "Ihren aktuellen %(current_plan)s-Zugang."
@@ -4844,7 +4846,7 @@ msgstr "Am besten für"
 #: phase6 templates/dashboard/_commission_invoice_modal.html
 msgctxt "billing"
 msgid "Billing Period"
-msgstr "[formelles Sie] Abrechnungszeitraum"
+msgstr "Abrechnungszeitraum"
 
 #: phase6 templates/dashboard/_commissions_panel.html
 msgctxt "billing"
@@ -4859,7 +4861,7 @@ msgstr "Abgesagt"
 #: phase6 templates/dashboard/_commission_invoice_modal.html
 msgctxt "billing"
 msgid "Commission"
-msgstr "[formelle Sie] Kommission"
+msgstr "Kommission"
 
 #: phase6 templates/dashboard/commissions.html
 msgctxt "billing"
@@ -4869,7 +4871,7 @@ msgstr "Provisionen"
 #: phase6 templates/dashboard/_commission_invoice_modal.html
 msgctxt "billing"
 msgid "Company"
-msgstr "[formelles Sie] Unternehmen"
+msgstr "Unternehmen"
 
 #: phase6 templates/dashboard/_commission_invoice_modal.html
 msgctxt "billing"
@@ -4879,7 +4881,7 @@ msgstr "Berater"
 #: phase6 templates/dashboard/_commission_invoice_modal.html
 msgctxt "billing"
 msgid "Consultant Share"
-msgstr "[formelle Sie] Berater teilen"
+msgstr "Berateranteil"
 
 #: phase6 templates/dashboard/commissions.html
 msgctxt "billing"
@@ -4889,11 +4891,11 @@ msgstr "Berater %(currency)s: %(amount)s"
 #: phase6 templates/dashboard/_commission_invoice_modal.html
 msgctxt "billing"
 msgid ""
-"Converted from %(source_amount)s %(source_currency)s at rate 1 {{ "
-"source_currency }} = %(rate)s %(display_currency)s"
+"Converted from %(source_amount)s %(source_currency)s at rate 1 "
+"%(source_currency)s = %(rate)s %(display_currency)s"
 msgstr ""
-"Umgerechnet von %(source_amount)s %(source_currency)s mit Rate 1 {{ "
-"source_currency }} = %(rate)s %(display_currency)s"
+"Umgerechnet von %(source_amount)s %(source_currency)s mit Rate 1 "
+"%(source_currency)s = %(rate)s %(display_currency)s"
 
 #: phase6 templates/dashboard/invoices.html
 msgctxt "billing"
@@ -4923,7 +4925,7 @@ msgstr "Rechnung als Excel (.xlsx) herunterladen"
 #: phase6 templates/dashboard/invoices.html
 msgctxt "billing"
 msgid "Due Date"
-msgstr "[formelles Sie] Fälligkeitsdatum"
+msgstr "Fälligkeitsdatum"
 
 #: phase6 templates/dashboard/_payments_panel.html
 msgctxt "billing"
@@ -5018,7 +5020,7 @@ msgstr "Inaktiv"
 #: phase6 templates/dashboard/_commission_invoice_modal.html
 msgctxt "billing"
 msgid "Invoice"
-msgstr "[formelle Sie] Rechnung"
+msgstr "Rechnung"
 
 #: phase6 templates/dashboard/invoices.html
 msgctxt "billing"
@@ -5033,7 +5035,7 @@ msgstr "Rechnungsdetails"
 #: phase6 templates/dashboard/_commission_invoice_modal.html
 msgctxt "billing"
 msgid "Invoice Number"
-msgstr "[formelle Sie] Rechnungsnummer"
+msgstr "Rechnungsnummer"
 
 #: phase6 templates/dashboard/invoices.html
 msgctxt "billing"
@@ -5043,7 +5045,7 @@ msgstr "Rechnungen"
 #: phase6 templates/dashboard/_commission_invoice_modal.html
 msgctxt "billing"
 msgid "Issue Date"
-msgstr "[formelles Sie] Ausgabedatum"
+msgstr "Ausgabedatum"
 
 #: phase6 templates/dashboard/commissions.html
 msgctxt "billing"
@@ -5073,7 +5075,7 @@ msgstr "Provision als bezahlt markieren"
 #: phase6 templates/dashboard/_commission_invoice_modal.html
 msgctxt "billing"
 msgid "Monthly"
-msgstr "[formelles Sie] Monatlich"
+msgstr "Monatlich"
 
 #: phase6 templates/dashboard/commissions.html
 msgctxt "billing"
@@ -5083,7 +5085,7 @@ msgstr "Meine Provisionen"
 #: phase6 templates/dashboard/_commission_invoice_modal.html
 msgctxt "billing"
 msgid "Name"
-msgstr "[formeller Sie] Name"
+msgstr "Name"
 
 #: phase6 templates/profile/_plan_card.html
 msgctxt "billing"
@@ -5208,7 +5210,7 @@ msgstr ""
 #: phase6 templates/dashboard/plan_history.html
 msgctxt "billing"
 msgid "Plan"
-msgstr "[formeller Sie] Plan"
+msgstr "Plan"
 
 #: phase6 templates/dashboard/subscriptions.html
 msgctxt "billing"
@@ -5243,7 +5245,7 @@ msgstr "Preis"
 #: phase6 templates/dashboard/_commission_invoice_modal.html
 msgctxt "billing"
 msgid "Rate"
-msgstr "[formelle Sie] Bewerten"
+msgstr "Satz"
 
 #: phase6 templates/dashboard/_payments_panel.html
 msgctxt "billing"
@@ -5313,7 +5315,7 @@ msgstr "Begonnen"
 #: phase6 templates/dashboard/plan_history.html
 msgctxt "billing"
 msgid "Status"
-msgstr "[formeller Sie] Status"
+msgstr "Status"
 
 #: phase6 templates/dashboard/_commission_invoice_modal.html
 msgctxt "billing"
@@ -5343,11 +5345,11 @@ msgstr "Slogan"
 #: phase6 templates/dashboard/_commissions_panel.html
 msgctxt "billing"
 msgid ""
-"This records the disbursement of <strong>%(amount)s {{ currency "
-"}}</strong> to <strong>%(email)s</strong>. This action cannot be undone."
+"This records the disbursement of <strong>%(amount)s %(currency)s</strong> to"
+" <strong>%(email)s</strong>. This action cannot be undone."
 msgstr ""
-"Hier wird die Auszahlung von <strong>%(amount)s %(currency)s</strong> an"
-" <strong>%(email)s</strong> erfasst. Diese Aktion kann nicht rückgängig "
+"Hier wird die Auszahlung von <strong>%(amount)s %(currency)s</strong> an "
+"<strong>%(email)s</strong> erfasst. Diese Aktion kann nicht rückgängig "
 "gemacht werden."
 
 #: phase6 templates/dashboard/subscriptions.html
@@ -5622,7 +5624,7 @@ msgstr "Bewerbungsstatus"
 #: phase6 templates/dashboard/consultant_users.html
 msgctxt "users"
 msgid "Applied Company Name"
-msgstr "Angewendeter Firmenname"
+msgstr "Angewendeter Unternehmensname"
 
 #: phase6 templates/dashboard/users.html
 msgctxt "users"
@@ -5632,8 +5634,8 @@ msgstr "Arabisch"
 #: phase6 templates/dashboard/consultant_users.html
 msgctxt "users"
 msgid ""
-"Are you sure you want to permanently delete <strong>%(email)s</strong>? "
-"This action cannot be undone."
+"Are you sure you want to permanently delete <strong>%(email)s</strong>? This"
+" action cannot be undone."
 msgstr ""
 "Sind Sie sicher, dass Sie <strong>%(email)s</strong> dauerhaft löschen "
 "möchten? Diese Aktion kann nicht rückgängig gemacht werden."
@@ -5693,12 +5695,12 @@ msgstr "Code"
 #: phase6 templates/dashboard/consultant_users.html
 msgctxt "users"
 msgid "Company"
-msgstr "[formelles Sie] Unternehmen"
+msgstr "Unternehmen"
 
 #: phase6 templates/dashboard/users.html
 msgctxt "users"
 msgid "Company is required."
-msgstr "Firma ist erforderlich."
+msgstr "Unternehmen ist erforderlich."
 
 #: phase6 templates/dashboard/consultant_users.html
 msgctxt "users"
@@ -5817,7 +5819,7 @@ msgstr ""
 #: phase6 templates/dashboard/users.html
 msgctxt "users"
 msgid "Failed to load companies"
-msgstr "Firmen konnten nicht geladen werden"
+msgstr "Unternehmen konnten nicht geladen werden"
 
 #: phase6 templates/dashboard/users.html
 msgctxt "users"
@@ -5927,7 +5929,7 @@ msgstr "Motivation"
 #: phase6 templates/dashboard/consultant_users.html
 msgctxt "users"
 msgid "Name"
-msgstr "[formeller Sie] Name"
+msgstr "Name"
 
 #: phase6 templates/dashboard/consultant_users.html
 msgctxt "users"
@@ -6155,7 +6157,7 @@ msgstr "Suchen Sie nach Geschäftsbenutzern"
 #: phase6 templates/dashboard/consultant_users.html
 msgctxt "users"
 msgid "Search by name, email, or company…"
-msgstr "Suchen Sie nach Name, E-Mail oder Firma ..."
+msgstr "Suchen Sie nach Name, E-Mail oder Unternehmen ..."
 
 #: phase6 templates/dashboard/business_users.html
 msgctxt "users"
@@ -6170,7 +6172,7 @@ msgstr "Unternehmen suchen…"
 #: phase6 templates/dashboard/users.html
 msgctxt "users"
 msgid "Search company…"
-msgstr "Firma suchen…"
+msgstr "Unternehmen suchen…"
 
 #: phase6 templates/dashboard/users.html
 msgctxt "users"
@@ -6230,7 +6232,7 @@ msgstr "Statistiken"
 #: phase6 templates/dashboard/consultant_users.html
 msgctxt "users"
 msgid "Status"
-msgstr "[formeller Sie] Status"
+msgstr "Status"
 
 #: phase6 templates/dashboard/users.html
 msgctxt "users"
@@ -6306,8 +6308,7 @@ msgstr "Rolle anzeigen"
 msgctxt "users"
 msgid "View %(first_name)s's certification + subscription statistics"
 msgstr ""
-"Sehen Sie sich die Zertifizierungs- und Abonnementstatistiken von {{ "
-"first_name }} an"
+"Zertifizierungs- und Abonnementstatistiken von %(first_name)s anzeigen"
 
 #: phase6 templates/dashboard/consultant_users.html
 msgctxt "users"
@@ -6350,8 +6351,8 @@ msgid ""
 "%(counter)s result for &ldquo;%(query)s&rdquo;{% plural %}%(counter)s "
 "results for &ldquo;%(query)s&rdquo;"
 msgstr ""
-"%(counter)s Ergebnis für „%(query)s“;{% plural %}%(counter)s "
-"Ergebnisse für „%(query)s“"
+"%(counter)s Ergebnis für „%(query)s“;{% plural %}%(counter)s Ergebnisse für "
+"„%(query)s“"
 
 #: phase6 templates/dashboard/consultant_users.html
 msgctxt "users"
@@ -6444,7 +6445,7 @@ msgstr "Ihre Verbindungsanfrage zu %(company_name)s abbrechen?"
 #: phase6 templates/dashboard/partnerships.html
 msgctxt "workflows"
 msgid "Company"
-msgstr "[formelles Sie] Unternehmen"
+msgstr "Unternehmen"
 
 #: phase6 templates/dashboard/applications.html
 msgctxt "workflows"
@@ -6494,11 +6495,11 @@ msgstr "Entschieden"
 #: phase6 templates/dashboard/applications.html
 msgctxt "workflows"
 msgid ""
-"Declared truthful: %(truthful)s · Accepted terms: %(terms)s · AML "
-"consent: %(aml)s"
+"Declared truthful: %(truthful)s · Accepted terms: %(terms)s · AML consent: "
+"%(aml)s"
 msgstr ""
-"Für wahr erklärt: %(truthful)s · Akzeptierte Bedingungen: %(terms)s · "
-"AML-Zustimmung: %(aml)s"
+"Für wahr erklärt: %(truthful)s · Akzeptierte Bedingungen: %(terms)s · AML-"
+"Zustimmung: %(aml)s"
 
 #: phase6 templates/dashboard/applications.html
 msgctxt "workflows"
@@ -6843,19 +6844,19 @@ msgstr "Widerrufen"
 #: phase6 templates/dashboard/partnerships.html
 msgctxt "workflows"
 msgid ""
-"Revoke partnership with %(email)s? They'll lose view access to {{ "
-"company_name }}."
+"Revoke partnership with %(email)s? They'll lose view access to "
+"%(company_name)s."
 msgstr ""
-"Partnerschaft mit %(email)s widerrufen? Sie verlieren den Zugriff auf {{ "
-"company_name }}."
+"Partnerschaft mit %(email)s widerrufen? Sie verlieren den Zugriff auf "
+"%(company_name)s."
 
 #: phase6 templates/dashboard/join_requests.html
 msgctxt "workflows"
 msgid ""
 "Revoke %(email)s's membership? They'll lose access to %(company_name)s."
 msgstr ""
-"Mitgliedschaft von %(email)s widerrufen? Sie verlieren den Zugriff auf {{ "
-"company_name }}."
+"Mitgliedschaft von %(email)s widerrufen? Sie verlieren den Zugriff auf "
+"%(company_name)s."
 
 #: phase6 templates/dashboard/applications.html
 msgctxt "workflows"
@@ -6875,7 +6876,7 @@ msgstr "Bundesland/Region:"
 #: phase6 templates/dashboard/applications.html
 msgctxt "workflows"
 msgid "Status"
-msgstr "[formeller Sie] Status"
+msgstr "Status"
 
 #: phase6 templates/dashboard/coordinator_requests.html
 msgctxt "workflows"
@@ -7009,7 +7010,7 @@ msgstr "N / A"
 #: phase7 templates/dashboard/_tenants_panel.html
 msgctxt "common"
 msgid "Name"
-msgstr "[formeller Sie] Name"
+msgstr "Name"
 
 #: phase7 templates/dashboard/messages.html
 msgctxt "common"
@@ -7024,7 +7025,7 @@ msgstr "Telefon"
 #: phase7 templates/dashboard/_tenants_panel.html
 msgctxt "common"
 msgid "Status"
-msgstr "[formeller Sie] Status"
+msgstr "Status"
 
 #: phase7 templates/dashboard/tenant_confirm_delete.html
 msgctxt "common"
@@ -7049,7 +7050,7 @@ msgstr "Warnung"
 #: phase7 templates/profile/profile.html
 msgctxt "companies"
 msgid "Enter company name"
-msgstr "Geben Sie den Firmennamen ein"
+msgstr "Geben Sie den Unternehmensnamen ein"
 
 #: phase7 templates/profile/profile.html
 msgctxt "companies"
@@ -7077,17 +7078,16 @@ msgid ""
 "<strong>%(active)s</strong> of <strong>%(total)s</strong> companies are "
 "active."
 msgstr ""
-"<strong>%(active)s</strong> von <strong>%(total)s</strong> Unternehmen "
-"sind aktiv."
+"<strong>%(active)s</strong> von <strong>%(total)s</strong> Unternehmen sind "
+"aktiv."
 
 #: phase7 templates/dashboard/index.html
 msgctxt "dashboard"
 msgid ""
-"<strong>%(active)s</strong> of <strong>%(total)s</strong> users are "
-"active."
+"<strong>%(active)s</strong> of <strong>%(total)s</strong> users are active."
 msgstr ""
-"<strong>%(active)s</strong> von <strong>%(total)s</strong> Benutzern "
-"sind aktiv."
+"<strong>%(active)s</strong> von <strong>%(total)s</strong> Benutzern sind "
+"aktiv."
 
 #: phase7 templates/dashboard/consultant_statistics.html
 msgctxt "dashboard"
@@ -7132,7 +7132,7 @@ msgstr "Schauspieler"
 #: phase7 templates/dashboard/index.html
 msgctxt "dashboard"
 msgid "Add Company"
-msgstr "Firma hinzufügen"
+msgstr "Unternehmen hinzufügen"
 
 #: phase7 templates/dashboard/tenants.html
 msgctxt "dashboard"
@@ -7291,12 +7291,12 @@ msgstr "Unternehmen nach Region"
 #: phase7 templates/dashboard/certifications.html
 msgctxt "dashboard"
 msgid "Company"
-msgstr "[formelles Sie] Unternehmen"
+msgstr "Unternehmen"
 
 #: phase7 templates/dashboard/certifications.html
 msgctxt "dashboard"
 msgid "Company Database"
-msgstr "Firmendatenbank"
+msgstr "Unternehmensdatenbank"
 
 #: phase7 templates/dashboard/index.html
 msgctxt "dashboard"
@@ -7351,7 +7351,7 @@ msgstr "Aktueller Abonnementstatus"
 #: phase7 templates/dashboard/index.html
 msgctxt "dashboard"
 msgid "Dashboard"
-msgstr "Armaturenbrett"
+msgstr "Dashboard"
 
 #: phase7 templates/dashboard/_tenants_panel.html
 msgctxt "dashboard"
@@ -7767,7 +7767,7 @@ msgstr "Ausstehende Überprüfung"
 #: phase7 templates/dashboard/index.html
 msgctxt "dashboard"
 msgid "Plan"
-msgstr "[formeller Sie] Plan"
+msgstr "Plan"
 
 #: phase7 templates/dashboard/consultant_statistics.html
 msgctxt "dashboard"
@@ -8022,7 +8022,7 @@ msgstr "USD"
 #: phase7 templates/dashboard/certifications.html
 msgctxt "dashboard"
 msgid "Update your company details and resubmit from"
-msgstr "Aktualisieren Sie Ihre Firmendaten und senden Sie sie erneut ab"
+msgstr "Aktualisieren Sie Ihre Unternehmensdaten und senden Sie sie erneut ab"
 
 #: phase7 templates/dashboard/_audit_logs_panel.html
 msgctxt "dashboard"
@@ -8311,12 +8311,13 @@ msgstr "Klicken Sie hier, um ein Unternehmen auszuwählen..."
 #: phase7 templates/profile/profile.html
 msgctxt "profile"
 msgid "Company Logo"
-msgstr "Firmenlogo"
+msgstr "Unternehmenslogo"
 
 #: phase7 templates/profile/profile.html
 msgctxt "profile"
 msgid "Company name cannot be empty or just spaces."
-msgstr "Der Firmenname darf nicht leer sein oder nur Leerzeichen enthalten."
+msgstr ""
+"Der Unternehmensname darf nicht leer sein oder nur Leerzeichen enthalten."
 
 #: phase7 templates/profile/profile.html
 msgctxt "profile"
@@ -8381,7 +8382,8 @@ msgstr ""
 #: phase7 templates/profile/profile.html
 msgctxt "profile"
 msgid "Failed to load companies. Please try again."
-msgstr "Firmen konnten nicht geladen werden. Bitte versuchen Sie es erneut."
+msgstr ""
+"Unternehmen konnten nicht geladen werden. Bitte versuchen Sie es erneut."
 
 #: phase7 templates/profile/profile.html
 msgctxt "profile"
@@ -8403,8 +8405,8 @@ msgctxt "profile"
 msgid ""
 "Legal identifier (e.g. company-house number, EIN, CIN). Must be unique."
 msgstr ""
-"Rechtliche Kennung (z. B. Firmenhausnummer, EIN, CIN). Muss einzigartig "
-"sein."
+"Rechtliche Kennung (z. B. Handelsregisternummer, EIN, CIN). Muss einzigartig"
+" sein."
 
 #: phase7 templates/profile/profile.html
 msgctxt "profile"
@@ -8426,7 +8428,7 @@ msgstr ""
 #: phase7 templates/profile/_join_company_form.html
 msgctxt "profile"
 msgid "Loading companies..."
-msgstr "Firmen werden geladen..."
+msgstr "Unternehmen werden geladen..."
 
 #: phase7 templates/profile/profile.html
 msgctxt "profile"
@@ -8462,7 +8464,7 @@ msgstr "Es stimmen keine Unternehmen überein“"
 msgctxt "profile"
 msgid "PNG, JPG, SVG, WEBP or GIF (max 5 MB). Shown in the company overview."
 msgstr ""
-"PNG, JPG, SVG, WEBP oder GIF (max. 5 MB). Wird in der Firmenübersicht "
+"PNG, JPG, SVG, WEBP oder GIF (max. 5 MB). Wird in der Unternehmensübersicht "
 "angezeigt."
 
 #: phase7 templates/profile/_join_company_form.html
@@ -8497,7 +8499,8 @@ msgid ""
 "owner approves or declines your request."
 msgstr ""
 "Antrag auf Beitritt zu einem anderen Unternehmen, das bereits auf der "
-"Plattform ist. Der Firmeninhaber genehmigt Ihre Anfrage oder lehnt sie ab."
+"Plattform ist. Der Unternehmensinhaber genehmigt Ihre Anfrage oder lehnt sie"
+" ab."
 
 #: phase7 templates/profile/profile.html
 msgctxt "profile"
@@ -8584,8 +8587,8 @@ msgid ""
 "Your request is sent to the company owner. Once they approve it, the company"
 " appears in your"
 msgstr ""
-"Ihre Anfrage wird an den Firmeninhaber gesendet. Sobald sie es genehmigt "
-"haben, erscheint das Unternehmen in Ihrem"
+"Ihre Anfrage wird an den Unternehmensinhaber gesendet. Sobald sie es "
+"genehmigt haben, erscheint das Unternehmen in Ihrem"
 
 #: phase7 templates/profile/profile.html
 msgctxt "profile"
@@ -8698,7 +8701,7 @@ msgstr "Unternehmen"
 #: phase8 static/adminlte/manifest.json
 msgctxt "pwa"
 msgid "Dashboard"
-msgstr "Armaturenbrett"
+msgstr "Dashboard"
 
 #: phase8 static/adminlte/manifest.json
 msgctxt "pwa"
@@ -9052,7 +9055,7 @@ msgstr "Am besten für:"
 #: phase8 templates/website/invoice.html
 msgctxt "website"
 msgid "Billing Period"
-msgstr "[formelles Sie] Abrechnungszeitraum"
+msgstr "Abrechnungszeitraum"
 
 #: phase8 templates/website/index.html
 msgctxt "website"
@@ -9204,17 +9207,17 @@ msgstr "Mitbegründer"
 #: phase8 templates/website/invoice.html
 msgctxt "website"
 msgid "Company"
-msgstr "[formelles Sie] Unternehmen"
+msgstr "Unternehmen"
 
 #: phase8 templates/website/index.html
 msgctxt "website"
 msgid "Company Database"
-msgstr "Firmendatenbank"
+msgstr "Unternehmensdatenbank"
 
 #: phase8 templates/website/invoice.html
 msgctxt "website"
 msgid "Company Name"
-msgstr "Name der Firma"
+msgstr "Unternehmensname"
 
 #: phase8 templates/website/invoice.html
 msgctxt "website"
@@ -9274,11 +9277,11 @@ msgstr "Vertrag · Remote"
 #: phase8 templates/website/invoice.html
 msgctxt "website"
 msgid ""
-"Converted from %(source_amount)s %(source_currency)s at rate 1 {{ "
-"source_currency }} = %(rate)s %(display_curr)s"
+"Converted from %(source_amount)s %(source_currency)s at rate 1 "
+"%(source_currency)s = %(rate)s %(display_curr)s"
 msgstr ""
-"Umgerechnet von %(source_amount)s %(source_currency)s mit Rate 1 {{ "
-"source_currency }} = %(rate)s %(display_curr)s"
+"Umgerechnet von %(source_amount)s %(source_currency)s mit Rate 1 "
+"%(source_currency)s = %(rate)s %(display_curr)s"
 
 #: phase8 templates/website/invoice.html
 msgctxt "website"
@@ -9436,7 +9439,7 @@ msgstr "Dubai / abgelegen"
 #: phase8 templates/website/invoice.html
 msgctxt "website"
 msgid "Due Date"
-msgstr "[formelles Sie] Fälligkeitsdatum"
+msgstr "Fälligkeitsdatum"
 
 #: phase8 templates/website/contact.html
 msgctxt "website"
@@ -9651,7 +9654,7 @@ msgid ""
 "details visible."
 msgstr ""
 "Voller Zugriff auf einen Landmieter. Unbegrenzte gespeicherte Auswahl. "
-"Firmendetails sichtbar."
+"Unternehmensdetails sichtbar."
 
 #: phase8 templates/website/about.html
 msgctxt "website"
@@ -9779,7 +9782,7 @@ msgstr "Hauptsitz"
 #: phase8 templates/website/invoice.html
 msgctxt "website"
 msgid "Home"
-msgstr "Heim"
+msgstr "Startseite"
 
 #: phase8 templates/website/contact.html
 msgctxt "website"
@@ -9887,12 +9890,12 @@ msgstr "Investor Relations"
 #: phase8 templates/website/invoice.html
 msgctxt "website"
 msgid "Invoice Number"
-msgstr "[formelle Sie] Rechnungsnummer"
+msgstr "Rechnungsnummer"
 
 #: phase8 templates/website/invoice.html
 msgctxt "website"
 msgid "Issue Date"
-msgstr "[formelles Sie] Ausgabedatum"
+msgstr "Ausgabedatum"
 
 #: phase8 templates/website/worldmap.html
 msgctxt "website"
@@ -10388,7 +10391,7 @@ msgstr "Pioniermitglieder"
 #: phase8 templates/website/invoice.html
 msgctxt "website"
 msgid "Plan"
-msgstr "[formeller Sie] Plan"
+msgstr "Plan"
 
 #: phase8 templates/website/membership.html
 msgctxt "website"
@@ -10569,8 +10572,8 @@ msgstr "Reagieren · TypeScript · TailwindCSS"
 msgctxt "website"
 msgid "Read-only company name index. Max 1 saved selection. No active tenant."
 msgstr ""
-"Schreibgeschützter Firmennamenindex. Maximal 1 gespeicherte Auswahl. Kein "
-"aktiver Mieter."
+"Schreibgeschützter Unternehmensnamenindex. Maximal 1 gespeicherte Auswahl. "
+"Kein aktiver Mieter."
 
 #: phase8 templates/website/invoice.html
 msgctxt "website"
@@ -11535,7 +11538,7 @@ msgstr ""
 #: phase8 templates/website/contact.html
 msgctxt "website"
 msgid "Your Company Ltd."
-msgstr "Ihre Firma Ltd."
+msgstr "Ihre Unternehmen Ltd."
 
 #: phase8 templates/website/contact.html
 msgctxt "website"
@@ -11561,4 +11564,3 @@ msgstr "PRO"
 msgctxt "billing.plan.global"
 msgid "GLOBAL"
 msgstr "GLOBAL"
-

@@ -159,6 +159,9 @@ COUNTRY_ENGLISH_NAME_TO_CODE = {
     name.lower(): code for code, name in COUNTRY_ENGLISH_NAMES.items()
 }
 
+# ISO codes valid for ORM validation — never build this from translated CHOICES.
+COUNTRY_CODES = frozenset(COUNTRY_ENGLISH_NAMES.keys())
+
 
 # ISO-3166-1 alpha-2 → emoji flag (regional indicator pairs). The browser
 # renders these via the OS font; no image assets to ship.

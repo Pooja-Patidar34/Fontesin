@@ -18,7 +18,12 @@ from django.http import JsonResponse
 from django.utils.translation import gettext as _
 from accounts.models import Tenant, Company, Role, UserCompany, User, DueDiligence
 from django.db import IntegrityError
-from accounts.constants import CountryChoices, LanguageChoices, SupportedLocale
+from accounts.constants import (
+    CountryChoices,
+    COUNTRY_ENGLISH_NAMES,
+    LanguageChoices,
+    SupportedLocale,
+)
 from FontEsin.middleware.locale import normalize_locale
 import random
 from datetime import date, timedelta
@@ -539,8 +544,10 @@ def apply_submit(request):
         messages.error(request, _("Please select your franchise type."))
         return redirect("apply")
 
-    # Map the ISO code to its readable label for display/notifications.
-    region_label = dict(CountryChoices.CHOICES).get(region_code, region_code)
+    # Store the canonical English name — never a translated UI label. Display
+    # layers translate from the ISO code; ORM fallbacks (coordinator scope,
+    # regions map) match against this English form.
+    region_label = COUNTRY_ENGLISH_NAMES.get(region_code, region_code)
 
     # territory_country (the explicit ISO code) is what coordinator_territory_q
     # reads first, so the coordinator immediately sees the right region once

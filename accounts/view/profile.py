@@ -13,6 +13,7 @@ from accounts.constants import (
     CountryChoices,
     EmployeeCountRangeChoices,
     SupportedLocale,
+    COUNTRY_CODES,
     COUNTRY_STATES,
 )
 import datetime
@@ -44,7 +45,6 @@ def _is_ajax(request):
 
 # First / last name: 2-50 chars, letters (incl. accented) + spaces/hyphens/apostrophes/periods.
 NAME_RE = re.compile(r"^[A-Za-zÀ-ɏ][A-Za-zÀ-ɏ\s'\-.]{1,49}$")
-COUNTRY_CODES = {code for code, _ in CountryChoices.CHOICES}
 
 # 2-100 chars, letters (incl. accented) / digits / spaces / & ' . , - ( ) only, must contain at least one letter.
 COMPANY_NAME_RE = re.compile(r"^(?=.*[A-Za-z\u00C0-\u024F])[A-Za-z\u00C0-\u024F0-9&'.,\-()\s]{2,100}$")
@@ -574,7 +574,7 @@ def profile_view(request):
             return _fail_create_company(_("Country is required."), field="company_country")
 
         country_code = country.upper()
-        if country_code not in COUNTRY_LABELS:
+        if country_code not in COUNTRY_CODES:
             return _fail_create_company(
                 _("Please select a valid country from the list."),
                 field="company_country",

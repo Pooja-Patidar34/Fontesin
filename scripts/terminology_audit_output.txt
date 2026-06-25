@@ -1,0 +1,350 @@
+﻿=== TERMINOLOGY BY CONCEPT ===
+
+--- COMPANY ---
+  fr INCONSISTENT (7 variants):
+    "Entreprise" <- ['auth.register|Company', 'companies|Company', '(no ctxt)|Company', 'billing|Company']
+    "Base de donnΘes de l'entreprise" <- ['sidebar|Company Database', 'dashboard|Company Database', 'website|Company Database']
+    "Nom de l'entreprise" <- ['companies|Company Name', 'website|Company Name']
+    "Logo de l'entreprise" <- ['companies|Company Logo', 'profile|Company Logo']
+    "DΘtails de l'entreprise" <- ['companies|Company Details']
+    "Entreprise:" <- ['workflows|Company:']
+    "SantΘ de lÆentreprise" <- ['dashboard|Company Health']
+  de INCONSISTENT (7 variants):
+    "Unternehmen" <- ['auth.register|Company', 'companies|Company', '(no ctxt)|Company', 'billing|Company']
+    "Unternehmensdatenbank" <- ['sidebar|Company Database', 'dashboard|Company Database', 'website|Company Database']
+    "Unternehmensname" <- ['companies|Company Name', 'website|Company Name']
+    "Unternehmenslogo" <- ['companies|Company Logo', 'profile|Company Logo']
+    "Unternehmensdetails" <- ['companies|Company Details']
+    "Unternehmen:" <- ['workflows|Company:']
+    "Unternehmensgesundheit" <- ['dashboard|Company Health']
+  es INCONSISTENT (7 variants):
+    "Empresa" <- ['auth.register|Company', 'companies|Company', '(no ctxt)|Company', 'billing|Company']
+    "Base de datos de la empresa" <- ['sidebar|Company Database', 'dashboard|Company Database', 'website|Company Database']
+    "Nombre de la empresa" <- ['companies|Company Name', 'website|Company Name']
+    "Logotipo de la empresa" <- ['companies|Company Logo', 'profile|Company Logo']
+    "Detalles de la empresa" <- ['companies|Company Details']
+    "Empresa:" <- ['workflows|Company:']
+    "Salud de la empresa" <- ['dashboard|Company Health']
+
+--- USER ---
+  fr INCONSISTENT (5 variants):
+    "Utilisateurs" <- ['sidebar|Users', 'users|Users', 'dashboard|Users']
+    "Utilisateur" <- ['billing|User', 'dashboard|User']
+    "DΘtails de l'utilisateur" <- ['users|User Details']
+    "Utilisateur professionnel" <- ['billing|Business User']
+    "Membre" <- ['companies|Member']
+  de INCONSISTENT (4 variants):
+    "Benutzer" <- ['billing|User', 'dashboard|User', 'sidebar|Users', 'users|Users']
+    "Benutzerdetails" <- ['users|User Details']
+    "GeschΣftsbenutzer" <- ['billing|Business User']
+    "Mitglied" <- ['companies|Member']
+  es INCONSISTENT (5 variants):
+    "Usuarios" <- ['sidebar|Users', 'users|Users', 'dashboard|Users']
+    "Usuario" <- ['billing|User', 'dashboard|User']
+    "Detalles del usuario" <- ['users|User Details']
+    "Usuario empresarial" <- ['billing|Business User']
+    "Miembro" <- ['companies|Member']
+
+--- PLAN ---
+  fr INCONSISTENT (6 variants):
+    "Forfait" <- ['(no ctxt)|Plan', 'billing|Plan', 'dashboard|Plan', 'website|Plan']
+    "Forfaits" <- ['sidebar|Plans', 'billing|Plans']
+    "Mettre α niveau le forfait" <- ['common|Upgrade Plan', 'billing|Upgrade Plan']
+    "DΘtails du forfait" <- ['billing|Plan Details']
+    "Historique du forfait" <- ['billing|Plan History']
+    "Nom du forfait" <- ['billing|Plan Name']
+  de INCONSISTENT (6 variants):
+    "Plan" <- ['(no ctxt)|Plan', 'billing|Plan', 'dashboard|Plan', 'website|Plan']
+    "PlΣne" <- ['sidebar|Plans', 'billing|Plans']
+    "Upgrade-Plan" <- ['common|Upgrade Plan', 'billing|Upgrade Plan']
+    "Plandetails" <- ['billing|Plan Details']
+    "Planverlauf" <- ['billing|Plan History']
+    "Planname" <- ['billing|Plan Name']
+  es INCONSISTENT (6 variants):
+    "Plan" <- ['(no ctxt)|Plan', 'billing|Plan', 'dashboard|Plan', 'website|Plan']
+    "Planes" <- ['sidebar|Plans', 'billing|Plans']
+    "Plan de actualizaci≤n" <- ['common|Upgrade Plan', 'billing|Upgrade Plan']
+    "Detalles del plan" <- ['billing|Plan Details']
+    "Historia del plan" <- ['billing|Plan History']
+    "Nombre del plan" <- ['billing|Plan Name']
+
+--- SUBSCRIPTION ---
+  fr INCONSISTENT (3 variants):
+    "Abonnements" <- ['sidebar|Subscriptions', 'billing|Subscriptions']
+    "Abonnement" <- ['billing|Subscription']
+    "Abonnement en attente d'approbation" <- ['auth.pending_approval|Subscription Pending Approval']
+  de INCONSISTENT (3 variants):
+    "Abonnements" <- ['sidebar|Subscriptions', 'billing|Subscriptions']
+    "Abonnement" <- ['billing|Subscription']
+    "Abonnement wartet auf Genehmigung" <- ['auth.pending_approval|Subscription Pending Approval']
+  es INCONSISTENT (3 variants):
+    "Suscripciones" <- ['sidebar|Subscriptions', 'billing|Subscriptions']
+    "Suscripci≤n" <- ['billing|Subscription']
+    "Suscripci≤n pendiente de aprobaci≤n" <- ['auth.pending_approval|Subscription Pending Approval']
+
+--- DASHBOARD ---
+  fr INCONSISTENT (3 variants):
+    "Tableau de bord" <- ['nav|Dashboard', 'sidebar|Dashboard', 'dashboard|Dashboard', 'pwa|Dashboard']
+    "Aperτu" <- ['nav|Overview', 'sidebar|Overview']
+    "Accueil" <- ['auth.verify|Home', 'website|Home']
+  de INCONSISTENT (3 variants):
+    "Dashboard" <- ['nav|Dashboard', 'sidebar|Dashboard', 'dashboard|Dashboard', 'pwa|Dashboard']
+    "▄berblick" <- ['nav|Overview', 'sidebar|Overview']
+    "Startseite" <- ['auth.verify|Home', 'website|Home']
+  es INCONSISTENT (3 variants):
+    "Panel" <- ['nav|Dashboard', 'sidebar|Dashboard', 'dashboard|Dashboard', 'pwa|Dashboard']
+    "Descripci≤n general" <- ['nav|Overview', 'sidebar|Overview']
+    "Inicio" <- ['auth.verify|Home', 'website|Home']
+
+--- SEARCH ---
+  fr INCONSISTENT (4 variants):
+    "Rechercher" <- ['common|Search', 'dashboard|Search']
+    "Rechercher des entreprisesà" <- ['companies|Search companiesà', 'users|Search companiesà']
+    "Rechercherà" <- ['common|Searchà']
+    "Rechercher une entrepriseà" <- ['users|Search companyà']
+  de INCONSISTENT (3 variants):
+    "Unternehmen suchenà" <- ['companies|Search companiesà', 'users|Search companiesà', 'users|Search companyà']
+    "Suchen" <- ['common|Search', 'dashboard|Search']
+    "Suchenà" <- ['common|Searchà']
+  es INCONSISTENT (4 variants):
+    "Buscar" <- ['common|Search', 'dashboard|Search']
+    "Buscar empresasà" <- ['companies|Search companiesà', 'users|Search companiesà']
+    "Buscarà" <- ['common|Searchà']
+    "Buscar empresaà" <- ['users|Search companyà']
+
+--- DELETE ---
+  fr INCONSISTENT (4 variants):
+    "Supprimer" <- ['common|Delete']
+    "Supprimer l'entrepriseá?" <- ['companies|Delete Company?']
+    "Supprimer l'utilisateurá?" <- ['users|Delete User?']
+    "Retirer" <- ['dashboard|Remove']
+  de INCONSISTENT (4 variants):
+    "L÷schen" <- ['common|Delete']
+    "Unternehmen l÷schen?" <- ['companies|Delete Company?']
+    "Benutzer l÷schen?" <- ['users|Delete User?']
+    "Entfernen" <- ['dashboard|Remove']
+  es INCONSISTENT (4 variants):
+    "Eliminar" <- ['common|Delete']
+    "┐Eliminar empresa?" <- ['companies|Delete Company?']
+    "┐Eliminar usuario?" <- ['users|Delete User?']
+    "Quitar" <- ['dashboard|Remove']
+
+--- SAVE ---
+  fr INCONSISTENT (3 variants):
+    "Enregistrer les modifications" <- ['billing|Save Changes', 'profile|Save Changes']
+    "Enregistrer" <- ['common|Save']
+    "Mis α jour" <- ['users|Updated']
+  de INCONSISTENT (3 variants):
+    "─nderungen speichern" <- ['billing|Save Changes', 'profile|Save Changes']
+    "Speichern" <- ['common|Save']
+    "Aktualisiert" <- ['users|Updated']
+  es INCONSISTENT (3 variants):
+    "Guardar cambios" <- ['billing|Save Changes', 'profile|Save Changes']
+    "Guardar" <- ['common|Save']
+    "Actualizado" <- ['users|Updated']
+
+--- CANCEL ---
+  fr INCONSISTENT (3 variants):
+    "Annuler" <- ['common|Cancel', 'auth.verify|Cancel']
+    "Fermer" <- ['common|Close', 'website|Close']
+    "Annuler la demande" <- ['workflows|Cancel Request']
+  de INCONSISTENT (3 variants):
+    "Abbrechen" <- ['common|Cancel', 'auth.verify|Cancel']
+    "Schlie▀en" <- ['common|Close', 'website|Close']
+    "Anfrage stornieren" <- ['workflows|Cancel Request']
+  es INCONSISTENT (3 variants):
+    "Cancelar" <- ['common|Cancel', 'auth.verify|Cancel']
+    "Cerrar" <- ['common|Close', 'website|Close']
+    "Cancelar solicitud" <- ['workflows|Cancel Request']
+
+--- NOTIFICATION ---
+
+--- JOIN_REQUEST ---
+  fr INCONSISTENT (2 variants):
+    "Demandes d'adhΘsion" <- ['sidebar|Join Requests', 'workflows|Join Requests']
+    "Demandes d'adhΘsion :" <- ['workflows|Join Requests :']
+  de INCONSISTENT (2 variants):
+    "Beitrittsanfragen" <- ['sidebar|Join Requests', 'workflows|Join Requests']
+    "Beitrittsanfragen:" <- ['workflows|Join Requests :']
+  es INCONSISTENT (2 variants):
+    "Solicitudes de uni≤n" <- ['sidebar|Join Requests', 'workflows|Join Requests']
+    "Solicitudes de uni≤n:" <- ['workflows|Join Requests :']
+
+--- ROLE ---
+  fr INCONSISTENT (3 variants):
+    "R⌠le" <- ['(no ctxt)|Role', 'billing|Role', 'users|Role', 'workflows|Role']
+    "R⌠les" <- ['users|Roles']
+    "Autorisations" <- ['users|Permissions']
+  de INCONSISTENT (3 variants):
+    "Rolle" <- ['(no ctxt)|Role', 'billing|Role', 'users|Role', 'workflows|Role']
+    "Rollen" <- ['users|Roles']
+    "Berechtigungen" <- ['users|Permissions']
+  es INCONSISTENT (3 variants):
+    "Rol" <- ['(no ctxt)|Role', 'billing|Role', 'users|Role', 'workflows|Role']
+    "Roles" <- ['users|Roles']
+    "Permisos" <- ['users|Permissions']
+
+=== SAME MSGID, DIFFERENT TRANSLATIONS (per language) ===
+fr: 0 msgids with multiple translations
+de: 1 msgids with multiple translations
+  '%(plan_name)s Plan': ['%(plan_name)s Plan', '%(plan_name)s-Plan']
+es: 0 msgids with multiple translations
+
+=== UNTRANSLATED (msgstr == English msgid) ===
+fr: 82 possibly untranslated
+  'sidebar' / Certifications
+  'sidebar' / Administration
+  'sidebar' / Franchises
+  'sidebar' / Messages
+  'sidebar' / Commissions
+  'sidebar' / Notifications
+  'modal' / Europe
+  'modal' / Motivation
+  'auth.apply_review' / Consultant
+  'auth.register' / Format:
+  'auth.verify' / Contact
+  'auth.verify' / Menu
+  'auth.verify' / Confirmation
+  'auth.email' / 10 minutes
+  '' / Consultant
+  '' / A %(amount)s commission from %(user)s's subscription%(via)s is pending. 
+  '' / B.V.
+  '' / Canada
+  '' / District
+  '' / Finance
+  '' / France
+  '' / GmbH
+  '' / S.A.
+  '' / S.A.R.L.
+  'common' / Action
+de: 95 possibly untranslated
+  'nav' / Dashboard
+  'sidebar' / Dashboard
+  'sidebar' / Franchises
+  'modal' / Motivation
+  'auth.register' / Format:
+  '' / Format:' context 'auth.register
+  'auth.pending_approval' / %(var)s Plan - %(var)s %(var)s
+  '' / %(label)s: %(error)s
+  '' / B.V.
+  '' / Community Interest Company (CIC)
+  '' / Corporation (S Corp)
+  '' / GmbH
+  '' / Japan
+  '' / LLP (Limited Liability Partnership)
+  '' / Marketing
+  '' / Name: %(name)s
+  '' / Pvt. Ltd. (Private Limited)
+  '' / Region
+  '' / S.A.
+  '' / S.A.R.L.
+  'companies' / Branding
+  'companies' / Name
+  'companies' / Region
+  'companies' / Status
+  '' / Name
+es: 41 possibly untranslated
+  '' / %(label)s: %(error)s
+  '' / Australia
+  '' / Austria
+  '' / B.V.
+  '' / GmbH
+  '' / India
+  '' / Marketing
+  '' / S.A.
+  '' / S.A.R.L.
+  'companies' / Total: %(count)s
+  'common' / No
+  'companies.import' / Total:
+  '' / Plan
+  'billing' / Plan
+  'billing' / Popular
+  'billing' / Total
+  'common' / ù
+  'users' / Australia
+  'users' / India
+  'users' / LinkedIn
+  'users' / Personal
+  'users' / Roles
+  'users' / Total:
+  'dashboard' / Actor
+  'dashboard' / Plan
+
+=== EMPTY TRANSLATIONS ===
+fr: 0 empty
+de: 0 empty
+es: 0 empty
+
+=== DELETE vs REMOVE (English contexts) ===
+  en [common] 'Delete' -> 'Delete'
+  en [companies] 'Are you sure you want to permanently delete this company? This action cannot be undone.' -> 'Are you sure you want to permanently delete this company? This action cannot be undone.'
+  en [companies] 'Delete Company?' -> 'Delete Company?'
+  en [dashboard] 'Are you sure you want to permanently delete this franchise? This action cannot be undone.' -> 'Are you sure you want to permanently delete this franchise? This action cannot be undone.'
+  en [dashboard] 'Delete Franchise?' -> 'Delete Franchise?'
+  en [dashboard] 'Delete this message?' -> 'Delete this message?'
+  en [dashboard] 'Delete this notification?' -> 'Delete this notification?'
+  en [dashboard] 'Remove' -> 'Remove'
+  en [dashboard] 'Remove this saved filter?' -> 'Remove this saved filter?'
+  en [users] 'Are you sure you want to permanently delete <strong>%(email)s</strong>? This action cannot be undone.' -> 'Are you sure you want to permanently delete <strong>%(email)s</strong>? This action cannot be undone.'
+  en [users] 'Delete User?' -> 'Delete User?'
+  fr [common] 'Delete' -> 'Supprimer'
+  fr [companies] 'Are you sure you want to permanently delete this company? This action cannot be undone.' -> '╩tes-vous s√r de vouloir supprimer dΘfinitivement cette entreprise\xa0? Cette action ne peut pas Ωtre annulΘe.'
+  fr [companies] 'Delete Company?' -> "Supprimer l'entreprise\xa0?"
+  fr [dashboard] 'Are you sure you want to permanently delete this franchise? This action cannot be undone.' -> '╩tes-vous s√r de vouloir supprimer dΘfinitivement cette franchise\xa0? Cette action ne peut pas Ωtre annulΘe.'
+  fr [dashboard] 'Delete Franchise?' -> 'Supprimer la franchise\xa0?'
+  fr [dashboard] 'Delete this message?' -> 'Supprimer ce message\xa0?'
+  fr [dashboard] 'Delete this notification?' -> 'Supprimer cette notification\xa0?'
+  fr [dashboard] 'Remove' -> 'Retirer'
+  fr [dashboard] 'Remove this saved filter?' -> 'Retirer ce filtre enregistrΘ ?'
+  fr [users] 'Are you sure you want to permanently delete <strong>%(email)s</strong>? This action cannot be undone.' -> '╩tes-vous s√r de vouloir supprimer dΘfinitivement <strong>%(email)s</strong>\xa0? Cette action ne peut pas Ωtre annulΘe.'
+  fr [users] 'Delete User?' -> "Supprimer l'utilisateur\xa0?"
+  de [common] 'Delete' -> 'L÷schen'
+  de [companies] 'Are you sure you want to permanently delete this company? This action cannot be undone.' -> 'Sind Sie sicher, dass Sie dieses Unternehmen dauerhaft l÷schen m÷chten? Diese Aktion kann nicht rⁿckgΣngig gemacht werden.'
+  de [companies] 'Delete Company?' -> 'Unternehmen l÷schen?'
+  de [dashboard] 'Are you sure you want to permanently delete this franchise? This action cannot be undone.' -> 'Sind Sie sicher, dass Sie dieses Franchise endgⁿltig l÷schen m÷chten? Diese Aktion kann nicht rⁿckgΣngig gemacht werden.'
+  de [dashboard] 'Delete Franchise?' -> 'Franchise l÷schen?'
+  de [dashboard] 'Delete this message?' -> 'Diese Nachricht l÷schen?'
+  de [dashboard] 'Delete this notification?' -> 'Diese Benachrichtigung l÷schen?'
+  de [dashboard] 'Remove' -> 'Entfernen'
+  de [dashboard] 'Remove this saved filter?' -> 'Diesen gespeicherten Filter entfernen?'
+  de [users] 'Are you sure you want to permanently delete <strong>%(email)s</strong>? This action cannot be undone.' -> 'Sind Sie sicher, dass Sie <strong>%(email)s</strong> dauerhaft l÷schen m÷chten? Diese Aktion kann nicht rⁿckgΣngig gemacht werden.'
+  de [users] 'Delete User?' -> 'Benutzer l÷schen?'
+  es [common] 'Delete' -> 'Eliminar'
+  es [companies] 'Are you sure you want to permanently delete this company? This action cannot be undone.' -> '┐Estß seguro de que desea eliminar permanentemente esta empresa? Esta acci≤n no se puede deshacer.'
+  es [companies] 'Delete Company?' -> '┐Eliminar empresa?'
+  es [dashboard] 'Are you sure you want to permanently delete this franchise? This action cannot be undone.' -> '┐Estßs seguro de que deseas eliminar permanentemente esta franquicia? Esta acci≤n no se puede deshacer.'
+  es [dashboard] 'Delete Franchise?' -> '┐Eliminar franquicia?'
+  es [dashboard] 'Delete this message?' -> '┐Eliminar este mensaje?'
+  es [dashboard] 'Delete this notification?' -> '┐Eliminar esta notificaci≤n?'
+  es [dashboard] 'Remove' -> 'Quitar'
+  es [dashboard] 'Remove this saved filter?' -> '┐Eliminar este filtro guardado?'
+  es [users] 'Are you sure you want to permanently delete <strong>%(email)s</strong>? This action cannot be undone.' -> '┐Estß seguro de que desea eliminar permanentemente <strong>%(email)s</strong>? Esta acci≤n no se puede deshacer.'
+  es [users] 'Delete User?' -> '┐Eliminar usuario?'
+
+=== MEMBERSHIP vs JOIN REQUEST synonyms in translations ===
+
+fr:
+  'adhΘsion': 17
+    ('sidebar', 'Join Requests', "Demandes d'adhΘsion")
+    ('', '%(count)s pending join requests', "%(count)s demandes d'adhΘsion en attente")
+    ('auth.verify', 'Your identity has been confirmed. You can now proc', 'Votre identitΘ a ΘtΘ confirmΘe. Vous pouvez maintenant procΘder au cho')
+  'demande d'adhΘsion': 5
+    ('', 'Join request sent to %(company)s. ', "Demande d'adhΘsion envoyΘe α %(company)s.")
+    ('', "Join request sent to %(company)s. You'll be linked", "Demande d'adhΘsion envoyΘe α %(company)s. Vous serez liΘ une fois")
+    ('', 'Join request to %(company)s has been withdrawn.', "La demande d'adhΘsion α %(company)s a ΘtΘ retirΘe.")
+
+de:
+  'mitgliedschaft': 5
+    ('auth.verify', 'Your identity has been confirmed. You can now proc', 'Ihre IdentitΣt wurde bestΣtigt. Sie k÷nnen nun mit der Auswahl Ihres M')
+    ('', 'Membership in %(company)s has been removed.', 'Die Mitgliedschaft in %(company)s wurde entfernt.')
+    ('billing', 'No membership plans configured yet.', 'Noch keine MitgliedschaftsplΣne konfiguriert.')
+  'beitrittsanfrage': 11
+    ('sidebar', 'Join Requests', 'Beitrittsanfragen')
+    ('', '%(count)s pending join requests', '%(count)s ausstehende Beitrittsanfragen')
+    ('', 'Join request sent to %(company)s. ', 'Beitrittsanfrage an %(company)s gesendet.')
+
+es:
+  'membresφa': 5
+    ('auth.verify', 'Your identity has been confirmed. You can now proc', 'Su identidad ha sido confirmada. Ahora puede proceder a elegir su plan')
+    ('', 'Membership in %(company)s has been removed.', 'Se elimin≤ la membresφa en %(company)s.')
+    ('billing', 'No membership plans configured yet.', 'A·n no hay planes de membresφa configurados.')

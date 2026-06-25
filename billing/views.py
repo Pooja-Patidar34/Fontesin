@@ -1,6 +1,8 @@
 import json
 import logging
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 from decimal import Decimal
 
 from django.contrib.auth.decorators import login_required
@@ -24,7 +26,7 @@ from django.utils.translation import gettext as _
 from billing.models import Invoice, Subscription, CommercialPlan, ConsultantCommission
 from billing.plan_i18n import attach_plan_display_fields, localized_plan_name
 
-logger = logging.getLogger("technical")
+_SUBSCRIPTION_STATUS_CODES = {code for code, _ in Subscription.STATUS_CHOICES}
 
 
 def _safe_next_or_default(request, default_name):
@@ -984,7 +986,7 @@ def payment_edit(request, subscription_id):
             sub.user.subscription_plan = plan.code
             sub.user.save(update_fields=["subscription_plan"])
 
-    if status and status in dict(Subscription.STATUS_CHOICES):
+    if status and status in _SUBSCRIPTION_STATUS_CODES:
         old_status = sub.status
         sub.status = status
         # If changing to active, supersede any OTHER active subscription for

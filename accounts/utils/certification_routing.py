@@ -12,6 +12,7 @@ profile-page form pick the same consultant without re-implementing the rules.
 from django.db.models import Count, Q
 
 from accounts.models import User, Company
+from accounts.utils.country_matching import country_match_q, resolve_country_code
 
 
 def find_consultant_for_company(company):
@@ -52,10 +53,11 @@ def find_consultant_for_company(company):
         if first:
             return first
 
-    # Tier 2: same country
+    # Tier 2: same country (ISO code, English name, aliases — locale-invariant)
     if country:
+        country_code = resolve_country_code(country) or country.upper()
         country_consultants = consultants.filter(
-            consulting_companies__country__iexact=country
+            country_match_q(country_code, field="consulting_companies__country")
         ).distinct().order_by("pending_count", "id")
         first = country_consultants.first()
         if first:

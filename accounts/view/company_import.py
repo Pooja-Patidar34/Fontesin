@@ -95,6 +95,14 @@ def _count_data_rows(path):
     return max(total - 1, 0)
 
 
+def _import_error(code, error, message, status=400):
+    """JSON error with stable machine code, legacy English ``error``, and localized ``message``."""
+    return JsonResponse(
+        {"code": code, "error": error, "message": message},
+        status=status,
+    )
+
+
 @login_required
 @require_POST
 def company_import_upload(request):
@@ -102,18 +110,34 @@ def company_import_upload(request):
 
     uploaded = request.FILES.get("csv_file")
     if uploaded is None:
-        return JsonResponse({"error": _("A CSV file is required.")}, status=400)
+        return _import_error(
+            "csv_file_required",
+            "csv_file is required",
+            _("A CSV file is required."),
+        )
 
     if not uploaded.name.lower().endswith(".csv"):
-        return JsonResponse({"error": _("File must be a .csv.")}, status=400)
+        return _import_error(
+            "invalid_file_type",
+            "file must be a .csv",
+            _("File must be a .csv."),
+        )
 
     tenant_id = (request.POST.get("tenant_id") or "").strip()
     if not tenant_id:
-        return JsonResponse({"error": _("Target tenant is required.")}, status=400)
+        return _import_error(
+            "tenant_id_required",
+            "tenant_id is required",
+            _("Target tenant is required."),
+        )
     try:
         target_tenant = Tenant.all_objects.get(id=tenant_id)
     except (Tenant.DoesNotExist, ValueError):
-        return JsonResponse({"error": _("Unknown tenant.")}, status=400)
+        return _import_error(
+            "unknown_tenant",
+            "unknown tenant_id",
+            _("Unknown tenant."),
+        )
 
     os.makedirs(IMPORTS_DIR, mode=0o700, exist_ok=True)
 
