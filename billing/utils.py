@@ -4,6 +4,7 @@ from django.shortcuts import redirect, render
 from django.http import JsonResponse
 from django.utils.translation import gettext as _
 
+from accounts.constants import COUNTRY_ENGLISH_NAMES
 from billing.models import Subscription, CommercialPlan
 
 
@@ -174,17 +175,6 @@ def get_user_geographic_scope(user, plan=None):
     return {"mode": "none", "countries": []}
 
 
-# Map ISO codes to common full-name spellings used in legacy free-text Company.country values
-_COUNTRY_NAME_BY_CODE = {
-    "US": "United States", "DE": "Germany", "CZ": "Czech Republic",
-    "GB": "United Kingdom", "FR": "France", "NL": "Netherlands",
-    "PL": "Poland", "AT": "Austria", "CH": "Switzerland", "SE": "Sweden",
-    "AE": "United Arab Emirates", "SG": "Singapore", "CA": "Canada",
-    "AU": "Australia", "JP": "Japan", "BR": "Brazil", "IN": "India",
-    "MX": "Mexico", "KR": "South Korea",
-}
-
-
 def filter_companies_by_plan_scope(queryset, user, country_field="country"):
     """
     Restrict a Company queryset to the user's plan geographic scope.
@@ -211,7 +201,7 @@ def filter_companies_by_plan_scope(queryset, user, country_field="country"):
         if not code:
             continue
         q |= Q(**{f"{country_field}__iexact": code})
-        full = _COUNTRY_NAME_BY_CODE.get(code)
+        full = COUNTRY_ENGLISH_NAMES.get(code)
         if full:
             q |= Q(**{f"{country_field}__iexact": full})
     return queryset.filter(q)

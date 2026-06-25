@@ -157,3 +157,54 @@ def attach_plan_display_fields(plan) -> None:
     plan.display_tagline = localized_plan_tagline(plan)
     plan.display_best_for = localized_plan_best_for(plan)
     plan.display_features = localized_plan_features(plan)
+
+
+_SUBSCRIPTION_STATUS_MSGIDS = {
+    "created": "Pending",
+    "trial": "Trial",
+    "active": "Active",
+    "past_due": "Past Due",
+    "suspended": "Suspended",
+    "cancelled": "Cancelled",
+}
+
+
+def localized_subscription_status(subscription) -> str:
+    """Translated subscription status label (``billing`` context)."""
+    code = (getattr(subscription, "status", None) or "").lower()
+    msgid = _SUBSCRIPTION_STATUS_MSGIDS.get(code)
+    if msgid:
+        return pgettext("billing", msgid)
+    display = getattr(subscription, "get_status_display", None)
+    return display() if callable(display) else code
+
+
+def _plan_gettext_catalog():  # pragma: no cover
+    """Anchor literals so makemessages / sync_phase6_po extract plan copy."""
+    pgettext("billing.plan.free", "FREE")
+    pgettext("billing.plan.basic", "BASIC")
+    pgettext("billing.plan.pro", "PRO")
+    pgettext("billing.plan.global", "GLOBAL")
+    for code in PLAN_CODES:
+        ctx = _plan_context(code)
+        data = PLAN_CANONICAL[code]
+        pgettext(ctx, data["tagline"])
+        pgettext(ctx, data["best_for"])
+        for feature in data["features"]:
+            pgettext(ctx, feature["text"])
+
+
+def pending_upgrade_access_note(current_plan_name: str) -> str:
+    template = pgettext(
+        "billing",
+        "Awaiting admin approval. Until then you keep your current %(current_plan)s access.",
+    )
+    return template % {"current_plan": current_plan_name}
+
+
+def deactivated_plan_message(plan_name: str) -> str:
+    template = pgettext(
+        "billing",
+        "Your %(plan_name)s plan was deactivated by the admin.",
+    )
+    return template % {"plan_name": plan_name}

@@ -51,6 +51,9 @@ BLOCKTRANS_RE = re.compile(
     re.DOTALL,
 )
 
+# Django ``blocktrans`` looks up ``%(var)s`` placeholders at runtime, not ``{{ var }}``.
+VAR_PLACEHOLDER_RE = re.compile(r"\{\{\s*(\w+)\s*\}\}")
+
 PGETTEXT_RE = re.compile(
     r"""pgettext\(\s*["']([^"']+)["']\s*,\s*["']((?:\\.|[^"\\])*)["']\s*\)"""
 )
@@ -109,6 +112,10 @@ def format_entry(*, ref: str, msgctxt: str, msgid: str, msgstr: str, fuzzy: bool
     return "\n".join(lines)
 
 
+def normalize_blocktrans_msgid(body: str) -> str:
+    return VAR_PLACEHOLDER_RE.sub(r"%(\1)s", body)
+
+
 def extract_from_file(rel: str) -> list[tuple[str, str, str]]:
     path = ROOT / rel
     if not path.exists():
@@ -131,7 +138,7 @@ def extract_from_file(rel: str) -> list[tuple[str, str, str]]:
 
     for m in BLOCKTRANS_RE.finditer(text):
         ctx = unescape(m.group(1) or "")
-        body = m.group(2).strip()
+        body = normalize_blocktrans_msgid(m.group(2).strip())
         if body:
             out.append((ref, ctx, body))
 

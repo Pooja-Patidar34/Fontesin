@@ -130,6 +130,36 @@ class CountryChoices:
     PINNED = ("US", "GB")
 
 
+# Canonical English country names for ORM filters and legacy free-text matching.
+# Company.country stores ISO codes and/or these English spellings — never
+# translated UI labels. Display strings live in CountryChoices.CHOICES.
+COUNTRY_ENGLISH_NAMES = {
+    "US": "United States",
+    "DE": "Germany",
+    "CZ": "Czech Republic",
+    "GB": "United Kingdom",
+    "FR": "France",
+    "NL": "Netherlands",
+    "PL": "Poland",
+    "AT": "Austria",
+    "CH": "Switzerland",
+    "SE": "Sweden",
+    "AE": "United Arab Emirates",
+    "SG": "Singapore",
+    "CA": "Canada",
+    "AU": "Australia",
+    "JP": "Japan",
+    "BR": "Brazil",
+    "IN": "India",
+    "MX": "Mexico",
+    "KR": "South Korea",
+}
+
+COUNTRY_ENGLISH_NAME_TO_CODE = {
+    name.lower(): code for code, name in COUNTRY_ENGLISH_NAMES.items()
+}
+
+
 # ISO-3166-1 alpha-2 → emoji flag (regional indicator pairs). The browser
 # renders these via the OS font; no image assets to ship.
 COUNTRY_FLAGS = {

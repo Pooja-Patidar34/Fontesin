@@ -3607,16 +3607,16 @@ msgstr ""
 
 #: phase5 templates/dashboard/consultant_companies.html
 msgctxt "companies"
-msgid "Total: {{ count }}"
-msgstr "Total: {{ count }}"
+msgid "Total: %(count)s"
+msgstr "Total: %(count)s"
 
 #: phase5 templates/dashboard/my_companies.html
 msgctxt "companies"
 msgid ""
-"You will lose access to <strong>{{ company_name }}</strong> and it will be "
+"You will lose access to <strong>%(company_name)s</strong> and it will be "
 "removed from your My Companies. You can request to join again later."
 msgstr ""
-"Perderá el acceso a <strong>{{ company_name }}</strong> y se eliminará de "
+"Perderá el acceso a <strong>%(company_name)s</strong> y se eliminará de "
 "Mis empresas. Puede solicitar unirse nuevamente más tarde."
 
 #: phase5 templates/dashboard/_company_import_modal.html
@@ -4689,11 +4689,11 @@ msgstr "Suscripciones activas"
 #: phase6 templates/profile/_plan_card.html
 msgctxt "billing"
 msgid ""
-"Active since {{ start }} &middot; Expires {{ end }} &middot; Status: <span "
-"style=\"color:#15803d; font-weight:600;\">{{ status }}</span>"
+"Active since %(start)s &middot; Expires %(end)s &middot; Status: <span "
+"style=\"color:#15803d; font-weight:600;\">%(status)s</span>"
 msgstr ""
-"Activo desde {{ start }} &middot; Vence {{ end }} &middot; Estado: <span "
-"style=\"color:#15803d; font-weight:600;\">{{ status }}</span>"
+"Activo desde %(start)s &middot; Vence %(end)s &middot; Estado: <span "
+"style=\"color:#15803d; font-weight:600;\">%(status)s</span>"
 
 #: phase6 templates/dashboard/_commission_invoice_modal.html
 msgctxt "billing"
@@ -4702,8 +4702,8 @@ msgstr "Compartir administrador"
 
 #: phase6 templates/dashboard/commissions.html
 msgctxt "billing"
-msgid "Admin {{ currency }}: {{ amount }}"
-msgstr "Administrador {{ currency }}: {{ amount }}"
+msgid "Admin %(currency)s: %(amount)s"
+msgstr "Administrador %(currency)s: %(amount)s"
 
 #: phase6 templates/dashboard/_commissions_panel.html
 msgctxt "billing"
@@ -4737,8 +4737,8 @@ msgstr "¿Aprobar suscripción?"
 
 #: phase6 templates/dashboard/_payments_panel.html
 msgctxt "billing"
-msgid "Approve subscription for <strong>{{ email }}</strong>?"
-msgstr "¿Aprobar la suscripción para <strong>{{ email }}</strong>?"
+msgid "Approve subscription for <strong>%(email)s</strong>?"
+msgstr "¿Aprobar la suscripción para <strong>%(email)s</strong>?"
 
 #: phase6 templates/dashboard/_payments_panel.html
 msgctxt "billing"
@@ -4753,11 +4753,11 @@ msgstr "¿Estás seguro de que quieres desactivar?"
 #: phase6 templates/profile/_plan_card.html
 msgctxt "billing"
 msgid ""
-"Awaiting admin approval. Until then you keep your current {{ current_plan }}"
+"Awaiting admin approval. Until then you keep your current %(current_plan)s"
 " access."
 msgstr ""
 "En espera de la aprobación del administrador. Hasta entonces, mantendrás tu "
-"acceso actual a {{ current_plan }}."
+"acceso actual a %(current_plan)s."
 
 #: phase6 templates/dashboard/_commission_invoice_modal.html
 msgctxt "billing"
@@ -4821,17 +4821,17 @@ msgstr "Consultor Compartir"
 
 #: phase6 templates/dashboard/commissions.html
 msgctxt "billing"
-msgid "Consultant {{ currency }}: {{ amount }}"
-msgstr "Consultor {{ currency }}: {{ amount }}"
+msgid "Consultant %(currency)s: %(amount)s"
+msgstr "Consultor %(currency)s: %(amount)s"
 
 #: phase6 templates/dashboard/_commission_invoice_modal.html
 msgctxt "billing"
 msgid ""
-"Converted from {{ source_amount }} {{ source_currency }} at rate 1 {{ "
-"source_currency }} = {{ rate }} {{ display_currency }}"
+"Converted from %(source_amount)s %(source_currency)s at rate 1 {{ "
+"source_currency }} = %(rate)s %(display_currency)s"
 msgstr ""
-"Convertido de {{ source_amount }} {{ source_currency }} a tasa 1 {{ "
-"source_currency }} = {{ rate }} {{ display_currency }}"
+"Convertido de %(source_amount)s %(source_currency)s a tasa 1 {{ "
+"source_currency }} = %(rate)s %(display_currency)s"
 
 #: phase6 templates/dashboard/invoices.html
 msgctxt "billing"
@@ -4875,8 +4875,8 @@ msgstr "Editar suscripción"
 
 #: phase6 templates/dashboard/subscriptions.html
 msgctxt "billing"
-msgid "Edit: {{ plan_name }}"
-msgstr "Editar: {{ plan_name }}"
+msgid "Edit: %(plan_name)s"
+msgstr "Editar: %(plan_name)s"
 
 #: phase6 templates/dashboard/_commission_invoice_modal.html
 msgctxt "billing"
@@ -5083,8 +5083,8 @@ msgstr "Pagado en"
 
 #: phase6 templates/dashboard/_commissions_panel.html
 msgctxt "billing"
-msgid "Paid on {{ date }}"
-msgstr "Pagado el {{ date }}"
+msgid "Paid on %(date)s"
+msgstr "Pagado el %(date)s"
 
 #: phase6 templates/dashboard/plan_history.html
 msgctxt "billing"
@@ -5123,8 +5123,8 @@ msgstr "Pendiente de aprobación"
 
 #: phase6 templates/dashboard/commissions.html
 msgctxt "billing"
-msgid "Pending {{ currency }}: {{ amount }}"
-msgstr "Pendiente {{ currency }}: {{ amount }}"
+msgid "Pending %(currency)s: %(amount)s"
+msgstr "Pendiente %(currency)s: %(amount)s"
 
 #: phase6 templates/profile/_plan_card.html
 msgctxt "billing"
@@ -5192,8 +5192,8 @@ msgstr "¿Rechazar suscripción?"
 
 #: phase6 templates/dashboard/_payments_panel.html
 msgctxt "billing"
-msgid "Reject subscription for <strong>{{ email }}</strong>?"
-msgstr "¿Rechazar la suscripción de <strong>{{ email }}</strong>?"
+msgid "Reject subscription for <strong>%(email)s</strong>?"
+msgstr "¿Rechazar la suscripción de <strong>%(email)s</strong>?"
 
 #: phase6 templates/dashboard/_payments_panel.html
 msgctxt "billing"
@@ -5207,8 +5207,8 @@ msgstr "Solicitado"
 
 #: phase6 templates/profile/_plan_card.html
 msgctxt "billing"
-msgid "Requested {{ date }}"
-msgstr "Solicitado {{ date }}"
+msgid "Requested %(date)s"
+msgstr "Solicitado %(date)s"
 
 #: phase6 templates/dashboard/_commission_invoice_modal.html
 msgctxt "billing"
@@ -5227,8 +5227,8 @@ msgstr "Guardar cambios"
 
 #: phase6 templates/dashboard/subscriptions.html
 msgctxt "billing"
-msgid "Save {{ pct }}%"
-msgstr "Ahorre {{ pct }}%"
+msgid "Save %(pct)s%"
+msgstr "Ahorre %(pct)s%"
 
 #: phase6 templates/dashboard/_commission_invoice_modal.html
 msgctxt "billing"
@@ -5278,11 +5278,11 @@ msgstr "Lema"
 #: phase6 templates/dashboard/_commissions_panel.html
 msgctxt "billing"
 msgid ""
-"This records the disbursement of <strong>{{ amount }} {{ currency "
-"}}</strong> to <strong>{{ email }}</strong>. This action cannot be undone."
+"This records the disbursement of <strong>%(amount)s {{ currency "
+"}}</strong> to <strong>%(email)s</strong>. This action cannot be undone."
 msgstr ""
-"Esto registra el desembolso de <strong>{{ amount }} {{ currency }}</strong> "
-"a <strong>{{ email }}</strong>. Esta acción no se puede deshacer."
+"Esto registra el desembolso de <strong>%(amount)s %(currency)s</strong> "
+"a <strong>%(email)s</strong>. Esta acción no se puede deshacer."
 
 #: phase6 templates/dashboard/subscriptions.html
 msgctxt "billing"
@@ -5383,8 +5383,8 @@ msgstr ""
 
 #: phase6 templates/profile/_plan_card.html
 msgctxt "billing"
-msgid "Your {{ plan_name }} plan was deactivated by the admin."
-msgstr "El administrador desactivó su plan {{ plan_name }}."
+msgid "Your %(plan_name)s plan was deactivated by the admin."
+msgstr "El administrador desactivó su plan %(plan_name)s."
 
 #: phase6 templates/dashboard/payments.html
 msgctxt "billing"
@@ -5398,13 +5398,13 @@ msgstr "este plan"
 
 #: phase6 templates/profile/_plan_card.html
 msgctxt "billing"
-msgid "{{ icon }} {{ plan_name }} Plan — Pending"
-msgstr "{{ icon }} {{ plan_name }} Plan — Pendiente"
+msgid "%(icon)s %(plan_name)s Plan — Pending"
+msgstr "%(icon)s %(plan_name)s Plan — Pendiente"
 
 #: phase6 templates/profile/_plan_card.html
 msgctxt "billing"
-msgid "{{ plan_name }} Plan"
-msgstr "Plan {{ plan_name }}"
+msgid "%(plan_name)s Plan"
+msgstr "Plan %(plan_name)s"
 
 #: phase6 templates/dashboard/users.html
 msgctxt "common"
@@ -5562,7 +5562,7 @@ msgstr "árabe"
 #: phase6 templates/dashboard/consultant_users.html
 msgctxt "users"
 msgid ""
-"Are you sure you want to permanently delete <strong>{{ email }}</strong>? "
+"Are you sure you want to permanently delete <strong>%(email)s</strong>? "
 "This action cannot be undone."
 msgstr ""
 "¿Está seguro de que desea eliminar permanentemente <strong>{{ email "
@@ -5875,8 +5875,8 @@ msgstr "Error de red. Por favor verifique su conexión e inténtelo nuevamente."
 
 #: phase6 templates/dashboard/business_users.html
 msgctxt "users"
-msgid "No active business users found for &ldquo;{{ query }}&rdquo;."
-msgstr "No se encontraron usuarios comerciales activos para \"{{ query }}\"."
+msgid "No active business users found for &ldquo;%(query)s&rdquo;."
+msgstr "No se encontraron usuarios comerciales activos para \"%(query)s\"."
 
 #: phase6 templates/dashboard/business_users.html
 msgctxt "users"
@@ -5920,8 +5920,8 @@ msgstr "No se encontraron usuarios"
 
 #: phase6 templates/dashboard/consultant_users.html
 msgctxt "users"
-msgid "No {{ entity }} users found."
-msgstr "No se encontraron usuarios {{ entity }}."
+msgid "No %(entity)s users found."
+msgstr "No se encontraron usuarios %(entity)s."
 
 #: phase6 templates/dashboard/users.html
 msgctxt "users"
@@ -6112,8 +6112,8 @@ msgstr "Buscar franquicia…"
 
 #: phase6 templates/dashboard/consultant_users.html
 msgctxt "users"
-msgid "Search {{ entity }} users"
-msgstr "Buscar {{ entity }} usuarios"
+msgid "Search %(entity)s users"
+msgstr "Buscar %(entity)s usuarios"
 
 #: phase6 templates/dashboard/users.html
 msgctxt "users"
@@ -6232,9 +6232,9 @@ msgstr "Ver rol"
 
 #: phase6 templates/dashboard/consultant_users.html
 msgctxt "users"
-msgid "View {{ first_name }}'s certification + subscription statistics"
+msgid "View %(first_name)s's certification + subscription statistics"
 msgstr ""
-"Ver la certificación de {{ first_name }} + estadísticas de suscripción"
+"Ver la certificación de %(first_name)s + estadísticas de suscripción"
 
 #: phase6 templates/dashboard/consultant_users.html
 msgctxt "users"
@@ -6274,16 +6274,16 @@ msgstr "eficaz"
 #: phase6 templates/dashboard/consultant_users.html
 msgctxt "users"
 msgid ""
-"{{ counter }} result for &ldquo;{{ query }}&rdquo;{% plural %}{{ counter }} "
-"results for &ldquo;{{ query }}&rdquo;"
+"%(counter)s result for &ldquo;%(query)s&rdquo;{% plural %}%(counter)s "
+"results for &ldquo;%(query)s&rdquo;"
 msgstr ""
-"{{ counter }} resultado para \"{{ query }}\" {% plural %}{{ counter }} "
-"resultados para \"{{ query }}\""
+"%(counter)s resultado para \"%(query)s\" {% plural %}%(counter)s "
+"resultados para \"%(query)s\""
 
 #: phase6 templates/dashboard/consultant_users.html
 msgctxt "users"
-msgid "{{ entity }} Details"
-msgstr "{{ entity }} Detalles"
+msgid "%(entity)s Details"
+msgstr "%(entity)s Detalles"
 
 #: phase6 templates/dashboard/applications.html
 msgctxt "workflows"
@@ -6365,8 +6365,8 @@ msgstr "¿Cancelar esta solicitud?"
 
 #: phase6 templates/dashboard/partnerships.html
 msgctxt "workflows"
-msgid "Cancel your connection request to {{ company_name }}?"
-msgstr "¿Cancelar su solicitud de conexión a {{ company_name }}?"
+msgid "Cancel your connection request to %(company_name)s?"
+msgstr "¿Cancelar su solicitud de conexión a %(company_name)s?"
 
 #: phase6 templates/dashboard/partnerships.html
 msgctxt "workflows"
@@ -6421,11 +6421,11 @@ msgstr "Decidido"
 #: phase6 templates/dashboard/applications.html
 msgctxt "workflows"
 msgid ""
-"Declared truthful: {{ truthful }} · Accepted terms: {{ terms }} · AML "
-"consent: {{ aml }}"
+"Declared truthful: %(truthful)s · Accepted terms: %(terms)s · AML "
+"consent: %(aml)s"
 msgstr ""
-"Declarado veraz: {{ truthful }} · Términos aceptados: {{ terms }} · "
-"Consentimiento ALD: {{ aml }}"
+"Declarado veraz: %(truthful)s · Términos aceptados: %(terms)s · "
+"Consentimiento ALD: %(aml)s"
 
 #: phase6 templates/dashboard/applications.html
 msgctxt "workflows"
@@ -6460,9 +6460,9 @@ msgstr "Desconectar"
 #: phase6 templates/dashboard/partnerships.html
 msgctxt "workflows"
 msgid ""
-"Disconnect from {{ company_name }}? You'll lose view access to this company."
+"Disconnect from %(company_name)s? You'll lose view access to this company."
 msgstr ""
-"¿Desconectarse de {{ company_name }}? Perderás el acceso de visualización a "
+"¿Desconectarse de %(company_name)s? Perderás el acceso de visualización a "
 "esta empresa."
 
 #: phase6 templates/dashboard/applications.html
@@ -6549,8 +6549,8 @@ msgstr "Dejar"
 
 #: phase6 templates/dashboard/join_requests.html
 msgctxt "workflows"
-msgid "Leave {{ company_name }}? You'll lose access to this company."
-msgstr "¿Dejar {{ company_name }}? Perderás el acceso a esta empresa."
+msgid "Leave %(company_name)s? You'll lose access to this company."
+msgstr "¿Dejar %(company_name)s? Perderás el acceso a esta empresa."
 
 #: phase6 templates/dashboard/applications.html
 msgctxt "workflows"
@@ -6660,19 +6660,19 @@ msgstr "No proporcionado"
 #: phase6 templates/dashboard/partnerships.html
 msgctxt "workflows"
 msgid ""
-"Open the <a href=\"{{ companies_url }}\">Companies</a> page and click\n"
+"Open the <a href=\"%(companies_url)s\">Companies</a> page and click\n"
 "          <strong>Connect</strong> on any company you'd like to partner with.\n"
 msgstr ""
-"Abra la página <a href=\"{{ companies_url }}\">Empresas</a> y haga clic en\n"
+"Abra la página <a href=\"%(companies_url)s\">Empresas</a> y haga clic en\n"
 "          <strong>Conéctese</strong> con cualquier empresa con la que desee asociarse."
 
 #: phase6 templates/dashboard/join_requests.html
 msgctxt "workflows"
 msgid ""
-"Open your <a href=\"{{ profile_url }}\">Profile</a> and use\n"
+"Open your <a href=\"%(profile_url)s\">Profile</a> and use\n"
 "          <strong>Join Existing Company</strong> to request to join one.\n"
 msgstr ""
-"Abra su <a href=\"{{ profile_url }}\">Perfil</a> y utilice\n"
+"Abra su <a href=\"%(profile_url)s\">Perfil</a> y utilice\n"
 "          <strong>Únase a una empresa existente</strong> para solicitar unirse a una."
 
 #: phase6 templates/dashboard/partnerships.html
@@ -6768,18 +6768,18 @@ msgstr "Revocar"
 #: phase6 templates/dashboard/partnerships.html
 msgctxt "workflows"
 msgid ""
-"Revoke partnership with {{ email }}? They'll lose view access to {{ "
+"Revoke partnership with %(email)s? They'll lose view access to {{ "
 "company_name }}."
 msgstr ""
-"¿Revocar la asociación con {{ email }}? Perderán el acceso de visualización "
-"a {{ company_name }}."
+"¿Revocar la asociación con %(email)s? Perderán el acceso de visualización "
+"a %(company_name)s."
 
 #: phase6 templates/dashboard/join_requests.html
 msgctxt "workflows"
 msgid ""
-"Revoke {{ email }}'s membership? They'll lose access to {{ company_name }}."
+"Revoke %(email)s's membership? They'll lose access to %(company_name)s."
 msgstr ""
-"¿Revocar la membresía de {{ email }}? Perderán el acceso a {{ company_name "
+"¿Revocar la membresía de %(email)s? Perderán el acceso a {{ company_name "
 "}}."
 
 #: phase6 templates/dashboard/applications.html
@@ -6814,8 +6814,8 @@ msgstr "Enviado"
 
 #: phase6 templates/dashboard/applications.html
 msgctxt "workflows"
-msgid "Submitted {{ submitted_date }}"
-msgstr "Enviado {{ submitted_date }}"
+msgid "Submitted %(submitted_date)s"
+msgstr "Enviado %(submitted_date)s"
 
 #: phase6 templates/dashboard/applications.html
 msgctxt "workflows"
@@ -6867,8 +6867,8 @@ msgstr "Retirar"
 
 #: phase6 templates/dashboard/join_requests.html
 msgctxt "workflows"
-msgid "Withdraw your request to join {{ company_name }}?"
-msgstr "¿Retirar su solicitud para unirse a {{ company_name }}?"
+msgid "Withdraw your request to join %(company_name)s?"
+msgstr "¿Retirar su solicitud para unirse a %(company_name)s?"
 
 #: phase6 templates/dashboard/partnerships.html
 msgctxt "workflows"
@@ -6883,16 +6883,16 @@ msgstr "Aún no has enviado ninguna solicitud de unión."
 #: phase6 templates/dashboard/applications.html
 msgctxt "workflows"
 msgid ""
-"You're about to decline <strong>{{ first_name }} {{ last_name }}</strong>'s\n"
-"            {{ role_name }} application.\n"
+"You're about to decline <strong>%(first_name)s %(last_name)s</strong>'s\n"
+"            %(role_name)s application.\n"
 msgstr ""
-"Estás a punto de rechazar <strong>{{ first_name }} {{ last_name }}</strong>.\n"
-"            Aplicación {{ role_name }}."
+"Estás a punto de rechazar <strong>%(first_name)s %(last_name)s</strong>.\n"
+"            Aplicación %(role_name)s."
 
 #: phase6 templates/dashboard/partnerships.html
 msgctxt "workflows"
-msgid "→ Your company: {{ company_name }}"
-msgstr "→ Su empresa: {{ company_name }}"
+msgid "→ Your company: %(company_name)s"
+msgstr "→ Su empresa: %(company_name)s"
 
 #: phase7 templates/profile/_join_company_form.html
 msgctxt "common"
@@ -6997,19 +6997,19 @@ msgstr "Año de establecimiento"
 #: phase7 templates/dashboard/index.html
 msgctxt "dashboard"
 msgid ""
-"<strong>{{ active }}</strong> of <strong>{{ total }}</strong> companies are "
+"<strong>%(active)s</strong> of <strong>%(total)s</strong> companies are "
 "active."
 msgstr ""
-"<strong>{{ active }}</strong> de <strong>{{ total }}</strong> empresas están"
+"<strong>%(active)s</strong> de <strong>%(total)s</strong> empresas están"
 " activas."
 
 #: phase7 templates/dashboard/index.html
 msgctxt "dashboard"
 msgid ""
-"<strong>{{ active }}</strong> of <strong>{{ total }}</strong> users are "
+"<strong>%(active)s</strong> of <strong>%(total)s</strong> users are "
 "active."
 msgstr ""
-"<strong>{{ active }}</strong> de <strong>{{ total }}</strong> usuarios están"
+"<strong>%(active)s</strong> de <strong>%(total)s</strong> usuarios están"
 " activos."
 
 #: phase7 templates/dashboard/consultant_statistics.html
@@ -7173,8 +7173,8 @@ msgstr "Certificado"
 
 #: phase7 templates/dashboard/certifications.html
 msgctxt "dashboard"
-msgid "Certified {{ date }}"
-msgstr "Certificado {{ date }}"
+msgid "Certified %(date)s"
+msgstr "Certificado %(date)s"
 
 #: phase7 templates/dashboard/search.html
 msgctxt "dashboard"
@@ -7301,8 +7301,8 @@ msgstr "Rechazado"
 
 #: phase7 templates/dashboard/certifications.html
 msgctxt "dashboard"
-msgid "Declined {{ date }}"
-msgstr "Rechazado {{ date }}"
+msgid "Declined %(date)s"
+msgstr "Rechazado %(date)s"
 
 #: phase7 templates/dashboard/_tenants_panel.html
 msgctxt "dashboard"
@@ -7550,8 +7550,8 @@ msgstr "Las nuevas solicitudes enviadas a usted aparecerán aquí."
 
 #: phase7 templates/dashboard/search.html
 msgctxt "dashboard"
-msgid "No companies match \"{{ query }}\""
-msgstr "Ninguna empresa coincide con \"{{ query }}\""
+msgid "No companies match \"%(query)s\""
+msgstr "Ninguna empresa coincide con \"%(query)s\""
 
 #: phase7 templates/dashboard/index.html
 msgctxt "dashboard"
@@ -7585,8 +7585,8 @@ msgstr "No se encontraron franquicias"
 
 #: phase7 templates/dashboard/_tenants_panel.html
 msgctxt "dashboard"
-msgid "No franchises match \"{{ query }}\"."
-msgstr "Ninguna franquicia coincide con \"{{ query }}\"."
+msgid "No franchises match \"%(query)s\"."
+msgstr "Ninguna franquicia coincide con \"%(query)s\"."
 
 #: phase7 templates/dashboard/_audit_logs_panel.html
 msgctxt "dashboard"
@@ -7625,8 +7625,8 @@ msgstr "No se venden suscripciones en este rango."
 
 #: phase7 templates/dashboard/search.html
 msgctxt "dashboard"
-msgid "No users match \"{{ query }}\""
-msgstr "Ningún usuario coincide con \"{{ query }}\""
+msgid "No users match \"%(query)s\""
+msgstr "Ningún usuario coincide con \"%(query)s\""
 
 #: phase7 templates/dashboard/messages.html
 msgctxt "dashboard"
@@ -7839,8 +7839,8 @@ msgstr "Enviado"
 
 #: phase7 templates/dashboard/certifications.html
 msgctxt "dashboard"
-msgid "Submitted {{ date }}"
-msgstr "Enviado {{ date }}"
+msgid "Submitted %(date)s"
+msgstr "Enviado %(date)s"
 
 #: phase7 templates/dashboard/index.html
 msgctxt "dashboard"
@@ -7874,13 +7874,13 @@ msgstr "Objetivo"
 
 #: phase7 templates/dashboard/consultant_statistics.html
 msgctxt "dashboard"
-msgid "Target {{ min }}–{{ max }} per day"
-msgstr "Objetivo {{ min }}–{{ max }} por día"
+msgid "Target %(min)s–%(max)s per day"
+msgstr "Objetivo %(min)s–%(max)s por día"
 
 #: phase7 templates/dashboard/consultant_statistics.html
 msgctxt "dashboard"
-msgid "Target {{ target }} per month"
-msgstr "Objetivo {{ target }} por mes"
+msgid "Target %(target)s per month"
+msgstr "Objetivo %(target)s por mes"
 
 #: phase7 templates/dashboard/search.html
 msgctxt "dashboard"
@@ -8150,18 +8150,18 @@ msgstr "tu perfil"
 
 #: phase7 templates/dashboard/search.html
 msgctxt "dashboard"
-msgid "{{ companies }} companies, {{ users }} users"
-msgstr "{{ companies }} empresas, {{ users }} usuarios"
+msgid "%(companies)s companies, %(users)s users"
+msgstr "%(companies)s empresas, %(users)s usuarios"
 
 #: phase7 templates/dashboard/contact_messages.html
 msgctxt "dashboard"
-msgid "{{ count }} unread"
-msgstr "{{ count }} sin leer"
+msgid "%(count)s unread"
+msgstr "%(count)s sin leer"
 
 #: phase7 templates/dashboard/index.html
 msgctxt "dashboard"
-msgid "{{ plan_name }} Plan"
-msgstr "Plan {{ plan_name }}"
+msgid "%(plan_name)s Plan"
+msgstr "Plan %(plan_name)s"
 
 #: phase7 templates/profile/profile.html
 msgctxt "profile"
@@ -8653,13 +8653,13 @@ msgstr "Abra el panel principal"
 
 #: phase8 templates/website/membership.html
 msgctxt "website"
-msgid "${{ price }} / month"
-msgstr "${{ price }} / mes"
+msgid "$%(price)s / month"
+msgstr "$%(price)s / mes"
 
 #: phase8 templates/website/membership.html
 msgctxt "website"
-msgid "${{ price }} / year"
-msgstr "${{ price }} / año"
+msgid "$%(price)s / year"
+msgstr "$%(price)s / año"
 
 #: phase8 templates/website/invoice.html
 msgctxt "website"
@@ -9185,11 +9185,11 @@ msgstr "Contrato · Remoto"
 #: phase8 templates/website/invoice.html
 msgctxt "website"
 msgid ""
-"Converted from {{ source_amount }} {{ source_currency }} at rate 1 {{ "
-"source_currency }} = {{ rate }} {{ display_curr }}"
+"Converted from %(source_amount)s %(source_currency)s at rate 1 {{ "
+"source_currency }} = %(rate)s %(display_curr)s"
 msgstr ""
-"Convertido de {{ source_amount }} {{ source_currency }} a tasa 1 {{ "
-"source_currency }} = {{ rate }} {{ display_curr }}"
+"Convertido de %(source_amount)s %(source_currency)s a tasa 1 {{ "
+"source_currency }} = %(rate)s %(display_curr)s"
 
 #: phase8 templates/website/invoice.html
 msgctxt "website"
@@ -10589,8 +10589,8 @@ msgstr "SWIFT/BIC"
 
 #: phase8 templates/website/membership.html
 msgctxt "website"
-msgid "Save ${{ amount }}"
-msgstr "Ahorre ${{ amount }}"
+msgid "Save $%(amount)s"
+msgstr "Ahorre $%(amount)s"
 
 #: phase8 templates/website/about.html
 msgctxt "website"
@@ -10648,8 +10648,8 @@ msgstr ""
 
 #: phase8 templates/website/membership.html
 msgctxt "website"
-msgid "Select {{ plan_name }} Plan"
-msgstr "Seleccione Plan {{ plan_name }}"
+msgid "Select %(plan_name)s Plan"
+msgstr "Seleccione Plan %(plan_name)s"
 
 #: phase8 templates/website/membership.html
 msgctxt "website"
@@ -11149,8 +11149,8 @@ msgstr "Su plan actual: <strong>Sin plan</strong>"
 
 #: phase8 templates/website/upgrade_required.html
 msgctxt "website"
-msgid "Your current plan: <strong>{{ plan_name }}</strong>"
-msgstr "Su plan actual: <strong>{{ plan_name }}</strong>"
+msgid "Your current plan: <strong>%(plan_name)s</strong>"
+msgstr "Su plan actual: <strong>%(plan_name)s</strong>"
 
 #: phase8 templates/website/upgrade_required.html
 msgctxt "website"
@@ -11209,13 +11209,13 @@ msgstr "año"
 
 #: phase8 templates/website/invoice.html
 msgctxt "website"
-msgid "{{ plan_name }} Plan"
-msgstr "Plan {{ plan_name }}"
+msgid "%(plan_name)s Plan"
+msgstr "Plan %(plan_name)s"
 
 #: phase8 templates/website/membership.html
 msgctxt "website"
-msgid "{{ plan_name }} Plan — Full Details"
-msgstr "Plan {{ plan_name }}: detalles completos"
+msgid "%(plan_name)s Plan — Full Details"
+msgstr "Plan %(plan_name)s: detalles completos"
 
 #: phase8 templates/website/invoice.html
 msgctxt "website"
@@ -11239,8 +11239,8 @@ msgstr "— Transferencia internacional (USD)"
 
 #: phase8 templates/website/membership.html
 msgctxt "website"
-msgid "≈ ${{ monthly }} / month"
-msgstr "≈ ${{ monthly }} / mes"
+msgid "≈ $%(monthly)s / month"
+msgstr "≈ $%(monthly)s / mes"
 
 #: phase8 templates/website/_world_map.html
 msgctxt "website"
@@ -11446,3 +11446,24 @@ msgstr "Su empresa Ltd."
 msgctxt "website"
 msgid "john@company.com"
 msgstr "juan@empresa.com"
+
+#: phase6 billing/plan_i18n.py
+msgctxt "billing.plan.free"
+msgid "FREE"
+msgstr "GRATIS"
+
+#: phase6 billing/plan_i18n.py
+msgctxt "billing.plan.basic"
+msgid "BASIC"
+msgstr "BASIC"
+
+#: phase6 billing/plan_i18n.py
+msgctxt "billing.plan.pro"
+msgid "PRO"
+msgstr "PRO"
+
+#: phase6 billing/plan_i18n.py
+msgctxt "billing.plan.global"
+msgid "GLOBAL"
+msgstr "GLOBAL"
+

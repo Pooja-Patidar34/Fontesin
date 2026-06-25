@@ -7,6 +7,8 @@ from django.utils.translation import gettext as _
 from accounts.models import Company, Tenant, AuditLog, CompanyConnection
 from accounts.constants import (
     CountryChoices,
+    COUNTRY_ENGLISH_NAMES,
+    COUNTRY_ENGLISH_NAME_TO_CODE,
     COUNTRY_STATES,
     COUNTRY_FLAGS,
     LEGAL_FORMS_BY_COUNTRY,
@@ -36,13 +38,15 @@ _COUNTRY_ALIASES = {
 
 def _country_match_q(country_code):
     """Build a Q that matches Company.country against the user's country code,
-    including the CountryChoices label and common free-text aliases."""
+    including the canonical English name and common free-text aliases.
+
+    Never use CountryChoices labels here — they are gettext_lazy and resolve
+    to the active UI locale, while Company.country stores ISO codes and
+    English names only."""
     variants = [country_code]
-    label = dict(CountryChoices.CHOICES).get(country_code)
-    if label:
-        # CountryChoices labels are gettext_lazy proxies; psycopg2 cannot
-        # adapt __proxy__ objects as SQL bind parameters.
-        variants.append(str(label))
+    english_name = COUNTRY_ENGLISH_NAMES.get(country_code)
+    if english_name:
+        variants.append(english_name)
     variants.extend(_COUNTRY_ALIASES.get(country_code, ()))
     q = Q()
     for v in variants:
@@ -70,8 +74,7 @@ def _coordinator_region_code(user):
 
     target_region = (user.target_region or "").strip()
     if target_region:
-        label_to_code = {lbl.lower(): code for code, lbl in CountryChoices.CHOICES}
-        code = label_to_code.get(target_region.lower())
+        code = COUNTRY_ENGLISH_NAME_TO_CODE.get(target_region.lower())
         if code:
             return code
         # Free-text region spellings (e.g. "USA") map through the same alias
