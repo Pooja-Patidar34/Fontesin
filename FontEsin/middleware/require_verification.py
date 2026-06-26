@@ -68,6 +68,7 @@ class RequireIdentityVerificationMiddleware:
         "about",
         "career",
         "contact",
+        "set_language",
     )
 
     # Prefixes always allowed: static/media assets keep loading, the admin

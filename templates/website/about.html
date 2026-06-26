@@ -31,6 +31,7 @@
     <div class="navbar__actions">
       <a href="{% url 'login' %}" class="btn btn-outline btn-sm">{% trans "Log In" context "auth.login" %}</a>
       <a href="{% url 'register' %}" class="btn btn-primary btn-sm">{% trans "Get Started" context "website" %}</a>
+      {% include "partials/_navbar_lang_switcher.html" %}
     </div>
   </div>
 </nav>

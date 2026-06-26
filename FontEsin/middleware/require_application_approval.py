@@ -58,6 +58,7 @@ class RequireApplicationApprovalMiddleware:
         "about",
         "career",
         "contact",
+        "set_language",
     )
 
     _ALLOWED_PREFIXES = (

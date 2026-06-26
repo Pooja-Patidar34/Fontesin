@@ -1,0 +1,52 @@
+{% load static i18n_extras %}
+<link rel="stylesheet" href="{% static 'adminlte/plugins/fontawesome-free/css/all.min.css' %}"/>
+<div class="navbar-lang-switcher">
+  {% language_switcher %}
+</div>
+<script>
+(function () {
+  var switchers = document.querySelectorAll(".navbar-lang-switcher .language-switcher");
+  if (!switchers.length) {
+    return;
+  }
+
+  function closeAll() {
+    switchers.forEach(function (dropdown) {
+      dropdown.classList.remove("show");
+      var toggle = dropdown.querySelector(".language-switcher__toggle");
+      if (toggle) {
+        toggle.setAttribute("aria-expanded", "false");
+      }
+    });
+  }
+
+  switchers.forEach(function (dropdown) {
+    var toggle = dropdown.querySelector(".language-switcher__toggle");
+    if (!toggle) {
+      return;
+    }
+
+    dropdown.addEventListener("click", function (event) {
+      event.stopPropagation();
+    });
+
+    toggle.addEventListener("click", function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      var isOpen = dropdown.classList.contains("show");
+      closeAll();
+      if (!isOpen) {
+        dropdown.classList.add("show");
+        toggle.setAttribute("aria-expanded", "true");
+      }
+    });
+  });
+
+  document.addEventListener("click", closeAll);
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+      closeAll();
+    }
+  });
+})();
+</script>

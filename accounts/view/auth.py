@@ -24,7 +24,7 @@ from accounts.constants import (
     LanguageChoices,
     SupportedLocale,
 )
-from FontEsin.middleware.locale import normalize_locale
+from FontEsin.middleware.locale import normalize_locale, LANGUAGE_SESSION_KEY
 import random
 from datetime import date, timedelta
 from django.utils import timezone
@@ -35,11 +35,15 @@ logger = logging.getLogger("technical")
 
 
 def _request_locale(request):
-    """Best-effort locale from cookie or active translation."""
+    """Best-effort locale from session, cookie, or active translation."""
+    from django.utils import translation
+
+    session_lang = request.session.get(LANGUAGE_SESSION_KEY)
+    if session_lang:
+        return normalize_locale(session_lang)
     cookie_lang = request.COOKIES.get(settings.LANGUAGE_COOKIE_NAME)
     if cookie_lang:
         return normalize_locale(cookie_lang)
-    from django.utils import translation
     return normalize_locale(translation.get_language())
 
 

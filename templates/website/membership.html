@@ -281,6 +281,7 @@
     <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="{% trans 'Menu' context 'website' %}">&#9776;</button>
     <div class="navbar__actions">
       <a href="{% url 'login' %}" class="btn btn-outline btn-sm">{% trans "Log In" context "auth.login" %}</a>
+      {% include "partials/_navbar_lang_switcher.html" %}
     </div>
   </div>
 </nav>

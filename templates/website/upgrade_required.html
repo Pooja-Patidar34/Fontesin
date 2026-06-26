@@ -72,6 +72,9 @@
       <a href="{% url 'career' %}">{% trans "Careers" context "website" %}</a>
       <a href="{% url 'contact' %}">{% trans "Contact" context "website" %}</a>
     </div>
+    <div class="navbar__actions">
+      {% include "partials/_navbar_lang_switcher.html" %}
+    </div>
   </div>
 </nav>
 

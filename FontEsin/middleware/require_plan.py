@@ -48,6 +48,7 @@ class RequirePlanForBusinessUserMiddleware:
         "about",
         "career",
         "contact",
+        "set_language",
     )
 
     # Path prefixes always allowed (static, admin login flow, identity
