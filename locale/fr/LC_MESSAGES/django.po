@@ -1778,8 +1778,8 @@ msgstr ""
 
 #: templates/auth/pending_approval.html
 msgctxt "auth.pending_approval"
-msgid "%(var)s Plan - %(var)s %(var)s"
-msgstr "Régime %(var)s - %(var)s %(var)s"
+msgid "%(plan_name)s - %(currency)s %(price)s"
+msgstr "%(plan_name)s - %(currency)s %(price)s"
 
 #: templates/auth/register.html
 msgctxt "auth.register"
@@ -5412,8 +5412,8 @@ msgstr ""
 
 #: phase6 templates/profile/_plan_card.html
 msgctxt "billing"
-msgid "Your %(plan_name)s plan was deactivated by the admin."
-msgstr "Votre forfait %(plan_name)s a été désactivé par l'administrateur."
+msgid "Your %(plan_name)s was deactivated by the admin."
+msgstr "Votre %(plan_name)s a été désactivé par l'administrateur."
 
 #: phase6 templates/dashboard/payments.html
 msgctxt "billing"
@@ -10703,8 +10703,8 @@ msgstr ""
 
 #: phase8 templates/website/membership.html
 msgctxt "website"
-msgid "Select %(plan_name)s Plan"
-msgstr "Sélectionnez le forfait %(plan_name)s"
+msgid "Select %(plan_name)s"
+msgstr "Sélectionner %(plan_name)s"
 
 #: phase8 templates/website/membership.html
 msgctxt "website"
@@ -11280,8 +11280,8 @@ msgstr "Forfait %(plan_name)s"
 
 #: phase8 templates/website/membership.html
 msgctxt "website"
-msgid "%(plan_name)s Plan — Full Details"
-msgstr "Plan %(plan_name)s — Tous les détails"
+msgid "%(plan_name)s — Full Details"
+msgstr "%(plan_name)s — Tous les détails"
 
 #: phase8 templates/website/invoice.html
 msgctxt "website"
@@ -11512,20 +11512,20 @@ msgstr "john@company.com"
 
 #: phase6 billing/plan_i18n.py
 msgctxt "billing.plan.free"
-msgid "FREE"
-msgstr "GRATUIT"
+msgid "Free Plan"
+msgstr "Plan gratuit"
 
 #: phase6 billing/plan_i18n.py
 msgctxt "billing.plan.basic"
-msgid "BASIC"
-msgstr "BASIC"
+msgid "Basic Plan"
+msgstr "Plan de base"
 
 #: phase6 billing/plan_i18n.py
 msgctxt "billing.plan.pro"
-msgid "PRO"
-msgstr "PRO"
+msgid "Pro Plan"
+msgstr "Plan Pro"
 
 #: phase6 billing/plan_i18n.py
 msgctxt "billing.plan.global"
-msgid "GLOBAL"
-msgstr "GLOBAL"
+msgid "Global Plan"
+msgstr "Plan global"

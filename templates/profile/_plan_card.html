@@ -24,7 +24,7 @@
         <i class="fas fa-crown"></i>
       </div>
       <div>
-        <div style="font-weight:700; color:#1B2E3F; font-size:.92rem;">{{ user_plan.icon }} {{ user_plan|localized_plan_name_filter }} {% trans "Plan" context "billing" %}</div>
+        <div style="font-weight:700; color:#1B2E3F; font-size:.92rem;">{{ user_plan.icon }} {{ user_plan|localized_plan_name_filter }}</div>
         {% if subscription %}
         <div style="font-size:.75rem; color:#64748b;">
           {% trans "Started" context "billing" %} {{ subscription.start_date|date:"M d, Y" }}
@@ -85,7 +85,7 @@
       </div>
       <div>
         <div style="font-weight:700; color:#92400e; font-size:.88rem;">
-          {{ pending_subscription.plan.icon }} {{ pending_subscription.plan|localized_plan_name_filter }} {% trans "Plan" context "billing" %} — {% trans "Pending" context "billing" %}
+          {{ pending_subscription.plan.icon }} {{ pending_subscription.plan|localized_plan_name_filter }} — {% trans "Pending" context "billing" %}
         </div>
         <div style="font-size:.72rem; color:#92400e;">
           {{ user_plan|pending_upgrade_access_note_filter }}

@@ -1,4 +1,4 @@
-{% load static i18n %}
+{% load static i18n plan_i18n_tags %}
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}">
 <head>
@@ -251,7 +251,7 @@
         <div class="subtitle">{% trans "FONTESIN Global Business Intelligence Platform" context "website" %}</div>
       </div>
       <div style="background:#15803d;color:#fff;border-radius:8px;padding:8px 20px;font-family:'Montserrat',sans-serif;font-weight:800;font-size:.85rem;text-transform:uppercase;">
-        {% blocktrans with plan_name=invoice.subscription.plan.name context "website" %}{{ plan_name }} Plan{% endblocktrans %}
+        {{ invoice.subscription.plan|localized_plan_name_filter }}
       </div>
     </div>
 
@@ -333,7 +333,7 @@
       <div style="margin-bottom:32px;">
         <div class="info-row">
           <span class="info-row__label">{% trans "Plan" context "website" %}</span>
-          <span class="info-row__value" style="font-weight:800;">{% blocktrans with plan_name=invoice.subscription.plan.name context "website" %}{{ plan_name }} Plan{% endblocktrans %}</span>
+          <span class="info-row__value" style="font-weight:800;">{{ invoice.subscription.plan|localized_plan_name_filter }}</span>
         </div>
         <div class="info-row">
           <span class="info-row__label">{% trans "Billing Period" context "website" %}</span>

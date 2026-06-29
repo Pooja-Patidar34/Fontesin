@@ -12,7 +12,7 @@ PLAN_CODES = ("free", "basic", "pro", "global")
 # Canonical English copy keyed by plan code (source: 0005_reseed_plans_mvp).
 PLAN_CANONICAL = {
     "free": {
-        "name": "FREE",
+        "name": "Free Plan",
         "tagline": "Get started in your domicile country",
         "best_for": (
             "Companies exploring the platform within their domicile country "
@@ -34,7 +34,7 @@ PLAN_CANONICAL = {
         ],
     },
     "basic": {
-        "name": "BASIC",
+        "name": "Basic Plan",
         "tagline": "Full access in one selected country",
         "best_for": (
             "Companies operating in a single national market who need full "
@@ -52,7 +52,7 @@ PLAN_CANONICAL = {
         ],
     },
     "pro": {
-        "name": "PRO",
+        "name": "Pro Plan",
         "tagline": "Full access across one selected region",
         "best_for": (
             "Companies operating across a regional market "
@@ -67,7 +67,7 @@ PLAN_CANONICAL = {
         ],
     },
     "global": {
-        "name": "GLOBAL",
+        "name": "Global Plan",
         "tagline": "Worldwide visibility & access",
         "best_for": (
             "Companies operating internationally who need worldwide "
@@ -181,10 +181,10 @@ def localized_subscription_status(subscription) -> str:
 
 def _plan_gettext_catalog():  # pragma: no cover
     """Anchor literals so makemessages / sync_phase6_po extract plan copy."""
-    pgettext("billing.plan.free", "FREE")
-    pgettext("billing.plan.basic", "BASIC")
-    pgettext("billing.plan.pro", "PRO")
-    pgettext("billing.plan.global", "GLOBAL")
+    pgettext("billing.plan.free", "Free Plan")
+    pgettext("billing.plan.basic", "Basic Plan")
+    pgettext("billing.plan.pro", "Pro Plan")
+    pgettext("billing.plan.global", "Global Plan")
     for code in PLAN_CODES:
         ctx = _plan_context(code)
         data = PLAN_CANONICAL[code]
@@ -205,6 +205,6 @@ def pending_upgrade_access_note(current_plan_name: str) -> str:
 def deactivated_plan_message(plan_name: str) -> str:
     template = pgettext(
         "billing",
-        "Your %(plan_name)s plan was deactivated by the admin.",
+        "Your %(plan_name)s was deactivated by the admin.",
     )
     return template % {"plan_name": plan_name}

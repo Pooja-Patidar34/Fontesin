@@ -12,6 +12,7 @@ from dateutil.relativedelta import relativedelta
 import json
 
 from accounts.models import Tenant, Company, User
+from billing.plan_i18n import localized_plan_name
 from billing.models import Subscription, Invoice, CommercialPlan
 from billing.utils import (
     get_user_plan,
@@ -392,7 +393,7 @@ def dashboard(request):
                     _("Your %(plan)s plan was deactivated by the admin. "
                       "You have been moved to the Free plan. "
                       "Please activate another plan to continue.")
-                    % {"plan": deactivated_plan.name},
+                    % {"plan": localized_plan_name(deactivated_plan)},
                 )
 
             from django.db.models import Q

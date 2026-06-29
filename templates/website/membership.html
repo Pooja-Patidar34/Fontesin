@@ -1,4 +1,4 @@
-{% load static i18n %}
+{% load static i18n plan_i18n_tags %}
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}">
 <head>
@@ -340,8 +340,8 @@
       {% endif %}
 
       <div class="plan-icon">{{ plan.icon }}</div>
-      <div class="plan-name">{{ plan.name }}</div>
-      <div class="plan-tagline">{{ plan.tagline }}</div>
+      <div class="plan-name">{{ plan.display_name }}</div>
+      <div class="plan-tagline">{{ plan.display_tagline }}</div>
 
       <div class="plan-price{% if plan.code == 'free' %} plan-price--free{% endif %}">
         {% if plan.original_price %}
@@ -374,7 +374,7 @@
       <hr class="plan-divider"/>
 
       <ul class="plan-features">
-        {% for feat in plan.features %}
+        {% for feat in plan.display_features %}
         <li>
           {% if feat.text %}
             {# Dict shape: {"included": bool, "text": "..."} #}
@@ -393,7 +393,7 @@
         {% endfor %}
       </ul>
 
-      <button class="plan-select-btn">{% blocktrans with plan_name=plan.name context "website" %}Select {{ plan_name }} Plan{% endblocktrans %}</button>
+      <button class="plan-select-btn">{% blocktrans with plan_name=plan.display_name context "website" %}Select {{ plan_name }}{% endblocktrans %}</button>
     </div>
     {% endfor %}
   </div>
@@ -402,7 +402,7 @@
   {% for plan in plans %}
   <div class="plan-details" id="details-{{ plan.code }}">
     <div class="plan-details__header">
-      <h3>{{ plan.icon }} {% blocktrans with plan_name=plan.name context "website" %}{{ plan_name }} Plan — Full Details{% endblocktrans %}</h3>
+      <h3>{{ plan.icon }} {% blocktrans with plan_name=plan.display_name context "website" %}{{ plan_name }} — Full Details{% endblocktrans %}</h3>
       <span class="price-tag">{% if plan.billing_period == 'monthly' %}{% blocktrans with price=plan.price|floatformat:0 context "website" %}${{ price }} / month{% endblocktrans %}{% else %}{% blocktrans with price=plan.price|floatformat:0 context "website" %}${{ price }} / year{% endblocktrans %}{% endif %}</span>
     </div>
     <div class="plan-details__body">
@@ -426,7 +426,7 @@
       {% if plan.best_for %}
       <div style="border-radius:10px;padding:16px;text-align:center;" class="best-for--{{ plan.best_for_style }}">
         <strong style="font-family:'Montserrat',sans-serif;font-size:.85rem;">&#128161; {% trans "Best for:" context "website" %}</strong>
-        <span style="font-size:.82rem;"> {{ plan.best_for }}</span>
+        <span style="font-size:.82rem;"> {{ plan.display_best_for }}</span>
       </div>
       {% endif %}
     </div>
@@ -443,7 +443,7 @@
             <th>{% trans "Feature" context "website" %}</th>
             {% for plan in plans %}
             <th{% if plan.is_popular %} class="highlight-col"{% endif %}>
-              {{ plan.name }}{% if plan.is_popular %} &#11088;{% endif %}
+              {{ plan.display_name }}{% if plan.is_popular %} &#11088;{% endif %}
               <br/><small style="font-weight:400;opacity:.7;">${{ plan.price|floatformat:0 }}/{% if plan.billing_period == 'monthly' %}{% trans "mo" context "website" %}{% else %}{% trans "yr" context "website" %}{% endif %}</small>
             </th>
             {% endfor %}

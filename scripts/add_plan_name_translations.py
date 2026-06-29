@@ -8,17 +8,31 @@ ROOT = Path(__file__).resolve().parents[1]
 LOCALE = ROOT / "locale"
 
 PLAN_NAMES = {
-    "free": "FREE",
-    "basic": "BASIC",
-    "pro": "PRO",
-    "global": "GLOBAL",
+    "free": "Free Plan",
+    "basic": "Basic Plan",
+    "pro": "Pro Plan",
+    "global": "Global Plan",
 }
 
-# Optional non-English plan name overrides (msgid stays English).
 PLAN_NAME_MSGSTR = {
-    "de": {"FREE": "FREI"},
-    "es": {"FREE": "GRATIS"},
-    "fr": {"FREE": "GRATUIT"},
+    "de": {
+        "Free Plan": "Kostenloser Plan",
+        "Basic Plan": "Basisplan",
+        "Pro Plan": "Pro-Plan",
+        "Global Plan": "Globalplan",
+    },
+    "es": {
+        "Free Plan": "Plan Gratuito",
+        "Basic Plan": "Plan Básico",
+        "Pro Plan": "Plan Pro",
+        "Global Plan": "Plan Global",
+    },
+    "fr": {
+        "Free Plan": "Plan gratuit",
+        "Basic Plan": "Plan de base",
+        "Pro Plan": "Plan Pro",
+        "Global Plan": "Plan global",
+    },
 }
 
 

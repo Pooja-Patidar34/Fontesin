@@ -32,6 +32,7 @@ INDUSTRY_CODE_RE = re.compile(r"^[A-Za-z0-9.\-]{1,20}$")
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 LOGO_ALLOWED_EXTENSIONS = (".png", ".jpg", ".jpeg", ".svg", ".webp", ".gif")
 LOGO_MAX_BYTES = 5 * 1024 * 1024
+from billing.plan_i18n import localized_plan_name
 from billing.utils import (
     get_user_plan,
     get_active_subscription,
@@ -111,9 +112,10 @@ def plans_view(request):
     if deactivated_plan:
         messages.warning(
             request,
-            f"Your {deactivated_plan.name} plan was deactivated by the admin. "
-            "You have been moved to the Free plan. "
-            "Please activate another plan to continue.",
+            _("Your %(plan)s plan was deactivated by the admin. "
+              "You have been moved to the Free plan. "
+              "Please activate another plan to continue.")
+            % {"plan": localized_plan_name(deactivated_plan)},
         )
 
     # Subscription history — same query the standalone /plan-history/ view
@@ -768,9 +770,10 @@ def profile_view(request):
         # straight here knows why their feature set just shrank.
         messages.warning(
             request,
-            f"Your {deactivated_plan.name} plan was deactivated by the admin. "
-            "You have been moved to the Free plan. "
-            "Please activate another plan to continue.",
+            _("Your %(plan)s plan was deactivated by the admin. "
+              "You have been moved to the Free plan. "
+              "Please activate another plan to continue.")
+            % {"plan": localized_plan_name(deactivated_plan)},
         )
 
     # Outgoing join requests this user has sent (pending / approved / declined)

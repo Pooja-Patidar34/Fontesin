@@ -1,4 +1,4 @@
-{% load static i18n i18n_extras %}
+{% load static i18n i18n_extras plan_i18n_tags %}
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}">
 <head>
@@ -103,7 +103,7 @@
     <p>{% trans "Thank you for choosing a plan! Your subscription is currently under review by our admin team." context "auth.pending_approval" %}</p>
 
     {% if subscription and subscription.plan %}
-      <div class="plan-badge">{% blocktrans with plan_name=subscription.plan.name currency=subscription.plan.currency price=subscription.plan.price context "auth.pending_approval" %}{{ plan_name }} Plan - {{ currency }} {{ price }}{% endblocktrans %}</div>
+      <div class="plan-badge">{% with plan_label=subscription.plan|localized_plan_name_filter %}{% blocktrans with plan_name=plan_label currency=subscription.plan.currency price=subscription.plan.price context "auth.pending_approval" %}{{ plan_name }} - {{ currency }} {{ price }}{% endblocktrans %}{% endwith %}</div>
     {% endif %}
 
     <ul class="pending-features">

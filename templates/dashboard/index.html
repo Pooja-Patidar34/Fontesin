@@ -1,5 +1,5 @@
 {% extends "base/base.html" %}
-{% load i18n %}
+{% load i18n plan_i18n_tags %}
 {% block title %}{% trans "Dashboard" context "dashboard" %}{% endblock %}
 
 {% block content %}
@@ -425,7 +425,7 @@
       <div class="dash-welcome__name">{{ request.user.first_name }} {{ request.user.last_name }}</div>
       <div class="dash-welcome__meta">
         {{ role_label }}
-        {% if user_plan %} &middot; {% blocktrans trimmed with plan_name=user_plan.name|upper context "dashboard" %}{{ plan_name }} Plan{% endblocktrans %}{% endif %}
+        {% if user_plan %} &middot; {{ user_plan|localized_plan_name_filter }}{% endif %}
         &middot; {% trans "Last login: Today" context "dashboard" %}
       </div>
     </div>
