@@ -440,7 +440,7 @@
           </div>
           {% endif %}
           <span>
-            {% if request.user.is_superuser %}{% trans "Platform Admin" context "nav" %}{% elif request.user.role %}{{ request.user.role.name|title }}{% else %}{{ request.user.first_name }}{% endif %}
+            {% if request.user.is_superuser %}{% trans "Platform Admin" context "nav" %}{% elif request.user.role %}{{ request.user|localized_role_label_filter }}{% else %}{{ request.user.first_name }}{% endif %}
           </span>
           <i class="fas fa-chevron-down" style="font-size:.6rem; color:#94a3b8;"></i>
         </a>

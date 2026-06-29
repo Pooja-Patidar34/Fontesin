@@ -3792,7 +3792,7 @@ msgstr "Adresse"
 #: phase5 templates/dashboard/companies.html
 msgctxt "companies"
 msgid "All Tenants"
-msgstr "Tous les locataires"
+msgstr "Toutes les franchises"
 
 #: phase5 templates/dashboard/_company_row.html
 msgctxt "companies"
@@ -7327,7 +7327,7 @@ msgstr "Date de la décision"
 #: phase7 templates/dashboard/certifications.html
 msgctxt "dashboard"
 msgid "Decline"
-msgstr "Déclin"
+msgstr "Refuser"
 
 #: phase7 templates/dashboard/certifications.html
 msgctxt "dashboard"
@@ -7347,7 +7347,7 @@ msgstr "Supprimer la franchise ?"
 #: phase7 templates/dashboard/tenant_confirm_delete.html
 msgctxt "dashboard"
 msgid "Delete Tenant"
-msgstr "Supprimer le locataire"
+msgstr "Supprimer la franchise"
 
 #: phase7 templates/dashboard/contact_messages.html
 msgctxt "dashboard"
@@ -7920,12 +7920,12 @@ msgstr "Objectif %(target)s par mois"
 #: phase7 templates/dashboard/search.html
 msgctxt "dashboard"
 msgid "Tenant"
-msgstr "Locataire"
+msgstr "Franchise"
 
 #: phase7 templates/dashboard/index.html
 msgctxt "dashboard"
 msgid "Tenants"
-msgstr "Locataires"
+msgstr "Franchises"
 
 #: phase7 templates/dashboard/consultant_statistics.html
 msgctxt "dashboard"
@@ -8023,12 +8023,12 @@ msgstr "Afficher les rapports"
 #: phase7 templates/dashboard/consultant_statistics.html
 msgctxt "dashboard"
 msgid "Wed"
-msgstr "Épouser"
+msgstr "Mer"
 
 #: phase7 templates/dashboard/index.html
 msgctxt "dashboard"
 msgid "Welcome Back"
-msgstr "Content de te revoir"
+msgstr "Bon retour"
 
 #: phase7 templates/dashboard/messages.html
 msgctxt "dashboard"
@@ -8038,7 +8038,7 @@ msgstr "Lorsque vous recevrez une notification, elle apparaîtra ici."
 #: phase7 templates/dashboard/tenant_confirm_delete.html
 msgctxt "dashboard"
 msgid "You are about to delete the tenant:"
-msgstr "Vous êtes sur le point de supprimer le locataire :"
+msgstr "Vous êtes sur le point de supprimer la franchise :"
 
 #: phase7 templates/dashboard/certifications.html
 msgctxt "dashboard"
@@ -8093,7 +8093,7 @@ msgstr "jours"
 #: phase7 templates/dashboard/consultant_statistics.html
 msgctxt "dashboard"
 msgid "in this range"
-msgstr "dans cette gamme"
+msgstr "sur cette période"
 
 #: phase7 templates/dashboard/index.html
 msgctxt "dashboard"
@@ -11529,3 +11529,98 @@ msgstr "Plan Pro"
 msgctxt "billing.plan.global"
 msgid "Global Plan"
 msgstr "Plan global"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "Platform Admin"
+msgstr "Administrateur de la plateforme"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "User"
+msgstr "Utilisateur"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "Tenant Admin"
+msgstr "Administrateur de franchise"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "Business User"
+msgstr "Utilisateur professionnel"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "Consultant"
+msgstr "Consultant"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "Coordinator"
+msgstr "Coordinateur"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "Franchise Partner"
+msgstr "Partenaire franchise"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "Admin"
+msgstr "Administrateur"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "New company registered"
+msgstr "Nouvelle entreprise enregistrée"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "%(name)s joined the platform"
+msgstr "%(name)s a rejoint la plateforme"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "Payment confirmed"
+msgstr "Paiement confirmé"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "%(plan)s subscription – %(email)s"
+msgstr "Abonnement %(plan)s – %(email)s"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "%(plan)s subscription"
+msgstr "Abonnement %(plan)s"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "Invoice overdue"
+msgstr "Facture en retard"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "%(email)s – $%(amount)s pending"
+msgstr "%(email)s – $%(amount)s en attente"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "Unknown"
+msgstr "Inconnu"
+
+#: templates/dashboard/index.html
+msgctxt "dashboard"
+msgid "%(time)s ago"
+msgstr "il y a %(time)s"
+
+#: templates/dashboard/index.html
+msgctxt "dashboard"
+msgid "$"
+msgstr "$"
+
+#: templates/dashboard/index.html
+msgctxt "dashboard"
+msgid "k"
+msgstr "k"

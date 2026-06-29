@@ -10462,3 +10462,98 @@ msgctxt "billing.plan.global"
 msgid "Global Plan"
 msgstr "Global Plan"
 
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "Platform Admin"
+msgstr "Platform Admin"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "User"
+msgstr "User"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "Tenant Admin"
+msgstr "Tenant Admin"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "Business User"
+msgstr "Business User"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "Consultant"
+msgstr "Consultant"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "Coordinator"
+msgstr "Coordinator"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "Franchise Partner"
+msgstr "Franchise Partner"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "Admin"
+msgstr "Admin"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "New company registered"
+msgstr "New company registered"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "%(name)s joined the platform"
+msgstr "%(name)s joined the platform"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "Payment confirmed"
+msgstr "Payment confirmed"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "%(plan)s subscription – %(email)s"
+msgstr "%(plan)s subscription – %(email)s"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "%(plan)s subscription"
+msgstr "%(plan)s subscription"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "Invoice overdue"
+msgstr "Invoice overdue"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "%(email)s – $%(amount)s pending"
+msgstr "%(email)s – $%(amount)s pending"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "Unknown"
+msgstr "Unknown"
+
+#: templates/dashboard/index.html
+msgctxt "dashboard"
+msgid "%(time)s ago"
+msgstr "%(time)s ago"
+
+#: templates/dashboard/index.html
+msgctxt "dashboard"
+msgid "$"
+msgstr "$"
+
+#: templates/dashboard/index.html
+msgctxt "dashboard"
+msgid "k"
+msgstr "k"
+

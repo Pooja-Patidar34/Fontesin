@@ -3824,7 +3824,7 @@ msgstr "Adresse"
 #: phase5 templates/dashboard/companies.html
 msgctxt "companies"
 msgid "All Tenants"
-msgstr "Alle Mieter"
+msgstr "Alle Mandanten"
 
 #: phase5 templates/dashboard/_company_row.html
 msgctxt "companies"
@@ -7127,7 +7127,7 @@ msgstr "Aktive Benutzer"
 #: phase7 templates/dashboard/audit_logs.html
 msgctxt "dashboard"
 msgid "Actor"
-msgstr "Schauspieler"
+msgstr "Akteur"
 
 #: phase7 templates/dashboard/index.html
 msgctxt "dashboard"
@@ -7371,7 +7371,7 @@ msgstr "Entscheidungsdatum"
 #: phase7 templates/dashboard/certifications.html
 msgctxt "dashboard"
 msgid "Decline"
-msgstr "Abfall"
+msgstr "Ablehnen"
 
 #: phase7 templates/dashboard/certifications.html
 msgctxt "dashboard"
@@ -7391,7 +7391,7 @@ msgstr "Franchise löschen?"
 #: phase7 templates/dashboard/tenant_confirm_delete.html
 msgctxt "dashboard"
 msgid "Delete Tenant"
-msgstr "Mieter löschen"
+msgstr "Mandant löschen"
 
 #: phase7 templates/dashboard/contact_messages.html
 msgctxt "dashboard"
@@ -7480,7 +7480,7 @@ msgstr "Fr"
 #: phase7 templates/dashboard/consultant_statistics.html
 msgctxt "dashboard"
 msgid "From"
-msgstr "Aus"
+msgstr "Von"
 
 #: phase7 templates/dashboard/index.html
 msgctxt "dashboard"
@@ -7555,7 +7555,7 @@ msgstr "Regionen verwalten"
 #: phase7 templates/dashboard/consultant_statistics.html
 msgctxt "dashboard"
 msgid "March"
-msgstr "Marsch"
+msgstr "März"
 
 #: phase7 templates/dashboard/contact_messages.html
 msgctxt "dashboard"
@@ -7847,7 +7847,7 @@ msgstr "Umsatzübersicht"
 #: phase7 templates/dashboard/index.html
 msgctxt "dashboard"
 msgid "Review now"
-msgstr "Jetzt bewerten"
+msgstr "Jetzt prüfen"
 
 #: phase7 templates/dashboard/certifications.html
 msgctxt "dashboard"
@@ -7966,12 +7966,12 @@ msgstr "Ziel: %(target)s pro Monat"
 #: phase7 templates/dashboard/search.html
 msgctxt "dashboard"
 msgid "Tenant"
-msgstr "Mieter"
+msgstr "Mandant"
 
 #: phase7 templates/dashboard/index.html
 msgctxt "dashboard"
 msgid "Tenants"
-msgstr "Mieter"
+msgstr "Mandanten"
 
 #: phase7 templates/dashboard/consultant_statistics.html
 msgctxt "dashboard"
@@ -8002,7 +8002,7 @@ msgstr "Do"
 #: phase7 templates/dashboard/consultant_statistics.html
 msgctxt "dashboard"
 msgid "To"
-msgstr "Zu"
+msgstr "Bis"
 
 #: phase7 templates/dashboard/index.html
 msgctxt "dashboard"
@@ -8067,7 +8067,7 @@ msgstr "Berichte anzeigen"
 #: phase7 templates/dashboard/consultant_statistics.html
 msgctxt "dashboard"
 msgid "Wed"
-msgstr "Heiraten"
+msgstr "Mi"
 
 #: phase7 templates/dashboard/index.html
 msgctxt "dashboard"
@@ -8112,7 +8112,7 @@ msgstr "Unternehmen zertifiziert"
 #: phase7 templates/dashboard/consultant_statistics.html
 msgctxt "dashboard"
 msgid "company certified"
-msgstr "Unternehmen zertifiziert"
+msgstr "zertifiziertes Unternehmen"
 
 #: phase7 templates/dashboard/regions_map.html
 msgctxt "dashboard"
@@ -11564,3 +11564,98 @@ msgstr "Pro-Plan"
 msgctxt "billing.plan.global"
 msgid "Global Plan"
 msgstr "Globalplan"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "Platform Admin"
+msgstr "Plattformadministrator"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "User"
+msgstr "Benutzer"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "Tenant Admin"
+msgstr "Mandantenadministrator"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "Business User"
+msgstr "Geschäftsbenutzer"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "Consultant"
+msgstr "Berater"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "Coordinator"
+msgstr "Koordinator"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "Franchise Partner"
+msgstr "Franchise-Partner"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "Admin"
+msgstr "Administrator"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "New company registered"
+msgstr "Neues Unternehmen registriert"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "%(name)s joined the platform"
+msgstr "%(name)s ist der Plattform beigetreten"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "Payment confirmed"
+msgstr "Zahlung bestätigt"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "%(plan)s subscription – %(email)s"
+msgstr "%(plan)s-Abonnement – %(email)s"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "%(plan)s subscription"
+msgstr "%(plan)s-Abonnement"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "Invoice overdue"
+msgstr "Rechnung überfällig"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "%(email)s – $%(amount)s pending"
+msgstr "%(email)s – $%(amount)s ausstehend"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "Unknown"
+msgstr "Unbekannt"
+
+#: templates/dashboard/index.html
+msgctxt "dashboard"
+msgid "%(time)s ago"
+msgstr "vor %(time)s"
+
+#: templates/dashboard/index.html
+msgctxt "dashboard"
+msgid "$"
+msgstr "$"
+
+#: templates/dashboard/index.html
+msgctxt "dashboard"
+msgid "k"
+msgstr "k"

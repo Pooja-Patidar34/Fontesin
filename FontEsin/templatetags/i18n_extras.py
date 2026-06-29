@@ -3,6 +3,7 @@ from django.conf import settings
 from django.utils.translation import get_language
 
 from accounts.constants import SupportedLocale
+from accounts.role_i18n import localized_role_label
 from FontEsin.middleware.locale import normalize_locale
 
 register = template.Library()
@@ -46,3 +47,8 @@ def language_switcher(context):
 @register.simple_tag
 def active_locale():
     return get_language() or SupportedLocale.EN
+
+
+@register.filter
+def localized_role_label_filter(user):
+    return localized_role_label(user)

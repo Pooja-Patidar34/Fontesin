@@ -3769,7 +3769,7 @@ msgstr "DIRECCIÓN"
 #: phase5 templates/dashboard/companies.html
 msgctxt "companies"
 msgid "All Tenants"
-msgstr "Todos los inquilinos"
+msgstr "Todas las franquicias"
 
 #: phase5 templates/dashboard/_company_row.html
 msgctxt "companies"
@@ -7308,7 +7308,7 @@ msgstr "¿Eliminar franquicia?"
 #: phase7 templates/dashboard/tenant_confirm_delete.html
 msgctxt "dashboard"
 msgid "Delete Tenant"
-msgstr "Eliminar inquilino"
+msgstr "Eliminar franquicia"
 
 #: phase7 templates/dashboard/contact_messages.html
 msgctxt "dashboard"
@@ -7881,12 +7881,12 @@ msgstr "Objetivo %(target)s por mes"
 #: phase7 templates/dashboard/search.html
 msgctxt "dashboard"
 msgid "Tenant"
-msgstr "Arrendatario"
+msgstr "Franquicia"
 
 #: phase7 templates/dashboard/index.html
 msgctxt "dashboard"
 msgid "Tenants"
-msgstr "inquilinos"
+msgstr "Franquicias"
 
 #: phase7 templates/dashboard/consultant_statistics.html
 msgctxt "dashboard"
@@ -7922,7 +7922,7 @@ msgstr "A"
 #: phase7 templates/dashboard/index.html
 msgctxt "dashboard"
 msgid "Total Companies"
-msgstr "Total Empresas"
+msgstr "Total de empresas"
 
 #: phase7 templates/dashboard/consultant_statistics.html
 msgctxt "dashboard"
@@ -7932,7 +7932,7 @@ msgstr "Mar"
 #: phase7 templates/dashboard/index.html
 msgctxt "dashboard"
 msgid "USD"
-msgstr "Dólar estadounidense"
+msgstr "USD"
 
 #: phase7 templates/dashboard/certifications.html
 msgctxt "dashboard"
@@ -7982,7 +7982,7 @@ msgstr "Ver informes"
 #: phase7 templates/dashboard/consultant_statistics.html
 msgctxt "dashboard"
 msgid "Wed"
-msgstr "Casarse"
+msgstr "Mié"
 
 #: phase7 templates/dashboard/index.html
 msgctxt "dashboard"
@@ -7997,7 +7997,7 @@ msgstr "Cuando reciba una notificación, aparecerá aquí."
 #: phase7 templates/dashboard/tenant_confirm_delete.html
 msgctxt "dashboard"
 msgid "You are about to delete the tenant:"
-msgstr "Está a punto de eliminar al inquilino:"
+msgstr "Está a punto de eliminar la franquicia:"
 
 #: phase7 templates/dashboard/certifications.html
 msgctxt "dashboard"
@@ -11462,3 +11462,98 @@ msgstr "Plan Pro"
 msgctxt "billing.plan.global"
 msgid "Global Plan"
 msgstr "Plan Global"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "Platform Admin"
+msgstr "Administrador de la plataforma"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "User"
+msgstr "Usuario"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "Tenant Admin"
+msgstr "Administrador de franquicia"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "Business User"
+msgstr "Usuario empresarial"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "Consultant"
+msgstr "Consultor"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "Coordinator"
+msgstr "Coordinador"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "Franchise Partner"
+msgstr "Socio de franquicia"
+
+#: accounts/role_i18n.py
+msgctxt "roles"
+msgid "Admin"
+msgstr "Administrador"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "New company registered"
+msgstr "Nueva empresa registrada"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "%(name)s joined the platform"
+msgstr "%(name)s se unió a la plataforma"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "Payment confirmed"
+msgstr "Pago confirmado"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "%(plan)s subscription – %(email)s"
+msgstr "Suscripción %(plan)s – %(email)s"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "%(plan)s subscription"
+msgstr "Suscripción %(plan)s"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "Invoice overdue"
+msgstr "Factura vencida"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "%(email)s – $%(amount)s pending"
+msgstr "%(email)s – $%(amount)s pendiente"
+
+#: accounts/view/dashboard.py
+msgctxt "dashboard"
+msgid "Unknown"
+msgstr "Desconocido"
+
+#: templates/dashboard/index.html
+msgctxt "dashboard"
+msgid "%(time)s ago"
+msgstr "hace %(time)s"
+
+#: templates/dashboard/index.html
+msgctxt "dashboard"
+msgid "$"
+msgstr "$"
+
+#: templates/dashboard/index.html
+msgctxt "dashboard"
+msgid "k"
+msgstr "k"
