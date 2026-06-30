@@ -1,6 +1,6 @@
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
@@ -10,8 +10,8 @@
   <meta name="apple-mobile-web-app-title" content="FONTESIN"/>
   <link rel="manifest" href="{% static 'manifest.json' %}"/>
   <link rel="apple-touch-icon" href="{% static 'adminlte/images/icons/icon-192.png' %}"/>
-  <title>Japan – FONTESIN Region</title>
-  <meta name="description" content="FONTESIN region profile for Japan: GDP, population, legal forms, credit rating, and business potential."/>
+  <title>{% trans "Japan - FONTESIN Region" context "website" %}</title>
+  <meta name="description" content="{% trans 'FONTESIN region profile for Japan: GDP, population, legal forms, credit rating, and business potential.' context 'website' %}"/>
   <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
 </head>
 <body>
@@ -20,16 +20,16 @@
   <div class="navbar__inner">
     <a href="{% url 'home' %}" class="navbar__logo"><img src="{% static 'adminlte/images/fontesin-logo.png' %}" alt="FONTESIN" height="38"/></a>
     <div class="navbar__nav">
-      <a href="{% url 'home' %}">Home</a>
-      <a href="{% url 'worldmap' %}">World Map</a>
-      <a href="{% url 'about' %}">About</a>
-      <a href="{% url 'career' %}">Careers</a>
-      <a href="{% url 'contact' %}">Contact</a>
+      <a href="{% url 'home' %}">{% trans "Home" context "website" %}</a>
+      <a href="{% url 'worldmap' %}">{% trans "World Map" context "website" %}</a>
+      <a href="{% url 'about' %}">{% trans "About" context "website" %}</a>
+      <a href="{% url 'career' %}">{% trans "Careers" context "website" %}</a>
+      <a href="{% url 'contact' %}">{% trans "Contact" context "website" %}</a>
     </div>
-    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
+    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="{% trans 'Menu' context 'website' %}">☰</button>
     <div class="navbar__actions">
-      <a href="{% url 'login' %}" class="btn btn-light btn-sm">Log In</a>
-      <a href="{% url 'register' %}" class="btn btn-light btn-sm">Get Started</a>
+      <a href="{% url 'login' %}" class="btn btn-light btn-sm">{% trans "Log In" context "auth.login" %}</a>
+      <a href="{% url 'register' %}" class="btn btn-light btn-sm">{% trans "Get Started" context "website" %}</a>
       {% include "partials/_navbar_lang_switcher.html" %}
     </div>
   </div>
@@ -39,33 +39,33 @@
 <section class="country-hero">
   <div class="container">
     <div class="breadcrumb">
-      <a href="{% url 'home' %}">Home</a>
+      <a href="{% url 'home' %}">{% trans "Home" context "website" %}</a>
       <span>/</span>
-      <a href="{% url 'worldmap' %}">World Map</a>
+      <a href="{% url 'worldmap' %}">{% trans "World Map" context "website" %}</a>
       <span>/</span>
-      <span>Japan</span>
+      <span>{% trans "Japan" context "website" %}</span>
     </div>
     <div class="country-hero__flag">🇯🇵</div>
     <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:8px;">
-      <h1>Japan</h1>
-      <span class="status-badge status-badge--planned">Planned · Year 3</span>
+      <h1>{% trans "Japan" context "website" %}</h1>
+      <span class="status-badge status-badge--planned">{% trans "Planned · Year 3" context "website" %}</span>
     </div>
     <div class="country-hero__meta">
       <div class="country-hero__meta-item">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-        Tokyo, East Asia
+        {% trans "Tokyo, East Asia" context "website" %}
       </div>
       <div class="country-hero__meta-item">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-        Japanese · JPY – Japanese Yen
+        {% trans "Japanese · JPY – Japanese Yen" context "website" %}
       </div>
       <div class="country-hero__meta-item">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        124,516,301 people
+        {% trans "124,516,301 people" context "website" %}
       </div>
       <div class="country-hero__meta-item">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-        GDP: $4.21 trillion
+        {% trans "GDP: $4.21 trillion" context "website" %}
       </div>
     </div>
   </div>
@@ -77,132 +77,132 @@
 
     <!-- Description -->
     <div style="background:#fff;border-radius:12px;padding:28px 32px;margin-bottom:32px;border:1px solid rgba(37,61,81,.06);box-shadow:0 2px 8px rgba(0,0,0,.05);">
-      <h3 style="margin-bottom:12px;">About Japan</h3>
-      <p>Japan is the world's fourth-largest economy with a highly educated workforce, advanced technology sector, and strong manufacturing base. The country offers stability, innovation, and access to the broader Asia-Pacific market.</p>
+      <h3 style="margin-bottom:12px;">{% trans "About Japan" context "website" %}</h3>
+      <p>{% blocktrans trimmed context "website" %}Japan is the world's fourth-largest economy with a highly educated workforce, advanced technology sector, and strong manufacturing base. The country offers stability, innovation, and access to the broader Asia-Pacific market.{% endblocktrans %}</p>
     </div>
 
     <!-- Business Potential Score -->
     <div style="background:#fff;border-radius:12px;padding:28px 32px;margin-bottom:32px;border:1px solid rgba(37,61,81,.06);box-shadow:0 2px 8px rgba(0,0,0,.05);">
-      <h3 style="margin-bottom:20px;">Business Potential Score</h3>
+      <h3 style="margin-bottom:20px;">{% trans "Business Potential Score" context "website" %}</h3>
       <div style="display:flex;align-items:center;gap:24px;">
         <div style="font-family:'Montserrat',sans-serif;font-size:3rem;font-weight:800;color:var(--primary);">82<span style="font-size:1.5rem;color:var(--secondary);">/100</span></div>
         <div style="flex:1;">
-          <div style="font-size:.82rem;color:var(--secondary);margin-bottom:8px;font-family:'Montserrat',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Overall Score</div>
+          <div style="font-size:.82rem;color:var(--secondary);margin-bottom:8px;font-family:'Montserrat',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">{% trans "Overall Score" context "website" %}</div>
           <div class="progress-bar-bg">
             <div class="progress-bar-fill" data-width="82" style="width:0%;"></div>
           </div>
-          <div style="font-size:.78rem;color:var(--text-secondary);margin-top:6px;">Based on GDP, market size, ease of doing business, digital infrastructure, and regulatory environment.</div>
+          <div style="font-size:.78rem;color:var(--text-secondary);margin-top:6px;">{% trans "Based on GDP, market size, ease of doing business, digital infrastructure, and regulatory environment." context "website" %}</div>
         </div>
       </div>
     </div>
 
     <!-- Key Economic Data -->
-    <h3 style="margin-bottom:20px;">Key Economic Indicators</h3>
+    <h3 style="margin-bottom:20px;">{% trans "Key Economic Indicators" context "website" %}</h3>
     <div class="data-grid">
       <div class="data-card">
-        <div class="data-card__label">GDP (Nominal)</div>
+        <div class="data-card__label">{% trans "GDP (Nominal)" context "website" %}</div>
         <div class="data-card__value">$4.21 trillion</div>
-        <div class="data-card__sub">Rank #4 globally</div>
+        <div class="data-card__sub">{% trans "Rank #4 globally" context "website" %}</div>
       </div>
       <div class="data-card">
-        <div class="data-card__label">GDP per Capita</div>
+        <div class="data-card__label">{% trans "GDP per Capita" context "website" %}</div>
         <div class="data-card__value">$33,834</div>
-        <div class="data-card__sub">USD, nominal</div>
+        <div class="data-card__sub">{% trans "USD, nominal" context "website" %}</div>
       </div>
       <div class="data-card">
-        <div class="data-card__label">Population</div>
+        <div class="data-card__label">{% trans "Population" context "website" %}</div>
         <div class="data-card__value">124,516,301</div>
-        <div class="data-card__sub">English speakers: ~30%</div>
+        <div class="data-card__sub">{% trans "English speakers: ~30%" context "website" %}</div>
       </div>
       <div class="data-card">
-        <div class="data-card__label">Credit Rating</div>
+        <div class="data-card__label">{% trans "Credit Rating" context "website" %}</div>
         <div class="data-card__value">A+</div>
-        <div class="data-card__sub">S&P sovereign rating</div>
+        <div class="data-card__sub">{% trans "S&P sovereign rating" context "website" %}</div>
       </div>
       <div class="data-card">
-        <div class="data-card__label">Inflation Rate</div>
+        <div class="data-card__label">{% trans "Inflation Rate" context "website" %}</div>
         <div class="data-card__value">2.7%</div>
-        <div class="data-card__sub">Year-over-year</div>
+        <div class="data-card__sub">{% trans "Year-over-year" context "website" %}</div>
       </div>
       <div class="data-card">
-        <div class="data-card__label">Corporate Tax</div>
+        <div class="data-card__label">{% trans "Corporate Tax" context "website" %}</div>
         <div class="data-card__value">23.2%</div>
-        <div class="data-card__sub">Standard rate</div>
+        <div class="data-card__sub">{% trans "Standard rate" context "website" %}</div>
       </div>
       <div class="data-card">
-        <div class="data-card__label">Minimum Wage</div>
-        <div class="data-card__value" style="font-size:.95rem;">¥1,004/hour (~¥173,000/month)</div>
-        <div class="data-card__sub">Monthly equivalent</div>
+        <div class="data-card__label">{% trans "Minimum Wage" context "website" %}</div>
+        <div class="data-card__value" style="font-size:.95rem;">{% trans "¥1,004/hour (~¥173,000/month)" context "website" %}</div>
+        <div class="data-card__sub">{% trans "Monthly equivalent" context "website" %}</div>
       </div>
       <div class="data-card">
-        <div class="data-card__label">State Debt</div>
+        <div class="data-card__label">{% trans "State Debt" context "website" %}</div>
         <div class="data-card__value" style="font-size:.95rem;">$9.2 trillion</div>
-        <div class="data-card__sub">Debt-to-GDP: 261%</div>
+        <div class="data-card__sub">{% trans "Debt-to-GDP: 261%" context "website" %}</div>
       </div>
       <div class="data-card">
-        <div class="data-card__label">Internet Penetration</div>
+        <div class="data-card__label">{% trans "Internet Penetration" context "website" %}</div>
         <div class="data-card__value">93%</div>
-        <div class="data-card__sub">4G/5G nationwide</div>
+        <div class="data-card__sub">{% trans "4G/5G nationwide" context "website" %}</div>
       </div>
       <div class="data-card">
-        <div class="data-card__label">Registered Businesses</div>
-        <div class="data-card__value" style="font-size:.95rem;">~3.8 million</div>
-        <div class="data-card__sub">Estimated total</div>
+        <div class="data-card__label">{% trans "Registered Businesses" context "website" %}</div>
+        <div class="data-card__value" style="font-size:.95rem;">{% trans "~3.8 million" context "website" %}</div>
+        <div class="data-card__sub">{% trans "Estimated total" context "website" %}</div>
       </div>
       <div class="data-card">
-        <div class="data-card__label">Currency</div>
-        <div class="data-card__value" style="font-size:.95rem;">JPY – Japanese Yen</div>
-        <div class="data-card__sub">Official currency</div>
+        <div class="data-card__label">{% trans "Currency" context "website" %}</div>
+        <div class="data-card__value" style="font-size:.95rem;">{% trans "JPY – Japanese Yen" context "website" %}</div>
+        <div class="data-card__sub">{% trans "Official currency" context "website" %}</div>
       </div>
       <div class="data-card">
-        <div class="data-card__label">Official Language</div>
-        <div class="data-card__value" style="font-size:.95rem;">Japanese</div>
-        <div class="data-card__sub">Primary language</div>
+        <div class="data-card__label">{% trans "Official Language" context "website" %}</div>
+        <div class="data-card__value" style="font-size:.95rem;">{% trans "Japanese" context "website" %}</div>
+        <div class="data-card__sub">{% trans "Primary language" context "website" %}</div>
       </div>
     </div>
 
     <!-- Legal Forms -->
-    <h3 style="margin-top:48px;margin-bottom:20px;">Legal Business Forms</h3>
-    <p style="margin-bottom:24px;max-width:640px;">The following legal structures are available for business registration in Japan. Each form has distinct liability, taxation, and governance characteristics.</p>
+    <h3 style="margin-top:48px;margin-bottom:20px;">{% trans "Legal Business Forms" context "website" %}</h3>
+    <p style="margin-bottom:24px;max-width:640px;">{% trans "The following legal structures are available for business registration in Japan. Each form has distinct liability, taxation, and governance characteristics." context "website" %}</p>
     <div class="legal-forms-list">
 
         <div class="legal-form-item">
           <div class="legal-form-item__num">1</div>
           <div>
-            <div class="legal-form-item__name">KK (Kabushiki Kaisha)</div>
-            <div class="legal-form-item__desc">Joint-stock company; most prestigious form; min. ¥1 capital.</div>
+            <div class="legal-form-item__name">{% trans "KK (Kabushiki Kaisha)" context "website" %}</div>
+            <div class="legal-form-item__desc">{% trans "Joint-stock company; most prestigious form; min. ¥1 capital." context "website" %}</div>
           </div>
         </div>
 
         <div class="legal-form-item">
           <div class="legal-form-item__num">2</div>
           <div>
-            <div class="legal-form-item__name">GK (Godo Kaisha)</div>
-            <div class="legal-form-item__desc">LLC equivalent; simpler structure; lower setup costs.</div>
+            <div class="legal-form-item__name">{% trans "GK (Godo Kaisha)" context "website" %}</div>
+            <div class="legal-form-item__desc">{% trans "LLC equivalent; simpler structure; lower setup costs." context "website" %}</div>
           </div>
         </div>
 
         <div class="legal-form-item">
           <div class="legal-form-item__num">3</div>
           <div>
-            <div class="legal-form-item__name">Gomei Kaisha</div>
-            <div class="legal-form-item__desc">General partnership; all partners have unlimited liability.</div>
+            <div class="legal-form-item__name">{% trans "Gomei Kaisha" context "website" %}</div>
+            <div class="legal-form-item__desc">{% trans "General partnership; all partners have unlimited liability." context "website" %}</div>
           </div>
         </div>
 
         <div class="legal-form-item">
           <div class="legal-form-item__num">4</div>
           <div>
-            <div class="legal-form-item__name">Goshi Kaisha</div>
-            <div class="legal-form-item__desc">Limited partnership; mix of general and limited partners.</div>
+            <div class="legal-form-item__name">{% trans "Goshi Kaisha" context "website" %}</div>
+            <div class="legal-form-item__desc">{% trans "Limited partnership; mix of general and limited partners." context "website" %}</div>
           </div>
         </div>
 
         <div class="legal-form-item">
           <div class="legal-form-item__num">5</div>
           <div>
-            <div class="legal-form-item__name">Branch Office</div>
-            <div class="legal-form-item__desc">Foreign company extension; no separate legal entity.</div>
+            <div class="legal-form-item__name">{% trans "Branch Office" context "website" %}</div>
+            <div class="legal-form-item__desc">{% trans "Foreign company extension; no separate legal entity." context "website" %}</div>
           </div>
         </div>
     </div>
@@ -210,12 +210,12 @@
     <!-- CTA -->
     <div style="background:var(--primary-dark);border-radius:16px;padding:40px;margin-top:48px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;">
       <div>
-        <h3 style="color:#fff;margin-bottom:8px;">Ready to Enter Japan?</h3>
-        <p style="color:rgba(199,204,209,.7);max-width:480px;">Apply for franchise, request activation, or contact our regional team to explore opportunities in Japan.</p>
+        <h3 style="color:#fff;margin-bottom:8px;">{% trans "Ready to Enter Japan?" context "website" %}</h3>
+        <p style="color:rgba(199,204,209,.7);max-width:480px;">{% trans "Apply for franchise, request activation, or contact our regional team to explore opportunities in Japan." context "website" %}</p>
       </div>
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <a href="{% url 'register' %}" class="btn btn--white">Apply for Franchise</a>
-        <a href="{% url 'contact' %}" class="btn btn-outline">Contact HQ</a>
+        <a href="{% url 'register' %}" class="btn btn--white">{% trans "Apply for Franchise" context "website" %}</a>
+        <a href="{% url 'contact' %}" class="btn btn-outline">{% trans "Contact HQ" context "website" %}</a>
       </div>
     </div>
 
@@ -227,38 +227,38 @@
     <div class="footer__grid">
       <div>
         <div class="footer__logo"><img src="{% static 'adminlte/images/fontesin-logo.png' %}" alt="FONTESIN" style="height:32px;width:auto;filter:brightness(0) invert(1);margin-bottom:12px;"/></div>
-        <p class="footer__brand-desc">A deep-tech global business infrastructure platform connecting companies, professionals, and markets across languages, borders, and systems.</p>
+        <p class="footer__brand-desc">{% trans "A deep-tech global business infrastructure platform connecting companies, professionals, and markets across languages, borders, and systems." context "website" %}</p>
       </div>
       <div>
-        <p class="footer__heading">Platform</p>
+        <p class="footer__heading">{% trans "Platform" context "website" %}</p>
         <div class="footer__links">
-          <a href="{% url 'worldmap' %}">World Map</a>
-          <a href="{% url 'register' %}">Get Started</a>
-          <a href="{% url 'login' %}">Log In</a>
+          <a href="{% url 'worldmap' %}">{% trans "World Map" context "website" %}</a>
+          <a href="{% url 'register' %}">{% trans "Get Started" context "website" %}</a>
+          <a href="{% url 'login' %}">{% trans "Log In" context "auth.login" %}</a>
         </div>
       </div>
       <div>
-        <p class="footer__heading">Company</p>
+        <p class="footer__heading">{% trans "Company" context "website" %}</p>
         <div class="footer__links">
-          <a href="{% url 'about' %}">About Us</a>
-          <a href="{% url 'career' %}">Careers</a>
-          <a href="{% url 'contact' %}">Contact</a>
+          <a href="{% url 'about' %}">{% trans "About Us" context "website" %}</a>
+          <a href="{% url 'career' %}">{% trans "Careers" context "website" %}</a>
+          <a href="{% url 'contact' %}">{% trans "Contact" context "website" %}</a>
         </div>
       </div>
       <div>
-        <p class="footer__heading">Regions</p>
+        <p class="footer__heading">{% trans "Regions" context "website" %}</p>
         <div class="footer__links">
-          <a href="{% url 'region_us' %}">United States</a>
-          <a href="{% url 'region_de' %}">Germany</a>
-          <a href="{% url 'region_cz' %}">Czech Republic</a>
-          <a href="{% url 'region_ae' %}">UAE</a>
-          <a href="{% url 'region_jp' %}">Japan</a>
+          <a href="{% url 'region_us' %}">{% trans "United States" context "website" %}</a>
+          <a href="{% url 'region_de' %}">{% trans "Germany" context "website" %}</a>
+          <a href="{% url 'region_cz' %}">{% trans "Czech Republic" context "website" %}</a>
+          <a href="{% url 'region_ae' %}">{% trans "UAE" context "website" %}</a>
+          <a href="{% url 'region_jp' %}">{% trans "Japan" context "website" %}</a>
         </div>
       </div>
     </div>
     <div class="footer__bottom">
-      <span>© 2026 FONTES Inc. All rights reserved.</span>
-      <span>Design by Memento Mori Digital LLC</span>
+      <span>{% trans "© 2026 FONTES Inc. All rights reserved." context "website" %}</span>
+      <span>{% trans "Design by Memento Mori Digital LLC" context "website" %}</span>
     </div>
   </div>
 </footer>
