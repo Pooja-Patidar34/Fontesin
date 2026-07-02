@@ -187,19 +187,19 @@ p  { color: var(--text-secondary); line-height: 1.75; }
   background: rgba(255,255,255,.08);
   outline: none;
 }
-.navbar-lang-switcher .language-switcher__icon {
+.navbar-lang-switcher .language-switcher__flag {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  font-size: 0.85rem;
-  color: var(--accent);
   flex-shrink: 0;
-  transition: var(--transition);
+  line-height: 0;
 }
-.navbar-lang-switcher .language-switcher__toggle:hover .language-switcher__icon,
-.navbar-lang-switcher .language-switcher__toggle:focus .language-switcher__icon,
-.navbar-lang-switcher .language-switcher.show .language-switcher__toggle .language-switcher__icon {
-  color: #fff;
+.navbar-lang-switcher .lang-flag {
+  width: 20px;
+  height: 15px;
+  object-fit: cover;
+  border-radius: 2px;
+  vertical-align: middle;
+  flex-shrink: 0;
 }
 .navbar-lang-switcher .language-switcher__code {
   font-weight: 700;
@@ -253,7 +253,11 @@ p  { color: var(--text-secondary); line-height: 1.75; }
   color: #1b2e3f;
   cursor: pointer;
 }
-.navbar-lang-switcher .language-switcher__option::before {
+.navbar-lang-switcher .language-switcher__label {
+  flex: 1;
+  min-width: 0;
+}
+.navbar-lang-switcher .language-switcher__option::after {
   content: "";
   width: 0.85em;
   flex-shrink: 0;
@@ -262,7 +266,7 @@ p  { color: var(--text-secondary); line-height: 1.75; }
   font-weight: 700;
   line-height: 1;
 }
-.navbar-lang-switcher .language-switcher__option.active::before {
+.navbar-lang-switcher .language-switcher__option.active::after {
   content: "\2713";
   color: #1d4ed8;
 }
