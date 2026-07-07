@@ -94,8 +94,20 @@ function getToastContainer() {
 const TOAST_ICONS = {
   error: '!', success: '\u2713', warning: '\u26A0', info: 'i'
 };
+
+function _toastTitle(type) {
+  var titles = {
+    error: 'Error', success: 'Success', warning: 'Warning', info: 'Info'
+  };
+  var fallback = titles[type] || titles.info;
+  return (typeof gettext === 'function') ? gettext(fallback) : fallback;
+}
+
 const TOAST_TITLES = {
-  error: 'Error', success: 'Success', warning: 'Warning', info: 'Info'
+  get error() { return _toastTitle('error'); },
+  get success() { return _toastTitle('success'); },
+  get warning() { return _toastTitle('warning'); },
+  get info() { return _toastTitle('info'); }
 };
 
 function showToast(message, type, duration) {

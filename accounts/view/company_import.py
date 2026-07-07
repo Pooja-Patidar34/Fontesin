@@ -26,6 +26,7 @@ from django.http import (
     HttpResponse,
     JsonResponse,
 )
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_POST
 
 from accounts.models import CompanyImportJob, Tenant
@@ -101,18 +102,18 @@ def company_import_upload(request):
 
     uploaded = request.FILES.get("csv_file")
     if uploaded is None:
-        return JsonResponse({"error": "csv_file is required"}, status=400)
+        return JsonResponse({"error": _("A CSV file is required.")}, status=400)
 
     if not uploaded.name.lower().endswith(".csv"):
-        return JsonResponse({"error": "file must be a .csv"}, status=400)
+        return JsonResponse({"error": _("File must be a .csv.")}, status=400)
 
     tenant_id = (request.POST.get("tenant_id") or "").strip()
     if not tenant_id:
-        return JsonResponse({"error": "tenant_id is required"}, status=400)
+        return JsonResponse({"error": _("Target tenant is required.")}, status=400)
     try:
         target_tenant = Tenant.all_objects.get(id=tenant_id)
     except (Tenant.DoesNotExist, ValueError):
-        return JsonResponse({"error": "unknown tenant_id"}, status=400)
+        return JsonResponse({"error": _("Unknown tenant.")}, status=400)
 
     os.makedirs(IMPORTS_DIR, mode=0o700, exist_ok=True)
 

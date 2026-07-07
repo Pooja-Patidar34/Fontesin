@@ -1,3 +1,4 @@
+{% load i18n plan_i18n_tags %}
 {% comment %}
 Tabs + table + pagination — extracted so the consultant page can AJAX-swap
 just this panel when a tab or pager link is clicked, instead of reloading
@@ -7,15 +8,15 @@ the whole dashboard layout.
   <div class="d-flex flex-wrap" style="gap:.5rem;">
     <a href="{% url 'commissions' %}"
        class="btn btn-sm commissions-tab {% if not status_filter %}btn-primary{% else %}btn-outline-secondary{% endif %}">
-      All
+      {% trans "All" context "billing" %}
     </a>
     <a href="?status=pending"
        class="btn btn-sm commissions-tab {% if status_filter == 'pending' %}btn-warning{% else %}btn-outline-warning{% endif %}">
-      Pending
+      {% trans "Pending" context "billing" %}
     </a>
     <a href="?status=paid"
        class="btn btn-sm commissions-tab {% if status_filter == 'paid' %}btn-success{% else %}btn-outline-success{% endif %}">
-      Paid
+      {% trans "Paid" context "billing" %}
     </a>
   </div>
 </div>
@@ -25,16 +26,16 @@ the whole dashboard layout.
     <table class="table table-hover mb-0 commissions-table">
       <thead class="bg-light">
         <tr>
-          <th>Date</th>
-          {% if viewing_as_admin %}<th>Consultant</th>{% endif %}
-          <th>Business User</th>
-          <th>Company</th>
-          <th>Plan</th>
-          <th class="text-right" style="white-space:nowrap;">Subscription</th>
-          <th class="text-right" style="white-space:nowrap;">Consultant Share</th>
-          <th class="text-right" style="white-space:nowrap;">Admin Share</th>
-          <th class="text-center" style="white-space:nowrap;">Status</th>
-          <th class="text-center">Action</th>
+          <th>{% trans "Date" context "billing" %}</th>
+          {% if viewing_as_admin %}<th>{% trans "Consultant" context "billing" %}</th>{% endif %}
+          <th>{% trans "Business User" context "billing" %}</th>
+          <th>{% trans "Company" context "billing" %}</th>
+          <th>{% trans "Plan" context "billing" %}</th>
+          <th class="text-right" style="white-space:nowrap;">{% trans "Subscription" context "billing" %}</th>
+          <th class="text-right" style="white-space:nowrap;">{% trans "Consultant Share" context "billing" %}</th>
+          <th class="text-right" style="white-space:nowrap;">{% trans "Admin Share" context "billing" %}</th>
+          <th class="text-center" style="white-space:nowrap;">{% trans "Status" context "billing" %}</th>
+          <th class="text-center">{% trans "Action" context "billing" %}</th>
         </tr>
       </thead>
       <tbody>
@@ -46,7 +47,7 @@ the whole dashboard layout.
           {% endif %}
           <td class="email-cell" title="{{ c.business_user.email }}">{{ c.business_user.email }}</td>
           <td class="company-cell" title="{{ c.company.name|default:'-' }}">{{ c.company.name|default:"-" }}</td>
-          <td>{{ c.subscription.plan.name }}</td>
+          <td>{{ c.subscription.plan|localized_plan_name_filter }}</td>
           <td class="text-right" style="white-space:nowrap;">{{ c.subscription_amount|floatformat:2 }} {{ c.currency }}</td>
           <td class="text-right" style="white-space:nowrap;">
             <strong style="color:#15803d;">{{ c.commission_amount|floatformat:2 }} {{ c.currency }}</strong>
@@ -58,11 +59,11 @@ the whole dashboard layout.
           </td>
           <td class="text-center" style="white-space:nowrap;">
             {% if c.status == "pending" %}
-              <span class="badge badge-warning">Pending</span>
+              <span class="badge badge-warning">{% trans "Pending" context "billing" %}</span>
             {% elif c.status == "paid" %}
-              <span class="badge badge-success" title="Paid on {{ c.paid_at|date:'M d, Y' }}">Paid</span>
+              <span class="badge badge-success" title="{% blocktrans trimmed with date=c.paid_at|date:'M d, Y' context "billing" %}Paid on {{ date }}{% endblocktrans %}">{% trans "Paid" context "billing" %}</span>
             {% elif c.status == "cancelled" %}
-              <span class="badge badge-secondary">Cancelled</span>
+              <span class="badge badge-secondary">{% trans "Cancelled" context "billing" %}</span>
             {% else %}
               <span class="badge badge-secondary">{{ c.get_status_display }}</span>
             {% endif %}
@@ -73,13 +74,13 @@ the whole dashboard layout.
               <button type="button"
                       class="btn btn-outline-primary btn-view-invoice view-commission-invoice"
                       data-commission-id="{{ c.id }}"
-                      title="View invoice details">
-                <i class="fas fa-eye"></i> View
+                      title="{% trans "View invoice details" context "billing" %}">
+                <i class="fas fa-eye"></i> {% trans "View" context "billing" %}
               </button>
               <a href="{% url 'commission-invoice-export' c.id %}"
                  class="btn btn-outline-success btn-export-invoice"
-                 title="Download invoice as Excel (.xlsx)">
-                <i class="fas fa-file-excel"></i> Export
+                 title="{% trans "Download invoice as Excel (.xlsx)" context "billing" %}">
+                <i class="fas fa-file-excel"></i> {% trans "Export" context "billing" %}
               </a>
               {% endif %}
               {% if viewing_as_admin %}
@@ -87,21 +88,21 @@ the whole dashboard layout.
                 <form method="post" action="{% url 'commission-mark-paid' c.id %}" id="commission-paid-form-{{ c.id }}">
                   {% csrf_token %}
                   <button type="button" class="btn btn-success btn-mark-paid"
-                          title="Mark commission as paid"
+                          title="{% trans "Mark commission as paid" context "billing" %}"
                           onclick="appConfirm({
                             kind: 'success',
-                            title: 'Mark Commission as Paid?',
-                            text: 'This records the disbursement of <strong>{{ c.commission_amount|floatformat:2 }} {{ c.currency }}</strong> to <strong>{{ c.consultant.email|escapejs }}</strong>. This action cannot be undone.',
-                            okLabel: 'Mark as Paid',
+                            title: '{% filter escapejs %}{% trans "Mark Commission as Paid?" context "billing" %}{% endfilter %}',
+                            text: '{% filter escapejs %}{% blocktrans trimmed with amount=c.commission_amount|floatformat:2 currency=c.currency email=c.consultant.email context "billing" %}This records the disbursement of <strong>{{ amount }} {{ currency }}</strong> to <strong>{{ email }}</strong>. This action cannot be undone.{% endblocktrans %}{% endfilter %}',
+                            okLabel: '{% filter escapejs %}{% trans "Mark as Paid" context "billing" %}{% endfilter %}',
                             okIcon: 'fa-check',
                             onConfirm: function(){ document.getElementById('commission-paid-form-{{ c.id }}').submit(); }
                           })">
-                    <i class="fas fa-check"></i> Mark as Paid
+                    <i class="fas fa-check"></i> {% trans "Mark as Paid" context "billing" %}
                   </button>
                 </form>
                 {% elif c.status == "paid" %}
-                <span class="badge badge-success" title="Paid on {{ c.paid_at|date:'M d, Y' }}">
-                  <i class="fas fa-check"></i> Paid
+                <span class="badge badge-success" title="{% blocktrans trimmed with date=c.paid_at|date:'M d, Y' context "billing" %}Paid on {{ date }}{% endblocktrans %}">
+                  <i class="fas fa-check"></i> {% trans "Paid" context "billing" %}
                 </span>
                 {% endif %}
               {% endif %}
@@ -111,7 +112,7 @@ the whole dashboard layout.
         {% empty %}
         <tr>
           <td colspan="{% if viewing_as_admin %}10{% else %}9{% endif %}" class="text-center text-muted py-4">
-            {% if viewing_as_admin %}No commissions recorded yet.{% else %}You haven't earned any commissions yet. They appear here when a business user linked to one of your companies subscribes to a paid plan.{% endif %}
+            {% if viewing_as_admin %}{% trans "No commissions recorded yet." context "billing" %}{% else %}{% trans "You haven't earned any commissions yet. They appear here when a business user linked to one of your companies subscribes to a paid plan." context "billing" %}{% endif %}
           </td>
         </tr>
         {% endfor %}
@@ -125,20 +126,20 @@ the whole dashboard layout.
   <ul class="pagination pagination-sm justify-content-end mb-0">
     {% if commissions.has_previous %}
       <li class="page-item">
-        <a class="page-link" href="?{% if status_filter %}status={{ status_filter }}&{% endif %}page={{ commissions.previous_page_number }}">Previous</a>
+        <a class="page-link" href="?{% if status_filter %}status={{ status_filter }}&{% endif %}page={{ commissions.previous_page_number }}">{% trans "Previous" context "common" %}</a>
       </li>
     {% else %}
-      <li class="page-item disabled"><span class="page-link">Previous</span></li>
+      <li class="page-item disabled"><span class="page-link">{% trans "Previous" context "common" %}</span></li>
     {% endif %}
     <li class="page-item active">
       <span class="page-link">{{ commissions.number }} / {{ commissions.paginator.num_pages }}</span>
     </li>
     {% if commissions.has_next %}
       <li class="page-item">
-        <a class="page-link" href="?{% if status_filter %}status={{ status_filter }}&{% endif %}page={{ commissions.next_page_number }}">Next</a>
+        <a class="page-link" href="?{% if status_filter %}status={{ status_filter }}&{% endif %}page={{ commissions.next_page_number }}">{% trans "Next" context "common" %}</a>
       </li>
     {% else %}
-      <li class="page-item disabled"><span class="page-link">Next</span></li>
+      <li class="page-item disabled"><span class="page-link">{% trans "Next" context "common" %}</span></li>
     {% endif %}
   </ul>
 </div>

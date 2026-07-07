@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.utils.translation import gettext as _
 
 from accounts.models import Company, Tenant, AuditLog, CompanyConnection
 from accounts.constants import (
@@ -39,7 +40,9 @@ def _country_match_q(country_code):
     variants = [country_code]
     label = dict(CountryChoices.CHOICES).get(country_code)
     if label:
-        variants.append(label)
+        # CountryChoices labels are gettext_lazy proxies; psycopg2 cannot
+        # adapt __proxy__ objects as SQL bind parameters.
+        variants.append(str(label))
     variants.extend(_COUNTRY_ALIASES.get(country_code, ()))
     q = Q()
     for v in variants:
@@ -577,7 +580,7 @@ def company_list(request):
                             defaults={"is_primary": True},
                         )
             except IntegrityError:
-                dup_message = (
+                dup_message = _(
                     "This company couldn't be saved — a company with the same "
                     "name or Registration ID already exists. Please review those "
                     "fields and try again."
@@ -628,13 +631,13 @@ def company_list(request):
                 pass
 
             if resubmitted_for_certification:
-                success_msg = "Certification request sent successfully. A consultant will review your company shortly."
+                success_msg = _("Certification request sent successfully. A consultant will review your company shortly.")
             elif company_id:
-                success_msg = "Company updated successfully."
+                success_msg = _("Company updated successfully.")
             elif request.user.is_superuser or creator_role_code == "consultant":
-                success_msg = "Company created successfully."
+                success_msg = _("Company created successfully.")
             else:
-                success_msg = "Certification request submitted. A consultant will review your company shortly."
+                success_msg = _("Certification request submitted. A consultant will review your company shortly.")
 
             if _is_ajax(request):
                 row_html = render_to_string(
@@ -678,13 +681,16 @@ def company_list(request):
                             if field in form.fields and form.fields[field].label
                             else field.replace("_", " ").title()
                         )
-                        flat_errors.extend(f"{label}: {e}" for e in str_errs)
+                        flat_errors.extend(
+                            _("%(label)s: %(error)s") % {"label": label, "error": e}
+                            for e in str_errs
+                        )
                 # Always include a specific message — never let the frontend
                 # fall back to "Could not save company. Please check the form."
                 # which tells the user nothing about WHICH field failed.
                 message = (
                     " ".join(flat_errors)
-                    or "Please correct the highlighted fields and try again."
+                    or _("Please correct the highlighted fields and try again.")
                 )
                 return JsonResponse(
                     {"ok": False, "errors": errors_plain, "message": message},
@@ -697,7 +703,7 @@ def company_list(request):
                         messages.error(request, err)
                     else:
                         label = form.fields[field].label or field.replace("_", " ").title()
-                        messages.error(request, f"{label}: {err}")
+                        messages.error(request, _("%(label)s: %(error)s") % {"label": label, "error": err})
 
     # -------------------------------
     # GET (LIST + EMPTY FORM)
@@ -916,14 +922,15 @@ def company_list(request):
     try:
         page_obj = paginator.page(page_number)
     except PageNotAnInteger:
-        messages.error(request, "Invalid page number. Showing the first page.")
+        messages.error(request, _("Invalid page number. Showing the first page."))
         querydict = request.GET.copy()
         querydict["page"] = 1
         return redirect(f"{request.path}?{querydict.urlencode()}")
     except EmptyPage:
         messages.error(
             request,
-            f"Page {page_number} doesn't exist. There are only {paginator.num_pages} page(s). Showing the first page.",
+            _("Page %(page)s doesn't exist. There are only %(total)s page(s). Showing the first page.")
+            % {"page": page_number, "total": paginator.num_pages},
         )
         querydict = request.GET.copy()
         querydict["page"] = 1
@@ -1129,7 +1136,7 @@ def company_list(request):
 #             except Exception:
 #                 pass
 
-#             messages.success(request, "Company saved successfully.")
+#             messages.success(request, _("Company saved successfully."))
 
 #             return redirect(next_url or "companies")
 
@@ -1261,7 +1268,7 @@ def company_delete(request, company_id):
     except Exception:
         pass
 
-    messages.success(request, "Company deleted successfully.")
+    messages.success(request, _("Company deleted successfully."))
 
     referer = request.META.get("HTTP_REFERER")
 

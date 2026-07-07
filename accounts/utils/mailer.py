@@ -2,19 +2,33 @@ import logging
 import threading
 import requests
 from django.conf import settings
+from django.template.loader import render_to_string
+from django.utils import translation
+from django.utils.translation import gettext as _
 
 logger = logging.getLogger("technical")
 
+_SUPPORTED_LOCALES = frozenset({"en", "de", "es", "fr"})
 
-def send_otp_email(to_email, first_name, otp):
+
+def _normalize_locale(user_language):
+    lang = (user_language or "en").split("-")[0].lower()
+    return lang if lang in _SUPPORTED_LOCALES else "en"
+
+
+def send_otp_email(to_email, first_name, otp, user_language="en"):
     """
     Send OTP email via MailerSend API in a background thread for faster response.
     """
-    thread = threading.Thread(target=_send_otp_email, args=(to_email, first_name, otp))
+    lang = _normalize_locale(user_language)
+    thread = threading.Thread(
+        target=_send_otp_email,
+        args=(to_email, first_name, otp, lang),
+    )
     thread.start()
 
 
-def _send_otp_email(to_email, first_name, otp):
+def _send_otp_email(to_email, first_name, otp, user_language="en"):
     """
     Send OTP email via MailerSend API.
     """
@@ -22,6 +36,12 @@ def _send_otp_email(to_email, first_name, otp):
         api_key = settings.MAILERSEND_API_KEY
         from_email = settings.MAILERSEND_FROM_EMAIL
         from_name = settings.MAILERSEND_FROM_NAME
+
+        with translation.override(user_language):
+            subject = _("FONTESIN – Your password reset code")
+            context = {"first_name": first_name, "otp": otp}
+            text_body = render_to_string("email/otp_password_reset.txt", context)
+            html_body = render_to_string("email/otp_password_reset.html", context)
 
         payload = {
             "from": {
@@ -34,34 +54,9 @@ def _send_otp_email(to_email, first_name, otp):
                     "name": first_name,
                 }
             ],
-            "subject": "FONTESIN – Your password reset code",
-            "text": (
-                f"Hi {first_name},\n\n"
-                f"We received a request to reset your password. "
-                f"Use the following verification code:\n\n"
-                f"    {otp}\n\n"
-                f"This code expires in 10 minutes.\n\n"
-                f"If you didn't request this, you can safely ignore this email.\n\n"
-                f"– FONTESIN Team"
-            ),
-            "html": (
-                f"<div style='font-family:Arial,sans-serif;max-width:480px;margin:0 auto;'>"
-                f"<div style='background:#253D51;padding:24px 32px;border-radius:12px 12px 0 0;'>"
-                f"<h2 style='color:#fff;margin:0;font-size:1.2rem;'>FONTESIN</h2>"
-                f"</div>"
-                f"<div style='background:#fff;padding:32px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px;'>"
-                f"<p style='color:#334155;font-size:.95rem;'>Hi {first_name},</p>"
-                f"<p style='color:#64748b;font-size:.9rem;'>We received a request to reset your password. Use the following code:</p>"
-                f"<div style='background:#f1f5f9;border-radius:10px;padding:20px;text-align:center;margin:24px 0;'>"
-                f"<span style='font-size:2rem;font-weight:800;letter-spacing:.3em;color:#253D51;'>{otp}</span>"
-                f"</div>"
-                f"<p style='color:#94a3b8;font-size:.82rem;'>This code expires in <strong>10 minutes</strong>.</p>"
-                f"<p style='color:#94a3b8;font-size:.82rem;'>If you didn't request this, you can safely ignore this email.</p>"
-                f"<hr style='border:none;border-top:1px solid #e2e8f0;margin:24px 0;'>"
-                f"<p style='color:#cbd5e1;font-size:.75rem;text-align:center;'>FONTESIN Team</p>"
-                f"</div>"
-                f"</div>"
-            ),
+            "subject": subject,
+            "text": text_body,
+            "html": html_body,
         }
 
         api_url = settings.MAILERSEND_API_URL

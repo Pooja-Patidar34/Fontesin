@@ -1,6 +1,6 @@
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
@@ -10,8 +10,8 @@
   <meta name="apple-mobile-web-app-title" content="FONTESIN"/>
   <link rel="manifest" href="{% static 'adminlte/manifest.json' %}"/>
   <link rel="apple-touch-icon" href="{% static 'adminlte/images/icons/icon-192.png' %}"/>
-  <title>Log In – FONTESIN</title>
-  <meta name="description" content="Log in to your FONTESIN account to access the global business platform."/>
+  <title>{% trans "Log In" context "auth.login" %} – FONTESIN</title>
+  <meta name="description" content="{% trans 'Log in to your FONTESIN account to access the global business platform.' context 'auth.login' %}"/>
   <link rel="stylesheet" href="{% static 'adminlte/plugins/fontawesome-free/css/all.min.css' %}"/>
   <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
 
@@ -138,7 +138,8 @@
 <body>
 
 <div class="auth-page-bg">
-  <a href="{% url 'home' %}" class="auth-back">← Back to Home</a>
+  <a href="{% url 'home' %}" class="auth-back">← {% trans "Back to Home" context "auth.common" %}</a>
+  {% include "partials/_auth_lang_switcher.html" %}
 
   <div class="auth-split">
 
@@ -148,33 +149,32 @@
         <img src="{% static 'adminlte/images/fontesin-logo.png' %}" alt="FONTESIN" style="height:36px;width:auto;filter:brightness(0) invert(1);"/>
       </div>
       <div>
-        <div class="auth-left__title">Welcome back to the global platform</div>
-        <p class="auth-left__desc">Access your company database, manage certifications, and connect with partners across 177+ countries.</p>
+        <div class="auth-left__title">{% trans "Welcome back to the global platform" context "auth.login" %}</div>
+        <p class="auth-left__desc">{% trans "Access your company database, manage certifications, and connect with partners across 177+ countries." context "auth.login" %}</p>
         <div class="auth-left__features">
-          <div class="auth-left__feature">Tenant-isolated company database</div>
-          <div class="auth-left__feature">Verified business profiles</div>
-          <div class="auth-left__feature">Global region access</div>
-          <div class="auth-left__feature">Partnership &amp; messaging tools</div>
+          <div class="auth-left__feature">{% trans "Tenant-isolated company database" context "auth.login" %}</div>
+          <div class="auth-left__feature">{% trans "Verified business profiles" context "auth.login" %}</div>
+          <div class="auth-left__feature">{% trans "Global region access" context "auth.login" %}</div>
+          <div class="auth-left__feature">{% trans "Partnership & messaging tools" context "auth.login" %}</div>
         </div>
       </div>
-      <div style="font-size:.78rem;color:rgba(199,204,209,.35);margin-top:32px;">© 2026 FONTES Inc. · Design by Memento Mori Digital LLC</div>
+      <div style="font-size:.78rem;color:rgba(199,204,209,.35);margin-top:32px;">© 2026 FONTES Inc. · {% trans "Design by Memento Mori Digital LLC" context "auth.common" %}</div>
     </div>
 
     <!-- RIGHT PANEL -->
     <div class="auth-right">
       <div style="margin-bottom:32px;">
-        <h2 style="margin-bottom:6px;">Log In</h2>
-        <p style="font-size:.9rem;">Don't have an account? <a href="{% url 'register' %}" class="auth-link">Sign up free</a></p>
+        <h2 style="margin-bottom:6px;">{% trans "Log In" context "auth.login" %}</h2>
+        <p style="font-size:.9rem;">{% trans "Don't have an account?" context "auth.login" %} <a href="{% url 'register' %}" class="auth-link">{% trans "Sign up free" context "auth.login" %}</a></p>
       </div>
 
       {% include "base/toasts.html" %}
 
-      <!-- ✅ Exact same form structure as the working template: plain name="email", name="password", no form object -->
       <form method="post" action="{% url 'login' %}">
         {% csrf_token %}
 
         <div class="form-group">
-          <label class="form-label" for="id_email">Email Address</label>
+          <label class="form-label" for="id_email">{% trans "Email Address" context "auth.common" %}</label>
           <input
             type="email"
             name="email"
@@ -184,54 +184,51 @@
             required
             maxlength="254"
             pattern="^[a-zA-Z0-9._+\-]+@[a-zA-Z0-9\-]+(\.[a-zA-Z0-9\-]+)*\.[a-zA-Z]{2,10}$"
-            title="Please enter a valid email address (e.g., you@company.com)"
+            title="{% trans 'Please enter a valid email address (e.g., you@company.com)' context 'auth.common' %}"
             oninput="this.value=this.value.replace(/[^a-zA-Z0-9@._+\-]/g,'')"
           />
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="id_password">Password</label>
+          <label class="form-label" for="id_password">{% trans "Password" context "auth.common" %}</label>
           <div class="password-toggle">
             <input
               type="password"
               name="password"
               id="id_password"
               class="form-control"
-              placeholder="Enter your password"
+              placeholder="{% trans 'Enter your password' context 'auth.login' %}"
               required
               maxlength="50"
               oninput="this.value=this.value.replace(/[^\x20-\x7E]/g,'')"
             />
-            <button type="button" class="password-toggle__btn" id="toggle-password" aria-label="Toggle password visibility"><i class="fas fa-eye-slash"></i></button>
+            <button type="button" class="password-toggle__btn" id="toggle-password" aria-label="{% trans 'Toggle password visibility' context 'auth.common' %}"><i class="fas fa-eye-slash"></i></button>
           </div>
         </div>
 
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
           <label style="display:flex;align-items:center;gap:8px;font-size:.85rem;color:var(--text-secondary);cursor:pointer;">
-            <input type="checkbox" name="remember_me" style="accent-color:var(--primary);"/> Remember me
+            <input type="checkbox" name="remember_me" style="accent-color:var(--primary);"/> {% trans "Remember me" context "auth.login" %}
           </label>
-          <a href="{% url 'forgot-password' %}" style="font-size:.85rem;color:var(--primary);font-weight:600;">Forgot password?</a>
+          <a href="{% url 'forgot-password' %}" style="font-size:.85rem;color:var(--primary);font-weight:600;">{% trans "Forgot password?" context "auth.login" %}</a>
         </div>
 
         <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;font-size:1rem;">
-          Log In
+          {% trans "Log In" context "auth.login" %}
         </button>
       </form>
 
       <p style="font-size:.78rem;color:var(--text-secondary);text-align:center;line-height:1.6;">
-        By logging in, you agree to our
-        <a href="#" style="color:var(--primary);">Terms of Service</a>
-        and
-        <a href="#" style="color:var(--primary);">Privacy Policy</a>.
+        {% blocktrans context "auth.login" %}By logging in, you agree to our <a href="#" style="color:var(--primary);">Terms of Service</a> and <a href="#" style="color:var(--primary);">Privacy Policy</a>.{% endblocktrans %}
       </p>
     </div>
   </div>
 </div>
 
+<script src="{% url 'javascript-catalog' %}"></script>
 <script src="{% static 'adminlte/js/main.js' %}"></script>
 <script src="{% static 'adminlte/js/no_emoji.js' %}"></script>
 <script>
-  // Service worker
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {
       navigator.serviceWorker.register("{% static 'adminlte/sw.js' %}")

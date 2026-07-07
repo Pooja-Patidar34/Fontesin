@@ -2,6 +2,7 @@ from functools import wraps
 
 from django.shortcuts import redirect, render
 from django.http import JsonResponse
+from django.utils.translation import gettext as _
 
 from billing.models import Subscription, CommercialPlan
 
@@ -282,7 +283,7 @@ def requires_plan_api(min_plan=None, feature=None):
         @wraps(view_func)
         def _wrapped(request, *args, **kwargs):
             if not request.user.is_authenticated:
-                return JsonResponse({"error": "Authentication required"}, status=401)
+                return JsonResponse({"error": _("Authentication required")}, status=401)
 
             if request.user.is_superuser:
                 return view_func(request, *args, **kwargs)
@@ -295,7 +296,7 @@ def requires_plan_api(min_plan=None, feature=None):
                 user_tier = get_plan_tier(request.user, plan=plan)
                 if user_tier < required_tier:
                     return JsonResponse({
-                        "error": "Plan upgrade required",
+                        "error": _("Plan upgrade required"),
                         "required_plan": min_plan,
                         "current_plan": plan.code if plan else "none",
                     }, status=403)
@@ -303,7 +304,7 @@ def requires_plan_api(min_plan=None, feature=None):
             if feature:
                 if not has_plan_feature(request.user, feature, plan=plan):
                     return JsonResponse({
-                        "error": "This feature is not available on your current plan",
+                        "error": _("This feature is not available on your current plan"),
                         "feature": feature,
                         "current_plan": plan.code if plan else "none",
                     }, status=403)

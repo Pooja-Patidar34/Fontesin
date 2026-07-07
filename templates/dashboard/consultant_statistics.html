@@ -1,7 +1,8 @@
 {% extends "base/base.html" %}
-{% block title %}Consultant Statistics — {{ consultant.first_name }} {{ consultant.last_name }}{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Consultant Statistics" context "dashboard" %} - {{ consultant.first_name }} {{ consultant.last_name }}{% endblock %}
 {% block breadcrumb %}
-  Network <span>/ Consultant Users / {{ consultant.first_name }} {{ consultant.last_name }} / Statistics</span>
+  {% trans "Network" context "dashboard" %} <span>/ {% trans "Consultant Users" context "dashboard" %} / {{ consultant.first_name }} {{ consultant.last_name }} / {% trans "Statistics" context "dashboard" %}</span>
 {% endblock %}
 
 {% block content %}
@@ -97,34 +98,34 @@
     </div>
     <div class="cs-range">
       <div>
-        <label for="cs-from">From</label>
+        <label for="cs-from">{% trans "From" context "dashboard" %}</label>
         <input type="date" id="cs-from" value="{{ default_from }}">
       </div>
       <div>
-        <label for="cs-to">To</label>
+        <label for="cs-to">{% trans "To" context "dashboard" %}</label>
         <input type="date" id="cs-to" value="{{ default_to }}">
       </div>
       <button type="button" id="cs-apply-range" class="btn btn-primary btn-sm" style="height:34px;">
-        <i class="fas fa-filter mr-1"></i> Apply
+        <i class="fas fa-filter mr-1"></i> {% trans "Apply" context "dashboard" %}
       </button>
     </div>
   </div>
 
   <div class="cs-kpi-row">
     <div class="cs-kpi">
-      <div class="cs-kpi__label">Certifications</div>
+      <div class="cs-kpi__label">{% trans "Certifications" context "dashboard" %}</div>
       <div class="cs-kpi__value" id="cs-certs-total">—</div>
       <div class="cs-kpi__hint" id="cs-certs-hint">…</div>
     </div>
     <div class="cs-kpi">
-      <div class="cs-kpi__label">Avg / day</div>
+      <div class="cs-kpi__label">{% trans "Avg / day" context "dashboard" %}</div>
       <div class="cs-kpi__value" id="cs-certs-avg">—</div>
-      <div class="cs-kpi__hint">Target {{ target_certs_min }}–{{ target_certs_max }} per day</div>
+      <div class="cs-kpi__hint">{% blocktrans trimmed with min=target_certs_min max=target_certs_max context "dashboard" %}Target {{ min }}–{{ max }} per day{% endblocktrans %}</div>
     </div>
     <div class="cs-kpi">
-      <div class="cs-kpi__label">Subscriptions sold</div>
+      <div class="cs-kpi__label">{% trans "Subscriptions sold" context "dashboard" %}</div>
       <div class="cs-kpi__value" id="cs-subs-total">—</div>
-      <div class="cs-kpi__hint" id="cs-subs-hint">Target {{ target_subs_month }} per month</div>
+      <div class="cs-kpi__hint" id="cs-subs-hint">{% blocktrans trimmed with target=target_subs_month context "dashboard" %}Target {{ target }} per month{% endblocktrans %}</div>
     </div>
   </div>
 </div>
@@ -133,7 +134,7 @@
   <div class="cs-card">
     <div class="cs-card__head">
       <div>
-        <h3 class="cs-card__title">Certifications calendar</h3>
+        <h3 class="cs-card__title">{% trans "Certifications calendar" context "dashboard" %}</h3>
         <div class="cs-card__sub" id="cs-cal-title">…</div>
       </div>
       <div style="display:flex; gap:6px; align-items:center;">
@@ -145,19 +146,76 @@
     </div>
     <div id="cs-cal-grid" style="display:grid; grid-template-columns: repeat(7, 1fr); gap:4px; font-size:.78rem;"></div>
     <div id="cs-cal-day-detail" style="margin-top:14px; font-size:.85rem; color:#475569;">
-      Click a day to see how many companies this consultant certified that day.
+      {% trans "Click a day to see how many companies this consultant certified that day." context "dashboard" %}
     </div>
   </div>
 
   <div class="cs-card">
-    <h3 class="cs-card__title">Plans sold in range</h3>
+    <h3 class="cs-card__title">{% trans "Plans sold in range" context "dashboard" %}</h3>
     <div class="cs-card__sub" id="cs-plan-sub">…</div>
     <div id="cs-plan-list" style="margin-top:12px;"></div>
   </div>
 </div>
 
+
 <script>
 (function () {
+  var g = function (s) { return (typeof gettext === 'function') ? gettext(s) : s; };
+  window.DASHBOARD_I18N = window.DASHBOARD_I18N || {};
+  Object.assign(window.DASHBOARD_I18N, {
+    monthNames: [
+      '{% filter escapejs %}{% trans "January" context "dashboard" %}{% endfilter %}',
+      '{% filter escapejs %}{% trans "February" context "dashboard" %}{% endfilter %}',
+      '{% filter escapejs %}{% trans "March" context "dashboard" %}{% endfilter %}',
+      '{% filter escapejs %}{% trans "April" context "dashboard" %}{% endfilter %}',
+      '{% filter escapejs %}{% trans "May" context "dashboard" %}{% endfilter %}',
+      '{% filter escapejs %}{% trans "June" context "dashboard" %}{% endfilter %}',
+      '{% filter escapejs %}{% trans "July" context "dashboard" %}{% endfilter %}',
+      '{% filter escapejs %}{% trans "August" context "dashboard" %}{% endfilter %}',
+      '{% filter escapejs %}{% trans "September" context "dashboard" %}{% endfilter %}',
+      '{% filter escapejs %}{% trans "October" context "dashboard" %}{% endfilter %}',
+      '{% filter escapejs %}{% trans "November" context "dashboard" %}{% endfilter %}',
+      '{% filter escapejs %}{% trans "December" context "dashboard" %}{% endfilter %}',
+    ],
+    daySun: '{% filter escapejs %}{% trans "Sun" context "dashboard" %}{% endfilter %}',
+    dayMon: '{% filter escapejs %}{% trans "Mon" context "dashboard" %}{% endfilter %}',
+    dayTue: '{% filter escapejs %}{% trans "Tue" context "dashboard" %}{% endfilter %}',
+    dayWed: '{% filter escapejs %}{% trans "Wed" context "dashboard" %}{% endfilter %}',
+    dayThu: '{% filter escapejs %}{% trans "Thu" context "dashboard" %}{% endfilter %}',
+    dayFri: '{% filter escapejs %}{% trans "Fri" context "dashboard" %}{% endfilter %}',
+    daySat: '{% filter escapejs %}{% trans "Sat" context "dashboard" %}{% endfilter %}',
+    noCompaniesCertified: '{% filter escapejs %}{% trans "no companies certified" context "dashboard" %}{% endfilter %}',
+    companyCertified: '{% filter escapejs %}{% trans "company certified" context "dashboard" %}{% endfilter %}',
+    companiesCertified: '{% filter escapejs %}{% trans "companies certified" context "dashboard" %}{% endfilter %}',
+    clickDayConsultant: '{% filter escapejs %}{% trans "Click a day to see how many companies this consultant certified that day." context "dashboard" %}{% endfilter %}',
+    acrossDays: '{% filter escapejs %}{% trans "Across" context "dashboard" %}{% endfilter %}',
+    day: '{% filter escapejs %}{% trans "day" context "dashboard" %}{% endfilter %}',
+    days: '{% filter escapejs %}{% trans "days" context "dashboard" %}{% endfilter %}',
+    targetPerDay: '{% filter escapejs %}{% trans "Target" context "dashboard" %}{% endfilter %}',
+    perDay: '{% filter escapejs %}{% trans "per day" context "dashboard" %}{% endfilter %}',
+    meetingDailyTarget: '{% filter escapejs %}{% trans "Meeting daily target" context "dashboard" %}{% endfilter %}',
+    belowDailyTarget: '{% filter escapejs %}{% trans "Below daily target" context "dashboard" %}{% endfilter %}',
+    expectedInRange: '{% filter escapejs %}{% trans "Expected" context "dashboard" %}{% endfilter %}',
+    inThisRange: '{% filter escapejs %}{% trans "in this range" context "dashboard" %}{% endfilter %}',
+    targetPerMonth: '{% filter escapejs %}{% trans "target" context "dashboard" %}{% endfilter %}',
+    metExpected: '{% filter escapejs %}{% trans "Met expected" context "dashboard" %}{% endfilter %}',
+    noSubsInRange: '{% filter escapejs %}{% trans "No subscriptions sold in this range." context "dashboard" %}{% endfilter %}',
+    toDateCantBeEarlier: '{% filter escapejs %}{% trans "The 'To' date can't be earlier than the 'From' date." context "dashboard" %}{% endfilter %}',
+  });
+  ['monthNames'].forEach(function (k) {
+    window.DASHBOARD_I18N[k] = window.DASHBOARD_I18N[k].map(g);
+  });
+  Object.keys(window.DASHBOARD_I18N).forEach(function (k) {
+    if (k !== 'monthNames' && typeof window.DASHBOARD_I18N[k] === 'string') {
+      window.DASHBOARD_I18N[k] = g(window.DASHBOARD_I18N[k]);
+    }
+  });
+})();
+</script>
+
+<script>
+(function () {
+  var i18n = window.DASHBOARD_I18N || {};
   var STATS_URL = "{% url 'consultant-stats' %}";
   var CONSULTANT_ID = "{{ consultant.id }}";
   var TARGET_DAY_MIN = parseInt("{{ target_certs_min }}", 10);
@@ -185,7 +243,7 @@
 
   var currentCerts = {};
   var selectedDay = null;
-  var monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  var monthNames = i18n.monthNames;
 
   function isoDate(y, m, d) {
     return y + "-" + String(m).padStart(2,"0") + "-" + String(d).padStart(2,"0");
@@ -202,7 +260,7 @@
     var todayIso = new Date().toISOString().slice(0, 10);
 
     grid.innerHTML = "";
-    ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(function (d) {
+    [i18n.daySun,i18n.dayMon,i18n.dayTue,i18n.dayWed,i18n.dayThu,i18n.dayFri,i18n.daySat].forEach(function (d) {
       var h = document.createElement("div");
       h.className = "cs-cal-head";
       h.textContent = d;
@@ -235,7 +293,7 @@
         renderCalendar(monthInput.value, currentCerts);
         var n = parseInt(this.dataset.count, 10) || 0;
         dayDetail.innerHTML = "<strong>" + this.dataset.iso + "</strong>: "
-          + (n === 0 ? "no companies certified" : n + " compan" + (n === 1 ? "y" : "ies") + " certified")
+          + (n === 0 ? i18n.noCompaniesCertified : n + " " + (n === 1 ? i18n.companyCertified : i18n.companiesCertified))
           + ".";
       });
       grid.appendChild(cell);
@@ -249,19 +307,19 @@
 
     certsTotal.textContent = certsN;
     certsAvg.textContent = avgN;
-    certsHint.textContent = "Across " + data.days_in_range + " day" + (data.days_in_range === 1 ? "" : "s");
+    certsHint.textContent = i18n.acrossDays + " " + data.days_in_range + " " + (data.days_in_range === 1 ? i18n.day : i18n.days);
     subsTotal.textContent = subsN;
 
     // Target evaluation. Avg/day vs daily target range; subs vs the
     // monthly target prorated by the selected range length.
     var dailyClass = "cs-kpi__hint";
-    var avgHintText = "Target " + TARGET_DAY_MIN + "–" + TARGET_DAY_MAX + " per day";
+    var avgHintText = i18n.targetPerDay + " " + TARGET_DAY_MIN + "–" + TARGET_DAY_MAX + " " + i18n.perDay;
     if (avgN >= TARGET_DAY_MIN) {
       dailyClass += " cs-kpi__hint--good";
-      avgHintText = "✓ Meeting daily target";
+      avgHintText = "✓ " + i18n.meetingDailyTarget;
     } else if (certsN > 0) {
       dailyClass += " cs-kpi__hint--miss";
-      avgHintText = "Below daily target (" + TARGET_DAY_MIN + "–" + TARGET_DAY_MAX + ")";
+      avgHintText = i18n.belowDailyTarget + " (" + TARGET_DAY_MIN + "–" + TARGET_DAY_MAX + ")";
     }
     certsAvg.nextElementSibling.className = dailyClass;
     certsAvg.nextElementSibling.textContent = avgHintText;
@@ -269,10 +327,10 @@
     var months = Math.max(1, data.days_in_range / 30);
     var expectedSubs = Math.round(TARGET_SUBS_MONTH * months);
     var subClass = "cs-kpi__hint";
-    var subText = "Expected " + expectedSubs + " in this range (target " + TARGET_SUBS_MONTH + "/mo)";
+    var subText = i18n.expectedInRange + " " + expectedSubs + " " + i18n.inThisRange + " (" + i18n.targetPerMonth + " " + TARGET_SUBS_MONTH + "/mo)";
     if (subsN >= expectedSubs) {
       subClass += " cs-kpi__hint--good";
-      subText = "✓ Met expected " + expectedSubs;
+      subText = "✓ " + i18n.metExpected + " " + expectedSubs;
     } else if (subsN > 0) {
       subClass += " cs-kpi__hint--miss";
     }
@@ -282,7 +340,7 @@
     planSub.textContent = data.from + " → " + data.to;
     var byPlan = data.subs_by_plan || [];
     if (byPlan.length === 0) {
-      planList.innerHTML = '<div style="color:#94a3b8; font-size:.85rem;">No subscriptions sold in this range.</div>';
+      planList.innerHTML = '<div style="color:#94a3b8; font-size:.85rem;">' + i18n.noSubsInRange + '</div>';
     } else {
       planList.innerHTML = byPlan.map(function (r) {
         return '<div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px dashed #eef2f7; font-size:.85rem;">'
@@ -307,9 +365,9 @@
     // API, which would otherwise return "Bad date range".
     if (fromInput.value && toInput.value && toInput.value < fromInput.value) {
       if (typeof showToast === "function") {
-        showToast("The 'To' date can't be earlier than the 'From' date.", "error");
+        showToast(i18n.toDateCantBeEarlier, "error");
       } else {
-        alert("The 'To' date can't be earlier than the 'From' date.");
+        alert(i18n.toDateCantBeEarlier);
       }
       toInput.focus();
       return;
@@ -334,7 +392,7 @@
         currentCerts = data.certs || {};
         selectedDay = null;
         renderCalendar(monthInput.value, currentCerts);
-        dayDetail.innerHTML = "Click a day to see how many companies this consultant certified that day.";
+        dayDetail.innerHTML = "{% trans "Click a day to see how many companies this consultant certified that day." context "dashboard" %}";
       })
       .catch(function (e) { console.error("month stats:", e); });
   }

@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.translation import gettext as _
 
 EMOJI_PATTERN = re.compile(
     "["
@@ -77,9 +78,9 @@ class NoEmojiMiddleware:
 
     @classmethod
     def _reject(cls, request, field=None):
-        message = "Emojis are not allowed in input."
+        message = _("Emojis are not allowed in input.")
         if field:
-            message = f"Emojis are not allowed in input '{field}'."
+            message = _("Emojis are not allowed in input '%(field)s'.") % {"field": field}
 
         if cls._wants_json(request):
             return JsonResponse({"error": message}, status=400)

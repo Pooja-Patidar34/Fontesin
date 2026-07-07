@@ -1,0 +1,50 @@
+name: i18n
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+jobs:
+  compilemessages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install gettext
+        run: sudo apt-get update && sudo apt-get install -y gettext
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Django system check
+        env:
+          SECRET_KEY: ci-test-secret-key
+          DB_NAME: fontesin
+          DB_USER: fontesin
+          DB_PASSWORD: fontesin
+          DB_HOST: localhost
+          DB_PORT: "5432"
+          VERIFF_API_KEY: ci
+          VERIFF_MASTER_SECRET: ci
+          VERIFF_BASE_URL: https://example.com
+          VERIFF_WEBHOOK_SECRET: ci
+        run: python manage.py check
+
+      - name: Compile translation messages
+        run: python manage.py compilemessages
+
+      - name: Validate .po syntax
+        run: |
+          for loc in en de es fr; do
+            msgfmt --check -o /dev/null locale/$loc/LC_MESSAGES/django.po
+            msgfmt --check -o /dev/null locale/$loc/LC_MESSAGES/djangojs.po
+          done

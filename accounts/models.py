@@ -9,7 +9,7 @@ from accounts.constants import (
     CompanyEntityTypeChoices,
     CountryChoices,
     EmployeeCountRangeChoices,
-    LanguageChoices,
+    SupportedLocale,
 )
 from accounts.common.active_manager import ActiveManager
 from django.utils import timezone
@@ -415,7 +415,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     gender = models.CharField(max_length=20, null=True, blank=True)
 
     # ---- Profile ----
-    preferred_language = models.CharField(max_length=10, choices=LanguageChoices.CHOICES, null=True, blank=True)
+    preferred_language = models.CharField(
+        max_length=10,
+        choices=SupportedLocale.CHOICES,
+        null=True,
+        blank=True,
+    )
     bio = models.TextField(null=True, blank=True)
     notes = models.TextField(null=True, blank=True)
     photo_url = models.URLField(max_length=500, null=True, blank=True)
@@ -522,6 +527,29 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+    def persist_preferred_language(self, language):
+        """Write preferred_language directly to the database."""
+        from FontEsin.middleware.locale import normalize_locale
+
+        lang = normalize_locale(language)
+        if lang not in SupportedLocale.ALL:
+            lang = SupportedLocale.EN
+        type(self).all_objects.filter(pk=self.pk).update(
+            preferred_language=lang,
+            updated_at=timezone.now(),
+        )
+        self.preferred_language = lang
+        return lang
+
+    @property
+    def effective_preferred_language(self):
+        """Resolved locale for this user; NULL/blank falls back to English."""
+        if self.preferred_language:
+            from FontEsin.middleware.locale import normalize_locale
+
+            return normalize_locale(self.preferred_language)
+        return SupportedLocale.EN
 
 
 class DueDiligence(models.Model):

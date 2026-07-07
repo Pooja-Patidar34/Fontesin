@@ -20,7 +20,9 @@ from openpyxl.utils import get_column_letter
 
 from django.db import models
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.translation import gettext as _
 from billing.models import Invoice, Subscription, CommercialPlan, ConsultantCommission
+from billing.plan_i18n import attach_plan_display_fields, localized_plan_name
 
 logger = logging.getLogger("technical")
 
@@ -181,7 +183,7 @@ def payment_approve(request, subscription_id):
     sub = get_object_or_404(Subscription, id=subscription_id)
 
     if sub.status != "created":
-        messages.warning(request, "This subscription is not pending approval.")
+        messages.warning(request, _("This subscription is not pending approval."))
         return _safe_next_or_default(request, "payments")
 
     now = timezone.now()
@@ -241,7 +243,7 @@ def payment_approve(request, subscription_id):
     # constraint makes this idempotent — re-approval can never double-pay.
     maybe_create_commission_for_subscription(sub, now)
 
-    messages.success(request, f"Subscription for {sub.user.email} has been approved.")
+    messages.success(request, _("Subscription for %(email)s has been approved.") % {"email": sub.user.email})
     return _safe_next_or_default(request, "payments")
 
 
@@ -428,7 +430,7 @@ def commission_invoice_export(request, commission_id):
 
     wb = Workbook()
     ws = wb.active
-    ws.title = "Invoice"
+    ws.title = _("Invoice")
 
     # Column widths
     widths = [22, 30, 22, 30]
@@ -529,10 +531,10 @@ def commission_invoice_export(request, commission_id):
             return "—"
         return f"{amount:,.2f} {currency or ''}".strip()
 
-    plan_name = sub.plan.name if sub and sub.plan else "—"
+    plan_name = localized_plan_name(sub.plan) if sub and sub.plan else "—"
     billing_period = (
-        "Monthly" if sub and sub.billing_period == "monthly"
-        else "Annual" if sub else "—"
+        _("Monthly") if sub and sub.billing_period == "monthly"
+        else _("Annual") if sub else "—"
     )
     sub_user_name = (
         f"{business_user.first_name} {business_user.last_name}".strip()
@@ -543,75 +545,78 @@ def commission_invoice_export(request, commission_id):
     )
 
     # ---- Build the workbook ----
-    title_banner(f"FONTESIN  ·  Invoice {inv_number}", height=36)
+    title_banner(_("FONTESIN  ·  Invoice %(number)s") % {"number": inv_number}, height=36)
     spacer()
 
-    section_header("Invoice")
-    kv_row("Invoice Number", inv_number, "Status", (invoice.status if invoice else "—").upper(), alt=False)
+    section_header(_("Invoice"))
     kv_row(
-        "Issue Date",
+        _("Invoice Number"), inv_number, _("Status"),
+        (invoice.status if invoice else "—").upper(), alt=False,
+    )
+    kv_row(
+        _("Issue Date"),
         fmt_date(invoice.created_at) if invoice else "—",
-        "Paid At",
+        _("Paid At"),
         fmt_date(invoice.paid_at) if invoice and invoice.paid_at else "—",
         alt=True,
     )
     if invoice and invoice.status != "paid" and invoice.due_date:
-        kv_row("Due Date", fmt_date(invoice.due_date), "", "", alt=False)
+        kv_row(_("Due Date"), fmt_date(invoice.due_date), "", "", alt=False)
     spacer()
 
-    section_header("Subscriber")
-    kv_row("Name", sub_user_name, "Email", business_user.email if business_user else "—", alt=False)
-    kv_row("Role", sub_user_role, "Company", company.name if company else "—", alt=True)
-    kv_row("Country", company.country if company else "—", "", "", alt=False)
+    section_header(_("Subscriber"))
+    kv_row(_("Name"), sub_user_name, _("Email"), business_user.email if business_user else "—", alt=False)
+    kv_row(_("Role"), sub_user_role, _("Company"), company.name if company else "—", alt=True)
+    kv_row(_("Country"), company.country if company else "—", "", "", alt=False)
     spacer()
 
-    section_header("Plan & Period")
-    kv_row("Plan", plan_name, "Billing Period", billing_period, alt=False)
+    section_header(_("Plan & Period"))
+    kv_row(_("Plan"), plan_name, _("Billing Period"), billing_period, alt=False)
     kv_row(
-        "Period Start",
+        _("Period Start"),
         fmt_date(sub.start_date) if sub and sub.start_date else "—",
-        "Period End",
+        _("Period End"),
         fmt_date(sub.end_date) if sub and sub.end_date else "—",
         alt=True,
     )
     spacer()
 
     total_row(
-        "Total Amount",
+        _("Total Amount"),
         fmt_currency(commission.subscription_amount, commission.currency),
     )
     spacer()
 
-    section_header("Commission")
+    section_header(_("Commission"))
     kv_row(
-        "Consultant",
+        _("Consultant"),
         commission.consultant.email if commission.consultant else "—",
-        "Rate",
+        _("Rate"),
         f"{commission.rate_percent:.0f}%",
         alt=False,
     )
     kv_row(
-        "Consultant Share",
+        _("Consultant Share"),
         fmt_currency(commission.commission_amount, commission.currency),
-        "Admin Share",
+        _("Admin Share"),
         fmt_currency(commission.admin_share, commission.currency),
         alt=True,
     )
     kv_row(
-        "Commission Status",
+        _("Commission Status"),
         commission.status.upper(),
-        "Paid At",
+        _("Paid At"),
         fmt_date(commission.paid_at) if commission.paid_at else "—",
         alt=False,
     )
 
     if invoice and invoice.fx_rate is not None:
         spacer()
-        section_header("FX")
+        section_header(_("FX"))
         kv_row(
-            "Source Amount",
+            _("Source Amount"),
             fmt_currency(invoice.fx_source_amount, invoice.fx_source_currency),
-            "Rate",
+            _("Rate"),
             f"1 {invoice.fx_source_currency or ''} = {invoice.fx_rate:.4f} {commission.currency or ''}".strip(),
             alt=False,
         )
@@ -637,7 +642,7 @@ def commission_mark_paid(request, commission_id):
         raise PermissionDenied()
     commission = get_object_or_404(ConsultantCommission, id=commission_id)
     if commission.status != "pending":
-        messages.warning(request, "This commission is not in pending state.")
+        messages.warning(request, _("This commission is not in pending state."))
         return redirect("commissions")
     commission.status = "paid"
     commission.paid_at = timezone.now()
@@ -651,7 +656,7 @@ def commission_mark_paid(request, commission_id):
     except Exception:
         pass
 
-    messages.success(request, f"Commission for {commission.consultant.email} marked as paid.")
+    messages.success(request, _("Commission for %(email)s marked as paid.") % {"email": commission.consultant.email})
     return redirect("commissions")
 
 
@@ -897,7 +902,7 @@ def payment_reject(request, subscription_id):
     sub = get_object_or_404(Subscription, id=subscription_id)
 
     if sub.status != "created":
-        messages.warning(request, "This subscription is not pending approval.")
+        messages.warning(request, _("This subscription is not pending approval."))
         return _safe_next_or_default(request, "payments")
 
     sub.status = "cancelled"
@@ -906,7 +911,7 @@ def payment_reject(request, subscription_id):
     # Mark the related invoice as failed
     Invoice.objects.filter(subscription=sub, status="pending").update(status="failed")
 
-    messages.success(request, f"Subscription for {sub.user.email} has been rejected.")
+    messages.success(request, _("Subscription for %(email)s has been rejected.") % {"email": sub.user.email})
     return _safe_next_or_default(request, "payments")
 
 
@@ -914,7 +919,7 @@ def payment_reject(request, subscription_id):
 def payment_detail_ajax(request, subscription_id):
     """Return subscription data as JSON for the edit modal."""
     if not request.user.is_superuser:
-        return JsonResponse({"error": "forbidden"}, status=403)
+        return JsonResponse({"error": _("forbidden")}, status=403)
 
     sub = get_object_or_404(
         Subscription.objects.select_related("user", "plan"), id=subscription_id
@@ -959,14 +964,14 @@ def payment_edit(request, subscription_id):
         try:
             new_end_dt = timezone.make_aware(datetime.strptime(end_date, "%Y-%m-%d"))
         except ValueError:
-            messages.error(request, "Invalid end date.")
+            messages.error(request, _("Invalid end date."))
             return _safe_next_or_default(request, "payments")
 
         current_end_date = sub.end_date.date() if sub.end_date else None
         if new_end_dt.date() < timezone.localdate() and new_end_dt.date() != current_end_date:
             messages.error(
                 request,
-                "End date cannot be in the past. Choose today or a future date.",
+                _("End date cannot be in the past. Choose today or a future date."),
             )
             return _safe_next_or_default(request, "payments")
 
@@ -1032,7 +1037,7 @@ def payment_edit(request, subscription_id):
                 "commission_amount", "updated_at",
             ])
 
-    messages.success(request, f"Subscription for {sub.user.email} updated successfully.")
+    messages.success(request, _("Subscription for %(email)s updated successfully.") % {"email": sub.user.email})
     return _safe_next_or_default(request, "payments")
 
 
@@ -1062,6 +1067,9 @@ def subscription_list(request):
         page_obj = paginator.page(1)
     except EmptyPage:
         page_obj = paginator.page(paginator.num_pages)
+
+    for plan in page_obj:
+        attach_plan_display_fields(plan)
 
     return render(request, "dashboard/subscriptions.html", {
         "plans": page_obj,
@@ -1097,10 +1105,16 @@ def plan_toggle(request, plan_id):
         if not plan.is_active and (plan.code or "").lower() != "free":
             moved_count = _move_subscribers_to_free(plan)
 
-        status = "activated" if plan.is_active else "deactivated"
-        msg = f"Plan '{plan.name}' has been {status}."
+        status_label = _("activated") if plan.is_active else _("deactivated")
+        msg = _("Plan '%(name)s' has been %(status)s.") % {
+            "name": plan.name,
+            "status": status_label,
+        }
         if moved_count:
-            msg += f" {moved_count} active subscriber(s) moved to the Free plan."
+            msg += " " + (
+                _("%(count)s active subscriber(s) moved to the Free plan.")
+                % {"count": moved_count}
+            )
 
         if is_ajax:
             return JsonResponse({
@@ -1114,8 +1128,8 @@ def plan_toggle(request, plan_id):
     except Exception as e:
         logger.error("Error toggling plan %s: %s", plan_id, e)
         if is_ajax:
-            return JsonResponse({"ok": False, "message": "Failed to update plan status."}, status=500)
-        messages.error(request, "Failed to update plan status.")
+            return JsonResponse({"ok": False, "message": _("Failed to update plan status.")}, status=500)
+        messages.error(request, _("Failed to update plan status."))
 
     return redirect("subscriptions")
 
@@ -1243,13 +1257,13 @@ def plan_edit(request, plan_id):
             plan.features = []
 
         plan.save()
-        messages.success(request, f"Plan '{plan.name}' updated successfully.")
+        messages.success(request, _("Plan '%(name)s' updated successfully.") % {"name": plan.name})
 
     except (ValueError, TypeError) as e:
         logger.error("Invalid data editing plan %s: %s", plan_id, e)
-        messages.error(request, "Invalid data provided. Please check your input.")
+        messages.error(request, _("Invalid data provided. Please check your input."))
     except Exception as e:
         logger.error("Error editing plan %s: %s", plan_id, e)
-        messages.error(request, "Failed to update plan.")
+        messages.error(request, _("Failed to update plan."))
 
     return redirect("subscriptions")

@@ -1,10 +1,10 @@
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Upgrade Required – FONTESIN</title>
+  <title>{% trans "Upgrade Required" context "website" %} – FONTESIN</title>
   <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
   <style>
@@ -66,11 +66,11 @@
       <img src="{% static 'adminlte/images/logo_full.png' %}" alt="FONTESIN" height="38" style="filter:brightness(0) invert(1);"/>
     </a>
     <div class="navbar__nav">
-      <a href="{% url 'home' %}">Home</a>
-      <a href="{% url 'worldmap' %}">World Map</a>
-      <a href="{% url 'about' %}">About</a>
-      <a href="{% url 'career' %}">Careers</a>
-      <a href="{% url 'contact' %}">Contact</a>
+      <a href="{% url 'home' %}">{% trans "Home" context "website" %}</a>
+      <a href="{% url 'worldmap' %}">{% trans "World Map" context "website" %}</a>
+      <a href="{% url 'about' %}">{% trans "About" context "website" %}</a>
+      <a href="{% url 'career' %}">{% trans "Careers" context "website" %}</a>
+      <a href="{% url 'contact' %}">{% trans "Contact" context "website" %}</a>
     </div>
   </div>
 </nav>
@@ -78,35 +78,38 @@
 <div class="upgrade-page">
   <div class="upgrade-card">
     <div class="upgrade-icon">&#128274;</div>
-    <h1>Upgrade Your Plan</h1>
+    <h1>{% trans "Upgrade Your Plan" context "website" %}</h1>
 
     {% if feature %}
     <div class="feature-name">{{ feature|cut:"_" }}</div>
     {% endif %}
 
     <p>
-      This feature is not available on your current plan.
-      Upgrade to
+      {% blocktrans context "website" %}This feature is not available on your current plan. Upgrade to{% endblocktrans %}
       {% if required_plan %}
-        <strong>{{ required_plan|upper }}</strong> or higher
+        <strong>{{ required_plan|upper }}</strong> {% trans "or higher" context "website" %}
       {% else %}
-        a higher plan
+        {% trans "a higher plan" context "website" %}
       {% endif %}
-      to unlock this feature.
+      {% trans "to unlock this feature." context "website" %}
     </p>
 
     <div class="current-plan">
-      Your current plan: <strong>{{ current_plan.name|default:"No Plan" }}</strong>
+      {% if current_plan.name %}
+      {% blocktrans with plan_name=current_plan.name context "website" %}Your current plan: <strong>{{ plan_name }}</strong>{% endblocktrans %}
+      {% else %}
+      {% blocktrans context "website" %}Your current plan: <strong>No Plan</strong>{% endblocktrans %}
+      {% endif %}
     </div>
 
     <br/><br/>
 
     <a href="{% url 'membership' %}" class="btn-upgrade">
-      View Plans &amp; Upgrade &rarr;
+      {% trans "View Plans & Upgrade" context "website" %} &rarr;
     </a>
 
     <br/>
-    <a href="javascript:history.back()" class="btn-back">&larr; Go Back</a>
+    <a href="javascript:history.back()" class="btn-back">&larr; {% trans "Go Back" context "website" %}</a>
   </div>
 </div>
 

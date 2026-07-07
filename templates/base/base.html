@@ -1,9 +1,9 @@
-{% load static %}
+{% load static i18n i18n_extras %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="utf-8">
-  <title>{% block title %}Admin Panel{% endblock %}</title>
+  <title>{% block title %}{% trans "Admin Panel" context "common" %}{% endblock %}</title>
 
   <link rel="stylesheet" href="{% static 'adminlte/plugins/fontawesome-free/css/all.min.css' %}">
   <link rel="stylesheet" href="{% static 'adminlte/css/adminlte.min.css' %}">
@@ -413,7 +413,7 @@
       </li>
       <li class="nav-item d-none d-md-block">
         <div class="header-breadcrumb">
-          {% block breadcrumb %}Dashboard <span>/ Overview</span>{% endblock %}
+          {% block breadcrumb %}{% trans "Dashboard" context "nav" %} <span>/ {% trans "Overview" context "nav" %}</span>{% endblock %}
         </div>
       </li>
     </ul>
@@ -422,11 +422,14 @@
     <ul class="navbar-nav ml-auto" style="gap: 12px; align-items: center;">
       <li class="nav-item d-none d-md-block">
         <form method="get" action="{% url 'global-search' %}" class="header-search-wrap mb-0">
-          <button type="submit" class="header-search-icon-btn" aria-label="Search">
+          <button type="submit" class="header-search-icon-btn" aria-label="{% trans "Search" context "common" %}">
             <i class="fas fa-search"></i>
           </button>
-          <input type="text" name="q" class="header-search" placeholder="Search companies, users..." value="{{ request.GET.q|default:'' }}">
+          <input type="text" name="q" class="header-search" placeholder="{% trans "Search companies, users..." context "nav" %}" value="{{ request.GET.q|default:'' }}">
         </form>
+      </li>
+      <li class="nav-item d-none d-md-block">
+        {% language_switcher %}
       </li>
       <li class="nav-item dropdown">
         <a href="#" class="header-user" style="text-decoration:none;" data-toggle="dropdown">
@@ -437,36 +440,36 @@
           </div>
           {% endif %}
           <span>
-            {% if request.user.is_superuser %}Platform Admin{% elif request.user.role %}{{ request.user.role.name|title }}{% else %}{{ request.user.first_name }}{% endif %}
+            {% if request.user.is_superuser %}{% trans "Platform Admin" context "nav" %}{% elif request.user.role %}{{ request.user.role.name|title }}{% else %}{{ request.user.first_name }}{% endif %}
           </span>
           <i class="fas fa-chevron-down" style="font-size:.6rem; color:#94a3b8;"></i>
         </a>
         <div class="dropdown-menu dropdown-menu-right" style="border-radius:10px; border:1px solid #e2e8f0; box-shadow:0 8px 24px rgba(0,0,0,.1); padding:8px;">
           <a class="dropdown-item" href="{% url 'profile' %}" style="border-radius:6px; font-size:.82rem; padding:8px 14px;">
-            <i class="fas fa-user mr-2" style="color:#94a3b8;"></i> Profile
+            <i class="fas fa-user mr-2" style="color:#94a3b8;"></i> {% trans "Profile" context "nav" %}
           </a>
           {% if is_business_user %}
           <div class="dropdown-divider" style="margin:4px 0;"></div>
           {% if has_pending_coordinator_request %}
           <a class="dropdown-item" href="#"
              onclick="event.preventDefault();"
-             title="Your coordinator request is awaiting Super Admin review."
+             title="{% trans "Your coordinator request is awaiting Super Admin review." context "nav" %}"
              style="border-radius:6px; font-size:.82rem; padding:8px 14px; opacity:.7; cursor:default; display:flex; align-items:center;">
             <i class="fas fa-hourglass-half mr-2" style="color:#f59e0b;"></i>
-            <span style="flex:1;">Become a Coordinator</span>
+            <span style="flex:1;">{% trans "Become a Coordinator" context "nav" %}</span>
             <span style="background:#f59e0b; color:#fff; border-radius:10px; padding:1px 7px; font-size:.65rem; font-weight:700;">…</span>
           </a>
           {% else %}
           <a class="dropdown-item" href="#"
              data-toggle="modal" data-target="#requestCoordinatorModal"
              style="border-radius:6px; font-size:.82rem; padding:8px 14px;">
-            <i class="fas fa-user-shield mr-2" style="color:#94a3b8;"></i> Become a Coordinator
+            <i class="fas fa-user-shield mr-2" style="color:#94a3b8;"></i> {% trans "Become a Coordinator" context "nav" %}
           </a>
           {% endif %}
           {% endif %}
           <div class="dropdown-divider" style="margin:4px 0;"></div>
           <a class="dropdown-item" href="{% url 'logout' %}" style="border-radius:6px; font-size:.82rem; padding:8px 14px; color:#e11d48;">
-            <i class="fas fa-sign-out-alt mr-2"></i> Logout
+            <i class="fas fa-sign-out-alt mr-2"></i> {% trans "Logout" context "nav" %}
           </a>
         </div>
       </li>
@@ -498,13 +501,13 @@
         <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview">
 
           <!-- OVERVIEW -->
-          <li class="nav-header">Overview</li>
+          <li class="nav-header">{% trans "Overview" context "sidebar" %}</li>
 
           <li class="nav-item">
             <a href="{% url 'dashboard' %}"
                class="nav-link {% if active_menu == 'dashboard' %}active{% endif %}">
               <i class="nav-icon fas fa-th-large"></i>
-              <p>Dashboard</p>
+              <p>{% trans "Dashboard" context "sidebar" %}</p>
             </a>
           </li>
 
@@ -514,7 +517,7 @@
                class="nav-link {% if active_menu == 'companies' %}active{% endif %}"
                style="display: flex; align-items: center;">
               <i class="nav-icon fas fa-database"></i>
-              <p style="flex:1;">Company Database</p>
+              <p style="flex:1;">{% trans "Company Database" context "sidebar" %}</p>
               {% if sidebar_company_count %}
               <!-- <span class="sidebar-count-badge">{{ sidebar_company_count }}</span> -->
               {% endif %}
@@ -534,7 +537,7 @@
               <a href="{% url 'my-companies' %}"
                  class="nav-link {% if active_menu == 'my-companies' %}active{% endif %}">
                 <i class="nav-icon fas fa-folder-open"></i>
-                <p>My Companies</p>
+                <p>{% trans "My Companies" context "sidebar" %}</p>
               </a>
             </li>
             {% endif %}
@@ -547,7 +550,7 @@
             <a href="{% url 'saved-filters' %}"
                class="nav-link {% if active_menu == 'favorites' %}active{% endif %}">
               <i class="nav-icon far fa-star"></i>
-              <p>Favorites</p>
+              <p>{% trans "Favorites" context "sidebar" %}</p>
             </a>
           </li>
           {% endif %}
@@ -561,7 +564,7 @@
             <a href="{% url 'users' %}"
                class="nav-link {% if active_menu == 'users' %}active{% endif %}">
               <i class="nav-icon fas fa-users"></i>
-              <p>{% if request.user.role.code|lower == "consultant" %}Certified Users{% else %}Users{% endif %}</p>
+              <p>{% if request.user.role.code|lower == "consultant" %}{% trans "Certified Users" context "sidebar" %}{% else %}{% trans "Users" context "sidebar" %}{% endif %}</p>
             </a>
           </li>
           {% endif %}
@@ -575,7 +578,7 @@
             <a href="{% url 'business-users' %}"
                class="nav-link {% if active_menu == 'business-users' %}active{% endif %}">
               <i class="nav-icon fas fa-user-friends"></i>
-              <p>Users</p>
+              <p>{% trans "Users" context "sidebar" %}</p>
             </a>
           </li>
           {% endif %}
@@ -587,7 +590,7 @@
                class="nav-link {% if active_menu == 'certifications' %}active{% endif %}">
               <i class="nav-icon fas fa-certificate"></i>
               <p>
-                Certifications
+                {% trans "Certifications" context "sidebar" %}
                 {% if pending_certification_count %}
                 <span class="badge badge-warning right">{{ pending_certification_count }}</span>
                 {% endif %}
@@ -601,7 +604,7 @@
             <a href="{% url 'plans' %}"
                class="nav-link {% if active_menu == 'plans' %}active{% endif %}">
               <i class="nav-icon fas fa-crown"></i>
-              <p>Plans</p>
+              <p>{% trans "Plans" context "sidebar" %}</p>
             </a>
           </li>
           {% endif %}
@@ -612,7 +615,7 @@
                class="nav-link {% if active_menu == 'network' or active_menu == 'consultants' %}active{% endif %}">
               <i class="nav-icon fas fa-user-tie"></i>
               <p>
-                Network
+                {% trans "Network" context "sidebar" %}
                 <i class="right fas fa-angle-left"></i>
               </p>
             </a>
@@ -621,14 +624,14 @@
                 <a href="{% url 'consultant-companies' %}"
                    class="nav-link {% if active_submenu == 'consultant-companies' %}active{% endif %}">
                   <i class="fas fa-building nav-icon"></i>
-                  <p>Consultants' Companies</p>
+                  <p>{% trans "Consultants' Companies" context "sidebar" %}</p>
                 </a>
               </li>
               <li class="nav-item">
                 <a href="{% url 'consultant-users' %}"
                    class="nav-link {% if active_submenu == 'consultant-users' %}active{% endif %}">
                   <i class="fas fa-user-friends nav-icon"></i>
-                  <p>Consultant Users</p>
+                  <p>{% trans "Consultant Users" context "sidebar" %}</p>
                 </a>
               </li>
               {% if request.user.is_superuser or request.user.role.code|lower == "franchise" %}
@@ -636,14 +639,14 @@
                 <a href="{% url 'coordinator-companies' %}"
                    class="nav-link {% if active_submenu == 'coordinator-companies' %}active{% endif %}">
                   <i class="fas fa-city nav-icon"></i>
-                  <p>Coordinators' Companies</p>
+                  <p>{% trans "Coordinators' Companies" context "sidebar" %}</p>
                 </a>
               </li>
               <li class="nav-item">
                 <a href="{% url 'coordinator-users' %}"
                    class="nav-link {% if active_submenu == 'coordinator-users' %}active{% endif %}">
                   <i class="fas fa-user-shield nav-icon"></i>
-                  <p>Coordinators</p>
+                  <p>{% trans "Coordinators" context "sidebar" %}</p>
                 </a>
               </li>
               {% endif %}
@@ -654,7 +657,7 @@
           <!-- ADMINISTRATION (SUPERUSER + TENANT ADMIN + BUSINESS USER) -->
           {% if request.user.is_superuser or request.user.role.name == "tenant_admin" or request.user.role.code|lower == "business_user" %}
           {% if not is_free_plan %}
-          <li class="nav-header">Administration</li>
+          <li class="nav-header">{% trans "Administration" context "sidebar" %}</li>
           {% endif %}
 
           <!-- FRANCHISES — visible to superuser and franchise partners -->
@@ -663,7 +666,7 @@
             <a href="{% url 'tenants' %}"
                class="nav-link {% if active_menu == 'tenants' %}active{% endif %}">
               <i class="nav-icon fas fa-sitemap"></i>
-              <p>Franchises</p>
+              <p>{% trans "Franchises" context "sidebar" %}</p>
             </a>
           </li>
           {% endif %}
@@ -681,11 +684,11 @@
                style="display: flex; align-items: center;">
               <i class="nav-icon fas fa-inbox"></i>
               <p style="flex:1;">
-                Requests
+                {% trans "Requests" context "sidebar" %}
                 <i class="right fas fa-angle-left"></i>
               </p>
               {% if pending_requests_total %}
-              <span class="sidebar-notif-badge" aria-label="{{ pending_requests_total }} pending requests">
+              <span class="sidebar-notif-badge" aria-label="{% blocktrans with count=pending_requests_total %}{{ count }} pending requests{% endblocktrans %}">
                 {% if pending_requests_total > 9 %}9+{% else %}{{ pending_requests_total }}{% endif %}
               </span>
               {% endif %}
@@ -696,9 +699,9 @@
                    class="nav-link {% if active_menu == 'coordinator-requests' %}active{% endif %}"
                    style="display: flex; align-items: center;">
                   <i class="fas fa-user-shield nav-icon"></i>
-                  <p style="flex:1;">Coordinator Upgrade Requests</p>
+                  <p style="flex:1;">{% trans "Coordinator Upgrade Requests" context "sidebar" %}</p>
                   {% if pending_coordinator_request_count %}
-                  <span class="sidebar-notif-badge" aria-label="{{ pending_coordinator_request_count }} pending coordinator requests">
+                  <span class="sidebar-notif-badge" aria-label="{% blocktrans with count=pending_coordinator_request_count %}{{ count }} pending coordinator requests{% endblocktrans %}">
                     {% if pending_coordinator_request_count > 9 %}9+{% else %}{{ pending_coordinator_request_count }}{% endif %}
                   </span>
                   {% endif %}
@@ -709,9 +712,9 @@
                    class="nav-link {% if active_menu == 'applications' %}active{% endif %}"
                    style="display: flex; align-items: center;">
                   <i class="fas fa-id-card nav-icon"></i>
-                  <p style="flex:1;">Registration Applications</p>
+                  <p style="flex:1;">{% trans "Registration Applications" context "sidebar" %}</p>
                   {% if pending_application_count %}
-                  <span class="sidebar-notif-badge" aria-label="{{ pending_application_count }} pending applications">
+                  <span class="sidebar-notif-badge" aria-label="{% blocktrans with count=pending_application_count %}{{ count }} pending applications{% endblocktrans %}">
                     {% if pending_application_count > 9 %}9+{% else %}{{ pending_application_count }}{% endif %}
                   </span>
                   {% endif %}
@@ -729,9 +732,9 @@
                class="nav-link {% if active_menu == 'contact-messages' %}active{% endif %}"
                style="display: flex; align-items: center;">
               <i class="nav-icon fas fa-envelope"></i>
-              <p style="flex:1;">Messages</p>
+              <p style="flex:1;">{% trans "Messages" context "sidebar" %}</p>
               {% if unread_contact_message_count %}
-              <span class="sidebar-notif-badge" aria-label="{{ unread_contact_message_count }} unread messages">
+              <span class="sidebar-notif-badge" aria-label="{% blocktrans with count=unread_contact_message_count %}{{ count }} unread messages{% endblocktrans %}">
                 {% if unread_contact_message_count > 9 %}9+{% else %}{{ unread_contact_message_count }}{% endif %}
               </span>
               {% endif %}
@@ -745,7 +748,7 @@
             <a href="{% url 'users' %}"
                class="nav-link {% if active_menu == 'users' %}active{% endif %}">
               <i class="nav-icon fas fa-users"></i>
-              <p>Users</p>
+              <p>{% trans "Users" context "sidebar" %}</p>
             </a>
           </li>
           {% endif %}
@@ -790,7 +793,7 @@
             <a href="{% url 'audit-logs' %}"
                class="nav-link {% if active_menu == 'audit' %}active{% endif %}">
               <i class="nav-icon fas fa-clipboard-list"></i>
-              <p>Audit Logs</p>
+              <p>{% trans "Audit Logs" context "sidebar" %}</p>
             </a>
           </li>
           {% endif %}
@@ -801,7 +804,7 @@
             <a href="{% url 'subscriptions' %}"
                class="nav-link {% if active_menu == 'subscriptions' %}active{% endif %}">
               <i class="nav-icon fas fa-credit-card"></i>
-              <p>Subscriptions</p>
+              <p>{% trans "Subscriptions" context "sidebar" %}</p>
             </a>
           </li>
           {% endif %}
@@ -821,9 +824,9 @@
                class="nav-link {% if active_menu == 'payments' %}active{% endif %}"
                style="display: flex; align-items: center;">
               <i class="nav-icon fas fa-file-invoice-dollar"></i>
-              <p style="flex:1;">Invoices</p>
+              <p style="flex:1;">{% trans "Invoices" context "sidebar" %}</p>
               {% if pending_invoice_count %}
-              <span class="sidebar-notif-badge" aria-label="{{ pending_invoice_count }} invoices awaiting approval">
+              <span class="sidebar-notif-badge" aria-label="{% blocktrans with count=pending_invoice_count %}{{ count }} invoices awaiting approval{% endblocktrans %}">
                 {% if pending_invoice_count > 9 %}9+{% else %}{{ pending_invoice_count }}{% endif %}
               </span>
               {% endif %}
@@ -836,7 +839,7 @@
             <a href="#" data-coming-soon="1"
                class="nav-link {% if active_menu == 'reports' %}active{% endif %}">
               <i class="nav-icon fas fa-chart-bar"></i>
-              <p>Reports</p>
+              <p>{% trans "Reports" context "sidebar" %}</p>
             </a>
           </li>
           {% endif %}
@@ -854,9 +857,9 @@
                class="nav-link {% if active_menu == 'commissions' %}active{% endif %}"
                style="display: flex; align-items: center;">
               <i class="nav-icon fas fa-coins"></i>
-              <p style="flex:1;">{% if request.user.is_superuser %}Commissions{% else %}My Commissions{% endif %}</p>
+              <p style="flex:1;">{% if request.user.is_superuser %}{% trans "Commissions" context "sidebar" %}{% else %}{% trans "My Commissions" context "sidebar" %}{% endif %}</p>
               {% if new_commission_count %}
-              <span class="sidebar-notif-badge" aria-label="{{ new_commission_count }} commission requests pending">
+              <span class="sidebar-notif-badge" aria-label="{% blocktrans with count=new_commission_count %}{{ count }} commission requests pending{% endblocktrans %}">
                 {% if new_commission_count > 9 %}9+{% else %}{{ new_commission_count }}{% endif %}
               </span>
               {% endif %}
@@ -867,7 +870,7 @@
           <!-- PLATFORM -->
           {% if not is_free_plan %}
           {% if request.user.role.code|lower != "consultant" and request.user.role.code|lower != "coordinator" and request.user.role.code|lower != "franchise" %}
-          <li class="nav-header">Platform</li>
+          <li class="nav-header">{% trans "Platform" context "sidebar" %}</li>
           {% endif %}
           {% endif %}
 
@@ -877,7 +880,7 @@
             <a href="{% url 'regions-map' %}"
                class="nav-link {% if active_menu == 'regions' %}active{% endif %}">
               <i class="nav-icon fas fa-globe-americas"></i>
-              <p>Regions & Map</p>
+              <p>{% trans "Regions & Map" context "sidebar" %}</p>
             </a>
           </li>
           {% endif %}
@@ -889,9 +892,9 @@
                class="nav-link {% if active_menu == 'partnerships' %}active{% endif %}"
                style="display: flex; align-items: center;">
               <i class="nav-icon fas fa-handshake"></i>
-              <p style="flex:1;">Partnerships</p>
+              <p style="flex:1;">{% trans "Partnerships" context "sidebar" %}</p>
               {% if pending_partnership_count %}
-              <span class="sidebar-notif-badge" aria-label="{{ pending_partnership_count }} pending partnership requests">
+              <span class="sidebar-notif-badge" aria-label="{% blocktrans with count=pending_partnership_count %}{{ count }} pending partnership requests{% endblocktrans %}">
                 {% if pending_partnership_count > 9 %}9+{% else %}{{ pending_partnership_count }}{% endif %}
               </span>
               {% endif %}
@@ -909,9 +912,9 @@
                class="nav-link {% if active_menu == 'join-requests' %}active{% endif %}"
                style="display: flex; align-items: center;">
               <i class="nav-icon fas fa-user-plus"></i>
-              <p style="flex:1;">Join Requests</p>
+              <p style="flex:1;">{% trans "Join Requests" context "sidebar" %}</p>
               {% if pending_join_request_count %}
-              <span class="sidebar-notif-badge" aria-label="{{ pending_join_request_count }} pending join requests">
+              <span class="sidebar-notif-badge" aria-label="{% blocktrans with count=pending_join_request_count %}{{ count }} pending join requests{% endblocktrans %}">
                 {% if pending_join_request_count > 9 %}9+{% else %}{{ pending_join_request_count }}{% endif %}
               </span>
               {% endif %}
@@ -925,9 +928,9 @@
                class="nav-link {% if active_menu == 'messages' %}active{% endif %}"
                style="display: flex; align-items: center;">
               <i class="nav-icon fas fa-bell"></i>
-              <p style="flex:1;">Notifications</p>
+              <p style="flex:1;">{% trans "Notifications" context "sidebar" %}</p>
               {% if unread_message_count %}
-              <span class="sidebar-notif-badge" aria-label="{{ unread_message_count }} unread notifications">
+              <span class="sidebar-notif-badge" aria-label="{% blocktrans with count=unread_message_count %}{{ count }} unread notifications{% endblocktrans %}">
                 {% if unread_message_count > 9 %}9+{% else %}{{ unread_message_count }}{% endif %}
               </span>
               {% endif %}
@@ -943,7 +946,7 @@
             <a href="#" data-coming-soon="1"
                class="nav-link {% if active_menu == 'settings' %}active{% endif %}">
               <i class="nav-icon fas fa-cog"></i>
-              <p>Settings</p>
+              <p>{% trans "Settings" context "sidebar" %}</p>
             </a>
           </li>
           {% endif %}
@@ -987,10 +990,14 @@
           </div>
           <div style="flex:1;">
             <div style="font-weight:700; color:#78350f; font-size:.92rem;">
-              {% if bu_certification_company_name %}{{ bu_certification_company_name }}{% else %}Your company{% endif %} is awaiting certification.
+              {% if bu_certification_company_name %}
+              {% blocktrans with company=bu_certification_company_name %}{{ company }} is awaiting certification.{% endblocktrans %}
+              {% else %}
+              {% trans "Your company is awaiting certification." context "banner" %}
+              {% endif %}
             </div>
             <div style="font-size:.82rem; color:#78350f;">
-              A consultant is reviewing your request. You'll see your company in the directory once it's approved.
+              {% trans "A consultant is reviewing your request. You'll see your company in the directory once it's approved." context "banner" %}
             </div>
           </div>
         </div>
@@ -1001,10 +1008,14 @@
           </div>
           <div style="flex:1;">
             <div style="font-weight:700; color:#065f46; font-size:.92rem;">
-              {% if bu_certification_company_name %}{{ bu_certification_company_name }}{% else %}Your company{% endif %} was certified by {{ bu_certification_consultant_name }}.
+              {% if bu_certification_company_name %}
+              {% blocktrans with company=bu_certification_company_name consultant=bu_certification_consultant_name %}{{ company }} was certified by {{ consultant }}.{% endblocktrans %}
+              {% else %}
+              {% blocktrans with consultant=bu_certification_consultant_name %}Your company was certified by {{ consultant }}.{% endblocktrans %}
+              {% endif %}
             </div>
             <div style="font-size:.82rem; color:#065f46;">
-              It is now visible in the public company directory.
+              {% trans "It is now visible in the public company directory." context "banner" %}
             </div>
           </div>
         </div>
@@ -1023,10 +1034,14 @@
           </div>
           <div style="flex:1;">
             <div style="font-weight:700; color:#991b1b; font-size:.92rem;">
-              Certification for {% if bu_certification_company_name %}{{ bu_certification_company_name }}{% else %}your company{% endif %} was declined.
+              {% if bu_certification_company_name %}
+              {% blocktrans with company=bu_certification_company_name %}Certification for {{ company }} was declined.{% endblocktrans %}
+              {% else %}
+              {% trans "Certification for your company was declined." context "banner" %}
+              {% endif %}
             </div>
             <div style="font-size:.82rem; color:#991b1b;">
-              You can update your company details and resubmit from your profile.
+              {% trans "You can update your company details and resubmit from your profile." context "banner" %}
             </div>
           </div>
         </div>
@@ -1050,14 +1065,18 @@
           </div>
           <div style="flex:1; min-width:200px;">
             <div style="font-weight:700; color:#9a3412; font-size:.92rem;">
-              You have {{ pending_partnership_count }} pending company partnership request{{ pending_partnership_count|pluralize }}.
+              {% blocktrans count counter=pending_partnership_count %}
+              You have {{ counter }} pending company partnership request.
+              {% plural %}
+              You have {{ counter }} pending company partnership requests.
+              {% endblocktrans %}
             </div>
             <div style="font-size:.82rem; color:#9a3412;">
-              Approving partnership requests requires a paid plan. Upgrade to review and accept them.
+              {% trans "Approving partnership requests requires a paid plan. Upgrade to review and accept them." context "banner" %}
             </div>
           </div>
           <a href="{% url 'membership' %}" class="btn btn-sm" style="background:#f97316; color:#fff; border-radius:8px; font-weight:600; padding:8px 18px; white-space:nowrap;">
-            <i class="fas fa-arrow-up mr-1"></i> Upgrade Plan
+            <i class="fas fa-arrow-up mr-1"></i> {% trans "Upgrade Plan" context "common" %}
           </a>
         </div>
         {% endif %}
@@ -1072,6 +1091,7 @@
 <script src="{% static 'adminlte/plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'adminlte/js/adminlte.min.js' %}"></script>
 <script src="{% static 'adminlte/plugins/chart.js/Chart.min.js' %}"></script>
+<script src="{% url 'javascript-catalog' %}"></script>
 <script src="{% static 'adminlte/js/main.js' %}"></script>
 <script src="{% static 'adminlte/js/no_emoji.js' %}"></script>
 {% include "base/toasts.html" %}
@@ -1109,7 +1129,8 @@
     }
 
     if (typeof showToast === 'function') {
-      showToast('Feature coming soon', 'info');
+      var comingSoonMsg = (typeof gettext === 'function') ? gettext('Feature coming soon') : 'Feature coming soon';
+      showToast(comingSoonMsg, 'info');
     }
   });
 })();
@@ -1180,14 +1201,14 @@
     <div class="confirm-modal-box__icon" id="app-confirm-icon">
       <i class="fas fa-exclamation-triangle"></i>
     </div>
-    <div class="confirm-modal-box__title" id="app-confirm-title">Are you sure?</div>
+    <div class="confirm-modal-box__title" id="app-confirm-title">{% trans "Are you sure?" context "modal" %}</div>
     <div class="confirm-modal-box__text" id="app-confirm-text"></div>
     <div class="confirm-modal-box__actions">
       <button type="button" class="confirm-modal-box__btn confirm-modal-box__btn--cancel" onclick="appConfirmClose()">
-        Cancel
+        {% trans "Cancel" context "common" %}
       </button>
       <button type="button" class="confirm-modal-box__btn" id="app-confirm-ok">
-        Confirm
+        {% trans "Confirm" context "common" %}
       </button>
     </div>
   </div>
@@ -1196,6 +1217,11 @@
 <script>
   (function(){
     let pendingAction = null;
+    var confirmDefaults = {
+      title: "{% filter escapejs %}{% trans "Are you sure?" context "modal" %}{% endfilter %}",
+      okLabel: "{% filter escapejs %}{% trans "Confirm" context "common" %}{% endfilter %}",
+      cancelLabel: "{% filter escapejs %}{% trans "Cancel" context "common" %}{% endfilter %}"
+    };
 
     window.appConfirm = function(opts) {
       const overlay = document.getElementById('app-confirm-modal');
@@ -1221,11 +1247,11 @@
       iconEl.className = 'confirm-modal-box__icon confirm-modal-box__icon--' + kind;
       iconEl.innerHTML = '<i class="fas ' + (iconMap[kind] || iconMap.danger) + '"></i>';
 
-      titleEl.textContent = opts.title || 'Are you sure?';
+      titleEl.textContent = opts.title || confirmDefaults.title;
       textEl.innerHTML = opts.text || '';
 
       okBtn.className = 'confirm-modal-box__btn ' + (btnStyleMap[kind] || btnStyleMap.danger);
-      okBtn.innerHTML = (opts.okIcon ? '<i class="fas ' + opts.okIcon + '"></i> ' : '') + (opts.okLabel || 'Confirm');
+      okBtn.innerHTML = (opts.okIcon ? '<i class="fas ' + opts.okIcon + '"></i> ' : '') + (opts.okLabel || confirmDefaults.okLabel);
 
       pendingAction = opts.onConfirm || null;
       overlay.classList.add('active');
@@ -1264,26 +1290,25 @@
         {% csrf_token %}
         <div class="modal-header">
           <h5 class="modal-title font-weight-bold">
-            <i class="fas fa-user-shield mr-1"></i> Request to become a Coordinator
+            <i class="fas fa-user-shield mr-1"></i> {% trans "Request to become a Coordinator" context "modal" %}
           </h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span>&times;</span></button>
+          <button type="button" class="close" data-dismiss="modal" aria-label="{% trans "Close" context "common" %}"><span>&times;</span></button>
         </div>
         <div class="modal-body">
           <p class="small text-muted" style="margin-bottom:14px;">
-            Submit a request to be upgraded to a Coordinator role. A Super Admin will review the details below along with the
-            information you provided during registration, then approve or decline. You will be notified of the decision.
+            {% trans "Submit a request to be upgraded to a Coordinator role. A Super Admin will review the details below along with the information you provided during registration, then approve or decline. You will be notified of the decision." context "modal" %}
           </p>
 
           <div class="form-group">
-            <label>Target region <span class="text-danger">*</span> <span class="text-muted small">(region/country you want to coordinate)</span></label>
+            <label>{% trans "Target region" context "modal" %} <span class="text-danger">*</span> <span class="text-muted small">{% trans "(region/country you want to coordinate)" context "modal" %}</span></label>
             {% comment %}
               Same region list as the registration application form so an
               approved request maps cleanly to a country scope (see
               coordinator_territory_q).
             {% endcomment %}
             <select name="target_region" class="form-control" required>
-              <option value="">Select your target region...</option>
-              <optgroup label="Europe">
+              <option value="">{% trans "Select your target region..." context "modal" %}</option>
+              <optgroup label="{% trans "Europe" context "modal" %}">
                 <option>Czech Republic</option>
                 <option>Germany</option>
                 <option>Austria</option>
@@ -1295,18 +1320,18 @@
                 <option>Scandinavia</option>
                 <option>Other European country</option>
               </optgroup>
-              <optgroup label="Middle East &amp; Africa">
+              <optgroup label="{% trans "Middle East & Africa" context "modal" %}">
                 <option>UAE</option>
                 <option>Saudi Arabia</option>
                 <option>Other MENA country</option>
               </optgroup>
-              <optgroup label="Asia Pacific">
+              <optgroup label="{% trans "Asia Pacific" context "modal" %}">
                 <option>Japan</option>
                 <option>South Korea</option>
                 <option>Australia</option>
                 <option>Other APAC country</option>
               </optgroup>
-              <optgroup label="Americas">
+              <optgroup label="{% trans "Americas" context "modal" %}">
                 <option>United States</option>
                 <option>Canada</option>
                 <option>Brazil</option>
@@ -1317,15 +1342,15 @@
           </div>
 
           <div class="form-group">
-            <label>Motivation <span class="text-danger">*</span></label>
+            <label>{% trans "Motivation" context "modal" %} <span class="text-danger">*</span></label>
             <textarea name="motivation" rows="4" class="form-control" required
-                      placeholder="Tell the Super Admin why you'd like to become a Coordinator (experience, network, goals…)"></textarea>
+                      placeholder="{% trans "Tell the Super Admin why you'd like to become a Coordinator (experience, network, goals…)" context "modal" %}"></textarea>
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-sm btn-light" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-sm btn-light" data-dismiss="modal">{% trans "Cancel" context "common" %}</button>
           <button type="submit" class="btn btn-sm btn-success">
-            <i class="fas fa-paper-plane mr-1"></i> Submit request
+            <i class="fas fa-paper-plane mr-1"></i> {% trans "Submit request" context "common" %}
           </button>
         </div>
       </form>

@@ -1,6 +1,6 @@
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
@@ -10,8 +10,8 @@
   <meta name="apple-mobile-web-app-title" content="FONTESIN"/>
   <link rel="manifest" href="{% static 'manifest.json' %}"/>
   <link rel="apple-touch-icon" href="{% static 'adminlte/images/icons/icon-192.png' %}"/>
-  <title>Contact – FONTESIN</title>
-  <meta name="description" content="Get in touch with FONTESIN. Contact us for franchise inquiries, partnerships, investor relations, or general questions."/>
+  <title>{% trans "Contact" context "website" %} – FONTESIN</title>
+  <meta name="description" content="{% trans 'Get in touch with FONTESIN. Contact us for franchise inquiries, partnerships, investor relations, or general questions.' context 'website' %}"/>
   <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
 </head>
 <body>
@@ -23,16 +23,16 @@
       <img src="{% static 'adminlte/images/logo_full.png' %}" alt="FONTESIN" height="38"/>
     </a>
     <div class="navbar__nav">
-      <a href="{% url 'home' %}">Home</a>
-      <a href="{% url 'worldmap' %}">World Map</a>
-      <a href="{% url 'about' %}">About</a>
-      <a href="{% url 'career' %}">Careers</a>
-      <a href="{% url 'contact' %}" class="active">Contact</a>
+      <a href="{% url 'home' %}">{% trans "Home" context "website" %}</a>
+      <a href="{% url 'worldmap' %}">{% trans "World Map" context "website" %}</a>
+      <a href="{% url 'about' %}">{% trans "About" context "website" %}</a>
+      <a href="{% url 'career' %}">{% trans "Careers" context "website" %}</a>
+      <a href="{% url 'contact' %}" class="active">{% trans "Contact" context "website" %}</a>
     </div>
-    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
+    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="{% trans 'Menu' context 'website' %}">☰</button>
     <div class="navbar__actions">
-      <a href="{% url 'login' %}" class="btn btn-outline btn-sm">Log In</a>
-      <a href="{% url 'register' %}" class="btn btn-primary btn-sm">Get Started</a>
+      <a href="{% url 'login' %}" class="btn btn-outline btn-sm">{% trans "Log In" context "auth.login" %}</a>
+      <a href="{% url 'register' %}" class="btn btn-primary btn-sm">{% trans "Get Started" context "website" %}</a>
     </div>
   </div>
 </nav>
@@ -41,12 +41,12 @@
 <section class="page-header">
   <div class="container">
     <div class="breadcrumb">
-      <a href="{% url 'home' %}">Home</a>
+      <a href="{% url 'home' %}">{% trans "Home" context "website" %}</a>
       <span>/</span>
-      <span>Contact</span>
+      <span>{% trans "Contact" context "website" %}</span>
     </div>
-    <h1>Get In Touch</h1>
-    <p>Whether you are an investor, franchise partner, consultant, or simply curious — we would love to hear from you.</p>
+    <h1>{% trans "Get In Touch" context "website" %}</h1>
+    <p>{% trans "Whether you are an investor, franchise partner, consultant, or simply curious — we would love to hear from you." context "website" %}</p>
   </div>
 </section>
 
@@ -57,17 +57,17 @@
 
       <!-- LEFT: Contact Info -->
       <div>
-        <h3 style="margin-bottom:28px;">Contact Information</h3>
+        <h3 style="margin-bottom:28px;">{% trans "Contact Information" context "website" %}</h3>
 
         <div class="contact-info__item">
           <div class="contact-info__icon">📍</div>
           <div>
-            <div class="contact-info__label">Headquarters</div>
+            <div class="contact-info__label">{% trans "Headquarters" context "website" %}</div>
             <div class="contact-info__value">
-              One World Trade Center<br/>
-              Suite 8500, Floor 85<br/>
-              New York, NY 10007<br/>
-              United States
+              {% blocktrans context "website" %}One World Trade Center<br/>
+Suite 8500, Floor 85<br/>
+New York, NY 10007<br/>
+United States{% endblocktrans %}
             </div>
           </div>
         </div>
@@ -75,7 +75,7 @@
         <div class="contact-info__item">
           <div class="contact-info__icon">📞</div>
           <div>
-            <div class="contact-info__label">Phone</div>
+            <div class="contact-info__label">{% trans "Phone" context "website" %}</div>
             <div class="contact-info__value">
               <a href="tel:+12122207417" style="color:var(--primary);font-weight:600;">+1 (212) 220-7417</a>
             </div>
@@ -85,7 +85,7 @@
         <div class="contact-info__item">
           <div class="contact-info__icon">✉️</div>
           <div>
-            <div class="contact-info__label">Email</div>
+            <div class="contact-info__label">{% trans "Email" context "common" %}</div>
             <div class="contact-info__value">
               <a href="mailto:info@fontesin.com" style="color:var(--primary);font-weight:600;">info@fontesin.com</a>
             </div>
@@ -95,7 +95,7 @@
         <div class="contact-info__item">
           <div class="contact-info__icon">🌐</div>
           <div>
-            <div class="contact-info__label">Website</div>
+            <div class="contact-info__label">{% trans "Website" context "website" %}</div>
             <div class="contact-info__value">
               <a href="https://www.fontesin.com" target="_blank" style="color:var(--primary);font-weight:600;">www.fontesin.com</a>
             </div>
@@ -105,8 +105,8 @@
         <div class="contact-info__item">
           <div class="contact-info__icon">🕐</div>
           <div>
-            <div class="contact-info__label">Office Hours</div>
-            <div class="contact-info__value">Monday – Friday<br/>9:00 AM – 6:00 PM EST</div>
+            <div class="contact-info__label">{% trans "Office Hours" context "website" %}</div>
+            <div class="contact-info__value">{% trans "Monday – Friday" context "website" %}<br/>{% trans "9:00 AM – 6:00 PM EST" context "website" %}</div>
           </div>
         </div>
 
@@ -114,19 +114,20 @@
         <div style="height:220px;border-radius:12px;overflow:hidden;margin-top:24px;position:relative;">
           <img
             src="{% static 'adminlte/images/office_hq.jpg' %}"
-            alt="One World Trade Center – FONTESIN Headquarters, New York"
+            alt="{% trans 'One World Trade Center – FONTESIN Headquarters, New York' context 'website' %}"
             style="width:100%;height:100%;object-fit:cover;display:block;"
-            onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,var(--primary-dark),var(--primary-mid))';this.parentElement.innerHTML='<div style=\'display:flex;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,.5);font-family:Montserrat,sans-serif;font-size:.9rem;\'>FONTESIN HQ · One World Trade Center, NYC</div>'"
+            data-fallback-text="{% filter escapejs %}{% trans 'FONTESIN HQ · One World Trade Center, NYC' context 'website' %}{% endfilter %}"
+            onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,var(--primary-dark),var(--primary-mid))';this.parentElement.innerHTML='<div style=\'display:flex;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,.5);font-family:Montserrat,sans-serif;font-size:.9rem;\'>'+this.dataset.fallbackText+'</div>'"
           />
           <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.65));padding:16px;color:#fff;font-family:'Montserrat',sans-serif;font-size:.8rem;font-weight:600;">
-            FONTESIN Headquarters · One World Trade Center, New York
+            {% trans "FONTESIN Headquarters · One World Trade Center, New York" context "website" %}
           </div>
         </div>
       </div>
 
       <!-- RIGHT: Contact Form -->
       <div>
-        <h3 style="margin-bottom:28px;">Send Us a Message</h3>
+        <h3 style="margin-bottom:28px;">{% trans "Send Us a Message" context "website" %}</h3>
         {% if messages %}
         <div style="margin-bottom:20px;">
           {% for message in messages %}
@@ -142,55 +143,55 @@
           {% csrf_token %}
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">First Name *</label>
-              <input type="text" name="first_name" class="form-control" placeholder="John" required/>
+              <label class="form-label">{% trans "First Name" context "website" %} *</label>
+              <input type="text" name="first_name" class="form-control" placeholder="{% trans 'John' context 'website' %}" required/>
             </div>
             <div class="form-group">
-              <label class="form-label">Last Name *</label>
-              <input type="text" name="last_name" class="form-control" placeholder="Smith" required/>
+              <label class="form-label">{% trans "Last Name" context "website" %} *</label>
+              <input type="text" name="last_name" class="form-control" placeholder="{% trans 'Smith' context 'website' %}" required/>
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label">Email Address *</label>
-            <input type="email" name="email" class="form-control" placeholder="john@company.com" required maxlength="254" pattern="^[a-zA-Z0-9._+\-]+@[a-zA-Z0-9\-]+(\.[a-zA-Z0-9\-]+)*\.[a-zA-Z]{2,10}$" title="Please enter a valid email address (e.g., you@company.com)" oninput="this.value=this.value.replace(/[^a-zA-Z0-9@._+\-]/g,'')"/>
+            <label class="form-label">{% trans "Email Address" context "website" %} *</label>
+            <input type="email" name="email" class="form-control" placeholder="{% trans 'john@company.com' context 'website' %}" required maxlength="254" pattern="^[a-zA-Z0-9._+\-]+@[a-zA-Z0-9\-]+(\.[a-zA-Z0-9\-]+)*\.[a-zA-Z]{2,10}$" title="{% trans 'Please enter a valid email address (e.g., you@company.com)' context 'website' %}" oninput="this.value=this.value.replace(/[^a-zA-Z0-9@._+\-]/g,'')"/>
           </div>
           <div class="form-group">
-            <label class="form-label">Phone Number</label>
-            <input type="tel" name="phone" class="form-control" placeholder="+1 212 555 0100"/>
+            <label class="form-label">{% trans "Phone Number" context "website" %}</label>
+            <input type="tel" name="phone" class="form-control" placeholder="{% trans '+1 212 555 0100' context 'website' %}"/>
           </div>
           <div class="form-group">
-            <label class="form-label">Company Name</label>
-            <input type="text" name="company_name" class="form-control" placeholder="Your Company Ltd."/>
+            <label class="form-label">{% trans "Company Name" context "website" %}</label>
+            <input type="text" name="company_name" class="form-control" placeholder="{% trans 'Your Company Ltd.' context 'website' %}"/>
           </div>
           <div class="form-group">
-            <label class="form-label">Subject *</label>
+            <label class="form-label">{% trans "Subject" context "common" %} *</label>
             <select name="subject" class="form-control" required>
-              <option value="">Select a topic...</option>
-              <option>Franchise Inquiry</option>
-              <option>Partnership Request</option>
-              <option>Investor Relations</option>
-              <option>Consultant Application</option>
-              <option>Technical Support</option>
-              <option>General Inquiry</option>
-              <option>Press &amp; Media</option>
+              <option value="">{% trans "Select a topic..." context "website" %}</option>
+              <option>{% trans "Franchise Inquiry" context "website" %}</option>
+              <option>{% trans "Partnership Request" context "website" %}</option>
+              <option>{% trans "Investor Relations" context "website" %}</option>
+              <option>{% trans "Consultant Application" context "website" %}</option>
+              <option>{% trans "Technical Support" context "website" %}</option>
+              <option>{% trans "General Inquiry" context "website" %}</option>
+              <option>{% trans "Press & Media" context "website" %}</option>
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Message *</label>
-            <textarea name="message" class="form-control" rows="5" placeholder="Tell us about your inquiry, project, or how we can help..." required></textarea>
+            <label class="form-label">{% trans "Message" context "website" %} *</label>
+            <textarea name="message" class="form-control" rows="5" placeholder="{% trans 'Tell us about your inquiry, project, or how we can help...' context 'website' %}" required></textarea>
           </div>
           <div class="checkbox-group">
             <input type="checkbox" id="privacy" name="privacy" value="yes" required/>
-            <label for="privacy">I agree to the processing of my personal data in accordance with FONTESIN's Privacy Policy. *</label>
+            <label for="privacy">{% trans "I agree to the processing of my personal data in accordance with FONTESIN's Privacy Policy." context "website" %} *</label>
           </div>
-          <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;">Send Message</button>
+          <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;">{% trans "Send Message" context "website" %}</button>
         </form>
       </div>
     </div>
 
     <!-- Google Maps Embed – One World Trade Center, NYC -->
     <div style="margin-top:56px;">
-      <h3 style="margin-bottom:20px;">Our Location</h3>
+      <h3 style="margin-bottom:20px;">{% trans "Our Location" context "website" %}</h3>
       <div style="border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.1);">
         <iframe
           src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3023.6!2d-74.0134!3d40.7127!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c25a1a4b8b8b8b%3A0x1234567890abcdef!2sOne+World+Trade+Center%2C+New+York%2C+NY+10007!5e0!3m2!1sen!2sus!4v1709000000000!5m2!1sen!2sus"
@@ -200,12 +201,12 @@
           allowfullscreen=""
           loading="lazy"
           referrerpolicy="no-referrer-when-downgrade"
-          title="FONTESIN Headquarters – One World Trade Center, New York, NY 10007">
+          title="{% trans 'FONTESIN Headquarters – One World Trade Center, New York, NY 10007' context 'website' %}">
         </iframe>
       </div>
       <div style="margin-top:12px;display:flex;align-items:center;gap:8px;font-size:.85rem;color:var(--text-secondary);">
         <span>📍</span>
-        <span>One World Trade Center, Suite 8500, Floor 85, New York, NY 10007 · <strong>+1 (212) 220-7417</strong> · <a href="https://www.fontesin.com" target="_blank" style="color:var(--primary);">www.fontesin.com</a></span>
+        <span>{% blocktrans context "website" %}One World Trade Center, Suite 8500, Floor 85, New York, NY 10007 · <strong>+1 (212) 220-7417</strong> · <a href="https://www.fontesin.com" target="_blank" style="color:var(--primary);">www.fontesin.com</a>{% endblocktrans %}</span>
       </div>
     </div>
 
@@ -215,24 +216,24 @@
 <!-- QUICK CONTACTS -->
 <section class="section section--light">
   <div class="container">
-    <h3 style="margin-bottom:28px;text-align:center;">Specific Inquiries</h3>
+    <h3 style="margin-bottom:28px;text-align:center;">{% trans "Specific Inquiries" context "website" %}</h3>
     <div class="grid-3">
       <div class="card text-center">
         <div class="card__icon" style="margin:0 auto 16px;">🤝</div>
-        <h4 class="card__title">Franchise &amp; Partners</h4>
-        <p class="card__text" style="font-size:.85rem;margin-bottom:16px;">Interested in becoming a Master Franchise or regional partner?</p>
+        <h4 class="card__title">{% trans "Franchise & Partners" context "website" %}</h4>
+        <p class="card__text" style="font-size:.85rem;margin-bottom:16px;">{% trans "Interested in becoming a Master Franchise or regional partner?" context "website" %}</p>
         <a href="mailto:franchise@fontesin.com" style="color:var(--primary);font-weight:600;font-size:.88rem;">franchise@fontesin.com</a>
       </div>
       <div class="card text-center">
         <div class="card__icon" style="margin:0 auto 16px;">📈</div>
-        <h4 class="card__title">Investor Relations</h4>
-        <p class="card__text" style="font-size:.85rem;margin-bottom:16px;">Looking for investment opportunities or financial information?</p>
+        <h4 class="card__title">{% trans "Investor Relations" context "website" %}</h4>
+        <p class="card__text" style="font-size:.85rem;margin-bottom:16px;">{% trans "Looking for investment opportunities or financial information?" context "website" %}</p>
         <a href="mailto:investors@fontesin.com" style="color:var(--primary);font-weight:600;font-size:.88rem;">investors@fontesin.com</a>
       </div>
       <div class="card text-center">
         <div class="card__icon" style="margin:0 auto 16px;">📰</div>
-        <h4 class="card__title">Press &amp; Media</h4>
-        <p class="card__text" style="font-size:.85rem;margin-bottom:16px;">Media inquiries, press releases, and interview requests.</p>
+        <h4 class="card__title">{% trans "Press & Media" context "website" %}</h4>
+        <p class="card__text" style="font-size:.85rem;margin-bottom:16px;">{% trans "Media inquiries, press releases, and interview requests." context "website" %}</p>
         <a href="mailto:press@fontesin.com" style="color:var(--primary);font-weight:600;font-size:.88rem;">press@fontesin.com</a>
       </div>
     </div>
@@ -247,42 +248,59 @@
         <div class="footer__logo">
           <img src="{% static 'adminlte/images/fontesin-logo.png' %}" alt="FONTESIN" style="height:32px;width:auto;filter:brightness(0) invert(1);margin-bottom:12px;"/>
         </div>
-        <p class="footer__brand-desc">A deep-tech global business infrastructure platform connecting companies, professionals, and markets across languages, borders, and systems.</p>
+        <p class="footer__brand-desc">{% trans "A deep-tech global business infrastructure platform connecting companies, professionals, and markets across languages, borders, and systems." context "website" %}</p>
       </div>
       <div>
-        <p class="footer__heading">Platform</p>
+        <p class="footer__heading">{% trans "Platform" context "website" %}</p>
         <div class="footer__links">
-          <a href="{% url 'worldmap' %}">World Map</a>
-          <a href="{% url 'register' %}">Get Started</a>
-          <a href="{% url 'login' %} ">Log In</a>
+          <a href="{% url 'worldmap' %}">{% trans "World Map" context "website" %}</a>
+          <a href="{% url 'register' %}">{% trans "Get Started" context "website" %}</a>
+          <a href="{% url 'login' %} ">{% trans "Log In" context "auth.login" %}</a>
         </div>
       </div>
       <div>
-        <p class="footer__heading">Company</p>
+        <p class="footer__heading">{% trans "Company" context "website" %}</p>
         <div class="footer__links">
-          <a href="{% url 'about' %}">About Us</a>
-          <a href="{% url 'career' %}">Careers</a>
-          <a href="{% url 'contact' %}">Contact</a>
+          <a href="{% url 'about' %}">{% trans "About Us" context "website" %}</a>
+          <a href="{% url 'career' %}">{% trans "Careers" context "website" %}</a>
+          <a href="{% url 'contact' %}">{% trans "Contact" context "website" %}</a>
         </div>
       </div>
       <div>
-        <p class="footer__heading">Regions</p>
+        <p class="footer__heading">{% trans "Regions" context "website" %}</p>
         <div class="footer__links">
-          <a href="{% url 'region_us' %}">United States</a>
-          <a href="{% url 'region_de' %}">Germany</a>
-          <a href="{% url 'region_cz' %}">Czech Republic</a>
-          <a href="{% url 'region_ae' %}">UAE</a>
-          <a href="{% url 'region_jp' %}">Japan</a>
+          <a href="{% url 'region_us' %}">{% trans "United States" context "website" %}</a>
+          <a href="{% url 'region_de' %}">{% trans "Germany" context "website" %}</a>
+          <a href="{% url 'region_cz' %}">{% trans "Czech Republic" context "website" %}</a>
+          <a href="{% url 'region_ae' %}">{% trans "UAE" context "website" %}</a>
+          <a href="{% url 'region_jp' %}">{% trans "Japan" context "website" %}</a>
         </div>
       </div>
     </div>
     <div class="footer__bottom">
-      <span>© 2026 FONTES Inc. All rights reserved.</span>
-      <span>Design by Memento Mori Digital LLC</span>
+      <span>{% trans "© 2026 FONTES Inc. All rights reserved." context "website" %}</span>
+      <span>{% trans "Design by Memento Mori Digital LLC" context "website" %}</span>
     </div>
   </div>
 </footer>
 
+<script>
+(function () {
+  var g = function (s) { return (typeof gettext === 'function') ? gettext(s) : s; };
+  window.WEBSITE_I18N = {
+    firstNameRequired: '{% filter escapejs %}{% trans "Please enter your first name." context "website" %}{% endfilter %}',
+    lastNameRequired: '{% filter escapejs %}{% trans "Please enter your last name." context "website" %}{% endfilter %}',
+    emailRequired: '{% filter escapejs %}{% trans "Please enter your email address." context "website" %}{% endfilter %}',
+    subjectRequired: '{% filter escapejs %}{% trans "Please select a subject." context "website" %}{% endfilter %}',
+    messageRequired: '{% filter escapejs %}{% trans "Please enter your message." context "website" %}{% endfilter %}',
+    emailInvalid: '{% filter escapejs %}{% trans "Please enter a valid email address." context "website" %}{% endfilter %}',
+    privacyRequired: '{% filter escapejs %}{% trans "Please agree to the Privacy Policy before sending." context "website" %}{% endfilter %}',
+  };
+  Object.keys(window.WEBSITE_I18N).forEach(function (k) {
+    window.WEBSITE_I18N[k] = g(window.WEBSITE_I18N[k]);
+  });
+})();
+</script>
 <style>
   .cf-invalid { border-color:#dc2626 !important; box-shadow:0 0 0 2px rgba(220,38,38,.15) !important; }
   .cf-error {
@@ -302,11 +320,11 @@
     if (!form) return;
 
     var REQUIRED = [
-      { name: "first_name", msg: "Please enter your first name." },
-      { name: "last_name",  msg: "Please enter your last name." },
-      { name: "email",      msg: "Please enter your email address." },
-      { name: "subject",    msg: "Please select a subject." },
-      { name: "message",    msg: "Please enter your message." }
+      { name: "first_name", msg: window.WEBSITE_I18N.firstNameRequired },
+      { name: "last_name",  msg: window.WEBSITE_I18N.lastNameRequired },
+      { name: "email",      msg: window.WEBSITE_I18N.emailRequired },
+      { name: "subject",    msg: window.WEBSITE_I18N.subjectRequired },
+      { name: "message",    msg: window.WEBSITE_I18N.messageRequired }
     ];
 
     function clearErrors() {
@@ -346,14 +364,14 @@
       var email = form.querySelector('[name="email"]');
       if (email && email.value.trim() &&
           !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.value.trim())) {
-        showError(email, "Please enter a valid email address.");
+        showError(email, window.WEBSITE_I18N.emailInvalid);
         if (!firstInvalid) firstInvalid = email;
       }
 
       // Privacy consent checkbox.
       var privacy = document.getElementById("privacy");
       if (privacy && !privacy.checked) {
-        showError(privacy, "Please agree to the Privacy Policy before sending.");
+        showError(privacy, window.WEBSITE_I18N.privacyRequired);
         if (!firstInvalid) firstInvalid = privacy;
       }
 
@@ -367,14 +385,32 @@
 </script>
 <script src="{% static 'adminlte/js/main.js' %}"></script>
   <script>
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", function() {
-        navigator.serviceWorker.register("{% static 'adminlte/sw.js' %}")
-          .then(function(reg) { console.log("[PWA] SW registered:", reg.scope); })
-          .catch(function(err) { console.warn("[PWA] SW registration failed:", err); });
-      });
-    }
-  </script>
+(function () {
+  window.PWA_I18N = {
+    notificationBody: '{% filter escapejs %}{% trans "You have a new notification" context "website" %}{% endfilter %}',
+    open: '{% filter escapejs %}{% trans "Open" context "website" %}{% endfilter %}',
+    dismiss: '{% filter escapejs %}{% trans "Dismiss" context "website" %}{% endfilter %}',
+  };
+})();
+</script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function() {
+      navigator.serviceWorker.register("{% static 'adminlte/js/sw.js' %}")
+        .then(function(reg) {
+          function sendStrings() {
+            var sw = reg.active || navigator.serviceWorker.controller;
+            if (sw && window.PWA_I18N) {
+              sw.postMessage({ type: "PWA_STRINGS", strings: window.PWA_I18N });
+            }
+          }
+          sendStrings();
+          navigator.serviceWorker.addEventListener("controllerchange", sendStrings);
+        })
+        .catch(function(err) { console.warn("[PWA] SW registration failed:", err); });
+    });
+  }
+</script>
   <script src="{% static 'adminlte/js/no_emoji.js' %}"></script>
 </body>
 </html>

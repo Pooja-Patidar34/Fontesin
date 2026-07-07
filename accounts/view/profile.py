@@ -5,15 +5,19 @@ from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.http import JsonResponse
+from django.utils.translation import gettext as _
 from accounts.models import Tenant, Company, UserCompany
 from accounts.constants import (
     CompanyClassificationChoices,
     CompanyEntityTypeChoices,
     CountryChoices,
     EmployeeCountRangeChoices,
+    SupportedLocale,
     COUNTRY_STATES,
 )
 import datetime
+from FontEsin.middleware.locale import apply_language_cookie, normalize_locale
+from FontEsin.templatetags.i18n_extras import LANGUAGE_DISPLAY_NAMES
 
 CLASSIFICATION_CODES = {code for code, _ in CompanyClassificationChoices.CHOICES}
 ENTITY_TYPE_CODES = {code for code, _ in CompanyEntityTypeChoices.CHOICES}
@@ -214,11 +218,11 @@ def profile_view(request):
 
             company_id = (request.POST.get("company_id") or "").strip()
             if not company_id:
-                return _join_fail("Please select a company to join.")
+                return _join_fail(_("Please select a company to join."))
 
             company = Company.objects.filter(id=company_id).first()
             if not company:
-                return _join_fail("That company is unavailable. Please pick another.")
+                return _join_fail(_("That company is unavailable. Please pick another."))
 
             from accounts.view.join_request import create_join_request, JoinRequestError
             try:
@@ -228,10 +232,10 @@ def profile_view(request):
             except JoinRequestError as e:
                 return _join_fail(e.message, status=e.status)
 
-            success_msg = (
-                f"Join request sent to {company.name}. You'll be linked once "
-                f"the company owner approves it."
-            )
+            success_msg = _(
+                "Join request sent to %(company)s. You'll be linked once "
+                "the company owner approves it."
+            ) % {"company": company.name}
             if ajax:
                 return JsonResponse({"ok": True, "message": success_msg})
             messages.success(request, success_msg)
@@ -253,19 +257,32 @@ def profile_view(request):
             country = request.POST.get("country", "").strip().upper()
 
             if not first_name or not NAME_RE.match(first_name):
-                return _fail("Enter a valid first name (2-50 characters; letters, spaces, hyphens, apostrophes).")
+                return _fail(_("Enter a valid first name (2-50 characters; letters, spaces, hyphens, apostrophes)."))
             if not last_name or not NAME_RE.match(last_name):
-                return _fail("Enter a valid last name (2-50 characters; letters, spaces, hyphens, apostrophes).")
+                return _fail(_("Enter a valid last name (2-50 characters; letters, spaces, hyphens, apostrophes)."))
 
             if phone:
                 if not PHONE_CHARSET_RE.match(phone):
-                    return _fail("Phone may only contain digits and the symbols + - ( ) and spaces (7-25 characters).")
+                    return _fail(_("Phone may only contain digits and the symbols + - ( ) and spaces (7-25 characters)."))
                 digits = re.sub(r"\D", "", phone)
                 if not (5 <= len(digits) <= 15):
-                    return _fail("Phone must contain 5-15 digits.")
+                    return _fail(_("Phone must contain 5-15 digits."))
 
             if country and country not in COUNTRY_CODES:
-                return _fail("Please select a valid country from the list.")
+                return _fail(_("Please select a valid country from the list."))
+
+            preferred_language_raw = request.POST.get("preferred_language")
+            if preferred_language_raw is not None:
+                preferred_language_raw = preferred_language_raw.strip()
+                if preferred_language_raw and preferred_language_raw not in SupportedLocale.ALL:
+                    return _fail(_("Please select a valid language."))
+                preferred_language = (
+                    normalize_locale(preferred_language_raw)
+                    if preferred_language_raw
+                    else SupportedLocale.EN
+                )
+            else:
+                preferred_language = user.preferred_language or SupportedLocale.EN
 
             # Snapshot the contact fields BEFORE we mutate `user` so the
             # post-save fan-out below can detect a real change (vs a no-op
@@ -273,11 +290,14 @@ def profile_view(request):
             old_first = user.first_name
             old_last = user.last_name
             old_phone = user.phone or ""
+            old_language = user.preferred_language or SupportedLocale.EN
 
             user.first_name = first_name
             user.last_name = last_name
             user.phone = phone or None
             user.country = country or None
+            language_changed = preferred_language != old_language
+            user.persist_preferred_language(preferred_language)
             user.save(update_fields=["first_name", "last_name", "phone", "country", "updated_at"])
 
             # Consultants are the visible "Certifying Consultant" on the
@@ -326,19 +346,30 @@ def profile_view(request):
                         pass
 
             if ajax:
-                return JsonResponse({
+                response = JsonResponse({
                     "ok": True,
-                    "message": "Profile updated successfully.",
+                    "message": _("Profile updated successfully."),
+                    "language_changed": language_changed,
                     "user": {
                         "first_name": user.first_name,
                         "last_name": user.last_name,
                         "phone": user.phone or "",
                         "country": user.country or "",
+                        "preferred_language": user.preferred_language,
+                        "preferred_language_display": LANGUAGE_DISPLAY_NAMES.get(
+                            user.preferred_language, user.preferred_language
+                        ),
                     },
                 })
+                if language_changed:
+                    apply_language_cookie(response, preferred_language)
+                return response
 
-            messages.success(request, "Profile updated successfully.")
-            return redirect("profile")
+            messages.success(request, _("Profile updated successfully."))
+            response = redirect("profile")
+            if language_changed:
+                apply_language_cookie(response, preferred_language)
+            return response
 
         # Company creation from profile.
         # Collapse runs of whitespace in the company name so "Acme  Corp" and
@@ -424,11 +455,11 @@ def profile_view(request):
         }
 
         if not company_name:
-            return _fail_create_company("Company name is required.", field="company_name")
+            return _fail_create_company(_("Company name is required."), field="company_name")
 
         if not COMPANY_NAME_RE.match(company_name):
             return _fail_create_company(
-                "Company name must be 2-100 characters and may only contain letters, digits, spaces, and the symbols & ' . , - ( ).",
+                _("Company name must be 2-100 characters and may only contain letters, digits, spaces, and the symbols & ' . , - ( )."),
                 field="company_name",
             )
 
@@ -443,51 +474,51 @@ def profile_view(request):
             or Tenant.objects.filter(name__iexact=company_name).exists()
         ):
             return _fail_create_company(
-                "A company with this name already exists. Please choose a different name.",
+                _("A company with this name already exists. Please choose a different name."),
                 field="company_name",
             )
 
         if not registration_id:
-            return _fail_create_company("Registration No. is required.", field="registration_id")
+            return _fail_create_company(_("Registration No. is required."), field="registration_id")
 
         if not REGISTRATION_ID_RE.match(registration_id):
             return _fail_create_company(
-                "Registration No. may only contain letters, digits, and the symbols - / . _ (2-100 characters).",
+                _("Registration No. may only contain letters, digits, and the symbols - / . _ (2-100 characters)."),
                 field="registration_id",
             )
 
         if Company.objects.filter(registration_id__iexact=registration_id).exists():
             return _fail_create_company(
-                "A company with this Registration No. already exists. Registration No. must be unique.",
+                _("A company with this Registration No. already exists. Registration No. must be unique."),
                 field="registration_id",
             )
 
         if not domain:
-            return _fail_create_company("Domain is required.", field="domain")
+            return _fail_create_company(_("Domain is required."), field="domain")
 
         domain = domain.lower()
         if not DOMAIN_RE.match(domain):
             return _fail_create_company(
-                "Enter a valid domain like mycompany.com (4-253 characters, letters/digits/hyphens separated by dots, with a TLD of at least 2 letters).",
+                _("Enter a valid domain like mycompany.com (4-253 characters, letters/digits/hyphens separated by dots, with a TLD of at least 2 letters)."),
                 field="domain",
             )
 
         # Check if domain already exists (case-insensitive)
         if Tenant.objects.filter(domain__iexact=domain).exists():
-            return _fail_create_company("This domain is already taken.", field="domain")
+            return _fail_create_company(_("This domain is already taken."), field="domain")
 
         if not classification:
-            return _fail_create_company("Classification is required.", field="classification")
+            return _fail_create_company(_("Classification is required."), field="classification")
 
         if classification not in CLASSIFICATION_CODES:
             return _fail_create_company(
-                "Please select a valid classification from the list.",
+                _("Please select a valid classification from the list."),
                 field="classification",
             )
 
         if website and not WEBSITE_URL_RE.match(website):
             return _fail_create_company(
-                "Enter a valid website URL like https://example.com (only letters, digits, and - . _ / in the path).",
+                _("Enter a valid website URL like https://example.com (only letters, digits, and - . _ / in the path)."),
                 field="website",
             )
 
@@ -516,22 +547,22 @@ def profile_view(request):
 
         if address_line1 and not ADDRESS_LINE_RE.match(address_line1):
             return _fail_create_company(
-                "Address line 1 may only contain letters, digits, spaces and the symbols , . - / # (3-120 characters).",
+                _("Address line 1 may only contain letters, digits, spaces and the symbols , . - / # (3-120 characters)."),
                 field="address_line1",
             )
 
         if address_line2 and not ADDRESS_LINE_RE.match(address_line2):
             return _fail_create_company(
-                "Address line 2 may only contain letters, digits, spaces and the symbols , . - / # (3-120 characters).",
+                _("Address line 2 may only contain letters, digits, spaces and the symbols , . - / # (3-120 characters)."),
                 field="address_line2",
             )
 
         if not city:
-            return _fail_create_company("City is required.", field="city")
+            return _fail_create_company(_("City is required."), field="city")
 
         if not CITY_NAME_RE.match(city):
             return _fail_create_company(
-                "City may only contain letters, spaces, hyphens, apostrophes and periods (2-60 characters).",
+                _("City may only contain letters, spaces, hyphens, apostrophes and periods (2-60 characters)."),
                 field="city",
             )
 
@@ -540,36 +571,36 @@ def profile_view(request):
         # selects are populated from the same map the server uses, so the only
         # way to get a value outside the map is a tampered request.
         if not country:
-            return _fail_create_company("Country is required.", field="company_country")
+            return _fail_create_company(_("Country is required."), field="company_country")
 
         country_code = country.upper()
         if country_code not in COUNTRY_LABELS:
             return _fail_create_company(
-                "Please select a valid country from the list.",
+                _("Please select a valid country from the list."),
                 field="company_country",
             )
         country = country_code
 
         valid_states = COUNTRY_STATES.get(country_code, [])
         if not state:
-            return _fail_create_company("State is required.", field="state")
+            return _fail_create_company(_("State is required."), field="state")
 
         if valid_states and state not in valid_states:
             return _fail_create_company(
-                "Please select a valid state for the chosen country.",
+                _("Please select a valid state for the chosen country."),
                 field="state",
             )
 
         if postal_code and not POSTAL_CODE_RE.match(postal_code):
             return _fail_create_company(
-                "Postal code may only contain letters, digits, spaces and hyphens (3-12 characters).",
+                _("Postal code may only contain letters, digits, spaces and hyphens (3-12 characters)."),
                 field="postal_code",
             )
 
         # ---- New BU-onboarding fields validation ----
         if entity_type and entity_type not in ENTITY_TYPE_CODES:
             return _fail_create_company(
-                "Please select a valid legal form from the list.",
+                _("Please select a valid legal form from the list."),
                 field="entity_type",
             )
 
@@ -579,7 +610,7 @@ def profile_view(request):
                 year_established = int(year_established_raw)
             except ValueError:
                 return _fail_create_company(
-                    "Year of establishment must be a number.",
+                _("Year of establishment must be a number."),
                     field="year_established",
                 )
             current_year = datetime.date.today().year
@@ -591,37 +622,37 @@ def profile_view(request):
 
         if employee_count_range and employee_count_range not in EMPLOYEE_RANGE_CODES:
             return _fail_create_company(
-                "Please select a valid employee count range.",
+                _("Please select a valid employee count range."),
                 field="employee_count_range",
             )
 
         if region and not REGION_DISTRICT_RE.match(region):
-            return _fail_create_company("Region contains invalid characters.", field="region")
+            return _fail_create_company(_("Region contains invalid characters."), field="region")
 
         if district and not REGION_DISTRICT_RE.match(district):
-            return _fail_create_company("District contains invalid characters.", field="district")
+            return _fail_create_company(_("District contains invalid characters."), field="district")
 
         if house_number and not HOUSE_NUMBER_RE.match(house_number):
             return _fail_create_company(
-                "House number may only contain letters, digits and the symbols - / and spaces (1-15 characters).",
+                _("House number may only contain letters, digits and the symbols - / and spaces (1-15 characters)."),
                 field="house_number",
             )
 
         if industry_code and not INDUSTRY_CODE_RE.match(industry_code):
             return _fail_create_company(
-                "Industry code may only contain letters, digits, dots and hyphens (1-20 characters).",
+                _("Industry code may only contain letters, digits, dots and hyphens (1-20 characters)."),
                 field="industry_code",
             )
 
         if keywords and len(keywords) > 500:
             return _fail_create_company(
-                "Keywords must be 500 characters or fewer.",
+                _("Keywords must be 500 characters or fewer."),
                 field="keywords",
             )
 
         if contact_email and not EMAIL_RE.match(contact_email):
             return _fail_create_company(
-                "Contact email is not a valid email address.",
+                _("Contact email is not a valid email address."),
                 field="contact_email",
             )
 
@@ -629,12 +660,12 @@ def profile_view(request):
             name = (logo_file.name or "").lower()
             if not name.endswith(LOGO_ALLOWED_EXTENSIONS):
                 return _fail_create_company(
-                    "Logo must be one of: " + ", ".join(LOGO_ALLOWED_EXTENSIONS),
+                _("Logo must be one of: ") + ", ".join(LOGO_ALLOWED_EXTENSIONS),
                     field="logo",
                 )
             if getattr(logo_file, "size", 0) > LOGO_MAX_BYTES:
                 return _fail_create_company(
-                    "Logo file must be 5 MB or smaller.",
+                _("Logo file must be 5 MB or smaller."),
                     field="logo",
                 )
 
@@ -724,7 +755,7 @@ def profile_view(request):
         request.session.pop("open_create_company_tab", None)
         messages.success(
             request,
-            "Company created successfully."
+            _("Company created successfully.")
             if self_certifies
             else "Certification request submitted. A consultant will review your company shortly.",
         )
@@ -770,6 +801,12 @@ def profile_view(request):
         "entity_types": CompanyEntityTypeChoices.CHOICES,
         "employee_count_ranges": EmployeeCountRangeChoices.CHOICES,
         "countries": CountryChoices.CHOICES,
+        "language_choices": [(code, LANGUAGE_DISPLAY_NAMES[code]) for code, _ in SupportedLocale.CHOICES],
+        "preferred_language": user.preferred_language or SupportedLocale.EN,
+        "preferred_language_display": LANGUAGE_DISPLAY_NAMES.get(
+            user.preferred_language or SupportedLocale.EN,
+            user.preferred_language or SupportedLocale.EN,
+        ),
         "country_states": COUNTRY_STATES,
         "user_plan": get_user_plan(user, subscription=subscription),
         "subscription": subscription,

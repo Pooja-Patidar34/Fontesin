@@ -178,6 +178,7 @@ See `.cursor/multilingual-task-list.md` for checkbox tasks and `.cursor/multilin
 
 ## Related Documents
 
+- [`.cursor/multilingual-phased-implementation-plan.md`](multilingual-phased-implementation-plan.md) — **Risk-driven 9-phase delivery roadmap** (primary execution plan)
 - [`.cursor/multilingual-architecture.md`](multilingual-architecture.md) — Technical design
 - [`.cursor/multilingual-task-list.md`](multilingual-task-list.md) — Checkbox task list
 - [`.cursor/multilingual-risk-analysis.md`](multilingual-risk-analysis.md) — Risks and mitigations

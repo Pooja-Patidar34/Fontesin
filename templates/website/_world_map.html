@@ -1,4 +1,4 @@
-{% load static %}
+{% load static i18n %}
 {% comment %}
   Shared interactive "Region Control Layer" world map.
 
@@ -18,6 +18,35 @@
 </div>
 
 <script>
+(function () {
+  window.WEBSITE_MAP_I18N = {
+    mapLoading: '{% filter escapejs %}{% trans "Map loading..." context "website" %}{% endfilter %}',
+    active: '{% filter escapejs %}{% trans "Active" context "website" %}{% endfilter %}',
+    plannedYear: '{% filter escapejs %}{% trans "Planned – Year" context "website" %}{% endfilter %}',
+    clickDetails: '{% filter escapejs %}{% trans "Click for details →" context "website" %}{% endfilter %}',
+    unitedStates: '{% filter escapejs %}{% trans "United States" context "website" %}{% endfilter %}',
+    germany: '{% filter escapejs %}{% trans "Germany" context "website" %}{% endfilter %}',
+    czechRepublic: '{% filter escapejs %}{% trans "Czech Republic" context "website" %}{% endfilter %}',
+    unitedKingdom: '{% filter escapejs %}{% trans "United Kingdom" context "website" %}{% endfilter %}',
+    france: '{% filter escapejs %}{% trans "France" context "website" %}{% endfilter %}',
+    netherlands: '{% filter escapejs %}{% trans "Netherlands" context "website" %}{% endfilter %}',
+    poland: '{% filter escapejs %}{% trans "Poland" context "website" %}{% endfilter %}',
+    austria: '{% filter escapejs %}{% trans "Austria" context "website" %}{% endfilter %}',
+    switzerland: '{% filter escapejs %}{% trans "Switzerland" context "website" %}{% endfilter %}',
+    sweden: '{% filter escapejs %}{% trans "Sweden" context "website" %}{% endfilter %}',
+    uae: '{% filter escapejs %}{% trans "United Arab Emirates" context "website" %}{% endfilter %}',
+    japan: '{% filter escapejs %}{% trans "Japan" context "website" %}{% endfilter %}',
+    singapore: '{% filter escapejs %}{% trans "Singapore" context "website" %}{% endfilter %}',
+    canada: '{% filter escapejs %}{% trans "Canada" context "website" %}{% endfilter %}',
+    australia: '{% filter escapejs %}{% trans "Australia" context "website" %}{% endfilter %}',
+    brazil: '{% filter escapejs %}{% trans "Brazil" context "website" %}{% endfilter %}',
+    india: '{% filter escapejs %}{% trans "India" context "website" %}{% endfilter %}',
+    southAfrica: '{% filter escapejs %}{% trans "South Africa" context "website" %}{% endfilter %}',
+    mexico: '{% filter escapejs %}{% trans "Mexico" context "website" %}{% endfilter %}',
+    southKorea: '{% filter escapejs %}{% trans "South Korea" context "website" %}{% endfilter %}',
+  };
+})();
+
 // Load SVG inline for interactivity
 fetch('{% static "adminlte/images/world-map.svg" %}?v=7')
   .then(r => r.text())
@@ -39,30 +68,30 @@ fetch('{% static "adminlte/images/world-map.svg" %}?v=7')
     initMap();
   })
   .catch(() => {
-    document.getElementById('svg-map-container').innerHTML = '<p style="color:#253D51;padding:40px;text-align:center;">Map loading...</p>';
+    document.getElementById('svg-map-container').innerHTML = '<p style="color:#253D51;padding:40px;text-align:center;">' + window.WEBSITE_MAP_I18N.mapLoading + '</p>';
   });
 
 const COUNTRY_STATUS = {
-  'US': { status: 'active',  year: 1, name: 'United States',         page: '{% url "region_us" %}' },
-  'DE': { status: 'active',  year: 1, name: 'Germany',               page: '{% url "region_de" %}' },
-  'CZ': { status: 'active',  year: 1, name: 'Czech Republic',        page: '{% url "region_cz" %}' },
-  'GB': { status: 'active',  year: 1, name: 'United Kingdom',        page: null },
-  'FR': { status: 'active',  year: 1, name: 'France',                page: null },
-  'NL': { status: 'active',  year: 1, name: 'Netherlands',           page: null },
-  'PL': { status: 'active',  year: 1, name: 'Poland',                page: null },
-  'AT': { status: 'active',  year: 1, name: 'Austria',               page: null },
-  'CH': { status: 'active',  year: 1, name: 'Switzerland',           page: null },
-  'SE': { status: 'active',  year: 1, name: 'Sweden',                page: null },
-  'AE': { status: 'planned', year: 2, name: 'United Arab Emirates',  page: '{% url "region_ae" %}' },
-  'JP': { status: 'planned', year: 3, name: 'Japan',                 page: '{% url "region_jp" %}' },
-  'SG': { status: 'planned', year: 2, name: 'Singapore',             page: null },
-  'CA': { status: 'planned', year: 2, name: 'Canada',                page: null },
-  'AU': { status: 'planned', year: 2, name: 'Australia',             page: null },
-  'BR': { status: 'planned', year: 3, name: 'Brazil',                page: null },
-  'IN': { status: 'planned', year: 3, name: 'India',                 page: null },
-  'ZA': { status: 'planned', year: 4, name: 'South Africa',          page: null },
-  'MX': { status: 'planned', year: 3, name: 'Mexico',                page: null },
-  'KR': { status: 'planned', year: 3, name: 'South Korea',           page: null },
+  'US': { status: 'active',  year: 1, name: window.WEBSITE_MAP_I18N.unitedStates,         page: '{% url "region_us" %}' },
+  'DE': { status: 'active',  year: 1, name: window.WEBSITE_MAP_I18N.germany,               page: '{% url "region_de" %}' },
+  'CZ': { status: 'active',  year: 1, name: window.WEBSITE_MAP_I18N.czechRepublic,        page: '{% url "region_cz" %}' },
+  'GB': { status: 'active',  year: 1, name: window.WEBSITE_MAP_I18N.unitedKingdom,        page: null },
+  'FR': { status: 'active',  year: 1, name: window.WEBSITE_MAP_I18N.france,                page: null },
+  'NL': { status: 'active',  year: 1, name: window.WEBSITE_MAP_I18N.netherlands,           page: null },
+  'PL': { status: 'active',  year: 1, name: window.WEBSITE_MAP_I18N.poland,                page: null },
+  'AT': { status: 'active',  year: 1, name: window.WEBSITE_MAP_I18N.austria,               page: null },
+  'CH': { status: 'active',  year: 1, name: window.WEBSITE_MAP_I18N.switzerland,           page: null },
+  'SE': { status: 'active',  year: 1, name: window.WEBSITE_MAP_I18N.sweden,                page: null },
+  'AE': { status: 'planned', year: 2, name: window.WEBSITE_MAP_I18N.uae,  page: '{% url "region_ae" %}' },
+  'JP': { status: 'planned', year: 3, name: window.WEBSITE_MAP_I18N.japan,                 page: '{% url "region_jp" %}' },
+  'SG': { status: 'planned', year: 2, name: window.WEBSITE_MAP_I18N.singapore,             page: null },
+  'CA': { status: 'planned', year: 2, name: window.WEBSITE_MAP_I18N.canada,                page: null },
+  'AU': { status: 'planned', year: 2, name: window.WEBSITE_MAP_I18N.australia,             page: null },
+  'BR': { status: 'planned', year: 3, name: window.WEBSITE_MAP_I18N.brazil,                page: null },
+  'IN': { status: 'planned', year: 3, name: window.WEBSITE_MAP_I18N.india,                 page: null },
+  'ZA': { status: 'planned', year: 4, name: window.WEBSITE_MAP_I18N.southAfrica,          page: null },
+  'MX': { status: 'planned', year: 3, name: window.WEBSITE_MAP_I18N.mexico,                page: null },
+  'KR': { status: 'planned', year: 3, name: window.WEBSITE_MAP_I18N.southKorea,           page: null },
 };
 
 function initMap() {
@@ -97,12 +126,14 @@ function initMap() {
       path.addEventListener('mouseenter', (e) => {
         path.style.fill = info.status === 'active' ? fillActive : fillPlanned;
         if (tooltip) {
-          const statusLabel = info.status === 'active' ? '● Active' : `◌ Planned – Year ${info.year}`;
+          const statusLabel = info.status === 'active'
+            ? '● ' + window.WEBSITE_MAP_I18N.active
+            : '◌ ' + window.WEBSITE_MAP_I18N.plannedYear + ' ' + info.year;
           const statusColor = info.status === 'active' ? '#253D51' : '#5F8FAA';
           tooltip.innerHTML = `
             <div class="map-tooltip__name">${info.name}</div>
             <div style="color:${statusColor};font-size:.75rem;">${statusLabel}</div>
-            <div style="font-size:.7rem;color:rgba(199,204,209,.6);margin-top:4px;">Click for details →</div>
+            <div style="font-size:.7rem;color:rgba(199,204,209,.6);margin-top:4px;">${window.WEBSITE_MAP_I18N.clickDetails}</div>
           `;
           tooltip.classList.add('visible');
         }

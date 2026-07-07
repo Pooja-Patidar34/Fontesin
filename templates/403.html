@@ -1,9 +1,9 @@
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="utf-8">
-  <title>403 Forbidden</title>
+  <title>{% trans "403 Forbidden" context "errors" %}</title>
 
   <link rel="stylesheet" href="{% static 'adminlte/plugins/fontawesome-free/css/all.min.css' %}">
   <link rel="stylesheet" href="{% static 'adminlte/css/adminlte.min.css' %}">
@@ -24,15 +24,15 @@
 
           <h3 class="mb-2">
             <i class="fas fa-ban text-danger"></i>
-            Access Denied
+            {% trans "Access Denied" context "errors" %}
           </h3>
 
           <p class="text-muted">
-            You do not have permission to access this page.
+            {% trans "You do not have permission to access this page." context "errors" %}
           </p>
 
           <a href="{% url 'dashboard' %}" class="btn btn-primary mt-3">
-            Go to Dashboard
+            {% trans "Go to Dashboard" context "errors" %}
           </a>
 
         </div>

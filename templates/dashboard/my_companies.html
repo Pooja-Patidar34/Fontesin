@@ -1,5 +1,6 @@
 {% extends "base/base.html" %}
-{% block title %}My Companies{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "My Companies" context "companies" %}{% endblock %}
 
 {% block content %}
 <style>
@@ -37,11 +38,11 @@
 <div class="card card-outline card-primary shadow-sm">
   <div class="card-header d-flex justify-content-between align-items-center flex-wrap" style="gap:1rem;">
     <h3 class="card-title font-weight-bold mb-0">
-      <i class="fas fa-folder-open mr-2"></i> My Companies
+      <i class="fas fa-folder-open mr-2"></i> {% trans "My Companies" context "companies" %}
     </h3>
     <div class="d-flex align-items-center" style="gap:1rem;">
       <span class="text-muted small">
-        Total: {{ total_count }}
+        {% blocktrans trimmed with count=total_count context "companies" %}Total: {{ count }}{% endblocktrans %}
       </span>
       {% comment %}
         Opens the in-page Add Company modal (shared create flow). The modal
@@ -49,7 +50,7 @@
       {% endcomment %}
       {% if can_manage %}
       <button type="button" id="add-company-btn" class="btn btn-primary btn-sm">
-        <i class="fas fa-plus mr-1"></i> Add Company
+        <i class="fas fa-plus mr-1"></i> {% trans "Add Company" context "companies" %}
       </button>
       {% endif %}
     </div>
@@ -61,14 +62,14 @@
       <table class="table table-hover mb-0 myc-table">
         <thead>
           <tr>
-            <th style="padding-left:1.25rem;">Company</th>
-            <th>Relationship</th>
-            <th>Location</th>
-            <th>Registration No.</th>
-            <th>Certification</th>
-            <th>Status</th>
-            <th>Created</th>
-            <th class="text-center">Action</th>
+            <th style="padding-left:1.25rem;">{% trans "Company" context "companies" %}</th>
+            <th>{% trans "Relationship" context "companies" %}</th>
+            <th>{% trans "Location" context "companies" %}</th>
+            <th>{% trans "Registration No." context "companies" %}</th>
+            <th>{% trans "Certification" context "companies" %}</th>
+            <th>{% trans "Status" context "companies" %}</th>
+            <th>{% trans "Created" context "companies" %}</th>
+            <th class="text-center">{% trans "Action" context "common" %}</th>
           </tr>
         </thead>
         <tbody>
@@ -82,9 +83,9 @@
             </td>
             <td>
               {% if c.owner_user_id == request.user.id %}
-                <span class="pill pill-certified">Owner</span>
+                <span class="pill pill-certified">{% trans "Owner" context "companies" %}</span>
               {% else %}
-                <span class="pill pill-uncertified">Member</span>
+                <span class="pill pill-uncertified">{% trans "Member" context "companies" %}</span>
               {% endif %}
             </td>
             <td class="small">
@@ -93,20 +94,20 @@
             <td class="small text-muted">{{ c.registration_id|default:"—" }}</td>
             <td>
               {% if c.certification_status == "pending" %}
-                <span class="pill pill-pending">Pending</span>
+                <span class="pill pill-pending">{% trans "Pending" context "companies" %}</span>
               {% elif c.certification_status == "certified" %}
-                <span class="pill pill-certified">Certified</span>
+                <span class="pill pill-certified">{% trans "Certified" context "companies" %}</span>
               {% elif c.certification_status == "rejected" %}
-                <span class="pill pill-rejected">Rejected</span>
+                <span class="pill pill-rejected">{% trans "Rejected" context "companies" %}</span>
               {% else %}
-                <span class="pill pill-uncertified">Uncertified</span>
+                <span class="pill pill-uncertified">{% trans "Uncertified" context "companies" %}</span>
               {% endif %}
             </td>
             <td>
               {% if c.is_active %}
-                <span class="pill pill-certified">Active</span>
+                <span class="pill pill-certified">{% trans "Active" context "companies" %}</span>
               {% else %}
-                <span class="pill pill-inactive">Inactive</span>
+                <span class="pill pill-inactive">{% trans "Inactive" context "companies" %}</span>
               {% endif %}
             </td>
             <td class="small text-muted">{{ c.created_at|date:"M j, Y" }}</td>
@@ -114,7 +115,7 @@
               <button type="button"
                       class="btn btn-sm btn-outline-secondary view-myc-btn"
                       data-url="{% url 'company-detail' c.id %}">
-                <i class="fas fa-eye mr-1"></i> View
+                <i class="fas fa-eye mr-1"></i> {% trans "View" context "common" %}
               </button>
               {% comment %}
                 Edit is owner-only — business users can edit just the companies
@@ -124,16 +125,16 @@
               {% if c.owner_user_id == request.user.id %}
               <a href="{% url 'companies' %}?open_edit={{ c.id }}&from=my-companies"
                  class="btn btn-sm btn-outline-primary ml-1">
-                <i class="fas fa-edit mr-1"></i> Edit
+                <i class="fas fa-edit mr-1"></i> {% trans "Edit" context "common" %}
               </a>
               {% else %}
               <form method="post" action="{% url 'company-leave' c.id %}"
                     id="myc-leave-form-{{ c.id }}" class="d-inline">
                 {% csrf_token %}
                 <button type="button" class="btn btn-sm btn-outline-danger ml-1"
-                        title="Leave this company"
-                        onclick="appConfirm({kind:'danger', title:'Leave this company?', text:'You will lose access to <strong>{{ c.name|escapejs }}</strong> and it will be removed from your My Companies. You can request to join again later.', okLabel:'Leave', okIcon:'fa-right-from-bracket', onConfirm:function(){document.getElementById('myc-leave-form-{{ c.id }}').submit();}})">
-                  <i class="fas fa-sign-out-alt mr-1"></i> Leave
+                        title="{% trans "Leave this company" context "companies" %}"
+                        onclick="appConfirm({kind:'danger', title:'{% filter escapejs %}{% trans "Leave this company?" context "companies" %}{% endfilter %}', text:'{% blocktrans trimmed with company_name=c.name context "companies" %}You will lose access to <strong>{{ company_name }}</strong> and it will be removed from your My Companies. You can request to join again later.{% endblocktrans %}', okLabel:'{% filter escapejs %}{% trans "Leave" context "companies" %}{% endfilter %}', okIcon:'fa-right-from-bracket', onConfirm:function(){document.getElementById('myc-leave-form-{{ c.id }}').submit();}})">
+                  <i class="fas fa-sign-out-alt mr-1"></i> {% trans "Leave" context "companies" %}
                 </button>
               </form>
               {% endif %}
@@ -146,8 +147,8 @@
     {% else %}
     <div class="myc-empty">
       <i class="fas fa-folder-open fa-3x"></i>
-      <p class="mb-1" style="font-weight:600; color:#475569;">No companies yet.</p>
-      <p class="small mb-0">Companies you create will show up here.</p>
+      <p class="mb-1" style="font-weight:600; color:#475569;">{% trans "No companies yet." context "companies" %}</p>
+      <p class="small mb-0">{% trans "Companies you create will show up here." context "companies" %}</p>
     </div>
     {% endif %}
   </div>
@@ -158,10 +159,10 @@
       <ul class="pagination pagination-sm mb-0">
         {% if page_obj.has_previous %}
           <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">{% trans "Previous" context "common" %}</a>
           </li>
         {% else %}
-          <li class="page-item disabled"><span class="page-link">Previous</span></li>
+          <li class="page-item disabled"><span class="page-link">{% trans "Previous" context "common" %}</span></li>
         {% endif %}
 
         {% for num in page_obj.paginator.page_range %}
@@ -174,10 +175,10 @@
 
         {% if page_obj.has_next %}
           <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}">{% trans "Next" context "common" %}</a>
           </li>
         {% else %}
-          <li class="page-item disabled"><span class="page-link">Next</span></li>
+          <li class="page-item disabled"><span class="page-link">{% trans "Next" context "common" %}</span></li>
         {% endif %}
       </ul>
     </nav>
@@ -193,7 +194,7 @@
 <aside id="myc-drawer" style="display:none; position:fixed; top:0; right:0; bottom:0; width:min(560px, 92vw); background:#fff; z-index:1055; box-shadow:-12px 0 32px rgba(15,23,42,.18); overflow-y:auto;">
   <div style="padding:18px 22px; border-bottom:1px solid #e8eef3; display:flex; align-items:center; justify-content:space-between;">
     <h5 style="margin:0; font-weight:700; color:#1B2E3F;">
-      <i class="fas fa-building mr-2"></i> Company Details
+      <i class="fas fa-building mr-2"></i> {% trans "Company Details" context "companies" %}
     </h5>
     <button type="button" class="btn btn-sm btn-link" id="myc-drawer-close" style="color:#64748b;">
       <i class="fas fa-times"></i>
@@ -201,13 +202,43 @@
   </div>
   <div id="myc-drawer-body" style="padding:18px 22px;">
     <div class="text-center text-muted py-4">
-      <i class="fas fa-spinner fa-spin"></i> Loading…
+      <i class="fas fa-spinner fa-spin"></i> {% trans "Loading…" context "common" %}
     </div>
   </div>
 </aside>
 
 <script>
 (function () {
+  var I18N = {
+    basics: '{% filter escapejs %}{% trans "Basics" context "companies" %}{% endfilter %}',
+    address: '{% filter escapejs %}{% trans "Address" context "companies" %}{% endfilter %}',
+    contact: '{% filter escapejs %}{% trans "Contact" context "companies" %}{% endfilter %}',
+    certifyingConsultant: '{% filter escapejs %}{% trans "Certifying Consultant" context "companies" %}{% endfilter %}',
+    status: '{% filter escapejs %}{% trans "Status" context "companies" %}{% endfilter %}',
+    registrationNo: '{% filter escapejs %}{% trans "Registration No." context "companies" %}{% endfilter %}',
+    legalForm: '{% filter escapejs %}{% trans "Legal Form" context "companies" %}{% endfilter %}',
+    yearFounded: '{% filter escapejs %}{% trans "Year founded" context "companies" %}{% endfilter %}',
+    employees: '{% filter escapejs %}{% trans "Employees" context "companies" %}{% endfilter %}',
+    naceCode: '{% filter escapejs %}{% trans "NACE Code" context "companies" %}{% endfilter %}',
+    naicsCode: '{% filter escapejs %}{% trans "NAICS Code" context "companies" %}{% endfilter %}',
+    keywords: '{% filter escapejs %}{% trans "Keywords" context "companies" %}{% endfilter %}',
+    cityState: '{% filter escapejs %}{% trans "City / State" context "companies" %}{% endfilter %}',
+    postalCode: '{% filter escapejs %}{% trans "Postal Code" context "companies" %}{% endfilter %}',
+    contactPerson: '{% filter escapejs %}{% trans "Contact Person" context "companies" %}{% endfilter %}',
+    contactEmail: '{% filter escapejs %}{% trans "Contact Email" context "companies" %}{% endfilter %}',
+    phone: '{% filter escapejs %}{% trans "Phone" context "companies" %}{% endfilter %}',
+    website: '{% filter escapejs %}{% trans "Website" context "companies" %}{% endfilter %}',
+    name: '{% filter escapejs %}{% trans "Name" context "companies" %}{% endfilter %}',
+    certification: '{% filter escapejs %}{% trans "Certification" context "companies" %}{% endfilter %}',
+    active: '{% filter escapejs %}{% trans "Active" context "companies" %}{% endfilter %}',
+    yes: '{% filter escapejs %}{% trans "Yes" context "common" %}{% endfilter %}',
+    no: '{% filter escapejs %}{% trans "No" context "common" %}{% endfilter %}',
+    loading: '{% filter escapejs %}{% trans "Loading…" context "common" %}{% endfilter %}',
+    loadError: '{% filter escapejs %}{% trans "Could not load company details." context "companies" %}{% endfilter %}',
+  };
+  var g = (typeof gettext === "function") ? gettext : function (s) { return s; };
+  Object.keys(I18N).forEach(function (k) { I18N[k] = g(I18N[k]); });
+
   var overlay = document.getElementById("myc-drawer-overlay");
   var drawer  = document.getElementById("myc-drawer");
   var body    = document.getElementById("myc-drawer-body");
@@ -248,37 +279,37 @@
       (d.classification ? '<div style="font-size:.82rem; color:#64748b;">' + d.classification + '</div>' : '') +
       '</div>';
 
-    html += sectionHeading("Basics");
-    html += row("Registration No.", d.registration_id);
-    html += row("Legal Form", d.entity_type);
-    html += row("Year founded", d.year_established);
-    html += row("Employees", d.employee_count_range);
-    html += row("NACE Code", d.nace_code_display);
-    html += row("NAICS Code", d.naics_code_display);
-    html += row("Keywords", d.keywords);
+    html += sectionHeading(I18N.basics);
+    html += row(I18N.registrationNo, d.registration_id);
+    html += row(I18N.legalForm, d.entity_type);
+    html += row(I18N.yearFounded, d.year_established);
+    html += row(I18N.employees, d.employee_count_range);
+    html += row(I18N.naceCode, d.nace_code_display);
+    html += row(I18N.naicsCode, d.naics_code_display);
+    html += row(I18N.keywords, d.keywords);
 
-    html += sectionHeading("Address");
-    html += row("Address", address);
-    html += row("City / State", loc);
-    html += row("Postal Code", d.postal_code);
+    html += sectionHeading(I18N.address);
+    html += row(I18N.address, address);
+    html += row(I18N.cityState, loc);
+    html += row(I18N.postalCode, d.postal_code);
 
-    html += sectionHeading("Contact");
-    html += row("Contact Person", contactName);
-    html += row("Contact Email", d.contact_email);
-    html += row("Phone", d.phone);
-    html += row("Website", d.website);
+    html += sectionHeading(I18N.contact);
+    html += row(I18N.contactPerson, contactName);
+    html += row(I18N.contactEmail, d.contact_email);
+    html += row(I18N.phone, d.phone);
+    html += row(I18N.website, d.website);
 
     if (d.certifying_consultant) {
-      html += sectionHeading("Certifying Consultant");
-      html += row("Name",  d.certifying_consultant.full_name);
-      html += row("Email", d.certifying_consultant.email);
-      html += row("Phone", d.certifying_consultant.phone);
+      html += sectionHeading(I18N.certifyingConsultant);
+      html += row(I18N.name, d.certifying_consultant.full_name);
+      html += row(I18N.contactEmail, d.certifying_consultant.email);
+      html += row(I18N.phone, d.certifying_consultant.phone);
     }
 
-    html += sectionHeading("Status");
-    html += row("Certification", d.certification_status);
+    html += sectionHeading(I18N.status);
+    html += row(I18N.certification, d.certification_status);
     if (typeof d.is_active === "boolean") {
-      html += row("Active", d.is_active ? "Yes" : "No");
+      html += row(I18N.active, d.is_active ? I18N.yes : I18N.no);
     }
 
     body.innerHTML = html;
@@ -287,13 +318,13 @@
   document.querySelectorAll(".view-myc-btn").forEach(function (btn) {
     btn.addEventListener("click", function () {
       var url = btn.getAttribute("data-url");
-      body.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i> Loading…</div>';
+      body.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i> ' + I18N.loading + '</div>';
       open();
       fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" }, credentials: "same-origin" })
         .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
         .then(function (payload) { renderDetail(payload); })
         .catch(function () {
-          body.innerHTML = '<div class="text-danger small">Could not load company details.</div>';
+          body.innerHTML = '<div class="text-danger small">' + I18N.loadError + '</div>';
         });
     });
   });

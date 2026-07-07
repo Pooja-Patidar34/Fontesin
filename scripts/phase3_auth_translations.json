@@ -1,0 +1,6114 @@
+{
+  "django": [
+    {
+      "msgid": "Application Under Review",
+      "context": "auth.application_pending",
+      "references": [
+        "templates/auth/application_pending.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Application Not Approved",
+      "context": "auth.application_pending",
+      "references": [
+        "templates/auth/application_pending.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "After review, your account application was not approved by our team.",
+      "context": "auth.application_pending",
+      "references": [
+        "templates/auth/application_pending.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Reason:",
+      "context": "auth.application_pending",
+      "references": [
+        "templates/auth/application_pending.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "If you believe this was a mistake, please contact our team.",
+      "context": "auth.application_pending",
+      "references": [
+        "templates/auth/application_pending.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Thanks — we've received your application. Our team is reviewing it and will activate your account once approved.",
+      "context": "auth.application_pending",
+      "references": [
+        "templates/auth/application_pending.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Your application has been submitted",
+      "context": "auth.application_pending",
+      "references": [
+        "templates/auth/application_pending.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "A super admin is reviewing your details",
+      "context": "auth.application_pending",
+      "references": [
+        "templates/auth/application_pending.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "You'll get full dashboard access once approved",
+      "context": "auth.application_pending",
+      "references": [
+        "templates/auth/application_pending.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "You'll be notified of the decision",
+      "context": "auth.application_pending",
+      "references": [
+        "templates/auth/application_pending.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Back to Login",
+      "context": "auth.common",
+      "references": [
+        "templates/auth/application_pending.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Application Under Review\" context \"auth.application_pending",
+      "context": null,
+      "references": [
+        "templates/auth/application_pending.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Application Not Approved\" context \"auth.application_pending",
+      "context": null,
+      "references": [
+        "templates/auth/application_pending.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "After review, your account application was not approved by our team.\" context \"auth.application_pending",
+      "context": null,
+      "references": [
+        "templates/auth/application_pending.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Reason:\" context \"auth.application_pending",
+      "context": null,
+      "references": [
+        "templates/auth/application_pending.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "If you believe this was a mistake, please contact our team.\" context \"auth.application_pending",
+      "context": null,
+      "references": [
+        "templates/auth/application_pending.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Thanks — we've received your application. Our team is reviewing it and will activate your account once approved.\" context \"auth.application_pending",
+      "context": null,
+      "references": [
+        "templates/auth/application_pending.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Your application has been submitted\" context \"auth.application_pending",
+      "context": null,
+      "references": [
+        "templates/auth/application_pending.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "A super admin is reviewing your details\" context \"auth.application_pending",
+      "context": null,
+      "references": [
+        "templates/auth/application_pending.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "You'll get full dashboard access once approved\" context \"auth.application_pending",
+      "context": null,
+      "references": [
+        "templates/auth/application_pending.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "You'll be notified of the decision\" context \"auth.application_pending",
+      "context": null,
+      "references": [
+        "templates/auth/application_pending.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Back to Login\" context \"auth.common",
+      "context": null,
+      "references": [
+        "templates/auth/application_pending.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Select your region",
+      "context": "auth.apply",
+      "references": [
+        "templates/auth/apply.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Select your operating region to complete your FONTESIN partner registration.",
+      "context": "auth.apply",
+      "references": [
+        "templates/auth/apply.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Sign out",
+      "context": "auth.common",
+      "references": [
+        "templates/auth/apply.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Choose the country you'll operate in. Your registration is then sent to the FONTESIN team for approval — you'll be notified once it's reviewed.",
+      "context": "auth.apply",
+      "references": [
+        "templates/auth/apply.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Franchise type",
+      "context": "auth.apply",
+      "references": [
+        "templates/auth/apply.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Select a franchise type…",
+      "context": "auth.apply",
+      "references": [
+        "templates/auth/apply.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Master, National, Regional, or Micro — defines the scope of your franchise.",
+      "context": "auth.apply",
+      "references": [
+        "templates/auth/apply.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Region (country)",
+      "context": "auth.apply",
+      "references": [
+        "templates/auth/apply.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Select your country…",
+      "context": "auth.apply",
+      "references": [
+        "templates/auth/apply.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "This determines the companies and territory you'll have access to once approved.",
+      "context": "auth.apply",
+      "references": [
+        "templates/auth/apply.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Submit for approval",
+      "context": "auth.apply",
+      "references": [
+        "templates/auth/apply.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "After you submit, a FONTESIN administrator will review and approve or decline your registration. You can't access the dashboard until then.",
+      "context": "auth.apply",
+      "references": [
+        "templates/auth/apply.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Select your region\" context \"auth.apply",
+      "context": null,
+      "references": [
+        "templates/auth/apply.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Select your operating region to complete your FONTESIN partner registration.' context 'auth.apply",
+      "context": null,
+      "references": [
+        "templates/auth/apply.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Sign out\" context \"auth.common",
+      "context": null,
+      "references": [
+        "templates/auth/apply.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Choose the country you'll operate in. Your registration is then sent to the FONTESIN team for approval — you'll be notified once it's reviewed.\" context \"auth.apply",
+      "context": null,
+      "references": [
+        "templates/auth/apply.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Franchise type\" context \"auth.apply",
+      "context": null,
+      "references": [
+        "templates/auth/apply.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Select a franchise type…\" context \"auth.apply",
+      "context": null,
+      "references": [
+        "templates/auth/apply.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Master, National, Regional, or Micro — defines the scope of your franchise.\" context \"auth.apply",
+      "context": null,
+      "references": [
+        "templates/auth/apply.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Region (country)\" context \"auth.apply",
+      "context": null,
+      "references": [
+        "templates/auth/apply.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Select your country…\" context \"auth.apply",
+      "context": null,
+      "references": [
+        "templates/auth/apply.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "This determines the companies and territory you'll have access to once approved.\" context \"auth.apply",
+      "context": null,
+      "references": [
+        "templates/auth/apply.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Submit for approval\" context \"auth.apply",
+      "context": null,
+      "references": [
+        "templates/auth/apply.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "After you submit, a FONTESIN administrator will review and approve or decline your registration. You can't access the dashboard until then.\" context \"auth.apply",
+      "context": null,
+      "references": [
+        "templates/auth/apply.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Application Submitted",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Application Submitted!",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Application Status",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Under Review",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Application Reference",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Role Applied For",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Consultant",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Submission Date",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Identity Verification",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Verified",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Expected Decision",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Review Process",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Application Received",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Your registration and selected region have been received and logged in our system.",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Completed · Today",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Your identity has been successfully verified through Veriff.",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Admin Review",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "A FONTESIN administrator is reviewing your registration and will approve or decline it.",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "In Progress",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Decision & Access",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "You will be notified by email with the outcome. Once approved, you get full access to your dashboard.",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Pending",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "What Happens Next?",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Questions About Your Application?",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Our partner onboarding team is available Monday–Friday, 9:00–18:00 EST. Please include your application reference number in all correspondence.",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Back to Homepage",
+      "context": "auth.common",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Log In to Your Account",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "at",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "By",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Application Submitted\" context \"auth.apply_review",
+      "context": null,
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Application Submitted!\" context \"auth.apply_review",
+      "context": null,
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Application Status\" context \"auth.apply_review",
+      "context": null,
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Under Review\" context \"auth.apply_review",
+      "context": null,
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Application Reference\" context \"auth.apply_review",
+      "context": null,
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Role Applied For\" context \"auth.apply_review",
+      "context": null,
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Consultant\" context \"auth.apply_review",
+      "context": null,
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Submission Date\" context \"auth.apply_review",
+      "context": null,
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Identity Verification\" context \"auth.apply_review",
+      "context": null,
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Verified\" context \"auth.apply_review",
+      "context": null,
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Expected Decision\" context \"auth.apply_review",
+      "context": null,
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Review Process\" context \"auth.apply_review",
+      "context": null,
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Application Received\" context \"auth.apply_review",
+      "context": null,
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Your registration and selected region have been received and logged in our system.\" context \"auth.apply_review",
+      "context": null,
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Completed · Today\" context \"auth.apply_review",
+      "context": null,
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Your identity has been successfully verified through Veriff.\" context \"auth.apply_review",
+      "context": null,
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Admin Review\" context \"auth.apply_review",
+      "context": null,
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "A FONTESIN administrator is reviewing your registration and will approve or decline it.\" context \"auth.apply_review",
+      "context": null,
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "In Progress\" context \"auth.apply_review",
+      "context": null,
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Decision & Access\" context \"auth.apply_review",
+      "context": null,
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "You will be notified by email with the outcome. Once approved, you get full access to your dashboard.\" context \"auth.apply_review",
+      "context": null,
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Pending\" context \"auth.apply_review",
+      "context": null,
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "What Happens Next?\" context \"auth.apply_review",
+      "context": null,
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Questions About Your Application?\" context \"auth.apply_review",
+      "context": null,
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Our partner onboarding team is available Monday–Friday, 9:00–18:00 EST. Please include your application reference number in all correspondence.\" context \"auth.apply_review",
+      "context": null,
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Back to Homepage\" context \"auth.common",
+      "context": null,
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Log In to Your Account\" context \"auth.apply_review",
+      "context": null,
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "at\" context \"auth.apply_review",
+      "context": null,
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "By\" context \"auth.apply_review",
+      "context": null,
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Forgot Password",
+      "context": "auth.forgot_password",
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Reset your FONTESIN account password.",
+      "context": "auth.forgot_password",
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Reset your password securely",
+      "context": "auth.forgot_password",
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Enter your email address and we'll send you a 6-digit verification code to reset your password.",
+      "context": "auth.forgot_password",
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "6-digit OTP via email",
+      "context": "auth.forgot_password",
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Code expires in 10 minutes",
+      "context": "auth.forgot_password",
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "One-time use only",
+      "context": "auth.forgot_password",
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Email verification required",
+      "context": "auth.forgot_password",
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Design by Memento Mori Digital LLC",
+      "context": "auth.common",
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Enter your email address and we'll send you a verification code.",
+      "context": "auth.forgot_password",
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Email Address",
+      "context": "auth.common",
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Please enter a valid email address (e.g., you@company.com)",
+      "context": "auth.common",
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Send Verification Code",
+      "context": "auth.forgot_password",
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Remember your password?",
+      "context": "auth.common",
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Log in",
+      "context": "auth.common",
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Forgot Password\" context \"auth.forgot_password",
+      "context": null,
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Reset your FONTESIN account password.' context 'auth.forgot_password",
+      "context": null,
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Reset your password securely\" context \"auth.forgot_password",
+      "context": null,
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Enter your email address and we'll send you a 6-digit verification code to reset your password.\" context \"auth.forgot_password",
+      "context": null,
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "6-digit OTP via email\" context \"auth.forgot_password",
+      "context": null,
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Code expires in 10 minutes\" context \"auth.forgot_password",
+      "context": null,
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "One-time use only\" context \"auth.forgot_password",
+      "context": null,
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Email verification required\" context \"auth.forgot_password",
+      "context": null,
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Design by Memento Mori Digital LLC\" context \"auth.common",
+      "context": null,
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Enter your email address and we'll send you a verification code.\" context \"auth.forgot_password",
+      "context": null,
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Email Address\" context \"auth.common",
+      "context": null,
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Please enter a valid email address (e.g., you@company.com)' context 'auth.common",
+      "context": null,
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Send Verification Code\" context \"auth.forgot_password",
+      "context": null,
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Remember your password?\" context \"auth.common",
+      "context": null,
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Log in\" context \"auth.common",
+      "context": null,
+      "references": [
+        "templates/auth/forgot_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Log In",
+      "context": "auth.login",
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "Anmelden",
+        "es": "Iniciar sesión",
+        "fr": "Se connecter"
+      }
+    },
+    {
+      "msgid": "Log in to your FONTESIN account to access the global business platform.",
+      "context": "auth.login",
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Back to Home",
+      "context": "auth.common",
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Welcome back to the global platform",
+      "context": "auth.login",
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Access your company database, manage certifications, and connect with partners across 177+ countries.",
+      "context": "auth.login",
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Tenant-isolated company database",
+      "context": "auth.login",
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Verified business profiles",
+      "context": "auth.login",
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Global region access",
+      "context": "auth.login",
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Partnership & messaging tools",
+      "context": "auth.login",
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Don't have an account?",
+      "context": "auth.login",
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Sign up free",
+      "context": "auth.login",
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Password",
+      "context": "auth.common",
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Enter your password",
+      "context": "auth.login",
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Toggle password visibility",
+      "context": "auth.common",
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Remember me",
+      "context": "auth.login",
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Forgot password?",
+      "context": "auth.login",
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "Passwort vergessen?",
+        "es": "¿Olvidó su contraseña?",
+        "fr": "Mot de passe oublié ?"
+      }
+    },
+    {
+      "msgid": "Log In\" context \"auth.login",
+      "context": null,
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Log in to your FONTESIN account to access the global business platform.' context 'auth.login",
+      "context": null,
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Back to Home\" context \"auth.common",
+      "context": null,
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Welcome back to the global platform\" context \"auth.login",
+      "context": null,
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Access your company database, manage certifications, and connect with partners across 177+ countries.\" context \"auth.login",
+      "context": null,
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Tenant-isolated company database\" context \"auth.login",
+      "context": null,
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Verified business profiles\" context \"auth.login",
+      "context": null,
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Global region access\" context \"auth.login",
+      "context": null,
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Partnership & messaging tools\" context \"auth.login",
+      "context": null,
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Don't have an account?\" context \"auth.login",
+      "context": null,
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Sign up free\" context \"auth.login",
+      "context": null,
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Password\" context \"auth.common",
+      "context": null,
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Enter your password' context 'auth.login",
+      "context": null,
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Toggle password visibility' context 'auth.common",
+      "context": null,
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Remember me\" context \"auth.login",
+      "context": null,
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Forgot password?\" context \"auth.login",
+      "context": null,
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Pending Approval",
+      "context": "auth.pending_approval",
+      "references": [
+        "templates/auth/pending_approval.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Subscription Pending Approval",
+      "context": "auth.pending_approval",
+      "references": [
+        "templates/auth/pending_approval.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Thank you for choosing a plan! Your subscription is currently under review by our admin team.",
+      "context": "auth.pending_approval",
+      "references": [
+        "templates/auth/pending_approval.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Your payment has been received",
+      "context": "auth.pending_approval",
+      "references": [
+        "templates/auth/pending_approval.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Admin review is in progress",
+      "context": "auth.pending_approval",
+      "references": [
+        "templates/auth/pending_approval.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "You'll get full dashboard access once approved",
+      "context": "auth.pending_approval",
+      "references": [
+        "templates/auth/pending_approval.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "This usually takes less than 24 hours",
+      "context": "auth.pending_approval",
+      "references": [
+        "templates/auth/pending_approval.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Pending Approval\" context \"auth.pending_approval",
+      "context": null,
+      "references": [
+        "templates/auth/pending_approval.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Subscription Pending Approval\" context \"auth.pending_approval",
+      "context": null,
+      "references": [
+        "templates/auth/pending_approval.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Thank you for choosing a plan! Your subscription is currently under review by our admin team.\" context \"auth.pending_approval",
+      "context": null,
+      "references": [
+        "templates/auth/pending_approval.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Your payment has been received\" context \"auth.pending_approval",
+      "context": null,
+      "references": [
+        "templates/auth/pending_approval.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Admin review is in progress\" context \"auth.pending_approval",
+      "context": null,
+      "references": [
+        "templates/auth/pending_approval.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "You'll get full dashboard access once approved\" context \"auth.pending_approval",
+      "context": null,
+      "references": [
+        "templates/auth/pending_approval.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "This usually takes less than 24 hours\" context \"auth.pending_approval",
+      "context": null,
+      "references": [
+        "templates/auth/pending_approval.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Register",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "Registrieren",
+        "es": "Registrarse",
+        "fr": "S'inscrire"
+      }
+    },
+    {
+      "msgid": "Create your FONTESIN account.",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Create your account and join the global business platform",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Basic Info",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Your Role",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Confirm",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Create Your Account",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Start with the basics — free, no credit card required.",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "First Name",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Last Name",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Country",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Select your country...",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Phone Number",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Preferred Language",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Confirm Password",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Continue →",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Already have an account?",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Your Role on FONTESIN",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Tell us how you plan to use the platform. This helps us tailor your experience.",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "I am interested in joining as",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "🏢 Business User",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Register & certify my company",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "💼 Consultant",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Advise companies in my region",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "🌍 Coordinator",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Coordinate regional operations",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "🚀 Franchise Partner",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Master / National / Local franchise",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Company",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Select Company",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "No company selection needed.",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "You can register your company from your profile after signing up.",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Tell us about your interest",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Brief description...",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Back",
+      "context": "auth.common",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Almost Done!",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Review and confirm your registration.",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Account Type",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "FREE (Upgradeable)",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Access Level",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Read-only · Company name index",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Verification",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Identity verification required (Veriff)",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "I consent to the processing of my personal data in accordance with GDPR.",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "I would like to receive updates about FONTESIN platform development (Optional)",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Create Account & Verify Identity →",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "You will receive a verification email after registration.",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Format:",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Register\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Create your FONTESIN account.' context 'auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Create your account and join the global business platform\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Basic Info\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Your Role\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Confirm\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Create Your Account\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Start with the basics — free, no credit card required.\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "First Name\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Last Name\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Country\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Select your country...\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Phone Number\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Preferred Language\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Confirm Password\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Continue →\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Already have an account?\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Your Role on FONTESIN\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Tell us how you plan to use the platform. This helps us tailor your experience.\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "I am interested in joining as\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "🏢 Business User\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Register & certify my company\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "💼 Consultant\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Advise companies in my region\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "🌍 Coordinator\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Coordinate regional operations\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "🚀 Franchise Partner\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Master / National / Local franchise\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Company\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Select Company\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "No company selection needed.\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "You can register your company from your profile after signing up.\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Tell us about your interest\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Brief description...' context 'auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Back\" context \"auth.common",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Almost Done!\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Review and confirm your registration.\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Account Type\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "FREE (Upgradeable)\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Access Level\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Read-only · Company name index\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Verification\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Identity verification required (Veriff)\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "I consent to the processing of my personal data in accordance with GDPR.\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "I would like to receive updates about FONTESIN platform development (Optional)\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Create Account & Verify Identity →\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "You will receive a verification email after registration.\" context \"auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Format:' context 'auth.register",
+      "context": null,
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Reset Password",
+      "context": "auth.reset_password",
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Set a new password for your FONTESIN account.",
+      "context": "auth.reset_password",
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Set your new password",
+      "context": "auth.reset_password",
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Choose a strong password to keep your account secure. Your password must be at least 8 characters long.",
+      "context": "auth.reset_password",
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Minimum 8 characters",
+      "context": "auth.reset_password",
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Argon2 hashed & salted",
+      "context": "auth.reset_password",
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "OTP verified",
+      "context": "auth.reset_password",
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "One-time use code",
+      "context": "auth.reset_password",
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Invalid or Expired Link",
+      "context": "auth.reset_password",
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Your verification code is invalid or has expired. Please request a new one.",
+      "context": "auth.reset_password",
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Request New Code",
+      "context": "auth.reset_password",
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Enter your new password below.",
+      "context": "auth.reset_password",
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "New Password",
+      "context": "auth.reset_password",
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Enter new password",
+      "context": "auth.reset_password",
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Confirm Password",
+      "context": "auth.reset_password",
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Confirm new password",
+      "context": "auth.reset_password",
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Reset Password\" context \"auth.reset_password",
+      "context": null,
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Set a new password for your FONTESIN account.' context 'auth.reset_password",
+      "context": null,
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Set your new password\" context \"auth.reset_password",
+      "context": null,
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Choose a strong password to keep your account secure. Your password must be at least 8 characters long.\" context \"auth.reset_password",
+      "context": null,
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Minimum 8 characters\" context \"auth.reset_password",
+      "context": null,
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Argon2 hashed & salted\" context \"auth.reset_password",
+      "context": null,
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "OTP verified\" context \"auth.reset_password",
+      "context": null,
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "One-time use code\" context \"auth.reset_password",
+      "context": null,
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Invalid or Expired Link\" context \"auth.reset_password",
+      "context": null,
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Your verification code is invalid or has expired. Please request a new one.\" context \"auth.reset_password",
+      "context": null,
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Request New Code\" context \"auth.reset_password",
+      "context": null,
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Enter your new password below.\" context \"auth.reset_password",
+      "context": null,
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "New Password\" context \"auth.reset_password",
+      "context": null,
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Enter new password' context 'auth.reset_password",
+      "context": null,
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Confirm Password\" context \"auth.reset_password",
+      "context": null,
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Confirm new password' context 'auth.reset_password",
+      "context": null,
+      "references": [
+        "templates/auth/reset_password.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Identity Verification",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Home",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "World Map",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "About",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Careers",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Contact",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Menu",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Log Out",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Account Info",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Choose Plan",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Confirmation",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Verifying your identity…",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Secured by Veriff · Please keep this page open",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "We couldn't confirm your identity. Please try the verification again.",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Retry Identity Verification",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Identity Verification Required",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Prepare ID",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Passport, national ID card or driver's license",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Take a Selfie",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Live photo for biometric matching",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Instant Result",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "AI-powered verification in seconds",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Start Identity Verification",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Secured by Veriff · Your data is encrypted and never stored",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Powered by Veriff · End-to-end encrypted",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Please wait while we securely process your documents and biometric data.",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Document scan & OCR extraction",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Biometric face matching",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "AML & watchlist screening",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Identity confirmed",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Cancel",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Confirm Identification",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Identity Verified Successfully!",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Your identity has been confirmed. You can now proceed to choose your membership plan.",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Verification Complete",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Continue to Application Form →",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Continue to Choose Plan →",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "256-bit SSL · GDPR Compliant · ISO 27001 Certified",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Identity Verification\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Home\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "World Map\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "About\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Careers\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Contact\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Menu' context 'auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Log Out\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Account Info\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Choose Plan\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Confirmation\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Verifying your identity…\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Secured by Veriff · Please keep this page open\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "We couldn't confirm your identity. Please try the verification again.\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Retry Identity Verification\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Identity Verification Required\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Prepare ID\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Passport, national ID card or driver's license\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Take a Selfie\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Live photo for biometric matching\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Instant Result\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "AI-powered verification in seconds\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Start Identity Verification\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Secured by Veriff · Your data is encrypted and never stored\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Powered by Veriff · End-to-end encrypted\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Please wait while we securely process your documents and biometric data.\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Document scan & OCR extraction\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Biometric face matching\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "AML & watchlist screening\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Identity confirmed\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Cancel\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Confirm Identification\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Identity Verified Successfully!\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Your identity has been confirmed. You can now proceed to choose your membership plan.\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Verification Complete\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Continue to Application Form →\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Continue to Choose Plan →\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "256-bit SSL · GDPR Compliant · ISO 27001 Certified\" context \"auth.verify",
+      "context": null,
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Verify Code",
+      "context": "auth.verify_otp",
+      "references": [
+        "templates/auth/verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Enter your verification code to reset your FONTESIN account password.",
+      "context": "auth.verify_otp",
+      "references": [
+        "templates/auth/verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Enter your verification code",
+      "context": "auth.verify_otp",
+      "references": [
+        "templates/auth/verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "We've sent a 6-digit code to your email. Enter it below to verify your identity and reset your password.",
+      "context": "auth.verify_otp",
+      "references": [
+        "templates/auth/verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Check your inbox and spam folder",
+      "context": "auth.verify_otp",
+      "references": [
+        "templates/auth/verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Code expires in 10 minutes",
+      "context": "auth.verify_otp",
+      "references": [
+        "templates/auth/verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "One-time use only",
+      "context": "auth.verify_otp",
+      "references": [
+        "templates/auth/verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Verify Your Code",
+      "context": "auth.verify_otp",
+      "references": [
+        "templates/auth/verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Verification Code",
+      "context": "auth.verify_otp",
+      "references": [
+        "templates/auth/verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Didn't receive the code?",
+      "context": "auth.verify_otp",
+      "references": [
+        "templates/auth/verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Resend",
+      "context": "auth.verify_otp",
+      "references": [
+        "templates/auth/verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Resend in __SECONDS__s",
+      "context": "auth.verify_otp",
+      "references": [
+        "templates/auth/verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Please wait __SECONDS__s before requesting another code.",
+      "context": "auth.verify_otp",
+      "references": [
+        "templates/auth/verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Verify Code\" context \"auth.verify_otp",
+      "context": null,
+      "references": [
+        "templates/auth/verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Enter your verification code to reset your FONTESIN account password.' context 'auth.verify_otp",
+      "context": null,
+      "references": [
+        "templates/auth/verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Enter your verification code\" context \"auth.verify_otp",
+      "context": null,
+      "references": [
+        "templates/auth/verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "We've sent a 6-digit code to your email. Enter it below to verify your identity and reset your password.\" context \"auth.verify_otp",
+      "context": null,
+      "references": [
+        "templates/auth/verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Check your inbox and spam folder\" context \"auth.verify_otp",
+      "context": null,
+      "references": [
+        "templates/auth/verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Code expires in 10 minutes\" context \"auth.verify_otp",
+      "context": null,
+      "references": [
+        "templates/auth/verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "One-time use only\" context \"auth.verify_otp",
+      "context": null,
+      "references": [
+        "templates/auth/verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Verify Your Code\" context \"auth.verify_otp",
+      "context": null,
+      "references": [
+        "templates/auth/verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Verification Code\" context \"auth.verify_otp",
+      "context": null,
+      "references": [
+        "templates/auth/verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Didn't receive the code?\" context \"auth.verify_otp",
+      "context": null,
+      "references": [
+        "templates/auth/verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Resend\" context \"auth.verify_otp",
+      "context": null,
+      "references": [
+        "templates/auth/verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Resend' context 'auth.verify_otp",
+      "context": null,
+      "references": [
+        "templates/auth/verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Resend in __SECONDS__s' context 'auth.verify_otp",
+      "context": null,
+      "references": [
+        "templates/auth/verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Please wait __SECONDS__s before requesting another code.' context 'auth.verify_otp",
+      "context": null,
+      "references": [
+        "templates/auth/verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "%(var)s application",
+      "context": "auth.application_pending",
+      "references": [
+        "templates/auth/application_pending.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Thank you for applying to join FONTESIN. Your application is now under review by our team. We will contact you within 5&ndash;10 business days.",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "A FONTESIN administrator will review your registration and the region you selected.",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "If additional information is needed, we will contact you directly by email or phone.",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "You will receive a decision notification once your registration is approved or declined.",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Once approved, you get full access to your dashboard — just sign in to get started.",
+      "context": "auth.apply_review",
+      "references": [
+        "templates/auth/apply_review.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "By logging in, you agree to our Terms of Service and Privacy Policy.",
+      "context": "auth.login",
+      "references": [
+        "templates/auth/login.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "%(var)s Plan - %(var)s %(var)s",
+      "context": "auth.pending_approval",
+      "references": [
+        "templates/auth/pending_approval.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "I agree to the Terms of Service and Privacy Policy of FONTESIN.",
+      "context": "auth.register",
+      "references": [
+        "templates/auth/register.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Thanks — we've received your submission. We're confirming your identity with our verification partner. This usually takes a few moments; you'll be taken to the next step automatically once it's done.",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "To comply with financial regulations and protect our platform, we require identity verification before activating your FONTESIN account. The process takes less than 2 minutes.",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Document authenticity: Verified Biometric match: Confirmed AML screening: Clear",
+      "context": "auth.verify",
+      "references": [
+        "templates/auth/verify.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "We've sent a 6-digit verification code to %(var)s. Enter it below.",
+      "context": "auth.verify_otp",
+      "references": [
+        "templates/auth/verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "We received a request to reset your password. Use the following code:",
+      "context": "auth.email",
+      "references": [
+        "templates/email/otp_password_reset.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "This code expires in",
+      "context": "auth.email",
+      "references": [
+        "templates/email/otp_password_reset.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "10 minutes",
+      "context": "auth.email",
+      "references": [
+        "templates/email/otp_password_reset.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "If you didn't request this, you can safely ignore this email.",
+      "context": "auth.email",
+      "references": [
+        "templates/email/otp_password_reset.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "FONTESIN Team",
+      "context": "auth.email",
+      "references": [
+        "templates/email/otp_password_reset.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "We received a request to reset your password. Use the following verification code:",
+      "context": "auth.email",
+      "references": [
+        "templates/email/otp_password_reset.txt"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Email is required.",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "E-Mail ist erforderlich.",
+        "es": "El correo electrónico es obligatorio.",
+        "fr": "L'adresse e-mail est requise."
+      }
+    },
+    {
+      "msgid": "Enter a valid email address.",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "Geben Sie eine gültige E-Mail-Adresse ein.",
+        "es": "Introduzca una dirección de correo válida.",
+        "fr": "Saisissez une adresse e-mail valide."
+      }
+    },
+    {
+      "msgid": "Password is required.",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "Passwort ist erforderlich.",
+        "es": "La contraseña es obligatoria.",
+        "fr": "Le mot de passe est requis."
+      }
+    },
+    {
+      "msgid": "Your account has been deactivated by admin. Please contact support.",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Invalid credentials",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "Ungültige Anmeldedaten",
+        "es": "Credenciales no válidas",
+        "fr": "Identifiants invalides"
+      }
+    },
+    {
+      "msgid": "First name",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Last name",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Email",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Phone",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Country",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Password",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Role",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "%(fields)s is required.",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "%(fields)s are required.",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "First name must contain only letters. Digits and emojis are not allowed.",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Last name must contain only letters. Digits and emojis are not allowed.",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Enter a valid email address (e.g. john@company.com).",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Phone number must be %(min)d-%(max)d digits for the selected country.",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Password must be at least 8 characters.",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Email already exists",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Passwords do not match",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Invalid role selected",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Your account does not have a valid role assigned. Please contact support.",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Consultant",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Coordinator",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Franchise Partner",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "The application form is only available for consultants, coordinators, and franchise partners.",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "The application is only available for consultants, coordinators, and franchise partners.",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Please select your region (country).",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Please select your franchise type.",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Invalid role for application review.",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "If an account with that email exists, we've sent a verification code.",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Something went wrong while sending the verification code. Please try again.",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Please enter a valid 6-digit code.",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Invalid or expired code. Please try again.",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Passwords do not match.",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Your password has been reset successfully. You can now log in.",
+      "context": null,
+      "references": [
+        "accounts/view/auth.py"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "FONTESIN – Your password reset code",
+      "context": null,
+      "references": [
+        "accounts/utils/mailer.py"
+      ],
+      "translations": {
+        "de": "FONTESIN – Ihr Code zum Zurücksetzen des Passworts",
+        "es": "FONTESIN – Su código de restablecimiento de contraseña",
+        "fr": "FONTESIN – Votre code de réinitialisation du mot de passe"
+      }
+    }
+  ],
+  "djangojs": [
+    {
+      "msgid": "Error",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Success",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Warning",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Info",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Feature coming soon",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Emojis are not allowed in name.",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Name can only contain letters, spaces, hyphens and apostrophes.",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Name cannot exceed %(max)s characters.",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Emojis are not allowed in password.",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Emojis are not allowed in email.",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Email can only contain letters, digits and . _ - + special characters.",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Date of Birth cannot be in the future.",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Emojis are not allowed in phone number.",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Phone number can only contain digits, spaces, +, -, ( and ).",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Emojis are not allowed in website URL.",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Website URL contains invalid characters.",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Enter a valid website URL (e.g. https://yourcompany.com).",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Emojis are not allowed in LinkedIn URL.",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "LinkedIn URL contains invalid characters.",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Enter a valid LinkedIn URL (e.g. https://linkedin.com/in/username).",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Emojis are not allowed.",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Unable to start verification session.",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Please complete all required fields.",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "First name must contain only letters. Digits and emojis are not allowed.",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Last name must contain only letters. Digits and emojis are not allowed.",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Enter a valid email address (e.g. john@company.com).",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Please select your country.",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Phone number must contain only digits.",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Phone number for %(country)s must be %(min)s-%(max)s digits.",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Phone number for %(country)s must be %(min)s digits.",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Password must be at least 8 characters.",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Password must include at least one letter and one number.",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Passwords do not match.",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "This email is already registered. Please log in or use a different email.",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Please select a role before continuing.",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Please select a company before continuing.",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "You must agree to the Terms of Service.",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "You must consent to GDPR data processing.",
+      "context": null,
+      "references": [
+        "FontEsin/static/js/djangojs-catalog.js"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Resend",
+      "context": "auth.verify_otp",
+      "references": [
+        "templates\\auth\\verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Resend in __SECONDS__s",
+      "context": "auth.verify_otp",
+      "references": [
+        "templates\\auth\\verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    },
+    {
+      "msgid": "Please wait __SECONDS__s before requesting another code.",
+      "context": "auth.verify_otp",
+      "references": [
+        "templates\\auth\\verify_otp.html"
+      ],
+      "translations": {
+        "de": "",
+        "es": "",
+        "fr": ""
+      }
+    }
+  ]
+}

@@ -16,6 +16,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
+from django.utils.translation import gettext as _
 
 from accounts.models import User, DueDiligence
 
@@ -136,7 +137,7 @@ def application_action(request, user_id):
 
     decision = (request.POST.get("decision") or "").strip().lower()
     if decision not in ("approve", "decline"):
-        messages.error(request, "Invalid action.")
+        messages.error(request, _("Invalid action."))
         return redirect("applications")
 
     applicant = get_object_or_404(
@@ -154,10 +155,10 @@ def application_action(request, user_id):
             "application_status", "application_decline_reason",
             "application_decided_by", "application_decided_at",
         ])
-        success_msg = (
-            f"Approved the application from "
-            f"{applicant.first_name or ''} {applicant.last_name or applicant.email}.".strip()
+        applicant_label = (
+            f"{applicant.first_name or ''} {applicant.last_name or applicant.email}".strip()
         )
+        success_msg = _("Approved the application from %(name)s.") % {"name": applicant_label}
         approved = True
     else:
         applicant.application_status = "declined"
@@ -166,7 +167,7 @@ def application_action(request, user_id):
             "application_status", "application_decline_reason",
             "application_decided_by", "application_decided_at",
         ])
-        success_msg = f"Declined the application from {applicant.email}."
+        success_msg = _("Declined the application from %(email)s.") % {"email": applicant.email}
         approved = False
 
     try:

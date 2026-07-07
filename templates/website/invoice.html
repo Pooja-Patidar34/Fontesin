@@ -1,10 +1,10 @@
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Pro Forma Invoice – FONTESIN</title>
+  <title>{% trans "Pro Forma Invoice" context "website" %} – FONTESIN</title>
   <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
   <style>
@@ -187,11 +187,11 @@
       <img src="{% static 'adminlte/images/logo_full.png' %}" alt="FONTESIN" height="38" style="filter:brightness(0) invert(1);"/>
     </a>
     <div class="navbar__nav">
-      <a href="{% url 'home' %}">Home</a>
-      <a href="{% url 'worldmap' %}">World Map</a>
-      <a href="{% url 'about' %}">About</a>
-      <a href="{% url 'career' %}">Careers</a>
-      <a href="{% url 'contact' %}">Contact</a>
+      <a href="{% url 'home' %}">{% trans "Home" context "website" %}</a>
+      <a href="{% url 'worldmap' %}">{% trans "World Map" context "website" %}</a>
+      <a href="{% url 'about' %}">{% trans "About" context "website" %}</a>
+      <a href="{% url 'career' %}">{% trans "Careers" context "website" %}</a>
+      <a href="{% url 'contact' %}">{% trans "Contact" context "website" %}</a>
     </div>
   </div>
 </nav>
@@ -201,19 +201,19 @@
   <div class="reg-progress__inner">
     <div class="reg-step reg-step--done">
       <div class="reg-step__num">&#10003;</div>
-      <div class="reg-step__label">Account Info</div>
+      <div class="reg-step__label">{% trans "Account Info" context "website" %}</div>
     </div>
     <div class="reg-step reg-step--done">
       <div class="reg-step__num">&#10003;</div>
-      <div class="reg-step__label">Identity Verified</div>
+      <div class="reg-step__label">{% trans "Identity Verified" context "website" %}</div>
     </div>
     <div class="reg-step reg-step--done">
       <div class="reg-step__num">&#10003;</div>
-      <div class="reg-step__label">Choose Plan</div>
+      <div class="reg-step__label">{% trans "Choose Plan" context "website" %}</div>
     </div>
     <div class="reg-step reg-step--active">
       <div class="reg-step__num">4</div>
-      <div class="reg-step__label">Confirmation</div>
+      <div class="reg-step__label">{% trans "Confirmation" context "website" %}</div>
     </div>
   </div>
 </div>
@@ -225,20 +225,20 @@
   <div style="background:linear-gradient(135deg,#f0fdf4 0%,#dcfce7 100%); border:1px solid #bbf7d0; border-radius:16px; padding:28px 32px; margin-bottom:32px; text-align:center;">
     <div style="font-size:2.5rem; margin-bottom:8px;">&#127881;</div>
     <h2 style="font-family:'Montserrat',sans-serif; font-weight:800; color:#15803d; font-size:1.4rem; margin:0 0 8px;">
-      Thank You for Choosing FONTESIN!
+      {% trans "Thank You for Choosing FONTESIN!" context "website" %}
     </h2>
     <p style="color:#166534; font-size:.92rem; margin:0; max-width:560px; margin-left:auto; margin-right:auto; line-height:1.5;">
-      Your Free plan is now active and ready to use. In the future, you can upgrade to one of our paid plans to unlock advanced features and capabilities.
+      {% trans "Your Free plan is now active and ready to use. In the future, you can upgrade to one of our paid plans to unlock advanced features and capabilities." context "website" %}
     </p>
   </div>
   {% else %}
   <div style="background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%); border:1px solid #bfdbfe; border-radius:16px; padding:28px 32px; margin-bottom:32px; text-align:center;">
     <div style="font-size:2.5rem; margin-bottom:8px;">&#9989;</div>
     <h2 style="font-family:'Montserrat',sans-serif; font-weight:800; color:#1e40af; font-size:1.4rem; margin:0 0 8px;">
-      Thank You! Your Invoice Has Been Generated
+      {% trans "Thank You! Your Invoice Has Been Generated" context "website" %}
     </h2>
     <p style="color:#1e3a8a; font-size:.92rem; margin:0; max-width:580px; margin-left:auto; margin-right:auto; line-height:1.5;">
-      Once your payment is completed, please wait for admin approval. You will receive a confirmation email as soon as your subscription is activated.
+      {% trans "Once your payment is completed, please wait for admin approval. You will receive a confirmation email as soon as your subscription is activated." context "website" %}
     </p>
   </div>
   {% endif %}
@@ -247,116 +247,116 @@
   <div class="invoice-card">
     <div class="invoice-header">
       <div>
-        <h1>Pro Forma Invoice</h1>
-        <div class="subtitle">FONTESIN Global Business Intelligence Platform</div>
+        <h1>{% trans "Pro Forma Invoice" context "website" %}</h1>
+        <div class="subtitle">{% trans "FONTESIN Global Business Intelligence Platform" context "website" %}</div>
       </div>
       <div style="background:#15803d;color:#fff;border-radius:8px;padding:8px 20px;font-family:'Montserrat',sans-serif;font-weight:800;font-size:.85rem;text-transform:uppercase;">
-        {{ invoice.subscription.plan.name }} Plan
+        {% blocktrans with plan_name=invoice.subscription.plan.name context "website" %}{{ plan_name }} Plan{% endblocktrans %}
       </div>
     </div>
 
     <div class="invoice-body">
 
       <!-- INVOICE DETAILS -->
-      <div class="section-title">INVOICE DETAILS</div>
+      <div class="section-title">{% trans "INVOICE DETAILS" context "website" %}</div>
       <div style="margin-bottom:32px;">
         <div class="info-row">
-          <span class="info-row__label">Invoice Number</span>
+          <span class="info-row__label">{% trans "Invoice Number" context "website" %}</span>
           <span class="info-row__value"><span class="code-value">{{ invoice.invoice_number }}</span></span>
         </div>
         <div class="info-row">
-          <span class="info-row__label">Issue Date</span>
+          <span class="info-row__label">{% trans "Issue Date" context "website" %}</span>
           <span class="info-row__value">{{ invoice.created_at|date:"F j, Y" }}</span>
         </div>
         {% if invoice.status != "paid" %}
         <div class="info-row">
-          <span class="info-row__label">Due Date</span>
+          <span class="info-row__label">{% trans "Due Date" context "website" %}</span>
           <span class="info-row__value">{{ invoice.due_date|date:"F j, Y" }}</span>
         </div>
         {% endif %}
         <div class="info-row">
-          <span class="info-row__label">Status</span>
+          <span class="info-row__label">{% trans "Status" context "common" %}</span>
           <span class="info-row__value">
             {% if invoice.status == 'paid' %}
-              <span style="color:#15803d;">&#9989; Paid</span>
+              <span style="color:#15803d;">&#9989; {% trans "Paid" context "website" %}</span>
             {% else %}
-              <span style="color:#d97706;">&#9203; Pending Payment</span>
+              <span style="color:#d97706;">&#9203; {% trans "Pending Payment" context "website" %}</span>
             {% endif %}
           </span>
         </div>
       </div>
 
       <!-- SUPPLIER -->
-      <div class="section-title">SUPPLIER (PAYEE)</div>
+      <div class="section-title">{% trans "SUPPLIER (PAYEE)" context "website" %}</div>
       <div style="margin-bottom:32px;">
         <div class="info-row">
-          <span class="info-row__label">Company Name</span>
-          <span class="info-row__value">FONTES Inc.</span>
+          <span class="info-row__label">{% trans "Company Name" context "website" %}</span>
+          <span class="info-row__value">{% trans "FONTES Inc." context "website" %}</span>
         </div>
         <div class="info-row">
-          <span class="info-row__label">Address</span>
-          <span class="info-row__value" style="text-align:right;">One World Trade Center, Suite 8500<br/>Floor 85, New York, NY 10007, USA</span>
+          <span class="info-row__label">{% trans "Address" context "website" %}</span>
+          <span class="info-row__value" style="text-align:right;">{% blocktrans context "website" %}One World Trade Center, Suite 8500<br/>Floor 85, New York, NY 10007, USA{% endblocktrans %}</span>
         </div>
         <div class="info-row">
-          <span class="info-row__label">Website</span>
+          <span class="info-row__label">{% trans "Website" context "website" %}</span>
           <span class="info-row__value">www.fontesin.com</span>
         </div>
         <div class="info-row">
-          <span class="info-row__label">Email</span>
+          <span class="info-row__label">{% trans "Email" context "common" %}</span>
           <span class="info-row__value">billing@fontesin.com</span>
         </div>
       </div>
 
       <!-- SUBSCRIBER -->
-      <div class="section-title">SUBSCRIBER (BUYER)</div>
+      <div class="section-title">{% trans "SUBSCRIBER (BUYER)" context "website" %}</div>
       <div style="margin-bottom:32px;">
         <div class="info-row">
-          <span class="info-row__label">Name</span>
+          <span class="info-row__label">{% trans "Name" context "common" %}</span>
           <span class="info-row__value">{{ invoice.subscription.user.first_name }} {{ invoice.subscription.user.last_name }}</span>
         </div>
         <div class="info-row">
-          <span class="info-row__label">Email</span>
+          <span class="info-row__label">{% trans "Email" context "common" %}</span>
           <span class="info-row__value">{{ invoice.subscription.user.email }}</span>
         </div>
         <div class="info-row">
-          <span class="info-row__label">Role</span>
+          <span class="info-row__label">{% trans "Role" context "website" %}</span>
           <span class="info-row__value">{{ invoice.subscription.user.role.name|default:"—" }}</span>
         </div>
         <div class="info-row">
-          <span class="info-row__label">Company</span>
+          <span class="info-row__label">{% trans "Company" context "website" %}</span>
           <span class="info-row__value">{{ invoice.subscription.user.primary_company.name|default:"—" }}</span>
         </div>
       </div>
 
       <!-- SUBSCRIPTION DETAILS -->
-      <div class="section-title">SUBSCRIPTION DETAILS</div>
+      <div class="section-title">{% trans "SUBSCRIPTION DETAILS" context "website" %}</div>
       <div style="margin-bottom:32px;">
         <div class="info-row">
-          <span class="info-row__label">Plan</span>
-          <span class="info-row__value" style="font-weight:800;">{{ invoice.subscription.plan.name }} Plan</span>
+          <span class="info-row__label">{% trans "Plan" context "website" %}</span>
+          <span class="info-row__value" style="font-weight:800;">{% blocktrans with plan_name=invoice.subscription.plan.name context "website" %}{{ plan_name }} Plan{% endblocktrans %}</span>
         </div>
         <div class="info-row">
-          <span class="info-row__label">Billing Period</span>
+          <span class="info-row__label">{% trans "Billing Period" context "website" %}</span>
           <span class="info-row__value">
             {% if invoice.subscription.billing_period == "monthly" %}
-              Monthly (1 month)
+              {% trans "Monthly (1 month)" context "website" %}
             {% else %}
-              Annual (12 months)
+              {% trans "Annual (12 months)" context "website" %}
             {% endif %}
           </span>
         </div>
         <div class="info-row">
-          <span class="info-row__label">Subscription Start</span>
+          <span class="info-row__label">{% trans "Subscription Start" context "website" %}</span>
           <span class="info-row__value{% if invoice.subscription.plan.code != 'free' %} info-row__value--highlight{% endif %}">
-            {% if invoice.subscription.plan.code == 'free' %}{{ invoice.subscription.start_date|date:"F j, Y" }}{% else %}Upon payment confirmation{% endif %}
+            {% if invoice.subscription.plan.code == 'free' %}{{ invoice.subscription.start_date|date:"F j, Y" }}{% else %}{% trans "Upon payment confirmation" context "website" %}{% endif %}
           </span>
         </div>
         <div class="info-row">
-          <span class="info-row__label">Subscription End</span>
+          <span class="info-row__label">{% trans "Subscription End" context "website" %}</span>
           <span class="info-row__value">{{ invoice.subscription.end_date|date:"F j, Y" }}</span>
         </div>
         <div class="info-row">
-          <span class="info-row__label">Currency</span>
+          <span class="info-row__label">{% trans "Currency" context "website" %}</span>
           <span class="info-row__value">
             {{ display_currency }}
             {% if display_currency == "EUR" %}(€){% else %}($){% endif %}
@@ -366,12 +366,11 @@
 
       <!-- TOTAL -->
       <div class="total-box">
-        <span class="total-box__label">Total Amount Due</span>
+        <span class="total-box__label">{% trans "Total Amount Due" context "website" %}</span>
         <span class="total-box__amount">{% if display_currency == "EUR" %}€{% else %}${% endif %}{{ display_amount|floatformat:2 }}</span>
         {% if fx_rate %}
         <div style="font-size:.72rem; color:#6b7280; margin-top:6px; font-weight:500;">
-          Converted from {{ fx_source_amount|default:invoice.amount|floatformat:2 }} {{ fx_source_currency }} at rate
-          1 {{ fx_source_currency }} = {{ fx_rate|floatformat:4 }} {{ display_currency }}{% if invoice.fx_rate %} <span style="opacity:.7;">(frozen at invoice creation)</span>{% endif %}
+          {% blocktrans with source_amount=fx_source_amount|default:invoice.amount|floatformat:2 source_currency=fx_source_currency rate=fx_rate|floatformat:4 display_curr=display_currency context "website" %}Converted from {{ source_amount }} {{ source_currency }} at rate 1 {{ source_currency }} = {{ rate }} {{ display_curr }}{% endblocktrans %}{% if invoice.fx_rate %} <span style="opacity:.7;">{% trans "(frozen at invoice creation)" context "website" %}</span>{% endif %}
         </div>
         {% endif %}
       </div>
@@ -379,98 +378,98 @@
       {% if invoice.subscription.plan.code != 'free' %}
       <!-- BANK TRANSFER DETAILS -->
       <div class="section-title">
-        <span class="icon">&#127974;</span> BANK TRANSFER DETAILS
-        {% if bank.profile == "domestic_us" %}<small style="font-weight:500; color:#64748b; margin-left:8px;">— Domestic US (USD)</small>
-        {% elif bank.profile == "international_eur" %}<small style="font-weight:500; color:#64748b; margin-left:8px;">— International Wire (EUR)</small>
-        {% elif bank.profile == "international_usd" %}<small style="font-weight:500; color:#64748b; margin-left:8px;">— International Wire (USD)</small>
+        <span class="icon">&#127974;</span> {% trans "BANK TRANSFER DETAILS" context "website" %}
+        {% if bank.profile == "domestic_us" %}<small style="font-weight:500; color:#64748b; margin-left:8px;">{% trans "— Domestic US (USD)" context "website" %}</small>
+        {% elif bank.profile == "international_eur" %}<small style="font-weight:500; color:#64748b; margin-left:8px;">{% trans "— International Wire (EUR)" context "website" %}</small>
+        {% elif bank.profile == "international_usd" %}<small style="font-weight:500; color:#64748b; margin-left:8px;">{% trans "— International Wire (USD)" context "website" %}</small>
         {% endif %}
       </div>
       <div style="margin-bottom:32px;">
         <div class="info-row">
-          <span class="info-row__label">Beneficiary Name</span>
+          <span class="info-row__label">{% trans "Beneficiary Name" context "website" %}</span>
           <span class="info-row__value">{{ bank.beneficiary_name }}</span>
         </div>
         <div class="info-row">
-          <span class="info-row__label">Beneficiary Address</span>
+          <span class="info-row__label">{% trans "Beneficiary Address" context "website" %}</span>
           <span class="info-row__value">{{ bank.beneficiary_address }}</span>
         </div>
         <div class="info-row">
           <span class="info-row__label">{{ bank.account_label }}</span>
           <span class="info-row__value">
-            <span class="code-value">{{ bank.account_number }} <button class="copy-btn" onclick="copyText('{{ bank.account_number }}')">Copy</button></span>
+            <span class="code-value">{{ bank.account_number }} <button class="copy-btn" onclick="copyText('{{ bank.account_number }}')">{% trans "Copy" context "website" %}</button></span>
           </span>
         </div>
         {% if bank.account_kind %}
         <div class="info-row">
-          <span class="info-row__label">Account Kind</span>
+          <span class="info-row__label">{% trans "Account Kind" context "website" %}</span>
           <span class="info-row__value">{{ bank.account_kind }}</span>
         </div>
         {% endif %}
         {% if bank.swift %}
         <div class="info-row">
-          <span class="info-row__label">SWIFT / BIC</span>
+          <span class="info-row__label">{% trans "SWIFT / BIC" context "website" %}</span>
           <span class="info-row__value">
-            <span class="code-value">{{ bank.swift }} <button class="copy-btn" onclick="copyText('{{ bank.swift }}')">Copy</button></span>
+            <span class="code-value">{{ bank.swift }} <button class="copy-btn" onclick="copyText('{{ bank.swift }}')">{% trans "Copy" context "website" %}</button></span>
           </span>
         </div>
         {% endif %}
         <div class="info-row">
-          <span class="info-row__label">ABA Routing Number</span>
+          <span class="info-row__label">{% trans "ABA Routing Number" context "website" %}</span>
           <span class="info-row__value">
-            <span class="code-value">{{ bank.aba_routing }} <button class="copy-btn" onclick="copyText('{{ bank.aba_routing }}')">Copy</button></span>
+            <span class="code-value">{{ bank.aba_routing }} <button class="copy-btn" onclick="copyText('{{ bank.aba_routing }}')">{% trans "Copy" context "website" %}</button></span>
           </span>
         </div>
         <div class="info-row">
-          <span class="info-row__label">Bank Name</span>
+          <span class="info-row__label">{% trans "Bank Name" context "website" %}</span>
           <span class="info-row__value">{{ bank.bank_name }}</span>
         </div>
         <div class="info-row">
-          <span class="info-row__label">Bank Address</span>
+          <span class="info-row__label">{% trans "Bank Address" context "website" %}</span>
           <span class="info-row__value">{{ bank.bank_address }}</span>
         </div>
         {% if bank.remittance_reference %}
         <div class="info-row" style="background:#eef2ff; border:1px solid #c7d2fe; border-radius:8px; padding:8px 12px; margin-top:10px;">
-          <span class="info-row__label">Remittance Reference</span>
+          <span class="info-row__label">{% trans "Remittance Reference" context "website" %}</span>
           <span class="info-row__value">
-            <span class="code-value">{{ bank.remittance_reference }} <button class="copy-btn" onclick="copyText('{{ bank.remittance_reference }}')">Copy</button></span>
+            <span class="code-value">{{ bank.remittance_reference }} <button class="copy-btn" onclick="copyText('{{ bank.remittance_reference }}')">{% trans "Copy" context "website" %}</button></span>
           </span>
         </div>
         <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 12px;margin:8px 0;font-size:.78rem;color:#92400e;">
-          &#9888; You must include this reference in the wire's "Memo" / Section 70 field. If space is short, include as much as possible.
+          &#9888; {% trans "You must include this reference in the wire's \"Memo\" / Section 70 field. If space is short, include as much as possible." context "website" %}
         </div>
         {% endif %}
       </div>
 
       <!-- PAYMENT IDENTIFICATION -->
-      <div class="section-title"><span class="icon">&#128273;</span> PAYMENT IDENTIFICATION (REQUIRED)</div>
+      <div class="section-title"><span class="icon">&#128273;</span> {% trans "PAYMENT IDENTIFICATION (REQUIRED)" context "website" %}</div>
       <div style="margin-bottom:32px;">
         <div class="info-row">
-          <span class="info-row__label">Variable Symbol (VS)</span>
+          <span class="info-row__label">{% trans "Variable Symbol (VS)" context "website" %}</span>
           <span class="info-row__value">
-            <span class="code-value">{{ invoice.variable_symbol }} <button class="copy-btn" onclick="copyText('{{ invoice.variable_symbol }}')">Copy</button></span>
+            <span class="code-value">{{ invoice.variable_symbol }} <button class="copy-btn" onclick="copyText('{{ invoice.variable_symbol }}')">{% trans "Copy" context "website" %}</button></span>
           </span>
         </div>
         <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 12px;margin:8px 0;font-size:.78rem;color:#92400e;">
-          &#9888; Must be included in payment reference
+          &#9888; {% trans "Must be included in payment reference" context "website" %}
         </div>
         <div class="info-row">
-          <span class="info-row__label">Specific Symbol (SS)</span>
+          <span class="info-row__label">{% trans "Specific Symbol (SS)" context "website" %}</span>
           <span class="info-row__value">{{ invoice.specific_symbol }}</span>
         </div>
         <div class="info-row">
-          <span class="info-row__label">Payment Reference / Note</span>
+          <span class="info-row__label">{% trans "Payment Reference / Note" context "website" %}</span>
           <span class="info-row__value">
-            <span class="code-value">{{ invoice.payment_reference }} <button class="copy-btn" onclick="copyText('{{ invoice.payment_reference }}')">Copy</button></span>
+            <span class="code-value">{{ invoice.payment_reference }} <button class="copy-btn" onclick="copyText('{{ invoice.payment_reference }}')">{% trans "Copy" context "website" %}</button></span>
           </span>
         </div>
         <div class="info-row">
-          <span class="info-row__label">Amount</span>
+          <span class="info-row__label">{% trans "Amount" context "website" %}</span>
           <span class="info-row__value">{% if display_currency == "EUR" %}€{% else %}${% endif %}{{ display_amount|floatformat:2 }} {{ display_currency }}</span>
         </div>
       </div>
 
       <div class="note-box">
-        <strong>Note:</strong> This Pro Forma Invoice is not a tax document. A final VAT invoice will be issued after payment confirmation. For international wire transfers, please ensure all bank charges are covered by the sender (OUR). For questions regarding your payment, contact <strong>billing@fontesin.com</strong> with your invoice number.
+        <strong>{% trans "Note:" context "website" %}</strong> {% blocktrans context "website" %}This Pro Forma Invoice is not a tax document. A final VAT invoice will be issued after payment confirmation. For international wire transfers, please ensure all bank charges are covered by the sender (OUR). For questions regarding your payment, contact <strong>billing@fontesin.com</strong> with your invoice number.{% endblocktrans %}
       </div>
       {% endif %}
     </div>
@@ -478,36 +477,36 @@
 
   <!-- ACTION BUTTONS -->
   <div class="action-buttons" style="margin-bottom:32px;">
-    <a href="{% url 'logout' %}" class="btn-action btn-action--outline">&larr; Back to Login Page</a>
-    <a href="{% url 'dashboard' %}" class="btn-action btn-action--primary">Go to Dashboard &rarr;</a>
+    <a href="{% url 'logout' %}" class="btn-action btn-action--outline">&larr; {% trans "Back to Login Page" context "website" %}</a>
+    <a href="{% url 'dashboard' %}" class="btn-action btn-action--primary">{% trans "Go to Dashboard" context "website" %} &rarr;</a>
     {% if invoice.subscription.plan.code != 'free' %}
-    <button class="btn-action btn-action--print" onclick="window.print()">&#128424; Print / Save as PDF</button>
+    <button class="btn-action btn-action--print" onclick="window.print()">&#128424; {% trans "Print / Save as PDF" context "website" %}</button>
     {% endif %}
   </div>
 
   {% if invoice.subscription.plan.code != 'free' %}
   <!-- WHAT HAPPENS NEXT -->
   <div class="steps-box">
-    <h2>What Happens Next?</h2>
+    <h2>{% trans "What Happens Next?" context "website" %}</h2>
     <div class="step">
       <div class="step__num">1</div>
       <div class="step__content">
-        <h3>Complete Your Bank Transfer</h3>
-        <p>Send the exact amount to the bank account above. Include your Variable Symbol (VS) in the payment reference.</p>
+        <h3>{% trans "Complete Your Bank Transfer" context "website" %}</h3>
+        <p>{% trans "Send the exact amount to the bank account above. Include your Variable Symbol (VS) in the payment reference." context "website" %}</p>
       </div>
     </div>
     <div class="step">
       <div class="step__num">2</div>
       <div class="step__content">
-        <h3>Payment Confirmation (1–3 Business Days)</h3>
-        <p>Our finance team will verify your payment and activate your subscription. You will receive a confirmation email.</p>
+        <h3>{% trans "Payment Confirmation (1–3 Business Days)" context "website" %}</h3>
+        <p>{% trans "Our finance team will verify your payment and activate your subscription. You will receive a confirmation email." context "website" %}</p>
       </div>
     </div>
     <div class="step">
       <div class="step__num">3</div>
       <div class="step__content">
-        <h3>Receive Final Invoice</h3>
-        <p>A final VAT invoice will be issued and sent to your registered email address.</p>
+        <h3>{% trans "Receive Final Invoice" context "website" %}</h3>
+        <p>{% trans "A final VAT invoice will be issued and sent to your registered email address." context "website" %}</p>
       </div>
     </div>
   </div>
@@ -523,32 +522,43 @@
         <a href="{% url 'home' %}" class="footer__logo">
           <img src="{% static 'adminlte/images/logo_full.png' %}" alt="FONTESIN" height="36" style="filter:brightness(0) invert(1);"/>
         </a>
-        <p class="footer__tagline">Global Business Intelligence Platform</p>
+        <p class="footer__tagline">{% trans "Global Business Intelligence Platform" context "website" %}</p>
       </div>
       <div class="footer__col">
-        <h4>Platform</h4>
-        <a href="{% url 'worldmap' %}">World Map</a>
-        <a href="{% url 'register' %}">Get Started</a>
-        <a href="{% url 'login' %}">Log In</a>
+        <h4>{% trans "Platform" context "website" %}</h4>
+        <a href="{% url 'worldmap' %}">{% trans "World Map" context "website" %}</a>
+        <a href="{% url 'register' %}">{% trans "Get Started" context "website" %}</a>
+        <a href="{% url 'login' %}">{% trans "Log In" context "auth.login" %}</a>
       </div>
       <div class="footer__col">
-        <h4>Company</h4>
-        <a href="{% url 'about' %}">About Us</a>
-        <a href="{% url 'career' %}">Careers</a>
-        <a href="{% url 'contact' %}">Contact</a>
+        <h4>{% trans "Company" context "website" %}</h4>
+        <a href="{% url 'about' %}">{% trans "About Us" context "website" %}</a>
+        <a href="{% url 'career' %}">{% trans "Careers" context "website" %}</a>
+        <a href="{% url 'contact' %}">{% trans "Contact" context "website" %}</a>
       </div>
     </div>
     <div class="footer__bottom">
-      <span>&copy; 2026 FONTES Inc. All rights reserved.</span>
-      <span>Design by Memento Mori Digital LLC</span>
+      <span>{% trans "© 2026 FONTES Inc. All rights reserved." context "website" %}</span>
+      <span>{% trans "Design by Memento Mori Digital LLC" context "website" %}</span>
     </div>
   </div>
 </footer>
 
 <script>
+(function () {
+  var g = function (s) { return (typeof gettext === 'function') ? gettext(s) : s; };
+  window.WEBSITE_I18N = {
+    copiedPrefix: '{% filter escapejs %}{% trans "Copied:" context "website" %}{% endfilter %}',
+  };
+  Object.keys(window.WEBSITE_I18N).forEach(function (k) {
+    window.WEBSITE_I18N[k] = g(window.WEBSITE_I18N[k]);
+  });
+})();
+</script>
+<script>
 function copyText(text) {
   navigator.clipboard.writeText(text).then(function() {
-    showToast('Copied: ' + text, 'success');
+    showToast(window.WEBSITE_I18N.copiedPrefix + ' ' + text, 'success');
   });
 }
 </script>

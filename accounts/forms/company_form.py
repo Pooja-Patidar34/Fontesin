@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 import datetime
 import re
 import uuid
@@ -83,7 +84,7 @@ class CompanyForm(forms.ModelForm):
     # companies.html that rebuilds the State dropdown on country change.
     country = forms.ChoiceField(
         required=True,
-        choices=[("", "Select Country")] + list(CountryChoices.CHOICES),
+        choices=[("", _("Select Country"))] + list(CountryChoices.CHOICES),
         widget=forms.Select(attrs={
             "class": "form-control",
             "id": "id_country",
@@ -454,14 +455,14 @@ class CompanyForm(forms.ModelForm):
         # uniqueness check below can't be slipped past with extra spaces.
         name = re.sub(r"\s+", " ", (self.cleaned_data.get("name") or "").strip())
         if not name:
-            raise forms.ValidationError("Company name is required and cannot be only spaces.")
+            raise forms.ValidationError(_("Company name is required and cannot be only spaces."))
         if len(name) < 2:
-            raise forms.ValidationError("Company name must be at least 2 characters.")
+            raise forms.ValidationError(_("Company name must be at least 2 characters."))
         if len(name) > 100:
-            raise forms.ValidationError("Company name must be 100 characters or fewer.")
+            raise forms.ValidationError(_("Company name must be 100 characters or fewer."))
         if not COMPANY_NAME_RE.match(name):
             raise forms.ValidationError(
-                "Company name may only contain letters, digits, spaces, and the symbols & ' . , - ( ), and must contain at least one letter."
+                _("Company name may only contain letters, digits, spaces, and the symbols & ' . , - ( ), and must contain at least one letter.")
             )
 
         # Strict global same-name guard: applies to both create and edit.
@@ -473,7 +474,7 @@ class CompanyForm(forms.ModelForm):
             duplicates = duplicates.exclude(pk=self.instance.pk)
         if duplicates.exists():
             raise forms.ValidationError(
-                "A company with this name already exists. Please choose a different name."
+                _("A company with this name already exists. Please choose a different name.")
             )
         return name
 
@@ -483,12 +484,12 @@ class CompanyForm(forms.ModelForm):
             # Optional field: whitespace-only collapses to empty and is allowed.
             return ""
         if len(reg) < 2:
-            raise forms.ValidationError("Registration ID must be at least 2 characters.")
+            raise forms.ValidationError(_("Registration ID must be at least 2 characters."))
         if len(reg) > 100:
-            raise forms.ValidationError("Registration ID must be 100 characters or fewer.")
+            raise forms.ValidationError(_("Registration ID must be 100 characters or fewer."))
         if not REGISTRATION_ID_RE.match(reg):
             raise forms.ValidationError(
-                "Registration ID may only contain letters, digits, and the symbols - / . _ , and must contain at least one letter or digit."
+                _("Registration ID may only contain letters, digits, and the symbols - / . _ , and must contain at least one letter or digit.")
             )
 
         # Globally unique (case-insensitive). Registration IDs are real-world
@@ -502,7 +503,7 @@ class CompanyForm(forms.ModelForm):
             duplicates = duplicates.exclude(pk=self.instance.pk)
         if duplicates.exists():
             raise forms.ValidationError(
-                "A company with this Registration ID already exists. Registration IDs must be unique."
+                _("A company with this Registration ID already exists. Registration IDs must be unique.")
             )
         return reg
 
@@ -525,14 +526,14 @@ class CompanyForm(forms.ModelForm):
         if country:
             valid_states = COUNTRY_STATES.get(country, [])
             if not state:
-                self.add_error("state", forms.ValidationError("State is required."))
+                self.add_error("state", forms.ValidationError(_("State is required.")))
             elif valid_states and state not in valid_states:
                 self.add_error(
                     "state",
-                    forms.ValidationError("Please select a valid state for the chosen country."),
+                    forms.ValidationError(_("Please select a valid state for the chosen country.")),
                 )
         elif state:
-            self.add_error("country", forms.ValidationError("Country is required."))
+            self.add_error("country", forms.ValidationError(_("Country is required.")))
 
         if name and country:
             country_label = COUNTRY_LABELS.get(country, country)
@@ -543,8 +544,9 @@ class CompanyForm(forms.ModelForm):
                 self.add_error(
                     "name",
                     forms.ValidationError(
-                        f"A company named '{name}' already exists in {country_label}. "
-                        "If this is a different legal entity, please provide a Registration ID to distinguish it."
+                        _("A company named '%(name)s' already exists in %(country)s. "
+                          "If this is a different legal entity, please provide a Registration ID to distinguish it.")
+                        % {"name": name, "country": country_label}
                     ),
                 )
         return cleaned
@@ -554,32 +556,34 @@ class CompanyForm(forms.ModelForm):
         if not value:
             return value
         if len(value) < 3:
-            raise forms.ValidationError(f"{label} must be at least 3 characters.")
+            raise forms.ValidationError(_("%(label)s must be at least 3 characters.") % {"label": label})
         if len(value) > 120:
-            raise forms.ValidationError(f"{label} must be 120 characters or fewer.")
+            raise forms.ValidationError(_("%(label)s must be 120 characters or fewer.") % {"label": label})
         if not ADDRESS_LINE_RE.match(value):
             raise forms.ValidationError(
-                f"{label} may only contain letters, digits, spaces and the symbols , . - / #. Other special characters (such as ! @ $ % ^ * {{ }} [ ] < >) are not allowed."
+                _("%(label)s may only contain letters, digits, spaces and the symbols , . - / #. "
+                  "Other special characters (such as ! @ $ %% ^ * {{ }} [ ] < >) are not allowed.")
+                % {"label": label}
             )
         return value
 
     def clean_address_line1(self):
-        return self._clean_address_line("address_line1", "Address Line 1")
+        return self._clean_address_line("address_line1", _("Address Line 1"))
 
     def clean_address_line2(self):
-        return self._clean_address_line("address_line2", "Address Line 2")
+        return self._clean_address_line("address_line2", _("Address Line 2"))
 
     def clean_postal_code(self):
         postal = (self.cleaned_data.get("postal_code") or "").strip()
         if not postal:
             return postal
         if len(postal) < 3:
-            raise forms.ValidationError("Postal code must be at least 3 characters.")
+            raise forms.ValidationError(_("Postal code must be at least 3 characters."))
         if len(postal) > 12:
-            raise forms.ValidationError("Postal code must be 12 characters or fewer.")
+            raise forms.ValidationError(_("Postal code must be 12 characters or fewer."))
         if not POSTAL_CODE_RE.match(postal):
             raise forms.ValidationError(
-                "Postal code may only contain letters, digits, spaces and hyphens, and must contain at least one letter or digit."
+                _("Postal code may only contain letters, digits, spaces and hyphens, and must contain at least one letter or digit.")
             )
         return postal
 
@@ -588,12 +592,12 @@ class CompanyForm(forms.ModelForm):
         if not city:
             return city
         if len(city) < 2:
-            raise forms.ValidationError("City must be at least 2 characters.")
+            raise forms.ValidationError(_("City must be at least 2 characters."))
         if len(city) > 60:
-            raise forms.ValidationError("City must be 60 characters or fewer.")
+            raise forms.ValidationError(_("City must be 60 characters or fewer."))
         if not CITY_NAME_RE.match(city):
             raise forms.ValidationError(
-                "City may only contain letters, spaces, hyphens, apostrophes and periods. Numbers and special characters are not allowed."
+                _("City may only contain letters, spaces, hyphens, apostrophes and periods. Numbers and special characters are not allowed.")
             )
         return city
 
@@ -616,7 +620,8 @@ class CompanyForm(forms.ModelForm):
             return value
         if not PHONE_CHARSET_RE.match(value):
             raise forms.ValidationError(
-                f"{label} may only contain digits and the symbols + - ( ) and spaces (7-25 characters)."
+                _("%(label)s may only contain digits and the symbols + - ( ) and spaces (7-25 characters).")
+                % {"label": label}
             )
 
         digits = re.sub(r"\D", "", value)
@@ -637,19 +642,22 @@ class CompanyForm(forms.ModelForm):
                         candidates.append(digits[cc_len:])
             if not any(min_len <= len(c) <= max_len for c in candidates):
                 raise forms.ValidationError(
-                    f"{label} must be {min_len}-{max_len} digits for the selected country."
+                    _("%(label)s must be %(min)s-%(max)s digits for the selected country.")
+                    % {"label": label, "min": min_len, "max": max_len}
                 )
         else:
             # No country selected or unknown: fall back to a generic 5-15 digit bound.
             if not (5 <= len(digits) <= 15):
-                raise forms.ValidationError(f"{label} must contain 5-15 digits.")
+                raise forms.ValidationError(
+                    _("%(label)s must contain 5-15 digits.") % {"label": label}
+                )
         return value
 
     def clean_phone(self):
-        return self._clean_phone_field("phone", "Phone")
+        return self._clean_phone_field("phone", _("Phone"))
 
     def clean_phone_secondary(self):
-        return self._clean_phone_field("phone_secondary", "Secondary phone")
+        return self._clean_phone_field("phone_secondary", _("Secondary phone"))
 
     def clean_fax(self):
         fax = (self.cleaned_data.get("fax") or "").strip()
@@ -657,11 +665,11 @@ class CompanyForm(forms.ModelForm):
             return fax
         if not FAX_RE.match(fax):
             raise forms.ValidationError(
-                "Fax may only contain digits and the symbols + - ( ) and spaces (7-25 characters)."
+                _("Fax may only contain digits and the symbols + - ( ) and spaces (7-25 characters).")
             )
         digits = re.sub(r"\D", "", fax)
         if not (5 <= len(digits) <= 15):
-            raise forms.ValidationError("Fax number must contain 5-15 digits.")
+            raise forms.ValidationError(_("Fax number must contain 5-15 digits."))
         return fax
 
     def _clean_text_field(self, field_name, label, regex, max_len=120):
@@ -669,21 +677,23 @@ class CompanyForm(forms.ModelForm):
         if not value:
             return value
         if len(value) > max_len:
-            raise forms.ValidationError(f"{label} must be {max_len} characters or fewer.")
+            raise forms.ValidationError(
+                _("%(label)s must be %(max)s characters or fewer.") % {"label": label, "max": max_len}
+            )
         if not regex.match(value):
             raise forms.ValidationError(
-                f"{label} contains invalid characters."
+                _("%(label)s contains invalid characters.") % {"label": label}
             )
         return value
 
     def clean_house_number(self):
-        return self._clean_text_field("house_number", "House number", HOUSE_NUMBER_RE, max_len=15)
+        return self._clean_text_field("house_number", _("House number"), HOUSE_NUMBER_RE, max_len=15)
 
     def clean_district(self):
-        return self._clean_text_field("district", "District", REGION_DISTRICT_RE, max_len=120)
+        return self._clean_text_field("district", _("District"), REGION_DISTRICT_RE, max_len=120)
 
     def clean_region(self):
-        return self._clean_text_field("region", "Region", REGION_DISTRICT_RE, max_len=120)
+        return self._clean_text_field("region", _("Region"), REGION_DISTRICT_RE, max_len=120)
 
     def clean_industry_code(self):
         code = (self.cleaned_data.get("industry_code") or "").strip()
@@ -691,7 +701,7 @@ class CompanyForm(forms.ModelForm):
             return code
         if not INDUSTRY_CODE_RE.match(code):
             raise forms.ValidationError(
-                "Industry code may only contain letters, digits, dots and hyphens (1-20 characters)."
+                _("Industry code may only contain letters, digits, dots and hyphens (1-20 characters).")
             )
         return code
 
@@ -700,7 +710,7 @@ class CompanyForm(forms.ModelForm):
         if not keywords:
             return keywords
         if len(keywords) > 500:
-            raise forms.ValidationError("Keywords must be 500 characters or fewer.")
+            raise forms.ValidationError(_("Keywords must be 500 characters or fewer."))
         return keywords
 
     def clean_year_established(self):
@@ -710,7 +720,8 @@ class CompanyForm(forms.ModelForm):
         current_year = datetime.date.today().year
         if year < 1500 or year > current_year:
             raise forms.ValidationError(
-                f"Year of establishment must be between 1500 and {current_year}."
+                _("Year of establishment must be between 1500 and %(year)s.")
+                % {"year": current_year}
             )
         return year
 
@@ -719,12 +730,12 @@ class CompanyForm(forms.ModelForm):
         if not value:
             return ""
         if len(value) < 2:
-            raise forms.ValidationError("Name must be at least 2 characters.")
+            raise forms.ValidationError(_("Name must be at least 2 characters."))
         if len(value) > 80:
-            raise forms.ValidationError("Name must be 80 characters or fewer.")
+            raise forms.ValidationError(_("Name must be 80 characters or fewer."))
         if not re.match(r"^[A-Za-zÀ-ɏ][A-Za-zÀ-ɏ\s'\-.]{1,79}$", value):
             raise forms.ValidationError(
-                "Use letters, spaces, hyphens, apostrophes, or dots only."
+                _("Use letters, spaces, hyphens, apostrophes, or dots only.")
             )
         return value
 
@@ -758,10 +769,11 @@ class CompanyForm(forms.ModelForm):
         name = (logo.name or "").lower()
         if not name.endswith(LOGO_ALLOWED_EXTENSIONS):
             raise forms.ValidationError(
-                "Logo must be one of: " + ", ".join(LOGO_ALLOWED_EXTENSIONS)
+                _("Logo must be one of: %(exts)s")
+                % {"exts": ", ".join(LOGO_ALLOWED_EXTENSIONS)}
             )
         if getattr(logo, "size", 0) > LOGO_MAX_BYTES:
-            raise forms.ValidationError("Logo file must be 5 MB or smaller.")
+            raise forms.ValidationError(_("Logo file must be 5 MB or smaller."))
         return logo
 
     def clean_website(self):
@@ -769,10 +781,10 @@ class CompanyForm(forms.ModelForm):
         if not website:
             return website
         if len(website) > 500:
-            raise forms.ValidationError("Website URL must be 500 characters or fewer.")
+            raise forms.ValidationError(_("Website URL must be 500 characters or fewer."))
         if not WEBSITE_URL_RE.match(website):
             raise forms.ValidationError(
-                "Enter a valid website URL like https://example.com. "
-                "Only letters, digits, and - . _ / are allowed in the path."
+                _("Enter a valid website URL like https://example.com. "
+                  "Only letters, digits, and - . _ / are allowed in the path.")
             )
         return website

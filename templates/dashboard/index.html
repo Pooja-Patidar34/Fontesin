@@ -1,5 +1,6 @@
 {% extends "base/base.html" %}
-{% block title %}Dashboard{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Dashboard" context "dashboard" %}{% endblock %}
 
 {% block content %}
 <style>
@@ -420,12 +421,12 @@
   <!-- ================= WELCOME BANNER ================= -->
   <div class="dash-welcome">
     <div>
-      <div class="dash-welcome__label">Welcome Back</div>
+      <div class="dash-welcome__label">{% trans "Welcome Back" context "dashboard" %}</div>
       <div class="dash-welcome__name">{{ request.user.first_name }} {{ request.user.last_name }}</div>
       <div class="dash-welcome__meta">
         {{ role_label }}
-        {% if user_plan %} &middot; {{ user_plan.name|upper }} Plan{% endif %}
-        &middot; Last login: Today
+        {% if user_plan %} &middot; {% blocktrans trimmed with plan_name=user_plan.name|upper context "dashboard" %}{{ plan_name }} Plan{% endblocktrans %}{% endif %}
+        &middot; {% trans "Last login: Today" context "dashboard" %}
       </div>
     </div>
   </div>
@@ -442,10 +443,10 @@
       </div>
       <div style="flex:1;">
         <div class="dash-kpi__value">{{ consultant_cert_total_month|default:"0" }}</div>
-        <div class="dash-kpi__label">Certifications this month</div>
+        <div class="dash-kpi__label">{% trans "Certifications this month" context "dashboard" %}</div>
         <div class="dash-kpi__trend dash-kpi__trend--up">
-          {{ consultant_cert_today|default:"0" }} today
-          <span style="color:#94a3b8; font-weight:500; margin-left:4px;">/ target {{ consultant_target_certs_min }}–{{ consultant_target_certs_max }}</span>
+          {{ consultant_cert_today|default:"0" }} {% trans "today" context "dashboard" %}
+          <span style="color:#94a3b8; font-weight:500; margin-left:4px;">/ {% trans "target" context "dashboard" %} {{ consultant_target_certs_min }}–{{ consultant_target_certs_max }}</span>
         </div>
       </div>
     </div>
@@ -455,9 +456,9 @@
       </div>
       <div style="flex:1;">
         <div class="dash-kpi__value">{{ consultant_sub_total_month|default:"0" }}</div>
-        <div class="dash-kpi__label">Subscriptions sold this month</div>
+        <div class="dash-kpi__label">{% trans "Subscriptions sold this month" context "dashboard" %}</div>
         <div class="dash-kpi__trend dash-kpi__trend--up" id="cs-sub-target-line">
-          <span style="color:#94a3b8; font-weight:500;">{{ consultant_sub_total_month|default:"0" }} of {{ consultant_target_subs_month }} (monthly target)</span>
+          <span style="color:#94a3b8; font-weight:500;">{{ consultant_sub_total_month|default:"0" }} {% trans "of" context "dashboard" %} {{ consultant_target_subs_month }} ({% trans "monthly target" context "dashboard" %})</span>
         </div>
         <div style="background:#eef2f7; border-radius:6px; height:6px; margin-top:8px; overflow:hidden;">
           <div id="cs-sub-target-bar" style="height:100%; background:linear-gradient(90deg,#10b981,#16a34a); border-radius:6px;"></div>
@@ -481,7 +482,7 @@
     <div style="background:#fff; border:1px solid #e8eef3; border-radius:14px; padding:20px;">
       <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px;">
         <div>
-          <div style="font-size:.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:#94a3b8;">Certifications</div>
+          <div style="font-size:.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:#94a3b8;">{% trans "Certifications" context "dashboard" %}</div>
           <div style="font-size:1.05rem; font-weight:800; color:#1B2E3F;" id="cs-cal-title">…</div>
         </div>
         <div style="display:flex; gap:6px; align-items:center;">
@@ -492,15 +493,15 @@
       </div>
       <div id="cs-cal-grid" style="display:grid; grid-template-columns: repeat(7, 1fr); gap:4px; font-size:.78rem;"></div>
       <div id="cs-cal-day-detail" style="margin-top:14px; font-size:.85rem; color:#475569;">
-        Click a day to see how many companies you certified that day.
+        {% trans "Click a day to see how many companies you certified that day." context "dashboard" %}
       </div>
     </div>
 
     <div style="background:#fff; border:1px solid #e8eef3; border-radius:14px; padding:20px;">
-      <div style="font-size:.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:#94a3b8;">Subscriptions sold</div>
+      <div style="font-size:.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:#94a3b8;">{% trans "Subscriptions sold" context "dashboard" %}</div>
       <div style="font-size:1.05rem; font-weight:800; color:#1B2E3F; margin-bottom:14px;" id="cs-sub-title">…</div>
       <div id="cs-sub-total" style="font-size:1.6rem; font-weight:800; color:#1B2E3F; margin-bottom:8px;">{{ consultant_sub_total_month|default:"0" }}</div>
-      <div style="font-size:.78rem; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px;">By plan</div>
+      <div style="font-size:.78rem; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px;">{% trans "By plan" context "dashboard" %}</div>
       <div id="cs-sub-breakdown">
         {% if consultant_sub_plan_breakdown %}
           {% for plan, count in consultant_sub_plan_breakdown %}
@@ -510,7 +511,7 @@
           </div>
           {% endfor %}
         {% else %}
-          <div style="color:#94a3b8; font-size:.85rem;">No subscriptions sold in this month yet.</div>
+          <div style="color:#94a3b8; font-size:.85rem;">{% trans "No subscriptions sold in this month yet." context "dashboard" %}</div>
         {% endif %}
       </div>
     </div>
@@ -571,7 +572,7 @@
     var initialCerts = JSON.parse('{{ consultant_cert_by_day_json|escapejs }}' || '{}');
     var currentCerts = initialCerts;
     var selectedDay = null;
-    var monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    var monthNames = (window.DASHBOARD_I18N && window.DASHBOARD_I18N.monthNames) || ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
     function isoDate(y, m, d) {
       return y + "-" + String(m).padStart(2,"0") + "-" + String(d).padStart(2,"0");
@@ -589,7 +590,7 @@
       var todayIso = new Date().toISOString().slice(0, 10);
 
       grid.innerHTML = "";
-      ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(function (d) {
+      [window.DASHBOARD_I18N.daySun,window.DASHBOARD_I18N.dayMon,window.DASHBOARD_I18N.dayTue,window.DASHBOARD_I18N.dayWed,window.DASHBOARD_I18N.dayThu,window.DASHBOARD_I18N.dayFri,window.DASHBOARD_I18N.daySat].forEach(function (d) {
         var h = document.createElement("div");
         h.className = "cs-cal-head";
         h.textContent = d;
@@ -622,7 +623,7 @@
           renderCalendar(monthInput.value, currentCerts);
           var n = parseInt(this.dataset.count, 10) || 0;
           dayDetail.innerHTML = "<strong>" + this.dataset.iso + "</strong>: "
-            + (n === 0 ? "no companies certified" : n + " compan" + (n === 1 ? "y" : "ies") + " certified")
+            + (n === 0 ? window.DASHBOARD_I18N.noCompaniesCertified : n + " " + (n === 1 ? window.DASHBOARD_I18N.companyCertified : window.DASHBOARD_I18N.companiesCertified))
             + ".";
         });
         grid.appendChild(cell);
@@ -635,7 +636,7 @@
       subTotal.textContent = data.subs_total || 0;
       var byPlan = data.subs_by_plan || [];
       if (byPlan.length === 0) {
-        subList.innerHTML = '<div style="color:#94a3b8; font-size:.85rem;">No subscriptions sold in this month yet.</div>';
+        subList.innerHTML = '<div style="color:#94a3b8; font-size:.85rem;">{% trans "No subscriptions sold in this month yet." context "dashboard" %}</div>';
       } else {
         subList.innerHTML = byPlan.map(function (r) {
           return '<div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px dashed #eef2f7; font-size:.85rem;">'
@@ -644,7 +645,7 @@
             + '</div>';
         }).join("");
       }
-      dayDetail.innerHTML = "Click a day to see how many companies you certified that day.";
+      dayDetail.innerHTML = "{% trans "Click a day to see how many companies you certified that day." context "dashboard" %}";
       selectedDay = null;
     }
 
@@ -687,11 +688,11 @@
       </div>
       <div>
         <div class="dash-kpi__value">{{ total_companies|default:"0" }}</div>
-        <div class="dash-kpi__label">Total Companies</div>
+        <div class="dash-kpi__label">{% trans "Total Companies" context "dashboard" %}</div>
         {% if request.user.is_superuser %}
-        <div class="dash-kpi__trend dash-kpi__trend--up">&#9650; +{{ new_companies_month|default:"0" }} this month</div>
+        <div class="dash-kpi__trend dash-kpi__trend--up">&#9650; +{{ new_companies_month|default:"0" }} {% trans "this month" context "dashboard" %}</div>
         {% else %}
-        <div class="dash-kpi__trend dash-kpi__trend--up">{{ active_companies }} active</div>
+        <div class="dash-kpi__trend dash-kpi__trend--up">{{ active_companies }} {% trans "active" context "dashboard" %}</div>
         {% endif %}
       </div>
     </div>
@@ -703,8 +704,8 @@
       </div>
       <div>
         <div class="dash-kpi__value">{{ active_subscriptions|default:"0" }}</div>
-        <div class="dash-kpi__label">Active Subscriptions</div>
-        <div class="dash-kpi__trend dash-kpi__trend--up">&#9650; +{{ new_subs_week|default:"0" }} this week</div>
+        <div class="dash-kpi__label">{% trans "Active Subscriptions" context "dashboard" %}</div>
+        <div class="dash-kpi__trend dash-kpi__trend--up">&#9650; +{{ new_subs_week|default:"0" }} {% trans "this week" context "dashboard" %}</div>
       </div>
     </div>
 
@@ -714,9 +715,9 @@
       </div>
       <div>
         <div class="dash-kpi__value">${{ monthly_revenue|floatformat:0|default:"0" }}</div>
-        <div class="dash-kpi__label">Monthly Revenue</div>
+        <div class="dash-kpi__label">{% trans "Monthly Revenue" context "dashboard" %}</div>
         <div class="dash-kpi__trend {% if revenue_change >= 0 %}dash-kpi__trend--up{% else %}dash-kpi__trend--down{% endif %}">
-          {% if revenue_change >= 0 %}&#9650;{% else %}&#9660;{% endif %} {{ revenue_change }}% vs last month
+          {% if revenue_change >= 0 %}&#9650;{% else %}&#9660;{% endif %} {{ revenue_change }}% {% trans "vs last month" context "dashboard" %}
         </div>
       </div>
     </div>
@@ -727,8 +728,8 @@
       </div>
       <div>
         <div class="dash-kpi__value">{{ active_companies|default:"0" }}</div>
-        <div class="dash-kpi__label">Active Companies</div>
-        <div class="dash-kpi__trend dash-kpi__trend--up">{{ inactive_companies }} inactive</div>
+        <div class="dash-kpi__label">{% trans "Active Companies" context "dashboard" %}</div>
+        <div class="dash-kpi__trend dash-kpi__trend--up">{{ inactive_companies }} {% trans "inactive" context "dashboard" %}</div>
       </div>
     </div>
     {% endif %}
@@ -739,11 +740,11 @@
       </div>
       <div>
         <div class="dash-kpi__value">{{ total_users|default:"0" }}</div>
-        <div class="dash-kpi__label">Registered Users</div>
+        <div class="dash-kpi__label">{% trans "Registered Users" context "dashboard" %}</div>
         {% if request.user.is_superuser %}
-        <div class="dash-kpi__trend dash-kpi__trend--up">&#9650; +{{ new_users_month|default:"0" }} this month</div>
+        <div class="dash-kpi__trend dash-kpi__trend--up">&#9650; +{{ new_users_month|default:"0" }} {% trans "this month" context "dashboard" %}</div>
         {% else %}
-        <div class="dash-kpi__trend dash-kpi__trend--up">{{ active_users }} active</div>
+        <div class="dash-kpi__trend dash-kpi__trend--up">{{ active_users }} {% trans "active" context "dashboard" %}</div>
         {% endif %}
       </div>
     </div>
@@ -760,8 +761,8 @@
       </div>
       <div>
         <div class="dash-kpi__value">{{ pending_invoices|default:"0" }}</div>
-        <div class="dash-kpi__label">Pending Invoices</div>
-        <div class="dash-kpi__trend dash-kpi__trend--down">&#9660; {{ overdue_invoices|default:"0" }} overdue</div>
+        <div class="dash-kpi__label">{% trans "Pending Invoices" context "dashboard" %}</div>
+        <div class="dash-kpi__trend dash-kpi__trend--down">&#9660; {{ overdue_invoices|default:"0" }} {% trans "overdue" context "dashboard" %}</div>
       </div>
     </div>
 
@@ -771,8 +772,8 @@
       </div>
       <div>
         <div class="dash-kpi__value">{{ active_regions|default:"0" }}</div>
-        <div class="dash-kpi__label">Active Regions</div>
-        <div class="dash-kpi__trend dash-kpi__trend--up">Countries with companies</div>
+        <div class="dash-kpi__label">{% trans "Active Regions" context "dashboard" %}</div>
+        <div class="dash-kpi__trend dash-kpi__trend--up">{% trans "Countries with companies" context "dashboard" %}</div>
       </div>
     </div>
 
@@ -783,8 +784,8 @@
       </div>
       <div>
         <div class="dash-kpi__value">{{ total_tenants|default:"0" }}</div>
-        <div class="dash-kpi__label">Tenants</div>
-        <div class="dash-kpi__trend dash-kpi__trend--up">{{ active_tenants }} active</div>
+        <div class="dash-kpi__label">{% trans "Tenants" context "dashboard" %}</div>
+        <div class="dash-kpi__trend dash-kpi__trend--up">{{ active_tenants }} {% trans "active" context "dashboard" %}</div>
       </div>
     </div>
     {% endif %}
@@ -796,8 +797,8 @@
       </div>
       <div>
         <div class="dash-kpi__value">{{ pending_approvals }}</div>
-        <div class="dash-kpi__label">Pending Approvals</div>
-        <div class="dash-kpi__trend dash-kpi__trend--down"><a href="{% url 'payments' %}?status=pending" style="color:#d97706;">Review now &rarr;</a></div>
+        <div class="dash-kpi__label">{% trans "Pending Approvals" context "dashboard" %}</div>
+        <div class="dash-kpi__trend dash-kpi__trend--down"><a href="{% url 'payments' %}?status=pending" style="color:#d97706;">{% trans "Review now" context "dashboard" %} &rarr;</a></div>
       </div>
     </div>
     {% endif %}
@@ -845,8 +846,8 @@
       <div class="dash-chart-card" style="height:100%;">
         <div class="dash-chart-card__header">
           <div>
-            <h5 class="dash-chart-card__title">Revenue Overview</h5>
-            <div class="dash-chart-card__subtitle">Monthly subscription revenue (USD)</div>
+            <h5 class="dash-chart-card__title">{% trans "Revenue Overview" context "dashboard" %}</h5>
+            <div class="dash-chart-card__subtitle">{% trans "Monthly subscription revenue (USD)" context "dashboard" %}</div>
           </div>
         </div>
         <div style="height:280px;">
@@ -858,8 +859,8 @@
       <div class="dash-chart-card" style="height:100%;">
         <div class="dash-chart-card__header">
           <div>
-            <h5 class="dash-chart-card__title">Subscription Plans</h5>
-            <div class="dash-chart-card__subtitle">Distribution by plan type</div>
+            <h5 class="dash-chart-card__title">{% trans "Subscription Plans" context "dashboard" %}</h5>
+            <div class="dash-chart-card__subtitle">{% trans "Distribution by plan type" context "dashboard" %}</div>
           </div>
         </div>
         <div style="height:280px; display:flex; align-items:center; justify-content:center;">
@@ -875,19 +876,19 @@
       <div class="dash-chart-card" style="height:100%;">
         <div class="dash-chart-card__header">
           <div>
-            <h5 class="dash-chart-card__title">Recent Companies</h5>
-            <div class="dash-chart-card__subtitle">Latest registered companies</div>
+            <h5 class="dash-chart-card__title">{% trans "Recent Companies" context "dashboard" %}</h5>
+            <div class="dash-chart-card__subtitle">{% trans "Latest registered companies" context "dashboard" %}</div>
           </div>
-          <a href="{% url 'companies' %}" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;font-size:.78rem;font-weight:600;">View All &rarr;</a>
+          <a href="{% url 'companies' %}" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;font-size:.78rem;font-weight:600;">{% trans "View All" context "dashboard" %} &rarr;</a>
         </div>
         <table class="dash-recent-table">
           <thead>
             <tr>
               <th style="width:40px;"></th>
-              <th>Company</th>
-              <th>Country</th>
-              <th>Plan</th>
-              <th>Status</th>
+              <th>{% trans "Company" context "dashboard" %}</th>
+              <th>{% trans "Country" context "common" %}</th>
+              <th>{% trans "Plan" context "dashboard" %}</th>
+              <th>{% trans "Status" context "common" %}</th>
             </tr>
           </thead>
           <tbody>
@@ -905,14 +906,14 @@
               </td>
               <td>
                 {% if company.is_active %}
-                  <span class="status-badge-sm status-badge-sm--verified">&#10003; Verified</span>
+                  <span class="status-badge-sm status-badge-sm--verified">&#10003; {% trans "Verified" context "dashboard" %}</span>
                 {% else %}
-                  <span class="status-badge-sm status-badge-sm--pending">Pending</span>
+                  <span class="status-badge-sm status-badge-sm--pending">{% trans "Pending" context "dashboard" %}</span>
                 {% endif %}
               </td>
             </tr>
             {% empty %}
-            <tr><td colspan="5" class="text-center text-muted py-3">No companies yet</td></tr>
+            <tr><td colspan="5" class="text-center text-muted py-3">{% trans "No companies yet" context "dashboard" %}</td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -923,8 +924,8 @@
       <div class="dash-chart-card" style="height:100%;">
         <div class="dash-chart-card__header">
           <div>
-            <h5 class="dash-chart-card__title">Recent Activity</h5>
-            <div class="dash-chart-card__subtitle">Latest platform events</div>
+            <h5 class="dash-chart-card__title">{% trans "Recent Activity" context "dashboard" %}</h5>
+            <div class="dash-chart-card__subtitle">{% trans "Latest platform events" context "dashboard" %}</div>
           </div>
         </div>
         <ul class="dash-activity">
@@ -938,7 +939,7 @@
             </div>
           </li>
           {% empty %}
-          <li class="text-center text-muted py-3">No recent activity</li>
+          <li class="text-center text-muted py-3">{% trans "No recent activity" context "dashboard" %}</li>
           {% endfor %}
         </ul>
       </div>
@@ -951,8 +952,8 @@
       <div class="dash-chart-card" style="height:100%;">
         <div class="dash-chart-card__header">
           <div>
-            <h5 class="dash-chart-card__title">Regional Performance</h5>
-            <div class="dash-chart-card__subtitle">Companies by region</div>
+            <h5 class="dash-chart-card__title">{% trans "Regional Performance" context "dashboard" %}</h5>
+            <div class="dash-chart-card__subtitle">{% trans "Companies by region" context "dashboard" %}</div>
           </div>
         </div>
         <div style="height:280px;">
@@ -964,8 +965,8 @@
       <div class="dash-chart-card" style="height:100%;">
         <div class="dash-chart-card__header">
           <div>
-            <h5 class="dash-chart-card__title">Industry Breakdown</h5>
-            <div class="dash-chart-card__subtitle">Companies by industry sector</div>
+            <h5 class="dash-chart-card__title">{% trans "Industry Breakdown" context "dashboard" %}</h5>
+            <div class="dash-chart-card__subtitle">{% trans "Companies by industry sector" context "dashboard" %}</div>
           </div>
         </div>
         <div style="height:280px; display:flex; align-items:center; justify-content:center;">
@@ -980,14 +981,14 @@
     <div class="col-lg-6 mb-4 mb-lg-0">
       <div class="dash-chart-card" style="height:100%;">
         <div class="dash-chart-card__header">
-          <h5 class="dash-chart-card__title">Quick Actions</h5>
+          <h5 class="dash-chart-card__title">{% trans "Quick Actions" context "dashboard" %}</h5>
         </div>
         <div class="dash-actions-grid">
-          <a href="{% url 'companies' %}" class="dash-action-btn"><i class="fas fa-plus"></i> Add Company</a>
-          <a href="{% url 'users' %}" class="dash-action-btn"><i class="fas fa-user-plus"></i> Add User</a>
-          <a href="{% url 'invoices' %}" class="dash-action-btn"><i class="fas fa-file-invoice"></i> View Invoices</a>
-          <a href="#" class="dash-action-btn"><i class="fas fa-chart-bar"></i> View Reports</a>
-          <a href="{% url 'worldmap' %}" class="dash-action-btn"><i class="fas fa-globe"></i> Manage Regions</a>
+          <a href="{% url 'companies' %}" class="dash-action-btn"><i class="fas fa-plus"></i> {% trans "Add Company" context "dashboard" %}</a>
+          <a href="{% url 'users' %}" class="dash-action-btn"><i class="fas fa-user-plus"></i> {% trans "Add User" context "dashboard" %}</a>
+          <a href="{% url 'invoices' %}" class="dash-action-btn"><i class="fas fa-file-invoice"></i> {% trans "View Invoices" context "dashboard" %}</a>
+          <a href="#" class="dash-action-btn"><i class="fas fa-chart-bar"></i> {% trans "View Reports" context "dashboard" %}</a>
+          <a href="{% url 'worldmap' %}" class="dash-action-btn"><i class="fas fa-globe"></i> {% trans "Manage Regions" context "dashboard" %}</a>
         </div>
       </div>
     </div>
@@ -996,46 +997,46 @@
       <div class="dash-chart-card" style="height:100%;">
         <div class="dash-chart-card__header">
           <div>
-            <h5 class="dash-chart-card__title">Billing Summary</h5>
-            <div class="dash-chart-card__subtitle">Current subscription status</div>
+            <h5 class="dash-chart-card__title">{% trans "Billing Summary" context "dashboard" %}</h5>
+            <div class="dash-chart-card__subtitle">{% trans "Current subscription status" context "dashboard" %}</div>
           </div>
-          <a href="{% url 'payments' %}" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;font-size:.78rem;font-weight:600;">Manage &rarr;</a>
+          <a href="{% url 'payments' %}" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;font-size:.78rem;font-weight:600;">{% trans "Manage" context "dashboard" %} &rarr;</a>
         </div>
 
         <div class="billing-plan-row">
           <div class="billing-plan-icon"><i class="fas fa-crown"></i></div>
           <div style="flex:1;">
-            <div style="font-weight:700;color:#1B2E3F;">Platform Admin</div>
-            <div style="font-size:.78rem;color:#64748b;">Full access to all features</div>
+            <div style="font-weight:700;color:#1B2E3F;">{% trans "Platform Admin" context "dashboard" %}</div>
+            <div style="font-size:.78rem;color:#64748b;">{% trans "Full access to all features" context "dashboard" %}</div>
           </div>
-          <span class="badge" style="background:#dcfce7;color:#15803d;font-weight:600;padding:5px 14px;border-radius:100px;">Active</span>
+          <span class="badge" style="background:#dcfce7;color:#15803d;font-weight:600;padding:5px 14px;border-radius:100px;">{% trans "Active" context "common" %}</span>
         </div>
 
         <dl style="margin:0;">
           <div class="billing-detail-row">
-            <dt>Active Subscriptions</dt>
+            <dt>{% trans "Active Subscriptions" context "dashboard" %}</dt>
             <dd>{{ active_subscriptions|default:"0" }}</dd>
           </div>
           <div class="billing-detail-row">
-            <dt>Pending Invoices</dt>
+            <dt>{% trans "Pending Invoices" context "dashboard" %}</dt>
             <dd>{{ pending_invoices|default:"0" }}</dd>
           </div>
           <div class="billing-detail-row">
-            <dt>Monthly Revenue</dt>
-            <dd>${{ monthly_revenue|floatformat:0|default:"0" }} USD</dd>
+            <dt>{% trans "Monthly Revenue" context "dashboard" %}</dt>
+            <dd>${{ monthly_revenue|floatformat:0|default:"0" }} {% trans "USD" context "dashboard" %}</dd>
           </div>
           <div class="billing-detail-row">
-            <dt>Payment Method</dt>
-            <dd>Bank Transfer</dd>
+            <dt>{% trans "Payment Method" context "dashboard" %}</dt>
+            <dd>{% trans "Bank Transfer" context "dashboard" %}</dd>
           </div>
         </dl>
 
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:16px;border-top:1px solid #e8eef3;">
-          <span style="font-size:.82rem;color:#94a3b8;">Pending Approvals</span>
+          <span style="font-size:.82rem;color:#94a3b8;">{% trans "Pending Approvals" context "dashboard" %}</span>
           {% if pending_approvals %}
-          <a href="{% url 'payments' %}?status=pending" class="badge" style="background:#fef3c7;color:#d97706;font-weight:600;padding:5px 14px;border-radius:100px;">{{ pending_approvals }} pending</a>
+          <a href="{% url 'payments' %}?status=pending" class="badge" style="background:#fef3c7;color:#d97706;font-weight:600;padding:5px 14px;border-radius:100px;">{{ pending_approvals }} {% trans "pending" context "dashboard" %}</a>
           {% else %}
-          <span class="badge" style="background:#dcfce7;color:#15803d;font-weight:600;padding:5px 14px;border-radius:100px;">All clear &#10003;</span>
+          <span class="badge" style="background:#dcfce7;color:#15803d;font-weight:600;padding:5px 14px;border-radius:100px;">{% trans "All clear" context "dashboard" %} &#10003;</span>
           {% endif %}
         </div>
       </div>
@@ -1050,10 +1051,10 @@
     <div class="col-lg-8 mb-4">
       <div class="dash-chart-card">
         <div class="dash-chart-card__header">
-          <h5 class="dash-chart-card__title" id="healthTitle">User Health</h5>
+          <h5 class="dash-chart-card__title" id="healthTitle">{% trans "User Health" context "dashboard" %}</h5>
           <div class="dash-toggle-group">
-            <button id="btnUsers" type="button" class="btn btn-active" onclick="showUsers()">Users</button>
-            <button id="btnCompanies" type="button" class="btn btn-inactive" onclick="showCompanies()">Companies</button>
+            <button id="btnUsers" type="button" class="btn btn-active" onclick="showUsers()">{% trans "Users" context "dashboard" %}</button>
+            <button id="btnCompanies" type="button" class="btn btn-inactive" onclick="showCompanies()">{% trans "Companies" context "dashboard" %}</button>
           </div>
         </div>
         <div style="height:260px; width:100%; display:flex; align-items:center; justify-content:center;">
@@ -1065,7 +1066,7 @@
     <!-- RIGHT : INSIGHT -->
     <div class="col-lg-4 mb-4">
       <div class="dash-insight">
-        <div class="dash-insight__title">Quick Insight</div>
+        <div class="dash-insight__title">{% trans "Quick Insight" context "dashboard" %}</div>
         <div class="dash-insight__value" id="insightText"></div>
         <div class="dash-insight__bar">
           <div class="dash-insight__bar-fill" id="insightBar"></div>
@@ -1078,6 +1079,53 @@
   {% endif %}{# /not is_consultant_dashboard — closes the wrapper around the non-consultant KPIs and charts #}
 
 </div>
+
+
+<script>
+(function () {
+  var g = function (s) { return (typeof gettext === 'function') ? gettext(s) : s; };
+  window.DASHBOARD_I18N = {
+    monthNames: [
+      '{% filter escapejs %}{% trans "January" context "dashboard" %}{% endfilter %}',
+      '{% filter escapejs %}{% trans "February" context "dashboard" %}{% endfilter %}',
+      '{% filter escapejs %}{% trans "March" context "dashboard" %}{% endfilter %}',
+      '{% filter escapejs %}{% trans "April" context "dashboard" %}{% endfilter %}',
+      '{% filter escapejs %}{% trans "May" context "dashboard" %}{% endfilter %}',
+      '{% filter escapejs %}{% trans "June" context "dashboard" %}{% endfilter %}',
+      '{% filter escapejs %}{% trans "July" context "dashboard" %}{% endfilter %}',
+      '{% filter escapejs %}{% trans "August" context "dashboard" %}{% endfilter %}',
+      '{% filter escapejs %}{% trans "September" context "dashboard" %}{% endfilter %}',
+      '{% filter escapejs %}{% trans "October" context "dashboard" %}{% endfilter %}',
+      '{% filter escapejs %}{% trans "November" context "dashboard" %}{% endfilter %}',
+      '{% filter escapejs %}{% trans "December" context "dashboard" %}{% endfilter %}',
+    ],
+    daySun: '{% filter escapejs %}{% trans "Sun" context "dashboard" %}{% endfilter %}',
+    dayMon: '{% filter escapejs %}{% trans "Mon" context "dashboard" %}{% endfilter %}',
+    dayTue: '{% filter escapejs %}{% trans "Tue" context "dashboard" %}{% endfilter %}',
+    dayWed: '{% filter escapejs %}{% trans "Wed" context "dashboard" %}{% endfilter %}',
+    dayThu: '{% filter escapejs %}{% trans "Thu" context "dashboard" %}{% endfilter %}',
+    dayFri: '{% filter escapejs %}{% trans "Fri" context "dashboard" %}{% endfilter %}',
+    daySat: '{% filter escapejs %}{% trans "Sat" context "dashboard" %}{% endfilter %}',
+    noCompaniesCertified: '{% filter escapejs %}{% trans "no companies certified" context "dashboard" %}{% endfilter %}',
+    companyCertified: '{% filter escapejs %}{% trans "company certified" context "dashboard" %}{% endfilter %}',
+    companiesCertified: '{% filter escapejs %}{% trans "companies certified" context "dashboard" %}{% endfilter %}',
+    clickDayCertified: '{% filter escapejs %}{% trans "Click a day to see how many companies you certified that day." context "dashboard" %}{% endfilter %}',
+    noSubsThisMonth: '{% filter escapejs %}{% trans "No subscriptions sold in this month yet." context "dashboard" %}{% endfilter %}',
+    userHealth: '{% filter escapejs %}{% trans "User Health" context "dashboard" %}{% endfilter %}',
+    companyHealth: '{% filter escapejs %}{% trans "Company Health" context "dashboard" %}{% endfilter %}',
+    userActivityStable: '{% filter escapejs %}{% trans "User activity is stable." context "dashboard" %}{% endfilter %}',
+    companyOpsStable: '{% filter escapejs %}{% trans "Company operations are stable." context "dashboard" %}{% endfilter %}',
+    activeUsers: '{% filter escapejs %}{% trans "Active Users" context "dashboard" %}{% endfilter %}',
+    inactiveUsers: '{% filter escapejs %}{% trans "Inactive Users" context "dashboard" %}{% endfilter %}',
+    activeCompanies: '{% filter escapejs %}{% trans "Active Companies" context "dashboard" %}{% endfilter %}',
+    inactiveCompanies: '{% filter escapejs %}{% trans "Inactive Companies" context "dashboard" %}{% endfilter %}',
+  };
+  Object.keys(window.DASHBOARD_I18N).forEach(function (k) {
+    if (k === 'monthNames') window.DASHBOARD_I18N[k] = window.DASHBOARD_I18N[k].map(g);
+    else window.DASHBOARD_I18N[k] = g(window.DASHBOARD_I18N[k]);
+  });
+})();
+</script>
 
 {% if not is_consultant_dashboard %}
 <!-- ================= CHART SCRIPTS ================= -->
@@ -1132,18 +1180,18 @@ function showUsers() {
     document.getElementById("btnUsers"),
     document.getElementById("btnCompanies")
   );
-  document.getElementById("healthTitle").innerText = "User Health";
+  document.getElementById("healthTitle").innerText = window.DASHBOARD_I18N.userHealth;
   document.getElementById("insightText").innerHTML =
-    "<strong>{{ active_users }}</strong> of <strong>{{ total_users }}</strong> users are active.";
+    "{% filter escapejs %}{% blocktrans trimmed with active=active_users total=total_users context "dashboard" %}<strong>{{ active }}</strong> of <strong>{{ total }}</strong> users are active.{% endblocktrans %}{% endfilter %}";
 
   var total = {{ total_users|default:"1" }};
   var active = {{ active_users|default:"0" }};
   var pct = total > 0 ? Math.round((active / total) * 100) : 0;
   document.getElementById("insightBar").style.width = pct + "%";
-  document.getElementById("insightNote").innerText = "User activity is stable.";
+  document.getElementById("insightNote").innerText = window.DASHBOARD_I18N.userActivityStable;
 
   renderChart(
-    ["Active Users", "Inactive Users"],
+    [window.DASHBOARD_I18N.activeUsers, window.DASHBOARD_I18N.inactiveUsers],
     [{{ active_users|default:"0" }}, {{ inactive_users|default:"0" }}]
   );
 }
@@ -1153,18 +1201,18 @@ function showCompanies() {
     document.getElementById("btnCompanies"),
     document.getElementById("btnUsers")
   );
-  document.getElementById("healthTitle").innerText = "Company Health";
+  document.getElementById("healthTitle").innerText = window.DASHBOARD_I18N.companyHealth;
   document.getElementById("insightText").innerHTML =
-    "<strong>{{ active_companies }}</strong> of <strong>{{ total_companies }}</strong> companies are active.";
+    "{% filter escapejs %}{% blocktrans trimmed with active=active_companies total=total_companies context "dashboard" %}<strong>{{ active }}</strong> of <strong>{{ total }}</strong> companies are active.{% endblocktrans %}{% endfilter %}";
 
   var total = {{ total_companies|default:"1" }};
   var active = {{ active_companies|default:"0" }};
   var pct = total > 0 ? Math.round((active / total) * 100) : 0;
   document.getElementById("insightBar").style.width = pct + "%";
-  document.getElementById("insightNote").innerText = "Company operations are stable.";
+  document.getElementById("insightNote").innerText = window.DASHBOARD_I18N.companyOpsStable;
 
   renderChart(
-    ["Active Companies", "Inactive Companies"],
+    [window.DASHBOARD_I18N.activeCompanies, window.DASHBOARD_I18N.inactiveCompanies],
     [{{ active_companies|default:"0" }}, {{ inactive_companies|default:"0" }}]
   );
 }

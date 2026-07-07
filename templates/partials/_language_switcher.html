@@ -1,0 +1,96 @@
+{% load i18n %}
+
+<form
+  id="language-switcher-form"
+  action="{% url 'set_language' %}"
+  method="post"
+  class="language-switcher-form"
+>
+  {% csrf_token %}
+  <input name="next" type="hidden" value="{{ request.get_full_path }}">
+  <input type="hidden" name="language" id="language-switcher-value" value="">
+</form>
+
+<div class="dropdown language-switcher">
+  <button
+    type="button"
+    class="header-user language-switcher__toggle"
+    data-toggle="dropdown"
+    aria-haspopup="true"
+    aria-expanded="false"
+    aria-label="{% trans "Language" context "common" %}"
+  >
+    <i class="fas fa-globe language-switcher__icon" aria-hidden="true"></i>
+    <span class="language-switcher__code">{{ current_abbr }}</span>
+    <i class="fas fa-chevron-down language-switcher__caret" aria-hidden="true"></i>
+  </button>
+  <div class="dropdown-menu dropdown-menu-right language-switcher__menu">
+    {% for language in languages %}
+      <button
+        type="submit"
+        form="language-switcher-form"
+        class="dropdown-item language-switcher__option{% if language.code == current_language %} active{% endif %}"
+        onclick="document.getElementById('language-switcher-value').value='{{ language.code }}';"
+      >
+        {{ language.label }}
+      </button>
+    {% endfor %}
+  </div>
+</div>
+
+<style>
+  .language-switcher__toggle {
+    cursor: pointer;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+  }
+  .language-switcher__toggle:hover,
+  .language-switcher__toggle:focus {
+    background: #f8fafc;
+    outline: none;
+  }
+  .language-switcher__icon {
+    color: #94a3b8;
+    font-size: 0.85rem;
+  }
+  .language-switcher__code {
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    min-width: 1.5rem;
+    text-align: center;
+  }
+  .language-switcher__caret {
+    font-size: 0.6rem;
+    color: #94a3b8;
+  }
+  .language-switcher__menu {
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    padding: 8px;
+    min-width: 7.5rem;
+    max-width: 10rem;
+    background: #fff;
+  }
+  .language-switcher__option {
+    border: none;
+    background: #fff;
+    width: 100%;
+    text-align: left;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    padding: 8px 14px;
+    color: #1b2e3f;
+    cursor: pointer;
+  }
+  .language-switcher__option:hover,
+  .language-switcher__option:focus {
+    background: #f1f5f9;
+    outline: none;
+  }
+  .language-switcher__option.active {
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-weight: 600;
+  }
+</style>

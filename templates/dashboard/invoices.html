@@ -1,12 +1,13 @@
 {% extends "base/base.html" %}
-{% block title %}Invoices{% endblock %}
+{% load i18n plan_i18n_tags %}
+{% block title %}{% trans "Invoices" context "billing" %}{% endblock %}
 
 {% block content %}
 <div class="card" style="border-radius:14px; border:1px solid #e8eef3; box-shadow:0 2px 12px rgba(0,0,0,.06);">
 
   <div class="card-header d-flex justify-content-between align-items-center">
     <h3 class="card-title font-weight-bold mb-0">
-      <i class="fas fa-file-invoice mr-2"></i> Invoices
+      <i class="fas fa-file-invoice mr-2"></i> {% trans "Invoices" context "billing" %}
     </h3>
   </div>
 
@@ -15,16 +16,16 @@
       <table class="table table-hover mb-0">
         <thead class="bg-light">
           <tr>
-            <th>Invoice #</th>
+            <th>{% trans "Invoice #" context "billing" %}</th>
             {% if request.user.is_superuser %}
-            <th>User</th>
+            <th>{% trans "User" context "billing" %}</th>
             {% endif %}
-            <th>Plan</th>
-            <th>Amount</th>
-            <th>Status</th>
-            <th>Due Date</th>
-            <th>Paid At</th>
-            <th>Created</th>
+            <th>{% trans "Plan" context "billing" %}</th>
+            <th>{% trans "Amount" context "billing" %}</th>
+            <th>{% trans "Status" context "billing" %}</th>
+            <th>{% trans "Due Date" context "billing" %}</th>
+            <th>{% trans "Paid At" context "billing" %}</th>
+            <th>{% trans "Created" context "billing" %}</th>
           </tr>
         </thead>
         <tbody>
@@ -44,7 +45,7 @@
 
             <td>
               {% if invoice.subscription and invoice.subscription.plan %}
-                {{ invoice.subscription.plan.name }}
+                {{ invoice.subscription.plan|localized_plan_name_filter }}
               {% else %}
                 -
               {% endif %}
@@ -54,11 +55,11 @@
 
             <td>
               {% if invoice.status == "paid" %}
-                <span class="badge badge-success">Paid</span>
+                <span class="badge badge-success">{% trans "Paid" context "billing" %}</span>
               {% elif invoice.status == "pending" %}
-                <span class="badge badge-warning">Pending</span>
+                <span class="badge badge-warning">{% trans "Pending" context "billing" %}</span>
               {% elif invoice.status == "failed" %}
-                <span class="badge badge-danger">Failed</span>
+                <span class="badge badge-danger">{% trans "Failed" context "billing" %}</span>
               {% else %}
                 <span class="badge badge-secondary">{{ invoice.status }}</span>
               {% endif %}
@@ -85,7 +86,7 @@
           {% empty %}
           <tr>
             <td colspan="{% if request.user.is_superuser %}8{% else %}7{% endif %}" class="text-center text-muted py-4">
-              No invoices found
+              {% trans "No invoices found" context "billing" %}
             </td>
           </tr>
           {% endfor %}
@@ -99,10 +100,10 @@
     <ul class="pagination pagination-sm justify-content-end mb-0">
       {% if page_obj.has_previous %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}">{% trans "Previous" context "common" %}</a>
         </li>
       {% else %}
-        <li class="page-item disabled"><span class="page-link">Previous</span></li>
+        <li class="page-item disabled"><span class="page-link">{% trans "Previous" context "common" %}</span></li>
       {% endif %}
 
       {% for num in page_obj.paginator.page_range %}
@@ -117,10 +118,10 @@
 
       {% if page_obj.has_next %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}">{% trans "Next" context "common" %}</a>
         </li>
       {% else %}
-        <li class="page-item disabled"><span class="page-link">Next</span></li>
+        <li class="page-item disabled"><span class="page-link">{% trans "Next" context "common" %}</span></li>
       {% endif %}
     </ul>
   </div>

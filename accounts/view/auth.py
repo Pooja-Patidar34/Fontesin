@@ -15,9 +15,11 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login
 from django.http import JsonResponse
+from django.utils.translation import gettext as _
 from accounts.models import Tenant, Company, Role, UserCompany, User, DueDiligence
 from django.db import IntegrityError
-from accounts.constants import CountryChoices, LanguageChoices
+from accounts.constants import CountryChoices, LanguageChoices, SupportedLocale
+from FontEsin.middleware.locale import normalize_locale
 import random
 from datetime import date, timedelta
 from django.utils import timezone
@@ -25,6 +27,16 @@ from accounts.models import User, PasswordResetToken
 from accounts.utils.mailer import send_otp_email
 
 logger = logging.getLogger("technical")
+
+
+def _request_locale(request):
+    """Best-effort locale from cookie or active translation."""
+    cookie_lang = request.COOKIES.get(settings.LANGUAGE_COOKIE_NAME)
+    if cookie_lang:
+        return normalize_locale(cookie_lang)
+    from django.utils import translation
+    return normalize_locale(translation.get_language())
+
 
 # Franchise tiers offered at registration (franchise role only). Stored verbatim
 # on User.franchise_type (a free CharField). The first value is the canonical
@@ -87,15 +99,15 @@ def admin_login(request):
         password = request.POST.get("password", "")
 
         if not email:
-            messages.error(request, "Email is required.")
+            messages.error(request, _("Email is required."))
             return render(request, "auth/login.html")
 
         if not re.match(r"^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$", email):
-            messages.error(request, "Enter a valid email address.")
+            messages.error(request, _("Enter a valid email address."))
             return render(request, "auth/login.html")
 
         if not password:
-            messages.error(request, "Password is required.")
+            messages.error(request, _("Password is required."))
             return render(request, "auth/login.html")
 
         user = authenticate(request, email=email, password=password)
@@ -109,13 +121,16 @@ def admin_login(request):
             if candidate and not candidate.is_active and candidate.check_password(password):
                 messages.error(
                     request,
-                    "Your account has been deactivated by admin. Please contact support.",
+                    _("Your account has been deactivated by admin. Please contact support."),
                 )
             else:
-                messages.error(request, "Invalid credentials")
+                messages.error(request, _("Invalid credentials"))
             return render(request, "auth/login.html")
 
         login(request, user)
+
+        if not user.preferred_language:
+            user.persist_preferred_language(_request_locale(request))
 
         next_url = request.POST.get("next") or request.GET.get("next")
         if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
@@ -195,17 +210,26 @@ def register_view(request):
 
         # required fields validation
         required_fields = {
-            "First name": first_name,
-            "Last name": last_name,
-            "Email": email,
-            "Phone": phone,
-            "Country": country,
-            "Password": password,
-            "Role": role_name,
+            _("First name"): first_name,
+            _("Last name"): last_name,
+            _("Email"): email,
+            _("Phone"): phone,
+            _("Country"): country,
+            _("Password"): password,
+            _("Role"): role_name,
         }
         missing = [name for name, value in required_fields.items() if not value]
         if missing:
-            messages.error(request, f"{', '.join(missing)} {'is' if len(missing) == 1 else 'are'} required.")
+            if len(missing) == 1:
+                messages.error(
+                    request,
+                    _("%(fields)s is required.") % {"fields": ", ".join(missing)},
+                )
+            else:
+                messages.error(
+                    request,
+                    _("%(fields)s are required.") % {"fields": ", ".join(missing)},
+                )
             return render(request, "auth/register.html", ctx)
 
         # emoji detection
@@ -219,16 +243,25 @@ def register_view(request):
         name_regex = re.compile(r"^[A-Za-zÀ-ÖØ-öø-ÿ\s'\-]+$")
 
         if emoji_pattern.search(first_name) or not name_regex.match(first_name):
-            messages.error(request, "First name must contain only letters. Digits and emojis are not allowed.")
+            messages.error(
+                request,
+                _("First name must contain only letters. Digits and emojis are not allowed."),
+            )
             return render(request, "auth/register.html", ctx)
         if emoji_pattern.search(last_name) or not name_regex.match(last_name):
-            messages.error(request, "Last name must contain only letters. Digits and emojis are not allowed.")
+            messages.error(
+                request,
+                _("Last name must contain only letters. Digits and emojis are not allowed."),
+            )
             return render(request, "auth/register.html", ctx)
 
         # email format validation (stricter)
         email_regex = re.compile(r"^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$")
         if not email_regex.match(email):
-            messages.error(request, "Enter a valid email address (e.g. john@company.com).")
+            messages.error(
+                request,
+                _("Enter a valid email address (e.g. john@company.com)."),
+            )
             return render(request, "auth/register.html", ctx)
 
         # phone validation per country
@@ -255,31 +288,35 @@ def register_view(request):
 
         min_len, max_len = PHONE_RULES.get(country, (7, 15))
         if not phone_digits.isdigit() or len(phone_digits) < min_len or len(phone_digits) > max_len:
-            messages.error(request, f"Phone number must be {min_len}-{max_len} digits for the selected country.")
+            messages.error(
+                request,
+                _("Phone number must be %(min)d-%(max)d digits for the selected country.")
+                % {"min": min_len, "max": max_len},
+            )
             return render(request, "auth/register.html", ctx)
 
         if len(password) < 8:
-            messages.error(request, "Password must be at least 8 characters.")
+            messages.error(request, _("Password must be at least 8 characters."))
             return render(request, "auth/register.html", ctx)
 
         # email exists check (case-insensitive — create_user lowercases the domain
         # via normalize_email, so a case-sensitive lookup misses existing rows
         # and the INSERT then trips the unique constraint)
         if User.objects.filter(email__iexact=email).exists():
-            messages.error(request, "Email already exists")
+            messages.error(request, _("Email already exists"))
             return render(request, "auth/register.html", ctx)
 
         # password match check
         if password != confirm_password:
-            messages.error(request, "Passwords do not match")
+            messages.error(request, _("Passwords do not match"))
             return render(request, "auth/register.html", ctx)
 
-        tenant, _ = Tenant.objects.get_or_create(name="Default")
+        tenant, created = Tenant.objects.get_or_create(name="Default")
 
         role = Role.objects.filter(code__iexact=role_name).first()
 
         if not role:
-            messages.error(request, "Invalid role selected")
+            messages.error(request, _("Invalid role selected"))
             return render(request, "auth/register.html", ctx)
 
         # create user — guard against the race between the iexact check above
@@ -302,8 +339,10 @@ def register_view(request):
                 verification_status="pending",
             )
         except IntegrityError:
-            messages.error(request, "Email already exists")
+            messages.error(request, _("Email already exists"))
             return render(request, "auth/register.html", ctx)
+
+        user.persist_preferred_language(_request_locale(request))
 
         # Business users register without a company — they create or join one
         # from their profile after sign-up. Consultants, coordinators, and
@@ -369,7 +408,10 @@ def identity_verification_view(request):
     user = request.user
 
     if not user.role or not user.role.code:
-        messages.error(request, "Your account does not have a valid role assigned. Please contact support.")
+        messages.error(
+            request,
+            _("Your account does not have a valid role assigned. Please contact support."),
+        )
         return redirect("login")
 
     role_code = user.role.code.lower()
@@ -414,24 +456,30 @@ def apply_view(request):
     user = request.user
 
     if not user.role or not user.role.code:
-        messages.error(request, "Your account does not have a valid role assigned. Please contact support.")
+        messages.error(
+            request,
+            _("Your account does not have a valid role assigned. Please contact support."),
+        )
         return redirect("login")
 
     role_code = user.role.code.lower()
     if 'consultant' in role_code:
         role_value = 'consultant'
-        role_label = 'Consultant'
+        role_label = _('Consultant')
         role_icon = '\U0001F4BC'
     elif 'coordinator' in role_code:
         role_value = 'coordinator'
-        role_label = 'Coordinator'
+        role_label = _('Coordinator')
         role_icon = '\U0001F30D'
     elif 'franchise' in role_code:
         role_value = 'franchise'
-        role_label = 'Franchise Partner'
+        role_label = _('Franchise Partner')
         role_icon = '\U0001F680'
     else:
-        messages.error(request, "The application form is only available for consultants, coordinators, and franchise partners.")
+        messages.error(
+            request,
+            _("The application form is only available for consultants, coordinators, and franchise partners."),
+        )
         return redirect("dashboard")
 
     # The application is now just a region (single country) selection — plus a
@@ -447,7 +495,7 @@ def apply_view(request):
         "role_label": role_label,
         "role_icon": role_icon,
         "country_choices": CountryChoices.CHOICES,
-        "franchise_types": FRANCHISE_TYPES,
+        "franchise_types": [(ft, _(ft)) for ft in FRANCHISE_TYPES],
         "selected_country": selected_country,
         "selected_franchise_type": (user.franchise_type or "").strip(),
     })
@@ -461,13 +509,19 @@ def apply_submit(request):
     user = request.user
 
     if not user.role or not user.role.code:
-        messages.error(request, "Your account does not have a valid role assigned. Please contact support.")
+        messages.error(
+            request,
+            _("Your account does not have a valid role assigned. Please contact support."),
+        )
         return redirect("login")
 
     role_code = user.role.code.lower()
     is_franchise = "franchise" in role_code
     if not any(r in role_code for r in ('consultant', 'coordinator', 'franchise')):
-        messages.error(request, "The application is only available for consultants, coordinators, and franchise partners.")
+        messages.error(
+            request,
+            _("The application is only available for consultants, coordinators, and franchise partners."),
+        )
         return redirect("dashboard")
 
     # The application is now just a single-country region selection (plus a
@@ -478,11 +532,11 @@ def apply_submit(request):
 
     valid_codes = {code for code, _ in CountryChoices.CHOICES}
     if region_code not in valid_codes:
-        messages.error(request, "Please select your region (country).")
+        messages.error(request, _("Please select your region (country)."))
         return redirect("apply")
 
     if is_franchise and franchise_type not in FRANCHISE_TYPES:
-        messages.error(request, "Please select your franchise type.")
+        messages.error(request, _("Please select your franchise type."))
         return redirect("apply")
 
     # Map the ISO code to its readable label for display/notifications.
@@ -518,18 +572,21 @@ def apply_review_view(request):
     user = request.user
 
     if not user.role or not user.role.code:
-        messages.error(request, "Your account does not have a valid role assigned. Please contact support.")
+        messages.error(
+            request,
+            _("Your account does not have a valid role assigned. Please contact support."),
+        )
         return redirect("login")
 
     role_code = user.role.code.lower()
     if 'consultant' in role_code:
-        role_label = 'Consultant'
+        role_label = _('Consultant')
     elif 'coordinator' in role_code:
-        role_label = 'Coordinator'
+        role_label = _('Coordinator')
     elif 'franchise' in role_code:
-        role_label = 'Franchise Partner'
+        role_label = _('Franchise Partner')
     else:
-        messages.error(request, "Invalid role for application review.")
+        messages.error(request, _("Invalid role for application review."))
         return redirect("dashboard")
 
     return render(request, "auth/apply_review.html", {
@@ -542,15 +599,17 @@ def forgot_password(request):
         email = request.POST.get("email", "").strip()
 
         if not email:
-            messages.error(request, "Email is required.")
+            messages.error(request, _("Email is required."))
             return render(request, "auth/forgot_password.html")
 
         if not re.match(r"^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$", email):
-            messages.error(request, "Enter a valid email address.")
+            messages.error(request, _("Enter a valid email address."))
             return render(request, "auth/forgot_password.html")
 
         # Always show success to prevent email enumeration
-        success_msg = "If an account with that email exists, we've sent a verification code."
+        success_msg = _(
+            "If an account with that email exists, we've sent a verification code."
+        )
 
         user = User.objects.filter(email__iexact=email, is_active=True).first()
         if user:
@@ -572,10 +631,14 @@ def forgot_password(request):
                     to_email=user.email,
                     first_name=user.first_name,
                     otp=otp,
+                    user_language=(user.preferred_language or "en"),
                 )
             except Exception as e:
                 logger.error("Failed to send OTP email to %s: %s", email, e)
-                messages.error(request, "Something went wrong while sending the verification code. Please try again.")
+                messages.error(
+                    request,
+                    _("Something went wrong while sending the verification code. Please try again."),
+                )
                 return render(request, "auth/forgot_password.html")
 
         # Store email in session for the OTP verification step
@@ -596,7 +659,7 @@ def verify_otp(request):
         otp = request.POST.get("otp", "").strip()
 
         if not otp or len(otp) != 6:
-            messages.error(request, "Please enter a valid 6-digit code.")
+            messages.error(request, _("Please enter a valid 6-digit code."))
             return render(request, "auth/verify_otp.html", {"email": email})
 
         reset_token = PasswordResetToken.objects.filter(
@@ -606,7 +669,7 @@ def verify_otp(request):
         ).first()
 
         if not reset_token or not reset_token.is_valid():
-            messages.error(request, "Invalid or expired code. Please try again.")
+            messages.error(request, _("Invalid or expired code. Please try again."))
             return render(request, "auth/verify_otp.html", {"email": email})
 
         # Mark OTP as used so it cannot be reused
@@ -636,15 +699,15 @@ def reset_password(request):
         confirm_password = request.POST.get("confirm_password", "")
 
         if not password:
-            messages.error(request, "Password is required.")
+            messages.error(request, _("Password is required."))
             return render(request, "auth/reset_password.html")
 
         if len(password) < 8:
-            messages.error(request, "Password must be at least 8 characters.")
+            messages.error(request, _("Password must be at least 8 characters."))
             return render(request, "auth/reset_password.html")
 
         if password != confirm_password:
-            messages.error(request, "Passwords do not match.")
+            messages.error(request, _("Passwords do not match."))
             return render(request, "auth/reset_password.html")
 
         user = reset_token.user
@@ -655,7 +718,10 @@ def reset_password(request):
         request.session.pop("reset_token_id", None)
         request.session.pop("reset_email", None)
 
-        messages.success(request, "Your password has been reset successfully. You can now log in.")
+        messages.success(
+            request,
+            _("Your password has been reset successfully. You can now log in."),
+        )
         return redirect("login")
 
     return render(request, "auth/reset_password.html")

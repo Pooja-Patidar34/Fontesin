@@ -1,5 +1,6 @@
 {% extends "base/base.html" %}
-{% block title %}Users{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Users" context "users" %}{% endblock %}
 {% block content %}
 
 <style>
@@ -96,12 +97,12 @@
   <div class="card-header" style="display:block !important; padding:.9rem 1.25rem;">
     <!-- Row 1: title (left) + Add User (right corner) -->
     <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-bottom:.85rem;">
-      <h3 class="card-title font-weight-bold mb-0" style="float:none !important;">Users</h3>
+      <h3 class="card-title font-weight-bold mb-0" style="float:none !important;">{% trans "Users" context "users" %}</h3>
       {% if can_manage_users %}
       <button class="btn btn-sm btn-primary" type="button"
               style="white-space:nowrap; flex-shrink:0;"
               onclick="openAddUserModal()">
-        <i class="fas fa-user-plus mr-1"></i> Add User
+        <i class="fas fa-user-plus mr-1"></i> {% trans "Add User" context "users" %}
       </button>
       {% endif %}
     </div>
@@ -111,20 +112,20 @@
       {% if request.user.is_superuser %}
       <div class="searchable-select" data-name="tenant" data-selected="{{ selected_tenant|default:'' }}" style="flex:1 1 0; min-width:0;">
         <button type="button" class="searchable-select__toggle form-control form-control-sm">
-          <span class="searchable-select__label">All Franchises</span>
+          <span class="searchable-select__label">{% trans "All Franchises" context "users" %}</span>
           <span class="searchable-select__caret">&#9662;</span>
         </button>
         <div class="searchable-select__panel">
-          <input type="text" class="searchable-select__search form-control form-control-sm" placeholder="Search franchises…" autocomplete="off"/>
+          <input type="text" class="searchable-select__search form-control form-control-sm" placeholder="{% trans "Search franchises…" context "users" %}" autocomplete="off"/>
           <div class="searchable-select__options" role="listbox">
-            <div class="searchable-select__option" data-value="" role="option">All Franchises</div>
+            <div class="searchable-select__option" data-value="" role="option">{% trans "All Franchises" context "users" %}</div>
             {% for tenant in tenants %}
               <div class="searchable-select__option" data-value="{{ tenant.id }}" data-label="{{ tenant.name }}" role="option" title="{{ tenant.name }}">
                 {{ tenant.name }}
               </div>
             {% endfor %}
           </div>
-          <div class="searchable-select__empty" style="display:none;">No matches.</div>
+          <div class="searchable-select__empty" style="display:none;">{% trans "No matches." context "common" %}</div>
         </div>
         <input type="hidden" name="tenant" value="{{ selected_tenant|default:'' }}"/>
       </div>
@@ -132,13 +133,13 @@
 
       <div class="searchable-select" data-name="company" data-selected="{{ selected_company|default:'' }}" style="flex:1 1 0; min-width:0;">
         <button type="button" class="searchable-select__toggle form-control form-control-sm">
-          <span class="searchable-select__label">All Companies</span>
+          <span class="searchable-select__label">{% trans "All Companies" context "users" %}</span>
           <span class="searchable-select__caret">&#9662;</span>
         </button>
         <div class="searchable-select__panel">
-          <input type="text" class="searchable-select__search form-control form-control-sm" placeholder="Search companies…" autocomplete="off"/>
+          <input type="text" class="searchable-select__search form-control form-control-sm" placeholder="{% trans "Search companies…" context "users" %}" autocomplete="off"/>
           <div class="searchable-select__options" role="listbox">
-            <div class="searchable-select__option" data-value="" role="option">All Companies</div>
+            <div class="searchable-select__option" data-value="" role="option">{% trans "All Companies" context "users" %}</div>
             {% for company in companies %}
               {% if request.user.is_superuser and not selected_tenant %}
                 <div class="searchable-select__option" data-value="{{ company.id }}" data-label="{{ company.name }} — {{ company.tenant.name }}" role="option" title="{{ company.name }} — {{ company.tenant.name }}">
@@ -151,7 +152,7 @@
               {% endif %}
             {% endfor %}
           </div>
-          <div class="searchable-select__empty" style="display:none;">No matches.</div>
+          <div class="searchable-select__empty" style="display:none;">{% trans "No matches." context "common" %}</div>
         </div>
         <input type="hidden" name="company" value="{{ selected_company|default:'' }}"/>
       </div>
@@ -293,7 +294,7 @@
     <div class="modal-content">
 
       <div class="modal-header">
-        <h5 class="modal-title">Add User</h5>
+        <h5 class="modal-title">{% trans "Add User" context "users" %}</h5>
         <button type="button" class="close" data-dismiss="modal">
           <span>&times;</span>
         </button>
@@ -304,9 +305,9 @@
 
           {% if request.user.is_superuser %}
           <div class="form-group">
-            <label>Franchise *</label>
+            <label>{% trans "Franchise" context "users" %} *</label>
             <select class="form-control" name="tenant" id="au-tenant" required>
-              <option value="">Select Franchise</option>
+              <option value="">{% trans "Select Franchise" context "users" %}</option>
               {% for tenant in tenants %}
                 <option value="{{ tenant.id }}">{{ tenant.name }}</option>
               {% endfor %}
@@ -317,34 +318,34 @@
           <!-- Identity -->
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label>Email *</label>
-              <input type="email" class="form-control" name="email" required maxlength="254" pattern="^[a-zA-Z0-9._+\-]+@[a-zA-Z0-9\-]+(\.[a-zA-Z0-9\-]+)*\.[a-zA-Z]{2,10}$" title="Please enter a valid email address (e.g., you@company.com)" oninput="this.value=this.value.replace(/[^a-zA-Z0-9@._+\-]/g,'')">
+              <label>{% trans "Email" context "users" %} *</label>
+              <input type="email" class="form-control" name="email" required maxlength="254" pattern="^[a-zA-Z0-9._+\-]+@[a-zA-Z0-9\-]+(\.[a-zA-Z0-9\-]+)*\.[a-zA-Z]{2,10}$" title="{% trans "Please enter a valid email address (e.g., you@company.com)" context "users" %}" oninput="this.value=this.value.replace(/[^a-zA-Z0-9@._+\-]/g,'')">
             </div>
             <div class="form-group col-md-6">
-              <label>Password *</label>
+              <label>{% trans "Password" context "users" %} *</label>
               <div class="password-toggle">
                 <input type="password" class="form-control" name="password" required maxlength="50" oninput="this.value=this.value.replace(/[^\x20-\x7E]/g,'')">
-                <button type="button" class="password-toggle__btn" aria-label="Toggle password visibility"><i class="fas fa-eye-slash"></i></button>
+                <button type="button" class="password-toggle__btn" aria-label="{% trans "Toggle password visibility" context "users" %}"><i class="fas fa-eye-slash"></i></button>
               </div>
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label>First Name *</label>
+              <label>{% trans "First Name" context "users" %} *</label>
               <input type="text" class="form-control" name="first_name" required maxlength="50" oninput="this.value=this.value.replace(/\s+/g,' ').replace(/^ /,'')">
             </div>
             <div class="form-group col-md-6">
-              <label>Last Name *</label>
+              <label>{% trans "Last Name" context "users" %} *</label>
               <input type="text" class="form-control" name="last_name" required maxlength="50" oninput="this.value=this.value.replace(/\s+/g,' ').replace(/^ /,'')">
             </div>
           </div>
 
           <!-- Company -->
           <div class="form-group">
-            <label>Company</label>
+            <label>{% trans "Company" context "users" %}</label>
             <select class="form-control" name="primary_company" id="au-company">
-              <option value="">Select Company</option>
+              <option value="">{% trans "Select Company" context "users" %}</option>
               {% for company in companies %}
                 <option value="{{ company.id }}">{{ company.name }}</option>
               {% endfor %}
@@ -354,25 +355,25 @@
           <!-- ENUM: Personal -->
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label>Gender</label>
+              <label>{% trans "Gender" context "users" %}</label>
               <select class="form-control" name="gender" id="au-gender"></select>
             </div>
 
             <div class="form-group col-md-6">
-              <label>Ethnicity</label>
+              <label>{% trans "Ethnicity" context "users" %}</label>
               <select class="form-control" name="ethnicity" id="au-ethnicity"></select>
             </div>
           </div>
 
           <!-- ENUM: Language -->
           <div class="form-group">
-            <label>Preferred Language</label>
+            <label>{% trans "Preferred Language" context "users" %}</label>
             <select class="form-control" name="preferred_language" id="au-language"></select>
           </div>
 
           <!-- Status -->
           <div class="form-group">
-            <label>Status</label>
+            <label>{% trans "Status" context "users" %}</label>
             <select class="form-control" name="is_active" id="au-status"></select>
           </div>
 
@@ -380,10 +381,10 @@
 
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
-            Cancel
+            {% trans "Cancel" context "common" %}
           </button>
           <button type="submit" class="btn btn-primary btn-sm">
-            Create User
+            {% trans "Create User" context "users" %}
           </button>
         </div>
       </form>
@@ -396,7 +397,7 @@
   <div class="modal-dialog modal-md modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">User Details</h5>
+        <h5 class="modal-title">{% trans "User Details" context "users" %}</h5>
         <button type="button" class="close" data-dismiss="modal">
           <span>&times;</span>
         </button>
@@ -406,37 +407,37 @@
         <table class="table table-sm table-borderless mb-0">
 
           <!-- Identity -->
-          <tr><th>Email</th><td id="ud-email"></td></tr>
-          <tr><th>Name</th><td id="ud-name"></td></tr>
-          <tr><th>Status</th><td id="ud-status"></td></tr>
+          <tr><th>{% trans "Email" context "users" %}</th><td id="ud-email"></td></tr>
+          <tr><th>{% trans "Name" context "users" %}</th><td id="ud-name"></td></tr>
+          <tr><th>{% trans "Status" context "users" %}</th><td id="ud-status"></td></tr>
 
           <!-- Organisation -->
-          <tr><th>Franchise</th><td id="ud-tenant"></td></tr>
-          <tr><th>Company</th><td id="ud-company"></td></tr>
-          <tr><th>Role</th><td id="ud-role"></td></tr>
+          <tr><th>{% trans "Franchise" context "users" %}</th><td id="ud-tenant"></td></tr>
+          <tr><th>{% trans "Company" context "users" %}</th><td id="ud-company"></td></tr>
+          <tr><th>{% trans "Role" context "users" %}</th><td id="ud-role"></td></tr>
 
           <!-- Contact -->
-          <tr><th>Phone</th><td id="ud-phone"></td></tr>
+          <tr><th>{% trans "Phone" context "users" %}</th><td id="ud-phone"></td></tr>
 
           <!-- Personal -->
-          <tr><th>Date of Birth</th><td id="ud-dob"></td></tr>
-          <tr><th>Gender</th><td id="ud-gender"></td></tr>
-          <tr><th>Ethnicity</th><td id="ud-ethnicity"></td></tr>
+          <tr><th>{% trans "Date of Birth" context "users" %}</th><td id="ud-dob"></td></tr>
+          <tr><th>{% trans "Gender" context "users" %}</th><td id="ud-gender"></td></tr>
+          <tr><th>{% trans "Ethnicity" context "users" %}</th><td id="ud-ethnicity"></td></tr>
 
           <!-- Profile -->
-          <tr><th>Preferred Language</th><td id="ud-language"></td></tr>
-          <tr><th>Bio</th><td id="ud-bio" style="word-break:break-word;overflow-wrap:anywhere;white-space:pre-wrap;"></td></tr>
-          <tr><th>Notes</th><td id="ud-notes" style="word-break:break-word;overflow-wrap:anywhere;white-space:pre-wrap;"></td></tr>
+          <tr><th>{% trans "Preferred Language" context "users" %}</th><td id="ud-language"></td></tr>
+          <tr><th>{% trans "Bio" context "users" %}</th><td id="ud-bio" style="word-break:break-word;overflow-wrap:anywhere;white-space:pre-wrap;"></td></tr>
+          <tr><th>{% trans "Notes" context "users" %}</th><td id="ud-notes" style="word-break:break-word;overflow-wrap:anywhere;white-space:pre-wrap;"></td></tr>
 
           <!-- Address -->
           <tr>
-            <th>Address</th>
+            <th>{% trans "Address" context "users" %}</th>
             <td id="ud-address" style="word-break:break-word;overflow-wrap:anywhere;"></td>
           </tr>
-          <tr><th>Country</th><td id="ud-country"></td></tr>
+          <tr><th>{% trans "Country" context "users" %}</th><td id="ud-country"></td></tr>
 
           <!-- Meta -->
-          <tr><th>Created</th><td id="ud-created"></td></tr>
+          <tr><th>{% trans "Created" context "users" %}</th><td id="ud-created"></td></tr>
 
         </table>
       </div>
@@ -449,7 +450,7 @@
     <div class="modal-content">
 
       <div class="modal-header">
-        <h5 class="modal-title">Edit User</h5>
+        <h5 class="modal-title">{% trans "Edit User" context "users" %}</h5>
         <button type="button" class="close" data-dismiss="modal">
           <span>&times;</span>
         </button>
@@ -459,169 +460,234 @@
 
         <!-- Franchise (read-only) -->
         <div class="form-group">
-          <label>Franchise</label>
+          <label>{% trans "Franchise" context "users" %}</label>
           <input type="text" class="form-control" id="eu-tenant" readonly>
         </div>
 
         <!-- Full Name (kept for backward compatibility) -->
         <div class="form-group">
-          <label>Full Name *</label>
+          <label>{% trans "Full Name" context "users" %} *</label>
           <input type="text" class="form-control" id="eu-name" required>
         </div>
 
         <!-- Contact -->
         <div class="form-group">
-          <label>Phone *</label>
+          <label>{% trans "Phone" context "users" %} *</label>
           <input type="tel" class="form-control" id="eu-phone" required
                  minlength="7" maxlength="20"
                  pattern="^\+?[\d\s\-\(\)]{7,20}$"
-                 title="7–15 digits. May include leading + and spaces, hyphens, or parentheses."
+                 title="{% trans "7–15 digits. May include leading + and spaces, hyphens, or parentheses." context "users" %}"
                  oninput="this.value=this.value.replace(/[^\d+\s\-()]/g,'').replace(/(?!^)\+/g,'').slice(0,20)">
-          <small class="form-text text-muted">7–15 digits. Optional leading +.</small>
+          <small class="form-text text-muted">{% trans "7–15 digits. Optional leading +." context "users" %}</small>
         </div>
 
         <!-- Personal -->
         <div class="form-row">
           <div class="form-group col-md-6">
-            <label>Date of Birth</label>
+            <label>{% trans "Date of Birth" context "users" %}</label>
             <input type="date" class="form-control" id="eu-dob">
-            <small class="form-text text-muted">Age must be between 13 and 120.</small>
+            <small class="form-text text-muted">{% trans "Age must be between 13 and 120." context "users" %}</small>
           </div>
 
           <div class="form-group col-md-6">
-            <label>Gender</label>
+            <label>{% trans "Gender" context "users" %}</label>
             <select class="form-control" id="eu-gender">
-              <option value="">-- Select Gender --</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other</option>
-              <option value="prefer_not_to_say">Prefer not to say</option>
+              <option value="">{% trans "-- Select Gender --" context "users" %}</option>
+              <option value="male">{% trans "Male" context "users" %}</option>
+              <option value="female">{% trans "Female" context "users" %}</option>
+              <option value="other">{% trans "Other" context "users" %}</option>
+              <option value="prefer_not_to_say">{% trans "Prefer not to say" context "users" %}</option>
             </select>
           </div>
         </div>
 
         <div class="form-group">
-          <label>Ethnicity</label>
+          <label>{% trans "Ethnicity" context "users" %}</label>
           <select class="form-control" id="eu-ethnicity">
-            <option value="">-- Select Ethnicity --</option>
-            <option value="asian">Asian</option>
-            <option value="black">Black / African descent</option>
-            <option value="hispanic">Hispanic / Latino</option>
-            <option value="white">White</option>
-            <option value="mixed">Mixed</option>
-            <option value="other">Other</option>
-            <option value="prefer_not_to_say">Prefer not to say</option>
+            <option value="">{% trans "-- Select Ethnicity --" context "users" %}</option>
+            <option value="asian">{% trans "Asian" context "users" %}</option>
+            <option value="black">{% trans "Black / African descent" context "users" %}</option>
+            <option value="hispanic">{% trans "Hispanic / Latino" context "users" %}</option>
+            <option value="white">{% trans "White" context "users" %}</option>
+            <option value="mixed">{% trans "Mixed" context "users" %}</option>
+            <option value="other">{% trans "Other" context "users" %}</option>
+            <option value="prefer_not_to_say">{% trans "Prefer not to say" context "users" %}</option>
           </select>
         </div>
 
         <!-- Profile -->
         <div class="form-group">
-          <label>Preferred Language</label>
+          <label>{% trans "Preferred Language" context "users" %}</label>
           <select class="form-control" id="eu-language">
-            <option value="">-- Select Language --</option>
-            <option value="en">English</option>
-            <option value="es">Spanish</option>
-            <option value="fr">French</option>
-            <option value="de">German</option>
-            <option value="ar">Arabic</option>
-            <option value="hi">Hindi</option>
+            <option value="">{% trans "-- Select Language --" context "users" %}</option>
+            <option value="en">{% trans "English" context "users" %}</option>
+            <option value="es">{% trans "Spanish" context "users" %}</option>
+            <option value="fr">{% trans "French" context "users" %}</option>
+            <option value="de">{% trans "German" context "users" %}</option>
+            <option value="ar">{% trans "Arabic" context "users" %}</option>
+            <option value="hi">{% trans "Hindi" context "users" %}</option>
           </select>
         </div>
 
         <div class="form-group">
-          <label>Bio</label>
+          <label>{% trans "Bio" context "users" %}</label>
           <textarea class="form-control" id="eu-bio" rows="2" minlength="10" maxlength="500"></textarea>
-          <small class="form-text text-muted">Optional. If provided, 10–500 characters.</small>
+          <small class="form-text text-muted">{% trans "Optional. If provided, 10–500 characters." context "users" %}</small>
         </div>
 
         <div class="form-group">
-          <label>Notes</label>
+          <label>{% trans "Notes" context "users" %}</label>
           <textarea class="form-control" id="eu-notes" rows="2" minlength="5" maxlength="1000"></textarea>
-          <small class="form-text text-muted">Optional. If provided, 5–1000 characters.</small>
+          <small class="form-text text-muted">{% trans "Optional. If provided, 5–1000 characters." context "users" %}</small>
         </div>
 
         <!-- Address -->
         <div class="form-group">
-          <label>Address Line 1</label>
+          <label>{% trans "Address Line 1" context "users" %}</label>
           <input type="text" class="form-control" id="eu-address1">
         </div>
 
         <div class="form-group">
-          <label>Address Line 2</label>
+          <label>{% trans "Address Line 2" context "users" %}</label>
           <input type="text" class="form-control" id="eu-address2">
         </div>
 
         <div class="form-row">
           <div class="form-group col-md-4">
-            <label>City</label>
+            <label>{% trans "City" context "users" %}</label>
             <input type="text" class="form-control" id="eu-city"
                    minlength="2" maxlength="50"
                    pattern="^[A-Za-zÀ-ɏ][A-Za-zÀ-ɏ\s.\-']{1,49}$"
-                   title="2–50 characters. Letters, spaces, dots, hyphens, and apostrophes only.">
+                   title="{% trans "2–50 characters. Letters, spaces, dots, hyphens, and apostrophes only." context "users" %}">
           </div>
           <div class="form-group col-md-4">
-            <label>State / Region</label>
+            <label>{% trans "State / Region" context "users" %}</label>
             <input type="text" class="form-control" id="eu-state"
                    minlength="2" maxlength="50"
                    pattern="^[A-Za-zÀ-ɏ][A-Za-zÀ-ɏ\s.\-']{1,49}$"
-                   title="2–50 characters. Letters, spaces, dots, hyphens, and apostrophes only.">
+                   title="{% trans "2–50 characters. Letters, spaces, dots, hyphens, and apostrophes only." context "users" %}">
           </div>
           <div class="form-group col-md-4">
-            <label>Postal Code</label>
+            <label>{% trans "Postal Code" context "users" %}</label>
             <input type="text" class="form-control" id="eu-postal">
           </div>
         </div>
 
         <div class="form-group">
-          <label>Country *</label>
+          <label>{% trans "Country" context "users" %} *</label>
           <select class="form-control" id="eu-country" required>
-            <option value="">-- Select Country --</option>
-            <option value="US">United States</option>
-            <option value="IN">India</option>
-            <option value="UK">United Kingdom</option>
-            <option value="CA">Canada</option>
-            <option value="AU">Australia</option>
+            <option value="">{% trans "-- Select Country --" context "users" %}</option>
+            <option value="US">{% trans "United States" context "users" %}</option>
+            <option value="IN">{% trans "India" context "users" %}</option>
+            <option value="UK">{% trans "United Kingdom" context "users" %}</option>
+            <option value="CA">{% trans "Canada" context "users" %}</option>
+            <option value="AU">{% trans "Australia" context "users" %}</option>
           </select>
         </div>
 
         <!-- Status -->
         <div class="form-group">
-          <label>Status *</label>
+          <label>{% trans "Status" context "users" %} *</label>
           <select class="form-control" id="eu-active" required>
-            <option value="true">Active</option>
-            <option value="false">Inactive</option>
+            <option value="true">{% trans "Active" context "common" %}</option>
+            <option value="false">{% trans "Inactive" context "common" %}</option>
           </select>
         </div>
 
         <!-- Company -->
         <div class="form-group">
-          <label>Company *</label>
+          <label>{% trans "Company" context "users" %} *</label>
           <select class="form-control" id="eu-company" required></select>
         </div>
 
         <!-- Role -->
         <div class="form-group">
-          <label>Role *</label>
+          <label>{% trans "Role" context "users" %} *</label>
           <select class="form-control" id="eu-role" required></select>
         </div>
 
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
-        <button class="btn btn-primary btn-sm" onclick="saveUserEdit()">Save</button>
+        <button class="btn btn-secondary btn-sm" data-dismiss="modal">{% trans "Cancel" context "common" %}</button>
+        <button class="btn btn-primary btn-sm" onclick="saveUserEdit()">{% trans "Save" context "common" %}</button>
       </div>
 
     </div>
   </div>
 </div>
+
+<script>
+(function () {
+  window.USER_I18N = {
+    active: '{% filter escapejs %}{% trans "Active" context "common" %}{% endfilter %}',
+    inactive: '{% filter escapejs %}{% trans "Inactive" context "common" %}{% endfilter %}',
+    dash: '{% filter escapejs %}{% trans "—" context "common" %}{% endfilter %}',
+    am: '{% filter escapejs %}{% trans "AM" context "common" %}{% endfilter %}',
+    pm: '{% filter escapejs %}{% trans "PM" context "common" %}{% endfilter %}',
+    save: '{% filter escapejs %}{% trans "Save" context "common" %}{% endfilter %}',
+    cancel: '{% filter escapejs %}{% trans "Cancel" context "common" %}{% endfilter %}',
+    fullNameRequired: '{% filter escapejs %}{% trans "Full name is required." context "users" %}{% endfilter %}',
+    phoneRequired: '{% filter escapejs %}{% trans "Phone is required." context "users" %}{% endfilter %}',
+    phoneFormat: '{% filter escapejs %}{% trans "Enter 7–15 digits. Optional leading + and spaces, hyphens or parentheses." context "users" %}{% endfilter %}',
+    countryRequired: '{% filter escapejs %}{% trans "Country is required." context "users" %}{% endfilter %}',
+    statusRequired: '{% filter escapejs %}{% trans "Status is required." context "users" %}{% endfilter %}',
+    companyRequired: '{% filter escapejs %}{% trans "Company is required." context "users" %}{% endfilter %}',
+    roleRequired: '{% filter escapejs %}{% trans "Role is required." context "users" %}{% endfilter %}',
+    dobInvalid: '{% filter escapejs %}{% trans "Date of birth is invalid." context "users" %}{% endfilter %}',
+    ageRange: '{% filter escapejs %}{% trans "Age must be between 13 and 120." context "users" %}{% endfilter %}',
+    bioLength: '{% filter escapejs %}{% trans "Bio must be 10–500 characters." context "users" %}{% endfilter %}',
+    notesLength: '{% filter escapejs %}{% trans "Notes must be 5–1000 characters." context "users" %}{% endfilter %}',
+    cityFormat: '{% filter escapejs %}{% trans "City must be 2–50 letters, spaces, dots, hyphens or apostrophes." context "users" %}{% endfilter %}',
+    stateFormat: '{% filter escapejs %}{% trans "State / Region must be 2–50 letters, spaces, dots, hyphens or apostrophes." context "users" %}{% endfilter %}',
+    failedToSave: '{% filter escapejs %}{% trans "Failed to save user." context "users" %}{% endfilter %}',
+    networkError: '{% filter escapejs %}{% trans "Network error. Please try again." context "common" %}{% endfilter %}',
+    failedToLoadPage: '{% filter escapejs %}{% trans "Failed to load page. Please try again." context "users" %}{% endfilter %}',
+    selectPlaceholder: '{% filter escapejs %}{% trans "-- Select --" context "users" %}{% endfilter %}',
+    searchDefault: '{% filter escapejs %}{% trans "Search…" context "common" %}{% endfilter %}',
+    noMatchFor: '{% filter escapejs %}{% trans "No match for" context "users" %}{% endfilter %}',
+    noOptions: '{% filter escapejs %}{% trans "No options" context "users" %}{% endfilter %}',
+    searchCompany: '{% filter escapejs %}{% trans "Search company…" context "users" %}{% endfilter %}',
+    searchFranchise: '{% filter escapejs %}{% trans "Search franchise…" context "users" %}{% endfilter %}',
+    selectCompany: '{% filter escapejs %}{% trans "Select Company" context "users" %}{% endfilter %}',
+    selectFranchise: '{% filter escapejs %}{% trans "Select Franchise" context "users" %}{% endfilter %}',
+    failedToLoadCompanies: '{% filter escapejs %}{% trans "Failed to load companies" context "users" %}{% endfilter %}',
+    noPermissionAddUsers: '{% filter escapejs %}{% trans "You don't have permission to add users." context "users" %}{% endfilter %}',
+    dataTooLarge: '{% filter escapejs %}{% trans "Submitted data is too large." context "users" %}{% endfilter %}',
+    serverErrorCreating: '{% filter escapejs %}{% trans "Server error while creating user. Please try again or contact support." context "users" %}{% endfilter %}',
+    failedToCreateUser: '{% filter escapejs %}{% trans "Failed to create user. Please check the form." context "users" %}{% endfilter %}',
+    networkErrorConnection: '{% filter escapejs %}{% trans "Network error. Please check your connection and try again." context "users" %}{% endfilter %}',
+    male: '{% filter escapejs %}{% trans "Male" context "users" %}{% endfilter %}',
+    female: '{% filter escapejs %}{% trans "Female" context "users" %}{% endfilter %}',
+    other: '{% filter escapejs %}{% trans "Other" context "users" %}{% endfilter %}',
+    preferNotToSay: '{% filter escapejs %}{% trans "Prefer not to say" context "users" %}{% endfilter %}',
+    asian: '{% filter escapejs %}{% trans "Asian" context "users" %}{% endfilter %}',
+    black: '{% filter escapejs %}{% trans "Black / African descent" context "users" %}{% endfilter %}',
+    hispanic: '{% filter escapejs %}{% trans "Hispanic / Latino" context "users" %}{% endfilter %}',
+    white: '{% filter escapejs %}{% trans "White" context "users" %}{% endfilter %}',
+    mixed: '{% filter escapejs %}{% trans "Mixed" context "users" %}{% endfilter %}',
+    english: '{% filter escapejs %}{% trans "English" context "users" %}{% endfilter %}',
+    spanish: '{% filter escapejs %}{% trans "Spanish" context "users" %}{% endfilter %}',
+    french: '{% filter escapejs %}{% trans "French" context "users" %}{% endfilter %}',
+    german: '{% filter escapejs %}{% trans "German" context "users" %}{% endfilter %}',
+    arabic: '{% filter escapejs %}{% trans "Arabic" context "users" %}{% endfilter %}',
+    hindi: '{% filter escapejs %}{% trans "Hindi" context "users" %}{% endfilter %}',
+  };
+  var g = (typeof gettext === "function") ? gettext : function (s) { return s; };
+  Object.keys(window.USER_I18N).forEach(function (k) {
+    window.USER_I18N[k] = g(window.USER_I18N[k]);
+  });
+})();
+</script>
+
 <script>
 let editUserId = null;
+const I18N = window.USER_I18N || {};
 
 function formatCreatedDate(isoString) {
-  if (!isoString) return "-";
+  if (!isoString) return I18N.dash || "-";
   const d = new Date(isoString);
-  if (isNaN(d.getTime())) return "-";
+  if (isNaN(d.getTime())) return I18N.dash || "-";
   const pad = function (n) { return String(n).padStart(2, "0"); };
   const dd = pad(d.getDate());
   const mm = pad(d.getMonth() + 1);
@@ -630,7 +696,7 @@ function formatCreatedDate(isoString) {
   const hh = pad(((h24 % 12) || 12));
   const min = pad(d.getMinutes());
   const ss = pad(d.getSeconds());
-  const ampm = h24 >= 12 ? "PM" : "AM";
+  const ampm = h24 >= 12 ? (I18N.pm || "PM") : (I18N.am || "AM");
   return dd + "/" + mm + "/" + yyyy + ", " + hh + ":" + min + ":" + ss + " " + ampm;
 }
 
@@ -642,36 +708,36 @@ function viewUser(userId) {
       // Identity
       document.getElementById("ud-email").innerText = data.email;
       document.getElementById("ud-name").innerText =
-        `${data.first_name || ""} ${data.last_name || ""}`.trim() || "-";
+        `${data.first_name || ""} ${data.last_name || ""}`.trim() || (I18N.dash || "-");
       document.getElementById("ud-status").innerText =
-        data.is_active ? "Active" : "Inactive";
+        data.is_active ? (I18N.active || "Active") : (I18N.inactive || "Inactive");
 
       // Org
       document.getElementById("ud-tenant").innerText = data.tenant;
       document.getElementById("ud-company").innerText =
-        data.company_name || "-";
+        data.company_name || (I18N.dash || "-");
       document.getElementById("ud-role").innerText =
-        data.role_name || "-";
+        data.role_name || (I18N.dash || "-");
 
       // Contact
       document.getElementById("ud-phone").innerText =
-        data.phone || "-";
+        data.phone || (I18N.dash || "-");
 
       // Personal
       document.getElementById("ud-dob").innerText =
-        data.birth_date || "-";
+        data.birth_date || (I18N.dash || "-");
       document.getElementById("ud-gender").innerText =
-        data.gender || "-";
+        data.gender || (I18N.dash || "-");
       document.getElementById("ud-ethnicity").innerText =
-        data.ethnicity || "-";
+        data.ethnicity || (I18N.dash || "-");
 
       // Profile
       document.getElementById("ud-language").innerText =
-        data.preferred_language || "-";
+        data.preferred_language || (I18N.dash || "-");
       document.getElementById("ud-bio").innerText =
-        data.bio || "-";
+        data.bio || (I18N.dash || "-");
       document.getElementById("ud-notes").innerText =
-        data.notes || "-";
+        data.notes || (I18N.dash || "-");
 
       // Address (merged) — Country is shown in its own row, not merged here,
       // otherwise users with only a country set would see e.g. "AU" rendered
@@ -682,8 +748,8 @@ function viewUser(userId) {
         data.city,
         data.state_region,
         data.postal_code
-      ].filter(Boolean).join(", ") || "-";
-      document.getElementById("ud-country").innerText = data.country || "-";
+      ].filter(Boolean).join(", ") || (I18N.dash || "-");
+      document.getElementById("ud-country").innerText = data.country || (I18N.dash || "-");
 
       // Meta — explicit DD/MM/YYYY, hh:mm:ss AM/PM with zero padding so the
       // value doesn't shift between browser locales ("2/5/2026" vs "5/2/2026").
@@ -824,26 +890,25 @@ function saveUserEdit() {
 
   const fullName = nameInput.value.trim();
   if (!fullName) {
-    errors.push([nameInput, "Full name is required."]);
+    errors.push([nameInput, I18N.fullNameRequired || "Full name is required."]);
   }
   const parts = (fullName || "").split(" ");
 
   const phoneRaw = phoneInput.value.trim();
   if (!phoneRaw) {
-    errors.push([phoneInput, "Phone is required."]);
+    errors.push([phoneInput, I18N.phoneRequired || "Phone is required."]);
   } else {
     const digitCount = (phoneRaw.match(/\d/g) || []).length;
     const formatOk = /^\+?[\d\s\-()]{7,20}$/.test(phoneRaw);
     if (!formatOk || digitCount < 7 || digitCount > 15) {
-      errors.push([phoneInput,
-        "Enter 7–15 digits. Optional leading + and spaces, hyphens or parentheses."]);
+      errors.push([phoneInput, I18N.phoneFormat || "Enter 7–15 digits. Optional leading + and spaces, hyphens or parentheses."]);
     }
   }
 
-  if (!countrySelect.value) errors.push([countrySelect, "Country is required."]);
-  if (!statusSelect.value)  errors.push([statusSelect,  "Status is required."]);
-  if (!companySelect.value) errors.push([companySelect, "Company is required."]);
-  if (!roleSelect.value)    errors.push([roleSelect,    "Role is required."]);
+  if (!countrySelect.value) errors.push([countrySelect, I18N.countryRequired || "Country is required."]);
+  if (!statusSelect.value)  errors.push([statusSelect,  I18N.statusRequired || "Status is required."]);
+  if (!companySelect.value) errors.push([companySelect, I18N.companyRequired || "Company is required."]);
+  if (!roleSelect.value)    errors.push([roleSelect,    I18N.roleRequired || "Role is required."]);
 
   // Optional fields — only validated when filled.
   const dobInput = document.getElementById("eu-dob");
@@ -851,14 +916,14 @@ function saveUserEdit() {
   if (dobRaw) {
     const dobDate = new Date(dobRaw);
     if (isNaN(dobDate.getTime())) {
-      errors.push([dobInput, "Date of birth is invalid."]);
+      errors.push([dobInput, I18N.dobInvalid || "Date of birth is invalid."]);
     } else {
       const now = new Date();
       let age = now.getFullYear() - dobDate.getFullYear();
       const m = now.getMonth() - dobDate.getMonth();
       if (m < 0 || (m === 0 && now.getDate() < dobDate.getDate())) age--;
       if (age < 13 || age > 120) {
-        errors.push([dobInput, "Age must be between 13 and 120."]);
+        errors.push([dobInput, I18N.ageRange || "Age must be between 13 and 120."]);
       }
     }
   }
@@ -866,28 +931,26 @@ function saveUserEdit() {
   const bioInput = document.getElementById("eu-bio");
   const bioVal = bioInput.value.trim();
   if (bioVal && (bioVal.length < 10 || bioVal.length > 500)) {
-    errors.push([bioInput, "Bio must be 10–500 characters."]);
+    errors.push([bioInput, I18N.bioLength || "Bio must be 10–500 characters."]);
   }
 
   const notesInput = document.getElementById("eu-notes");
   const notesVal = notesInput.value.trim();
   if (notesVal && (notesVal.length < 5 || notesVal.length > 1000)) {
-    errors.push([notesInput, "Notes must be 5–1000 characters."]);
+    errors.push([notesInput, I18N.notesLength || "Notes must be 5–1000 characters."]);
   }
 
   const placeRe = /^[A-Za-zÀ-ɏ][A-Za-zÀ-ɏ\s.\-']{1,49}$/;
   const cityInput = document.getElementById("eu-city");
   const cityVal = cityInput.value.trim();
   if (cityVal && !placeRe.test(cityVal)) {
-    errors.push([cityInput,
-      "City must be 2–50 letters, spaces, dots, hyphens or apostrophes."]);
+    errors.push([cityInput, I18N.cityFormat || "City must be 2–50 letters, spaces, dots, hyphens or apostrophes."]);
   }
 
   const stateInput = document.getElementById("eu-state");
   const stateVal = stateInput.value.trim();
   if (stateVal && !placeRe.test(stateVal)) {
-    errors.push([stateInput,
-      "State / Region must be 2–50 letters, spaces, dots, hyphens or apostrophes."]);
+    errors.push([stateInput, I18N.stateFormat || "State / Region must be 2–50 letters, spaces, dots, hyphens or apostrophes."]);
   }
 
   if (errors.length) {
@@ -937,7 +1000,7 @@ function saveUserEdit() {
   .then(res => res.json().then(data => ({ ok: res.ok, data })))
   .then(({ ok, data }) => {
     if (!ok) {
-      const msg = (data && data.message) || "Failed to save user.";
+      const msg = (data && data.message) || (I18N.failedToSave || "Failed to save user.");
       if (typeof showToast === "function") {
         showToast(msg, "error");
       } else {
@@ -963,7 +1026,7 @@ function saveUserEdit() {
   .catch(err => {
     console.error("Save failed:", err);
     if (typeof showToast === "function") {
-      showToast("Network error. Please try again.", "error");
+      showToast(I18N.networkError || "Network error. Please try again.", "error");
     }
   });
 }
@@ -1003,7 +1066,7 @@ function saveUserEdit() {
       .catch(err => {
         console.error("Pagination load failed:", err);
         if (typeof showToast === "function") {
-          showToast("Failed to load page. Please try again.", "error");
+          showToast(I18N.failedToLoadPage || "Failed to load page. Please try again.", "error");
         }
       });
   });
@@ -1015,34 +1078,34 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const ENUMS = {
     gender: [
-      { value: "male", label: "Male" },
-      { value: "female", label: "Female" },
-      { value: "other", label: "Other" },
-      { value: "prefer_not_to_say", label: "Prefer not to say" }
+      { value: "male", label: I18N.male || "Male" },
+      { value: "female", label: I18N.female || "Female" },
+      { value: "other", label: I18N.other || "Other" },
+      { value: "prefer_not_to_say", label: I18N.preferNotToSay || "Prefer not to say" }
     ],
 
     ethnicity: [
-      { value: "asian", label: "Asian" },
-      { value: "black", label: "Black / African descent" },
-      { value: "hispanic", label: "Hispanic / Latino" },
-      { value: "white", label: "White" },
-      { value: "mixed", label: "Mixed" },
-      { value: "other", label: "Other" },
-      { value: "prefer_not_to_say", label: "Prefer not to say" }
+      { value: "asian", label: I18N.asian || "Asian" },
+      { value: "black", label: I18N.black || "Black / African descent" },
+      { value: "hispanic", label: I18N.hispanic || "Hispanic / Latino" },
+      { value: "white", label: I18N.white || "White" },
+      { value: "mixed", label: I18N.mixed || "Mixed" },
+      { value: "other", label: I18N.other || "Other" },
+      { value: "prefer_not_to_say", label: I18N.preferNotToSay || "Prefer not to say" }
     ],
 
     language: [
-      { value: "en", label: "English" },
-      { value: "es", label: "Spanish" },
-      { value: "fr", label: "French" },
-      { value: "de", label: "German" },
-      { value: "ar", label: "Arabic" },
-      { value: "hi", label: "Hindi" }
+      { value: "en", label: I18N.english || "English" },
+      { value: "es", label: I18N.spanish || "Spanish" },
+      { value: "fr", label: I18N.french || "French" },
+      { value: "de", label: I18N.german || "German" },
+      { value: "ar", label: I18N.arabic || "Arabic" },
+      { value: "hi", label: I18N.hindi || "Hindi" }
     ],
 
     status: [
-      { value: "true", label: "Active" },
-      { value: "false", label: "Inactive" }
+      { value: "true", label: I18N.active || "Active" },
+      { value: "false", label: I18N.inactive || "Inactive" }
     ]
   };
 
@@ -1050,7 +1113,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function fillSelect(selectEl, options) {
     if (!selectEl) return;
-    selectEl.innerHTML = "<option value=''>-- Select --</option>";
+    selectEl.innerHTML = "<option value=''>" + (I18N.selectPlaceholder || "-- Select --") + "</option>";
     options.forEach(o => {
       const opt = document.createElement("option");
       opt.value = o.value;
@@ -1068,7 +1131,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!selectEl || selectEl.dataset.searchableMounted === "1") return;
     selectEl.dataset.searchableMounted = "1";
 
-    var placeholder = (opts && opts.placeholder) || "Search…";
+    var placeholder = (opts && opts.placeholder) || (I18N.searchDefault || "Search…");
 
     var wrap = document.createElement("div");
     wrap.className = "searchable-select";
@@ -1123,7 +1186,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!any) {
         var empty = document.createElement("div");
         empty.className = "searchable-select__empty";
-        empty.textContent = q ? "No match for \"" + q + "\"" : "No options";
+        empty.textContent = q ? (I18N.noMatchFor || "No match for") + ' "' + q + '"' : (I18N.noOptions || "No options");
         menu.appendChild(empty);
       }
     }
@@ -1166,8 +1229,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Replace the native company / tenant selects with searchable widgets
     // the first time the modal opens. Subsequent opens are no-ops.
-    makeSearchable(document.getElementById("au-company"), { placeholder: "Search company…" });
-    makeSearchable(document.getElementById("au-tenant"),  { placeholder: "Search franchise…" });
+    makeSearchable(document.getElementById("au-company"), { placeholder: I18N.searchCompany || "Search company…" });
+    makeSearchable(document.getElementById("au-tenant"),  { placeholder: I18N.searchFranchise || "Search franchise…" });
 
     $('#addUserModal').modal('show');
   };
@@ -1207,15 +1270,15 @@ document.addEventListener("DOMContentLoaded", function () {
           return;
         }
         const msg = data.message
-          || (result.status === 403 ? "You don't have permission to add users."
-          :  result.status === 413 ? "Submitted data is too large."
-          :  result.status >= 500   ? "Server error while creating user. Please try again or contact support."
-          : "Failed to create user. Please check the form.");
+          || (result.status === 403 ? (I18N.noPermissionAddUsers || "You don't have permission to add users.")
+          :  result.status === 413 ? (I18N.dataTooLarge || "Submitted data is too large.")
+          :  result.status >= 500   ? (I18N.serverErrorCreating || "Server error while creating user. Please try again or contact support.")
+          : (I18N.failedToCreateUser || "Failed to create user. Please check the form."));
         showToast(msg, "error");
       })
       .catch(err => {
         console.error("Add user failed:", err);
-        showToast("Network error. Please check your connection and try again.", "error");
+        showToast(I18N.networkErrorConnection || "Network error. Please check your connection and try again.", "error");
       })
       .finally(() => {
         if (submitBtn) {
@@ -1240,7 +1303,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const tenantId = this.value;
 
         companySelect.innerHTML =
-          "<option value=''>Select Company</option>";
+          "<option value=''>" + (I18N.selectCompany || "Select Company") + "</option>";
 
         if (!tenantId) return;
 
@@ -1262,7 +1325,7 @@ document.addEventListener("DOMContentLoaded", function () {
           .catch(err => {
             console.error("Company load failed", err);
             companySelect.innerHTML =
-              "<option value=''>Failed to load companies</option>";
+              "<option value=''>" + (I18N.failedToLoadCompanies || "Failed to load companies") + "</option>";
           });
       });
     }

@@ -1,5 +1,6 @@
 {% extends "base/base.html" %}
-{% block title %}Subscriptions{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Subscriptions" context "billing" %}{% endblock %}
 
 {% block content %}
 <style>
@@ -274,7 +275,7 @@
     </div>
     <div>
       <div class="sub-summary-value">{{ total_plans }}</div>
-      <div class="sub-summary-label">Total Plans</div>
+      <div class="sub-summary-label">{% trans "Total Plans" context "billing" %}</div>
     </div>
   </div>
   <div class="sub-summary-card">
@@ -283,7 +284,7 @@
     </div>
     <div>
       <div class="sub-summary-value">{{ total_active }}</div>
-      <div class="sub-summary-label">Active Subscriptions</div>
+      <div class="sub-summary-label">{% trans "Active Subscriptions" context "billing" %}</div>
     </div>
   </div>
   <div class="sub-summary-card">
@@ -292,7 +293,7 @@
     </div>
     <div>
       <div class="sub-summary-value">${{ total_revenue|floatformat:0 }}</div>
-      <div class="sub-summary-label">Total Revenue</div>
+      <div class="sub-summary-label">{% trans "Total Revenue" context "billing" %}</div>
     </div>
   </div>
 </div>
@@ -302,23 +303,23 @@
   <table class="plans-table">
     <thead>
       <tr>
-        <th>Plan Name</th>
-        <th>Price</th>
-        <th>Billing Period</th>
-        <th>Status</th>
-        <th>Active</th>
-        <th>Pending</th>
-        <th>Total</th>
-        <th>Best For</th>
-        <th>Action</th>
+        <th>{% trans "Plan Name" context "billing" %}</th>
+        <th>{% trans "Price" context "billing" %}</th>
+        <th>{% trans "Billing Period" context "billing" %}</th>
+        <th>{% trans "Status" context "billing" %}</th>
+        <th>{% trans "Active" context "billing" %}</th>
+        <th>{% trans "Pending" context "billing" %}</th>
+        <th>{% trans "Total" context "billing" %}</th>
+        <th>{% trans "Best For" context "billing" %}</th>
+        <th>{% trans "Action" context "billing" %}</th>
       </tr>
     </thead>
     <tbody>
       {% for plan in plans %}
       <tr>
         <td>
-          <div class="plan-name">{{ plan.name }}</div>
-          {% if plan.tagline %}<div class="plan-tagline">{{ plan.tagline }}</div>{% endif %}
+          <div class="plan-name">{{ plan.display_name }}</div>
+          {% if plan.display_tagline %}<div class="plan-tagline">{{ plan.display_tagline }}</div>{% endif %}
         </td>
         <td>
           <strong>{{ plan.currency }}{{ plan.price|floatformat:0 }}</strong>
@@ -328,23 +329,23 @@
           {% if plan.billing_period == "yearly" and plan.price > 0 %}
             <div class="plan-monthly-note">
               {{ plan.currency }}{{ plan.monthly_price|floatformat:2 }}/mo
-              {% if plan.discount_percent %} &middot; Save {{ plan.discount_percent }}%{% endif %}
+              {% if plan.discount_percent %} &middot; {% blocktrans trimmed with pct=plan.discount_percent context "billing" %}Save {{ pct }}%{% endblocktrans %}{% endif %}
             </div>
           {% endif %}
         </td>
         <td style="text-transform:capitalize;">{{ plan.billing_period }}</td>
         <td>
-          {% if plan.is_popular %}<span class="plan-badge plan-badge--popular">Popular</span> {% endif %}
+          {% if plan.is_popular %}<span class="plan-badge plan-badge--popular">{% trans "Popular" context "billing" %}</span> {% endif %}
           <span class="plan-badge plan-badge--{% if plan.is_active %}active{% else %}inactive{% endif %} js-plan-status">
-            {% if plan.is_active %}Active{% else %}Inactive{% endif %}
+            {% if plan.is_active %}{% trans "Active" context "billing" %}{% else %}{% trans "Inactive" context "billing" %}{% endif %}
           </span>
         </td>
         <td><strong>{{ plan.active_count }}</strong></td>
         <td>{{ plan.pending_count }}</td>
         <td>{{ plan.total_count }}</td>
         <td>
-          {% if plan.best_for %}
-            {{ plan.best_for }}
+          {% if plan.display_best_for %}
+            {{ plan.display_best_for }}
           {% else %}
             <span style="color:#94a3b8;">{{ plan.code }}</span>
           {% endif %}
@@ -352,20 +353,20 @@
         <td>
           <div class="action-btns">
             <button class="btn-plan-action btn-view-plan" onclick="openPlanModal('plan-modal-{{ forloop.counter }}')">
-              <i class="fas fa-eye"></i> View
+              <i class="fas fa-eye"></i> {% trans "View" context "billing" %}
             </button>
             <button class="btn-plan-action btn-edit-plan" onclick="openPlanModal('edit-modal-{{ forloop.counter }}')">
-              <i class="fas fa-edit"></i> Edit
+              <i class="fas fa-edit"></i> {% trans "Edit" context "billing" %}
             </button>
             <button type="button"
                     class="btn-plan-action js-plan-toggle {% if plan.is_active %}btn-toggle-inactive{% else %}btn-toggle-active{% endif %}"
                     data-toggle-url="{% url 'plan-toggle' plan.id %}"
-                    data-plan-name="{{ plan.name|escapejs }}"
+                    data-plan-name="{{ plan.display_name|escapejs }}"
                     data-active="{{ plan.is_active|yesno:'1,0' }}">
               {% if plan.is_active %}
-                <i class="fas fa-ban"></i> Deactivate
+                <i class="fas fa-ban"></i> {% trans "Deactivate" context "billing" %}
               {% else %}
-                <i class="fas fa-check"></i> Activate
+                <i class="fas fa-check"></i> {% trans "Activate" context "billing" %}
               {% endif %}
             </button>
           </div>
@@ -375,7 +376,7 @@
       <tr>
         <td colspan="9" class="text-center" style="padding:40px; color:#94a3b8;">
           <i class="fas fa-layer-group fa-2x" style="display:block; margin-bottom:12px; color:#cbd5e1;"></i>
-          No membership plans configured yet.
+          {% trans "No membership plans configured yet." context "billing" %}
         </td>
       </tr>
       {% endfor %}
@@ -389,10 +390,10 @@
       <ul class="pagination pagination-sm mb-0">
         {% if page_obj.has_previous %}
           <li class="page-item">
-            <a class="page-link" href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">Previous</a>
+            <a class="page-link" href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">{% trans "Previous" context "common" %}</a>
           </li>
         {% else %}
-          <li class="page-item disabled"><span class="page-link">Previous</span></li>
+          <li class="page-item disabled"><span class="page-link">{% trans "Previous" context "common" %}</span></li>
         {% endif %}
 
         {% with start=page_obj.number|add:-2 end=page_obj.number|add:2 %}
@@ -411,10 +412,10 @@
 
         {% if page_obj.has_next %}
           <li class="page-item">
-            <a class="page-link" href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">Next</a>
+            <a class="page-link" href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">{% trans "Next" context "common" %}</a>
           </li>
         {% else %}
-          <li class="page-item disabled"><span class="page-link">Next</span></li>
+          <li class="page-item disabled"><span class="page-link">{% trans "Next" context "common" %}</span></li>
         {% endif %}
       </ul>
     </nav>
@@ -427,44 +428,44 @@
 <div class="plan-modal-overlay" id="plan-modal-{{ forloop.counter }}">
   <div class="plan-modal">
     <div class="plan-modal__header">
-      <div class="plan-modal__title">{{ plan.name }}</div>
+      <div class="plan-modal__title">{{ plan.display_name }}</div>
       <button class="plan-modal__close" onclick="closePlanModal('plan-modal-{{ forloop.counter }}')">&times;</button>
     </div>
     <div class="plan-modal__body">
-      <div class="plan-modal__section-label">Plan Details</div>
+      <div class="plan-modal__section-label">{% trans "Plan Details" context "billing" %}</div>
       <div class="plan-modal__info-grid">
         <div class="plan-modal__info-item">
-          <div class="plan-modal__info-label">Price</div>
+          <div class="plan-modal__info-label">{% trans "Price" context "billing" %}</div>
           <div class="plan-modal__info-value">
             {{ plan.currency }}{{ plan.price|floatformat:0 }}/{{ plan.billing_period }}
           </div>
         </div>
         <div class="plan-modal__info-item">
-          <div class="plan-modal__info-label">Status</div>
+          <div class="plan-modal__info-label">{% trans "Status" context "billing" %}</div>
           <div class="plan-modal__info-value">
-            {% if plan.is_active %}Active{% else %}Inactive{% endif %}
+            {% if plan.is_active %}{% trans "Active" context "billing" %}{% else %}{% trans "Inactive" context "billing" %}{% endif %}
           </div>
         </div>
         <div class="plan-modal__info-item">
-          <div class="plan-modal__info-label">Active Subscribers</div>
+          <div class="plan-modal__info-label">{% trans "Active Subscribers" context "billing" %}</div>
           <div class="plan-modal__info-value">{{ plan.active_count }}</div>
         </div>
         <div class="plan-modal__info-item">
-          <div class="plan-modal__info-label">Total Subscribers</div>
+          <div class="plan-modal__info-label">{% trans "Total Subscribers" context "billing" %}</div>
           <div class="plan-modal__info-value">{{ plan.total_count }}</div>
         </div>
       </div>
 
-      <div class="plan-modal__section-label">Features</div>
-      {% if plan.features %}
+      <div class="plan-modal__section-label">{% trans "Features" context "billing" %}</div>
+      {% if plan.display_features %}
         <ul class="plan-modal__features">
-          {% for feature in plan.features %}
-            <li>{{ feature }}</li>
+          {% for feature in plan.display_features %}
+            <li{% if not feature.included %} style="opacity:.65;"{% endif %}>{{ feature.text }}</li>
           {% endfor %}
         </ul>
       {% else %}
         <div class="plan-modal__no-features">
-          <i class="fas fa-info-circle"></i> No features listed for this plan.
+          <i class="fas fa-info-circle"></i> {% trans "No features listed for this plan." context "billing" %}
         </div>
       {% endif %}
     </div>
@@ -477,7 +478,7 @@
 <div class="plan-modal-overlay" id="edit-modal-{{ forloop.counter }}">
   <div class="plan-modal">
     <div class="plan-modal__header">
-      <div class="plan-modal__title">Edit: {{ plan.name }}</div>
+      <div class="plan-modal__title">{% blocktrans trimmed with plan_name=plan.display_name context "billing" %}Edit: {{ plan_name }}{% endblocktrans %}</div>
       <button class="plan-modal__close" onclick="closePlanModal('edit-modal-{{ forloop.counter }}')">&times;</button>
     </div>
     <div class="plan-modal__body">
@@ -485,46 +486,46 @@
         {% csrf_token %}
 
         <div class="form-row">
-          <label for="name-{{ forloop.counter }}">Plan Name</label>
+          <label for="name-{{ forloop.counter }}">{% trans "Plan Name" context "billing" %}</label>
           <input type="text" id="name-{{ forloop.counter }}" name="name" value="{{ plan.name }}" required />
         </div>
 
         <div class="form-row">
-          <label for="tagline-{{ forloop.counter }}">Tagline</label>
+          <label for="tagline-{{ forloop.counter }}">{% trans "Tagline" context "billing" %}</label>
           <input type="text" id="tagline-{{ forloop.counter }}" name="tagline" value="{{ plan.tagline }}" />
         </div>
 
         <div class="form-row form-row-half">
           <div>
-            <label for="price-{{ forloop.counter }}">Price</label>
+            <label for="price-{{ forloop.counter }}">{% trans "Price" context "billing" %}</label>
             <input type="number" id="price-{{ forloop.counter }}" name="price" value="{{ plan.price }}" step="0.01" min="0" required />
           </div>
           <div>
-            <label for="original_price-{{ forloop.counter }}">Original Price</label>
+            <label for="original_price-{{ forloop.counter }}">{% trans "Original Price" context "billing" %}</label>
             <input type="number" id="original_price-{{ forloop.counter }}" name="original_price" value="{{ plan.original_price|default_if_none:'' }}" step="0.01" min="0" />
           </div>
         </div>
 
         <div class="form-row">
-          <label for="billing_period-{{ forloop.counter }}">Billing Period</label>
+          <label for="billing_period-{{ forloop.counter }}">{% trans "Billing Period" context "billing" %}</label>
           <select id="billing_period-{{ forloop.counter }}" name="billing_period">
-            <option value="monthly" {% if plan.billing_period == "monthly" %}selected{% endif %}>Monthly</option>
-            <option value="yearly" {% if plan.billing_period == "yearly" %}selected{% endif %}>Yearly</option>
+            <option value="monthly" {% if plan.billing_period == "monthly" %}selected{% endif %}>{% trans "Monthly" context "billing" %}</option>
+            <option value="yearly" {% if plan.billing_period == "yearly" %}selected{% endif %}>{% trans "Yearly" context "billing" %}</option>
           </select>
         </div>
 
         <div class="form-row">
-          <label for="best_for-{{ forloop.counter }}">Best For</label>
+          <label for="best_for-{{ forloop.counter }}">{% trans "Best For" context "billing" %}</label>
           <input type="text" id="best_for-{{ forloop.counter }}" name="best_for" value="{{ plan.best_for }}" />
         </div>
 
         <div class="form-row checkbox-row">
           <input type="checkbox" id="is_popular-{{ forloop.counter }}" name="is_popular" {% if plan.is_popular %}checked{% endif %} />
-          <label for="is_popular-{{ forloop.counter }}" style="margin-bottom:0;text-transform:none;font-size:.85rem;color:#334155;">Mark as Most Popular</label>
+          <label for="is_popular-{{ forloop.counter }}" style="margin-bottom:0;text-transform:none;font-size:.85rem;color:#334155;">{% trans "Mark as Most Popular" context "billing" %}</label>
         </div>
 
         <div class="form-row">
-          <label for="features-{{ forloop.counter }}">Features (one per line — prefix with "- " for an excluded feature)</label>
+          <label for="features-{{ forloop.counter }}">{% trans "Features (one per line — prefix with \"- \" for an excluded feature)" context "billing" %}</label>
           {% comment %}
             Pre-fill in the same shape the save handler expects: plain text per line,
             with a leading "- " on excluded features. Rendering a dict would dump the
@@ -537,13 +538,34 @@
         </div>
 
         <button type="submit" class="btn-save-plan">
-          <i class="fas fa-save"></i> Save Changes
+          <i class="fas fa-save"></i> {% trans "Save Changes" context "billing" %}
         </button>
       </form>
     </div>
   </div>
 </div>
 {% endfor %}
+
+<script>
+(function () {
+  window.BILLING_I18N = {
+    activate: '{% filter escapejs %}{% trans "Activate" context "billing" %}{% endfilter %}',
+    deactivate: '{% filter escapejs %}{% trans "Deactivate" context "billing" %}{% endfilter %}',
+    active: '{% filter escapejs %}{% trans "Active" context "billing" %}{% endfilter %}',
+    inactive: '{% filter escapejs %}{% trans "Inactive" context "billing" %}{% endfilter %}',
+    failedUpdatePlan: '{% filter escapejs %}{% trans "Failed to update plan status." context "billing" %}{% endfilter %}',
+    networkError: '{% filter escapejs %}{% trans "Network error. Please try again." context "common" %}{% endfilter %}',
+    deactivatePlanTitle: '{% filter escapejs %}{% trans "Deactivate Plan?" context "billing" %}{% endfilter %}',
+    deactivatePlanBefore: '{% filter escapejs %}{% trans "Are you sure you want to deactivate" context "billing" %}{% endfilter %}',
+    deactivatePlanAfter: '{% filter escapejs %}{% trans "? Users will no longer be able to see or subscribe to this plan." context "billing" %}{% endfilter %}',
+    thisPlan: '{% filter escapejs %}{% trans "this plan" context "billing" %}{% endfilter %}',
+  };
+  var g = (typeof gettext === "function") ? gettext : function (s) { return s; };
+  Object.keys(window.BILLING_I18N).forEach(function (k) {
+    window.BILLING_I18N[k] = g(window.BILLING_I18N[k]);
+  });
+})();
+</script>
 
 <script>
   function openPlanModal(id) {
@@ -580,8 +602,8 @@
       btn.classList.toggle('btn-toggle-inactive', isActive);
       btn.classList.toggle('btn-toggle-active', !isActive);
       btn.innerHTML = isActive
-        ? '<i class="fas fa-ban"></i> Deactivate'
-        : '<i class="fas fa-check"></i> Activate';
+        ? '<i class="fas fa-ban"></i> ' + BILLING_I18N.deactivate
+        : '<i class="fas fa-check"></i> ' + BILLING_I18N.activate;
 
       // Status badge in the same row
       const tr = btn.closest('tr');
@@ -589,7 +611,7 @@
       if (badge) {
         badge.classList.toggle('plan-badge--active', isActive);
         badge.classList.toggle('plan-badge--inactive', !isActive);
-        badge.textContent = isActive ? 'Active' : 'Inactive';
+        badge.textContent = isActive ? BILLING_I18N.active : BILLING_I18N.inactive;
       }
     }
 
@@ -609,13 +631,13 @@
           applyToggleResult(btn, !!res.data.is_active);
           if (typeof showToast === 'function') showToast(res.data.message, 'success');
         } else {
-          const msg = (res.data && res.data.message) || 'Failed to update plan status.';
+          const msg = (res.data && res.data.message) || BILLING_I18N.failedUpdatePlan;
           if (typeof showToast === 'function') showToast(msg, 'error');
           else console.error(msg);
         }
       })
       .catch(function () {
-        if (typeof showToast === 'function') showToast('Network error. Please try again.', 'error');
+        if (typeof showToast === 'function') showToast(BILLING_I18N.networkError, 'error');
       })
       .finally(function () { btn.disabled = false; });
     }
@@ -626,14 +648,14 @@
       e.preventDefault();
 
       const isActive = btn.dataset.active === '1';
-      const planName = btn.dataset.planName || 'this plan';
+      const planName = btn.dataset.planName || BILLING_I18N.thisPlan;
 
       if (isActive && typeof appConfirm === 'function') {
         appConfirm({
           kind: 'danger',
-          title: 'Deactivate Plan?',
-          text: 'Are you sure you want to deactivate <strong>' + planName + '</strong>? Users will no longer be able to see or subscribe to this plan.',
-          okLabel: 'Deactivate',
+          title: BILLING_I18N.deactivatePlanTitle,
+          text: BILLING_I18N.deactivatePlanBefore + ' <strong>' + planName + '</strong>' + BILLING_I18N.deactivatePlanAfter,
+          okLabel: BILLING_I18N.deactivate,
           okIcon: 'fa-ban',
           onConfirm: function () { performToggle(btn); },
         });

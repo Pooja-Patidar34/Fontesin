@@ -13,6 +13,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
+from django.utils.translation import gettext as _
 
 from accounts.models import Notification
 
@@ -65,7 +66,7 @@ def messages_mark_all_read(request):
     ).update(is_read=True, read_at=timezone.now())
     if _is_ajax(request):
         return JsonResponse({"ok": True})
-    django_messages.success(request, "All notifications marked as read.")
+    django_messages.success(request, _("All notifications marked as read."))
     return redirect("messages")
 
 

@@ -1,5 +1,6 @@
 {% extends "base/base.html" %}
-{% block title %}Partnerships{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Partnerships" context "workflows" %}{% endblock %}
 
 {% block content %}
 
@@ -56,29 +57,31 @@
 
   <div class="card-header">
     <h3 class="card-title font-weight-bold mb-0">
-      <i class="fas fa-handshake mr-1"></i> Partnerships : 
+      <i class="fas fa-handshake mr-1"></i> {% trans "Partnerships :" context "workflows" %}
     </h3>
-   
+
     <h5 class="small text-muted mb-0 ">
-       Approve or reject incoming connection requests on your companies, and track requests you've sent.
+      {% blocktrans trimmed context "workflows" %}
+      Approve or reject incoming connection requests on your companies, and track requests you've sent.
+      {% endblocktrans %}
     </h5>
   </div>
 
   <div class="partnership-tabs">
     <button type="button" class="partnership-tab active" data-pane="incoming">
-      Incoming
+      {% trans "Incoming" context "workflows" %}
       {% if incoming_pending %}
       <span class="badge badge-warning">{{ incoming_pending|length }}</span>
       {% endif %}
     </button>
     <button type="button" class="partnership-tab" data-pane="outgoing">
-      My Requests
+      {% trans "My Requests" context "workflows" %}
       {% if outgoing %}
       <span class="badge badge-secondary">{{ outgoing|length }}</span>
       {% endif %}
     </button>
     <button type="button" class="partnership-tab" data-pane="history">
-      History
+      {% trans "History" context "workflows" %}
       {% if incoming_history %}
       <span class="badge badge-secondary">{{ incoming_history|length }}</span>
       {% endif %}
@@ -93,10 +96,10 @@
         <table class="table table-hover mb-0">
           <thead class="bg-light">
             <tr>
-              <th>Requester</th>
-              <th>Company</th>
-              <th>Sent</th>
-              <th class="text-right pr-4">Action</th>
+              <th>{% trans "Requester" context "workflows" %}</th>
+              <th>{% trans "Company" context "workflows" %}</th>
+              <th>{% trans "Sent" context "workflows" %}</th>
+              <th class="text-right pr-4">{% trans "Action" context "common" %}</th>
             </tr>
           </thead>
           <tbody>
@@ -112,7 +115,7 @@
                 {% else %}
                   <span class="text-muted">—</span>
                 {% endif %}
-                <div class="small text-muted">→ Your company: {{ req.company.name }}</div>
+                <div class="small text-muted">{% blocktrans trimmed with company_name=req.company.name context "workflows" %}→ Your company: {{ company_name }}{% endblocktrans %}</div>
               </td>
               <td class="small text-muted">{{ req.created_at|date:"M j, Y H:i" }}</td>
               <td class="text-right pr-4">
@@ -121,7 +124,7 @@
                   {% csrf_token %}
                   <input type="hidden" name="decision" value="approve">
                   <button type="submit" class="btn btn-sm btn-success">
-                    <i class="fas fa-check mr-1"></i> Approve
+                    <i class="fas fa-check mr-1"></i> {% trans "Approve" context "workflows" %}
                   </button>
                 </form>
                 <form method="post" action="{% url 'partnership-action' req.id %}"
@@ -129,7 +132,7 @@
                   {% csrf_token %}
                   <input type="hidden" name="decision" value="reject">
                   <button type="submit" class="btn btn-sm btn-outline-danger">
-                    <i class="fas fa-times mr-1"></i> Reject
+                    <i class="fas fa-times mr-1"></i> {% trans "Reject" context "workflows" %}
                   </button>
                 </form>
               </td>
@@ -141,9 +144,9 @@
       {% else %}
       <div class="empty-state">
         <i class="fas fa-inbox fa-2x"></i>
-        <p class="mb-0">No pending requests.</p>
+        <p class="mb-0">{% trans "No pending requests." context "workflows" %}</p>
         <p class="small mb-0">
-          When another user requests to connect with one of your companies, it will appear here.
+          {% trans "When another user requests to connect with one of your companies, it will appear here." context "workflows" %}
         </p>
       </div>
       {% endif %}
@@ -158,11 +161,11 @@
         <table class="table table-hover mb-0">
           <thead class="bg-light">
             <tr>
-              <th>Company</th>
-              <th>Contact Person</th>
-              <th>Status</th>
-              <th>Sent</th>
-              <th class="text-right pr-4">Action</th>
+              <th>{% trans "Company" context "workflows" %}</th>
+              <th>{% trans "Contact Person" context "workflows" %}</th>
+              <th>{% trans "Status" context "workflows" %}</th>
+              <th>{% trans "Sent" context "workflows" %}</th>
+              <th class="text-right pr-4">{% trans "Action" context "common" %}</th>
             </tr>
           </thead>
           <tbody>
@@ -184,10 +187,10 @@
                     <div class="small text-muted">{{ req.company.phone }}</div>
                     {% endif %}
                   {% else %}
-                    <span class="text-muted small">Not provided</span>
+                    <span class="text-muted small">{% trans "Not provided" context "workflows" %}</span>
                   {% endif %}
                 {% else %}
-                  <span class="text-muted small">Available once connected</span>
+                  <span class="text-muted small">{% trans "Available once connected" context "workflows" %}</span>
                 {% endif %}
               </td>
               <td>
@@ -198,19 +201,19 @@
                 {% if req.status == 'pending' %}
                 <form method="post" action="{% url 'partnership-cancel' req.id %}"
                       class="partnership-cancel-form d-inline m-0"
-                      data-confirm="Cancel your connection request to {{ req.company.name }}?">
+                      data-confirm="{% filter escapejs %}{% blocktrans trimmed with company_name=req.company.name context "workflows" %}Cancel your connection request to {{ company_name }}?{% endblocktrans %}{% endfilter %}">
                   {% csrf_token %}
                   <button type="submit" class="btn btn-sm btn-outline-secondary">
-                    <i class="fas fa-times mr-1"></i> Cancel Request
+                    <i class="fas fa-times mr-1"></i> {% trans "Cancel Request" context "workflows" %}
                   </button>
                 </form>
                 {% elif req.status == 'accepted' %}
                 <form method="post" action="{% url 'partnership-cancel' req.id %}"
                       class="partnership-cancel-form d-inline m-0"
-                      data-confirm="Disconnect from {{ req.company.name }}? You'll lose view access to this company.">
+                      data-confirm="{% filter escapejs %}{% blocktrans trimmed with company_name=req.company.name context "workflows" %}Disconnect from {{ company_name }}? You'll lose view access to this company.{% endblocktrans %}{% endfilter %}">
                   {% csrf_token %}
                   <button type="submit" class="btn btn-sm btn-outline-danger">
-                    <i class="fas fa-unlink mr-1"></i> Disconnect
+                    <i class="fas fa-unlink mr-1"></i> {% trans "Disconnect" context "workflows" %}
                   </button>
                 </form>
                 {% else %}
@@ -225,10 +228,13 @@
       {% else %}
       <div class="empty-state">
         <i class="far fa-paper-plane fa-2x"></i>
-        <p class="mb-0">You haven't sent any connection requests yet.</p>
+        <p class="mb-0">{% trans "You haven't sent any connection requests yet." context "workflows" %}</p>
         <p class="small mb-0">
-          Open the <a href="{% url 'companies' %}">Companies</a> page and click
+          {% url 'companies' as companies_url %}
+          {% blocktrans trimmed context "workflows" %}
+          Open the <a href="{{ companies_url }}">Companies</a> page and click
           <strong>Connect</strong> on any company you'd like to partner with.
+          {% endblocktrans %}
         </p>
       </div>
       {% endif %}
@@ -243,11 +249,11 @@
         <table class="table table-hover mb-0">
           <thead class="bg-light">
             <tr>
-              <th>Requester</th>
-              <th>Company</th>
-              <th>Status</th>
-              <th>Decided</th>
-              <th class="text-right pr-4">Action</th>
+              <th>{% trans "Requester" context "workflows" %}</th>
+              <th>{% trans "Company" context "workflows" %}</th>
+              <th>{% trans "Status" context "workflows" %}</th>
+              <th>{% trans "Decided" context "workflows" %}</th>
+              <th class="text-right pr-4">{% trans "Action" context "common" %}</th>
             </tr>
           </thead>
           <tbody>
@@ -263,7 +269,7 @@
                 {% else %}
                   <span class="text-muted">—</span>
                 {% endif %}
-                <div class="small text-muted">→ Your company: {{ req.company.name }}</div>
+                <div class="small text-muted">{% blocktrans trimmed with company_name=req.company.name context "workflows" %}→ Your company: {{ company_name }}{% endblocktrans %}</div>
               </td>
               <td>
                 <span class="pill pill-{{ req.status }}">{{ req.get_status_display }}</span>
@@ -273,10 +279,10 @@
                 {% if req.status == 'accepted' %}
                 <form method="post" action="{% url 'partnership-cancel' req.id %}"
                       class="partnership-cancel-form d-inline m-0"
-                      data-confirm="Revoke partnership with {{ req.user.email }}? They'll lose view access to {{ req.company.name }}.">
+                      data-confirm="{% filter escapejs %}{% blocktrans trimmed with email=req.user.email company_name=req.company.name context "workflows" %}Revoke partnership with {{ email }}? They'll lose view access to {{ company_name }}.{% endblocktrans %}{% endfilter %}">
                   {% csrf_token %}
                   <button type="submit" class="btn btn-sm btn-outline-danger">
-                    <i class="fas fa-ban mr-1"></i> Revoke
+                    <i class="fas fa-ban mr-1"></i> {% trans "Revoke" context "workflows" %}
                   </button>
                 </form>
                 {% else %}
@@ -291,7 +297,7 @@
       {% else %}
       <div class="empty-state">
         <i class="fas fa-history fa-2x"></i>
-        <p class="mb-0">No decisions yet.</p>
+        <p class="mb-0">{% trans "No decisions yet." context "workflows" %}</p>
       </div>
       {% endif %}
     </div>
@@ -300,7 +306,23 @@
 </div>
 
 <script>
+(function () {
+  window.WORKFLOW_I18N = {
+    actionFailed: '{% filter escapejs %}{% trans "Action failed." context "workflows" %}{% endfilter %}',
+    couldNotCancel: '{% filter escapejs %}{% trans "Could not cancel." context "workflows" %}{% endfilter %}',
+    cancelPartnershipConfirm: '{% filter escapejs %}{% trans "Cancel this partnership?" context "workflows" %}{% endfilter %}',
+    networkError: '{% filter escapejs %}{% trans "Network error. Please try again." context "common" %}{% endfilter %}',
+  };
+  var g = (typeof gettext === "function") ? gettext : function (s) { return s; };
+  Object.keys(window.WORKFLOW_I18N).forEach(function (k) {
+    window.WORKFLOW_I18N[k] = g(window.WORKFLOW_I18N[k]);
+  });
+})();
+</script>
+
+<script>
 document.addEventListener("DOMContentLoaded", function () {
+  var i18n = window.WORKFLOW_I18N || {};
 
   // ---- tab switching ----
   var tabs = document.querySelectorAll(".partnership-tab");
@@ -343,14 +365,14 @@ document.addEventListener("DOMContentLoaded", function () {
               window.location.reload();
             }
           } else {
-            var msg = (res.data && res.data.message) || "Action failed.";
+            var msg = (res.data && res.data.message) || i18n.actionFailed || "Action failed.";
             if (typeof showToast === "function") showToast(msg, "error");
             else console.error(msg);
             btns.forEach(function (b) { b.disabled = false; });
           }
         })
         .catch(function () {
-          if (typeof showToast === "function") showToast("Network error. Please try again.", "error");
+          if (typeof showToast === "function") showToast(i18n.networkError || "Network error. Please try again.", "error");
           btns.forEach(function (b) { b.disabled = false; });
         });
     });
@@ -381,14 +403,14 @@ document.addEventListener("DOMContentLoaded", function () {
             window.location.reload();
           }
         } else {
-          var msg = (res.data && res.data.message) || "Could not cancel.";
+          var msg = (res.data && res.data.message) || i18n.couldNotCancel || "Could not cancel.";
           if (typeof showToast === "function") showToast(msg, "error");
           else console.error(msg);
           btns.forEach(function (b) { b.disabled = false; });
         }
       })
       .catch(function () {
-        if (typeof showToast === "function") showToast("Network error. Please try again.", "error");
+        if (typeof showToast === "function") showToast(i18n.networkError || "Network error. Please try again.", "error");
         btns.forEach(function (b) { b.disabled = false; });
       });
   }
@@ -396,12 +418,10 @@ document.addEventListener("DOMContentLoaded", function () {
   document.querySelectorAll(".partnership-cancel-form").forEach(function (form) {
     form.addEventListener("submit", function (e) {
       e.preventDefault();
-      var confirmText = form.dataset.confirm || "Cancel this partnership?";
+      var confirmText = form.dataset.confirm || i18n.cancelPartnershipConfirm || "Cancel this partnership?";
       appConfirm({
         kind: 'danger',
-        title: 'Are you sure?',
         text: confirmText,
-        okLabel: 'Confirm',
         okIcon: 'fa-check',
         onConfirm: function () { submitPartnershipCancel(form); }
       });

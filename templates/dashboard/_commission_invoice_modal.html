@@ -1,3 +1,4 @@
+{% load i18n plan_i18n_tags %}
 {% if invoice %}
 <style>
   .inv-modal-section { margin-bottom: 1.25rem; }
@@ -54,36 +55,36 @@
 </style>
 
 <div class="inv-modal-section">
-  <h6>Invoice</h6>
+  <h6>{% trans "Invoice" context "billing" %}</h6>
   <div class="inv-modal-row">
-    <span class="lbl">Invoice Number</span>
+    <span class="lbl">{% trans "Invoice Number" context "billing" %}</span>
     <span class="val"><span class="inv-code">{{ invoice.invoice_number }}</span></span>
   </div>
   <div class="inv-modal-row">
-    <span class="lbl">Issue Date</span>
+    <span class="lbl">{% trans "Issue Date" context "billing" %}</span>
     <span class="val">{{ invoice.created_at|date:"F j, Y" }}</span>
   </div>
   {% if invoice.status != "paid" %}
   <div class="inv-modal-row">
-    <span class="lbl">Due Date</span>
+    <span class="lbl">{% trans "Due Date" context "billing" %}</span>
     <span class="val">{{ invoice.due_date|date:"F j, Y" }}</span>
   </div>
   {% endif %}
   {% if invoice.paid_at %}
   <div class="inv-modal-row">
-    <span class="lbl">Paid At</span>
+    <span class="lbl">{% trans "Paid At" context "billing" %}</span>
     <span class="val">{{ invoice.paid_at|date:"F j, Y" }}</span>
   </div>
   {% endif %}
   <div class="inv-modal-row">
-    <span class="lbl">Status</span>
+    <span class="lbl">{% trans "Status" context "billing" %}</span>
     <span class="val">
       {% if invoice.status == "paid" %}
-        <span class="inv-modal-badge inv-modal-badge--paid">Paid</span>
+        <span class="inv-modal-badge inv-modal-badge--paid">{% trans "Paid" context "billing" %}</span>
       {% elif invoice.status == "pending" %}
-        <span class="inv-modal-badge inv-modal-badge--pending">Pending</span>
+        <span class="inv-modal-badge inv-modal-badge--pending">{% trans "Pending" context "billing" %}</span>
       {% elif invoice.status == "failed" %}
-        <span class="inv-modal-badge inv-modal-badge--failed">Failed</span>
+        <span class="inv-modal-badge inv-modal-badge--failed">{% trans "Failed" context "billing" %}</span>
       {% else %}
         <span class="inv-modal-badge">{{ invoice.status }}</span>
       {% endif %}
@@ -92,83 +93,85 @@
 </div>
 
 <div class="inv-modal-section">
-  <h6>Subscriber</h6>
+  <h6>{% trans "Subscriber" context "billing" %}</h6>
   <div class="inv-modal-row">
-    <span class="lbl">Name</span>
+    <span class="lbl">{% trans "Name" context "billing" %}</span>
     <span class="val">{{ invoice.subscription.user.first_name }} {{ invoice.subscription.user.last_name }}</span>
   </div>
   <div class="inv-modal-row">
-    <span class="lbl">Email</span>
+    <span class="lbl">{% trans "Email" context "billing" %}</span>
     <span class="val">{{ invoice.subscription.user.email }}</span>
   </div>
   <div class="inv-modal-row">
-    <span class="lbl">Role</span>
+    <span class="lbl">{% trans "Role" context "billing" %}</span>
     <span class="val">{{ invoice.subscription.user.role.name|default:"—" }}</span>
   </div>
   <div class="inv-modal-row">
-    <span class="lbl">Company</span>
+    <span class="lbl">{% trans "Company" context "billing" %}</span>
     <span class="val">{{ commission.company.name|default:invoice.subscription.user.primary_company.name|default:"—" }}</span>
   </div>
 </div>
 
 <div class="inv-modal-section">
-  <h6>Subscription</h6>
+  <h6>{% trans "Subscription" context "billing" %}</h6>
   <div class="inv-modal-row">
-    <span class="lbl">Plan</span>
-    <span class="val">{{ invoice.subscription.plan.name }}</span>
+    <span class="lbl">{% trans "Plan" context "billing" %}</span>
+    <span class="val">{{ invoice.subscription.plan|localized_plan_name_filter }}</span>
   </div>
   <div class="inv-modal-row">
-    <span class="lbl">Billing Period</span>
+    <span class="lbl">{% trans "Billing Period" context "billing" %}</span>
     <span class="val">
-      {% if invoice.subscription.billing_period == "monthly" %}Monthly{% else %}Annual{% endif %}
+      {% if invoice.subscription.billing_period == "monthly" %}{% trans "Monthly" context "billing" %}{% else %}{% trans "Annual" context "billing" %}{% endif %}
     </span>
   </div>
   <div class="inv-modal-row">
-    <span class="lbl">Start Date</span>
+    <span class="lbl">{% trans "Start Date" context "billing" %}</span>
     <span class="val">{{ invoice.subscription.start_date|date:"F j, Y"|default:"—" }}</span>
   </div>
   <div class="inv-modal-row">
-    <span class="lbl">End Date</span>
+    <span class="lbl">{% trans "End Date" context "billing" %}</span>
     <span class="val">{{ invoice.subscription.end_date|date:"F j, Y"|default:"—" }}</span>
   </div>
 </div>
 
 <div class="inv-modal-total">
-  <span class="t-lbl">Total Amount</span>
+  <span class="t-lbl">{% trans "Total Amount" context "billing" %}</span>
   <span class="t-amt">{% if display_currency == "EUR" %}€{% else %}${% endif %}{{ display_amount|floatformat:2 }} {{ display_currency }}</span>
 </div>
 {% if fx_rate %}
 <div style="font-size:.72rem; color:#6b7280; margin: -8px 0 16px; text-align:right;">
-  Converted from {{ fx_source_amount|default:invoice.amount|floatformat:2 }} {{ fx_source_currency }} at rate
-  1 {{ fx_source_currency }} = {{ fx_rate|floatformat:4 }} {{ display_currency }}{% if invoice.fx_rate %} (frozen){% endif %}
+  {% blocktrans trimmed with source_amount=fx_source_amount|default:invoice.amount|floatformat:2 source_currency=fx_source_currency rate=fx_rate|floatformat:4 display_currency=display_currency context "billing" %}
+  Converted from {{ source_amount }} {{ source_currency }} at rate 1 {{ source_currency }} = {{ rate }} {{ display_currency }}
+  {% endblocktrans %}
+  {% if invoice.fx_rate %} {% trans "(frozen)" context "billing" %}{% endif %}
 </div>
 {% endif %}
 
 <div class="inv-modal-section">
-  <h6>Commission</h6>
+  <h6>{% trans "Commission" context "billing" %}</h6>
   <div class="inv-modal-row">
-    <span class="lbl">Consultant</span>
+    <span class="lbl">{% trans "Consultant" context "billing" %}</span>
     <span class="val">{{ commission.consultant.email }}</span>
   </div>
   <div class="inv-modal-row">
-    <span class="lbl">Rate</span>
+    <span class="lbl">{% trans "Rate" context "billing" %}</span>
     <span class="val">{{ commission.rate_percent|floatformat:0 }}%</span>
   </div>
   <div class="inv-modal-row">
-    <span class="lbl">Consultant Share</span>
+    <span class="lbl">{% trans "Consultant Share" context "billing" %}</span>
     <span class="val" style="color:#15803d;">{{ commission.commission_amount|floatformat:2 }} {{ commission.currency }}</span>
   </div>
   <div class="inv-modal-row">
-    <span class="lbl">Admin Share</span>
+    <span class="lbl">{% trans "Admin Share" context "billing" %}</span>
     <span class="val">{{ commission.admin_share|floatformat:2 }} {{ commission.currency }}</span>
   </div>
   <div class="inv-modal-row">
-    <span class="lbl">Status</span>
+    <span class="lbl">{% trans "Status" context "billing" %}</span>
     <span class="val">
       {% if commission.status == "paid" %}
-        <span class="inv-modal-badge inv-modal-badge--paid">Paid{% if commission.paid_at %} · {{ commission.paid_at|date:"M d, Y" }}{% endif %}</span>
+        <span class="inv-modal-badge inv-modal-badge--paid">{% trans "Paid" context "billing" %}{% if commission.paid_at %} · {{ commission.paid_at|date:"M d, Y" }}{% endif %}</span>
       {% elif commission.status == "pending" %}
-        <span class="inv-modal-badge inv-modal-badge--pending">Pending</span>
+        <span class="inv-modal-badge inv-modal-badge--pending">{% trans "Pending" context "billing" %}</span>
       {% else %}
         <span class="inv-modal-badge">{{ commission.status }}</span>
       {% endif %}
@@ -178,34 +181,34 @@
 
 {% if bank and invoice.subscription.plan.code != "free" %}
 <div class="inv-modal-section">
-  <h6>Bank Transfer</h6>
+  <h6>{% trans "Bank Transfer" context "billing" %}</h6>
   {% if bank.beneficiary_name %}
   <div class="inv-modal-row">
-    <span class="lbl">Beneficiary</span>
+    <span class="lbl">{% trans "Beneficiary" context "billing" %}</span>
     <span class="val">{{ bank.beneficiary_name }}</span>
   </div>
   {% endif %}
   {% if bank.account_number %}
   <div class="inv-modal-row">
-    <span class="lbl">{{ bank.account_label|default:"Account Number" }}</span>
+    <span class="lbl">{% if bank.account_label %}{{ bank.account_label }}{% else %}{% trans "Account Number" context "billing" %}{% endif %}</span>
     <span class="val"><span class="inv-code">{{ bank.account_number }}</span></span>
   </div>
   {% endif %}
   {% if bank.swift %}
   <div class="inv-modal-row">
-    <span class="lbl">SWIFT / BIC</span>
+    <span class="lbl">{% trans "SWIFT / BIC" context "billing" %}</span>
     <span class="val"><span class="inv-code">{{ bank.swift }}</span></span>
   </div>
   {% endif %}
   {% if bank.aba_routing %}
   <div class="inv-modal-row">
-    <span class="lbl">ABA Routing</span>
+    <span class="lbl">{% trans "ABA Routing" context "billing" %}</span>
     <span class="val"><span class="inv-code">{{ bank.aba_routing }}</span></span>
   </div>
   {% endif %}
   {% if bank.bank_name %}
   <div class="inv-modal-row">
-    <span class="lbl">Bank Name</span>
+    <span class="lbl">{% trans "Bank Name" context "billing" %}</span>
     <span class="val">{{ bank.bank_name }}</span>
   </div>
   {% endif %}
@@ -214,22 +217,22 @@
 
 {% if invoice.variable_symbol or invoice.payment_reference %}
 <div class="inv-modal-section">
-  <h6>Payment Identification</h6>
+  <h6>{% trans "Payment Identification" context "billing" %}</h6>
   {% if invoice.variable_symbol %}
   <div class="inv-modal-row">
-    <span class="lbl">Variable Symbol</span>
+    <span class="lbl">{% trans "Variable Symbol" context "billing" %}</span>
     <span class="val"><span class="inv-code">{{ invoice.variable_symbol }}</span></span>
   </div>
   {% endif %}
   {% if invoice.specific_symbol %}
   <div class="inv-modal-row">
-    <span class="lbl">Specific Symbol</span>
+    <span class="lbl">{% trans "Specific Symbol" context "billing" %}</span>
     <span class="val">{{ invoice.specific_symbol }}</span>
   </div>
   {% endif %}
   {% if invoice.payment_reference %}
   <div class="inv-modal-row">
-    <span class="lbl">Payment Reference</span>
+    <span class="lbl">{% trans "Payment Reference" context "billing" %}</span>
     <span class="val"><span class="inv-code">{{ invoice.payment_reference }}</span></span>
   </div>
   {% endif %}
@@ -239,6 +242,6 @@
 {% else %}
 <div class="text-center text-muted py-5">
   <i class="fas fa-file-invoice fa-2x mb-3" style="opacity:.4;"></i>
-  <div>No invoice is linked to this commission record.</div>
+  <div>{% trans "No invoice is linked to this commission record." context "billing" %}</div>
 </div>
 {% endif %}

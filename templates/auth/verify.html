@@ -1,6 +1,6 @@
-{% load static %}
+{% load static i18n i18n_extras %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
@@ -12,7 +12,7 @@
   <link rel="manifest" href="{% static 'manifest.json' %}"/>
   <link rel="apple-touch-icon" href="{% static 'adminlte/images/icons/icon-192.png' %}"/>
 
-  <title>Identity Verification – FONTESIN</title>
+  <title>{% trans "Identity Verification" context "auth.verify" %} – FONTESIN</title>
 
   <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
 
@@ -354,11 +354,12 @@
     #veriff-root iframe { width: 100% !important; border: none !important; border-radius: 10px; }
 
     .hidden { display: none !important; }
+
+    .navbar { position: relative; }
   </style>
 </head>
 <body>
 
-<!-- NAVBAR -->
 <!-- NAVBAR -->
 <nav class="navbar">
   <div class="navbar__inner">
@@ -366,22 +367,23 @@
       <img src="{% static 'adminlte/images/logo_full.png' %}" alt="FONTESIN" height="38" style="filter:brightness(0) invert(1);"/>
     </a>
     <div class="navbar__nav">
-      <a href="{% url 'home' %}">Home</a>
-      <a href="{% url 'worldmap' %}">World Map</a>
-      <a href="{% url 'about' %}">About</a>
-      <a href="{% url 'career' %}">Careers</a>
-      <a href="{% url 'contact' %}">Contact</a>
+      <a href="{% url 'home' %}">{% trans "Home" context "auth.verify" %}</a>
+      <a href="{% url 'worldmap' %}">{% trans "World Map" context "auth.verify" %}</a>
+      <a href="{% url 'about' %}">{% trans "About" context "auth.verify" %}</a>
+      <a href="{% url 'career' %}">{% trans "Careers" context "auth.verify" %}</a>
+      <a href="{% url 'contact' %}">{% trans "Contact" context "auth.verify" %}</a>
     </div>
-    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
+    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="{% trans 'Menu' context 'auth.verify' %}">☰</button>
     <div class="navbar__actions">
       {% comment %}
         The user is logged in (mid-verification), so "Log In" looped back here
         via the auth gate. Offer Log Out instead — it clears the session and
         lands them on the login page, where they can sign in to another account.
       {% endcomment %}
-      <a href="{% url 'logout' %}" class="btn btn-outline btn-sm">Log Out</a>
+      <a href="{% url 'logout' %}" class="btn btn-outline btn-sm">{% trans "Log Out" context "auth.verify" %}</a>
     </div>
   </div>
+  {% include "partials/_auth_lang_switcher.html" %}
 </nav>
 
 <!-- PROGRESS BAR -->
@@ -389,19 +391,19 @@
   <div class="reg-progress__inner">
     <div class="reg-step reg-step--done">
       <div class="reg-step__num">✓</div>
-      <div class="reg-step__label">Account Info</div>
+      <div class="reg-step__label">{% trans "Account Info" context "auth.verify" %}</div>
     </div>
     <div class="reg-step reg-step--active">
       <div class="reg-step__num">2</div>
-      <div class="reg-step__label">Identity Verification</div>
+      <div class="reg-step__label">{% trans "Identity Verification" context "auth.verify" %}</div>
     </div>
     <div class="reg-step reg-step--pending">
       <div class="reg-step__num">3</div>
-      <div class="reg-step__label">Choose Plan</div>
+      <div class="reg-step__label">{% trans "Choose Plan" context "auth.verify" %}</div>
     </div>
     <div class="reg-step reg-step--pending">
       <div class="reg-step__num">4</div>
-      <div class="reg-step__label">Confirmation</div>
+      <div class="reg-step__label">{% trans "Confirmation" context "auth.verify" %}</div>
     </div>
   </div>
 </div>
@@ -417,11 +419,13 @@
        data-status-url="{% url 'veriff-status' %}"
        data-next-url="{% if show_apply_link %}{% url 'apply' %}{% else %}{% url 'membership' %}{% endif %}">
     <div class="verify-card__icon">⏳</div>
-    <h1 class="verify-card__title">Verifying your identity…</h1>
+    <h1 class="verify-card__title">{% trans "Verifying your identity…" context "auth.verify" %}</h1>
     <p class="verify-card__subtitle">
+      {% blocktrans context "auth.verify" trimmed %}
       Thanks — we've received your submission. We're confirming your identity
       with our verification partner. This usually takes a few moments; you'll be
       taken to the next step automatically once it's done.
+      {% endblocktrans %}
     </p>
 
     <div class="veriff-scan-bar" style="max-width:360px;margin:0 auto 28px;">
@@ -429,17 +433,17 @@
     </div>
 
     <div class="verify-note">
-      🔒 Secured by Veriff · Please keep this page open
+      🔒 {% trans "Secured by Veriff · Please keep this page open" context "auth.verify" %}
     </div>
 
     <!-- Failure / retry message (hidden until a terminal decision arrives) -->
     <div id="verifyingFailed" class="hidden" style="margin-top:24px;">
       <p style="color:#b91c1c;font-size:.9rem;margin-bottom:16px;">
-        We couldn't confirm your identity. Please try the verification again.
+        {% trans "We couldn't confirm your identity. Please try the verification again." context "auth.verify" %}
       </p>
       <button class="btn-verify" onclick="startVerification()">
         <span>🔄</span>
-        <span>Retry Identity Verification</span>
+        <span>{% trans "Retry Identity Verification" context "auth.verify" %}</span>
       </button>
     </div>
   </div>
@@ -447,38 +451,40 @@
   {% else %}
   <div class="verify-card">
     <div class="verify-card__icon">🛡️</div>
-    <h1 class="verify-card__title">Identity Verification Required</h1>
+    <h1 class="verify-card__title">{% trans "Identity Verification Required" context "auth.verify" %}</h1>
     <p class="verify-card__subtitle">
+      {% blocktrans context "auth.verify" trimmed %}
       To comply with financial regulations and protect our platform,
       we require identity verification before activating your FONTESIN account.
       The process takes less than 2 minutes.
+      {% endblocktrans %}
     </p>
 
     <div class="verify-steps">
       <div class="verify-step-item">
         <div class="verify-step-item__num">1</div>
-        <div class="verify-step-item__title">Prepare ID</div>
-        <div class="verify-step-item__desc">Passport, national ID card or driver's license</div>
+        <div class="verify-step-item__title">{% trans "Prepare ID" context "auth.verify" %}</div>
+        <div class="verify-step-item__desc">{% trans "Passport, national ID card or driver's license" context "auth.verify" %}</div>
       </div>
       <div class="verify-step-item">
         <div class="verify-step-item__num">2</div>
-        <div class="verify-step-item__title">Take a Selfie</div>
-        <div class="verify-step-item__desc">Live photo for biometric matching</div>
+        <div class="verify-step-item__title">{% trans "Take a Selfie" context "auth.verify" %}</div>
+        <div class="verify-step-item__desc">{% trans "Live photo for biometric matching" context "auth.verify" %}</div>
       </div>
       <div class="verify-step-item">
         <div class="verify-step-item__num">3</div>
-        <div class="verify-step-item__title">Instant Result</div>
-        <div class="verify-step-item__desc">AI-powered verification in seconds</div>
+        <div class="verify-step-item__title">{% trans "Instant Result" context "auth.verify" %}</div>
+        <div class="verify-step-item__desc">{% trans "AI-powered verification in seconds" context "auth.verify" %}</div>
       </div>
     </div>
 
     <button class="btn-verify" onclick="startVerification()">
       <span>🔍</span>
-      <span>Start Identity Verification</span>
+      <span>{% trans "Start Identity Verification" context "auth.verify" %}</span>
     </button>
 
     <div class="verify-note">
-      🔒 Secured by Veriff · Your data is encrypted and never stored
+      🔒 {% trans "Secured by Veriff · Your data is encrypted and never stored" context "auth.verify" %}
     </div>
   </div>
   {% endif %}
@@ -492,8 +498,8 @@
     <div class="veriff-modal__header">
       <div class="veriff-modal__header-logo">VERIFF</div>
       <div class="veriff-modal__header-text">
-        <h3>Identity Verification</h3>
-        <p>Powered by Veriff · End-to-end encrypted</p>
+        <h3>{% trans "Identity Verification" context "auth.verify" %}</h3>
+        <p>{% trans "Powered by Veriff · End-to-end encrypted" context "auth.verify" %}</p>
       </div>
     </div>
 
@@ -502,8 +508,8 @@
       <!-- SCANNING / PROGRESS STATE -->
       <div id="stateScan" class="veriff-modal__status veriff-modal__status--scanning">
         <div class="veriff-scan-icon">📷</div>
-        <h4>Verifying your identity…</h4>
-        <p>Please wait while we securely process your documents and biometric data.</p>
+        <h4>{% trans "Verifying your identity…" context "auth.verify" %}</h4>
+        <p>{% trans "Please wait while we securely process your documents and biometric data." context "auth.verify" %}</p>
 
         <div class="veriff-scan-bar">
           <div class="veriff-scan-bar__fill" id="scanBar"></div>
@@ -512,19 +518,19 @@
         <div class="veriff-scan-steps">
           <div class="veriff-scan-step" id="step1">
             <div class="veriff-scan-step__dot" id="dot1">1</div>
-            <span>Document scan &amp; OCR extraction</span>
+            <span>{% trans "Document scan & OCR extraction" context "auth.verify" %}</span>
           </div>
           <div class="veriff-scan-step" id="step2">
             <div class="veriff-scan-step__dot" id="dot2">2</div>
-            <span>Biometric face matching</span>
+            <span>{% trans "Biometric face matching" context "auth.verify" %}</span>
           </div>
           <div class="veriff-scan-step" id="step3">
             <div class="veriff-scan-step__dot" id="dot3">3</div>
-            <span>AML &amp; watchlist screening</span>
+            <span>{% trans "AML & watchlist screening" context "auth.verify" %}</span>
           </div>
           <div class="veriff-scan-step" id="step4">
             <div class="veriff-scan-step__dot" id="dot4">4</div>
-            <span>Identity confirmed</span>
+            <span>{% trans "Identity confirmed" context "auth.verify" %}</span>
           </div>
         </div>
 
@@ -532,9 +538,9 @@
         <div id="veriff-root"></div>
 
         <div class="veriff-modal__actions">
-          <button class="btn-modal-secondary" onclick="closeVeriffModal()">Cancel</button>
+          <button class="btn-modal-secondary" onclick="closeVeriffModal()">{% trans "Cancel" context "auth.verify" %}</button>
           <button class="btn-modal-primary" id="btnConfirm" onclick="confirmVerification()">
-            ✓ Confirm Identification
+            ✓ {% trans "Confirm Identification" context "auth.verify" %}
           </button>
         </div>
       </div>
@@ -542,36 +548,38 @@
       <!-- SUCCESS STATE -->
       <div id="stateSuccess" class="veriff-modal__status veriff-modal__status--success hidden">
         <div class="veriff-scan-icon">✓</div>
-        <h4>Identity Verified Successfully!</h4>
-        <p>Your identity has been confirmed. You can now proceed to choose your membership plan.</p>
+        <h4>{% trans "Identity Verified Successfully!" context "auth.verify" %}</h4>
+        <p>{% trans "Your identity has been confirmed. You can now proceed to choose your membership plan." context "auth.verify" %}</p>
         <div style="margin-top:24px;">
           <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px;text-align:left;">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
               <span style="font-size:1.2rem;">✅</span>
-              <span style="font-weight:700;color:#15803d;font-size:.9rem;">Verification Complete</span>
+              <span style="font-weight:700;color:#15803d;font-size:.9rem;">{% trans "Verification Complete" context "auth.verify" %}</span>
             </div>
             <div style="font-size:.8rem;color:#166534;line-height:1.6;">
+              {% blocktrans context "auth.verify" trimmed %}
               Document authenticity: <strong>Verified</strong><br/>
               Biometric match: <strong>Confirmed</strong><br/>
               AML screening: <strong>Clear</strong>
+              {% endblocktrans %}
             </div>
           </div>
         </div>
         <div class="veriff-modal__actions" style="margin-top:24px;">
           {% if show_apply_link %}
           <a href="{% url 'apply' %}" class="btn-modal-primary" style="text-align:center;text-decoration:none;">
-            Continue to Application Form →
+            {% trans "Continue to Application Form →" context "auth.verify" %}
           </a>
           {% else %}
           <a href="{% url 'membership' %}" class="btn-modal-primary" style="text-align:center;text-decoration:none;">
-            Continue to Choose Plan →
+            {% trans "Continue to Choose Plan →" context "auth.verify" %}
           </a>
           {% endif %}
         </div>
       </div>
 
       <div class="veriff-badge">
-        🔒 256-bit SSL · GDPR Compliant · ISO 27001 Certified
+        🔒 {% trans "256-bit SSL · GDPR Compliant · ISO 27001 Certified" context "auth.verify" %}
       </div>
 
     </div><!-- /.veriff-modal__body -->
@@ -593,6 +601,7 @@
 </footer>
 
 
+<script src="{% url 'javascript-catalog' %}"></script>
 <script>
 /* ─────────────────────────────────────────────
    Veriff integration
@@ -609,7 +618,7 @@
 
 //   } catch (error) {
 //     console.error(error);
-//     showToast("Unable to start verification session.", "error");
+//     showToast(gettext('Unable to start verification session.'), "error");
 //   }
 // }
 async function startVerification() {
@@ -637,7 +646,7 @@ async function startVerification() {
   } catch (error) {
 
     console.error("Verification error:", error);
-    showToast("Unable to start verification session.", "error");
+    showToast(gettext('Unable to start verification session.'), "error");
 
   }
 }

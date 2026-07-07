@@ -1,11 +1,11 @@
-{% load static %}
+{% load static i18n i18n_extras %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <meta name="theme-color" content="#253D51"/>
-  <title>Pending Approval - FONTESIN</title>
+  <title>{% trans "Pending Approval" context "auth.pending_approval" %} - FONTESIN</title>
   <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
   <style>
     .pending-page {
@@ -15,6 +15,7 @@
       justify-content: center;
       background: linear-gradient(135deg, #253D51 0%, #1a2d3d 100%);
       padding: 24px;
+      position: relative;
     }
     .pending-card {
       background: #fff;
@@ -94,23 +95,25 @@
 <body>
 
 <div class="pending-page">
+  {% include "partials/_auth_lang_switcher.html" %}
+
   <div class="pending-card">
     <div class="pending-icon">&#9203;</div>
-    <h2>Subscription Pending Approval</h2>
-    <p>Thank you for choosing a plan! Your subscription is currently under review by our admin team.</p>
+    <h2>{% trans "Subscription Pending Approval" context "auth.pending_approval" %}</h2>
+    <p>{% trans "Thank you for choosing a plan! Your subscription is currently under review by our admin team." context "auth.pending_approval" %}</p>
 
     {% if subscription and subscription.plan %}
-      <div class="plan-badge">{{ subscription.plan.name }} Plan - {{ subscription.plan.currency }} {{ subscription.plan.price }}</div>
+      <div class="plan-badge">{% blocktrans with plan_name=subscription.plan.name currency=subscription.plan.currency price=subscription.plan.price context "auth.pending_approval" %}{{ plan_name }} Plan - {{ currency }} {{ price }}{% endblocktrans %}</div>
     {% endif %}
 
     <ul class="pending-features">
-      <li>Your payment has been received</li>
-      <li>Admin review is in progress</li>
-      <li>You'll get full dashboard access once approved</li>
-      <li>This usually takes less than 24 hours</li>
+      <li>{% trans "Your payment has been received" context "auth.pending_approval" %}</li>
+      <li>{% trans "Admin review is in progress" context "auth.pending_approval" %}</li>
+      <li>{% trans "You'll get full dashboard access once approved" context "auth.pending_approval" %}</li>
+      <li>{% trans "This usually takes less than 24 hours" context "auth.pending_approval" %}</li>
     </ul>
 
-    <a href="{% url 'logout' %}" class="btn-back">Back to Login</a>
+    <a href="{% url 'logout' %}" class="btn-back">{% trans "Back to Login" context "auth.common" %}</a>
   </div>
 </div>
 

@@ -17,4 +17,4 @@ static/adminlte/images/
 imports/
 
 scripts/verify_artifacts
-
+.cursor/

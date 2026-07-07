@@ -1,5 +1,6 @@
 {% extends "base/base.html" %}
-{% block title %}Companies{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Companies" context "companies" %}{% endblock %}
 
 {% block content %}
 
@@ -255,28 +256,30 @@
   <div class="card-header" style="display:flex; align-items:center; flex-wrap:wrap; gap:1rem;">
 
       <h3 class="font-weight-bold mb-0" style="margin:0; padding:0; font-size:1.1rem; flex:0 0 auto;">
-        Companies
+        {% trans "Companies" context "companies" %}
       </h3>
 
       <div class="d-flex align-items-center" style="gap:.75rem; margin-left:auto;">
 
-        {# Company search — name / registration no. / classification / location.
-           Shown to admins and coordinators (coordinators have no location filter
-           bar, so this is their only way to find a specific company). The
-           backend `q` search is role-agnostic and intersects with the user's
-           existing scope, so it only ever searches companies they may see. #}
+        {% comment %}
+        Company search — name / registration no. / classification / location.
+        Shown to admins and coordinators (coordinators have no location filter
+        bar, so this is their only way to find a specific company). The
+        backend `q` search is role-agnostic and intersects with the user's
+        existing scope, so it only ever searches companies they may see.
+        {% endcomment %}
         {% if request.user.is_superuser or request.user.role.code|lower == "coordinator" %}
         <form method="get" class="mb-0" id="companySearchForm">
           <div class="input-group input-group-sm" style="width:260px;">
             <input type="text" name="q" value="{{ search_q|default:'' }}"
-                   class="form-control" placeholder="Search companies…" autocomplete="off">
+                   class="form-control" placeholder="{% trans "Search companies…" context "companies" %}" autocomplete="off">
             {# Preserve the selected tenant when searching. #}
             <input type="hidden" name="tenant" value="{{ selected_tenant_id|default:'' }}">
             <div class="input-group-append">
               <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i></button>
               {% if search_q %}
               <a href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}{% endif %}"
-                 class="btn btn-outline-secondary" title="Clear search">&times;</a>
+                 class="btn btn-outline-secondary" title="{% trans "Clear search" context "common" %}">&times;</a>
               {% endif %}
             </div>
           </div>
@@ -289,20 +292,20 @@
           <input type="hidden" name="q" value="{{ search_q|default:'' }}"/>
           <div class="searchable-select" data-name="tenant" data-selected="{{ selected_tenant_id|default:'' }}" style="min-width:240px;">
             <button type="button" class="searchable-select__toggle form-control form-control-sm">
-              <span class="searchable-select__label">All Tenants</span>
+              <span class="searchable-select__label">{% trans "All Tenants" context "companies" %}</span>
               <span class="searchable-select__caret">&#9662;</span>
             </button>
             <div class="searchable-select__panel">
-              <input type="text" class="searchable-select__search form-control form-control-sm" placeholder="Search tenants…" autocomplete="off"/>
+              <input type="text" class="searchable-select__search form-control form-control-sm" placeholder="{% trans "Search tenants…" context "companies" %}" autocomplete="off"/>
               <div class="searchable-select__options" role="listbox">
-                <div class="searchable-select__option" data-value="" role="option">All Tenants</div>
+                <div class="searchable-select__option" data-value="" role="option">{% trans "All Tenants" context "companies" %}</div>
                 {% for tenant in tenants %}
                   <div class="searchable-select__option" data-value="{{ tenant.id }}" data-label="{{ tenant.name }}" role="option" title="{{ tenant.name }}">
                     {{ tenant.name }}
                   </div>
                 {% endfor %}
               </div>
-              <div class="searchable-select__empty" style="display:none;">No matches.</div>
+              <div class="searchable-select__empty" style="display:none;">{% trans "No matches." context "common" %}</div>
             </div>
             <input type="hidden" name="tenant" value="{{ selected_tenant_id|default:'' }}"/>
           </div>
@@ -424,13 +427,13 @@
                 data-bs-toggle="modal"
                 data-target="#importCsvModal"
                 data-bs-target="#importCsvModal">
-          <i class="fas fa-file-csv mr-1"></i> Import CSV
+          <i class="fas fa-file-csv mr-1"></i> {% trans "Import CSV" context "companies" %}
         </button>
         {% endif %}
 
         {% if can_manage %}
         <button class="btn btn-primary btn-sm" id="add-company-btn">
-          <i class="fas fa-plus mr-1"></i> Add Company
+          <i class="fas fa-plus mr-1"></i> {% trans "Add Company" context "companies" %}
         </button>
         {% endif %}
 
@@ -445,17 +448,17 @@
       <div class="row">
         <!-- Country (mandatory) — pinned: US, UK; flags rendered next to label -->
         <div class="col-md-4 col-sm-6 mb-2">
-          <label class="small">Country <span class="text-danger">*</span></label>
+          <label class="small">{% trans "Country" context "companies" %} <span class="text-danger">*</span></label>
           <select name="country" id="flt-country" class="form-control form-control-sm" required>
-            <option value="">-- Select country --</option>
-            <optgroup label="── Primary markets ──">
+            <option value="">{% trans "-- Select country --" context "companies" %}</option>
+            <optgroup label="{% trans "── Primary markets ──" context "companies" %}">
               {% for code, label in filter_country_choices.pinned %}
               <option value="{{ code }}" {% if applied_filters.country == code %}selected{% endif %}>
                 {% if code == "US" %}🇺🇸{% elif code == "GB" %}🇬🇧{% endif %} {{ label }}
               </option>
               {% endfor %}
             </optgroup>
-            <optgroup label="── Other countries ──">
+            <optgroup label="{% trans "── Other countries ──" context "companies" %}">
               {% for code, label in filter_country_choices.others %}
               <option value="{{ code }}" {% if applied_filters.country == code %}selected{% endif %}>{{ label }}</option>
               {% endfor %}
@@ -465,17 +468,17 @@
 
         <!-- State (autocomplete; scoped to selected country) -->
         <div class="col-md-4 col-sm-6 mb-2 fb-ac" data-field="state">
-          <label class="small">State / Region</label>
+          <label class="small">{% trans "State / Region" context "companies" %}</label>
           <input type="text" name="state" id="flt-state" class="form-control form-control-sm fb-ac-input"
-                 value="{{ applied_filters.state|default:'' }}" placeholder="e.g. Tex…" autocomplete="off">
+                 value="{{ applied_filters.state|default:'' }}" placeholder="{% trans "e.g. Tex…" context "companies" %}" autocomplete="off">
           <div class="fb-ac-results"></div>
         </div>
 
         <!-- City (autocomplete) -->
         <div class="col-md-4 col-sm-6 mb-2 fb-ac" data-field="city">
-          <label class="small">City</label>
+          <label class="small">{% trans "City" context "companies" %}</label>
           <input type="text" name="city" id="flt-city" class="form-control form-control-sm fb-ac-input"
-                 value="{{ applied_filters.city|default:'' }}" placeholder="e.g. San Fr…" autocomplete="off">
+                 value="{{ applied_filters.city|default:'' }}" placeholder="{% trans "e.g. San Fr…" context "companies" %}" autocomplete="off">
           <div class="fb-ac-results"></div>
         </div>
       </div>
@@ -483,27 +486,27 @@
       <div class="row">
         <!-- Company Name — autocomplete from existing companies -->
         <div class="col-md-4 col-sm-6 mb-2 fb-ac" data-field="name">
-          <label class="small">Company Name</label>
+          <label class="small">{% trans "Company Name" context "companies" %}</label>
           <input type="text" name="name" id="flt-name" class="form-control form-control-sm fb-ac-input"
-                 value="{{ applied_filters.name|default:'' }}" placeholder="e.g. Euro…" autocomplete="off">
+                 value="{{ applied_filters.name|default:'' }}" placeholder="{% trans "e.g. Euro…" context "companies" %}" autocomplete="off">
           <div class="fb-ac-results"></div>
         </div>
 
         <!-- Company type / legal form (dropdown — swapped by country) -->
         <div class="col-md-4 col-sm-6 mb-2">
-          <label class="small">Company Type (Legal Form)</label>
+          <label class="small">{% trans "Company Type (Legal Form)" context "companies" %}</label>
           <select name="entity_type" id="flt-entity-type" class="form-control form-control-sm">
-            <option value="">Any</option>
+            <option value="">{% trans "Any" context "common" %}</option>
             <!-- options injected client-side based on selected country -->
           </select>
-          <small class="text-muted" id="flt-entity-type-hint" style="font-size:.72rem;">Pick a country to see legal forms.</small>
+          <small class="text-muted" id="flt-entity-type-hint" style="font-size:.72rem;">{% trans "Pick a country to see legal forms." context "companies" %}</small>
         </div>
 
         <!-- Field of activity (classification dropdown) -->
         <div class="col-md-4 col-sm-6 mb-2">
-          <label class="small">Field of Activity</label>
+          <label class="small">{% trans "Field of Activity" context "companies" %}</label>
           <select name="classification" class="form-control form-control-sm">
-            <option value="">Any</option>
+            <option value="">{% trans "Any" context "common" %}</option>
             {% for value, label in filter_classifications %}
             <option value="{{ value }}" {% if applied_filters.classification == value %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
@@ -514,18 +517,18 @@
       <div class="row">
         <!-- NACE / NAICS code -->
         <div class="col-md-4 col-sm-6 mb-2">
-          <label class="small">Industry Code (NACE / NAICS)</label>
+          <label class="small">{% trans "Industry Code (NACE / NAICS)" context "companies" %}</label>
           <input type="text" name="naics" class="form-control form-control-sm"
-                 value="{{ applied_filters.naics|default:'' }}" placeholder="e.g. J62, 541511, software">
-          <small class="text-muted" style="font-size:.72rem;">Matches code prefix or activity keyword on either system.</small>
+                 value="{{ applied_filters.naics|default:'' }}" placeholder="{% trans "e.g. J62, 541511, software" context "companies" %}">
+          <small class="text-muted" style="font-size:.72rem;">{% trans "Matches code prefix or activity keyword on either system." context "companies" %}</small>
         </div>
 
         <!-- Keywords (free text — search across name, website, registration id) -->
         <div class="col-md-4 col-sm-6 mb-2">
-          <label class="small">Keywords</label>
+          <label class="small">{% trans "Keywords" context "companies" %}</label>
           <input type="text" name="keywords" class="form-control form-control-sm"
-                 value="{{ applied_filters.keywords|default:'' }}" placeholder="words to match">
-          <small class="text-muted" style="font-size:.72rem;">Matches name, website &amp; registration ID.</small>
+                 value="{{ applied_filters.keywords|default:'' }}" placeholder="{% trans "words to match" context "companies" %}">
+          <small class="text-muted" style="font-size:.72rem;">{% trans "Matches name, website & registration ID." context "companies" %}</small>
         </div>
 
         <!-- Actions -->
@@ -538,12 +541,12 @@
           <label class="small" aria-hidden="true" style="visibility:hidden;">&nbsp;</label>
           <div class="filter-actions">
             <button type="submit" class="btn btn-sm btn-outline-primary">
-              <i class="fas fa-filter mr-1"></i> Apply
+              <i class="fas fa-filter mr-1"></i> {% trans "Apply" context "common" %}
             </button>
             {% if applied_filters %}
-            <a href="{% url 'companies' %}" class="btn btn-sm btn-outline-secondary">Clear</a>
+            <a href="{% url 'companies' %}" class="btn btn-sm btn-outline-secondary">{% trans "Clear" context "common" %}</a>
             <button type="button" class="btn btn-sm btn-success" id="save-filter-btn">
-              <i class="far fa-star mr-1"></i> Save
+              <i class="far fa-star mr-1"></i> {% trans "Save" context "common" %}
             </button>
             {% endif %}
           </div>
@@ -612,7 +615,7 @@
       }
       var currentValue = APPLIED.entity_type || entitySel.value || '';
       // Wipe and rebuild — only "Any" survives.
-      entitySel.innerHTML = '<option value="">Any</option>';
+      entitySel.innerHTML = '<option value="">' + COMPANY_I18N.any + '</option>';
       forms.forEach(function (pair) {
         var opt = document.createElement('option');
         opt.value = pair[0];
@@ -626,8 +629,8 @@
       entitySel.disabled = false;
       if (usingFallback) {
         entityHint.textContent = country
-          ? 'No preset for this country — showing all legal forms.'
-          : 'Pick a country to narrow the list, or filter globally.';
+          ? COMPANY_I18N.noPresetCountry
+          : COMPANY_I18N.pickCountryNarrow;
       } else {
         entityHint.textContent = '';
       }
@@ -647,7 +650,7 @@
       function render(items, query) {
         if (!items.length) {
           resultsBox.innerHTML = '<div class="fb-ac-empty">' +
-            (query ? 'No matches for "' + esc(query) + '".' : 'Start typing.') +
+            (query ? COMPANY_I18N.noMatchesFor + ' "' + esc(query) + '".': COMPANY_I18N.startTyping) +
             '</div>';
           resultsBox.style.display = 'block';
           return;
@@ -716,11 +719,11 @@
 
         <thead class="bg-light">
           <tr>
-            <th>Company Name</th>
+            <th>{% trans "Company Name" context "companies" %}</th>
             {% if request.user.is_superuser %}
-            <th>Tenant</th>
+            <th>{% trans "Tenant" context "companies" %}</th>
             {% endif %}
-            <th>Industry</th>
+            <th>{% trans "Industry" context "companies" %}</th>
             {% if is_business_user %}
             {% comment %} All business-user plans use the limited fields — Location instead
                of Status. Plans differ only in scope + actions:
@@ -728,11 +731,11 @@
                  Basic  = country,  all actions enabled
                  Pro    = region,   all actions enabled
                  Global = worldwide, all actions enabled {% endcomment %}
-            <th>Location</th>
+            <th>{% trans "Location" context "companies" %}</th>
             {% else %}
-            <th>Status</th>
+            <th>{% trans "Status" context "companies" %}</th>
             {% endif %}
-            <th class="text-right pr-4">Action</th>
+            <th class="text-right pr-4">{% trans "Action" context "common" %}</th>
           </tr>
         </thead>
 
@@ -763,7 +766,7 @@
 
         <div class="modal-header">
           <div class="d-flex align-items-center" style="gap:.75rem;">
-            <h5 class="modal-title font-weight-bold mb-0">Company</h5>
+            <h5 class="modal-title font-weight-bold mb-0">{% trans "Company" context "companies" %}</h5>
             <span id="company-cert-badge"
                   class="pill pill-pending"
                   style="display:none;padding:2px 10px;border-radius:100px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;"></span>
@@ -779,7 +782,7 @@
         <div id="company-certified-by-banner"
              style="display:none;background:#ecfdf5;border-bottom:1px solid #6ee7b7;padding:.5rem 1.25rem;color:#065f46;font-size:.82rem;">
           <i class="fas fa-certificate mr-1"></i>
-          Certified by <strong id="company-certified-by-name"></strong>
+          {% trans "Certified by" context "companies" %} <strong id="company-certified-by-name"></strong>
           <span id="company-certified-on" class="text-muted ml-1"></span>
         </div>
 
@@ -792,97 +795,97 @@
 
           {% if request.user.is_superuser %}
           <div class="form-group">
-            <label>Tenant <span class="text-danger">*</span></label>
+            <label>{% trans "Tenant" context "companies" %} <span class="text-danger">*</span></label>
             {{ form.tenant }}
           </div>
           {% else %}
             {{ form.tenant }}
           {% endif %}
 
-          <div class="section-title">Basic Info</div>
+          <div class="section-title">{% trans "Basic Info" context "companies" %}</div>
 
           <div class="form-group">
-            <label>Company Name <span class="text-danger">*</span></label>
+            <label>{% trans "Company Name" context "companies" %} <span class="text-danger">*</span></label>
             {{ form.name }}
           </div>
 
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label>Legal Form <span class="text-danger">*</span></label>
+              <label>{% trans "Legal Form" context "companies" %} <span class="text-danger">*</span></label>
               {{ form.entity_type }}
             </div>
             <div class="form-group col-md-6">
-              <label>Registration Number / Company ID</label>
+              <label>{% trans "Registration Number / Company ID" context "companies" %}</label>
               {{ form.registration_id }}
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label>Year of Establishment</label>
+              <label>{% trans "Year of Establishment" context "companies" %}</label>
               {{ form.year_established }}
             </div>
             <div class="form-group col-md-6">
-              <label>Number of Employees</label>
+              <label>{% trans "Number of Employees" context "companies" %}</label>
               {{ form.employee_count_range }}
             </div>
           </div>
 
-          <div class="section-title">Address</div>
+          <div class="section-title">{% trans "Address" context "companies" %}</div>
 
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label>Country <span class="text-danger">*</span></label>
+              <label>{% trans "Country" context "companies" %} <span class="text-danger">*</span></label>
               {{ form.country }}
             </div>
             <div class="form-group col-md-6">
-              <label>State</label>
+              <label>{% trans "State" context "companies" %}</label>
               {{ form.state }}
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label>Region</label>
+              <label>{% trans "Region" context "companies" %}</label>
               {{ form.region }}
             </div>
             <div class="form-group col-md-6">
-              <label>City / Municipality <span class="text-danger">*</span></label>
+              <label>{% trans "City / Municipality" context "companies" %} <span class="text-danger">*</span></label>
               {{ form.city }}
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label>District</label>
+              <label>{% trans "District" context "companies" %}</label>
               {{ form.district }}
             </div>
             <div class="form-group col-md-6">
-              <label>Postal Code</label>
+              <label>{% trans "Postal Code" context "companies" %}</label>
               {{ form.postal_code }}
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group col-md-8">
-              <label>Street</label>
+              <label>{% trans "Street" context "companies" %}</label>
               {{ form.address_line1 }}
             </div>
             <div class="form-group col-md-4">
-              <label>House Number</label>
+              <label>{% trans "House Number" context "companies" %}</label>
               {{ form.house_number }}
             </div>
           </div>
 
-          <div class="section-title">Business Activity</div>
+          <div class="section-title">{% trans "Business Activity" context "companies" %}</div>
 
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label>Primary Line of Business <span class="text-danger">*</span></label>
+              <label>{% trans "Primary Line of Business" context "companies" %} <span class="text-danger">*</span></label>
               {{ form.classification }}
             </div>
             <div class="form-group col-md-6">
-              <label for="nace-picker-search">NACE Code <small class="text-muted">(EU classification)</small></label>
+              <label for="nace-picker-search">{% trans "NACE Code" context "companies" %} <small class="text-muted">{% trans "(EU classification)" context "companies" %}</small></label>
               <div class="industry-picker" data-system="nace"
                    data-endpoint="/api/industry-codes/nace/">
                 {{ form.nace_code }}
@@ -890,11 +893,11 @@
                        id="nace-picker-search"
                        class="form-control industry-picker-search"
                        autocomplete="off"
-                       placeholder="Start typing a code or activity, e.g. J62 or 'software'">
+                       placeholder="{% trans "Start typing a code or activity, e.g. J62 or software" context "companies" %}">
                 <button type="button"
                         class="industry-picker-clear"
-                        aria-label="Clear NACE code"
-                        title="Clear"
+                        aria-label="{% trans "Clear NACE code" context "companies" %}"
+                        title="{% trans "Clear" context "common" %}"
                         hidden>&times;</button>
                 <ul class="industry-picker-results" hidden></ul>
               </div>
@@ -903,7 +906,7 @@
 
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label for="naics-picker-search">NAICS Code <small class="text-muted">(US, optional)</small></label>
+              <label for="naics-picker-search">{% trans "NAICS Code" context "companies" %} <small class="text-muted">{% trans "(US, optional)" context "companies" %}</small></label>
               <div class="industry-picker" data-system="naics"
                    data-endpoint="/api/industry-codes/naics/">
                 {{ form.naics_code }}
@@ -911,11 +914,11 @@
                        id="naics-picker-search"
                        class="form-control industry-picker-search"
                        autocomplete="off"
-                       placeholder="Start typing a code or activity, e.g. 541511">
+                       placeholder="{% trans "Start typing a code or activity, e.g. 541511" context "companies" %}">
                 <button type="button"
                         class="industry-picker-clear"
-                        aria-label="Clear NAICS code"
-                        title="Clear"
+                        aria-label="{% trans "Clear NAICS code" context "companies" %}"
+                        title="{% trans "Clear" context "common" %}"
                         hidden>&times;</button>
                 <ul class="industry-picker-results" hidden></ul>
               </div>
@@ -926,39 +929,39 @@
             <label>Keywords</label>
             {{ form.keywords }}
             <small class="form-text text-muted">
-              Words other users will type to find this company.
+              {% trans "Words other users will type to find this company." context "companies" %}
             </small>
           </div>
 
-          <div class="section-title">Contact Person</div>
+          <div class="section-title">{% trans "Contact Person" context "companies" %}</div>
 
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label>First Name</label>
+              <label>{% trans "First Name" context "companies" %}</label>
               {{ form.contact_first_name }}
               {% if is_business_user %}
-              <small class="form-text text-muted contact-maintained-hint" style="display:none;">Maintained by the certifying consultant.</small>
+              <small class="form-text text-muted contact-maintained-hint" style="display:none;">{% trans "Maintained by the certifying consultant." context "companies" %}</small>
               {% endif %}
             </div>
             <div class="form-group col-md-6">
-              <label>Last Name</label>
+              <label>{% trans "Last Name" context "companies" %}</label>
               {{ form.contact_last_name }}
               {% if is_business_user %}
-              <small class="form-text text-muted contact-maintained-hint" style="display:none;">Maintained by the certifying consultant.</small>
+              <small class="form-text text-muted contact-maintained-hint" style="display:none;">{% trans "Maintained by the certifying consultant." context "companies" %}</small>
               {% endif %}
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label>Contact Email <span class="text-danger">*</span></label>
+              <label>{% trans "Contact Email" context "companies" %} <span class="text-danger">*</span></label>
               {{ form.contact_email }}
               {% if is_business_user %}
-              <small class="form-text text-muted contact-maintained-hint" style="display:none;">Maintained by the certifying consultant.</small>
+              <small class="form-text text-muted contact-maintained-hint" style="display:none;">{% trans "Maintained by the certifying consultant." context "companies" %}</small>
               {% endif %}
             </div>
             <div class="form-group col-md-6">
-              <label>Phone</label>
+              <label>{% trans "Phone" context "companies" %}</label>
               {{ form.phone }}
             </div>
           </div>
@@ -971,25 +974,25 @@
             company has no certified_by user (renders empty rows otherwise).
           {% endcomment %}
           <div id="company-consultant-section"{% if not is_business_user %} style="display:none;"{% endif %}>
-            <div class="section-title">Certifying Consultant</div>
+            <div class="section-title">{% trans "Certifying Consultant" context "companies" %}</div>
             {% if is_business_user %}
             <small class="form-text text-muted" id="company-consultant-pending"
                    style="margin-bottom:10px; display:block;">
               <i class="fas fa-info-circle mr-1"></i>
-              A consultant will be assigned when your certification request is reviewed.
-              Their name and contact details will appear here automatically and are
-              maintained by them &mdash; not editable from your account.
+              {% trans "A consultant will be assigned when your certification request is reviewed." context "companies" %}
+              {% trans "Their name and contact details will appear here automatically and are" context "companies" %}
+              {% trans "maintained by them — not editable from your account." context "companies" %}
             </small>
             {% endif %}
             <div class="form-row">
               <div class="form-group col-md-6">
-                <label>Name</label>
+                <label>{% trans "Name" context "companies" %}</label>
                 <input type="text" class="form-control" id="company-consultant-name"
-                       placeholder="Not yet assigned"
+                       placeholder="{% trans "Not yet assigned" context "companies" %}"
                        readonly disabled aria-readonly="true">
               </div>
               <div class="form-group col-md-6">
-                <label>Email</label>
+                <label>{% trans "Email" context "companies" %}</label>
                 <input type="email" class="form-control" id="company-consultant-email"
                        placeholder="—"
                        readonly disabled aria-readonly="true">
@@ -997,7 +1000,7 @@
             </div>
             <div class="form-row">
               <div class="form-group col-md-6">
-                <label>Phone</label>
+                <label>{% trans "Phone" context "companies" %}</label>
                 <input type="text" class="form-control" id="company-consultant-phone"
                        placeholder="—"
                        readonly disabled aria-readonly="true">
@@ -1007,18 +1010,18 @@
 
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label>Website</label>
+              <label>{% trans "Website" context "companies" %}</label>
               {{ form.website }}
             </div>
           </div>
 
-          <div class="section-title">Branding</div>
+          <div class="section-title">{% trans "Branding" context "companies" %}</div>
 
           <div class="form-group">
-            <label>Company Logo</label>
+            <label>{% trans "Company Logo" context "companies" %}</label>
             {{ form.logo }}
             <small class="form-text text-muted">
-              PNG, JPG, SVG, WEBP or GIF (max 5 MB). Shown in the company overview.
+              {% trans "PNG, JPG, SVG, WEBP or GIF (max 5 MB). Shown in the company overview." context "companies" %}
             </small>
           </div>
 
@@ -1049,9 +1052,9 @@
                   id="save-btn"
                   class="btn btn-primary btn-sm">
             {% if request.user.is_superuser or request.user.role.code|lower == "consultant" %}
-            <i class="fas fa-plus mr-1"></i> Create Company
+            <i class="fas fa-plus mr-1"></i> {% trans "Create Company" context "companies" %}
             {% else %}
-            <i class="fas fa-certificate mr-1"></i> Request Certification
+            <i class="fas fa-certificate mr-1"></i> {% trans "Request Certification" context "companies" %}
             {% endif %}
           </button>
 
@@ -1066,7 +1069,7 @@
                   value="1"
                   class="btn btn-success btn-sm ml-2"
                   style="display:none;">
-            <i class="fas fa-certificate mr-1"></i> Request Certification
+            <i class="fas fa-certificate mr-1"></i> {% trans "Request Certification" context "companies" %}
           </button>
           {% endif %}
         </div>
@@ -1076,6 +1079,75 @@
     </div>
   </div>
 </div>
+
+<script>
+(function () {
+  window.COMPANY_I18N = {
+    selectState: '{% filter escapejs %}{% trans "Select State" context "companies" %}{% endfilter %}',
+    addCompany: '{% filter escapejs %}{% trans "Add Company" context "companies" %}{% endfilter %}',
+    createCompany: '{% filter escapejs %}{% trans "Create Company" context "companies" %}{% endfilter %}',
+    requestCertification: '{% filter escapejs %}{% trans "Request Certification" context "companies" %}{% endfilter %}',
+    companyDetails: '{% filter escapejs %}{% trans "Company Details" context "companies" %}{% endfilter %}',
+    editCompany: '{% filter escapejs %}{% trans "Edit Company" context "companies" %}{% endfilter %}',
+    save: '{% filter escapejs %}{% trans "Save" context "common" %}{% endfilter %}',
+    certifiedBy: '{% filter escapejs %}{% trans "Certified by" context "companies" %}{% endfilter %}',
+    on: '{% filter escapejs %}{% trans "on" context "common" %}{% endfilter %}',
+    basicInfo: '{% filter escapejs %}{% trans "Basic Info" context "companies" %}{% endfilter %}',
+    address: '{% filter escapejs %}{% trans "Address" context "companies" %}{% endfilter %}',
+    contact: '{% filter escapejs %}{% trans "Contact" context "companies" %}{% endfilter %}',
+    certifyingConsultant: '{% filter escapejs %}{% trans "Certifying Consultant" context "companies" %}{% endfilter %}',
+    status: '{% filter escapejs %}{% trans "Status" context "companies" %}{% endfilter %}',
+    legalForm: '{% filter escapejs %}{% trans "Legal Form" context "companies" %}{% endfilter %}',
+    registrationNo: '{% filter escapejs %}{% trans "Registration No." context "companies" %}{% endfilter %}',
+    yearOfEstablishment: '{% filter escapejs %}{% trans "Year of Establishment" context "companies" %}{% endfilter %}',
+    numberOfEmployees: '{% filter escapejs %}{% trans "Number of Employees" context "companies" %}{% endfilter %}',
+    naceCode: '{% filter escapejs %}{% trans "NACE Code" context "companies" %}{% endfilter %}',
+    naicsCode: '{% filter escapejs %}{% trans "NAICS Code" context "companies" %}{% endfilter %}',
+    keywords: '{% filter escapejs %}{% trans "Keywords" context "companies" %}{% endfilter %}',
+    houseNumber: '{% filter escapejs %}{% trans "House Number" context "companies" %}{% endfilter %}',
+    district: '{% filter escapejs %}{% trans "District" context "companies" %}{% endfilter %}',
+    region: '{% filter escapejs %}{% trans "Region" context "companies" %}{% endfilter %}',
+    cityState: '{% filter escapejs %}{% trans "City / State" context "companies" %}{% endfilter %}',
+    postalCode: '{% filter escapejs %}{% trans "Postal Code" context "companies" %}{% endfilter %}',
+    contactPerson: '{% filter escapejs %}{% trans "Contact Person" context "companies" %}{% endfilter %}',
+    contactEmail: '{% filter escapejs %}{% trans "Contact Email" context "companies" %}{% endfilter %}',
+    name: '{% filter escapejs %}{% trans "Name" context "companies" %}{% endfilter %}',
+    phone: '{% filter escapejs %}{% trans "Phone" context "companies" %}{% endfilter %}',
+    website: '{% filter escapejs %}{% trans "Website" context "companies" %}{% endfilter %}',
+    certification: '{% filter escapejs %}{% trans "Certification" context "companies" %}{% endfilter %}',
+    active: '{% filter escapejs %}{% trans "Active" context "companies" %}{% endfilter %}',
+    yes: '{% filter escapejs %}{% trans "Yes" context "common" %}{% endfilter %}',
+    no: '{% filter escapejs %}{% trans "No" context "common" %}{% endfilter %}',
+    any: '{% filter escapejs %}{% trans "Any" context "common" %}{% endfilter %}',
+    noPresetCountry: '{% filter escapejs %}{% trans "No preset for this country — showing all legal forms." context "companies" %}{% endfilter %}',
+    pickCountryNarrow: '{% filter escapejs %}{% trans "Pick a country to narrow the list, or filter globally." context "companies" %}{% endfilter %}',
+    noMatchesFor: '{% filter escapejs %}{% trans "No matches for" context "companies" %}{% endfilter %}',
+    startTyping: '{% filter escapejs %}{% trans "Start typing." context "companies" %}{% endfilter %}',
+    certSubmitted: '{% filter escapejs %}{% trans "Certification request submitted. A consultant will review your company shortly." context "companies" %}{% endfilter %}',
+    couldNotSave: '{% filter escapejs %}{% trans "Could not save company. Please check the form." context "companies" %}{% endfilter %}',
+    couldNotSaveFilter: '{% filter escapejs %}{% trans "Could not save filter." context "companies" %}{% endfilter %}',
+    networkError: '{% filter escapejs %}{% trans "Network error. Please try again." context "common" %}{% endfilter %}',
+    companyLogo: '{% filter escapejs %}{% trans "Company" context "companies" %}{% endfilter %}',
+    uploadImport: '{% filter escapejs %}{% trans "Upload & Import" context "companies.import" %}{% endfilter %}',
+    uploading: '{% filter escapejs %}{% trans "Uploading…" context "companies.import" %}{% endfilter %}',
+    chooseTenant: '{% filter escapejs %}{% trans "Please choose a target tenant." context "companies.import" %}{% endfilter %}',
+    chooseCsv: '{% filter escapejs %}{% trans "Please choose a CSV file." context "companies.import" %}{% endfilter %}',
+    mustBeCsv: '{% filter escapejs %}{% trans "File must be a .csv" context "companies.import" %}{% endfilter %}',
+    uploadFailed: '{% filter escapejs %}{% trans "Upload failed" context "companies.import" %}{% endfilter %}',
+    importComplete: '{% filter escapejs %}{% trans "Import complete." context "companies.import" %}{% endfilter %}',
+    inserted: '{% filter escapejs %}{% trans "Inserted:" context "companies.import" %}{% endfilter %}',
+    skippedDuplicates: '{% filter escapejs %}{% trans "Skipped (duplicates):" context "companies.import" %}{% endfilter %}',
+    failed: '{% filter escapejs %}{% trans "Failed:" context "companies.import" %}{% endfilter %}',
+    importFailed: '{% filter escapejs %}{% trans "Import failed." context "companies.import" %}{% endfilter %}',
+    noDetails: '{% filter escapejs %}{% trans "(no details)" context "companies.import" %}{% endfilter %}',
+    noResults: '{% filter escapejs %}{% trans "No results" context "companies" %}{% endfilter %}',
+  };
+  var g = (typeof gettext === "function") ? gettext : function (s) { return s; };
+  Object.keys(window.COMPANY_I18N).forEach(function (k) {
+    window.COMPANY_I18N[k] = g(window.COMPANY_I18N[k]);
+  });
+})();
+</script>
 
 <!-- ================= JS (UNCHANGED LOGIC, ONLY ADDITIONS) ================= -->
 
@@ -1101,11 +1173,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const options = (countryCode && countryStates[countryCode]) || [];
     const currentValue = preserveValue != null ? preserveValue : stateSel.value;
     if (!options.length) {
-      stateSel.innerHTML = '<option value="">Select State</option>';
+      stateSel.innerHTML = '<option value="">' + COMPANY_I18N.selectState + '</option>';
       stateSel.disabled = true;
       return;
     }
-    let html = '<option value="">Select State</option>';
+    let html = '<option value="">' + COMPANY_I18N.selectState + '</option>';
     options.forEach(function (name) {
       const sel = name === currentValue ? " selected" : "";
       html += '<option value="' + name + '"' + sel + '>' + name + '</option>';
@@ -1171,7 +1243,7 @@ document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("add-company-btn")?.addEventListener("click", function () {
 
       idField.value = "";
-      title.innerText = "Add Company";
+      title.innerText = COMPANY_I18N.addCompany;
       // Ensure the editable form is shown (a prior View action may have
       // swapped in the read-only details view).
       var addViewBody = document.getElementById("company-view-body");
@@ -1188,9 +1260,9 @@ document.addEventListener("DOMContentLoaded", function () {
       // existing company resets this to "Save" in populateCompanyModal.)
       if (saveBtn) {
         {% if request.user.is_superuser or request.user.role.code|lower == "consultant" %}
-        saveBtn.innerHTML = '<i class="fas fa-plus mr-1"></i> Create Company';
+        saveBtn.innerHTML = '<i class="fas fa-plus mr-1"></i> {% trans "Create Company" context "companies" %}';
         {% else %}
-        saveBtn.innerHTML = '<i class="fas fa-certificate mr-1"></i> Request Certification';
+        saveBtn.innerHTML = '<i class="fas fa-certificate mr-1"></i> {% trans "Request Certification" context "companies" %}';
         {% endif %}
       }
 
@@ -1263,12 +1335,12 @@ document.addEventListener("DOMContentLoaded", function () {
     var html = '<div class="cv-title">' + esc(c.name || "—") + '</div>';
     if (c.classification) html += '<div class="cv-subtitle">' + esc(c.classification) + '</div>';
 
-    html += heading("Basic Info");
-    html += row("Legal Form", c.entity_type);
-    html += row("Registration No.", c.registration_id);
-    html += row("Year of Establishment", c.year_established);
-    html += row("Number of Employees", c.employee_count_range);
-    html += row("NACE Code", c.nace_code_display);
+    html += heading(COMPANY_I18N.basicInfo);
+    html += row(COMPANY_I18N.legalForm, c.entity_type);
+    html += row(COMPANY_I18N.registrationNo, c.registration_id);
+    html += row(COMPANY_I18N.yearOfEstablishment, c.year_established);
+    html += row(COMPANY_I18N.numberOfEmployees, c.employee_count_range);
+    html += row(COMPANY_I18N.naceCode, c.nace_code_display);
     // NAICS: prefer the linked NaicsCode FK, but fall back to the imported
     // enrichment value. The bulk CSV importer populates enrichment.naics_code,
     // not the FK, so without this fallback imported companies show no NAICS.
@@ -1278,35 +1350,35 @@ document.addEventListener("DOMContentLoaded", function () {
         ? (e.naics_code + " — " + e.naics_description)
         : e.naics_code;
     }
-    html += row("NAICS Code", naicsDisplay);
-    html += row("Keywords", c.keywords);
+    html += row(COMPANY_I18N.naicsCode, naicsDisplay);
+    html += row(COMPANY_I18N.keywords, c.keywords);
 
-    html += heading("Address");
-    html += row("Address", address);
-    html += row("House Number", c.house_number);
-    html += row("District", c.district);
-    html += row("Region", c.region);
-    html += row("City / State", loc);
-    html += row("Postal Code", c.postal_code);
+    html += heading(COMPANY_I18N.address);
+    html += row(COMPANY_I18N.address, address);
+    html += row(COMPANY_I18N.houseNumber, c.house_number);
+    html += row(COMPANY_I18N.district, c.district);
+    html += row(COMPANY_I18N.region, c.region);
+    html += row(COMPANY_I18N.cityState, loc);
+    html += row(COMPANY_I18N.postalCode, c.postal_code);
 
-    html += heading("Contact");
-    html += row("Contact Person", contactName);
-    html += row("Contact Email", c.contact_email);
-    html += row("Phone", c.phone);
-    html += row("Website", c.website);
+    html += heading(COMPANY_I18N.contact);
+    html += row(COMPANY_I18N.contactPerson, contactName);
+    html += row(COMPANY_I18N.contactEmail, c.contact_email);
+    html += row(COMPANY_I18N.phone, c.phone);
+    html += row(COMPANY_I18N.website, c.website);
 
     if (c.certifying_consultant) {
-      html += heading("Certifying Consultant");
-      html += row("Name", c.certifying_consultant.full_name);
-      html += row("Email", c.certifying_consultant.email);
-      html += row("Phone", c.certifying_consultant.phone);
+      html += heading(COMPANY_I18N.certifyingConsultant);
+      html += row(COMPANY_I18N.name, c.certifying_consultant.full_name);
+      html += row(COMPANY_I18N.contactEmail, c.certifying_consultant.email);
+      html += row(COMPANY_I18N.phone, c.certifying_consultant.phone);
     }
 
     // Certification status is meaningless for consultant-created companies.
     if (!c.owner_is_consultant) {
-      html += heading("Status");
-      html += row("Certification", c.certification_status);
-      if (typeof c.is_active === "boolean") html += row("Active", c.is_active ? "Yes" : "No");
+      html += heading(COMPANY_I18N.status);
+      html += row(COMPANY_I18N.certification, c.certification_status);
+      if (typeof c.is_active === "boolean") html += row(COMPANY_I18N.active, c.is_active ? COMPANY_I18N.yes : COMPANY_I18N.no);
     }
 
     return html;
@@ -1443,10 +1515,10 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
 
-    title.innerText = mode === "view" ? "Company Details" : "Edit Company";
+    title.innerText = mode === "view" ? COMPANY_I18N.companyDetails : COMPANY_I18N.editCompany;
     // Editing an existing company is a plain save — the "Request Certification"
     // wording only fits the Add-Company (new) flow. (Hidden in view mode.)
-    if (saveBtn) saveBtn.innerHTML = '<i class="fas fa-save mr-1"></i> Save';
+    if (saveBtn) saveBtn.innerHTML = '<i class="fas fa-save mr-1"></i> ' + COMPANY_I18N.save;
     setReadonly(mode === "view");
     // Lock the contact-person fields for a business user opening a company
     // they don't own — those fields belong to the owner / certifying
@@ -1619,7 +1691,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   editBtn?.addEventListener("click", function () {
-      title.innerText = "Edit Company";
+      title.innerText = COMPANY_I18N.editCompany;
       setReadonly(false);
   });
 
@@ -1742,7 +1814,7 @@ document.addEventListener("DOMContentLoaded", function () {
           if (typeof showToast === "function") {
             showToast(
               result.data.message ||
-                "Certification request submitted. A consultant will review your company shortly.",
+                COMPANY_I18N.certSubmitted,
               "success"
             );
           }
@@ -1772,7 +1844,7 @@ document.addEventListener("DOMContentLoaded", function () {
           var msg =
             (result.data && result.data.message) ||
             firstSpecific ||
-            "Could not save company. Please check the form.";
+            COMPANY_I18N.couldNotSave;
 
           if (typeof showToast === "function") {
             showToast(msg, "error");
@@ -1784,7 +1856,7 @@ document.addEventListener("DOMContentLoaded", function () {
       .catch(function (err) {
         console.error("Create company failed:", err);
         if (typeof showToast === "function") {
-          showToast("Network error. Please try again.", "error");
+          showToast(COMPANY_I18N.networkError, "error");
         }
       })
       .finally(function () {
@@ -1809,18 +1881,19 @@ document.addEventListener("DOMContentLoaded", function () {
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title font-weight-bold">Save Filter to Favorites</h5>
+        <h5 class="modal-title font-weight-bold">{% trans "Save Filter to Favorites" context "companies" %}</h5>
         <button type="button" class="close" data-dismiss="modal">&times;</button>
       </div>
       <div class="modal-body">
         <p class="small text-muted">
-          Save the current filter criteria under a friendly name. Return anytime from the Favorites tab —
-          one click re-applies the filter. This does <strong>not</strong> export or download data.
+          {% blocktrans trimmed context "companies" %}
+          Save the current filter criteria under a friendly name. Return anytime from the Favorites tab — one click re-applies the filter. This does not export or download data.
+          {% endblocktrans %}
         </p>
         <div class="form-group mb-2">
-          <label>Name</label>
+          <label>{% trans "Name" context "companies" %}</label>
           <input type="text" id="saved-filter-name" class="form-control"
-                 placeholder="e.g. Health Insurance — USA / CA / San Francisco" maxlength="120">
+                 placeholder="{% trans "e.g. Health Insurance — USA / CA / San Francisco" context "companies" %}" maxlength="120">
         </div>
         <dl class="row small mb-0">
           {% for key, value in applied_filters.items %}
@@ -1830,8 +1903,8 @@ document.addEventListener("DOMContentLoaded", function () {
         </dl>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-success btn-sm" id="confirm-save-filter-btn">Save</button>
+        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">{% trans "Cancel" context "common" %}</button>
+        <button type="button" class="btn btn-success btn-sm" id="confirm-save-filter-btn">{% trans "Save" context "common" %}</button>
       </div>
     </div>
   </div>
@@ -1880,13 +1953,13 @@ document.addEventListener("DOMContentLoaded", function () {
           if (typeof showToast === "function") showToast(res.data.message, "success");
           else console.log(res.data.message);
         } else {
-          const msg = res.data.message || "Could not save filter.";
+          const msg = res.data.message || COMPANY_I18N.couldNotSaveFilter;
           if (typeof showToast === "function") showToast(msg, "error");
           else console.error(msg);
         }
       })
       .catch(function () {
-        if (typeof showToast === "function") showToast("Network error. Please try again.", "error");
+        if (typeof showToast === "function") showToast(COMPANY_I18N.networkError, "error");
       })
       .finally(function () { confirmBtn.disabled = false; });
   });
@@ -2014,7 +2087,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!rows.length) {
       var empty = document.createElement("li");
       empty.className = "empty";
-      empty.textContent = "No matches";
+      empty.textContent = COMPANY_I18N.noResults;
       this.results.appendChild(empty);
     } else {
       rows.forEach(function (row) {

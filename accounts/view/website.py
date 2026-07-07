@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.utils import timezone
 from django.contrib import messages
+from django.utils.translation import gettext as _
 
 from billing.models import CommercialPlan, Subscription, Invoice, ConsultantCommission
 
@@ -50,10 +51,10 @@ def contact(request):
         # first name, last name, email, subject, message, and the privacy
         # consent checkbox. Phone + company name stay optional.
         if not (first_name and last_name and email and subject and message_text):
-            messages.error(request, "Please fill in all required fields (marked with *).")
+            messages.error(request, _("Please fill in all required fields (marked with *)."))
             return render(request, 'website/contact.html')
         if not agreed:
-            messages.error(request, "Please agree to the Privacy Policy before sending your message.")
+            messages.error(request, _("Please agree to the Privacy Policy before sending your message."))
             return render(request, 'website/contact.html')
 
         contact_msg = ContactMessage.objects.create(
@@ -69,7 +70,7 @@ def contact(request):
 
         messages.success(
             request,
-            "Thanks for reaching out! Your message has been sent — our team will get back to you shortly.",
+            _("Thanks for reaching out! Your message has been sent — our team will get back to you shortly."),
         )
         return redirect("contact")
 
@@ -107,8 +108,9 @@ def membership(request):
         if pending_sub:
             messages.info(
                 request,
-                f"Your upgrade to the {pending_sub.plan.name} plan is pending admin approval. "
-                "You can't start another upgrade until that one is approved or rejected.",
+                _("Your upgrade to the %(plan)s plan is pending admin approval. "
+                  "You can't start another upgrade until that one is approved or rejected.")
+                % {"plan": pending_sub.plan.name},
             )
 
         # If the user has been auto-moved from a now-deactivated paid plan
@@ -119,21 +121,22 @@ def membership(request):
         if deactivated_plan:
             messages.warning(
                 request,
-                f"Your {deactivated_plan.name} plan was deactivated by the admin. "
-                "You have been moved to the Free plan. "
-                "Please activate another plan from the options below.",
+                _("Your %(plan)s plan was deactivated by the admin. "
+                  "You have been moved to the Free plan. "
+                  "Please activate another plan from the options below.")
+                % {"plan": deactivated_plan.name},
             )
 
     plans = CommercialPlan.objects.filter(is_active=True)
 
     comparison_rows = [
-        {"label": "Profile Visibility", "key": "profile_visibility"},
-        {"label": "Geographic Access Scope", "key": "geographic_scope"},
-        {"label": "Search Scope", "key": "search_scope"},
-        {"label": "Company Certification", "key": "company_certification"},
-        {"label": "Partnerships", "key": "partnerships"},
-        {"label": "Messaging", "key": "messaging"},
-        {"label": "Saving Databases", "key": "saving_databases"},
+        {"label": _("Profile Visibility"), "key": "profile_visibility"},
+        {"label": _("Geographic Access Scope"), "key": "geographic_scope"},
+        {"label": _("Search Scope"), "key": "search_scope"},
+        {"label": _("Company Certification"), "key": "company_certification"},
+        {"label": _("Partnerships"), "key": "partnerships"},
+        {"label": _("Messaging"), "key": "messaging"},
+        {"label": _("Saving Databases"), "key": "saving_databases"},
     ]
 
     plans_json = json.dumps({
@@ -170,7 +173,8 @@ def select_plan(request):
     if pending_sub:
         messages.info(
             request,
-            f"Your upgrade to the {pending_sub.plan.name} plan is already pending admin approval.",
+            _("Your upgrade to the %(plan)s plan is already pending admin approval.")
+            % {"plan": pending_sub.plan.name},
         )
         return redirect("dashboard")
 
@@ -178,7 +182,7 @@ def select_plan(request):
     plan = CommercialPlan.objects.filter(code=plan_code, is_active=True).first()
 
     if not plan:
-        messages.error(request, "Invalid plan selected")
+        messages.error(request, _("Invalid plan selected"))
         return redirect("membership")
 
     from billing.utils import PLAN_TIERS
@@ -195,7 +199,7 @@ def select_plan(request):
     # otherwise reject any non-upgrade move (this is the BASIC → FREE case).
     if plan.code == "free" and current_active:
         if (current_active.plan.code or "").lower() == "free":
-            messages.info(request, "You're already on the Free plan.")
+            messages.info(request, _("You're already on the Free plan."))
             return redirect("membership")
 
         now = timezone.now()
@@ -220,8 +224,8 @@ def select_plan(request):
             user.save(update_fields=["subscription_plan"])
         messages.success(
             request,
-            f"Your plan has been changed to Free. Your {current_active.plan.name} "
-            "plan has been cancelled.",
+            _("Your plan has been changed to Free. Your %(plan)s plan has been cancelled.")
+            % {"plan": current_active.plan.name},
         )
         return redirect("plans")
 
@@ -235,13 +239,14 @@ def select_plan(request):
             if new_tier == current_tier:
                 messages.info(
                     request,
-                    f"You're already on the {current_active.plan.name} plan.",
+                    _("You're already on the %(plan)s plan.")
+                    % {"plan": current_active.plan.name},
                 )
             else:
                 messages.info(
                     request,
-                    "Downgrading to a lower paid plan isn't supported yet. "
-                    "You can switch to the Free plan instead.",
+                    _("Downgrading to a lower paid plan isn't supported yet. "
+                      "You can switch to the Free plan instead."),
                 )
             return redirect("membership")
 
@@ -446,7 +451,7 @@ def invoice_detail(request, invoice_id):
     ).filter(id=invoice_id).first()
 
     if not invoice:
-        messages.error(request, "Invoice not found")
+        messages.error(request, _("Invoice not found"))
         return redirect("membership")
 
     # Access control: the subscription owner (business user) always sees their
@@ -458,7 +463,7 @@ def invoice_detail(request, invoice_id):
         invoice=invoice, consultant=request.user
     ).exists()
     if not (request.user.is_superuser or is_owner or is_linked_consultant):
-        messages.error(request, "Invoice not found")
+        messages.error(request, _("Invoice not found"))
         return redirect("membership")
 
     # The bank-details fallback should reflect the subscriber's region, not

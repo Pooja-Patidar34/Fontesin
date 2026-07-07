@@ -1,6 +1,7 @@
 {% extends "base/base.html" %}
+{% load i18n %}
 
-{% block title %}Delete Tenant{% endblock %}
+{% block title %}{% trans "Delete Tenant" context "dashboard" %}{% endblock %}
 
 {% block content %}
 
@@ -8,22 +9,21 @@
 
   <div class="card-header">
     <h3 class="card-title font-weight-bold">
-      Delete Tenant
+      {% trans "Delete Tenant" context "dashboard" %}
     </h3>
   </div>
 
   <div class="card-body">
 
-```
 <div class="alert alert-danger">
   <h5>
     <i class="icon fas fa-exclamation-triangle"></i>
-    Warning
+    {% trans "Warning" context "common" %}
   </h5>
-  You are about to delete the tenant:
+  {% trans "You are about to delete the tenant:" context "dashboard" %}
   <strong>{{ tenant.name }}</strong>.
   <br><br>
-  This action cannot be undone.
+  {% trans "This action cannot be undone." context "common" %}
 </div>
 
 <form method="post">
@@ -33,20 +33,18 @@
 
     <a href="{% url 'tenants' %}"
        class="btn btn-secondary mr-2">
-      Cancel
+      {% trans "Cancel" context "common" %}
     </a>
 
     <button type="submit"
             class="btn btn-danger">
       <i class="fas fa-trash mr-1"></i>
-      Delete Tenant
+      {% trans "Delete Tenant" context "dashboard" %}
     </button>
 
   </div>
 
 </form>
-```
-
   </div>
 
 </div>

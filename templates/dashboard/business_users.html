@@ -1,5 +1,6 @@
 {% extends "base/base.html" %}
-{% block title %}{{ page_title|default:"Users" }}{% endblock %}
+{% load i18n %}
+{% block title %}{% if page_title %}{{ page_title }}{% else %}{% trans "Users" context "users" %}{% endif %}{% endblock %}
 {% block content %}
 
 <style>
@@ -19,9 +20,9 @@
 
   <div class="card-header d-flex justify-content-between align-items-center">
     <h3 class="card-title font-weight-bold mb-0">
-      <i class="fas fa-user-friends mr-2"></i>{{ page_title|default:"Users" }}
+      <i class="fas fa-user-friends mr-2"></i>{% if page_title %}{{ page_title }}{% else %}{% trans "Users" context "users" %}{% endif %}
     </h3>
-    <span class="text-muted small">Active business users · Total: {{ page_obj.paginator.count }}</span>
+    <span class="text-muted small">{% trans "Active business users" context "users" %} · {% trans "Total:" context "users" %} {{ page_obj.paginator.count }}</span>
   </div>
 
   {# Single search bar — matches across first name, last name, email, phone #}
@@ -30,20 +31,20 @@
       <div class="input-group input-group-sm" style="max-width: 420px; width: 100%;">
         <input type="text" name="q" value="{{ search_query|default:'' }}"
                class="form-control"
-               placeholder="Search by name, email, or phone…"
-               aria-label="Search business users">
+               placeholder="{% trans "Search by name, email, or phone…" context "users" %}"
+               aria-label="{% trans "Search business users" context "users" %}">
         <div class="input-group-append">
           <button type="submit" class="btn btn-primary">
             <i class="fas fa-search"></i>
           </button>
           {% if search_query %}
-          <a href="{% url 'business-users' %}" class="btn btn-outline-secondary" title="Clear search">&times;</a>
+          <a href="{% url 'business-users' %}" class="btn btn-outline-secondary" title="{% trans "Clear search" context "common" %}">&times;</a>
           {% endif %}
         </div>
       </div>
       {% if search_query %}
       <span class="text-muted small ml-2">
-        {{ page_obj.paginator.count }} result{{ page_obj.paginator.count|pluralize }} for &ldquo;{{ search_query }}&rdquo;
+        {% blocktrans trimmed count counter=page_obj.paginator.count with query=search_query context "users" %}{{ counter }} result for &ldquo;{{ query }}&rdquo;{% plural %}{{ counter }} results for &ldquo;{{ query }}&rdquo;{% endblocktrans %}
       </span>
       {% endif %}
     </form>
@@ -54,12 +55,12 @@
       <table class="table table-hover table-sm mb-0">
         <thead class="bg-light">
           <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Phone</th>
-            <th>Company</th>
-            <th>Status</th>
-            <th class="text-right">Action</th>
+            <th>{% trans "Name" context "users" %}</th>
+            <th>{% trans "Email" context "users" %}</th>
+            <th>{% trans "Phone" context "users" %}</th>
+            <th>{% trans "Company" context "users" %}</th>
+            <th>{% trans "Status" context "users" %}</th>
+            <th class="text-right">{% trans "Action" context "common" %}</th>
           </tr>
         </thead>
         <tbody>
@@ -85,23 +86,27 @@
             </td>
             <td>
               {% if u.is_active %}
-                <span class="badge badge-success status-badge">Active</span>
+                <span class="badge badge-success status-badge">{% trans "Active" context "common" %}</span>
               {% else %}
-                <span class="badge badge-danger status-badge">Inactive</span>
+                <span class="badge badge-danger status-badge">{% trans "Inactive" context "common" %}</span>
               {% endif %}
             </td>
             <td class="text-right">
               <button type="button"
                       class="btn btn-sm btn-primary view-cu-btn"
                       data-row-index="{{ forloop.counter0 }}">
-                <i class="fas fa-eye mr-1"></i> View
+                <i class="fas fa-eye mr-1"></i> {% trans "View" context "common" %}
               </button>
             </td>
           </tr>
           {% empty %}
           <tr>
             <td colspan="6" class="text-center text-muted py-4">
-              No active business users found{% if search_query %} for &ldquo;{{ search_query }}&rdquo;{% endif %}.
+              {% if search_query %}
+                {% blocktrans trimmed with query=search_query context "users" %}No active business users found for &ldquo;{{ query }}&rdquo;.{% endblocktrans %}
+              {% else %}
+                {% trans "No active business users found." context "users" %}
+              {% endif %}
             </td>
           </tr>
           {% endfor %}
@@ -118,10 +123,10 @@
       <ul class="pagination pagination-sm mb-0">
         {% if page_obj.has_previous %}
           <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}">Previous</a>
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}">{% trans "Previous" context "common" %}</a>
           </li>
         {% else %}
-          <li class="page-item disabled"><span class="page-link">Previous</span></li>
+          <li class="page-item disabled"><span class="page-link">{% trans "Previous" context "common" %}</span></li>
         {% endif %}
 
         {% for num in page_obj.paginator.page_range %}
@@ -134,10 +139,10 @@
 
         {% if page_obj.has_next %}
           <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}">Next</a>
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}">{% trans "Next" context "common" %}</a>
           </li>
         {% else %}
-          <li class="page-item disabled"><span class="page-link">Next</span></li>
+          <li class="page-item disabled"><span class="page-link">{% trans "Next" context "common" %}</span></li>
         {% endif %}
       </ul>
     </nav>
@@ -153,53 +158,53 @@
       <div class="modal-header">
         <h5 class="modal-title">
           <i class="fas fa-user mr-2"></i>
-          <span id="cu-modal-title">User Details</span>
+          <span id="cu-modal-title">{% trans "User Details" context "users" %}</span>
         </h5>
         <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
       </div>
 
       <div class="modal-body">
 
-        <h6 class="text-primary font-weight-bold mt-1 mb-2">Identity</h6>
+        <h6 class="text-primary font-weight-bold mt-1 mb-2">{% trans "Identity" context "users" %}</h6>
         <table class="table table-sm table-borderless mb-3">
-          <tr><th style="width: 34%;">Name</th><td id="cu-name"></td></tr>
-          <tr><th>Email</th><td id="cu-email"></td></tr>
-          <tr><th>Status</th><td id="cu-status"></td></tr>
+          <tr><th style="width: 34%;">{% trans "Name" context "users" %}</th><td id="cu-name"></td></tr>
+          <tr><th>{% trans "Email" context "users" %}</th><td id="cu-email"></td></tr>
+          <tr><th>{% trans "Status" context "users" %}</th><td id="cu-status"></td></tr>
         </table>
 
-        <h6 class="text-primary font-weight-bold mt-3 mb-2">Contact</h6>
+        <h6 class="text-primary font-weight-bold mt-3 mb-2">{% trans "Contact" context "users" %}</h6>
         <table class="table table-sm table-borderless mb-3">
-          <tr><th style="width: 34%;">Phone</th><td id="cu-phone"></td></tr>
-          <tr><th>LinkedIn</th><td id="cu-linkedin"></td></tr>
+          <tr><th style="width: 34%;">{% trans "Phone" context "users" %}</th><td id="cu-phone"></td></tr>
+          <tr><th>{% trans "LinkedIn" context "users" %}</th><td id="cu-linkedin"></td></tr>
         </table>
 
-        <h6 class="text-primary font-weight-bold mt-3 mb-2">Address</h6>
+        <h6 class="text-primary font-weight-bold mt-3 mb-2">{% trans "Address" context "users" %}</h6>
         <table class="table table-sm table-borderless mb-3">
-          <tr><th style="width: 34%;">Country</th><td id="cu-country"></td></tr>
-          <tr><th>City</th><td id="cu-city"></td></tr>
-          <tr><th>State / Region</th><td id="cu-state"></td></tr>
-          <tr><th>Postal Code</th><td id="cu-postal"></td></tr>
-          <tr><th>Address</th><td id="cu-address"></td></tr>
+          <tr><th style="width: 34%;">{% trans "Country" context "users" %}</th><td id="cu-country"></td></tr>
+          <tr><th>{% trans "City" context "users" %}</th><td id="cu-city"></td></tr>
+          <tr><th>{% trans "State / Region" context "users" %}</th><td id="cu-state"></td></tr>
+          <tr><th>{% trans "Postal Code" context "users" %}</th><td id="cu-postal"></td></tr>
+          <tr><th>{% trans "Address" context "users" %}</th><td id="cu-address"></td></tr>
         </table>
 
-        <h6 class="text-primary font-weight-bold mt-3 mb-2">Company</h6>
+        <h6 class="text-primary font-weight-bold mt-3 mb-2">{% trans "Company" context "users" %}</h6>
         <table class="table table-sm table-borderless mb-3">
-          <tr><th style="width: 34%;">Registered Company</th><td id="cu-company"></td></tr>
-          <tr><th>Applied Company Name</th><td id="cu-app-company-name"></td></tr>
-          <tr><th>Country of Incorporation</th><td id="cu-app-company-country"></td></tr>
-          <tr><th>Website</th><td id="cu-app-company-website"></td></tr>
+          <tr><th style="width: 34%;">{% trans "Registered Company" context "users" %}</th><td id="cu-company"></td></tr>
+          <tr><th>{% trans "Applied Company Name" context "users" %}</th><td id="cu-app-company-name"></td></tr>
+          <tr><th>{% trans "Country of Incorporation" context "users" %}</th><td id="cu-app-company-country"></td></tr>
+          <tr><th>{% trans "Website" context "users" %}</th><td id="cu-app-company-website"></td></tr>
         </table>
 
-        <h6 class="text-primary font-weight-bold mt-3 mb-2">System</h6>
+        <h6 class="text-primary font-weight-bold mt-3 mb-2">{% trans "System" context "users" %}</h6>
         <table class="table table-sm table-borderless mb-0">
-          <tr><th style="width: 34%;">Created</th><td id="cu-created"></td></tr>
-          <tr><th>Updated</th><td id="cu-updated"></td></tr>
+          <tr><th style="width: 34%;">{% trans "Created" context "users" %}</th><td id="cu-created"></td></tr>
+          <tr><th>{% trans "Updated" context "users" %}</th><td id="cu-updated"></td></tr>
         </table>
 
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+        <button class="btn btn-secondary btn-sm" data-dismiss="modal">{% trans "Close" context "common" %}</button>
       </div>
     </div>
   </div>
@@ -207,13 +212,29 @@
 
 <script>
 (function () {
+  window.USER_I18N = window.USER_I18N || {};
+  Object.assign(window.USER_I18N, {
+    active: '{% filter escapejs %}{% trans "Active" context "common" %}{% endfilter %}',
+    inactive: '{% filter escapejs %}{% trans "Inactive" context "common" %}{% endfilter %}',
+    dash: '{% filter escapejs %}{% trans "—" context "common" %}{% endfilter %}',
+  });
+  var g = (typeof gettext === "function") ? gettext : function (s) { return s; };
+  Object.keys(window.USER_I18N).forEach(function (k) {
+    window.USER_I18N[k] = g(window.USER_I18N[k]);
+  });
+})();
+</script>
+
+<script>
+(function () {
+  const I18N = window.USER_I18N || {};
   const dataEl = document.getElementById("cu-rows-data");
   if (!dataEl) return;
   const rows = JSON.parse(dataEl.textContent);
 
   function setText(id, value) {
     const el = document.getElementById(id);
-    if (el) el.textContent = (value === null || value === undefined || value === "") ? "-" : value;
+    if (el) el.textContent = (value === null || value === undefined || value === "") ? (I18N.dash || "-") : value;
   }
   function setHtml(id, html) {
     const el = document.getElementById(id);
@@ -225,7 +246,7 @@
     if (url) {
       el.innerHTML = '<a href="' + url + '" target="_blank" rel="noopener">' + url + '</a>';
     } else {
-      el.textContent = "-";
+      el.textContent = I18N.dash || "-";
     }
   }
   function fmtDate(iso) {
@@ -245,8 +266,8 @@
       setText("cu-email", row.email);
 
       const statusBadge = row.is_active
-        ? '<span class="badge badge-success">Active</span>'
-        : '<span class="badge badge-danger">Inactive</span>';
+        ? '<span class="badge badge-success">' + (I18N.active || "Active") + '</span>'
+        : '<span class="badge badge-danger">' + (I18N.inactive || "Inactive") + '</span>';
       setHtml("cu-status", statusBadge);
 
       const phoneText = row.national_prefix
@@ -260,7 +281,7 @@
       setText("cu-state", row.state_region);
       setText("cu-postal", row.postal_code);
       const addressParts = [row.address_line1, row.address_line2].filter(Boolean);
-      setText("cu-address", addressParts.length ? addressParts.join(", ") : "-");
+      setText("cu-address", addressParts.length ? addressParts.join(", ") : (I18N.dash || "-"));
 
       setText("cu-company", row.company);
       setText("cu-app-company-name", row.applied_company_name);

@@ -1,3 +1,4 @@
+{% load i18n %}
 <tr data-company-id="{{ company.id }}">
 
   <td><strong>{{ company.name|default:"—" }}</strong></td>
@@ -41,9 +42,9 @@
   {% else %}
   <td>
     {% if company.is_active %}
-      <span class="badge badge-success">Active</span>
+      <span class="badge badge-success">{% trans "Active" context "companies" %}</span>
     {% else %}
-      <span class="badge badge-danger">Inactive</span>
+      <span class="badge badge-danger">{% trans "Inactive" context "companies" %}</span>
     {% endif %}
   </td>
   {% endif %}
@@ -54,7 +55,7 @@
       <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
               type="button"
               data-toggle="dropdown">
-        Action
+        {% trans "Action" context "common" %}
       </button>
 
     <div class="dropdown-menu dropdown-menu-right">
@@ -71,14 +72,14 @@
         {% if can_view %}
         <button class="dropdown-item view-company-btn"
                 data-url="{% url 'company-detail' company.id %}">
-          <i class="fas fa-eye mr-2"></i> View
+          <i class="fas fa-eye mr-2"></i> {% trans "View" context "common" %}
         </button>
         {% endif %}
 
         {% if can_manage %}
         <button class="dropdown-item edit-company-btn"
                 data-url="{% url 'company-detail' company.id %}">
-          <i class="fas fa-edit mr-2"></i> Edit
+          <i class="fas fa-edit mr-2"></i> {% trans "Edit" context "common" %}
         </button>
 
         <div class="dropdown-divider"></div>
@@ -86,12 +87,12 @@
         {% if company.is_active %}
         <a class="dropdown-item text-warning"
            href="{% url 'company-toggle' company.id %}">
-          <i class="fas fa-ban mr-2"></i> Deactivate
+          <i class="fas fa-ban mr-2"></i> {% trans "Deactivate" context "companies" %}
         </a>
         {% else %}
         <a class="dropdown-item text-success"
            href="{% url 'company-toggle' company.id %}">
-          <i class="fas fa-check mr-2"></i> Activate
+          <i class="fas fa-check mr-2"></i> {% trans "Activate" context "companies" %}
         </a>
         {% endif %}
 
@@ -102,8 +103,8 @@
               id="company-delete-form-{{ company.id }}">
           {% csrf_token %}
           <button type="button" class="dropdown-item text-danger"
-                  onclick="appConfirm({kind:'danger', title:'Delete Company?', text:'Are you sure you want to permanently delete this company? This action cannot be undone.', okLabel:'Delete', okIcon:'fa-trash', onConfirm:function(){document.getElementById('company-delete-form-{{ company.id }}').submit();}})">
-            <i class="fas fa-trash mr-2"></i> Delete
+                  onclick="appConfirm({kind:'danger', title:'{% filter escapejs %}{% trans "Delete Company?" context "companies" %}{% endfilter %}', text:'{% filter escapejs %}{% trans "Are you sure you want to permanently delete this company? This action cannot be undone." context "companies" %}{% endfilter %}', okLabel:'{% filter escapejs %}{% trans "Delete" context "common" %}{% endfilter %}', okIcon:'fa-trash', onConfirm:function(){document.getElementById('company-delete-form-{{ company.id }}').submit();}})">
+            <i class="fas fa-trash mr-2"></i> {% trans "Delete" context "common" %}
           </button>
         </form>
         {% endif %}
@@ -122,19 +123,19 @@
           {% if is_paid_business_user or company.id in viewable_ids %}
           <button class="dropdown-item view-company-btn text-success"
                   data-url="{% url 'company-detail' company.id %}">
-            <i class="fas fa-eye mr-2"></i> View
+            <i class="fas fa-eye mr-2"></i> {% trans "View" context "common" %}
           </button>
           {% else %}
           <button type="button" class="dropdown-item text-success"
                   style="opacity:.45; cursor: not-allowed;" disabled
-                  title="Upgrade to a paid plan (or connect with this company) to view its details.">
-            <i class="fas fa-eye mr-2"></i> View
+                  title="{% trans "Upgrade to a paid plan (or connect with this company) to view its details." context "companies" %}">
+            <i class="fas fa-eye mr-2"></i> {% trans "View" context "common" %}
           </button>
           {% endif %}
         {% else %}
         <button class="dropdown-item view-company-btn"
                 data-url="{% url 'company-detail' company.id %}">
-          <i class="fas fa-eye mr-2"></i> View
+          <i class="fas fa-eye mr-2"></i> {% trans "View" context "common" %}
         </button>
         {% endif %}
       {% endif %}
@@ -148,24 +149,24 @@
       {% if is_business_user %}
         {% if company.id in accepted_ids %}
         <button type="button" class="dropdown-item text-success" disabled>
-          <i class="fas fa-link mr-2"></i> Connected
+          <i class="fas fa-link mr-2"></i> {% trans "Connected" context "companies" %}
         </button>
         {% elif company.id in pending_ids %}
         <button type="button" class="dropdown-item text-muted" disabled>
-          <i class="fas fa-hourglass-half mr-2"></i> Connection requested
+          <i class="fas fa-hourglass-half mr-2"></i> {% trans "Connection requested" context "companies" %}
         </button>
         {% elif is_free_plan %}
         <button type="button" class="dropdown-item text-success"
                 style="opacity:.45; cursor: not-allowed;" disabled
-                title="Upgrade to a paid plan to connect with companies.">
-          <i class="fas fa-handshake mr-2"></i> Connect
+                title="{% trans "Upgrade to a paid plan to connect with companies." context "companies" %}">
+          <i class="fas fa-handshake mr-2"></i> {% trans "Connect" context "companies" %}
         </button>
         {% else %}
         <form method="post" action="{% url 'company-connect' company.id %}"
               class="company-connect-form m-0" data-company-id="{{ company.id }}">
           {% csrf_token %}
           <button type="submit" class="dropdown-item text-success">
-            <i class="fas fa-handshake mr-2"></i> Connect
+            <i class="fas fa-handshake mr-2"></i> {% trans "Connect" context "companies" %}
           </button>
         </form>
         {% endif %}
@@ -178,17 +179,17 @@
         {% endcomment %}
         {% if company.id in member_company_ids %}
         <button type="button" class="dropdown-item text-success" disabled>
-          <i class="fas fa-user-check mr-2"></i> Joined
+          <i class="fas fa-user-check mr-2"></i> {% trans "Joined" context "companies" %}
         </button>
         {% elif company.id in pending_join_ids %}
         <button type="button" class="dropdown-item text-muted" disabled>
-          <i class="fas fa-hourglass-half mr-2"></i> Join requested
+          <i class="fas fa-hourglass-half mr-2"></i> {% trans "Join requested" context "companies" %}
         </button>
         {% else %}
         <form method="post" action="{% url 'company-join' company.id %}" class="m-0">
           {% csrf_token %}
           <button type="submit" class="dropdown-item text-primary">
-            <i class="fas fa-user-plus mr-2"></i> Join
+            <i class="fas fa-user-plus mr-2"></i> {% trans "Join" context "companies" %}
           </button>
         </form>
         {% endif %}
@@ -203,7 +204,7 @@
       {% if can_manage and not is_pro_plan and not is_global_plan %}
         <button class="dropdown-item edit-company-btn"
                 data-url="{% url 'company-detail' company.id %}">
-          <i class="fas fa-edit mr-2"></i> Edit
+          <i class="fas fa-edit mr-2"></i> {% trans "Edit" context "common" %}
         </button>
       {% endif %}
 
@@ -216,12 +217,12 @@
         {% if company.is_active %}
           <a class="dropdown-item text-warning"
             href="{% url 'company-toggle' company.id %}">
-            <i class="fas fa-ban mr-2"></i> Deactivate
+            <i class="fas fa-ban mr-2"></i> {% trans "Deactivate" context "companies" %}
           </a>
         {% else %}
           <a class="dropdown-item text-success"
             href="{% url 'company-toggle' company.id %}">
-            <i class="fas fa-check mr-2"></i> Activate
+            <i class="fas fa-check mr-2"></i> {% trans "Activate" context "companies" %}
           </a>
         {% endif %}
       {% endif %}
@@ -235,8 +236,8 @@
             id="company-delete-form-{{ company.id }}">
         {% csrf_token %}
         <button type="button" class="dropdown-item text-danger"
-                onclick="appConfirm({kind:'danger', title:'Delete Company?', text:'Are you sure you want to permanently delete this company? This action cannot be undone.', okLabel:'Delete', okIcon:'fa-trash', onConfirm:function(){document.getElementById('company-delete-form-{{ company.id }}').submit();}})">
-          <i class="fas fa-trash mr-2"></i> Delete
+                onclick="appConfirm({kind:'danger', title:'{% filter escapejs %}{% trans "Delete Company?" context "companies" %}{% endfilter %}', text:'{% filter escapejs %}{% trans "Are you sure you want to permanently delete this company? This action cannot be undone." context "companies" %}{% endfilter %}', okLabel:'{% filter escapejs %}{% trans "Delete" context "common" %}{% endfilter %}', okIcon:'fa-trash', onConfirm:function(){document.getElementById('company-delete-form-{{ company.id }}').submit();}})">
+          <i class="fas fa-trash mr-2"></i> {% trans "Delete" context "common" %}
         </button>
       </form>
       {% endif %}

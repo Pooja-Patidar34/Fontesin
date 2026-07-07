@@ -1,6 +1,6 @@
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
@@ -8,10 +8,10 @@
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <meta name="apple-mobile-web-app-title" content="FONTESIN"/>
-  <link rel="manifest" href="manifest.json"/>
-  <link rel="apple-touch-icon" href="images/icons/icon-192.png"/>
-  <title>FONTESIN – Global Business Infrastructure Platform</title>
-  <meta name="description" content="FONTESIN is a deep-tech global business infrastructure platform connecting companies, professionals, and markets across borders."/>
+  <link rel="manifest" href="{% static 'adminlte/manifest.json' %}"/>
+  <link rel="apple-touch-icon" href="{% static 'adminlte/images/icons/icon-192.png' %}"/>
+  <title>FONTESIN – {% trans "Global Business Infrastructure Platform" context "website" %}</title>
+  <meta name="description" content="{% trans 'FONTESIN is a deep-tech global business infrastructure platform connecting companies, professionals, and markets across borders.' context 'website' %}"/>
   <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}?v=6"/>
 </head>
 <body>
@@ -23,16 +23,16 @@
       <img src="{% static 'adminlte/images/fontesin-logo.png' %}" alt="FONTESIN" height="38"/>
     </a>
     <div class="navbar__nav">
-      <a href="{% url 'home' %}" class="active">Home</a>
-      <a href="{% url 'worldmap' %}">World Map</a>
-      <a href="{% url 'about' %}">About</a>
-      <a href="{% url 'career' %}">Careers</a>
-      <a href="{% url 'contact' %}">Contact</a>
+      <a href="{% url 'home' %}" class="active">{% trans "Home" context "website" %}</a>
+      <a href="{% url 'worldmap' %}">{% trans "World Map" context "website" %}</a>
+      <a href="{% url 'about' %}">{% trans "About" context "website" %}</a>
+      <a href="{% url 'career' %}">{% trans "Careers" context "website" %}</a>
+      <a href="{% url 'contact' %}">{% trans "Contact" context "website" %}</a>
     </div>
-    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
+    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="{% trans 'Menu' context 'website' %}">☰</button>
     <div class="navbar__actions">
-      <a href="{% url 'login' %}" class="btn btn-outline btn-sm">Log In</a>
-      <a href="{% url 'register' %}" class="btn btn-primary btn-sm">Get Started</a>
+      <a href="{% url 'login' %}" class="btn btn-outline btn-sm">{% trans "Log In" context "auth.login" %}</a>
+      <a href="{% url 'register' %}" class="btn btn-primary btn-sm">{% trans "Get Started" context "website" %}</a>
     </div>
   </div>
 </nav>
@@ -43,30 +43,30 @@
     <div class="hero__content animate-in">
       <div class="hero__badge">
         <span></span>
-        Pre-MVP · Now Onboarding Partners
+        {% trans "Pre-MVP · Now Onboarding Partners" context "website" %}
       </div>
-      <h1>Global Business<br/><em>Infrastructure</em><br/>Platform</h1>
-      <p>FONTESIN is a deep-tech communication and certification platform connecting companies, professionals, and markets across languages, borders, and systems.</p>
+      <h1>{% trans "Global Business" context "website" %}<br/><em>{% trans "Infrastructure" context "website" %}</em><br/>{% trans "Platform" context "website" %}</h1>
+      <p>{% trans "FONTESIN is a deep-tech communication and certification platform connecting companies, professionals, and markets across languages, borders, and systems." context "website" %}</p>
       <div class="hero__actions">
-        <a href="{% url 'register' %}" class="btn btn--white btn-lg">Get Started Free</a>
-        <a href="{% url 'worldmap' %}" class="btn btn-outline btn-lg">Explore World Map</a>
+        <a href="{% url 'register' %}" class="btn btn--white btn-lg">{% trans "Get Started Free" context "website" %}</a>
+        <a href="{% url 'worldmap' %}" class="btn btn-outline btn-lg">{% trans "Explore World Map" context "website" %}</a>
       </div>
       <div class="hero__stats">
         <div>
           <span class="hero__stat-value">177+</span>
-          <span class="hero__stat-label">Countries Mapped</span>
+          <span class="hero__stat-label">{% trans "Countries Mapped" context "website" %}</span>
         </div>
         <div>
           <span class="hero__stat-value">5</span>
-          <span class="hero__stat-label">Active Regions</span>
+          <span class="hero__stat-label">{% trans "Active Regions" context "website" %}</span>
         </div>
         <div>
           <span class="hero__stat-value">200</span>
-          <span class="hero__stat-label">Pioneer Members</span>
+          <span class="hero__stat-label">{% trans "Pioneer Members" context "website" %}</span>
         </div>
         <div>
           <span class="hero__stat-value">4</span>
-          <span class="hero__stat-label">License Tiers</span>
+          <span class="hero__stat-label">{% trans "License Tiers" context "website" %}</span>
         </div>
       </div>
     </div>
@@ -76,39 +76,39 @@
 <!-- ===== FEATURES ===== -->
 <section class="section">
   <div class="container">
-    <span class="section-label">Platform Capabilities</span>
-    <h2 class="section-title">Built for Global Business Operations</h2>
-    <p class="section-subtitle">FONTESIN provides a structured, verified, and scalable infrastructure for companies and professionals operating across international markets.</p>
+    <span class="section-label">{% trans "Platform Capabilities" context "website" %}</span>
+    <h2 class="section-title">{% trans "Built for Global Business Operations" context "website" %}</h2>
+    <p class="section-subtitle">{% trans "FONTESIN provides a structured, verified, and scalable infrastructure for companies and professionals operating across international markets." context "website" %}</p>
     <div class="grid-3">
       <div class="card">
         <div class="card__icon">🌍</div>
-        <h4 class="card__title">Global Region Control</h4>
-        <p class="card__text">Interactive world map with live region status — Active, Planned, and Inactive markets. Direct entry point for investors, franchisees, and partners.</p>
+        <h4 class="card__title">{% trans "Global Region Control" context "website" %}</h4>
+        <p class="card__text">{% trans "Interactive world map with live region status — Active, Planned, and Inactive markets. Direct entry point for investors, franchisees, and partners." context "website" %}</p>
       </div>
       <div class="card">
         <div class="card__icon">🏢</div>
-        <h4 class="card__title">Company Database</h4>
-        <p class="card__text">Searchable, tenant-isolated company registry with legal form classification, NACE codes, certifications, and verified business profiles.</p>
+        <h4 class="card__title">{% trans "Company Database" context "website" %}</h4>
+        <p class="card__text">{% trans "Searchable, tenant-isolated company registry with legal form classification, NACE codes, certifications, and verified business profiles." context "website" %}</p>
       </div>
       <div class="card">
         <div class="card__icon">✅</div>
-        <h4 class="card__title">Trust & Certification</h4>
-        <p class="card__text">Blockchain-anchored certification system providing verified badges, transparent audit trails, and institutional-grade data validation.</p>
+        <h4 class="card__title">{% trans "Trust & Certification" context "website" %}</h4>
+        <p class="card__text">{% trans "Blockchain-anchored certification system providing verified badges, transparent audit trails, and institutional-grade data validation." context "website" %}</p>
       </div>
       <div class="card">
         <div class="card__icon">🤝</div>
-        <h4 class="card__title">Partnership Network</h4>
-        <p class="card__text">Structured partnership requests, mutual visibility after acceptance, and direct 1:1 messaging within a secure, role-based environment.</p>
+        <h4 class="card__title">{% trans "Partnership Network" context "website" %}</h4>
+        <p class="card__text">{% trans "Structured partnership requests, mutual visibility after acceptance, and direct 1:1 messaging within a secure, role-based environment." context "website" %}</p>
       </div>
       <div class="card">
         <div class="card__icon">🔐</div>
-        <h4 class="card__title">Tenant-Based Security</h4>
-        <p class="card__text">Every country operates as an isolated data tenant. Licenses define access rights. No cross-tenant data leakage — ever.</p>
+        <h4 class="card__title">{% trans "Tenant-Based Security" context "website" %}</h4>
+        <p class="card__text">{% trans "Every country operates as an isolated data tenant. Licenses define access rights. No cross-tenant data leakage — ever." context "website" %}</p>
       </div>
       <div class="card">
         <div class="card__icon">🤖</div>
-        <h4 class="card__title">AI-Powered Matching</h4>
-        <p class="card__text">Intelligent algorithms match companies, consultants, and franchise opportunities based on sector, region, and business profile.</p>
+        <h4 class="card__title">{% trans "AI-Powered Matching" context "website" %}</h4>
+        <p class="card__text">{% trans "Intelligent algorithms match companies, consultants, and franchise opportunities based on sector, region, and business profile." context "website" %}</p>
       </div>
     </div>
   </div>
@@ -117,23 +117,23 @@
 <!-- ===== WORLD MAP PREVIEW ===== -->
 <section class="map-section">
   <div class="container">
-    <span class="section-label">Region Control Layer</span>
-    <h2 class="section-title">Live Global Expansion Map</h2>
-    <p class="section-subtitle" style="margin-bottom:32px;">The world map is not a visualization — it is our regional control layer. A live interface for global rollout, licensing, and franchise activation.</p>
+    <span class="section-label">{% trans "Region Control Layer" context "website" %}</span>
+    <h2 class="section-title">{% trans "Live Global Expansion Map" context "website" %}</h2>
+    <p class="section-subtitle" style="margin-bottom:32px;">{% trans "The world map is not a visualization — it is our regional control layer. A live interface for global rollout, licensing, and franchise activation." context "website" %}</p>
 
     <div class="map-wrapper">
       <div class="map-legend">
         <div class="map-legend__item">
           <span class="map-legend__dot map-legend__dot--active"></span>
-          Active Region
+          {% trans "Active Region" context "website" %}
         </div>
         <div class="map-legend__item">
           <span class="map-legend__dot map-legend__dot--planned"></span>
-          Planned Expansion
+          {% trans "Planned Expansion" context "website" %}
         </div>
         <div class="map-legend__item">
           <span class="map-legend__dot map-legend__dot--inactive"></span>
-          Not Yet Available
+          {% trans "Not Yet Available" context "website" %}
         </div>
       </div>
 
@@ -142,7 +142,7 @@
     </div>
 
     <div style="text-align:center;margin-top:32px;">
-      <a href="/worldmap/" class="btn btn-primary btn-lg">Open Full Interactive Map</a>
+      <a href="/worldmap/" class="btn btn-primary btn-lg">{% trans "Open Full Interactive Map" context "website" %}</a>
     </div>
   </div>
 </section>
@@ -150,70 +150,70 @@
 <!-- ===== REGIONS PREVIEW ===== -->
 <section class="section">
   <div class="container">
-    <span class="section-label">Active Regions</span>
-    <h2 class="section-title">Explore Our Active Markets</h2>
-    <p class="section-subtitle">Click any region to view detailed economic data, legal business forms, credit ratings, and franchise availability.</p>
+    <span class="section-label">{% trans "Active Regions" context "website" %}</span>
+    <h2 class="section-title">{% trans "Explore Our Active Markets" context "website" %}</h2>
+    <p class="section-subtitle">{% trans "Click any region to view detailed economic data, legal business forms, credit ratings, and franchise availability." context "website" %}</p>
     <div class="grid-3" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
 
       <a href="/region/us/" class="card" style="text-decoration:none;display:block;">
         <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
           <span style="font-size:2.5rem;">🇺🇸</span>
           <div>
-            <h4 class="card__title" style="margin-bottom:4px;">United States</h4>
-            <span class="status-badge status-badge--active">Active</span>
+            <h4 class="card__title" style="margin-bottom:4px;">{% trans "United States" context "website" %}</h4>
+            <span class="status-badge status-badge--active">{% trans "Active" context "website" %}</span>
           </div>
         </div>
-        <p class="card__text" style="font-size:.85rem;">GDP: $27.36T · Population: 335M · Rating: AA+</p>
+        <p class="card__text" style="font-size:.85rem;">{% blocktrans context "website" %}GDP: $27.36T · Population: 335M · Rating: AA+{% endblocktrans %}</p>
       </a>
 
       <a href="/region/de/" class="card" style="text-decoration:none;display:block;">
         <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
           <span style="font-size:2.5rem;">🇩🇪</span>
           <div>
-            <h4 class="card__title" style="margin-bottom:4px;">Germany</h4>
-            <span class="status-badge status-badge--active">Active</span>
+            <h4 class="card__title" style="margin-bottom:4px;">{% trans "Germany" context "website" %}</h4>
+            <span class="status-badge status-badge--active">{% trans "Active" context "website" %}</span>
           </div>
         </div>
-        <p class="card__text" style="font-size:.85rem;">GDP: $4.46T · Population: 84.6M · Rating: AAA</p>
+        <p class="card__text" style="font-size:.85rem;">{% blocktrans context "website" %}GDP: $4.46T · Population: 84.6M · Rating: AAA{% endblocktrans %}</p>
       </a>
 
       <a href="/region/cz/" class="card" style="text-decoration:none;display:block;">
         <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
           <span style="font-size:2.5rem;">🇨🇿</span>
           <div>
-            <h4 class="card__title" style="margin-bottom:4px;">Czech Republic</h4>
-            <span class="status-badge status-badge--active">Active</span>
+            <h4 class="card__title" style="margin-bottom:4px;">{% trans "Czech Republic" context "website" %}</h4>
+            <span class="status-badge status-badge--active">{% trans "Active" context "website" %}</span>
           </div>
         </div>
-        <p class="card__text" style="font-size:.85rem;">GDP: $330.5B · Population: 10.9M · Rating: AA-</p>
+        <p class="card__text" style="font-size:.85rem;">{% blocktrans context "website" %}GDP: $330.5B · Population: 10.9M · Rating: AA-{% endblocktrans %}</p>
       </a>
 
       <a href="/region/ae/" class="card" style="text-decoration:none;display:block;">
         <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
           <span style="font-size:2.5rem;">🇦🇪</span>
           <div>
-            <h4 class="card__title" style="margin-bottom:4px;">United Arab Emirates</h4>
-            <span class="status-badge status-badge--planned">Planned – Year 2</span>
+            <h4 class="card__title" style="margin-bottom:4px;">{% trans "United Arab Emirates" context "website" %}</h4>
+            <span class="status-badge status-badge--planned">{% trans "Planned – Year 2" context "website" %}</span>
           </div>
         </div>
-        <p class="card__text" style="font-size:.85rem;">GDP: $509.2B · Population: 9.8M · Rating: AA-</p>
+        <p class="card__text" style="font-size:.85rem;">{% blocktrans context "website" %}GDP: $509.2B · Population: 9.8M · Rating: AA-{% endblocktrans %}</p>
       </a>
 
       <a href="/region/jp/" class="card" style="text-decoration:none;display:block;">
         <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
           <span style="font-size:2.5rem;">🇯🇵</span>
           <div>
-            <h4 class="card__title" style="margin-bottom:4px;">Japan</h4>
-            <span class="status-badge status-badge--planned">Planned – Year 3</span>
+            <h4 class="card__title" style="margin-bottom:4px;">{% trans "Japan" context "website" %}</h4>
+            <span class="status-badge status-badge--planned">{% trans "Planned – Year 3" context "website" %}</span>
           </div>
         </div>
-        <p class="card__text" style="font-size:.85rem;">GDP: $4.21T · Population: 124.5M · Rating: A+</p>
+        <p class="card__text" style="font-size:.85rem;">{% blocktrans context "website" %}GDP: $4.21T · Population: 124.5M · Rating: A+{% endblocktrans %}</p>
       </a>
 
       <div class="card" style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;background:var(--bg-light);border-style:dashed;">
         <span style="font-size:2rem;color:var(--secondary);">+</span>
-        <p style="font-size:.85rem;text-align:center;color:var(--secondary);">More regions coming soon.<br/>View full map for expansion timeline.</p>
-        <a href="/worldmap/" class="btn btn-outline-dark btn-sm">View All Regions</a>
+        <p style="font-size:.85rem;text-align:center;color:var(--secondary);">{% trans "More regions coming soon." context "website" %}<br/>{% trans "View full map for expansion timeline." context "website" %}</p>
+        <a href="/worldmap/" class="btn btn-outline-dark btn-sm">{% trans "View All Regions" context "website" %}</a>
       </div>
 
     </div>
@@ -223,33 +223,33 @@
 <!-- ===== LICENSE TIERS ===== -->
 <section class="section section--dark">
   <div class="container">
-    <span class="section-label text-accent">Access Model</span>
-    <h2 class="section-title text-white">Choose Your License</h2>
-    <p class="section-subtitle">From free exploration to full global access — FONTESIN scales with your ambitions.</p>
+    <span class="section-label text-accent">{% trans "Access Model" context "website" %}</span>
+    <h2 class="section-title text-white">{% trans "Choose Your License" context "website" %}</h2>
+    <p class="section-subtitle">{% trans "From free exploration to full global access — FONTESIN scales with your ambitions." context "website" %}</p>
     <div class="grid-4">
       <div class="card" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);">
         <div class="card__icon" style="background:rgba(255,255,255,.08);color:#fff;">🔓</div>
-        <h4 class="card__title text-white">FREE</h4>
-        <p class="card__text" style="color:var(--accent);font-size:.85rem;">Read-only company name index. Max 1 saved selection. No active tenant.</p>
+        <h4 class="card__title text-white">{% trans "FREE" context "website" %}</h4>
+        <p class="card__text" style="color:var(--accent);font-size:.85rem;">{% trans "Read-only company name index. Max 1 saved selection. No active tenant." context "website" %}</p>
       </div>
       <div class="card" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);">
         <div class="card__icon" style="background:rgba(255,255,255,.08);color:#fff;">📍</div>
-        <h4 class="card__title text-white">LOCAL</h4>
-        <p class="card__text" style="color:var(--accent);font-size:.85rem;">Full access to one country tenant. Unlimited saved selections. Company details visible.</p>
+        <h4 class="card__title text-white">{% trans "LOCAL" context "website" %}</h4>
+        <p class="card__text" style="color:var(--accent);font-size:.85rem;">{% trans "Full access to one country tenant. Unlimited saved selections. Company details visible." context "website" %}</p>
       </div>
       <div class="card" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);">
         <div class="card__icon" style="background:rgba(255,255,255,.08);color:#fff;">🌐</div>
-        <h4 class="card__title text-white">PRO</h4>
-        <p class="card__text" style="color:var(--accent);font-size:.85rem;">Access to defined regions. One active country tenant per session. Advanced filters.</p>
+        <h4 class="card__title text-white">{% trans "PRO" context "website" %}</h4>
+        <p class="card__text" style="color:var(--accent);font-size:.85rem;">{% trans "Access to defined regions. One active country tenant per session. Advanced filters." context "website" %}</p>
       </div>
       <div class="card" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);">
         <div class="card__icon" style="background:rgba(255,255,255,.08);color:#fff;">🚀</div>
-        <h4 class="card__title text-white">GLOBAL</h4>
-        <p class="card__text" style="color:var(--accent);font-size:.85rem;">Access to all countries. One active country tenant per session. Full platform capabilities.</p>
+        <h4 class="card__title text-white">{% trans "GLOBAL" context "website" %}</h4>
+        <p class="card__text" style="color:var(--accent);font-size:.85rem;">{% trans "Access to all countries. One active country tenant per session. Full platform capabilities." context "website" %}</p>
       </div>
     </div>
     <div style="text-align:center;margin-top:40px;">
-      <a href="{% url 'register' %}" class="btn btn--white btn-lg">Start for Free</a>
+      <a href="{% url 'register' %}" class="btn btn--white btn-lg">{% trans "Start for Free" context "website" %}</a>
     </div>
   </div>
 </section>
@@ -257,12 +257,12 @@
 <!-- ===== CTA ===== -->
 <section class="section">
   <div class="container text-center">
-    <span class="section-label">Join the Movement</span>
-    <h2 class="section-title">Become a Pioneer Member</h2>
-    <p class="section-subtitle" style="margin: 0 auto 36px;">We are building a global micro-community of 200 visionaries, experts, and pioneers shaping the future of digital business collaboration.</p>
+    <span class="section-label">{% trans "Join the Movement" context "website" %}</span>
+    <h2 class="section-title">{% trans "Become a Pioneer Member" context "website" %}</h2>
+    <p class="section-subtitle" style="margin: 0 auto 36px;">{% trans "We are building a global micro-community of 200 visionaries, experts, and pioneers shaping the future of digital business collaboration." context "website" %}</p>
     <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
-      <a href="/register/" class="btn btn-primary btn-lg">Apply for Pioneer Status</a>
-      <a href="/about/" class="btn btn-outline-dark btn-lg">Learn About Us</a>
+      <a href="/register/" class="btn btn-primary btn-lg">{% trans "Apply for Pioneer Status" context "website" %}</a>
+      <a href="/about/" class="btn btn-outline-dark btn-lg">{% trans "Learn About Us" context "website" %}</a>
     </div>
   </div>
 </section>
@@ -273,51 +273,69 @@
     <div class="footer__grid">
       <div>
         <div class="footer__logo"><img src="{% static 'adminlte/images/fontesin-logo.png' %}" alt="FONTESIN" style="height:32px;width:auto;filter:brightness(0) invert(1);margin-bottom:12px;"/></div>
-        <p class="footer__brand-desc">A deep-tech global business infrastructure platform connecting companies, professionals, and markets across languages, borders, and systems.</p>
+        <p class="footer__brand-desc">{% trans "A deep-tech global business infrastructure platform connecting companies, professionals, and markets across languages, borders, and systems." context "website" %}</p>
       </div>
       <div>
-        <p class="footer__heading">Platform</p>
+        <p class="footer__heading">{% trans "Platform" context "website" %}</p>
         <div class="footer__links">
-          <a href="/worldmap/">World Map</a>
-          <a href="/register/">Get Started</a>
-          <a href="/login/">Log In</a>
+          <a href="/worldmap/">{% trans "World Map" context "website" %}</a>
+          <a href="/register/">{% trans "Get Started" context "website" %}</a>
+          <a href="/login/">{% trans "Log In" context "auth.login" %}</a>
         </div>
       </div>
       <div>
-        <p class="footer__heading">Company</p>
+        <p class="footer__heading">{% trans "Company" context "website" %}</p>
         <div class="footer__links">
-          <a href="{% url 'about' %}">About Us</a>
-          <a href="{% url 'career' %}">Careers</a>
-          <a href="{% url 'contact' %}">Contact</a>
+          <a href="{% url 'about' %}">{% trans "About Us" context "website" %}</a>
+          <a href="{% url 'career' %}">{% trans "Careers" context "website" %}</a>
+          <a href="{% url 'contact' %}">{% trans "Contact" context "website" %}</a>
         </div>
       </div>
       <div>
-        <p class="footer__heading">Regions</p>
+        <p class="footer__heading">{% trans "Regions" context "website" %}</p>
         <div class="footer__links">
-          <a href="/region/us/">United States</a>
-          <a href="/region/de/">Germany</a>
-          <a href="/region/cz/">Czech Republic</a>
-          <a href="/region/ae/">UAE</a>
-          <a href="/region/jp/">Japan</a>
+          <a href="/region/us/">{% trans "United States" context "website" %}</a>
+          <a href="/region/de/">{% trans "Germany" context "website" %}</a>
+          <a href="/region/cz/">{% trans "Czech Republic" context "website" %}</a>
+          <a href="/region/ae/">{% trans "UAE" context "website" %}</a>
+          <a href="/region/jp/">{% trans "Japan" context "website" %}</a>
         </div>
       </div>
     </div>
     <div class="footer__bottom">
-      <span>© 2026 FONTES Inc. All rights reserved.</span>
-      <span>Design by Memento Mori Digital LLC</span>
+      <span>{% trans "© 2026 FONTES Inc. All rights reserved." context "website" %}</span>
+      <span>{% trans "Design by Memento Mori Digital LLC" context "website" %}</span>
     </div>
   </div>
 </footer>
 
 <script src="{% static 'adminlte/js/main.js' %}"></script>
   <script>
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", function() {
-        navigator.serviceWorker.register("/sw.js")
-          .then(function(reg) { console.log("[PWA] SW registered:", reg.scope); })
-          .catch(function(err) { console.warn("[PWA] SW registration failed:", err); });
-      });
-    }
-  </script>
+(function () {
+  window.PWA_I18N = {
+    notificationBody: '{% filter escapejs %}{% trans "You have a new notification" context "website" %}{% endfilter %}',
+    open: '{% filter escapejs %}{% trans "Open" context "website" %}{% endfilter %}',
+    dismiss: '{% filter escapejs %}{% trans "Dismiss" context "website" %}{% endfilter %}',
+  };
+})();
+</script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function() {
+      navigator.serviceWorker.register("{% static 'adminlte/js/sw.js' %}")
+        .then(function(reg) {
+          function sendStrings() {
+            var sw = reg.active || navigator.serviceWorker.controller;
+            if (sw && window.PWA_I18N) {
+              sw.postMessage({ type: "PWA_STRINGS", strings: window.PWA_I18N });
+            }
+          }
+          sendStrings();
+          navigator.serviceWorker.addEventListener("controllerchange", sendStrings);
+        })
+        .catch(function(err) { console.warn("[PWA] SW registration failed:", err); });
+    });
+  }
+</script>
 </body>
 </html>

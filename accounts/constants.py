@@ -1,3 +1,6 @@
+from django.utils.translation import gettext_lazy as _
+
+
 class CompanyClassificationChoices:
     MANUFACTURING = "manufacturing"
     IT_SERVICES = "it_services"
@@ -9,14 +12,14 @@ class CompanyClassificationChoices:
     INDUSTRY = "industry"
 
     CHOICES = [
-        (MANUFACTURING, "Manufacturing"),
-        (IT_SERVICES, "IT Services"),
-        (HEALTHCARE, "Healthcare"),
-        (FINANCE, "Finance"),
-        (RETAIL, "Retail"),
-        (EDUCATION, "Education"),
-        (MARKETING, "Marketing"),
-        (INDUSTRY, "Industry"),
+        (MANUFACTURING, _("Manufacturing")),
+        (IT_SERVICES, _("IT Services")),
+        (HEALTHCARE, _("Healthcare")),
+        (FINANCE, _("Finance")),
+        (RETAIL, _("Retail")),
+        (EDUCATION, _("Education")),
+        (MARKETING, _("Marketing")),
+        (INDUSTRY, _("Industry")),
     ]
 
 
@@ -43,21 +46,21 @@ class CompanyEntityTypeChoices:
     OTHER = "other"
 
     CHOICES = [
-        (INC, "Inc. (Incorporated)"),
-        (LLC, "LLC (Limited Liability Company)"),
-        (LTD, "Ltd. (Limited)"),
-        (PVT_LTD, "Pvt. Ltd. (Private Limited)"),
-        (LLP, "LLP (Limited Liability Partnership)"),
-        (CORP, "Corp. (Corporation)"),
-        (GMBH, "GmbH"),
-        (AG, "AG"),
-        (SA, "S.A."),
-        (SARL, "S.A.R.L."),
-        (BV, "B.V."),
-        (SOLE_PROPRIETORSHIP, "Sole Proprietorship"),
-        (PARTNERSHIP, "Partnership"),
-        (NON_PROFIT, "Non-Profit"),
-        (OTHER, "Other"),
+        (INC, _("Inc. (Incorporated)")),
+        (LLC, _("LLC (Limited Liability Company)")),
+        (LTD, _("Ltd. (Limited)")),
+        (PVT_LTD, _("Pvt. Ltd. (Private Limited)")),
+        (LLP, _("LLP (Limited Liability Partnership)")),
+        (CORP, _("Corp. (Corporation)")),
+        (GMBH, _("GmbH")),
+        (AG, _("AG")),
+        (SA, _("S.A.")),
+        (SARL, _("S.A.R.L.")),
+        (BV, _("B.V.")),
+        (SOLE_PROPRIETORSHIP, _("Sole Proprietorship")),
+        (PARTNERSHIP, _("Partnership")),
+        (NON_PROFIT, _("Non-Profit")),
+        (OTHER, _("Other")),
     ]
 
 
@@ -70,11 +73,11 @@ class EmployeeCountRangeChoices:
     OVER_1000 = "over_1000"
 
     CHOICES = [
-        (UP_TO_10, "Up to 10"),
-        (UP_TO_50, "Up to 50"),
-        (UP_TO_100, "Up to 100"),
-        (UP_TO_1000, "Up to 1,000"),
-        (OVER_1000, "Over 1,000"),
+        (UP_TO_10, _("Up to 10")),
+        (UP_TO_50, _("Up to 50")),
+        (UP_TO_100, _("Up to 100")),
+        (UP_TO_1000, _("Up to 1,000")),
+        (OVER_1000, _("Over 1,000")),
     ]
 
 
@@ -100,25 +103,25 @@ class CountryChoices:
     KR = "KR"
 
     CHOICES = [
-        (US, "United States"),
-        (DE, "Germany"),
-        (CZ, "Czech Republic"),
-        (GB, "United Kingdom"),
-        (FR, "France"),
-        (NL, "Netherlands"),
-        (PL, "Poland"),
-        (AT, "Austria"),
-        (CH, "Switzerland"),
-        (SE, "Sweden"),
-        (AE, "United Arab Emirates"),
-        (SG, "Singapore"),
-        (CA, "Canada"),
-        (AU, "Australia"),
-        (JP, "Japan"),
-        (BR, "Brazil"),
-        (IN, "India"),
-        (MX, "Mexico"),
-        (KR, "South Korea"),
+        (US, _("United States")),
+        (DE, _("Germany")),
+        (CZ, _("Czech Republic")),
+        (GB, _("United Kingdom")),
+        (FR, _("France")),
+        (NL, _("Netherlands")),
+        (PL, _("Poland")),
+        (AT, _("Austria")),
+        (CH, _("Switzerland")),
+        (SE, _("Sweden")),
+        (AE, _("United Arab Emirates")),
+        (SG, _("Singapore")),
+        (CA, _("Canada")),
+        (AU, _("Australia")),
+        (JP, _("Japan")),
+        (BR, _("Brazil")),
+        (IN, _("India")),
+        (MX, _("Mexico")),
+        (KR, _("South Korea")),
     ]
 
     # Countries pinned to the top of search/dropdown UIs. These are the
@@ -144,24 +147,24 @@ COUNTRY_FLAGS = {
 # with choices, but Django doesn't enforce choices at the DB layer).
 LEGAL_FORMS_BY_COUNTRY = {
     "US": [
-        ("sole_proprietorship", "Sole Proprietorship"),
-        ("partnership", "Partnership (General)"),
-        ("lp",          "Partnership (Limited / LP)"),
-        ("llp",         "Partnership (Limited Liability / LLP)"),
-        ("llc",         "Limited Liability Company (LLC)"),
-        ("c_corp",      "Corporation (C Corp)"),
-        ("s_corp",      "Corporation (S Corp)"),
-        ("non_profit",  "Nonprofit Organization"),
+        ("sole_proprietorship", _("Sole Proprietorship")),
+        ("partnership", _("Partnership (General)")),
+        ("lp",          _("Partnership (Limited / LP)")),
+        ("llp",         _("Partnership (Limited Liability / LLP)")),
+        ("llc",         _("Limited Liability Company (LLC)")),
+        ("c_corp",      _("Corporation (C Corp)")),
+        ("s_corp",      _("Corporation (S Corp)")),
+        ("non_profit",  _("Nonprofit Organization")),
     ],
     "GB": [
-        ("sole_trader", "Sole Trader"),
-        ("partnership", "Partnership"),
-        ("llp",         "Limited Liability Partnership (LLP)"),
-        ("ltd",         "Private Limited Company (Ltd)"),
-        ("plc",         "Public Limited Company (PLC)"),
-        ("social_enterprise", "Social Enterprise"),
-        ("cic",         "Community Interest Company (CIC)"),
-        ("cooperative", "Cooperative"),
+        ("sole_trader", _("Sole Trader")),
+        ("partnership", _("Partnership")),
+        ("llp",         _("Limited Liability Partnership (LLP)")),
+        ("ltd",         _("Private Limited Company (Ltd)")),
+        ("plc",         _("Public Limited Company (PLC)")),
+        ("social_enterprise", _("Social Enterprise")),
+        ("cic",         _("Community Interest Company (CIC)")),
+        ("cooperative", _("Cooperative")),
     ],
 }
 
@@ -308,23 +311,21 @@ PHONE_RULES = {
 }
 
 
-class LanguageChoices:
+class SupportedLocale:
     EN = "en"
     DE = "de"
-    CS = "cs"
-    FR = "fr"
-    AR = "ar"
-    JA = "ja"
     ES = "es"
-    PT = "pt"
+    FR = "fr"
 
     CHOICES = [
-        (EN, "English"),
-        (DE, "German"),
-        (CS, "Czech"),
-        (FR, "French"),
-        (AR, "Arabic"),
-        (JA, "Japanese"),
-        (ES, "Spanish"),
-        (PT, "Portuguese"),
+        (EN, _("English")),
+        (DE, _("German")),
+        (ES, _("Spanish")),
+        (FR, _("French")),
     ]
+
+    ALL = frozenset({EN, DE, ES, FR})
+
+
+class LanguageChoices(SupportedLocale):
+    """Backward-compatible alias for SupportedLocale."""

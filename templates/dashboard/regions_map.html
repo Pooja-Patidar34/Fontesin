@@ -1,5 +1,6 @@
 {% extends "base/base.html" %}
-{% block title %}Regions & Map{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Regions & Map" context "dashboard" %}{% endblock %}
 {% block content %}
 
 <link rel="stylesheet"
@@ -73,7 +74,7 @@
 <div class="card card-outline card-primary shadow-sm">
   <div class="card-header">
     <h3 class="card-title font-weight-bold mb-0">
-      <i class="fas fa-globe-americas mr-2"></i>Regions & Map
+      <i class="fas fa-globe-americas mr-2"></i>{% trans "Regions & Map" context "dashboard" %}
     </h3>
   </div>
 
@@ -81,11 +82,11 @@
 
     <div class="regions-summary">
       <div class="regions-summary__card">
-        <div class="regions-summary__label">Consultants</div>
+        <div class="regions-summary__label">{% trans "Consultants" context "dashboard" %}</div>
         <div class="regions-summary__value">{{ total_consultants }}</div>
       </div>
       <div class="regions-summary__card">
-        <div class="regions-summary__label">Regions covered</div>
+        <div class="regions-summary__label">{% trans "Regions covered" context "dashboard" %}</div>
         <div class="regions-summary__value">{{ regions|length }}</div>
       </div>
     </div>
@@ -121,7 +122,7 @@
           {% endfor %}
         {% else %}
           <div class="text-muted text-center p-4">
-            No consultants have selected a target region yet.
+            {% trans "No consultants have selected a target region yet." context "dashboard" %}
           </div>
         {% endif %}
       </div>
@@ -130,6 +131,24 @@
 
   </div>
 </div>
+
+
+<script>
+(function () {
+  var g = function (s) { return (typeof gettext === 'function') ? gettext(s) : s; };
+  window.DASHBOARD_I18N = window.DASHBOARD_I18N || {};
+  Object.assign(window.DASHBOARD_I18N, {
+    consultant: '{% filter escapejs %}{% trans "consultant" context "dashboard" %}{% endfilter %}',
+    consultants: '{% filter escapejs %}{% trans "consultants" context "dashboard" %}{% endfilter %}',
+    more: '{% filter escapejs %}{% trans "more" context "dashboard" %}{% endfilter %}',
+  });
+  Object.keys(window.DASHBOARD_I18N).forEach(function (k) {
+    if (['consultant','consultants','more'].indexOf(k) !== -1) {
+      window.DASHBOARD_I18N[k] = g(window.DASHBOARD_I18N[k]);
+    }
+  });
+})();
+</script>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
@@ -157,12 +176,11 @@
     if (!p.coords) return;
     const preview = p.consultants.slice(0, 5).map(n => "&bull; " + n).join("<br>");
     const extra = p.consultants.length > 5
-      ? "<br><em>+ " + (p.consultants.length - 5) + " more</em>"
+      ? "<br><em>+ " + (p.consultants.length - 5) + " " + (window.DASHBOARD_I18N.more || "more") + "</em>"
       : "";
     const popupHtml =
       "<strong>" + p.label + "</strong><br>" +
-      "<span style='color:#6c757d'>" + p.count + " consultant" +
-      (p.count === 1 ? "" : "s") + "</span><br><br>" +
+      "<span style='color:#6c757d'>" + p.count + " " + (p.count === 1 ? (window.DASHBOARD_I18N.consultant || "consultant") : (window.DASHBOARD_I18N.consultants || "consultants")) + "</span><br><br>" +
       preview + extra;
 
     const marker = L.marker(p.coords).addTo(map).bindPopup(popupHtml);
