@@ -3,7 +3,7 @@
 from django.views.i18n import LANGUAGE_QUERY_PARAMETER, set_language as django_set_language
 
 from accounts.constants import SupportedLocale
-from FontEsin.middleware.locale import normalize_locale
+from FontEsin.middleware.locale import LANGUAGE_SESSION_KEY, normalize_locale
 
 
 def set_language(request):
@@ -13,6 +13,8 @@ def set_language(request):
         if lang_code:
             language = normalize_locale(lang_code)
             if language in SupportedLocale.ALL:
+                if hasattr(request, "session"):
+                    request.session[LANGUAGE_SESSION_KEY] = language
                 user = getattr(request, "user", None)
                 if user and user.is_authenticated:
                     user.persist_preferred_language(language)

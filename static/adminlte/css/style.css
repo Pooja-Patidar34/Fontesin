@@ -140,7 +140,146 @@ p  { color: var(--text-secondary); line-height: 1.75; }
   color: #fff;
   background: rgba(255,255,255,.08);
 }
-.navbar__actions { display: flex; gap: 10px; }
+.navbar__actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
+}
+.navbar { overflow: visible; }
+
+/* Public navbar language switcher — flex child, not absolutely positioned */
+.navbar-lang-switcher {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.navbar-lang-switcher .language-switcher {
+  position: relative;
+}
+.navbar-lang-switcher .language-switcher__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-sizing: border-box;
+  height: 36px;
+  min-width: 6.25rem;
+  width: 6.25rem;
+  padding: 0 12px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: .8rem;
+  font-weight: 600;
+  border-radius: var(--radius);
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
+  background: transparent;
+  color: var(--accent);
+  border: 2px solid rgba(199,204,209,.4);
+  transition: var(--transition);
+}
+.navbar-lang-switcher .language-switcher__toggle:hover,
+.navbar-lang-switcher .language-switcher__toggle:focus,
+.navbar-lang-switcher .language-switcher.show .language-switcher__toggle {
+  border-color: var(--accent);
+  color: #fff;
+  background: rgba(255,255,255,.08);
+  outline: none;
+}
+.navbar-lang-switcher .language-switcher__flag {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  line-height: 0;
+}
+.navbar-lang-switcher .lang-flag {
+  width: 20px;
+  height: 15px;
+  object-fit: cover;
+  border-radius: 2px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+.navbar-lang-switcher .language-switcher__code {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  min-width: 1.35rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+.navbar-lang-switcher .language-switcher__caret {
+  font-size: 0.55rem;
+  color: var(--accent);
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+.navbar-lang-switcher .language-switcher__toggle:hover .language-switcher__caret,
+.navbar-lang-switcher .language-switcher__toggle:focus .language-switcher__caret,
+.navbar-lang-switcher .language-switcher.show .language-switcher__toggle .language-switcher__caret {
+  color: #fff;
+}
+.navbar-lang-switcher .language-switcher__menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  left: auto;
+  display: none;
+  float: none;
+  width: 100%;
+  min-width: 10.5rem;
+  background: #fff;
+  margin: 0;
+  z-index: 200;
+  border-radius: var(--radius);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  padding: 8px;
+}
+.navbar-lang-switcher .language-switcher.show .language-switcher__menu {
+  display: block;
+}
+.navbar-lang-switcher .language-switcher__option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: #fff;
+  width: 100%;
+  text-align: left;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  padding: 8px 12px;
+  color: #1b2e3f;
+  cursor: pointer;
+}
+.navbar-lang-switcher .language-switcher__label {
+  flex: 1;
+  min-width: 0;
+}
+.navbar-lang-switcher .language-switcher__option::after {
+  content: "";
+  width: 0.85em;
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.navbar-lang-switcher .language-switcher__option.active::after {
+  content: "\2713";
+  color: #1d4ed8;
+}
+.navbar-lang-switcher .language-switcher__option:hover,
+.navbar-lang-switcher .language-switcher__option:focus {
+  background: #f1f5f9;
+  outline: none;
+}
+.navbar-lang-switcher .language-switcher__option.active {
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 600;
+}
 .btn {
   display: inline-flex;
   align-items: center;
@@ -883,6 +1022,13 @@ select.form-control { cursor: pointer; height: auto; min-height: 46px; }
   .grid-3 { grid-template-columns: 1fr; }
   .grid-2 { grid-template-columns: 1fr; }
   .values-grid { grid-template-columns: 1fr; }
+  .navbar__actions { gap: 8px; }
+  .navbar-lang-switcher .language-switcher__toggle {
+    min-width: 5.75rem;
+    width: 5.75rem;
+    padding: 0 10px;
+    gap: 6px;
+  }
   .navbar__nav { display: none; }
   .navbar__nav.mobile-open {
     display: flex;

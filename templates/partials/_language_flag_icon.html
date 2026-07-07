@@ -1,0 +1,10 @@
+{% load static %}
+{% if code == 'en' %}
+<img src="{% static 'images/flags/gb.svg' %}" class="lang-flag" alt="" aria-hidden="true">
+{% elif code == 'de' %}
+<img src="{% static 'images/flags/de.svg' %}" class="lang-flag" alt="" aria-hidden="true">
+{% elif code == 'es' %}
+<img src="{% static 'images/flags/es.svg' %}" class="lang-flag" alt="" aria-hidden="true">
+{% elif code == 'fr' %}
+<img src="{% static 'images/flags/fr.svg' %}" class="lang-flag" alt="" aria-hidden="true">
+{% endif %}

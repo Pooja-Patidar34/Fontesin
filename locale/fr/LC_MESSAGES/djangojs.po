@@ -282,14 +282,14 @@ msgstr ""
 #: phase8 accounts/view/website.py
 msgid "Your upgrade to the %(plan)s plan is already pending admin approval."
 msgstr ""
-"Votre mise à niveau vers le plan %(plan)s est déjà en attente de "
+"Votre mise à niveau vers le forfait %(plan)s est déjà en attente de "
 "l'approbation de l'administrateur."
 
 #: phase8 accounts/view/website.py
 msgid "Your upgrade to the %(plan)s plan is pending admin approval. "
 msgstr ""
-"Votre mise à niveau vers le plan %(plan)s est en attente de l'approbation de"
-" l'administrateur."
+"Votre mise à niveau vers le forfait %(plan)s est en attente de l'approbation"
+" de l'administrateur."
 
 #: phase8 templates/website/invoice.html
 msgctxt "common"
@@ -368,13 +368,13 @@ msgstr "Ouvrez le tableau de bord principal"
 
 #: phase8 templates/website/membership.html
 msgctxt "website"
-msgid "${{ price }} / month"
-msgstr "${{ price }} / mois"
+msgid "$%(price)s / month"
+msgstr "$%(price)s / mois"
 
 #: phase8 templates/website/membership.html
 msgctxt "website"
-msgid "${{ price }} / year"
-msgstr "${{ price }} / an"
+msgid "$%(price)s / year"
+msgstr "$%(price)s / an"
 
 #: phase8 templates/website/invoice.html
 msgctxt "website"
@@ -903,11 +903,11 @@ msgstr "Contrat · À distance"
 #: phase8 templates/website/invoice.html
 msgctxt "website"
 msgid ""
-"Converted from {{ source_amount }} {{ source_currency }} at rate 1 {{ "
-"source_currency }} = {{ rate }} {{ display_curr }}"
+"Converted from %(source_amount)s %(source_currency)s at rate 1 "
+"%(source_currency)s = %(rate)s %(display_curr)s"
 msgstr ""
-"Converti de {{ source_amount }} {{ source_currency }} au taux 1 {{ "
-"source_currency }} = {{ rate }} {{ display_curr }}"
+"Converti de %(source_amount)s %(source_currency)s au taux 1 "
+"%(source_currency)s = %(rate)s %(display_curr)s"
 
 #: phase8 templates/website/invoice.html
 msgctxt "website"
@@ -1410,7 +1410,7 @@ msgstr "Quartier général"
 #: phase8 templates/website/invoice.html
 msgctxt "website"
 msgid "Home"
-msgstr "Maison"
+msgstr "Accueil"
 
 #: phase8 templates/website/contact.html
 msgctxt "website"
@@ -2021,7 +2021,7 @@ msgstr "Membres pionniers"
 #: phase8 templates/website/invoice.html
 msgctxt "website"
 msgid "Plan"
-msgstr "Plan"
+msgstr "Forfait"
 
 #: phase8 templates/website/membership.html
 msgctxt "website"
@@ -2312,8 +2312,8 @@ msgstr "SWIFT/BIC"
 
 #: phase8 templates/website/membership.html
 msgctxt "website"
-msgid "Save ${{ amount }}"
-msgstr "Économisez {{ amount }} $"
+msgid "Save $%(amount)s"
+msgstr "Économisez %(amount)s $"
 
 #: phase8 templates/website/about.html
 msgctxt "website"
@@ -2367,13 +2367,13 @@ msgstr "Sélectionnez un sujet..."
 msgctxt "website"
 msgid "Select the plan that best fits your business needs."
 msgstr ""
-"Sélectionnez le plan qui correspond le mieux aux besoins de votre "
+"Sélectionnez le forfait qui correspond le mieux aux besoins de votre "
 "entreprise."
 
 #: phase8 templates/website/membership.html
 msgctxt "website"
-msgid "Select {{ plan_name }} Plan"
-msgstr "Sélectionnez le forfait {{ plan_name }}"
+msgid "Select %(plan_name)s Plan"
+msgstr "Sélectionnez le forfait %(plan_name)s"
 
 #: phase8 templates/website/membership.html
 msgctxt "website"
@@ -2884,8 +2884,8 @@ msgstr "Votre forfait actuel : <strong>Aucun forfait</strong>"
 
 #: phase8 templates/website/upgrade_required.html
 msgctxt "website"
-msgid "Your current plan: <strong>{{ plan_name }}</strong>"
-msgstr "Votre forfait actuel : <strong>{{ plan_name }}</strong>"
+msgid "Your current plan: <strong>%(plan_name)s</strong>"
+msgstr "Votre forfait actuel : <strong>%(plan_name)s</strong>"
 
 #: phase8 templates/website/upgrade_required.html
 msgctxt "website"
@@ -2944,13 +2944,13 @@ msgstr "année"
 
 #: phase8 templates/website/invoice.html
 msgctxt "website"
-msgid "{{ plan_name }} Plan"
-msgstr "Forfait {{ plan_name }}"
+msgid "%(plan_name)s Plan"
+msgstr "Forfait %(plan_name)s"
 
 #: phase8 templates/website/membership.html
 msgctxt "website"
-msgid "{{ plan_name }} Plan — Full Details"
-msgstr "Plan {{ plan_name }} — Tous les détails"
+msgid "%(plan_name)s Plan — Full Details"
+msgstr "Plan %(plan_name)s — Tous les détails"
 
 #: phase8 templates/website/invoice.html
 msgctxt "website"
@@ -2974,8 +2974,8 @@ msgstr "— Fil international (USD)"
 
 #: phase8 templates/website/membership.html
 msgctxt "website"
-msgid "≈ ${{ monthly }} / month"
-msgstr "≈${{ monthly }} / mois"
+msgid "≈ $%(monthly)s / month"
+msgstr "≈$%(monthly)s / mois"
 
 #: phase8 templates/website/_world_map.html
 msgctxt "website"
@@ -3097,7 +3097,7 @@ msgstr ""
 #: phase8 templates/website/index.html
 msgctxt "website"
 msgid "GLOBAL"
-msgstr "MONDIAL"
+msgstr "GLOBAL"
 
 #: phase8 templates/website/contact.html
 msgctxt "website"
@@ -3178,3 +3178,52 @@ msgstr "Votre entreprise Ltd."
 msgctxt "website"
 msgid "john@company.com"
 msgstr "john@company.com"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "$%(price)s / month"
+msgstr "$%(price)s / mois"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "$%(price)s / year"
+msgstr "$%(price)s / an"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid ""
+"Converted from %(source_amount)s %(source_currency)s at rate 1 "
+"%(source_currency)s = %(rate)s %(display_curr)s"
+msgstr ""
+"Converti de %(source_amount)s %(source_currency)s au taux de 1 "
+"%(source_currency)s = %(rate)s %(display_curr)s"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "Save $%(amount)s"
+msgstr "Économisez $%(amount)s"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "Select %(plan_name)s Plan"
+msgstr "Sélectionner le forfait %(plan_name)s"
+
+#: phase8 templates/website/upgrade_required.html
+msgctxt "website"
+msgid "Your current plan: <strong>%(plan_name)s</strong>"
+msgstr "Votre forfait actuel : <strong>%(plan_name)s</strong>"
+
+#: phase8 templates/website/invoice.html
+msgctxt "website"
+msgid "%(plan_name)s Plan"
+msgstr "Forfait %(plan_name)s"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "%(plan_name)s Plan — Full Details"
+msgstr "Forfait %(plan_name)s — Détails complets"
+
+#: phase8 templates/website/membership.html
+msgctxt "website"
+msgid "≈ $%(monthly)s / month"
+msgstr "≈ $%(monthly)s / mois"

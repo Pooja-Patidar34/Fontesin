@@ -6,12 +6,15 @@ from django.http import JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
-from django.utils.translation import gettext as _
+from django.utils.formats import date_format
+from django.utils.translation import gettext as _, pgettext
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import json
 
 from accounts.models import Tenant, Company, User
+from accounts.role_i18n import localized_role_label
+from billing.plan_i18n import localized_plan_name
 from billing.models import Subscription, Invoice, CommercialPlan
 from billing.utils import (
     get_user_plan,
@@ -141,14 +144,24 @@ def dashboard(request):
 
         try:
             # ── Subscription plan distribution (for donut chart) ──
-            plan_dist = (
+            plan_dist = list(
                 Subscription.objects
                 .filter(status__in=["active", "trial", "created"])
                 .values("plan__name", "plan__code")
                 .annotate(count=Count("id"))
                 .order_by("plan__code")
             )
-            plan_labels = [p["plan__name"] for p in plan_dist]
+            codes = [p["plan__code"] for p in plan_dist if p["plan__code"]]
+            plans_by_code = {
+                p.code: p
+                for p in CommercialPlan.objects.filter(code__in=codes)
+            }
+            plan_labels = [
+                localized_plan_name(plans_by_code[p["plan__code"]])
+                if p["plan__code"] in plans_by_code
+                else p["plan__name"]
+                for p in plan_dist
+            ]
             plan_counts = [p["count"] for p in plan_dist]
             context["plan_labels_json"] = json.dumps(plan_labels)
             context["plan_counts_json"] = json.dumps(plan_counts)
@@ -165,7 +178,7 @@ def dashboard(request):
                     m_end = (now - relativedelta(months=i - 1)).replace(day=1)
                 else:
                     m_end = now
-                label = m_start.strftime("%b")
+                label = date_format(m_start, "M")
                 total = Invoice.objects.filter(
                     status="paid", paid_at__gte=m_start, paid_at__lt=m_end
                 ).aggregate(t=Sum("amount"))["t"] or 0
@@ -215,27 +228,37 @@ def dashboard(request):
             for c in Company.objects.order_by("-created_at")[:3]:
                 recent_activity.append({
                     "time": c.created_at,
-                    "title": "New company registered",
-                    "desc": f"{c.name} joined the platform",
+                    "title": pgettext("dashboard", "New company registered"),
+                    "desc": pgettext("dashboard", "%(name)s joined the platform") % {"name": c.name},
                     "color": "#16a34a",
                 })
 
             # Recent payment approvals
             for s in Subscription.objects.filter(status="active").select_related("plan", "user").order_by("-updated_at")[:3]:
+                plan_label = localized_plan_name(s.plan) if s.plan else ""
+                if s.user:
+                    desc = pgettext(
+                        "dashboard", "%(plan)s subscription – %(email)s"
+                    ) % {"plan": plan_label, "email": s.user.email}
+                else:
+                    desc = pgettext("dashboard", "%(plan)s subscription") % {"plan": plan_label}
                 recent_activity.append({
                     "time": s.updated_at,
-                    "title": "Payment confirmed",
-                    "desc": f"{s.plan.name} subscription – {s.user.email}" if s.user else s.plan.name,
+                    "title": pgettext("dashboard", "Payment confirmed"),
+                    "desc": desc,
                     "color": "#16a34a",
                 })
 
             # Overdue invoices
             for inv in Invoice.objects.filter(status="pending", due_date__lt=now).select_related("subscription__user").order_by("-due_date")[:2]:
                 u = inv.subscription.user
+                email = u.email if u else pgettext("dashboard", "Unknown")
                 recent_activity.append({
                     "time": inv.due_date,
-                    "title": "Invoice overdue",
-                    "desc": f"{u.email if u else 'Unknown'} – ${inv.amount} pending",
+                    "title": pgettext("dashboard", "Invoice overdue"),
+                    "desc": pgettext(
+                        "dashboard", "%(email)s – $%(amount)s pending"
+                    ) % {"email": email, "amount": inv.amount},
                     "color": "#d97706",
                 })
 
@@ -355,7 +378,7 @@ def dashboard(request):
             plan_counter = Counter()
             for comm in comm_qs:
                 plan = comm.subscription.plan if comm.subscription else None
-                label = plan.name if plan else "Unknown"
+                label = localized_plan_name(plan) if plan else pgettext("dashboard", "Unknown")
                 plan_counter[label] += 1
             plan_breakdown = sorted(plan_counter.items(), key=lambda kv: kv[1], reverse=True)
 
@@ -392,7 +415,7 @@ def dashboard(request):
                     _("Your %(plan)s plan was deactivated by the admin. "
                       "You have been moved to the Free plan. "
                       "Please activate another plan to continue.")
-                    % {"plan": deactivated_plan.name},
+                    % {"plan": localized_plan_name(deactivated_plan)},
                 )
 
             from django.db.models import Q
@@ -428,13 +451,7 @@ def dashboard(request):
         except Exception as e:
             logger.error("Dashboard: regular user metrics failed: %s", e)
 
-    # Role label for welcome banner
-    if user.is_superuser:
-        context["role_label"] = "Platform Admin"
-    elif user.role:
-        context["role_label"] = user.role.name.replace("_", " ").title()
-    else:
-        context["role_label"] = "User"
+    context["role_label"] = localized_role_label(user)
 
     context["active_menu"] = "dashboard"
     return render(request, "dashboard/index.html", context)
@@ -541,7 +558,8 @@ def consultant_stats(request):
     plan_counter = Counter()
     for comm in comm_qs:
         plan = comm.subscription.plan if comm.subscription else None
-        plan_counter[plan.name if plan else "Unknown"] += 1
+        plan_label = localized_plan_name(plan) if plan else pgettext("dashboard", "Unknown")
+        plan_counter[plan_label] += 1
     subs_by_plan = sorted(
         ({"plan": p, "count": n} for p, n in plan_counter.items()),
         key=lambda r: r["count"],

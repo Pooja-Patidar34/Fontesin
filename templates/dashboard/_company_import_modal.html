@@ -239,7 +239,8 @@ Three panes: upload form -> progress bar -> result summary.
           let msg = COMPANY_I18N.uploadFailed + " (HTTP " + resp.status + ")";
           try {
             const j = await resp.json();
-            if (j.error) msg = j.error;
+            if (j.message) msg = j.message;
+            else if (j.error) msg = j.error;
           } catch (e) { /* keep default */ }
           throw new Error(msg);
         }

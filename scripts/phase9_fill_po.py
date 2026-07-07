@@ -32,6 +32,30 @@ PH_PATTERNS: list[re.Pattern[str]] = [
 
 TOKEN = "⟦PH{0}⟧"
 
+# Google Translate sometimes prefixes German strings with formal-address markers
+# like "[formeller Sie] Plan" that must never reach the UI.
+FORMALITY_PREFIX_RE = re.compile(
+    r"^\[(?:formeller|formelles|formelle)\s+Sie\]\s*",
+    re.IGNORECASE,
+)
+
+# Short strings where MT picked the wrong sense after prefix stripping.
+_DE_MSGID_OVERRIDES: dict[str, str] = {
+    "Admin Share": "Admin-Anteil",
+    "Consultant Share": "Berateranteil",
+    "Rate": "Satz",
+}
+
+
+def sanitize_de_translation(text: str, msgid: str = "") -> str:
+    cleaned = FORMALITY_PREFIX_RE.sub("", text or "").strip()
+    if not cleaned and text:
+        cleaned = text.strip()
+    override = _DE_MSGID_OVERRIDES.get(msgid)
+    if override:
+        return override
+    return cleaned
+
 
 def cache_key(locale: str, entry: polib.POEntry) -> str:
     ctx = entry.msgctxt or ""
@@ -72,7 +96,10 @@ def translate_batch(
     for attempt in range(3):
         try:
             results = translator.translate_batch(batch)
-            return [restore(r, protected[i][1]) for i, r in enumerate(results)]
+            out = [restore(r, protected[i][1]) for i, r in enumerate(results)]
+            if translator.target == "de":
+                out = [sanitize_de_translation(t, texts[i]) for i, t in enumerate(out)]
+            return out
         except Exception:
             time.sleep(2 * (attempt + 1))
     return texts
@@ -100,6 +127,8 @@ def fill_po(path: Path, locale: str, cache: dict[str, str]) -> int:
         legacy = legacy_cache_key(locale, entry)
         translation = cache.get(ck) or cache.get(legacy)
         if translation:
+            if locale == "de":
+                translation = sanitize_de_translation(translation, entry.msgid)
             entry.msgstr = translation
             if "fuzzy" in entry.flags:
                 entry.flags.remove("fuzzy")
@@ -114,6 +143,8 @@ def fill_po(path: Path, locale: str, cache: dict[str, str]) -> int:
         for (entry, ck), translation in zip(chunk, results):
             if not translation:
                 translation = entry.msgid
+            if locale == "de":
+                translation = sanitize_de_translation(translation, entry.msgid)
             entry.msgstr = translation
             cache[ck] = translation
             if "fuzzy" in entry.flags:
@@ -127,14 +158,59 @@ def fill_po(path: Path, locale: str, cache: dict[str, str]) -> int:
     return filled
 
 
+def sanitize_po_file(path: Path) -> int:
+    po = polib.pofile(str(path))
+    fixed = 0
+    for entry in po:
+        if not entry.msgstr:
+            continue
+        cleaned = sanitize_de_translation(entry.msgstr, entry.msgid)
+        if cleaned != entry.msgstr:
+            entry.msgstr = cleaned
+            fixed += 1
+    if fixed:
+        po.save(str(path))
+    return fixed
+
+
+def sanitize_cache(cache: dict[str, str]) -> int:
+    fixed = 0
+    for key, value in list(cache.items()):
+        if not key.startswith("de::"):
+            continue
+        msgid = key.split("::", 2)[-1]
+        cleaned = sanitize_de_translation(value, msgid)
+        if cleaned != value:
+            cache[key] = cleaned
+            fixed += 1
+    return fixed
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--locales", nargs="+", default=list(LOCALES))
+    parser.add_argument(
+        "--sanitize-de-only",
+        action="store_true",
+        help="Strip Google Translate [formeller Sie] markers from existing de catalogs and cache.",
+    )
     args = parser.parse_args()
 
     cache: dict[str, str] = {}
     if CACHE_PATH.exists():
         cache = json.loads(CACHE_PATH.read_text(encoding="utf-8"))
+
+    if args.sanitize_de_only:
+        total = sanitize_cache(cache)
+        save_cache(cache)
+        for domain in DOMAINS:
+            path = ROOT / "locale" / "de" / "LC_MESSAGES" / f"{domain}.po"
+            if path.exists():
+                n = sanitize_po_file(path)
+                print(f"Sanitized {path.relative_to(ROOT)}: {n} entries", flush=True)
+                total += n
+        print(f"Total sanitized: {total}", flush=True)
+        return
 
     total_filled = 0
     for locale in args.locales:

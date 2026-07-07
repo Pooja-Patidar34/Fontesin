@@ -5,36 +5,186 @@
 {% block content %}
 
 <style>
-  .cr-tabs { display: flex; gap: .25rem; border-bottom: 1px solid #e9ecef; padding: 0 1.25rem; background: #f8f9fa; }
-  .cr-tab { border: 0; background: transparent; padding: .75rem 1rem; font-size: .85rem; font-weight: 600; color: #6c757d; border-bottom: 2px solid transparent; cursor: pointer; }
+  /* Stack title + description vertically — global .card-header is a horizontal flex row. */
+  .app-card-header {
+    display: flex !important;
+    flex-direction: column;
+    align-items: stretch;
+    min-height: 0;
+    gap: .5rem;
+    padding: .9rem 1.25rem;
+  }
+  .app-card-header .card-title {
+    float: none !important;
+    line-height: 1.35;
+  }
+  .app-card-header .card-subtitle {
+    line-height: 1.55;
+    max-width: 100%;
+  }
+
+  .cr-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .25rem;
+    border-bottom: 1px solid #e9ecef;
+    padding: 0 1.25rem;
+    background: #f8f9fa;
+  }
+  .cr-tab {
+    border: 0;
+    background: transparent;
+    padding: .75rem 1rem;
+    font-size: .85rem;
+    font-weight: 600;
+    color: #6c757d;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    flex: 0 1 auto;
+    min-width: 0;
+    white-space: normal;
+    text-align: left;
+  }
   .cr-tab:hover { color: #1B2E3F; }
   .cr-tab.active { color: #1B2E3F; border-bottom-color: #4da3ff; }
   .cr-tab .badge { margin-left: .35rem; font-size: .68rem; }
+
   .cr-pane { display: none; }
   .cr-pane.active { display: block; }
+
+  .cr-table th {
+    white-space: normal;
+    vertical-align: bottom;
+    line-height: 1.35;
+  }
+  .cr-table td {
+    vertical-align: top;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  .cr-applicant-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: .25rem .5rem;
+  }
+  .cr-action-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+    justify-content: flex-end;
+    align-items: center;
+  }
+  .cr-action-btns form { margin: 0; display: inline-flex; }
+  .cr-col-actions { text-align: right; }
+
   .empty-state { text-align: center; color: #94a3b8; padding: 2.5rem 1rem; }
   .empty-state .fa-2x { margin-bottom: .5rem; }
-  .cr-info-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 18px; font-size: .82rem; color: #475569; }
+
+  .cr-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14em), 1fr));
+    gap: .5rem 1.125rem;
+    font-size: .82rem;
+    color: #475569;
+  }
   .cr-info-grid div { min-width: 0; overflow-wrap: anywhere; word-break: break-word; }
   .cr-info-grid div span { color: #94a3b8; margin-right: 4px; }
-  .cr-section-title { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #94a3b8; margin: 16px 0 6px; }
-  .cr-motivation { background: #f8fafc; border: 1px solid #eef2f7; border-radius: 8px; padding: 8px 10px; font-size: .82rem; color: #1f2937; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; margin-top: 6px; }
-  .cr-dd-grid { display: grid; grid-template-columns: repeat(1, minmax(0,1fr)); gap: 3px 12px; margin-top: 6px; color: #475569; font-size: .8rem; }
+
+  .cr-section-title {
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #94a3b8;
+    margin: 1rem 0 .375rem;
+    line-height: 1.4;
+  }
+  .cr-motivation {
+    background: #f8fafc;
+    border: 1px solid #eef2f7;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: .82rem;
+    color: #1f2937;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    margin-top: 6px;
+  }
+  .cr-dd-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: .375rem .75rem;
+    margin-top: 6px;
+    color: #475569;
+    font-size: .8rem;
+  }
+  .cr-dd-grid div { min-width: 0; overflow-wrap: anywhere; word-break: break-word; }
   .cr-dd-grid .flag-yes { color: #b91c1c; font-weight: 600; }
   .cr-dd-grid .flag-no { color: #64748b; }
-  .role-tag { display:inline-block; background:#eef2ff; color:#3730a3; font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; padding:2px 8px; border-radius:6px; margin-left:6px; }
-  .pill { display: inline-block; padding: 2px 10px; border-radius: 100px; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+
+  .role-tag {
+    display: inline-block;
+    background: #eef2ff;
+    color: #3730a3;
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: 2px 8px;
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+  .pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 100px;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.35;
+  }
   .pill-approved { background: #dcfce7; color: #166534; }
   .pill-declined { background: #fee2e2; color: #991b1b; }
+
+  .app-modal-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .35rem .5rem;
+    min-width: 0;
+    line-height: 1.35;
+  }
+  .app-modal-footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: .5rem;
+  }
+  .cr-decline-form {
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: .375rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .cr-decline-form .form-control { flex: 1 1 0; min-width: 0; }
 </style>
 
 <div class="card card-outline card-primary shadow-sm">
 
-  <div class="card-header">
+  <div class="card-header app-card-header">
     <h3 class="card-title font-weight-bold mb-0">
       <i class="fas fa-id-card mr-1"></i> {% trans "Registration Applications" context "workflows" %}
     </h3>
-    <h5 class="small text-muted mb-0">
+    <h5 class="card-subtitle small text-muted mb-0">
       {% blocktrans trimmed context "workflows" %}
       New <strong>Franchise Partner</strong> &amp; <strong>Coordinator</strong> sign-ups awaiting approval. (Business Users requesting a Coordinator upgrade appear under <em>Coordinator Upgrade Requests</em>.) Click <strong>View</strong> to see the full application, then Approve or Decline.
       {% endblocktrans %}
@@ -61,39 +211,43 @@
     <div class="card-body p-0">
       {% if pending %}
       <div class="table-responsive">
-        <table class="table table-hover mb-0">
+        <table class="table table-hover mb-0 cr-table">
           <thead class="bg-light">
             <tr>
               <th>{% trans "Applicant" context "workflows" %}</th>
               <th>{% trans "Submitted" context "workflows" %}</th>
-              <th class="text-right pr-4" style="width:230px;">{% trans "Action" context "common" %}</th>
+              <th class="cr-col-actions pr-4">{% trans "Action" context "common" %}</th>
             </tr>
           </thead>
           <tbody>
             {% for u in pending %}
             <tr>
               <td>
-                <strong>{{ u.first_name }} {{ u.last_name }}</strong>
-                <span class="role-tag">{{ u.role.name|default:u.role.code }}</span>
+                <div class="cr-applicant-row">
+                  <strong>{{ u.first_name }} {{ u.last_name }}</strong>
+                  <span class="role-tag">{{ u.role.name|default:u.role.code }}</span>
+                </div>
                 <div class="small text-muted">{{ u.email }}</div>
               </td>
               <td class="small text-muted">{{ u.updated_at|date:"M j, Y H:i" }}</td>
-              <td class="text-right pr-4" style="white-space:nowrap;">
-                <button type="button" class="btn btn-sm btn-outline-primary"
-                        data-toggle="modal" data-target="#app-modal-{{ u.id }}" title="{% trans "View full application" context "workflows" %}">
-                  <i class="fas fa-eye mr-1"></i> {% trans "View" context "common" %}
-                </button>
-                <form method="post" action="{% url 'application-action' u.id %}" class="d-inline m-0">
-                  {% csrf_token %}
-                  <input type="hidden" name="decision" value="approve">
-                  <button type="submit" class="btn btn-sm btn-success" title="{% trans "Approve" context "workflows" %}">
-                    <i class="fas fa-check mr-1"></i> {% trans "Approve" context "workflows" %}
+              <td class="cr-col-actions pr-4">
+                <div class="cr-action-btns">
+                  <button type="button" class="btn btn-sm btn-outline-primary"
+                          data-toggle="modal" data-target="#app-modal-{{ u.id }}" title="{% trans "View full application" context "workflows" %}">
+                    <i class="fas fa-eye mr-1"></i> {% trans "View" context "common" %}
                   </button>
-                </form>
-                <button type="button" class="btn btn-sm btn-outline-danger"
-                        data-toggle="modal" data-target="#decline-modal-{{ u.id }}" title="{% trans "Decline" context "workflows" %}">
-                  <i class="fas fa-times mr-1"></i> {% trans "Decline" context "workflows" %}
-                </button>
+                  <form method="post" action="{% url 'application-action' u.id %}" class="m-0">
+                    {% csrf_token %}
+                    <input type="hidden" name="decision" value="approve">
+                    <button type="submit" class="btn btn-sm btn-success" title="{% trans "Approve" context "workflows" %}">
+                      <i class="fas fa-check mr-1"></i> {% trans "Approve" context "workflows" %}
+                    </button>
+                  </form>
+                  <button type="button" class="btn btn-sm btn-outline-danger"
+                          data-toggle="modal" data-target="#decline-modal-{{ u.id }}" title="{% trans "Decline" context "workflows" %}">
+                    <i class="fas fa-times mr-1"></i> {% trans "Decline" context "workflows" %}
+                  </button>
+                </div>
               </td>
             </tr>
             {% endfor %}
@@ -115,7 +269,7 @@
     <div class="card-body p-0">
       {% if approved %}
       <div class="table-responsive">
-        <table class="table table-hover mb-0">
+        <table class="table table-hover mb-0 cr-table">
           <thead class="bg-light">
             <tr>
               <th>{% trans "Applicant" context "workflows" %}</th>
@@ -149,7 +303,7 @@
     <div class="card-body p-0">
       {% if declined %}
       <div class="table-responsive">
-        <table class="table table-hover mb-0">
+        <table class="table table-hover mb-0 cr-table">
           <thead class="bg-light">
             <tr>
               <th>{% trans "Applicant" context "workflows" %}</th>
@@ -192,8 +346,8 @@
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">
-          {{ u.first_name }} {{ u.last_name }}
+        <h5 class="modal-title app-modal-title">
+          <span>{{ u.first_name }} {{ u.last_name }}</span>
           <span class="role-tag">{{ u.role.name|default:u.role.code }}</span>
         </h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="{% trans "Close" context "common" %}"><span aria-hidden="true">&times;</span></button>
@@ -252,18 +406,18 @@
         </div>
         {% endif %}
       </div>
-      <div class="modal-footer" style="justify-content: space-between; gap:8px; flex-wrap:wrap;">
+      <div class="modal-footer app-modal-footer">
         <form method="post" action="{% url 'application-action' u.id %}" class="m-0">
           {% csrf_token %}
           <input type="hidden" name="decision" value="approve">
           <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-check mr-1"></i> {% trans "Approve" context "workflows" %}</button>
         </form>
-        <form method="post" action="{% url 'application-action' u.id %}" class="m-0 d-flex" style="flex:1; min-width:260px; gap:6px;">
+        <form method="post" action="{% url 'application-action' u.id %}" class="m-0 cr-decline-form">
           {% csrf_token %}
           <input type="hidden" name="decision" value="decline">
           <input type="text" name="decline_reason" class="form-control form-control-sm"
                  placeholder="{% trans "Decline reason (shown to applicant)" context "workflows" %}">
-          <button type="submit" class="btn btn-danger btn-sm" style="white-space:nowrap;"><i class="fas fa-times mr-1"></i> {% trans "Decline" context "workflows" %}</button>
+          <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-times mr-1"></i> {% trans "Decline" context "workflows" %}</button>
         </form>
       </div>
     </div>

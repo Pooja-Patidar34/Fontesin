@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.contrib import messages
 from django.utils.translation import gettext as _
 
+from billing.plan_i18n import attach_plan_display_fields, localized_plan_name
 from billing.models import CommercialPlan, Subscription, Invoice, ConsultantCommission
 
 
@@ -110,7 +111,7 @@ def membership(request):
                 request,
                 _("Your upgrade to the %(plan)s plan is pending admin approval. "
                   "You can't start another upgrade until that one is approved or rejected.")
-                % {"plan": pending_sub.plan.name},
+                % {"plan": localized_plan_name(pending_sub.plan)},
             )
 
         # If the user has been auto-moved from a now-deactivated paid plan
@@ -124,10 +125,12 @@ def membership(request):
                 _("Your %(plan)s plan was deactivated by the admin. "
                   "You have been moved to the Free plan. "
                   "Please activate another plan from the options below.")
-                % {"plan": deactivated_plan.name},
+                % {"plan": localized_plan_name(deactivated_plan)},
             )
 
-    plans = CommercialPlan.objects.filter(is_active=True)
+    plans = list(CommercialPlan.objects.filter(is_active=True))
+    for plan in plans:
+        attach_plan_display_fields(plan)
 
     comparison_rows = [
         {"label": _("Profile Visibility"), "key": "profile_visibility"},
@@ -142,9 +145,10 @@ def membership(request):
     plans_json = json.dumps({
         p.code: {
             "name": p.name,
+            "display_name": localized_plan_name(p),
             "price": float(p.price),
             "billing_period": p.billing_period,
-            "label": f"{p.name} Plan — ${p.price:,.0f}/{'month' if p.billing_period == 'monthly' else 'year'}",
+            "label": f"{localized_plan_name(p)} — ${p.price:,.0f}/{'month' if p.billing_period == 'monthly' else 'year'}",
         }
         for p in plans
     })
@@ -174,7 +178,7 @@ def select_plan(request):
         messages.info(
             request,
             _("Your upgrade to the %(plan)s plan is already pending admin approval.")
-            % {"plan": pending_sub.plan.name},
+            % {"plan": localized_plan_name(pending_sub.plan)},
         )
         return redirect("dashboard")
 
@@ -225,7 +229,7 @@ def select_plan(request):
         messages.success(
             request,
             _("Your plan has been changed to Free. Your %(plan)s plan has been cancelled.")
-            % {"plan": current_active.plan.name},
+            % {"plan": localized_plan_name(current_active.plan)},
         )
         return redirect("plans")
 
@@ -240,7 +244,7 @@ def select_plan(request):
                 messages.info(
                     request,
                     _("You're already on the %(plan)s plan.")
-                    % {"plan": current_active.plan.name},
+                    % {"plan": localized_plan_name(current_active.plan)},
                 )
             else:
                 messages.info(

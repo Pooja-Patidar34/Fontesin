@@ -1,6 +1,6 @@
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
@@ -10,8 +10,8 @@
   <meta name="apple-mobile-web-app-title" content="FONTESIN"/>
   <link rel="manifest" href="{% static 'manifest.json' %}"/>
   <link rel="apple-touch-icon" href="{% static 'adminlte/images/icons/icon-192.png' %}"/>
-  <title>{{ p.name }} – FONTESIN Region</title>
-  <meta name="description" content="FONTESIN region profile for {{ p.name }}: capital, region, official language, currency, and rollout status."/>
+  <title>{% blocktrans with country_name=p.name %}{{ country_name }} - FONTESIN Region{% endblocktrans %}</title>
+  <meta name="description" content="{% blocktrans with country_name=p.name %}FONTESIN region profile for {{ country_name }}: capital, region, official language, currency, and rollout status.{% endblocktrans %}"/>
   <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
 </head>
 <body>
@@ -20,16 +20,17 @@
   <div class="navbar__inner">
     <a href="{% url 'home' %}" class="navbar__logo"><img src="{% static 'adminlte/images/fontesin-logo.png' %}" alt="FONTESIN" height="38"/></a>
     <div class="navbar__nav">
-      <a href="{% url 'home' %}">Home</a>
-      <a href="{% url 'worldmap' %}">World Map</a>
-      <a href="{% url 'about' %}">About</a>
-      <a href="{% url 'career' %}">Careers</a>
-      <a href="{% url 'contact' %}">Contact</a>
+      <a href="{% url 'home' %}">{% trans "Home" context "website" %}</a>
+      <a href="{% url 'worldmap' %}">{% trans "World Map" context "website" %}</a>
+      <a href="{% url 'about' %}">{% trans "About" context "website" %}</a>
+      <a href="{% url 'career' %}">{% trans "Careers" context "website" %}</a>
+      <a href="{% url 'contact' %}">{% trans "Contact" context "website" %}</a>
     </div>
-    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
+    <button class="navbar__hamburger" onclick="toggleMobileNav()" aria-label="{% trans 'Menu' context 'website' %}">☰</button>
     <div class="navbar__actions">
-      <a href="{% url 'login' %}" class="btn btn-outline btn-sm">Log In</a>
-      <a href="{% url 'register' %}" class="btn btn-primary btn-sm">Get Started</a>
+      <a href="{% url 'login' %}" class="btn btn-outline btn-sm">{% trans "Log In" context "auth.login" %}</a>
+      <a href="{% url 'register' %}" class="btn btn-primary btn-sm">{% trans "Get Started" context "website" %}</a>
+      {% include "partials/_navbar_lang_switcher.html" %}
     </div>
   </div>
 </nav>
@@ -38,9 +39,9 @@
 <section class="country-hero">
   <div class="container">
     <div class="breadcrumb">
-      <a href="{% url 'home' %}">Home</a>
+      <a href="{% url 'home' %}">{% trans "Home" context "website" %}</a>
       <span>/</span>
-      <a href="{% url 'worldmap' %}">World Map</a>
+      <a href="{% url 'worldmap' %}">{% trans "World Map" context "website" %}</a>
       <span>/</span>
       <span>{{ p.name }}</span>
     </div>
@@ -60,7 +61,7 @@
       </div>
       <div class="country-hero__meta-item">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-        ISO code · {{ code }}
+        {% trans "ISO Code" context "website" %} · {{ code }}
       </div>
     </div>
   </div>
@@ -72,35 +73,35 @@
 
     <!-- About -->
     <div style="background:#fff;border-radius:12px;padding:28px 32px;margin-bottom:32px;border:1px solid rgba(37,61,81,.06);box-shadow:0 2px 8px rgba(0,0,0,.05);">
-      <h3 style="margin-bottom:12px;">About {{ p.name }}</h3>
-      <p>{{ p.name }} is part of FONTESIN's global rollout ({{ p.status }}). The full economic and regulatory profile for this market is being prepared. Below are the key facts available today.</p>
+      <h3 style="margin-bottom:12px;">{% blocktrans with country_name=p.name %}About {{ country_name }}{% endblocktrans %}</h3>
+      <p>{% blocktrans with country_name=p.name rollout_status=p.status %}{{ country_name }} is part of FONTESIN's global rollout ({{ rollout_status }}). The full economic and regulatory profile for this market is being prepared. Below are the key facts available today.{% endblocktrans %}</p>
     </div>
 
     <!-- Country Facts -->
-    <h3 style="margin-bottom:20px;">Country Facts</h3>
+    <h3 style="margin-bottom:20px;">{% trans "Country Facts" context "website" %}</h3>
     <div class="data-grid">
       <div class="data-card">
-        <div class="data-card__label">Capital</div>
+        <div class="data-card__label">{% trans "Capital" context "website" %}</div>
         <div class="data-card__value" style="font-size:.95rem;">{{ p.capital }}</div>
       </div>
       <div class="data-card">
-        <div class="data-card__label">Region</div>
+        <div class="data-card__label">{% trans "Region" context "website" %}</div>
         <div class="data-card__value" style="font-size:.95rem;">{{ p.area }}</div>
       </div>
       <div class="data-card">
-        <div class="data-card__label">Official Language</div>
+        <div class="data-card__label">{% trans "Official Language" context "website" %}</div>
         <div class="data-card__value" style="font-size:.95rem;">{{ p.language }}</div>
       </div>
       <div class="data-card">
-        <div class="data-card__label">Currency</div>
+        <div class="data-card__label">{% trans "Currency" context "website" %}</div>
         <div class="data-card__value" style="font-size:.95rem;">{{ p.currency }}</div>
       </div>
       <div class="data-card">
-        <div class="data-card__label">ISO Code</div>
+        <div class="data-card__label">{% trans "ISO Code" context "website" %}</div>
         <div class="data-card__value">{{ code }}</div>
       </div>
       <div class="data-card">
-        <div class="data-card__label">Rollout Status</div>
+        <div class="data-card__label">{% trans "Rollout Status" context "website" %}</div>
         <div class="data-card__value" style="font-size:.95rem;">{{ p.status }}</div>
       </div>
     </div>
@@ -108,12 +109,12 @@
     <!-- CTA -->
     <div style="background:var(--primary-dark);border-radius:16px;padding:40px;margin-top:48px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;">
       <div>
-        <h3 style="color:#fff;margin-bottom:8px;">Interested in {{ p.name }}?</h3>
-        <p style="color:rgba(199,204,209,.7);max-width:480px;">Apply for franchise, request activation, or contact our regional team to explore opportunities in {{ p.name }}.</p>
+        <h3 style="color:#fff;margin-bottom:8px;">{% blocktrans with country_name=p.name %}Interested in {{ country_name }}?{% endblocktrans %}</h3>
+        <p style="color:rgba(199,204,209,.7);max-width:480px;">{% blocktrans with country_name=p.name %}Apply for franchise, request activation, or contact our regional team to explore opportunities in {{ country_name }}.{% endblocktrans %}</p>
       </div>
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <a href="{% url 'register' %}" class="btn btn--white">Apply for Franchise</a>
-        <a href="{% url 'contact' %}" class="btn btn-outline">Contact HQ</a>
+        <a href="{% url 'register' %}" class="btn btn--white">{% trans "Apply for Franchise" context "website" %}</a>
+        <a href="{% url 'contact' %}" class="btn btn-outline">{% trans "Contact HQ" context "website" %}</a>
       </div>
     </div>
 
@@ -125,38 +126,38 @@
     <div class="footer__grid">
       <div>
         <div class="footer__logo"><img src="{% static 'adminlte/images/fontesin-logo.png' %}" alt="FONTESIN" style="height:32px;width:auto;filter:brightness(0) invert(1);margin-bottom:12px;"/></div>
-        <p class="footer__brand-desc">A deep-tech global business infrastructure platform connecting companies, professionals, and markets across languages, borders, and systems.</p>
+        <p class="footer__brand-desc">{% trans "A deep-tech global business infrastructure platform connecting companies, professionals, and markets across languages, borders, and systems." context "website" %}</p>
       </div>
       <div>
-        <p class="footer__heading">Platform</p>
+        <p class="footer__heading">{% trans "Platform" context "website" %}</p>
         <div class="footer__links">
-          <a href="{% url 'worldmap' %}">World Map</a>
-          <a href="{% url 'register' %}">Get Started</a>
-          <a href="{% url 'login' %}">Log In</a>
+          <a href="{% url 'worldmap' %}">{% trans "World Map" context "website" %}</a>
+          <a href="{% url 'register' %}">{% trans "Get Started" context "website" %}</a>
+          <a href="{% url 'login' %}">{% trans "Log In" context "auth.login" %}</a>
         </div>
       </div>
       <div>
-        <p class="footer__heading">Company</p>
+        <p class="footer__heading">{% trans "Company" context "website" %}</p>
         <div class="footer__links">
-          <a href="{% url 'about' %}">About Us</a>
-          <a href="{% url 'career' %}">Careers</a>
-          <a href="{% url 'contact' %}">Contact</a>
+          <a href="{% url 'about' %}">{% trans "About Us" context "website" %}</a>
+          <a href="{% url 'career' %}">{% trans "Careers" context "website" %}</a>
+          <a href="{% url 'contact' %}">{% trans "Contact" context "website" %}</a>
         </div>
       </div>
       <div>
-        <p class="footer__heading">Regions</p>
+        <p class="footer__heading">{% trans "Regions" context "website" %}</p>
         <div class="footer__links">
-          <a href="{% url 'region_us' %}">United States</a>
-          <a href="{% url 'region_de' %}">Germany</a>
-          <a href="{% url 'region_cz' %}">Czech Republic</a>
-          <a href="{% url 'region_ae' %}">UAE</a>
-          <a href="{% url 'region_jp' %}">Japan</a>
+          <a href="{% url 'region_us' %}">{% trans "United States" context "website" %}</a>
+          <a href="{% url 'region_de' %}">{% trans "Germany" context "website" %}</a>
+          <a href="{% url 'region_cz' %}">{% trans "Czech Republic" context "website" %}</a>
+          <a href="{% url 'region_ae' %}">{% trans "UAE" context "website" %}</a>
+          <a href="{% url 'region_jp' %}">{% trans "Japan" context "website" %}</a>
         </div>
       </div>
     </div>
     <div class="footer__bottom">
-      <span>© 2026 FONTES Inc. All rights reserved.</span>
-      <span>Design by Memento Mori Digital LLC</span>
+      <span>{% trans "© 2026 FONTES Inc. All rights reserved." context "website" %}</span>
+      <span>{% trans "Design by Memento Mori Digital LLC" context "website" %}</span>
     </div>
   </div>
 </footer>

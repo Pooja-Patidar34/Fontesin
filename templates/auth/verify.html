@@ -14,6 +14,7 @@
 
   <title>{% trans "Identity Verification" context "auth.verify" %} – FONTESIN</title>
 
+  <link rel="stylesheet" href="{% static 'adminlte/plugins/fontawesome-free/css/all.min.css' %}"/>
   <link rel="stylesheet" href="{% static 'adminlte/css/style.css' %}"/>
 
   <!-- Veriff SDK -->
@@ -354,8 +355,6 @@
     #veriff-root iframe { width: 100% !important; border: none !important; border-radius: 10px; }
 
     .hidden { display: none !important; }
-
-    .navbar { position: relative; }
   </style>
 </head>
 <body>
@@ -381,9 +380,9 @@
         lands them on the login page, where they can sign in to another account.
       {% endcomment %}
       <a href="{% url 'logout' %}" class="btn btn-outline btn-sm">{% trans "Log Out" context "auth.verify" %}</a>
+      {% include "partials/_navbar_lang_switcher.html" %}
     </div>
   </div>
-  {% include "partials/_auth_lang_switcher.html" %}
 </nav>
 
 <!-- PROGRESS BAR -->

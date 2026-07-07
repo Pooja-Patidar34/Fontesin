@@ -1,4 +1,4 @@
-{% load static i18n %}
+{% load static i18n plan_i18n_tags %}
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}">
 <head>
@@ -72,6 +72,9 @@
       <a href="{% url 'career' %}">{% trans "Careers" context "website" %}</a>
       <a href="{% url 'contact' %}">{% trans "Contact" context "website" %}</a>
     </div>
+    <div class="navbar__actions">
+      {% include "partials/_navbar_lang_switcher.html" %}
+    </div>
   </div>
 </nav>
 
@@ -95,8 +98,10 @@
     </p>
 
     <div class="current-plan">
-      {% if current_plan.name %}
-      {% blocktrans with plan_name=current_plan.name context "website" %}Your current plan: <strong>{{ plan_name }}</strong>{% endblocktrans %}
+      {% if current_plan %}
+      {% with plan_label=current_plan|localized_plan_name_filter %}
+      {% blocktrans with plan_name=plan_label context "website" %}Your current plan: <strong>{{ plan_name }}</strong>{% endblocktrans %}
+      {% endwith %}
       {% else %}
       {% blocktrans context "website" %}Your current plan: <strong>No Plan</strong>{% endblocktrans %}
       {% endif %}

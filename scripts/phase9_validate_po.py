@@ -16,6 +16,8 @@ PLACEHOLDER_RE = re.compile(
     r"%\(\w+\)[a-zA-Z]|%\(\w+\)|%\d+\$[a-zA-Z]|%[sdif]|\{\{[^}]+\}\}|\{[^}]+\}"
 )
 
+FORMALITY_MARKER_RE = re.compile(r"\[(?:formeller|formelles|formelle)\s+Sie\]", re.IGNORECASE)
+
 
 def extract_placeholders(text: str) -> set[str]:
     return set(PLACEHOLDER_RE.findall(text))
@@ -59,6 +61,11 @@ def validate_file(path: Path) -> list[str]:
                 errors.append(
                     f"{path}: %% count mismatch: {entry.msgctxt!r} / {entry.msgid[:50]!r}"
                 )
+
+        if entry.msgstr and FORMALITY_MARKER_RE.search(entry.msgstr):
+            errors.append(
+                f"{path}: unresolved formality marker in {entry.msgctxt!r} / {entry.msgid[:50]!r}"
+            )
 
     return errors
 

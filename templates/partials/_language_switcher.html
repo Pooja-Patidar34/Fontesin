@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load static i18n %}
 
 <form
   id="language-switcher-form"
@@ -20,7 +20,7 @@
     aria-expanded="false"
     aria-label="{% trans "Language" context "common" %}"
   >
-    <i class="fas fa-globe language-switcher__icon" aria-hidden="true"></i>
+    <span class="language-switcher__flag" aria-hidden="true">{% include "partials/_language_flag_icon.html" with code=current_language %}</span>
     <span class="language-switcher__code">{{ current_abbr }}</span>
     <i class="fas fa-chevron-down language-switcher__caret" aria-hidden="true"></i>
   </button>
@@ -32,7 +32,8 @@
         class="dropdown-item language-switcher__option{% if language.code == current_language %} active{% endif %}"
         onclick="document.getElementById('language-switcher-value').value='{{ language.code }}';"
       >
-        {{ language.label }}
+        <span class="language-switcher__flag" aria-hidden="true">{% include "partials/_language_flag_icon.html" with code=language.code %}</span>
+        <span class="language-switcher__label">{{ language.label }}</span>
       </button>
     {% endfor %}
   </div>
@@ -40,6 +41,9 @@
 
 <style>
   .language-switcher__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     cursor: pointer;
     background: #fff;
     border: 1px solid #e2e8f0;
@@ -49,9 +53,24 @@
     background: #f8fafc;
     outline: none;
   }
-  .language-switcher__icon {
-    color: #94a3b8;
-    font-size: 0.85rem;
+  .language-switcher__flag {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    line-height: 0;
+  }
+  .lang-flag {
+    width: 20px;
+    height: 15px;
+    object-fit: cover;
+    border-radius: 2px;
+    margin-right: 8px;
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
+  .language-switcher__toggle .lang-flag,
+  .language-switcher__option .lang-flag {
+    margin-right: 0;
   }
   .language-switcher__code {
     font-weight: 700;
@@ -73,15 +92,35 @@
     background: #fff;
   }
   .language-switcher__option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     border: none;
     background: #fff;
     width: 100%;
     text-align: left;
     border-radius: 6px;
     font-size: 0.82rem;
-    padding: 8px 14px;
+    padding: 8px 12px;
     color: #1b2e3f;
     cursor: pointer;
+  }
+  .language-switcher__label {
+    flex: 1;
+    min-width: 0;
+  }
+  .language-switcher__option::after {
+    content: "";
+    width: 0.85em;
+    flex-shrink: 0;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .language-switcher__option.active::after {
+    content: "\2713";
+    color: #1d4ed8;
   }
   .language-switcher__option:hover,
   .language-switcher__option:focus {

@@ -13,6 +13,7 @@ from accounts.constants import (
     CompanyClassificationChoices,
 )
 from django.db.models import Q
+from accounts.utils.country_matching import country_match_q, resolve_country_code
 from accounts.utils.permissions import has_permission
 from accounts.view.saved_filter import (
     FILTER_FIELDS,
@@ -23,42 +24,16 @@ from accounts.view.saved_filter import (
 from billing.utils import PLAN_REGIONS, _region_for_country, get_user_geographic_scope
 
 
-# Extra free-text spellings seen in Company.country (mapped by ISO code).
-# The user's profile stores the ISO code; companies store free-text names.
-_COUNTRY_ALIASES = {
-    "US": ("USA", "United States of America", "U.S.", "U.S.A."),
-    "GB": ("UK", "U.K.", "Great Britain"),
-    "AE": ("UAE", "U.A.E."),
-    "KR": ("Korea", "South Korea"),
-    "CZ": ("Czechia",),
-}
-
-
-def _country_match_q(country_code):
-    """Build a Q that matches Company.country against the user's country code,
-    including the CountryChoices label and common free-text aliases."""
-    variants = [country_code]
-    label = dict(CountryChoices.CHOICES).get(country_code)
-    if label:
-        # CountryChoices labels are gettext_lazy proxies; psycopg2 cannot
-        # adapt __proxy__ objects as SQL bind parameters.
-        variants.append(str(label))
-    variants.extend(_COUNTRY_ALIASES.get(country_code, ()))
-    q = Q()
-    for v in variants:
-        q |= Q(country__iexact=v)
-    return q
-
-
 def _coordinator_region_code(user):
     """Resolve the ISO country code of the region a coordinator manages.
 
     Priority:
       1. territory_country — an explicit ISO code, if an admin assigned one.
       2. target_region     — the region the coordinator picked on the
-                             application form. It's stored as a country *label*
-                             (e.g. "United States"), so we map it back to its
-                             ISO code via the CountryChoices labels + aliases.
+                             application form. Stored as a canonical English
+                             country name (e.g. "United States"); legacy rows
+                             may hold aliases or translated labels, resolved
+                             via resolve_country_code.
       3. country           — the coordinator's own country (ISO code), as a
                              last-resort fallback.
 
@@ -70,15 +45,9 @@ def _coordinator_region_code(user):
 
     target_region = (user.target_region or "").strip()
     if target_region:
-        label_to_code = {lbl.lower(): code for code, lbl in CountryChoices.CHOICES}
-        code = label_to_code.get(target_region.lower())
+        code = resolve_country_code(target_region)
         if code:
             return code
-        # Free-text region spellings (e.g. "USA") map through the same alias
-        # table used to match Company.country.
-        for c, aliases in _COUNTRY_ALIASES.items():
-            if target_region.lower() in {a.lower() for a in aliases}:
-                return c
 
     return (user.country or "").strip().upper()
 
@@ -96,7 +65,7 @@ def coordinator_territory_q(user):
     _coordinator_region_code (territory_country → target_region → country).
 
     Company.country is free-text while the resolved region is an ISO code, so
-    we match across the code + label + common aliases via _country_match_q.
+    we match across the code + English name + aliases via country_match_q.
     Returns None when the user isn't a coordinator or no region can be
     determined, so callers can skip widening the scope (a coordinator with no
     region info keeps their linked-company view rather than getting the entire
@@ -111,7 +80,7 @@ def coordinator_territory_q(user):
         return None
 
     scope_q = (
-        _country_match_q(region_code)
+        country_match_q(region_code)
         & Q(is_active=True)
         & Q(certification_status="certified")
     )
@@ -149,8 +118,8 @@ def business_user_plan_scope_q(user):
     (billing.utils.get_user_geographic_scope).
 
     The billing scope yields ISO codes; Company.country is free-text, so each
-    code is matched across its code + CountryChoices label + common aliases
-    via _country_match_q.
+    code is matched across its ISO code + canonical English name + aliases
+    via country_match_q.
 
     Returns None when the plan grants no discovery scope — no plan at all, or
     a country/region plan where the user hasn't set a country yet. Callers OR
@@ -161,14 +130,14 @@ def business_user_plan_scope_q(user):
     # limited set of fields and no actions (read-only teaser — see the row /
     # header templates gated on is_free_plan). Country is the only location
     # signal captured at sign-up (User.country, an ISO code), matched across
-    # code + label + aliases via _country_match_q. No country set → no discovery
+    # code + English name + aliases via country_match_q. No country set → no discovery
     # scope (the user keeps their linkage-only view).
     plan_code = _plan_code_for_business_user(user)
     if plan_code == "free":
         country = (getattr(user, "country", "") or "").strip()
         if not country:
             return None
-        return _country_match_q(country) & Q(is_active=True)
+        return country_match_q(country) & Q(is_active=True)
 
     scope = get_user_geographic_scope(user)
     mode = scope.get("mode")
@@ -186,7 +155,7 @@ def business_user_plan_scope_q(user):
 
     country_q = Q()
     for code in countries:
-        country_q |= _country_match_q(code)
+        country_q |= country_match_q(code)
     return country_q & Q(is_active=True)
 
 
@@ -371,7 +340,7 @@ def company_filter_autocomplete(request):
 
     qs = Company.objects.filter(is_active=True)
     if country:
-        qs = qs.filter(country__iexact=country)
+        qs = qs.filter(country_match_q(country))
     if q:
         qs = qs.filter(**{f"{field}__icontains": q})
 

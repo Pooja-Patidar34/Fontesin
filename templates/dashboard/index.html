@@ -1,5 +1,5 @@
 {% extends "base/base.html" %}
-{% load i18n %}
+{% load i18n plan_i18n_tags %}
 {% block title %}{% trans "Dashboard" context "dashboard" %}{% endblock %}
 
 {% block content %}
@@ -425,7 +425,7 @@
       <div class="dash-welcome__name">{{ request.user.first_name }} {{ request.user.last_name }}</div>
       <div class="dash-welcome__meta">
         {{ role_label }}
-        {% if user_plan %} &middot; {% blocktrans trimmed with plan_name=user_plan.name|upper context "dashboard" %}{{ plan_name }} Plan{% endblocktrans %}{% endif %}
+        {% if user_plan %} &middot; {{ user_plan|localized_plan_name_filter }}{% endif %}
         &middot; {% trans "Last login: Today" context "dashboard" %}
       </div>
     </div>
@@ -933,7 +933,7 @@
           <li class="dash-activity__item">
             <div class="dash-activity__dot" style="background:{{ item.color }};"></div>
             <div>
-              <div class="dash-activity__time">{{ item.time|timesince }} ago</div>
+              <div class="dash-activity__time">{% blocktrans trimmed with time=item.time|timesince context "dashboard" %}{{ time }} ago{% endblocktrans %}</div>
               <div class="dash-activity__title">{{ item.title }}</div>
               <div class="dash-activity__desc">{{ item.desc }}</div>
             </div>
@@ -1111,6 +1111,8 @@
     companiesCertified: '{% filter escapejs %}{% trans "companies certified" context "dashboard" %}{% endfilter %}',
     clickDayCertified: '{% filter escapejs %}{% trans "Click a day to see how many companies you certified that day." context "dashboard" %}{% endfilter %}',
     noSubsThisMonth: '{% filter escapejs %}{% trans "No subscriptions sold in this month yet." context "dashboard" %}{% endfilter %}',
+    revenueTickPrefix: '{% filter escapejs %}{% trans "$" context "dashboard" %}{% endfilter %}',
+    revenueTickThousand: '{% filter escapejs %}{% trans "k" context "dashboard" %}{% endfilter %}',
     userHealth: '{% filter escapejs %}{% trans "User Health" context "dashboard" %}{% endfilter %}',
     companyHealth: '{% filter escapejs %}{% trans "Company Health" context "dashboard" %}{% endfilter %}',
     userActivityStable: '{% filter escapejs %}{% trans "User activity is stable." context "dashboard" %}{% endfilter %}',
@@ -1249,7 +1251,11 @@ document.addEventListener("DOMContentLoaded", function () {
           y: {
             beginAtZero: true,
             ticks: {
-              callback: function(v) { return "$" + (v >= 1000 ? (v/1000) + "k" : v); },
+              callback: function(v) {
+                var prefix = window.DASHBOARD_I18N.revenueTickPrefix || "$";
+                var k = window.DASHBOARD_I18N.revenueTickThousand || "k";
+                return prefix + (v >= 1000 ? (v/1000) + k : v);
+              },
               font: { size: 11 }
             },
             grid: { color: "#f1f5f9" }

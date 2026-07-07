@@ -4,6 +4,11 @@ from django.utils import translation
 from accounts.constants import SupportedLocale
 
 
+# Django 5.x persists language in a cookie only; we mirror the choice in the
+# session as well so anonymous users keep their locale across navigation.
+LANGUAGE_SESSION_KEY = "_language"
+
+
 def normalize_locale(code):
     """Map a locale code to a supported locale; unknown values fall back to English."""
     if not code:
@@ -29,29 +34,44 @@ def apply_language_cookie(response, language):
     return response
 
 
+def sync_language_storage(request, response, language):
+    """Keep Django's session key and language cookie aligned with the active locale."""
+    if hasattr(request, "session"):
+        request.session[LANGUAGE_SESSION_KEY] = language
+    apply_language_cookie(response, language)
+    return response
+
+
 class UserLocaleMiddleware:
     """
     Resolve locale after authentication.
 
-    Priority:
+    Authenticated users:
       1. Explicit ?lang= query parameter
-      2. Authenticated user.preferred_language
-      3. django_language cookie (set by the language switcher)
-      4. Locale already activated by LocaleMiddleware (Accept-Language)
-      5. English fallback for unsupported codes
+      2. user.preferred_language (falls back to English when unset)
+      3. Sync session + cookie to match the profile language
+
+    Anonymous users:
+      1. Explicit ?lang= query parameter
+      2. django_language session key (set by Django's set_language view)
+      3. django_language cookie
+      4. English fallback
     """
 
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        language, set_cookie = self._resolve_language(request)
+        language, sync_storage = self._resolve_language(request)
         translation.activate(language)
         request.LANGUAGE_CODE = language
 
+        if sync_storage and hasattr(request, "session"):
+            request.session[LANGUAGE_SESSION_KEY] = language
+
         response = self.get_response(request)
 
-        if set_cookie:
+        if sync_storage:
             apply_language_cookie(response, language)
 
         if hasattr(response, "headers"):
@@ -68,16 +88,15 @@ class UserLocaleMiddleware:
 
         user = getattr(request, "user", None)
         if getattr(user, "is_authenticated", False):
-            preferred = getattr(user, "preferred_language", None)
-            if preferred:
-                return normalize_locale(preferred), False
+            return user.effective_preferred_language, True
+
+        if hasattr(request, "session"):
+            session_lang = request.session.get(LANGUAGE_SESSION_KEY)
+            if session_lang:
+                return normalize_locale(session_lang), False
 
         cookie_lang = request.COOKIES.get(settings.LANGUAGE_COOKIE_NAME)
         if cookie_lang:
             return normalize_locale(cookie_lang), False
-
-        activated = translation.get_language()
-        if activated:
-            return normalize_locale(activated), False
 
         return SupportedLocale.EN, False

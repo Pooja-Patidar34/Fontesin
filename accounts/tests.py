@@ -2885,6 +2885,66 @@ class ApplyReviewTests(BaseIAMTestCase):
         self.assertRedirects(response, reverse("dashboard"))
 
 
+class PublicLocaleTests(TestCase):
+    """Language selection for anonymous users and profile sync for authenticated users."""
+
+    def setUp(self):
+        self.tenant = Tenant.objects.create(name="Locale Tenant", slug="locale-tenant")
+        self.role = Role.objects.create(name="Business", code="business_user", tier_level=1)
+        self.user = User.objects.create_user(
+            email="locale@test.com",
+            password="test123",
+            tenant=self.tenant,
+            role=self.role,
+            first_name="Locale",
+            last_name="User",
+            preferred_language="fr",
+            is_active=True,
+        )
+
+    def test_homepage_shows_single_language_switcher(self):
+        response = self.client.get(reverse("home"))
+        html = response.content.decode()
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("navbar-lang-switcher", html)
+        self.assertEqual(html.count('id="language-switcher-form"'), 1)
+
+    def test_anonymous_language_persists_across_requests(self):
+        home_url = reverse("home")
+        response = self.client.post(
+            reverse("set_language"),
+            {"language": "de", "next": home_url},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.client.session.get("_language"), "de")
+
+        response = self.client.get(home_url)
+        self.assertEqual(response.headers.get("Content-Language"), "de")
+
+        response = self.client.get(reverse("login"))
+        self.assertEqual(response.headers.get("Content-Language"), "de")
+
+    def test_authenticated_profile_language_overrides_anonymous_cookie(self):
+        self.client.cookies["django_language"] = "de"
+        self.client.login(email="locale@test.com", password="test123")
+        response = self.client.get(reverse("home"))
+        self.assertEqual(response.headers.get("Content-Language"), "fr")
+
+    def test_set_language_updates_authenticated_user_profile(self):
+        self.client.force_login(self.user)
+        response = self.client.post(
+            reverse("set_language"),
+            {"language": "es", "next": reverse("home")},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.client.session.get("_language"), "es")
+        saved = User.all_objects.get(pk=self.user.pk)
+        self.assertEqual(saved.preferred_language, "es")
+
+        response = self.client.get(reverse("home"))
+        self.assertEqual(response.headers.get("Content-Language"), "es")
+
+
 class IdentityVerificationTests(BaseIAMTestCase):
 
     def test_requires_login(self):
@@ -2908,6 +2968,25 @@ class IdentityVerificationTests(BaseIAMTestCase):
         self.client.login(email="user@test.com", password="test123")
         response = self.client.get(reverse("identity-verification"))
         self.assertEqual(response.status_code, 200)
+
+    def test_language_switcher_integrated_in_navbar_actions(self):
+        """Lang switcher must sit in navbar__actions, not as an absolute overlay on the nav."""
+        consultant_role = Role.objects.create(
+            name="Consultant", code="consultant", tier_level=1
+        )
+        self.user.role = consultant_role
+        self.user.save()
+        self.client.login(email="user@test.com", password="test123")
+        response = self.client.get(reverse("identity-verification"))
+        html = response.content.decode()
+        self.assertIn('class="navbar__actions"', html)
+        self.assertIn('class="navbar-lang-switcher"', html)
+        # Switcher is nested inside navbar actions (after Log Out), not a sibling overlay.
+        actions_start = html.index('class="navbar__actions"')
+        actions_end = html.index("</div>", actions_start)
+        actions_block = html[actions_start:actions_end]
+        self.assertIn("navbar-lang-switcher", actions_block)
+        self.assertNotIn(".navbar { position: relative; }", html)
 
 
 # ═══════════════════════════════════════════════════════════════════════

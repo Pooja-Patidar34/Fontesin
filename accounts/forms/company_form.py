@@ -7,6 +7,7 @@ from django import forms
 from accounts.models import Company, NaceCode, NaicsCode, Tenant
 from accounts.constants import (
     CountryChoices,
+    COUNTRY_ENGLISH_NAME_TO_CODE,
     EmployeeCountRangeChoices,
     PHONE_RULES,
     COUNTRY_STATES,
@@ -27,8 +28,8 @@ COMPANY_NAME_RE = re.compile(r"^(?=.*[A-Za-z\u00C0-\u024F])[A-Za-z\u00C0-\u024F0
 # Registration ID: alphanumerics and - / . _ ; 2-100 chars; at least one alphanumeric.
 REGISTRATION_ID_RE = re.compile(r"^(?=.*[A-Za-z0-9])[A-Za-z0-9\-/._]{2,100}$")
 
-# Map known country names (lowercased) to ISO codes so PHONE_RULES lookups work from free-text input.
-COUNTRY_NAME_TO_CODE = {label.lower(): code for code, label in CountryChoices.CHOICES}
+# Canonical English names → ISO codes (never translated CountryChoices labels).
+COUNTRY_NAME_TO_CODE = COUNTRY_ENGLISH_NAME_TO_CODE
 
 # Strict website URL:
 #   - http/https only

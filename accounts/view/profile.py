@@ -13,6 +13,7 @@ from accounts.constants import (
     CountryChoices,
     EmployeeCountRangeChoices,
     SupportedLocale,
+    COUNTRY_CODES,
     COUNTRY_STATES,
 )
 import datetime
@@ -31,6 +32,7 @@ INDUSTRY_CODE_RE = re.compile(r"^[A-Za-z0-9.\-]{1,20}$")
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 LOGO_ALLOWED_EXTENSIONS = (".png", ".jpg", ".jpeg", ".svg", ".webp", ".gif")
 LOGO_MAX_BYTES = 5 * 1024 * 1024
+from billing.plan_i18n import localized_plan_name
 from billing.utils import (
     get_user_plan,
     get_active_subscription,
@@ -44,7 +46,6 @@ def _is_ajax(request):
 
 # First / last name: 2-50 chars, letters (incl. accented) + spaces/hyphens/apostrophes/periods.
 NAME_RE = re.compile(r"^[A-Za-zÀ-ɏ][A-Za-zÀ-ɏ\s'\-.]{1,49}$")
-COUNTRY_CODES = {code for code, _ in CountryChoices.CHOICES}
 
 # 2-100 chars, letters (incl. accented) / digits / spaces / & ' . , - ( ) only, must contain at least one letter.
 COMPANY_NAME_RE = re.compile(r"^(?=.*[A-Za-z\u00C0-\u024F])[A-Za-z\u00C0-\u024F0-9&'.,\-()\s]{2,100}$")
@@ -111,9 +112,10 @@ def plans_view(request):
     if deactivated_plan:
         messages.warning(
             request,
-            f"Your {deactivated_plan.name} plan was deactivated by the admin. "
-            "You have been moved to the Free plan. "
-            "Please activate another plan to continue.",
+            _("Your %(plan)s plan was deactivated by the admin. "
+              "You have been moved to the Free plan. "
+              "Please activate another plan to continue.")
+            % {"plan": localized_plan_name(deactivated_plan)},
         )
 
     # Subscription history — same query the standalone /plan-history/ view
@@ -574,7 +576,7 @@ def profile_view(request):
             return _fail_create_company(_("Country is required."), field="company_country")
 
         country_code = country.upper()
-        if country_code not in COUNTRY_LABELS:
+        if country_code not in COUNTRY_CODES:
             return _fail_create_company(
                 _("Please select a valid country from the list."),
                 field="company_country",
@@ -768,9 +770,10 @@ def profile_view(request):
         # straight here knows why their feature set just shrank.
         messages.warning(
             request,
-            f"Your {deactivated_plan.name} plan was deactivated by the admin. "
-            "You have been moved to the Free plan. "
-            "Please activate another plan to continue.",
+            _("Your %(plan)s plan was deactivated by the admin. "
+              "You have been moved to the Free plan. "
+              "Please activate another plan to continue.")
+            % {"plan": localized_plan_name(deactivated_plan)},
         )
 
     # Outgoing join requests this user has sent (pending / approved / declined)

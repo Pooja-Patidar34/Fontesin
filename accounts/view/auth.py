@@ -18,8 +18,13 @@ from django.http import JsonResponse
 from django.utils.translation import gettext as _
 from accounts.models import Tenant, Company, Role, UserCompany, User, DueDiligence
 from django.db import IntegrityError
-from accounts.constants import CountryChoices, LanguageChoices, SupportedLocale
-from FontEsin.middleware.locale import normalize_locale
+from accounts.constants import (
+    CountryChoices,
+    COUNTRY_ENGLISH_NAMES,
+    LanguageChoices,
+    SupportedLocale,
+)
+from FontEsin.middleware.locale import normalize_locale, LANGUAGE_SESSION_KEY
 import random
 from datetime import date, timedelta
 from django.utils import timezone
@@ -30,11 +35,15 @@ logger = logging.getLogger("technical")
 
 
 def _request_locale(request):
-    """Best-effort locale from cookie or active translation."""
+    """Best-effort locale from session, cookie, or active translation."""
+    from django.utils import translation
+
+    session_lang = request.session.get(LANGUAGE_SESSION_KEY)
+    if session_lang:
+        return normalize_locale(session_lang)
     cookie_lang = request.COOKIES.get(settings.LANGUAGE_COOKIE_NAME)
     if cookie_lang:
         return normalize_locale(cookie_lang)
-    from django.utils import translation
     return normalize_locale(translation.get_language())
 
 
@@ -539,8 +548,10 @@ def apply_submit(request):
         messages.error(request, _("Please select your franchise type."))
         return redirect("apply")
 
-    # Map the ISO code to its readable label for display/notifications.
-    region_label = dict(CountryChoices.CHOICES).get(region_code, region_code)
+    # Store the canonical English name — never a translated UI label. Display
+    # layers translate from the ISO code; ORM fallbacks (coordinator scope,
+    # regions map) match against this English form.
+    region_label = COUNTRY_ENGLISH_NAMES.get(region_code, region_code)
 
     # territory_country (the explicit ISO code) is what coordinator_territory_q
     # reads first, so the coordinator immediately sees the right region once
