@@ -3,7 +3,7 @@ from .view.auth import admin_login, admin_logout,register_view,identity_verifica
 from .view.profile import profile_view, company_search_ajax, plans_view
 from .view.auth import admin_login, admin_logout, register_view, identity_verification_view, forgot_password, verify_otp, reset_password, check_email_exists
 from .view.dashboard import dashboard, consultant_stats, consultant_statistics_page
-from accounts.view.company import company_list, toggle_company,company_detail_ajax,company_delete,company_filter_autocomplete, my_companies
+from accounts.view.company import company_list, toggle_company,company_detail_ajax,company_delete,company_filter_autocomplete, my_companies, select_company
 from accounts.view.company_import import (
     company_import_upload,
     company_import_status,
@@ -64,6 +64,7 @@ urlpatterns = [
     path("consultants/<uuid:user_id>/statistics/", consultant_statistics_page, name="consultant-statistics"),
     path("companies/", company_list, name="companies"),
     path("my-companies/", my_companies, name="my-companies"),
+    path("select-company/", select_company, name="select-company"),
     path("companies/filter-autocomplete/", company_filter_autocomplete, name="companies-filter-autocomplete"),
     path("companies/<uuid:company_id>/toggle/", toggle_company, name="company-toggle"),
     path("users/", user_list, name="users"),

@@ -24,12 +24,17 @@ def _is_ajax(request):
 
 @login_required
 def messages_list(request):
+    from accounts.utils.notifications import scope_notifications_qs
+
     qs = (
         Notification.objects
         .filter(recipient=request.user)
         .select_related("sender", "related_company")
         .order_by("-created_at")
     )
+    # Business users see only the active company's notifications + account-level
+    # ones; other roles see everything.
+    qs = scope_notifications_qs(qs, request.user)
 
     unread_count = qs.filter(is_read=False).count()
 
@@ -61,8 +66,14 @@ def message_mark_read(request, notification_id):
 @login_required
 @require_POST
 def messages_mark_all_read(request):
-    Notification.objects.filter(
-        recipient=request.user, is_read=False
+    from accounts.utils.notifications import scope_notifications_qs
+
+    # Mark read only what's actually visible in the (possibly company-scoped)
+    # inbox, so a business user acting as one company doesn't silently clear
+    # unread notifications belonging to their other companies.
+    scope_notifications_qs(
+        Notification.objects.filter(recipient=request.user, is_read=False),
+        request.user,
     ).update(is_read=True, read_at=timezone.now())
     if _is_ajax(request):
         return JsonResponse({"ok": True})

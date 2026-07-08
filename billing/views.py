@@ -138,7 +138,7 @@ def payment_list(request):
 
     qs = (
         Subscription.objects
-        .select_related("user", "plan")
+        .select_related("user", "plan", "company", "company__certified_by")
         .prefetch_related("invoice_set")
         .order_by("-created_at")
     )
@@ -190,17 +190,21 @@ def payment_approve(request, subscription_id):
 
     now = timezone.now()
 
-    # Supersede any other still-active subscription for this user (e.g. the
-    # Free plan they were on before initiating this upgrade). Without this
-    # the user ends up with two `active` rows and `get_active_subscription`
-    # picks one with `.first()` and no ordering — the resulting plan tier is
-    # effectively non-deterministic. Using "cancelled" because the existing
+    # Supersede any other still-active subscription ON THE SAME COMPANY (e.g.
+    # the Free plan the company was on before this upgrade). Plans are
+    # company-scoped, so this must be scoped to sub.company — cancelling every
+    # active sub for the user would wrongly kill the plans on their OTHER
+    # companies. Without it the company ends up with two `active` rows and
+    # `get_active_subscription` picks one with `.first()` and no ordering — a
+    # non-deterministic plan tier. Legacy rows without a company fall back to
+    # the old per-user supersede. Using "cancelled" because the existing
     # STATUS_CHOICES has no "superseded"/"expired" — closest fit.
-    Subscription.objects.filter(
-        user=sub.user, status="active"
-    ).exclude(pk=sub.pk).update(
-        status="cancelled", end_date=now, updated_at=now
-    )
+    supersede_qs = Subscription.objects.filter(status="active").exclude(pk=sub.pk)
+    if sub.company_id:
+        supersede_qs = supersede_qs.filter(company_id=sub.company_id)
+    else:
+        supersede_qs = supersede_qs.filter(user=sub.user, company__isnull=True)
+    supersede_qs.update(status="cancelled", end_date=now, updated_at=now)
 
     # Recompute end_date from the approval moment so the user gets the full
     # paid period starting NOW, not from when they originally submitted.
@@ -754,13 +758,16 @@ def maybe_create_commission_for_subscription(sub, now):
     to call from both payment_approve (the live approval path) AND from a
     backfill path that runs when the user belatedly certifies / links a company.
 
-    Eligibility rule (current product policy): each PLAN's commission goes to
-    the consultant who CERTIFIED the FIRST company the business user created
-    DURING that plan's period (see _commission_company_for_subscription; falls
-    back to the primary company when none was created in the period). The chosen
-    company must be certified and its `certified_by` must be a consultant — so a
-    business user creates a company, a consultant certifies it, and that
-    consultant earns 10% when the plan is approved.
+    Eligibility rule: plans are company-scoped, so each PLAN's commission goes
+    to the consultant who CERTIFIED the subscription's OWN company. The company
+    must be certified and its `certified_by` must be a consultant — a business
+    user creates a company, a consultant certifies it, that company's owner buys
+    a plan for it, and the certifying consultant earns 10% when the plan is
+    approved. Renewals repeat this on each new approved subscription.
+
+    Legacy subscriptions with no company attached fall back to the historical
+    "first company created during the plan window" heuristic
+    (`_commission_company_for_subscription`).
     """
     plan_code = (sub.plan.code or "").lower() if sub.plan_id else ""
     if plan_code in ("", "free"):
@@ -770,9 +777,11 @@ def maybe_create_commission_for_subscription(sub, now):
     if not business_user:
         return
 
-    # The company whose certifier is paid for THIS plan (first company created
-    # during the plan period, else the primary company).
-    company = _commission_company_for_subscription(business_user, sub)
+    # The plan's own company (company-scoped subscriptions). Fall back to the
+    # legacy window heuristic only for subscriptions predating the company link.
+    company = sub.company if getattr(sub, "company_id", None) else None
+    if company is None:
+        company = _commission_company_for_subscription(business_user, sub)
     if not company:
         return
 
@@ -997,11 +1006,17 @@ def payment_edit(request, subscription_id):
         # approving a cancelled subscription. Mirrors payment_approve.
         if status == "active" and old_status != "active":
             now = timezone.now()
-            Subscription.objects.filter(
-                user=sub.user, status="active"
-            ).exclude(pk=sub.pk).update(
-                status="cancelled", end_date=now, updated_at=now
-            )
+            # Scope the supersede to the subscription's COMPANY — plans are
+            # company-scoped (unique_active_subscription_per_company), so
+            # cancelling every active sub for the user would wrongly kill the
+            # plans on their other companies. Legacy rows without a company fall
+            # back to the old per-user supersede.
+            supersede_qs = Subscription.objects.filter(status="active").exclude(pk=sub.pk)
+            if sub.company_id:
+                supersede_qs = supersede_qs.filter(company_id=sub.company_id)
+            else:
+                supersede_qs = supersede_qs.filter(user=sub.user, company__isnull=True)
+            supersede_qs.update(status="cancelled", end_date=now, updated_at=now)
             Invoice.objects.filter(subscription=sub, status="pending").update(
                 status="paid", paid_at=now
             )
@@ -1164,23 +1179,29 @@ def _move_subscribers_to_free(deactivated_plan):
         if user is None:
             continue
 
-        # Cancel the now-invalid paid sub. This frees the
-        # `unique_active_subscription_per_user` constraint slot so we can
-        # insert the Free replacement on the next line.
+        # Cancel the now-invalid paid sub. This frees the per-company active
+        # constraint slot so we can insert the Free replacement on the next
+        # line. Plans are company-scoped, so the Free replacement is created
+        # for the subscription's COMPANY (not just the user).
         sub.status = "cancelled"
         sub.end_date = now
         sub.save(update_fields=["status", "end_date", "updated_at"])
 
-        # Idempotent guard: if the user somehow already has another active
-        # sub (unlikely given the unique constraint, but possible across
-        # races), skip the Free insert rather than tripping IntegrityError.
+        # Idempotent guard: skip the Free insert if this company (or the user,
+        # for legacy company-less subs) already has an active sub.
+        active_filter = (
+            {"company_id": sub.company_id}
+            if sub.company_id
+            else {"user": user, "company__isnull": True}
+        )
         has_active = Subscription.objects.filter(
-            user=user, status__in=["active", "trial"]
+            status__in=["active", "trial"], **active_filter
         ).exists()
         if not has_active:
             from dateutil.relativedelta import relativedelta
             Subscription.objects.create(
                 user=user,
+                company_id=sub.company_id,
                 plan=free_plan,
                 billing_period=free_plan.billing_period,
                 status="active",

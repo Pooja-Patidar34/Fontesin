@@ -127,6 +127,18 @@
                  class="btn btn-sm btn-outline-primary ml-1">
                 <i class="fas fa-edit mr-1"></i> {% trans "Edit" context "common" %}
               </a>
+              {% comment %}
+                Plan selection is per-company and unlocked only once the
+                company is certified by a consultant. Owners of a certified
+                company get a "Select Plan" action that carries the company
+                context into the membership page.
+              {% endcomment %}
+              {% if c.certification_status == "certified" %}
+              <a href="{% url 'membership' %}?company={{ c.id }}"
+                 class="btn btn-sm btn-outline-success ml-1">
+                <i class="fas fa-crown mr-1"></i> {% trans "Select Plan" context "companies" %}
+              </a>
+              {% endif %}
               {% else %}
               <form method="post" action="{% url 'company-leave' c.id %}"
                     id="myc-leave-form-{{ c.id }}" class="d-inline">

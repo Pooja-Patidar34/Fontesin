@@ -60,18 +60,54 @@
     </div>
     {% endif %}
 
-    {% if user_plan.code|lower != "global" and not pending_subscription %}
-    <a href="{% url 'membership' %}" class="btn btn-sm" style="background:{% if deactivated_plan %}#dc2626{% else %}#253D51{% endif %}; color:#fff; border-radius:8px; font-size:.78rem; font-weight:600; padding:6px 20px; display:inline-flex; align-items:center; gap:6px;">
-      <i class="fas {% if deactivated_plan %}fa-play-circle{% else %}fa-arrow-up{% endif %}"></i>
-      {% if deactivated_plan %}{% trans "Activate a Plan" context "billing" %}{% else %}{% trans "Upgrade Plan" context "billing" %}{% endif %}
-    </a>
-    <div style="font-size:.72rem; color:#64748b; margin-top:8px;">
-      {% if deactivated_plan %}
-        {% trans "Pick an available plan to restore your paid features." context "billing" %}
-      {% else %}
-        {% trans "Pick a higher plan, an invoice will be generated, and an admin will review and approve it." context "billing" %}
-      {% endif %}
+    {% if active_plan_needs_renewal and not pending_subscription %}
+    {% comment %}The active company's paid plan has ended / ends soon. Renewing re-pays the certifying consultant.{% endcomment %}
+    <div style="background:#fef3c7; border:1px solid #fde68a; border-radius:10px; padding:12px 14px; margin-bottom:12px;">
+      <div style="font-weight:700; color:#92400e; font-size:.8rem; margin-bottom:8px;">
+        {% blocktrans with plan=user_plan|localized_plan_name_filter context "billing" %}Your {{ plan }} plan is up for renewal.{% endblocktrans %}
+      </div>
+      <form method="post" action="{% url 'select_plan' %}" style="margin:0;">
+        {% csrf_token %}
+        <input type="hidden" name="company_id" value="{{ active_company.id }}"/>
+        <input type="hidden" name="plan_code" value="{{ active_plan_code }}"/>
+        <input type="hidden" name="renew" value="1"/>
+        <button type="submit" class="btn btn-sm" style="background:#b45309; color:#fff; border-radius:8px; font-size:.78rem; font-weight:600; padding:6px 20px; display:inline-flex; align-items:center; gap:6px;">
+          <i class="fas fa-rotate-right"></i> {% trans "Renew Plan" context "billing" %}
+        </button>
+      </form>
+      <div style="font-size:.72rem; color:#92400e; margin-top:6px;">
+        {% trans "An invoice is generated and, once the admin approves payment, a fresh term starts." context "billing" %}
+      </div>
     </div>
+    {% endif %}
+
+    {% if user_plan.code|lower != "global" and not pending_subscription %}
+      {% if active_company_certified %}
+      {% comment %}Paid plans unlock only once the active company is certified; carry the company id into membership so select_plan attaches the plan to it.{% endcomment %}
+      <a href="{% url 'membership' %}?company={{ active_company.id }}" class="btn btn-sm" style="background:{% if deactivated_plan %}#dc2626{% else %}#253D51{% endif %}; color:#fff; border-radius:8px; font-size:.78rem; font-weight:600; padding:6px 20px; display:inline-flex; align-items:center; gap:6px;">
+        <i class="fas {% if deactivated_plan %}fa-play-circle{% else %}fa-arrow-up{% endif %}"></i>
+        {% if deactivated_plan %}{% trans "Activate a Plan" context "billing" %}{% else %}{% trans "Upgrade Plan" context "billing" %}{% endif %}
+      </a>
+      <div style="font-size:.72rem; color:#64748b; margin-top:8px;">
+        {% if deactivated_plan %}
+          {% trans "Pick an available plan to restore your paid features." context "billing" %}
+        {% else %}
+          {% trans "Pick a higher plan, an invoice will be generated, and an admin will review and approve it." context "billing" %}
+        {% endif %}
+      </div>
+      {% else %}
+      {# Not certified yet — paid plan selection is locked. #}
+      <div style="background:#fef9c3; border:1px solid #fde68a; border-radius:10px; padding:10px 12px; font-size:.74rem; color:#854d0e; display:flex; align-items:flex-start; gap:8px;">
+        <i class="fas fa-lock" style="margin-top:2px;"></i>
+        <span>
+          {% if active_company_name %}
+            {% blocktrans with company=active_company_name context "billing" %}{{ company }} must be certified by a consultant before you can select a paid plan.{% endblocktrans %}
+          {% else %}
+            {% trans "Your company must be certified by a consultant before you can select a paid plan." context "billing" %}
+          {% endif %}
+        </span>
+      </div>
+      {% endif %}
     {% endif %}
   </div>
 </div>

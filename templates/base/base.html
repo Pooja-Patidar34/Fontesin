@@ -428,6 +428,22 @@
           <input type="text" name="q" class="header-search" placeholder="{% trans "Search companies, users..." context "nav" %}" value="{{ request.GET.q|default:'' }}">
         </form>
       </li>
+      {% if active_company_name %}
+      <li class="nav-item d-none d-md-block">
+        {% comment %}
+          Company switcher — the active company governs the plan for this
+          session. Shows the active company; when the BU owns more than one,
+          it links to the picker so they can switch.
+        {% endcomment %}
+        <a href="{% if can_switch_company %}{% url 'select-company' %}{% else %}{% url 'my-companies' %}{% endif %}"
+           class="header-user" style="text-decoration:none;"
+           title="{% if can_switch_company %}{% trans 'Switch company' context 'companies' %}{% else %}{% trans 'Active company' context 'companies' %}{% endif %}">
+          <i class="fas fa-building" style="font-size:.75rem;color:#5F8FAA;"></i>
+          <span style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ active_company_name }}</span>
+          {% if can_switch_company %}<i class="fas fa-exchange-alt" style="font-size:.6rem;color:#94a3b8;"></i>{% endif %}
+        </a>
+      </li>
+      {% endif %}
       <li class="nav-item d-none d-md-block">
         {% language_switcher %}
       </li>

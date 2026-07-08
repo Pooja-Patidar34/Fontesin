@@ -107,6 +107,21 @@ class Subscription(models.Model):
         blank=True,
     )
 
+    # The company this plan is attached to. Plans are per-company (a Business
+    # User picks a plan for EACH company they own), so feature-gating,
+    # geographic scope, and commission attribution all resolve through the
+    # subscription's company rather than the buying user. `user` still records
+    # WHO pays (the company's owner). Nullable to keep legacy/global rows and
+    # a brief pre-company window valid; the unique-active constraint below is
+    # scoped to non-null companies.
+    company = models.ForeignKey(
+        "accounts.Company",
+        on_delete=models.CASCADE,
+        related_name="subscriptions",
+        null=True,
+        blank=True,
+    )
+
     certification = models.ForeignKey(
         "billing.Certification",
         on_delete=models.CASCADE,
@@ -154,10 +169,15 @@ class Subscription(models.Model):
 
     class Meta:
         constraints = [
+            # At most one active/trial subscription PER COMPANY. Plans are now
+            # company-scoped, so a Business User can hold several active
+            # subscriptions at once (one per company) — but never two live
+            # plans on the same company. Scoped to non-null companies so
+            # legacy/global rows without a company aren't caught.
             models.UniqueConstraint(
-                fields=["user"],
-                condition=Q(status__in=["active", "trial"]),
-                name="unique_active_subscription_per_user"
+                fields=["company"],
+                condition=Q(status__in=["active", "trial"]) & Q(company__isnull=False),
+                name="unique_active_subscription_per_company"
             )
         ]
 

@@ -4,6 +4,7 @@
     <thead class="bg-light">
       <tr>
         <th class="col-user">{% trans "User" context "billing" %}</th>
+        <th class="col-company">{% trans "Company / Consultant" context "billing" %}</th>
         <th class="col-ref">{% trans "Payment Ref." context "billing" %}</th>
         <th class="col-plan">{% trans "Plan" context "billing" %}</th>
         <th class="col-amount">{% trans "Amount" context "billing" %}</th>
@@ -21,6 +22,22 @@
             <span class="muted">{{ sub.user.email }}</span>
           {% else %}
             -
+          {% endif %}
+        </td>
+
+        <td class="company-cell">
+          {% if sub.company %}
+            <strong>{{ sub.company.name }}</strong>
+            {% if sub.company.certified_by %}
+              <span class="muted d-block">
+                <i class="fas fa-user-check" style="font-size:.7rem;"></i>
+                {% blocktrans with name=sub.company.certified_by.first_name|add:" "|add:sub.company.certified_by.last_name context "billing" %}Consultant: {{ name }}{% endblocktrans %}
+              </span>
+            {% else %}
+              <span class="muted d-block">{% trans "Not certified" context "billing" %}</span>
+            {% endif %}
+          {% else %}
+            <span class="muted">{% trans "Account-level" context "billing" %}</span>
           {% endif %}
         </td>
 
@@ -98,7 +115,7 @@
       </tr>
       {% empty %}
       <tr>
-        <td colspan="7" class="text-center text-muted py-4">
+        <td colspan="8" class="text-center text-muted py-4">
           {% trans "No payment records found" context "billing" %}
         </td>
       </tr>

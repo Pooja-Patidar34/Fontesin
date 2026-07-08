@@ -31,6 +31,13 @@ def admin_context(request):
     unread_contact_message_count = 0
     pending_invoice_count = 0
     has_pending_paid_upgrade = False
+    active_company = None
+    active_company_name = ""
+    active_company_certified = False
+    active_plan_needs_renewal = False
+    active_plan_code = ""
+    owned_company_count = 0
+    can_switch_company = False
 
     if request.user.is_authenticated:
         if not request.user.is_superuser:
@@ -208,10 +215,14 @@ def admin_context(request):
             except Exception:
                 pending_application_count = 0
 
-        # Unread in-app messages — every account type sees this badge.
+        # Unread in-app messages — every account type sees this badge. For
+        # business users it's scoped to the active company (+ account-level)
+        # so the badge matches the company-scoped inbox.
         try:
-            unread_message_count = Notification.objects.filter(
-                recipient=request.user, is_read=False
+            from accounts.utils.notifications import scope_notifications_qs
+            unread_message_count = scope_notifications_qs(
+                Notification.objects.filter(recipient=request.user, is_read=False),
+                request.user,
             ).count()
         except Exception:
             unread_message_count = 0
@@ -254,6 +265,41 @@ def admin_context(request):
             except Exception:
                 pending_invoice_count = 0
 
+        # Active-company context for the top-bar company switcher. Plans are
+        # company-scoped, so a Business User who owns several companies can
+        # switch which one governs their session; the switcher only shows when
+        # there's more than one to pick from.
+        if not request.user.is_superuser:
+            _role_code = ""
+            if request.user.role and request.user.role.code:
+                _role_code = request.user.role.code.lower()
+            if _role_code == "business_user":
+                owned_company_count = Company.objects.filter(
+                    owner_user=request.user
+                ).count()
+                can_switch_company = owned_company_count > 1
+                try:
+                    from billing.utils import resolve_active_company, get_active_subscription
+                    active_company = resolve_active_company(request.user)
+                    if active_company:
+                        active_company_name = active_company.name
+                        active_company_certified = (
+                            (active_company.certification_status or "").lower() == "certified"
+                        )
+                        # Renewal prompt: the active company's PAID plan has
+                        # ended (or ends within 30 days). The consultant asks
+                        # the company to renew; paying again starts a fresh term
+                        # and re-pays the certifying consultant.
+                        from django.utils import timezone as _tz
+                        from datetime import timedelta as _td
+                        _sub = get_active_subscription(request.user, company=active_company)
+                        if _sub and _sub.plan_id:
+                            active_plan_code = (_sub.plan.code or "").lower()
+                            if active_plan_code not in ("", "free") and _sub.end_date:
+                                active_plan_needs_renewal = _sub.end_date <= _tz.now() + _td(days=30)
+                except Exception:
+                    active_company = None
+
     return {
         "is_tenant_admin": is_tenant_admin,
         "sidebar_company_count": sidebar_company_count,
@@ -295,4 +341,16 @@ def admin_context(request):
         "unread_message_count": unread_message_count,
         "unread_contact_message_count": unread_contact_message_count,
         "pending_invoice_count": pending_invoice_count,
+        # Company switcher (Business Users with multiple companies).
+        "active_company": active_company,
+        "active_company_name": active_company_name,
+        # Whether the active company is certified — gates the "select a paid
+        # plan" CTA (paid plans are unavailable until a consultant certifies).
+        "active_company_certified": active_company_certified,
+        # Active company's paid plan has ended / ends within 30 days — surfaces
+        # a "Renew" CTA. Renewing re-pays the certifying consultant.
+        "active_plan_needs_renewal": active_plan_needs_renewal,
+        "active_plan_code": active_plan_code,
+        "owned_company_count": owned_company_count,
+        "can_switch_company": can_switch_company,
     }

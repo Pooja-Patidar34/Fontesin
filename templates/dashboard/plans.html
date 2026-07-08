@@ -26,9 +26,14 @@
   <div class="card-header">
     <h3 class="card-title font-weight-bold mb-0">
       <i class="fas fa-crown mr-1"></i> {% trans "Plans" context "billing" %}
+      {% if plan_company %}<span class="text-muted font-weight-normal">— {{ plan_company.name }}</span>{% endif %}
     </h3>
     <h5 class="small text-muted mb-0">
-      {% trans "View your current plan and request an upgrade. Pending upgrades require admin approval before they activate." context "billing" %}
+      {% if plan_company %}
+        {% blocktrans with company=plan_company.name context "billing" %}Current plan and history for {{ company }}. Each company has its own plan.{% endblocktrans %}
+      {% else %}
+        {% trans "View your current plan and request an upgrade. Pending upgrades require admin approval before they activate." context "billing" %}
+      {% endif %}
     </h5>
   </div>
 

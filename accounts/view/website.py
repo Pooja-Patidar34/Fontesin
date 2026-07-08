@@ -95,6 +95,26 @@ def membership(request):
                 return redirect("application-pending")
             return redirect("dashboard")
 
+    # Plans are company-scoped: the membership page is reached FOR a specific
+    # certified company (via ?company=<id>). Resolve and validate it so the
+    # plan form can carry the company_id into select_plan and we can show the
+    # right per-company messaging. A missing/invalid company still renders the
+    # read-only catalogue.
+    selected_company = None
+    if request.user.is_authenticated and not request.user.is_superuser:
+        from accounts.models import Company
+        _cid = request.GET.get("company")
+        if _cid:
+            selected_company = Company.objects.filter(
+                id=_cid, owner_user=request.user
+            ).first()
+            if selected_company and (selected_company.certification_status or "").lower() != "certified":
+                messages.warning(
+                    request,
+                    _("%(company)s must be certified by a consultant before you can "
+                      "select a paid plan for it.") % {"company": selected_company.name},
+                )
+
     # Don't gate the page itself — users on Free/Basic/Pro need to be able
     # to view plans in order to upgrade. The actual create-subscription
     # decision (same-tier? pending already? unknown plan?) lives in
@@ -102,10 +122,10 @@ def membership(request):
     if request.user.is_authenticated:
         pending_sub = (
             Subscription.objects
-            .filter(user=request.user, status="created")
+            .filter(company=selected_company, status="created")
             .select_related("plan")
             .first()
-        )
+        ) if selected_company else None
         if pending_sub:
             messages.info(
                 request,
@@ -157,6 +177,7 @@ def membership(request):
         "plans": plans,
         "comparison_rows": comparison_rows,
         "plans_json": plans_json,
+        "selected_company": selected_company,
     })
 
 
@@ -167,20 +188,19 @@ def select_plan(request):
 
     user = request.user
 
-    # Block stacking: one pending upgrade at a time.
-    pending_sub = (
-        Subscription.objects
-        .filter(user=user, status="created")
-        .select_related("plan")
-        .first()
+    # Plans are company-scoped: a Business User picks a plan FOR one specific
+    # company they own. Resolve and validate that company before anything else.
+    from accounts.models import Company
+    from billing.utils import PLAN_TIERS, ensure_free_subscription
+
+    company_id = request.POST.get("company_id") or request.GET.get("company")
+    company = (
+        Company.objects.filter(id=company_id, owner_user=user).first()
+        if company_id else None
     )
-    if pending_sub:
-        messages.info(
-            request,
-            _("Your upgrade to the %(plan)s plan is already pending admin approval.")
-            % {"plan": localized_plan_name(pending_sub.plan)},
-        )
-        return redirect("dashboard")
+    if company is None:
+        messages.error(request, _("Please choose which company this plan is for."))
+        return redirect("my-companies")
 
     plan_code = request.POST.get("plan_code")
     plan = CommercialPlan.objects.filter(code=plan_code, is_active=True).first()
@@ -189,62 +209,106 @@ def select_plan(request):
         messages.error(request, _("Invalid plan selected"))
         return redirect("membership")
 
-    from billing.utils import PLAN_TIERS
+    # A PAID plan can only be selected AFTER a consultant has certified the
+    # company. This is the core rule: certification comes first, plan second.
+    # Free needs no certification.
+    if plan.code != "free" and (company.certification_status or "").lower() != "certified":
+        messages.error(
+            request,
+            _("You can select a paid plan for %(company)s only after it has been "
+              "certified by a consultant.") % {"company": company.name},
+        )
+        return redirect("my-companies")
+
+    # Block stacking: one pending upgrade PER COMPANY at a time.
+    pending_sub = (
+        Subscription.objects
+        .filter(company=company, status="created")
+        .select_related("plan")
+        .first()
+    )
+    if pending_sub:
+        messages.info(
+            request,
+            _("The upgrade to the %(plan)s plan for %(company)s is already pending "
+              "admin approval.")
+            % {"plan": localized_plan_name(pending_sub.plan), "company": company.name},
+        )
+        return redirect("dashboard")
+
+    # The company's current live plan.
     current_active = (
         Subscription.objects
-        .filter(user=user, status="active")
+        .filter(company=company, status="active")
         .select_related("plan")
         .first()
     )
 
-    # Downgrade to Free — allowed and immediate (no payment / admin approval).
-    # The user drops onto the Free tier right away and the paid plan they were
-    # on is superseded. Handled before the upgrade guard below, which would
-    # otherwise reject any non-upgrade move (this is the BASIC → FREE case).
-    if plan.code == "free" and current_active:
-        if (current_active.plan.code or "").lower() == "free":
-            messages.info(request, _("You're already on the Free plan."))
-            return redirect("membership")
+    now = timezone.now()
 
-        now = timezone.now()
+    # Downgrade to Free — allowed and immediate (no payment / admin approval).
+    # The company drops onto the Free tier right away and its paid plan is
+    # superseded. Handled before the upgrade guard below, which would otherwise
+    # reject any non-upgrade move (the BASIC → FREE case).
+    if plan.code == "free":
+        if current_active and (current_active.plan.code or "").lower() == "free":
+            messages.info(
+                request,
+                _("%(company)s is already on the Free plan.") % {"company": company.name},
+            )
+            return redirect("my-companies")
+
         # Supersede the current active (paid) subscription FIRST, then activate
-        # Free. The DB enforces a single active subscription per user
-        # (unique_active_subscription_per_user), so we must cancel the old row
+        # Free. The DB enforces a single active subscription per company
+        # (unique_active_subscription_per_company), so cancel the old row
         # before inserting the new active one — not after.
         with transaction.atomic():
             Subscription.objects.filter(
-                user=user, status="active"
+                company=company, status="active"
             ).update(status="cancelled", end_date=now, updated_at=now)
 
             Subscription.objects.create(
                 user=user,
+                company=company,
                 plan=plan,
                 billing_period=plan.billing_period,
                 status="active",
                 start_date=now,
                 end_date=now + relativedelta(years=1),
             )
-            user.subscription_plan = "free"
-            user.save(update_fields=["subscription_plan"])
         messages.success(
             request,
-            _("Your plan has been changed to Free. Your %(plan)s plan has been cancelled.")
-            % {"plan": localized_plan_name(current_active.plan)},
+            _("%(company)s has been moved to the Free plan.") % {"company": company.name},
         )
-        return redirect("plans")
+        return redirect("my-companies")
 
-    # Upgrade guard: only allow strictly-higher-tier moves. Same plan is a
-    # no-op; a paid→paid downgrade isn't supported yet (it would need a
-    # refund-shaped flow we don't have) — those users can move to Free above.
+    # Renewal: re-purchasing the SAME paid plan once its term has ended (or an
+    # explicit "Renew" click). After the plan's year is up the consultant asks
+    # the company to renew; paying again creates a NEW pending subscription
+    # which, once the admin approves it, starts a fresh term AND pays the
+    # certifying consultant the same commission again. Detected here so the
+    # same-tier upgrade guard below doesn't reject it as "already on this plan".
+    is_renewal = False
     if current_active:
+        current_code = (current_active.plan.code or "").lower()
+        same_plan = current_code == (plan.code or "").lower()
+        expired = current_active.end_date is not None and current_active.end_date <= now
+        renew_flag = request.POST.get("renew") in ("1", "true", "on")
+        is_renewal = same_plan and current_code != "free" and (expired or renew_flag)
+
+    # Upgrade guard: only allow strictly-higher-tier moves for this company.
+    # Same plan is a no-op; a paid→paid downgrade isn't supported yet (it would
+    # need a refund-shaped flow we don't have) — those move to Free above. A
+    # renewal of the same paid plan is exempt (handled above).
+    if current_active and not is_renewal:
         current_tier = PLAN_TIERS.get((current_active.plan.code or "").lower(), -1)
         new_tier = PLAN_TIERS.get((plan.code or "").lower(), -1)
         if new_tier <= current_tier:
             if new_tier == current_tier:
                 messages.info(
                     request,
-                    _("You're already on the %(plan)s plan.")
-                    % {"plan": localized_plan_name(current_active.plan)},
+                    _("%(company)s is already on the %(plan)s plan.")
+                    % {"company": company.name, "plan": localized_plan_name(current_active.plan)},
                 )
             else:
                 messages.info(
@@ -252,64 +316,39 @@ def select_plan(request):
                     _("Downgrading to a lower paid plan isn't supported yet. "
                       "You can switch to the Free plan instead."),
                 )
-            return redirect("membership")
+            return redirect("my-companies")
 
-    now = timezone.now()
     if plan.billing_period == "monthly":
         end_date = now + relativedelta(months=1)
     else:
         end_date = now + relativedelta(years=1)
 
-    # Free plan needs no admin approval — activate immediately.
-    subscription_status = "active" if plan.code == "free" else "created"
+    # Keep a live Free plan on the company as the fallback while the paid
+    # upgrade awaits admin approval. Companies get a Free sub at creation, but
+    # be defensive in case this one predates that.
+    ensure_free_subscription(company, user=user)
 
-    # If the user is buying a paid plan and doesn't have any active sub yet
-    # (e.g. fresh signup straight to a paid tier), spin up a Free active sub
-    # alongside the pending paid sub. This is what lets the user log into the
-    # dashboard with Free-tier access while the paid upgrade is awaiting
-    # admin approval — without it, they'd land back on /membership/ on next
-    # login because there's no `status="active"` row to gate them through.
-    if subscription_status == "created":
-        has_active = Subscription.objects.filter(user=user, status="active").exists()
-        if not has_active:
-            free_plan = (
-                CommercialPlan.objects
-                .filter(code="free", is_active=True)
-                .first()
-            )
-            if free_plan:
-                Subscription.objects.create(
-                    user=user,
-                    plan=free_plan,
-                    billing_period=free_plan.billing_period,
-                    status="active",
-                    start_date=now,
-                    end_date=now + relativedelta(years=1),
-                )
-                user.subscription_plan = "free"
-                user.save(update_fields=["subscription_plan"])
-
-    # Create the requested subscription (free → active immediately, paid → created).
-    # Snapshot `billing_period` from the plan at creation time — this is what
-    # the bug fix is about: if the admin later edits the plan's billing_period
-    # (yearly → monthly), this user's existing subscription must continue to
-    # display and renew on its *original* cadence, not the plan's new one.
+    # Create the requested PAID subscription in "created" (pending) state — it
+    # goes live only when the super admin approves the payment. Snapshot
+    # `billing_period` from the plan at creation time so a later admin edit to
+    # the plan template (yearly → monthly) can't retroactively flip this row.
     subscription = Subscription.objects.create(
         user=user,
+        company=company,
         plan=plan,
         billing_period=plan.billing_period,
-        status=subscription_status,
+        status="created",
         start_date=now,
         end_date=end_date,
     )
 
-    # Only sync User.subscription_plan when *this* sub is active now (free path).
-    # For paid upgrades the sub starts as "created" — deferring the write keeps
-    # User.subscription_plan in step with the actually-live plan until the admin
-    # approves and `payment_approve` flips it.
-    if subscription_status == "active":
-        user.subscription_plan = plan.code
-        user.save(update_fields=["subscription_plan"])
+    # Notify the super admin that this company is requesting a paid plan, naming
+    # the certifying consultant who will earn the commission on approval.
+    try:
+        from accounts.utils.notifications import notify_plan_request
+        notify_plan_request(subscription)
+    except Exception:
+        pass
 
     # Create invoice
     year = now.strftime("%Y")

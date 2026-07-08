@@ -569,6 +569,17 @@ def company_list(request):
                 messages.error(request, dup_message)
                 return redirect(_safe_post_redirect(next_url) or "companies")
 
+            # Give every newly-created BU company a Free plan so it behaves as
+            # Free-tier until the owner selects (and gets approved for) a paid
+            # plan after certification. Plans are company-scoped, so without
+            # this the company would resolve to "no plan" (which blocks scope).
+            if not company_id and creator_role_code == "business_user":
+                try:
+                    from billing.utils import ensure_free_subscription
+                    ensure_free_subscription(company, user=request.user)
+                except Exception:
+                    pass
+
             if emit_cert_notification:
                 try:
                     from accounts.utils.notifications import notify_certification_request
@@ -1633,4 +1644,55 @@ def my_companies(request):
             # Non-AJAX fallback target after a successful create.
             "next": request.get_full_path(),
         },
+    )
+
+
+@login_required
+def select_company(request):
+    """Login-time company picker for Business Users who own more than one
+    company.
+
+    Plans are company-scoped, so a BU with several companies must choose which
+    one to "act as" — the whole app then behaves according to THAT company's
+    plan. The choice is stored in the session (`active_company_id`) and read by
+    ActiveCompanyMiddleware / billing.utils.resolve_active_company.
+
+    Auto-resolves the common cases: a BU who owns zero companies is sent to the
+    dashboard (the company gate prompts them to create one); a BU who owns
+    exactly one has it selected automatically (no picker). The picker only
+    renders when there are two or more.
+    """
+    user = request.user
+    role_code = (user.role.code or "").lower() if user.role else ""
+    if user.is_superuser or role_code != "business_user":
+        return redirect("dashboard")
+
+    owned = list(Company.objects.filter(owner_user=user).order_by("name"))
+
+    if request.method == "POST":
+        cid = request.POST.get("company_id")
+        chosen = next((c for c in owned if str(c.id) == str(cid)), None)
+        if chosen:
+            request.session["active_company_id"] = str(chosen.id)
+            return redirect(request.POST.get("next") or "dashboard")
+        messages.error(request, _("Please choose a company to continue."))
+
+    if not owned:
+        return redirect("dashboard")
+    if len(owned) == 1:
+        request.session["active_company_id"] = str(owned[0].id)
+        return redirect("dashboard")
+
+    # Label each company with its current plan for the picker.
+    from billing.utils import get_active_subscription
+    active_id = request.session.get("active_company_id")
+    for c in owned:
+        sub = get_active_subscription(user, company=c)
+        c.current_plan_label = (sub.plan.name if sub and sub.plan_id else _("Free"))
+        c.is_active_selection = str(c.id) == str(active_id)
+
+    return render(
+        request,
+        "dashboard/select_company.html",
+        {"companies": owned, "active_menu": "select-company"},
     )

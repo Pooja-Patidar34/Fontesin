@@ -77,11 +77,19 @@ MIDDLEWARE = [
     "FontEsin.middleware.error_logging.ErrorLoggingMiddleware",
     "FontEsin.middleware.no_emoji.NoEmojiMiddleware",
     "FontEsin.middleware.no_cache.NoCachePagesMiddleware",
+    # Resolve the Business User's currently-selected company BEFORE the plan
+    # gate — plans are company-scoped, so the plan resolver needs to know
+    # which company the user is acting as.
+    "FontEsin.middleware.active_company.ActiveCompanyMiddleware",
     # Identity verification gate runs BEFORE the plan gate: an unverified
     # account is forced onto /verify/ and can't reach plan selection until
     # Veriff approves it.
     "FontEsin.middleware.require_verification.RequireIdentityVerificationMiddleware",
-    "FontEsin.middleware.require_plan.RequirePlanForBusinessUserMiddleware",
+    # Company gate: plans are company-scoped, so a verified Business User must
+    # create their first company (the mandatory onboarding step) before using
+    # the app. This replaced the old "pick a plan" gate — plan selection now
+    # happens per-company AFTER certification, not at onboarding.
+    "FontEsin.middleware.require_company.RequireCompanyForBusinessUserMiddleware",
     # Coordinator / franchise accounts can't reach the dashboard until a super
     # admin approves their application. Runs after the verification + plan
     # gates (Veriff first, then approval).

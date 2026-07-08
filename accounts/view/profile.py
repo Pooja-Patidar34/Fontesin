@@ -107,7 +107,14 @@ def plans_view(request):
     if user.is_superuser or role_code in ("consultant", "coordinator", "franchise"):
         raise PermissionDenied("Plans are only available to subscribing users.")
 
-    subscription = get_active_subscription(user)
+    # Plans are company-scoped, so this page is about the ACTIVE company (the
+    # one selected in the switcher). Resolve it so the current-plan card AND the
+    # history below both reflect that single company — not a mix across every
+    # company the user owns.
+    from billing.utils import resolve_active_company
+    active_company = resolve_active_company(user)
+
+    subscription = get_active_subscription(user, company=active_company)
     deactivated_plan = get_deactivated_paid_plan(user, subscription=subscription)
     if deactivated_plan:
         messages.warning(
@@ -118,13 +125,18 @@ def plans_view(request):
             % {"plan": localized_plan_name(deactivated_plan)},
         )
 
-    # Subscription history — same query the standalone /plan-history/ view
-    # uses, scoped to the current user. Newest first.
+    # Subscription history for the ACTIVE company only (newest first). Without
+    # this scope the table mixes every company's plans together — e.g. company
+    # B's Pro plan would show on company A's page. Legacy account-level subs
+    # (no company) fall back to a user scope.
     history_qs = (
         Subscription.objects
-        .filter(user=user)
-        .select_related("plan", "user")
-        .order_by("-start_date", "-created_at")
+        .filter(company=active_company)
+        if active_company else
+        Subscription.objects.filter(user=user, company__isnull=True)
+    )
+    history_qs = history_qs.select_related("plan", "user", "company").order_by(
+        "-start_date", "-created_at"
     )
     paginator = Paginator(history_qs, 10)
     try:
@@ -139,10 +151,11 @@ def plans_view(request):
             "active_menu": "plans",
             "user_plan": get_user_plan(user, subscription=subscription),
             "subscription": subscription,
-            "pending_subscription": get_pending_subscription(user),
+            "pending_subscription": get_pending_subscription(user, company=active_company),
             "deactivated_plan": deactivated_plan,
             "subscriptions": page_obj,
             "page_obj": page_obj,
+            "plan_company": active_company,
         },
     )
 
@@ -192,11 +205,21 @@ def company_search_ajax(request):
 @login_required
 def profile_view(request):
     user = request.user
-    user_company = user.primary_company
+    # The "My Company" panel reflects the company the user is currently acting
+    # as — the one picked in the company switcher — not just their
+    # primary_company, so switching companies updates what's shown here too.
+    # Falls back to primary_company when there's no active selection or for
+    # non-business roles.
+    role_code = (user.role.code or "").lower() if user.role else ""
+    if role_code == "business_user":
+        from billing.utils import resolve_active_company
+        user_company = resolve_active_company(user) or user.primary_company
+    else:
+        user_company = user.primary_company
     # A company soft-deleted by the admin must not appear ANYWHERE — including
-    # the profile "My Company" panel, which reads the primary_company FK
-    # directly (list views already filter is_deleted). Treat a deleted primary
-    # company as "no company" so the user sees the Set-Up / Join prompt instead.
+    # the profile "My Company" panel (list views already filter is_deleted).
+    # Treat a deleted company as "no company" so the user sees the Set-Up /
+    # Join prompt instead.
     if user_company and user_company.is_deleted:
         user_company = None
 
@@ -742,6 +765,15 @@ def profile_view(request):
             company=company,
             defaults={"is_primary": True},
         )
+
+        # Give the new company a Free plan so it behaves as Free-tier until the
+        # owner selects a paid plan after certification (plans are
+        # company-scoped — see billing.utils.ensure_free_subscription).
+        try:
+            from billing.utils import ensure_free_subscription
+            ensure_free_subscription(company, user=user)
+        except Exception:
+            pass
 
         # Same backfill as the join-company branch: if this user already
         # had an approved paid subscription before they had a consultant-

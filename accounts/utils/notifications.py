@@ -22,6 +22,34 @@ from FontEsin.i18n import user_language
 logger = logging.getLogger("technical")
 
 
+def scope_notifications_qs(qs, user):
+    """Restrict a Notification queryset to what `user` should see given the
+    company they're currently acting as.
+
+    Plans and companies are company-scoped, so a Business User acting as one
+    company shouldn't see notifications tied to their OTHER companies. This
+    keeps notifications with a matching ``related_company`` (the active
+    company) plus account-level ones (``related_company`` is null — e.g.
+    coordinator-request or generic messages), and drops the rest. Non-business
+    roles (consultant / coordinator / franchise / admin) and superusers see
+    everything unchanged. A business user with no active company also sees
+    everything (nothing to scope to yet).
+    """
+    from django.db.models import Q
+
+    if not user or getattr(user, "is_superuser", False):
+        return qs
+    role_code = (user.role.code or "").lower() if getattr(user, "role", None) else ""
+    if role_code != "business_user":
+        return qs
+
+    from billing.utils import resolve_active_company
+    active_company = resolve_active_company(user)
+    if active_company is None:
+        return qs
+    return qs.filter(Q(related_company__isnull=True) | Q(related_company=active_company))
+
+
 def notify(*, recipient, sender=None, kind=Notification.KIND_GENERIC,
            title, body="", link_url="", related_company=None):
     """Create a Notification. Recipient must be authenticated User; everything
@@ -197,6 +225,74 @@ def notify_commission_earned(commission):
         build_consultant_msgs=build_consultant_msgs,
         build_su_msgs=build_su_msgs,
     )
+
+
+def notify_plan_request(subscription):
+    """A Business User requested a paid plan for one of their companies —
+    notify every active super admin.
+
+    Plans are company-scoped and approved by the super admin once payment
+    arrives; on approval the commission flows to the consultant who CERTIFIED
+    the company. So the message names the company, the requested plan, the
+    buying user, AND that certifying consultant, matching the product spec:
+    "a notification will be sent to the superadmin ... and the name of
+    consultant A will be published there."
+    """
+    from accounts.models import User
+
+    company = getattr(subscription, "company", None)
+    plan = getattr(subscription, "plan", None)
+    buyer = getattr(subscription, "user", None)
+    if company is None or plan is None:
+        return None
+
+    plan_name = plan.name or (plan.code or "").upper()
+    company_name = company.name
+    buyer_label = ""
+    if buyer:
+        buyer_label = f"{buyer.first_name} {buyer.last_name}".strip() or buyer.email
+
+    consultant = getattr(company, "certified_by", None)
+    consultant_label = ""
+    if consultant:
+        consultant_label = (
+            f"{consultant.first_name} {consultant.last_name}".strip() or consultant.email
+        )
+
+    try:
+        link = reverse("payments")
+    except NoReverseMatch:
+        link = ""
+
+    last = None
+    for su in User.objects.filter(is_superuser=True, is_active=True):
+        with translation.override(user_language(su)):
+            title = _("Plan request: %(company)s → %(plan)s") % {
+                "company": company_name,
+                "plan": plan_name,
+            }
+            body = _(
+                "%(buyer)s is requesting the %(plan)s plan for %(company)s. "
+                "Approve it once payment arrives to activate the plan."
+            ) % {
+                "buyer": buyer_label or _("A business user"),
+                "plan": plan_name,
+                "company": company_name,
+            }
+            if consultant_label:
+                body += "\n" + _(
+                    "Certifying consultant (commission on approval): %(consultant)s."
+                ) % {"consultant": consultant_label}
+            last = notify(
+                recipient=su,
+                sender=buyer,
+                kind=Notification.KIND_GENERIC,
+                title=title,
+                body=body,
+                link_url=link,
+                related_company=company,
+            )
+    return last
 
 
 def notify_certification_request(company, *, submitted_by):

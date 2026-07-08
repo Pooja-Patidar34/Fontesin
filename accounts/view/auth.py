@@ -162,16 +162,27 @@ def admin_login(request):
         # no active sub at all (and no pending one — select_plan now
         # auto-creates a Free active sub for paid signups so this branch
         # only fires for users who haven't visited membership yet).
-        from billing.models import Subscription
-        active_sub = Subscription.objects.filter(user=user, status="active").first()
-        if active_sub:
-            return redirect("dashboard")
+        # Business users always land in the app. Plans are company-scoped now,
+        # so there's no account-level plan gate on login — the company gate
+        # (RequireCompanyForBusinessUserMiddleware) prompts a BU with no company
+        # to create one, and per-company plan selection happens after
+        # certification.
+        #
+        # Ensure the BU is on the Free floor (covers accounts created before the
+        # company-scoped plan model, or any that lost their subscription).
+        try:
+            from billing.utils import ensure_account_free_subscription
+            ensure_account_free_subscription(user)
+        except Exception:
+            pass
 
-        pending_sub = Subscription.objects.filter(user=user, status="created").first()
-        if pending_sub:
-            return redirect("dashboard")
-
-        return redirect("membership")
+        # When a BU owns MORE THAN ONE company they must pick which one to act
+        # as (its plan governs the session); a single-company owner is
+        # auto-selected by the resolver, so skip the picker for them.
+        from accounts.models import Company
+        if Company.objects.filter(owner_user=user).count() > 1:
+            return redirect("select-company")
+        return redirect("dashboard")
 
     return render(request, "auth/login.html")
 
@@ -391,6 +402,16 @@ def register_view(request):
             except Exception:
                 pass
 
+            # Put the new BU on the Free plan immediately (before any company
+            # exists), per the onboarding spec. Plans are company-scoped, so
+            # this is an account-level Free floor the resolver falls back to
+            # until they create their first company.
+            try:
+                from billing.utils import ensure_account_free_subscription
+                ensure_account_free_subscription(user)
+            except Exception:
+                pass
+
         login(request, user, backend="django.contrib.auth.backends.ModelBackend")
 
         # LOCAL TESTING ONLY: when VERIFF_BYPASS is on, skip the Veriff step
@@ -402,7 +423,9 @@ def register_view(request):
             user.save(update_fields=["verification_status"])
             if role_name in ("consultant", "coordinator", "franchise"):
                 return redirect("apply")
-            return redirect("membership")
+            # Business users land in the app on the Free floor; the company gate
+            # then prompts them to create their first company.
+            return redirect("dashboard")
 
         # All roles go through Veriff identity verification
         # After verification, consultant/coordinator/franchise → /apply/, others → /membership/
@@ -436,7 +459,7 @@ def identity_verification_view(request):
     # re-catches them on a later request.
     current_status = (user.verification_status or "")
     if current_status in GATE_PASS_STATUSES:
-        return redirect("apply" if show_apply_link else "membership")
+        return redirect("apply" if show_apply_link else "dashboard")
 
     # Not submitted yet (pending / cancelled / declined / expired). As a
     # safety net for a just-finished user whose "submitted" event webhook
@@ -447,7 +470,7 @@ def identity_verification_view(request):
     if synced:
         user.refresh_from_db(fields=["verification_status"])
         if (user.verification_status or "") in GATE_PASS_STATUSES:
-            return redirect("apply" if show_apply_link else "membership")
+            return redirect("apply" if show_apply_link else "dashboard")
 
     # Otherwise show the start screen so they can begin / re-attempt.
     return render(

@@ -488,11 +488,21 @@
   <!-- CTA -->
   <div class="membership-cta">
     <div class="selected-plan-info" id="selectedPlanInfo"></div>
+    {% if selected_company %}
+      <p style="margin-bottom:8px;font-weight:600;color:#253D51;">
+        {% blocktrans with company=selected_company.name context "website" %}Selecting a plan for {{ company }}{% endblocktrans %}
+      </p>
+    {% else %}
+      <p style="color:#b45309;">
+        {% trans "Open this page from a certified company in “My Companies” to select its plan." context "website" %}
+      </p>
+    {% endif %}
     <p>{% trans "Select a plan above to continue. You will receive a Pro Forma Invoice with payment instructions." context "website" %}</p>
     <form method="POST" action="{% url 'select_plan' %}" id="planForm">
       {% csrf_token %}
       <input type="hidden" name="plan_code" id="planCodeInput" value=""/>
-      <button type="submit" class="btn-proceed" id="btnProceed" disabled>
+      {% if selected_company %}<input type="hidden" name="company_id" value="{{ selected_company.id }}"/>{% endif %}
+      <button type="submit" class="btn-proceed" id="btnProceed" {% if not selected_company %}disabled title="{% trans 'Choose a company first' context 'website' %}"{% else %}disabled{% endif %}>
         {% trans "Continue to Payment" context "website" %} &rarr;
       </button>
     </form>
