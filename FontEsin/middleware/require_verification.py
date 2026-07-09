@@ -29,9 +29,9 @@ class RequireIdentityVerificationMiddleware:
     /verify/, except a small allow-list of paths they need to run the Veriff
     flow, log out, or load static assets.
 
-    This runs BEFORE RequirePlanForBusinessUserMiddleware so verification is
-    enforced ahead of plan selection — you can't choose a plan until you're
-    verified.
+    This runs BEFORE RequireCompanyForBusinessUserMiddleware so verification is
+    enforced ahead of the company-creation gate — you can't create a company
+    (or later pick a per-company plan) until you're verified.
 
     Skipped accounts: anonymous users (login_required handles them),
     superusers, and tenant admins — none of them go through the Veriff
@@ -61,7 +61,7 @@ class RequireIdentityVerificationMiddleware:
         # is still enforced for the app itself (membership, plan selection,
         # dashboard, apply), so this doesn't let anyone skip Veriff; it only
         # keeps the public pages public. Mirrors the same allow-list in
-        # RequirePlanForBusinessUserMiddleware.
+        # RequireCompanyForBusinessUserMiddleware.
         "home",
         "home_root",  # bare "/" serves the same home view as /home/
         "worldmap",

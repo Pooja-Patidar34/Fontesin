@@ -1,6 +1,9 @@
 import json
+import logging
 
 from accounts.models import UserRole, Company, CompanyConnection, CompanyJoinRequest, Notification, User
+
+logger = logging.getLogger("technical")
 
 
 def admin_context(request):
@@ -244,11 +247,17 @@ def admin_context(request):
         # until approval — the template greys out the Connect button and
         # company_connect rejects the request server-side.
         try:
-            from billing.models import Subscription
-            has_pending_paid_upgrade = Subscription.objects.filter(
-                user=request.user, status="created"
-            ).exists()
+            # Plans are company-scoped, so a pending upgrade only locks the
+            # ACTIVE company — a pending request on another owned company must
+            # not gate this session. get_pending_subscription resolves the
+            # active company (falling back to a legacy user-level pending sub).
+            from billing.utils import get_pending_subscription
+            has_pending_paid_upgrade = get_pending_subscription(request.user) is not None
         except Exception:
+            logger.exception(
+                "has_pending_paid_upgrade lookup failed for user %s",
+                getattr(request.user, "pk", None),
+            )
             has_pending_paid_upgrade = False
 
         # Pending payment approvals — drives the red badge on the superuser's
@@ -280,7 +289,11 @@ def admin_context(request):
                 can_switch_company = owned_company_count > 1
                 try:
                     from billing.utils import resolve_active_company, get_active_subscription
-                    active_company = resolve_active_company(request.user)
+                    # ActiveCompanyMiddleware already resolved and cached the
+                    # active company on the request; reuse it to avoid re-running
+                    # the resolver (2 extra queries) on every page load. Fall
+                    # back to resolving directly for non-request contexts.
+                    active_company = getattr(request, "active_company", None) or resolve_active_company(request.user)
                     if active_company:
                         active_company_name = active_company.name
                         active_company_certified = (
@@ -298,6 +311,10 @@ def admin_context(request):
                             if active_plan_code not in ("", "free") and _sub.end_date:
                                 active_plan_needs_renewal = _sub.end_date <= _tz.now() + _td(days=30)
                 except Exception:
+                    logger.exception(
+                        "active-company header context failed for user %s",
+                        getattr(request.user, "pk", None),
+                    )
                     active_company = None
 
     return {

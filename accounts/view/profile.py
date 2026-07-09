@@ -115,7 +115,9 @@ def plans_view(request):
     active_company = resolve_active_company(user)
 
     subscription = get_active_subscription(user, company=active_company)
-    deactivated_plan = get_deactivated_paid_plan(user, subscription=subscription)
+    deactivated_plan = get_deactivated_paid_plan(
+        user, subscription=subscription, company=active_company
+    )
     if deactivated_plan:
         messages.warning(
             request,

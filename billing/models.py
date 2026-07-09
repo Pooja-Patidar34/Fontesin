@@ -178,7 +178,19 @@ class Subscription(models.Model):
                 fields=["company"],
                 condition=Q(status__in=["active", "trial"]) & Q(company__isnull=False),
                 name="unique_active_subscription_per_company"
-            )
+            ),
+            # At most one active/trial ACCOUNT-LEVEL subscription per user
+            # (company is null). These are the legacy/pre-company Free rows
+            # (`ensure_account_free_subscription`); without this, a check-then-
+            # create race could leave a user with duplicate account-level active
+            # subs, making `get_active_subscription`'s no-company fallback
+            # non-deterministic. Company-scoped rows are covered by the
+            # constraint above and excluded here via company__isnull=True.
+            models.UniqueConstraint(
+                fields=["user"],
+                condition=Q(status__in=["active", "trial"]) & Q(company__isnull=True),
+                name="unique_active_account_subscription_per_user"
+            ),
         ]
 
 

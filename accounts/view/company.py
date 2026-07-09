@@ -3,6 +3,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.utils.translation import gettext as _
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from accounts.models import Company, Tenant, AuditLog, CompanyConnection
 from accounts.constants import (
@@ -1619,6 +1620,26 @@ def my_companies(request):
     except (PageNotAnInteger, EmptyPage):
         page_obj = paginator.page(1)
 
+    # Annotate each company on this page with its current active/trial plan so
+    # the action column can show "Select Plan" (no paid plan yet) vs "Manage
+    # Plan" + the plan name (already subscribed). One query for the whole page
+    # instead of a per-row subscription lookup.
+    from billing.models import Subscription
+    page_companies = list(page_obj)
+    subs_by_company = {
+        s.company_id: s
+        for s in Subscription.objects.filter(
+            company__in=page_companies, status__in=["active", "trial"]
+        ).select_related("plan")
+    }
+    for c in page_companies:
+        sub = subs_by_company.get(c.id)
+        plan = sub.plan if sub and sub.plan_id else None
+        c.active_plan_label = plan.name if plan else ""
+        c.active_plan_code = (plan.code or "").lower() if plan else ""
+        # "Paid" = any active plan that isn't Free (Free is the default floor).
+        c.has_paid_plan = bool(c.active_plan_code) and c.active_plan_code != "free"
+
     return render(
         request,
         "dashboard/my_companies.html",
@@ -1674,7 +1695,14 @@ def select_company(request):
         chosen = next((c for c in owned if str(c.id) == str(cid)), None)
         if chosen:
             request.session["active_company_id"] = str(chosen.id)
-            return redirect(request.POST.get("next") or "dashboard")
+            # Validate the post-selection redirect target so a crafted `next`
+            # can't turn the picker into an open-redirect.
+            next_url = request.POST.get("next")
+            if next_url and url_has_allowed_host_and_scheme(
+                next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+            ):
+                return redirect(next_url)
+            return redirect("dashboard")
         messages.error(request, _("Please choose a company to continue."))
 
     if not owned:
@@ -1683,11 +1711,19 @@ def select_company(request):
         request.session["active_company_id"] = str(owned[0].id)
         return redirect("dashboard")
 
-    # Label each company with its current plan for the picker.
-    from billing.utils import get_active_subscription
+    # Label each company with its current plan for the picker. Fetch every
+    # owned company's active/trial subscription in ONE query (keyed by
+    # company id) instead of calling get_active_subscription per company.
+    from billing.models import Subscription
     active_id = request.session.get("active_company_id")
+    subs_by_company = {
+        s.company_id: s
+        for s in Subscription.objects.filter(
+            company__in=owned, status__in=["active", "trial"]
+        ).select_related("plan")
+    }
     for c in owned:
-        sub = get_active_subscription(user, company=c)
+        sub = subs_by_company.get(c.id)
         c.current_plan_label = (sub.plan.name if sub and sub.plan_id else _("Free"))
         c.is_active_selection = str(c.id) == str(active_id)
 

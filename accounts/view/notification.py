@@ -53,7 +53,17 @@ def messages_list(request):
 @login_required
 @require_POST
 def message_mark_read(request, notification_id):
-    note = get_object_or_404(Notification, id=notification_id, recipient=request.user)
+    from accounts.utils.notifications import scope_notifications_qs
+
+    # Scope to the active company's inbox so a business user acting as one
+    # company can't clear (or even address) notifications belonging to their
+    # other companies by guessing ids — mirrors the company-scoped list view.
+    note = get_object_or_404(
+        scope_notifications_qs(
+            Notification.objects.filter(id=notification_id, recipient=request.user),
+            request.user,
+        )
+    )
     if not note.is_read:
         note.is_read = True
         note.read_at = timezone.now()
@@ -84,7 +94,16 @@ def messages_mark_all_read(request):
 @login_required
 @require_POST
 def message_delete(request, notification_id):
-    note = get_object_or_404(Notification, id=notification_id, recipient=request.user)
+    from accounts.utils.notifications import scope_notifications_qs
+
+    # Same company scoping as mark-read: only notifications visible in the
+    # active company's inbox can be deleted.
+    note = get_object_or_404(
+        scope_notifications_qs(
+            Notification.objects.filter(id=notification_id, recipient=request.user),
+            request.user,
+        )
+    )
     note.delete()
     if _is_ajax(request):
         return JsonResponse({"ok": True})
@@ -103,7 +122,14 @@ def message_open(request, notification_id):
     link points off-host (defense against open-redirects via crafted
     notification payloads).
     """
-    note = get_object_or_404(Notification, id=notification_id, recipient=request.user)
+    from accounts.utils.notifications import scope_notifications_qs
+
+    note = get_object_or_404(
+        scope_notifications_qs(
+            Notification.objects.filter(id=notification_id, recipient=request.user),
+            request.user,
+        )
+    )
     if not note.is_read:
         note.is_read = True
         note.read_at = timezone.now()

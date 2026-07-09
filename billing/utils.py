@@ -113,20 +113,32 @@ def ensure_free_subscription(company, user=None):
     if not free_plan:
         return None
 
+    from django.db import IntegrityError, transaction
     from django.utils import timezone
     from dateutil.relativedelta import relativedelta
 
     now = timezone.now()
     owner = user or getattr(company, "owner_user", None)
-    return Subscription.objects.create(
-        user=owner,
-        company=company,
-        plan=free_plan,
-        billing_period=free_plan.billing_period,
-        status="active",
-        start_date=now,
-        end_date=now + relativedelta(years=1),
-    )
+    try:
+        with transaction.atomic():
+            return Subscription.objects.create(
+                user=owner,
+                company=company,
+                plan=free_plan,
+                billing_period=free_plan.billing_period,
+                status="active",
+                start_date=now,
+                end_date=now + relativedelta(years=1),
+            )
+    except IntegrityError:
+        # A concurrent request won the race and created the active sub first
+        # (unique_active_subscription_per_company). Return the existing row.
+        return (
+            Subscription.objects
+            .filter(company=company, status__in=["active", "trial"])
+            .select_related("plan")
+            .first()
+        )
 
 
 def ensure_account_free_subscription(user):
@@ -157,19 +169,32 @@ def ensure_account_free_subscription(user):
     if not free_plan:
         return None
 
+    from django.db import IntegrityError, transaction
     from django.utils import timezone
     from dateutil.relativedelta import relativedelta
 
     now = timezone.now()
-    return Subscription.objects.create(
-        user=user,
-        company=None,
-        plan=free_plan,
-        billing_period=free_plan.billing_period,
-        status="active",
-        start_date=now,
-        end_date=now + relativedelta(years=1),
-    )
+    try:
+        with transaction.atomic():
+            return Subscription.objects.create(
+                user=user,
+                company=None,
+                plan=free_plan,
+                billing_period=free_plan.billing_period,
+                status="active",
+                start_date=now,
+                end_date=now + relativedelta(years=1),
+            )
+    except IntegrityError:
+        # A concurrent login/registration created the account-level Free sub
+        # first (unique_active_account_subscription_per_user). Return whatever
+        # active/trial sub the user now has.
+        return (
+            Subscription.objects
+            .filter(user=user, status__in=["active", "trial"])
+            .select_related("plan")
+            .first()
+        )
 
 
 def get_pending_subscription(user, company=None):
@@ -191,7 +216,7 @@ def get_user_plan(user, subscription=None):
     return subscription.plan if subscription else None
 
 
-def get_deactivated_paid_plan(user, subscription=None):
+def get_deactivated_paid_plan(user, subscription=None, company=None):
     """If the user was auto-moved off a paid plan because an admin
     deactivated it, return the now-inactive CommercialPlan; otherwise None.
 
@@ -205,9 +230,14 @@ def get_deactivated_paid_plan(user, subscription=None):
 
     Returning the plan (not just a bool) lets the template name it in the
     banner: "Your Pro plan was deactivated by the admin."
+
+    Plans are company-scoped, so pass the `company` this check is FOR (the
+    active company) to avoid a cancelled paid sub on ANOTHER owned company
+    raising a false "deactivated by admin" banner. When omitted, the search
+    is user-wide (legacy behaviour).
     """
     if subscription is None:
-        subscription = get_active_subscription(user)
+        subscription = get_active_subscription(user, company=company)
     # If the user is still on a non-Free plan, the helper doesn't apply —
     # they were not auto-moved.
     if not subscription or not subscription.plan_id:
@@ -217,9 +247,11 @@ def get_deactivated_paid_plan(user, subscription=None):
         return None
 
     from billing.models import Subscription
+    cancelled_qs = Subscription.objects.filter(user=user, status="cancelled")
+    if company is not None:
+        cancelled_qs = cancelled_qs.filter(company=company)
     last_cancelled = (
-        Subscription.objects
-        .filter(user=user, status="cancelled")
+        cancelled_qs
         .exclude(plan__code__iexact="free")
         .select_related("plan")
         .order_by("-end_date", "-updated_at")

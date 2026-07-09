@@ -22,13 +22,17 @@
     font-weight: 700;
     color: #1B2E3F;
   }
-  .payments-table .col-user      { width: 22%; }
-  .payments-table .col-ref       { width: 18%; }
-  .payments-table .col-plan      { width: 10%; }
-  .payments-table .col-amount    { width: 12%; white-space: nowrap; }
-  .payments-table .col-status    { width: 12%; text-align: center; white-space: nowrap; }
-  .payments-table .col-requested { width: 12%; white-space: nowrap; }
-  .payments-table .col-actions   { width: 14%; }
+  /* 8 columns must sum to 100% under table-layout: fixed — the Company /
+     Consultant column was added without a width, which collapsed it to ~0
+     and made its text wrap one character per line. */
+  .payments-table .col-user      { width: 17%; }
+  .payments-table .col-company   { width: 17%; }
+  .payments-table .col-ref       { width: 13%; }
+  .payments-table .col-plan      { width: 9%; }
+  .payments-table .col-amount    { width: 11%; white-space: nowrap; }
+  .payments-table .col-status    { width: 10%; text-align: center; white-space: nowrap; }
+  .payments-table .col-requested { width: 10%; white-space: nowrap; }
+  .payments-table .col-actions   { width: 13%; }
   .payments-table .user-cell strong {
     display: block;
     font-size: .88rem;
@@ -50,6 +54,20 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+  .payments-table .company-cell strong {
+    display: block;
+    color: #1B2E3F;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .payments-table .company-cell .muted {
+    font-size: .72rem;
+    line-height: 1.15;
+    /* Let the consultant line wrap on word boundaries, never per-character. */
+    overflow-wrap: anywhere;
+    word-break: normal;
   }
   .payments-table .plan-cell {
     white-space: nowrap;

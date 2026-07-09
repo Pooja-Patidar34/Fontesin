@@ -129,15 +129,26 @@
               </a>
               {% comment %}
                 Plan selection is per-company and unlocked only once the
-                company is certified by a consultant. Owners of a certified
-                company get a "Select Plan" action that carries the company
-                context into the membership page.
+                company is certified by a consultant. A company with no paid
+                plan yet shows "Select Plan"; one already on a paid plan shows
+                its current plan + "Manage Plan" (both link to the per-company
+                membership page).
               {% endcomment %}
               {% if c.certification_status == "certified" %}
-              <a href="{% url 'membership' %}?company={{ c.id }}"
-                 class="btn btn-sm btn-outline-success ml-1">
-                <i class="fas fa-crown mr-1"></i> {% trans "Select Plan" context "companies" %}
-              </a>
+                {% if c.has_paid_plan %}
+                <span class="pill pill-certified ml-1" title="{% trans "Current plan" context "companies" %}">
+                  <i class="fas fa-crown mr-1"></i>{{ c.active_plan_label }}
+                </span>
+                <a href="{% url 'membership' %}?company={{ c.id }}"
+                   class="btn btn-sm btn-outline-secondary ml-1">
+                  {% trans "Manage Plan" context "companies" %}
+                </a>
+                {% else %}
+                <a href="{% url 'membership' %}?company={{ c.id }}"
+                   class="btn btn-sm btn-outline-success ml-1">
+                  <i class="fas fa-crown mr-1"></i> {% trans "Select Plan" context "companies" %}
+                </a>
+                {% endif %}
               {% endif %}
               {% else %}
               <form method="post" action="{% url 'company-leave' c.id %}"

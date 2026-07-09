@@ -502,7 +502,8 @@
       {% csrf_token %}
       <input type="hidden" name="plan_code" id="planCodeInput" value=""/>
       {% if selected_company %}<input type="hidden" name="company_id" value="{{ selected_company.id }}"/>{% endif %}
-      <button type="submit" class="btn-proceed" id="btnProceed" {% if not selected_company %}disabled title="{% trans 'Choose a company first' context 'website' %}"{% else %}disabled{% endif %}>
+      {# Always starts disabled; selectPlan() enables it once a plan is chosen. The title only adds a hint when no company is selected. #}
+      <button type="submit" class="btn-proceed" id="btnProceed" disabled {% if not selected_company %}title="{% trans 'Choose a company first' context 'website' %}"{% endif %}>
         {% trans "Continue to Payment" context "website" %} &rarr;
       </button>
     </form>
