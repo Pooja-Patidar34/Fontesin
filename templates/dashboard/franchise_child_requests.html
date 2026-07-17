@@ -1,0 +1,236 @@
+{% extends "base/base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Sub-Franchise Requests" context "franchise" %}{% endblock %}
+
+{% block content %}
+
+<style>
+  .cr-tabs { display: flex; gap: .25rem; border-bottom: 1px solid #e9ecef; padding: 0 1.25rem; background: #f8f9fa; }
+  .cr-tab { border: 0; background: transparent; padding: .75rem 1rem; font-size: .85rem; font-weight: 600; color: #6c757d; border-bottom: 2px solid transparent; cursor: pointer; }
+  .cr-tab:hover { color: #1B2E3F; }
+  .cr-tab.active { color: #1B2E3F; border-bottom-color: #4da3ff; }
+  .cr-tab .badge { margin-left: .35rem; font-size: .68rem; }
+  .cr-pane { display: none; }
+  .cr-pane.active { display: block; }
+  .empty-state { text-align: center; color: #94a3b8; padding: 2.5rem 1rem; }
+  .empty-state .fa-2x { margin-bottom: .5rem; }
+  .cr-info-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 18px; font-size: .8rem; color: #475569; margin-top: 6px; }
+  .cr-info-grid div { min-width: 0; overflow-wrap: anywhere; }
+  .cr-info-grid div span { color: #94a3b8; margin-right: 5px; }
+  .cr-motivation { background: #f8fafc; border: 1px solid #eef2f7; border-radius: 8px; padding: 8px 10px; font-size: .82rem; color: #1f2937; white-space: pre-wrap; margin-top: 8px; }
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 100px; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+  .pill-approved { background: #dbeafe; color: #1e40af; }
+  .pill-active { background: #dcfce7; color: #166534; }
+  .pill-pending_contract, .pill-pending_payment { background: #fef3c7; color: #92600a; }
+  .pill-rejected { background: #fee2e2; color: #991b1b; }
+  .fr-head { display: flex; gap: 14px; align-items: flex-start; padding: 20px 22px; border-bottom: 1px solid #f1f5f9; }
+  .fr-ico { width: 42px; height: 42px; border-radius: 11px; display: grid; place-items: center; font-size: 1.02rem; flex: 0 0 auto; background: #eaf2fb; color: #2f6dbd; }
+  .fr-head__t { font-size: 1.06rem; font-weight: 700; color: #0f1e2e; margin: 0; line-height: 1.25; }
+  .fr-head__s { font-size: .82rem; color: #64748b; margin: 5px 0 0; line-height: 1.5; max-width: 660px; }
+  .card.fr-shell { border: 1px solid #e8edf3; border-radius: 14px; box-shadow: 0 1px 3px rgba(15,23,42,.05); overflow: hidden; }
+</style>
+
+<div class="card fr-shell">
+
+  <div class="fr-head">
+    <div class="fr-ico"><i class="fas fa-inbox"></i></div>
+    <div>
+      <h3 class="fr-head__t">{% trans "Sub-Franchise Requests" context "franchise" %}</h3>
+      <p class="fr-head__s">
+        {% blocktrans trimmed context "franchise" %}
+        Requests to open a franchise inside your territory. Approve to create it under
+        your tree — the Platform Admin then activates it after contract &amp; payment.
+        {% endblocktrans %}
+      </p>
+    </div>
+  </div>
+
+  <div class="cr-tabs">
+    <button type="button" class="cr-tab active" data-pane="pending">
+      {% trans "Pending" context "workflows" %}{% if pending %}<span class="badge badge-warning">{{ pending|length }}</span>{% endif %}
+    </button>
+    <button type="button" class="cr-tab" data-pane="approved">
+      {% trans "Approved" context "workflows" %}{% if approved %}<span class="badge badge-secondary">{{ approved|length }}</span>{% endif %}
+    </button>
+    <button type="button" class="cr-tab" data-pane="rejected">
+      {% trans "Rejected" context "workflows" %}{% if rejected %}<span class="badge badge-secondary">{{ rejected|length }}</span>{% endif %}
+    </button>
+  </div>
+
+  <!-- PENDING -->
+  <div class="cr-pane active" id="pane-pending">
+    <div class="card-body p-0">
+      {% if pending %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th style="width:32%;">{% trans "Applicant" context "franchise" %}</th>
+              <th>{% trans "Request" context "franchise" %}</th>
+              <th class="text-right pr-4" style="width:26%;">{% trans "Action" context "common" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in pending %}
+            <tr>
+              <td>
+                <strong>{{ a.applicant_user.first_name }} {{ a.applicant_user.last_name }}</strong>
+                <div class="small text-muted">{{ a.applicant_user.email }}</div>
+                {% if a.applicant_user.phone %}<div class="small text-muted"><i class="fas fa-phone mr-1"></i>{{ a.applicant_user.phone }}</div>{% endif %}
+                <div class="small text-muted mt-1">{{ a.created_at|date:"M j, Y H:i" }}</div>
+              </td>
+              <td>
+                <div class="cr-info-grid">
+                  <div><span>{% trans "Level:" context "franchise" %}</span><strong>{{ a.get_requested_level_display }}</strong></div>
+                  <div><span>{% trans "Under:" context "franchise" %}</span>{{ a.parent_franchise.name }}</div>
+                  <div><span>{% trans "Country:" context "franchise" %}</span>{{ a.requested_country }}</div>
+                  {% if a.requested_region %}<div><span>{% trans "Region:" context "franchise" %}</span>{{ a.requested_region }}</div>{% endif %}
+                  {% if a.requested_city %}<div><span>{% trans "City:" context "franchise" %}</span>{{ a.requested_city }}</div>{% endif %}
+                  {% if a.requested_local_area %}<div><span>{% trans "Local area:" context "franchise" %}</span>{{ a.requested_local_area }}</div>{% endif %}
+                </div>
+                {% if a.application_note %}
+                <div class="cr-motivation"><strong>{% trans "Notes:" context "franchise" %}</strong> {{ a.application_note }}</div>
+                {% endif %}
+                {% if a.conflict %}
+                <div class="cr-motivation" style="background:#fff5f5; border-color:#fbdada; color:#9f1239;">
+                  <i class="fas fa-exclamation-triangle mr-1"></i>
+                  {% blocktrans trimmed with name=a.conflict.name context "franchise" %}
+                  This territory is already held by <strong>{{ name }}</strong>. Only one franchise is allowed per territory — reject this request.
+                  {% endblocktrans %}
+                </div>
+                {% endif %}
+              </td>
+              <td class="text-right pr-4" style="vertical-align: top;">
+                <form method="post" action="{% url 'franchise-child-action' a.id %}" class="d-inline m-0">
+                  {% csrf_token %}
+                  <input type="hidden" name="decision" value="approve">
+                  <button type="submit" class="btn btn-sm btn-success">
+                    <i class="fas fa-check mr-1"></i> {% trans "Approve" context "workflows" %}
+                  </button>
+                </form>
+                <button type="button" class="btn btn-sm btn-outline-danger mt-1"
+                        onclick="document.getElementById('fc-reject-{{ a.id }}').style.display='block'; this.style.display='none';">
+                  <i class="fas fa-times mr-1"></i> {% trans "Reject" context "workflows" %}
+                </button>
+                <form id="fc-reject-{{ a.id }}" method="post" action="{% url 'franchise-child-action' a.id %}"
+                      style="display:none; margin-top: 8px;">
+                  {% csrf_token %}
+                  <input type="hidden" name="decision" value="reject">
+                  <textarea name="board_note" rows="2" class="form-control form-control-sm"
+                            placeholder="{% trans "Reason (shown to applicant)" context "franchise" %}" style="font-size:.78rem;"></textarea>
+                  <button type="submit" class="btn btn-sm btn-danger mt-1">
+                    <i class="fas fa-paper-plane mr-1"></i> {% trans "Submit rejection" context "franchise" %}
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="fas fa-inbox fa-2x"></i>
+        <p class="mb-0">{% trans "No pending sub-franchise requests." context "franchise" %}</p>
+        <p class="small mb-0">{% trans "Requests to open a franchise inside your territory appear here." context "franchise" %}</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- APPROVED -->
+  <div class="cr-pane" id="pane-approved">
+    <div class="card-body p-0">
+      {% if approved %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th>{% trans "Applicant" context "franchise" %}</th>
+              <th>{% trans "Franchise" context "franchise" %}</th>
+              <th>{% trans "Status" context "workflows" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in approved %}
+            <tr>
+              <td>
+                <strong>{{ a.applicant_user.first_name }} {{ a.applicant_user.last_name }}</strong>
+                <div class="small text-muted">{{ a.applicant_user.email }}</div>
+              </td>
+              <td>
+                {% if a.created_franchise %}
+                <strong>{{ a.created_franchise.name }}</strong>
+                <div class="small text-muted">{{ a.created_franchise.get_franchise_level_display }}</div>
+                {% else %}—{% endif %}
+              </td>
+              <td>
+                {% if a.created_franchise %}
+                <span class="pill pill-{{ a.created_franchise.franchise_status|lower }}">{{ a.created_franchise.get_franchise_status_display }}</span>
+                {% else %}<span class="pill pill-approved">{% trans "Approved" context "workflows" %}</span>{% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="fas fa-check-circle fa-2x"></i>
+        <p class="mb-0">{% trans "No approved sub-franchises yet." context "franchise" %}</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- REJECTED -->
+  <div class="cr-pane" id="pane-rejected">
+    <div class="card-body p-0">
+      {% if rejected %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th>{% trans "Applicant" context "franchise" %}</th>
+              <th>{% trans "Request" context "franchise" %}</th>
+              <th>{% trans "Reason" context "workflows" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in rejected %}
+            <tr>
+              <td>
+                <strong>{{ a.applicant_user.first_name }} {{ a.applicant_user.last_name }}</strong>
+                <div class="small text-muted">{{ a.applicant_user.email }}</div>
+              </td>
+              <td class="small text-muted">{{ a.get_requested_level_display }} · {{ a.requested_country }}</td>
+              <td class="small text-muted">{{ a.board_note|default:"—" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="fas fa-user-times fa-2x"></i>
+        <p class="mb-0">{% trans "No rejected sub-franchise requests." context "franchise" %}</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+<script>
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest(".cr-tab");
+    if (!btn) return;
+    document.querySelectorAll(".cr-tab").forEach(function (t) { t.classList.remove("active"); });
+    document.querySelectorAll(".cr-pane").forEach(function (p) { p.classList.remove("active"); });
+    btn.classList.add("active");
+    var pane = document.getElementById("pane-" + btn.dataset.pane);
+    if (pane) pane.classList.add("active");
+  });
+</script>
+
+{% endblock %}

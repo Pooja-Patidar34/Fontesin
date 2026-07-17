@@ -13,6 +13,9 @@
     background: #f8f9fa;
   }
   .myc-table td, .myc-table th { vertical-align: middle !important; }
+  /* Placeholder for a missing value — centered in its column, unlike the
+     left-aligned real values, so empty cells read as deliberately blank. */
+  .myc-dash { display: block; text-align: center; color: #94a3b8; }
   .myc-empty {
     text-align: center;
     color: #94a3b8;
@@ -89,9 +92,15 @@
               {% endif %}
             </td>
             <td class="small">
-              {{ c.city|default:"—" }}{% if c.country %}, {{ c.country }}{% endif %}
+              {% if c.city or c.country %}
+                {% if c.city %}{{ c.city }}{% endif %}{% if c.country %}{% if c.city %}, {% endif %}{{ c.country }}{% endif %}
+              {% else %}
+                <span class="myc-dash">—</span>
+              {% endif %}
             </td>
-            <td class="small text-muted">{{ c.registration_id|default:"—" }}</td>
+            <td class="small text-muted">
+              {% if c.registration_id %}{{ c.registration_id }}{% else %}<span class="myc-dash">—</span>{% endif %}
+            </td>
             <td>
               {% if c.certification_status == "pending" %}
                 <span class="pill pill-pending">{% trans "Pending" context "companies" %}</span>
@@ -129,13 +138,22 @@
               </a>
               {% comment %}
                 Plan selection is per-company and unlocked only once the
-                company is certified by a consultant. A company with no paid
-                plan yet shows "Select Plan"; one already on a paid plan shows
-                its current plan + "Manage Plan" (both link to the per-company
-                membership page).
+                company is certified by a consultant. Branches, in order:
+                  1. a plan upgrade is awaiting admin approval (a "created"
+                     subscription) — show the requested plan + "Pending" only,
+                     with no button: there's nothing to manage until it's
+                     approved, and no "Select Plan" that would invite a
+                     duplicate request;
+                  2. already on a paid plan — show it + "Manage Plan";
+                  3. no paid plan yet — "Select Plan".
+                Branches 2 and 3 link to the per-company membership page.
               {% endcomment %}
               {% if c.certification_status == "certified" %}
-                {% if c.has_paid_plan %}
+                {% if c.has_pending_plan %}
+                <span class="pill pill-pending ml-1" title="{% trans "Plan awaiting admin approval" context "companies" %}">
+                  <i class="fas fa-hourglass-half mr-1"></i>{{ c.pending_plan_label }} · {% trans "Pending" context "billing" %}
+                </span>
+                {% elif c.has_paid_plan %}
                 <span class="pill pill-certified ml-1" title="{% trans "Current plan" context "companies" %}">
                   <i class="fas fa-crown mr-1"></i>{{ c.active_plan_label }}
                 </span>

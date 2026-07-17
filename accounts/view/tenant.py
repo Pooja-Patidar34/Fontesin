@@ -153,7 +153,22 @@ def tenant_list(request):
     # Business user: only see their own tenant
     if is_business_user:
         qs = Tenant.objects.filter(id=request.user.tenant_id, is_deleted=False)
+    elif is_franchise_partner and not request.user.is_superuser:
+        # Franchise partner: only their own franchise node(s) plus descendants —
+        # never a parallel branch (spec §7.1/§7.3, §9.6 "View parallel branches" =
+        # No). A Brazil master must not see the US master's nodes. This mirrors
+        # the Franchise Tree page's scoping via visible_node_ids().
+        from accounts.view.franchise import visible_nodes_qs
+        qs = visible_nodes_qs(request.user).filter(is_deleted=False)
+
+        # Deactivated tenants are an admin-only concern: the Platform Admin needs
+        # them listed to reactivate them, but a franchise partner has no action to
+        # take on one, so they only ever see live tenants. `is_active` is the field
+        # the Status badge renders, so this hides exactly the "Inactive" rows.
+        qs = qs.filter(is_active=True)
     else:
+        # Platform Admin: the full tenant list — franchise nodes AND plain
+        # (non-franchise) tenants alike, active and inactive.
         qs = Tenant.objects.filter(is_deleted=False)
 
     if q:

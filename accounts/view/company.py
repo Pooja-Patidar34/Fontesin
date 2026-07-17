@@ -1632,6 +1632,18 @@ def my_companies(request):
             company__in=page_companies, status__in=["active", "trial"]
         ).select_related("plan")
     }
+    # A pending plan upgrade is a Subscription with status="created" — the company
+    # keeps its active/free plan until an admin approves it (mirrors
+    # billing.utils.get_pending_subscription). Without this the action column
+    # would still show "Select Plan" for a company that already has a request in
+    # flight. Keep only the newest pending row per company.
+    pending_by_company = {}
+    for s in (
+        Subscription.objects.filter(company__in=page_companies, status="created")
+        .select_related("plan")
+        .order_by("-created_at")
+    ):
+        pending_by_company.setdefault(s.company_id, s)
     for c in page_companies:
         sub = subs_by_company.get(c.id)
         plan = sub.plan if sub and sub.plan_id else None
@@ -1639,6 +1651,10 @@ def my_companies(request):
         c.active_plan_code = (plan.code or "").lower() if plan else ""
         # "Paid" = any active plan that isn't Free (Free is the default floor).
         c.has_paid_plan = bool(c.active_plan_code) and c.active_plan_code != "free"
+        pending = pending_by_company.get(c.id)
+        pending_plan = pending.plan if pending and pending.plan_id else None
+        c.pending_plan_label = pending_plan.name if pending_plan else ""
+        c.has_pending_plan = bool(c.pending_plan_label)
 
     return render(
         request,

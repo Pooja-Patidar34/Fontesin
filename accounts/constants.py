@@ -362,3 +362,143 @@ class SupportedLocale:
 
 class LanguageChoices(SupportedLocale):
     """Backward-compatible alias for SupportedLocale."""
+
+
+# ---------------------------------------------------------------------------
+# Franchise hierarchy (MVP)
+#
+# The franchise tree is layered onto the existing `Tenant` model: a Tenant row
+# with a non-null `franchise_level` IS a franchise node; a row with a null
+# level is a plain org-partition (legacy behaviour, unchanged). These choice
+# classes back the new franchise fields on Tenant plus the FranchiseApplication
+# and ConsultantAssignment models. See accounts/models.py.
+# ---------------------------------------------------------------------------
+
+
+class FranchiseLevel:
+    """The four franchise tiers, ordered from broadest to narrowest.
+
+    Not every region uses every tier (spec §1): a Master may sit directly above
+    a Regional or a Micro if the intermediate tiers don't exist yet. `RANK`
+    encodes depth so validation can require a child to be strictly deeper than
+    its parent without forcing adjacent tiers.
+    """
+    MASTER = "MASTER"
+    NATIONAL = "NATIONAL"
+    REGIONAL = "REGIONAL"
+    MICRO = "MICRO"
+
+    CHOICES = [
+        (MASTER, _("Master Franchise")),
+        (NATIONAL, _("National Sub-Franchise")),
+        (REGIONAL, _("Regional Sub-Franchise")),
+        (MICRO, _("Micro-Franchise")),
+    ]
+
+    # Depth rank — a child node must have a strictly greater rank than its
+    # parent. Gaps are allowed (simplified MVP tree, spec §4 note).
+    RANK = {
+        MASTER: 1,
+        NATIONAL: 2,
+        REGIONAL: 3,
+        MICRO: 4,
+    }
+
+
+class FranchiseUnitStatus:
+    """Lifecycle of a franchise unit (spec §9.2).
+
+    A unit gains full access rights ONLY in ACTIVE. Everything before that is a
+    gate (contract → payment → activation); everything after is a wind-down.
+    """
+    PENDING_CONTRACT = "PENDING_CONTRACT"
+    PENDING_PAYMENT = "PENDING_PAYMENT"
+    ACTIVE = "ACTIVE"
+    SUSPENDED = "SUSPENDED"
+    TERMINATED = "TERMINATED"
+    EXPIRED = "EXPIRED"
+
+    CHOICES = [
+        (PENDING_CONTRACT, _("Pending Contract")),
+        (PENDING_PAYMENT, _("Pending Payment")),
+        (ACTIVE, _("Active")),
+        (SUSPENDED, _("Suspended")),
+        (TERMINATED, _("Terminated")),
+        (EXPIRED, _("Expired")),
+    ]
+
+
+class FranchiseApplicationStatus:
+    """Lifecycle of a franchise application / approval request (spec §9.1)."""
+    DRAFT = "DRAFT"
+    SUBMITTED = "SUBMITTED"
+    PENDING_REVIEW = "PENDING_REVIEW"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    CANCELLED = "CANCELLED"
+
+    CHOICES = [
+        (DRAFT, _("Draft")),
+        (SUBMITTED, _("Submitted")),
+        (PENDING_REVIEW, _("Pending Review")),
+        (APPROVED, _("Approved")),
+        (REJECTED, _("Rejected")),
+        (CANCELLED, _("Cancelled")),
+    ]
+
+    # Statuses that still occupy the reviewer's queue.
+    OPEN = frozenset({SUBMITTED, PENDING_REVIEW})
+
+
+class ConsultantType:
+    """A consultant's relationship to a franchise node (spec §8.3).
+
+    A Micro-Franchise owner IS a consultant with local exclusivity; a standard
+    consultant works a territory without exclusivity and can't block it.
+    """
+    MICRO_FRANCHISE_OWNER = "MICRO_FRANCHISE_OWNER"
+    STANDARD_CONSULTANT = "STANDARD_CONSULTANT"
+
+    CHOICES = [
+        (MICRO_FRANCHISE_OWNER, _("Micro-Franchise Owner")),
+        (STANDARD_CONSULTANT, _("Standard Consultant")),
+    ]
+
+
+class ConsultantAssignmentStatus:
+    """Lifecycle of a consultant's assignment to a franchise node (spec §12.3)."""
+    PENDING = "PENDING"
+    ACTIVE = "ACTIVE"
+    SUSPENDED = "SUSPENDED"
+    TERMINATED = "TERMINATED"
+
+    CHOICES = [
+        (PENDING, _("Pending")),
+        (ACTIVE, _("Active")),
+        (SUSPENDED, _("Suspended")),
+        (TERMINATED, _("Terminated")),
+    ]
+
+
+class FranchiseFeeStatus:
+    """Franchise-fee payment state (spec §8.1 `franchise_fee_status`)."""
+    UNPAID = "UNPAID"
+    PAID = "PAID"
+    WAIVED = "WAIVED"
+
+    CHOICES = [
+        (UNPAID, _("Unpaid")),
+        (PAID, _("Paid")),
+        (WAIVED, _("Waived")),
+    ]
+
+
+class ContractStatus:
+    """Franchise-contract signature state (spec §8.1 `contract_status`)."""
+    PENDING = "PENDING"
+    SIGNED = "SIGNED"
+
+    CHOICES = [
+        (PENDING, _("Pending")),
+        (SIGNED, _("Signed")),
+    ]

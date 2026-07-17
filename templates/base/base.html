@@ -39,6 +39,14 @@
       flex-direction: column;
       flex: 1 1 auto;
       min-height: 0;
+      /* AdminLTE gives .sidebar its own overflow-y, so it — not .main-sidebar —
+         is what actually scrolls. Its scrollbar was left visible and sat on top
+         of the nav badges, clipping them. Hide it to match .main-sidebar. */
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .main-sidebar > .sidebar::-webkit-scrollbar {
+      display: none;
     }
     .main-sidebar .brand-link {
       background: transparent !important;
@@ -184,6 +192,78 @@
       margin-left: auto;
       box-shadow: 0 0 0 2px rgba(255,255,255,.06);
     }
+
+    /* On a treeview parent AdminLTE pins the caret with position:absolute;
+       right:1rem, so it leaves the flex flow and the badge's margin-left:auto
+       parks it underneath. Reserve the caret's lane so the two sit side by side. */
+    .nav-sidebar .has-treeview > .nav-link > .sidebar-notif-badge {
+      margin-right: .9rem;
+    }
+
+    /* Top-right notification bell (§16 #7). Sidebar item is unchanged. */
+    .topbar-bell {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      color: #475569;
+      font-size: 1.05rem;
+      text-decoration: none;
+      transition: background .15s ease, color .15s ease;
+    }
+    .topbar-bell:hover { background: #f1f5f9; color: #16293b; }
+    .topbar-bell__badge {
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      background: #e11d48;
+      color: #fff;
+      font-size: .62rem;
+      font-weight: 700;
+      min-width: 17px;
+      height: 17px;
+      padding: 0 4px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      box-shadow: 0 0 0 2px #fff;
+    }
+    .topbar-bell__menu {
+      width: 340px;
+      max-width: 92vw;
+      padding: 0;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 12px 32px rgba(15,23,42,.14);
+      overflow: hidden;
+    }
+    .topbar-bell__head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid #f1f5f9;
+      font-weight: 700;
+      font-size: .9rem;
+      color: #0f1e2e;
+    }
+    .topbar-bell__count { font-size: .68rem; font-weight: 700; color: #e11d48; background: #fee2e2; padding: 2px 8px; border-radius: 999px; }
+    .topbar-bell__list { max-height: 360px; overflow-y: auto; }
+    .topbar-bell__item { display: block; padding: 11px 16px; border-bottom: 1px solid #f6f8fb; text-decoration: none; color: #334155; }
+    .topbar-bell__item:hover { background: #f8fafc; text-decoration: none; }
+    .topbar-bell__item.is-unread { background: #f0f7ff; }
+    .topbar-bell__item.is-unread:hover { background: #e6f1fe; }
+    .topbar-bell__title { font-size: .82rem; font-weight: 600; color: #0f1e2e; }
+    .topbar-bell__body { font-size: .76rem; color: #64748b; margin-top: 2px; }
+    .topbar-bell__time { font-size: .68rem; color: #94a3b8; margin-top: 3px; }
+    .topbar-bell__empty { padding: 28px 16px; text-align: center; color: #94a3b8; font-size: .82rem; }
+    .topbar-bell__foot { display: block; padding: 11px 16px; text-align: center; font-size: .8rem; font-weight: 600; color: #24405a; background: #fbfdff; text-decoration: none; }
+    .topbar-bell__foot:hover { background: #f1f5f9; text-decoration: none; }
 
     /* Profile section — pinned to the bottom of the flex sidebar body. */
     .sidebar-profile {
@@ -447,6 +527,38 @@
       <li class="nav-item d-none d-md-block">
         {% language_switcher %}
       </li>
+
+      {% comment %} Top-right notification bell with red unread badge (§16 #7). The
+         sidebar Notifications item stays as the full inbox; this is the
+         quick-glance bell. {% endcomment %}
+      <li class="nav-item dropdown">
+        <a href="#" class="topbar-bell" data-toggle="dropdown" aria-label="{% trans "Notifications" context "nav" %}"
+           title="{% trans "Notifications" context "nav" %}">
+          <i class="far fa-bell"></i>
+          {% if unread_message_count %}
+          <span class="topbar-bell__badge" aria-label="{% blocktrans with count=unread_message_count %}{{ count }} unread notifications{% endblocktrans %}">{% if unread_message_count > 9 %}9+{% else %}{{ unread_message_count }}{% endif %}</span>
+          {% endif %}
+        </a>
+        <div class="dropdown-menu dropdown-menu-right topbar-bell__menu">
+          <div class="topbar-bell__head">
+            <span>{% trans "Notifications" context "nav" %}</span>
+            {% if unread_message_count %}<span class="topbar-bell__count">{% blocktrans with count=unread_message_count %}{{ count }} new{% endblocktrans %}</span>{% endif %}
+          </div>
+          <div class="topbar-bell__list">
+            {% for n in recent_notifications %}
+            <a href="{% if n.link_url %}{{ n.link_url }}{% else %}{% url 'messages' %}{% endif %}" class="topbar-bell__item {% if not n.is_read %}is-unread{% endif %}">
+              <div class="topbar-bell__title">{{ n.title }}</div>
+              {% if n.body %}<div class="topbar-bell__body">{{ n.body|truncatechars:90 }}</div>{% endif %}
+              <div class="topbar-bell__time">{{ n.created_at|timesince }} {% trans "ago" context "nav" %}</div>
+            </a>
+            {% empty %}
+            <div class="topbar-bell__empty">{% trans "No notifications yet." context "nav" %}</div>
+            {% endfor %}
+          </div>
+          <a href="{% url 'messages' %}" class="topbar-bell__foot">{% trans "View all notifications" context "nav" %}</a>
+        </div>
+      </li>
+
       <li class="nav-item dropdown">
         <a href="#" class="header-user" style="text-decoration:none;" data-toggle="dropdown">
           <div class="header-user__dot"></div>
@@ -560,6 +672,143 @@
           {% endif %}
           {% endwith %}
 
+          {% comment %} Request a Franchise — standard accounts (Business Users) apply
+             to hold a franchise, and franchise holders use it to see "My
+             Franchises". Consultants/coordinators cannot create franchises
+             (spec §6, §17 #11), so it's hidden from them. {% endcomment %}
+          {% if not request.user.is_superuser and request.user.role.code|lower == "business_user" or is_active_franchise_owner %}
+
+          {% comment %} A Business User who holds no franchise yet has only this one
+             entry point, so it stays a flat item — there is nothing to group it
+             with until they own an activated node. {% endcomment %}
+          {% if not is_active_franchise_owner %}
+          <li class="nav-item">
+            <a href="{% url 'franchise-request' %}"
+               class="nav-link {% if active_menu == 'franchise-request' %}active{% endif %}">
+              <i class="nav-icon fas fa-sitemap"></i>
+              <p>{% trans "Request a Franchise" context "sidebar" %}</p>
+            </a>
+          </li>
+          {% else %}
+
+          {% comment %} Franchise Management — the holder's five franchise screens
+             collapsed into one treeview group (spec §12). The whole section shows
+             only once the account owns an ACTIVATED franchise node (spec §6.2) — a
+             franchise-role account with no live node sees nothing here until
+             activation. The parent carries the sub-franchise pending badge so the
+             count stays visible while the group is collapsed. {% endcomment %}
+          <li class="nav-item has-treeview {% if active_menu == 'franchise-request' or active_menu == 'franchise-child-requests' or active_menu == 'tenants' or active_menu == 'franchise-tree' or active_menu == 'franchise-add-subfranchise' %}menu-open{% endif %}">
+            <a href="#"
+               class="nav-link {% if active_menu == 'franchise-request' or active_menu == 'franchise-child-requests' or active_menu == 'tenants' or active_menu == 'franchise-tree' or active_menu == 'franchise-add-subfranchise' %}active{% endif %}"
+               style="display: flex; align-items: center;">
+              <i class="nav-icon fas fa-sitemap"></i>
+              <p style="flex:1;">
+                {% trans "Manage Franchises" context "sidebar" %}
+                <i class="right fas fa-angle-left"></i>
+              </p>
+              {% if pending_child_franchise_request_count %}
+              <span class="sidebar-notif-badge" aria-label="{% blocktrans with count=pending_child_franchise_request_count %}{{ count }} pending sub-franchise requests{% endblocktrans %}">
+                {% if pending_child_franchise_request_count > 9 %}9+{% else %}{{ pending_child_franchise_request_count }}{% endif %}
+              </span>
+              {% endif %}
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="{% url 'franchise-request' %}"
+                   class="nav-link {% if active_menu == 'franchise-request' %}active{% endif %}">
+                  <i class="fas fa-sitemap nav-icon"></i>
+                  <p>{% trans "My Franchises" context "sidebar" %}</p>
+                </a>
+              </li>
+
+              {% comment %} Sub-Franchise Requests — the direct-parent operational review
+                 queue (spec §4.2). Always available to a franchise holder so every
+                 parent can accept requests any time; the badge shows the pending
+                 count. {% endcomment %}
+              <li class="nav-item">
+                <a href="{% url 'franchise-child-requests' %}"
+                   class="nav-link {% if active_menu == 'franchise-child-requests' %}active{% endif %}"
+                   style="display: flex; align-items: center;">
+                  <i class="fas fa-inbox nav-icon"></i>
+                  <p style="flex:1;">{% trans "Sub-Franchise Requests" context "sidebar" %}</p>
+                  {% if pending_child_franchise_request_count %}
+                  <span class="sidebar-notif-badge" aria-label="{% blocktrans with count=pending_child_franchise_request_count %}{{ count }} pending sub-franchise requests{% endblocktrans %}">
+                    {% if pending_child_franchise_request_count > 9 %}9+{% else %}{{ pending_child_franchise_request_count }}{% endif %}
+                  </span>
+                  {% endif %}
+                </a>
+              </li>
+
+              {% comment %} Franchises — the tenants list. Unlike the Franchise Tree
+                 below, tenant_list does NOT scope to visible_node_ids: a holder
+                 sees every tenant, including parallel branches. It does hide
+                 deactivated tenants, which stay admin-only. {% endcomment %}
+              <li class="nav-item">
+                <a href="{% url 'tenants' %}"
+                   class="nav-link {% if active_menu == 'tenants' %}active{% endif %}">
+                  <i class="fas fa-list-ul nav-icon"></i>
+                  <p>{% trans "Franchises" context "sidebar" %}</p>
+                </a>
+              </li>
+
+              {% comment %} Franchise Tree — the holder's own node plus its descendant
+                 subtree, scoped by visible_nodes_qs (spec §7.1/§12). {% endcomment %}
+              <li class="nav-item">
+                <a href="{% url 'franchise-tree' %}"
+                   class="nav-link {% if active_menu == 'franchise-tree' %}active{% endif %}">
+                  <i class="fas fa-project-diagram nav-icon"></i>
+                  <p>{% trans "Franchise Tree" context "sidebar" %}</p>
+                </a>
+              </li>
+
+              {% comment %} Add Sub-Franchise — only for owners whose franchise can have
+                 children (a non-Micro node). A Micro-Franchise is the deepest level and
+                 has no child hierarchy (§8.2), so a Micro-only owner never sees this.
+                 Suspended non-Micro owners still see it and reach the "suspended"
+                 explanation on the page (§13 Rule 10). {% endcomment %}
+              {% if can_add_subfranchise %}
+              <li class="nav-item">
+                <a href="{% url 'franchise-add-subfranchise' %}"
+                   class="nav-link {% if active_menu == 'franchise-add-subfranchise' %}active{% endif %}">
+                  <i class="fas fa-plus-circle nav-icon"></i>
+                  <p>{% trans "Add Sub-Franchise" context "sidebar" %}</p>
+                </a>
+              </li>
+              {% endif %}
+            </ul>
+          </li>
+
+          <li class="nav-item">
+            <a href="{% url 'franchise-consultants' %}"
+               class="nav-link {% if active_menu == 'franchise-consultants' %}active{% endif %}">
+              <i class="nav-icon fas fa-user-friends"></i>
+              <p>{% trans "Consultants" context "sidebar" %}</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="{% url 'franchise-certified-companies' %}"
+               class="nav-link {% if active_menu == 'franchise-certified-companies' %}active{% endif %}">
+              <i class="nav-icon fas fa-building"></i>
+              <p>{% trans "Certified Companies" context "sidebar" %}</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="{% url 'franchise-sales' %}"
+               class="nav-link {% if active_menu == 'franchise-sales' %}active{% endif %}">
+              <i class="nav-icon fas fa-crown"></i>
+              <p>{% trans "Sales / Plans" context "sidebar" %}</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="{% url 'franchise-reports' %}"
+               class="nav-link {% if active_menu == 'franchise-reports' %}active{% endif %}">
+              <i class="nav-icon fas fa-chart-bar"></i>
+              <p>{% trans "Reports" context "sidebar" %}</p>
+            </a>
+          </li>
+          {% endif %}
+          {% endif %}
+
           {# Favorites — basic business users only (saved filters + connect) #}
           {% if is_basic_or_pro_business_user %}
           <li class="nav-item">
@@ -575,7 +824,7 @@
           <!-- Users link for consultant / franchise (sees only their company's users).
                Consultant sees "Certified Users" since their list is the BUs whose
                companies they've certified. Franchise keeps the generic "Users" label. -->
-          {% if request.user.role.code|lower == "consultant" or request.user.role.code|lower == "franchise" %}
+          {% if request.user.role.code|lower == "consultant" or is_active_franchise_owner %}
           <li class="nav-item">
             <a href="{% url 'users' %}"
                class="nav-link {% if active_menu == 'users' %}active{% endif %}">
@@ -600,7 +849,7 @@
           {% endif %}
 
           <!-- Network menu (coordinator + franchise + superuser) -->
-          {% if request.user.is_superuser or request.user.role.code|lower == "consultant" or request.user.role.code|lower == "business_user" %}
+          {% if request.user.is_superuser or request.user.role.code|lower == "consultant" or request.user.role.code|lower == "business_user" or owns_micro_franchise %}
           <li class="nav-item">
             <a href="{% url 'certifications' %}"
                class="nav-link {% if active_menu == 'certifications' %}active{% endif %}">
@@ -625,7 +874,7 @@
           </li>
           {% endif %}
 
-          {% if request.user.is_superuser or request.user.role.code|lower == "coordinator" or request.user.role.code|lower == "franchise" %}
+          {% if request.user.is_superuser or request.user.role.code|lower == "coordinator" or is_active_franchise_owner %}
           <li class="nav-item has-treeview {% if active_menu == 'network' or active_menu == 'consultants' %}menu-open{% endif %}">
             <a href="#"
                class="nav-link {% if active_menu == 'network' or active_menu == 'consultants' %}active{% endif %}">
@@ -650,7 +899,7 @@
                   <p>{% trans "Consultant Users" context "sidebar" %}</p>
                 </a>
               </li>
-              {% if request.user.is_superuser or request.user.role.code|lower == "franchise" %}
+              {% if request.user.is_superuser or is_active_franchise_owner %}
               <li class="nav-item">
                 <a href="{% url 'coordinator-companies' %}"
                    class="nav-link {% if active_submenu == 'coordinator-companies' %}active{% endif %}">
@@ -676,13 +925,28 @@
           <li class="nav-header">{% trans "Administration" context "sidebar" %}</li>
           {% endif %}
 
-          <!-- FRANCHISES — visible to superuser and franchise partners -->
-          {% if request.user.is_superuser or request.user.role.code|upper == "FRANCHISE" %}
+          {% comment %} FRANCHISES — Platform Admin's global franchise list. Franchise
+             partners get their own subtree-scoped "Franchises" item up in the
+             franchise-management section (this Administration gate excludes the
+             franchise role). {% endcomment %}
+          {% if request.user.is_superuser %}
           <li class="nav-item">
             <a href="{% url 'tenants' %}"
                class="nav-link {% if active_menu == 'tenants' %}active{% endif %}">
               <i class="nav-icon fas fa-sitemap"></i>
               <p>{% trans "Franchises" context "sidebar" %}</p>
+            </a>
+          </li>
+          {% endif %}
+
+          {% comment %} Global franchise tree — Platform Admin sees the whole
+             franchise forest (§7.4). {% endcomment %}
+          {% if request.user.is_superuser %}
+          <li class="nav-item">
+            <a href="{% url 'franchise-tree' %}"
+               class="nav-link {% if active_menu == 'franchise-tree' %}active{% endif %}">
+              <i class="nav-icon fas fa-project-diagram"></i>
+              <p>{% trans "Franchise Tree" context "sidebar" %}</p>
             </a>
           </li>
           {% endif %}
@@ -694,9 +958,9 @@
                dropdown is open. Future request queues (franchise / partner)
                plug in here as additional <li> entries. -->
           {% if request.user.is_superuser %}
-          <li class="nav-item has-treeview {% if active_menu == 'coordinator-requests' or active_menu == 'applications' %}menu-open{% endif %}">
+          <li class="nav-item has-treeview {% if active_menu == 'coordinator-requests' or active_menu == 'applications' or active_menu == 'franchise-applications' %}menu-open{% endif %}">
             <a href="#"
-               class="nav-link {% if active_menu == 'coordinator-requests' or active_menu == 'applications' %}active{% endif %}"
+               class="nav-link {% if active_menu == 'coordinator-requests' or active_menu == 'applications' or active_menu == 'franchise-applications' %}active{% endif %}"
                style="display: flex; align-items: center;">
               <i class="nav-icon fas fa-inbox"></i>
               <p style="flex:1;">
@@ -732,6 +996,19 @@
                   {% if pending_application_count %}
                   <span class="sidebar-notif-badge" aria-label="{% blocktrans with count=pending_application_count %}{{ count }} pending applications{% endblocktrans %}">
                     {% if pending_application_count > 9 %}9+{% else %}{{ pending_application_count }}{% endif %}
+                  </span>
+                  {% endif %}
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{% url 'franchise-applications' %}"
+                   class="nav-link {% if active_menu == 'franchise-applications' %}active{% endif %}"
+                   style="display: flex; align-items: center;">
+                  <i class="fas fa-sitemap nav-icon"></i>
+                  <p style="flex:1;">{% trans "Franchise Requests" context "sidebar" %}</p>
+                  {% if pending_franchise_application_count %}
+                  <span class="sidebar-notif-badge" aria-label="{% blocktrans with count=pending_franchise_application_count %}{{ count }} pending franchise requests{% endblocktrans %}">
+                    {% if pending_franchise_application_count > 9 %}9+{% else %}{{ pending_franchise_application_count }}{% endif %}
                   </span>
                   {% endif %}
                 </a>
@@ -867,7 +1144,7 @@
             all (for payout review). Placed *outside* the ADMINISTRATION gate
             above because consultants aren't in that gate's role list.
           {% endcomment %}
-          {% if request.user.is_superuser or request.user.role.code|lower == "consultant" %}
+          {% if request.user.is_superuser or request.user.role.code|lower == "consultant" or owns_micro_franchise %}
           <li class="nav-item">
             <a href="{% url 'commissions' %}"
                class="nav-link {% if active_menu == 'commissions' %}active{% endif %}"

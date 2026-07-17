@@ -1,0 +1,12 @@
+{% load i18n %}
+{% if page.has_other_pages %}
+<div class="cr-pager">
+  {% if page.has_previous %}
+  <a class="cr-pager__btn" href="?{{ param }}={{ page.previous_page_number }}#{{ tab }}">{% trans "Previous" context "common" %}</a>
+  {% endif %}
+  <span class="cr-pager__info">{% blocktrans with num=page.number total=page.paginator.num_pages %}Page {{ num }} of {{ total }}{% endblocktrans %}</span>
+  {% if page.has_next %}
+  <a class="cr-pager__btn" href="?{{ param }}={{ page.next_page_number }}#{{ tab }}">{% trans "Next" context "common" %}</a>
+  {% endif %}
+</div>
+{% endif %}

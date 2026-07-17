@@ -1,0 +1,485 @@
+{% extends "base/base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Franchise Requests" context "franchise" %}{% endblock %}
+
+{% block content %}
+
+<style>
+  .cr-tabs { display: flex; gap: .25rem; border-bottom: 1px solid #e9ecef; padding: 0 1.25rem; background: #f8f9fa; }
+  .cr-tab { border: 0; background: transparent; padding: .75rem 1rem; font-size: .85rem; font-weight: 600; color: #6c757d; border-bottom: 2px solid transparent; cursor: pointer; }
+  .cr-tab:hover { color: #1B2E3F; }
+  .cr-tab.active { color: #1B2E3F; border-bottom-color: #4da3ff; }
+  .cr-tab .badge { margin-left: .35rem; font-size: .68rem; }
+  .cr-pane { display: none; }
+  .cr-pane.active { display: block; }
+  .cr-pager { display: flex; justify-content: flex-end; align-items: center; gap: 8px; padding: 12px 16px; border-top: 1px solid #f1f5f9; }
+  .cr-pager__btn { border: 1px solid #dbe3ec; border-radius: 8px; padding: 5px 12px; font-size: .8rem; font-weight: 600; color: #334155; text-decoration: none; background: #fff; }
+  .cr-pager__btn:hover { background: #f1f5f9; text-decoration: none; color: #16293b; }
+  .cr-pager__info { font-size: .75rem; color: #64748b; }
+  .empty-state { text-align: center; color: #94a3b8; padding: 2.5rem 1rem; }
+  .empty-state .fa-2x { margin-bottom: .5rem; }
+  .cr-info-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 18px; font-size: .8rem; color: #475569; margin-top: 6px; }
+  .cr-info-grid div { min-width: 0; overflow-wrap: anywhere; }
+  .cr-info-grid div span { color: #94a3b8; margin-right: 4px; }
+  .cr-motivation { background: #f8fafc; border: 1px solid #eef2f7; border-radius: 8px; padding: 8px 10px; font-size: .82rem; color: #1f2937; white-space: pre-wrap; margin-top: 8px; }
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 100px; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+  .pill-approved { background: #dbeafe; color: #1e40af; }
+  .pill-active { background: #dcfce7; color: #166534; }
+  .pill-rejected { background: #fee2e2; color: #991b1b; }
+  .fr-head { display: flex; gap: 14px; align-items: flex-start; padding: 20px 22px; border-bottom: 1px solid #f1f5f9; }
+  .fr-ico { width: 42px; height: 42px; border-radius: 11px; display: grid; place-items: center; font-size: 1.02rem; flex: 0 0 auto; background: #eaf2fb; color: #2f6dbd; }
+  .fr-head__t { font-size: 1.06rem; font-weight: 700; color: #0f1e2e; margin: 0; line-height: 1.25; }
+  .fr-head__s { font-size: .82rem; color: #64748b; margin: 5px 0 0; line-height: 1.5; max-width: 640px; }
+  .card.fr-shell { border: 1px solid #e8edf3; border-radius: 14px; box-shadow: 0 1px 3px rgba(15,23,42,.05); overflow: hidden; }
+</style>
+
+<div class="card fr-shell">
+
+  <div class="fr-head">
+    <div class="fr-ico"><i class="fas fa-sitemap"></i></div>
+    <div>
+      <h3 class="fr-head__t">{% trans "Franchise Requests" context "franchise" %}</h3>
+      <p class="fr-head__s">
+        {% blocktrans trimmed context "franchise" %}
+        Master Franchise requests to review, plus every approved franchise (Master or
+        sub) awaiting activation. Approve a Master to create it, then Activate once
+        contract &amp; payment are complete. Sub-franchise requests are reviewed by
+        their parent franchise.
+        {% endblocktrans %}
+      </p>
+    </div>
+  </div>
+
+  <div class="cr-tabs">
+    <button type="button" class="cr-tab active" data-pane="pending">
+      {% trans "Pending" context "workflows" %}{% if counts.pending %}<span class="badge badge-warning">{{ counts.pending }}</span>{% endif %}
+    </button>
+    <button type="button" class="cr-tab" data-pane="sub">
+      {% trans "Sub-Franchise Requests" context "franchise" %}{% if counts.sub %}<span class="badge badge-warning">{{ counts.sub }}</span>{% endif %}
+    </button>
+    <button type="button" class="cr-tab" data-pane="awaiting">
+      {% trans "Awaiting Activation" context "franchise" %}{% if counts.awaiting %}<span class="badge badge-primary">{{ counts.awaiting }}</span>{% endif %}
+    </button>
+    <button type="button" class="cr-tab" data-pane="approved">
+      {% trans "Approved" context "workflows" %}{% if counts.approved %}<span class="badge badge-secondary">{{ counts.approved }}</span>{% endif %}
+    </button>
+    <button type="button" class="cr-tab" data-pane="rejected">
+      {% trans "Rejected" context "workflows" %}{% if counts.rejected %}<span class="badge badge-secondary">{{ counts.rejected }}</span>{% endif %}
+    </button>
+  </div>
+
+  {% comment %} Per-tab pagination control. Links carry the tab's own page param plus
+     the tab hash, so reloading lands back on the same tab (see the JS at the
+     bottom). Rendered inside each pane below. {% endcomment %}
+
+  <!-- PENDING -->
+  <div class="cr-pane active" id="pane-pending">
+    <div class="card-body p-0">
+      {% if pending %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th style="width:32%;">{% trans "Applicant" context "franchise" %}</th>
+              <th>{% trans "Request" context "franchise" %}</th>
+              <th class="text-right pr-4" style="width:26%;">{% trans "Action" context "common" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in pending %}
+            <tr>
+              <td>
+                <strong>{{ a.applicant_user.first_name }} {{ a.applicant_user.last_name }}</strong>
+                <div class="small text-muted">{{ a.applicant_user.email }}</div>
+                {% if a.applicant_user.phone %}<div class="small text-muted"><i class="fas fa-phone mr-1"></i>{{ a.applicant_user.phone }}</div>{% endif %}
+                <div class="small text-muted mt-1">{{ a.created_at|date:"M j, Y H:i" }}</div>
+              </td>
+              <td>
+                <div class="cr-info-grid">
+                  <div><span>{% trans "Level:" context "franchise" %}</span><strong>{{ a.get_requested_level_display }}</strong></div>
+                  <div><span>{% trans "Country:" context "franchise" %}</span>{{ a.requested_country }}</div>
+                  {% if a.requested_region %}<div><span>{% trans "Region:" context "franchise" %}</span>{{ a.requested_region }}</div>{% endif %}
+                  {% if a.requested_city %}<div><span>{% trans "City:" context "franchise" %}</span>{{ a.requested_city }}</div>{% endif %}
+                  {% if a.requested_local_area %}<div><span>{% trans "Local area:" context "franchise" %}</span>{{ a.requested_local_area }}</div>{% endif %}
+                </div>
+                {% if a.application_note %}
+                <div class="cr-motivation"><strong>{% trans "Notes:" context "franchise" %}</strong> {{ a.application_note }}</div>
+                {% endif %}
+                {% if a.conflict %}
+                <div class="cr-motivation" style="background:#fff5f5; border-color:#fbdada; color:#9f1239;">
+                  <i class="fas fa-exclamation-triangle mr-1"></i>
+                  {% blocktrans trimmed with name=a.conflict.name context "franchise" %}
+                  This territory is already held by <strong>{{ name }}</strong>. Only one franchise is allowed per territory — reject this request.
+                  {% endblocktrans %}
+                </div>
+                {% endif %}
+              </td>
+              <td class="text-right pr-4" style="vertical-align: top;">
+                <form method="post" action="{% url 'franchise-application-action' a.id %}" class="d-inline m-0">
+                  {% csrf_token %}
+                  <input type="hidden" name="decision" value="approve">
+                  <button type="submit" class="btn btn-sm btn-success">
+                    <i class="fas fa-check mr-1"></i> {% trans "Approve" context "workflows" %}
+                  </button>
+                </form>
+                <button type="button" class="btn btn-sm btn-outline-danger mt-1"
+                        onclick="document.getElementById('fr-reject-{{ a.id }}').style.display='block'; this.style.display='none';">
+                  <i class="fas fa-times mr-1"></i> {% trans "Reject" context "workflows" %}
+                </button>
+                <form id="fr-reject-{{ a.id }}" method="post" action="{% url 'franchise-application-action' a.id %}"
+                      style="display:none; margin-top: 8px;">
+                  {% csrf_token %}
+                  <input type="hidden" name="decision" value="reject">
+                  <textarea name="board_note" rows="2" class="form-control form-control-sm"
+                            placeholder="{% trans "Reason (shown to applicant)" context "franchise" %}" style="font-size:.78rem;"></textarea>
+                  <button type="submit" class="btn btn-sm btn-danger mt-1">
+                    <i class="fas fa-paper-plane mr-1"></i> {% trans "Submit rejection" context "franchise" %}
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="fas fa-inbox fa-2x"></i>
+        <p class="mb-0">{% trans "No pending franchise requests." context "franchise" %}</p>
+        <p class="small mb-0">{% trans "When a user requests a franchise, it appears here." context "franchise" %}</p>
+      </div>
+      {% endif %}
+    </div>
+    {% include "dashboard/_cr_pager.html" with page=pending param="pending_page" tab="pending" %}
+  </div>
+
+  <!-- SUB-FRANCHISE REQUESTS (routed to a parent; Admin override) -->
+  <div class="cr-pane" id="pane-sub">
+    <div class="card-body p-0">
+      <div class="px-4 pt-3">
+        <p class="fr-head__s mb-2">
+          {% blocktrans trimmed context "franchise" %}
+          These sub-franchise requests are routed to their parent franchise for review.
+          You can step in and approve or reject one here if the parent hasn't acted.
+          {% endblocktrans %}
+        </p>
+      </div>
+      {% if pending_sub %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th style="width:28%;">{% trans "Applicant" context "franchise" %}</th>
+              <th>{% trans "Request" context "franchise" %}</th>
+              <th style="width:20%;">{% trans "Routed to" context "franchise" %}</th>
+              <th class="text-right pr-4" style="width:24%;">{% trans "Action" context "common" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in pending_sub %}
+            <tr>
+              <td>
+                <strong>{{ a.applicant_user.first_name }} {{ a.applicant_user.last_name }}</strong>
+                <div class="small text-muted">{{ a.applicant_user.email }}</div>
+                {% if a.applicant_user.phone %}<div class="small text-muted"><i class="fas fa-phone mr-1"></i>{{ a.applicant_user.phone }}</div>{% endif %}
+                <div class="small text-muted mt-1">{{ a.created_at|date:"M j, Y H:i" }}</div>
+              </td>
+              <td>
+                <div class="cr-info-grid">
+                  <div><span>{% trans "Level:" context "franchise" %}</span><strong>{{ a.get_requested_level_display }}</strong></div>
+                  <div><span>{% trans "Country:" context "franchise" %}</span>{{ a.requested_country }}</div>
+                  {% if a.requested_region %}<div><span>{% trans "Region:" context "franchise" %}</span>{{ a.requested_region }}</div>{% endif %}
+                  {% if a.requested_city %}<div><span>{% trans "City:" context "franchise" %}</span>{{ a.requested_city }}</div>{% endif %}
+                  {% if a.requested_local_area %}<div><span>{% trans "Local area:" context "franchise" %}</span>{{ a.requested_local_area }}</div>{% endif %}
+                </div>
+                {% if a.application_note %}
+                <div class="cr-motivation"><strong>{% trans "Notes:" context "franchise" %}</strong> {{ a.application_note }}</div>
+                {% endif %}
+                {% if a.conflict %}
+                <div class="cr-motivation" style="background:#fff5f5; border-color:#fbdada; color:#9f1239;">
+                  <i class="fas fa-exclamation-triangle mr-1"></i>
+                  {% blocktrans trimmed with name=a.conflict.name context "franchise" %}
+                  This territory is already held by <strong>{{ name }}</strong>. Only one franchise is allowed per territory — reject this request.
+                  {% endblocktrans %}
+                </div>
+                {% endif %}
+              </td>
+              <td>
+                <strong>{{ a.parent_franchise.name }}</strong>
+                {% if a.parent_franchise.owner_user %}
+                <div class="small text-muted">{{ a.parent_franchise.owner_user.email }}</div>
+                {% endif %}
+                <div class="small text-muted mt-1"><i class="fas fa-user-shield mr-1"></i>{% trans "Awaiting parent — you may override" context "franchise" %}</div>
+              </td>
+              <td class="text-right pr-4" style="vertical-align: top;">
+                <form method="post" action="{% url 'franchise-application-action' a.id %}" class="d-inline m-0"
+                      data-confirm
+                      data-confirm-tone="primary"
+                      data-confirm-icon="fa-check"
+                      data-confirm-title="{% trans "Approve on the parent's behalf?" context "franchise" %}"
+                      data-confirm-body="{% trans "This overrides the parent franchise's review and creates the sub-franchise, pending contract & payment." context "franchise" %}"
+                      data-confirm-ok="{% trans "Approve" context "workflows" %}"
+                      data-confirm-name="{{ a.applicant_user.email }}">
+                  {% csrf_token %}
+                  <input type="hidden" name="decision" value="approve">
+                  <button type="submit" class="btn btn-sm btn-success">
+                    <i class="fas fa-check mr-1"></i> {% trans "Approve" context "workflows" %}
+                  </button>
+                </form>
+                <button type="button" class="btn btn-sm btn-outline-danger mt-1"
+                        onclick="document.getElementById('fr-sub-reject-{{ a.id }}').style.display='block'; this.style.display='none';">
+                  <i class="fas fa-times mr-1"></i> {% trans "Reject" context "workflows" %}
+                </button>
+                <form id="fr-sub-reject-{{ a.id }}" method="post" action="{% url 'franchise-application-action' a.id %}"
+                      style="display:none; margin-top: 8px;">
+                  {% csrf_token %}
+                  <input type="hidden" name="decision" value="reject">
+                  <textarea name="board_note" rows="2" class="form-control form-control-sm"
+                            placeholder="{% trans "Reason (shown to applicant)" context "franchise" %}" style="font-size:.78rem;"></textarea>
+                  <button type="submit" class="btn btn-sm btn-danger mt-1">
+                    <i class="fas fa-paper-plane mr-1"></i> {% trans "Submit rejection" context "franchise" %}
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="fas fa-inbox fa-2x"></i>
+        <p class="mb-0">{% trans "No sub-franchise requests awaiting a parent." context "franchise" %}</p>
+        <p class="small mb-0">{% trans "Requests routed to a parent franchise appear here so you can step in if needed." context "franchise" %}</p>
+      </div>
+      {% endif %}
+    </div>
+    {% include "dashboard/_cr_pager.html" with page=pending_sub param="sub_page" tab="sub" %}
+  </div>
+
+  <!-- AWAITING ACTIVATION (approved, pending contract/payment → Activate) -->
+  <div class="cr-pane" id="pane-awaiting">
+    <div class="card-body p-0">
+      <div class="px-4 pt-3">
+        <p class="fr-head__s mb-2">
+          {% blocktrans trimmed context "franchise" %}
+          Approved franchises still awaiting activation. Once contract &amp; payment are
+          complete, click Activate to grant the holder full active rights.
+          {% endblocktrans %}
+        </p>
+      </div>
+      {% if awaiting_activation %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th>{% trans "Applicant" context "franchise" %}</th>
+              <th>{% trans "Franchise" context "franchise" %}</th>
+              <th>{% trans "Status" context "workflows" %}</th>
+              <th>{% trans "Approved" context "workflows" %}</th>
+              <th class="text-right pr-4">{% trans "Action" context "common" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in awaiting_activation %}
+            <tr>
+              <td>
+                <strong>{{ a.applicant_user.first_name }} {{ a.applicant_user.last_name }}</strong>
+                <div class="small text-muted">{{ a.applicant_user.email }}</div>
+              </td>
+              <td>
+                <strong>{{ a.created_franchise.name }}</strong>
+                <div class="small text-muted">{{ a.created_franchise.get_franchise_level_display }}{% if a.parent_franchise %} · {% trans "under" context "franchise" %} {{ a.parent_franchise.name }}{% endif %}</div>
+              </td>
+              <td>
+                <span class="pill pill-{{ a.created_franchise.franchise_status|lower }}">{{ a.created_franchise.get_franchise_status_display }}</span>
+              </td>
+              <td class="small text-muted">{{ a.approved_at|date:"M j, Y H:i" }}</td>
+              <td class="text-right pr-4">
+                <form method="post" action="{% url 'franchise-activate' a.created_franchise.id %}" class="d-inline m-0"
+                      data-confirm
+                      data-confirm-tone="primary"
+                      data-confirm-icon="fa-bolt"
+                      data-confirm-title="{% trans "Activate franchise?" context "franchise" %}"
+                      data-confirm-body="{% trans "This confirms contract & payment and grants the holder full active rights." context "franchise" %}"
+                      data-confirm-ok="{% trans "Activate" context "franchise" %}"
+                      data-confirm-name="{{ a.created_franchise.name }}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-primary">
+                    <i class="fas fa-bolt mr-1"></i> {% trans "Activate" context "franchise" %}
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="fas fa-bolt fa-2x"></i>
+        <p class="mb-0">{% trans "Nothing awaiting activation." context "franchise" %}</p>
+        <p class="small mb-0">{% trans "Approved franchises pending contract & payment appear here, ready to activate." context "franchise" %}</p>
+      </div>
+      {% endif %}
+    </div>
+    {% include "dashboard/_cr_pager.html" with page=awaiting_activation param="awaiting_page" tab="awaiting" %}
+  </div>
+
+  <!-- APPROVED (with Activate) -->
+  <div class="cr-pane" id="pane-approved">
+    <div class="card-body p-0">
+      {% if approved %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th>{% trans "Applicant" context "franchise" %}</th>
+              <th>{% trans "Franchise" context "franchise" %}</th>
+              <th>{% trans "Status" context "workflows" %}</th>
+              <th class="text-right pr-4">{% trans "Action" context "common" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in approved %}
+            <tr>
+              <td>
+                <strong>{{ a.applicant_user.first_name }} {{ a.applicant_user.last_name }}</strong>
+                <div class="small text-muted">{{ a.applicant_user.email }}</div>
+              </td>
+              <td>
+                {% if a.created_franchise %}
+                <strong>{{ a.created_franchise.name }}</strong>
+                <div class="small text-muted">{{ a.created_franchise.get_franchise_level_display }}{% if a.parent_franchise %} · {% trans "under" context "franchise" %} {{ a.parent_franchise.name }}{% endif %}</div>
+                {% else %}—{% endif %}
+              </td>
+              <td>
+                {% if a.created_franchise %}
+                <span class="pill pill-{{ a.created_franchise.franchise_status|lower }}">{{ a.created_franchise.get_franchise_status_display }}</span>
+                {% else %}<span class="pill pill-approved">{% trans "Approved" context "workflows" %}</span>{% endif %}
+              </td>
+              <td class="text-right pr-4">
+                {% if a.created_franchise %}
+                  {% if a.created_franchise.franchise_status == "ACTIVE" %}
+                  <form method="post" action="{% url 'franchise-suspend' a.created_franchise.id %}" class="d-inline m-0"
+                        data-confirm
+                        data-confirm-tone="warning"
+                        data-confirm-icon="fa-pause"
+                        data-confirm-title="{% trans "Suspend franchise?" context "franchise" %}"
+                        data-confirm-body="{% trans "The holder keeps historical data but loses active rights until reactivated." context "franchise" %}"
+                        data-confirm-ok="{% trans "Suspend" context "franchise" %}"
+                        data-confirm-name="{{ a.created_franchise.name }}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="suspend">
+                    <button type="submit" class="btn btn-sm btn-outline-warning">
+                      <i class="fas fa-pause mr-1"></i> {% trans "Suspend" context "franchise" %}
+                    </button>
+                  </form>
+                  {% elif a.created_franchise.franchise_status == "SUSPENDED" %}
+                  <span class="pill pill-rejected mr-1">{% trans "Suspended" context "franchise" %}</span>
+                  <form method="post" action="{% url 'franchise-suspend' a.created_franchise.id %}" class="d-inline m-0">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="reactivate">
+                    <button type="submit" class="btn btn-sm btn-outline-success">
+                      <i class="fas fa-play mr-1"></i> {% trans "Reactivate" context "franchise" %}
+                    </button>
+                  </form>
+                  {% else %}
+                  <form method="post" action="{% url 'franchise-activate' a.created_franchise.id %}" class="d-inline m-0"
+                        data-confirm
+                        data-confirm-tone="primary"
+                        data-confirm-icon="fa-bolt"
+                        data-confirm-title="{% trans "Activate franchise?" context "franchise" %}"
+                        data-confirm-body="{% trans "This confirms contract & payment and grants the holder full active rights." context "franchise" %}"
+                        data-confirm-ok="{% trans "Activate" context "franchise" %}"
+                        data-confirm-name="{{ a.created_franchise.name }}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-primary">
+                      <i class="fas fa-bolt mr-1"></i> {% trans "Activate" context "franchise" %}
+                    </button>
+                  </form>
+                  {% endif %}
+                {% else %}—{% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="fas fa-check-circle fa-2x"></i>
+        <p class="mb-0">{% trans "No approved franchises yet." context "franchise" %}</p>
+      </div>
+      {% endif %}
+    </div>
+    {% include "dashboard/_cr_pager.html" with page=approved param="approved_page" tab="approved" %}
+  </div>
+
+  <!-- REJECTED -->
+  <div class="cr-pane" id="pane-rejected">
+    <div class="card-body p-0">
+      {% if rejected %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th>{% trans "Applicant" context "franchise" %}</th>
+              <th>{% trans "Request" context "franchise" %}</th>
+              <th>{% trans "Decided" context "workflows" %}</th>
+              <th>{% trans "Reason" context "workflows" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in rejected %}
+            <tr>
+              <td>
+                <strong>{{ a.applicant_user.first_name }} {{ a.applicant_user.last_name }}</strong>
+                <div class="small text-muted">{{ a.applicant_user.email }}</div>
+              </td>
+              <td class="small text-muted">{{ a.get_requested_level_display }} · {{ a.requested_country }}</td>
+              <td class="small text-muted">{{ a.rejected_at|date:"M j, Y H:i" }}</td>
+              <td class="small text-muted">{{ a.board_note|default:"—" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="fas fa-user-times fa-2x"></i>
+        <p class="mb-0">{% trans "No rejected franchise requests." context "franchise" %}</p>
+      </div>
+      {% endif %}
+    </div>
+    {% include "dashboard/_cr_pager.html" with page=rejected param="rejected_page" tab="rejected" %}
+  </div>
+
+</div>
+
+{% include "base/_confirm_modal.html" %}
+
+<script>
+  function crActivate(name) {
+    var btn = document.querySelector('.cr-tab[data-pane="' + name + '"]');
+    if (!btn) return;
+    document.querySelectorAll(".cr-tab").forEach(function (t) { t.classList.remove("active"); });
+    document.querySelectorAll(".cr-pane").forEach(function (p) { p.classList.remove("active"); });
+    btn.classList.add("active");
+    var pane = document.getElementById("pane-" + name);
+    if (pane) pane.classList.add("active");
+  }
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest(".cr-tab");
+    if (!btn) return;
+    crActivate(btn.dataset.pane);
+    // Remember the active tab in the URL hash so a pagination reload lands here.
+    if (window.history && history.replaceState) history.replaceState(null, "", "#" + btn.dataset.pane);
+    else location.hash = btn.dataset.pane;
+  });
+  // On load, open the tab named in the hash (set by a paginate link or a tab click).
+  var crInitial = (location.hash || "").replace("#", "");
+  if (crInitial) crActivate(crInitial);
+</script>
+
+{% endblock %}

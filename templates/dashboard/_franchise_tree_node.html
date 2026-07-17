@@ -1,0 +1,21 @@
+{% load i18n %}
+<li class="ft-node">
+  <div class="ft-card ft-lvl-{{ node.franchise_level|lower }}">
+    <div class="ft-card__main">
+      <span class="ft-chip ft-chip-{{ node.franchise_level|lower }}">{{ node.get_franchise_level_display }}</span>
+      <span class="ft-name">{{ node.name }}</span>
+      <span class="ft-status ft-status-{{ node.franchise_status|lower }}">{{ node.get_franchise_status_display }}</span>
+    </div>
+    <div class="ft-meta">
+      {% if node.owner_user %}<span><i class="fas fa-user"></i> {{ node.owner_user.first_name }} {{ node.owner_user.last_name|default:node.owner_user.email }}</span>{% endif %}
+      {% if node.territory_country %}<span><i class="fas fa-map-marker-alt"></i> {{ node.territory_country }}{% if node.territory_region %} · {{ node.territory_region }}{% endif %}{% if node.territory_city %} · {{ node.territory_city }}{% endif %}</span>{% endif %}
+    </div>
+  </div>
+  {% if node.tree_children %}
+  <ul class="ft-children">
+    {% for child in node.tree_children %}
+      {% include "dashboard/_franchise_tree_node.html" with node=child %}
+    {% endfor %}
+  </ul>
+  {% endif %}
+</li>

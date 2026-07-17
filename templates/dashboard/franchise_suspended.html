@@ -1,0 +1,31 @@
+{% extends "base/base.html" %}
+{% load i18n %}
+{% block title %}{{ page_title|default:_("Access suspended") }}{% endblock %}
+
+{% block content %}
+<style>
+  .susp-card { max-width: 620px; margin: 40px auto; background: #fff; border: 1px solid #e8edf3;
+    border-radius: 16px; box-shadow: 0 1px 3px rgba(15,23,42,.05); padding: 40px 32px; text-align: center; }
+  .susp-ico { width: 64px; height: 64px; border-radius: 16px; margin: 0 auto 18px; display: grid;
+    place-items: center; font-size: 1.6rem; background: #fee2e2; color: #b91c1c; }
+  .susp-title { font-size: 1.25rem; font-weight: 800; color: #0f1e2e; margin: 0 0 8px; }
+  .susp-text { font-size: .92rem; color: #475569; line-height: 1.6; margin: 0 auto; max-width: 460px; }
+  .susp-note { margin-top: 18px; font-size: .85rem; color: #64748b; background: #f8fafc;
+    border: 1px solid #eef2f7; border-radius: 10px; padding: 12px 16px; display: inline-block; }
+</style>
+
+<div class="susp-card">
+  <div class="susp-ico"><i class="fas fa-ban"></i></div>
+  <h2 class="susp-title">{% trans "Your account is suspended" context "franchise" %}</h2>
+  <p class="susp-text">
+    {% blocktrans trimmed with feature=feature|default:_("this section") context "franchise" %}
+    Your franchise has been suspended by the Platform Admin, so you can't access {{ feature }}
+    right now. Your existing data is preserved and access is restored once your franchise is
+    reactivated.
+    {% endblocktrans %}
+  </p>
+  <div class="susp-note">
+    <i class="fas fa-headset mr-1"></i> {% trans "Please contact the Platform Admin if you think this is a mistake." context "franchise" %}
+  </div>
+</div>
+{% endblock %}

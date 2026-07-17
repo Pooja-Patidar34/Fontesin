@@ -41,6 +41,25 @@ from .view.coordinator_request import (
     coordinator_requests_list,
     coordinator_request_action,
 )
+from .view.franchise import (
+    franchise_request_view,
+    franchise_request_submit,
+    franchise_applications_list,
+    franchise_application_action,
+    franchise_activate,
+    franchise_child_requests,
+    franchise_child_action,
+    franchise_tree,
+    franchise_suspend,
+    franchise_consultants,
+    assign_consultant,
+    consultant_assignment_remove,
+    franchise_add_subfranchise,
+    franchise_subfranchise_submit,
+    franchise_certified_companies,
+    franchise_sales,
+    franchise_reports,
+)
 from .view.notification import (
     messages_list,
     message_mark_read,
@@ -73,11 +92,11 @@ urlpatterns = [
     path("users/<uuid:user_id>/roles/",assign_roles,name="assign-roles",),
     path("audit-logs/", audit_logs, name="audit-logs"),
     path("roles/", role_list, name="roles"),
-    path("tenants/", tenant_list, name="tenants"),
-    path("tenants/<uuid:tenant_id>/toggle/",toggle_tenant,name="tenant-toggle",),
-    path("tenants/<uuid:tenant_id>/delete/",tenant_delete, name="tenant-delete"),
+    path("franchises/", tenant_list, name="tenants"),
+    path("franchises/<uuid:tenant_id>/toggle/",toggle_tenant,name="tenant-toggle",),
+    path("franchises/<uuid:tenant_id>/delete/",tenant_delete, name="tenant-delete"),
     path("audit/logs/<uuid:log_id>/detail/",audit_log_detail_ajax,name="audit_log_detail_ajax",),
-    path("tenants/<uuid:tenant_id>/detail/",tenant_detail_ajax,name="tenant-detail",),
+    path("franchises/<uuid:tenant_id>/detail/",tenant_detail_ajax,name="tenant-detail",),
     path("companies/<uuid:company_id>/detail/",company_detail_ajax,name="company-detail",),
     path("roles/<uuid:role_id>/detail/",role_detail_ajax,name="role-detail",),
     path("permissions/", permission_list, name="permissions"),
@@ -116,6 +135,29 @@ urlpatterns = [
     path("coordinator-requests/", coordinator_requests_list, name="coordinator-requests"),
     path("coordinator-requests/submit/", coordinator_request_submit, name="coordinator-request-submit"),
     path("coordinator-requests/<uuid:request_id>/action/", coordinator_request_action, name="coordinator-request-action"),
+
+    # Franchise requests (user submit / Super Admin review → approve → activate)
+    path("franchise-request/", franchise_request_view, name="franchise-request"),
+    path("franchise-request/submit/", franchise_request_submit, name="franchise-request-submit"),
+    path("franchise-applications/", franchise_applications_list, name="franchise-applications"),
+    path("franchise-applications/<uuid:application_id>/action/", franchise_application_action, name="franchise-application-action"),
+    path("franchises/<uuid:tenant_id>/activate/", franchise_activate, name="franchise-activate"),
+    # Direct-parent (Master/National/Regional) review of sub-franchise requests
+    path("franchise-sub-requests/", franchise_child_requests, name="franchise-child-requests"),
+    path("franchise-sub-requests/<uuid:application_id>/action/", franchise_child_action, name="franchise-child-action"),
+    # Franchise tree (scoped by visibility) + suspension + consultant management
+    path("franchise-tree/", franchise_tree, name="franchise-tree"),
+    path("franchises/<uuid:tenant_id>/suspend/", franchise_suspend, name="franchise-suspend"),
+    path("franchise-consultants/", franchise_consultants, name="franchise-consultants"),
+    path("franchise-consultants/assign/", assign_consultant, name="assign-consultant"),
+    path("franchise-consultants/<uuid:assignment_id>/remove/", consultant_assignment_remove, name="consultant-assignment-remove"),
+    # Holder proposes a child franchise under one of their nodes (spec §6.3)
+    path("franchise-add-sub/", franchise_add_subfranchise, name="franchise-add-subfranchise"),
+    path("franchise-add-sub/submit/", franchise_subfranchise_submit, name="franchise-subfranchise-submit"),
+    # Subtree business data (spec §6.3): certified companies, plan sales, reports
+    path("franchise-certified-companies/", franchise_certified_companies, name="franchise-certified-companies"),
+    path("franchise-sales/", franchise_sales, name="franchise-sales"),
+    path("franchise-reports/", franchise_reports, name="franchise-reports"),
 
     # Messages / notifications (every account type)
     path("messages/", messages_list, name="messages"),

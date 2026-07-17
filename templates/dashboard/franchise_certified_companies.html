@@ -1,0 +1,94 @@
+{% extends "base/base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Certified Companies" context "franchise" %}{% endblock %}
+
+{% block content %}
+
+<style>
+  .card.fr-shell { border: 1px solid #e8edf3; border-radius: 14px; box-shadow: 0 1px 3px rgba(15,23,42,.05); overflow: hidden; }
+  .fr-head { display: flex; gap: 14px; align-items: flex-start; padding: 20px 22px; border-bottom: 1px solid #f1f5f9; }
+  .fr-ico { width: 42px; height: 42px; border-radius: 11px; display: grid; place-items: center; font-size: 1.02rem; flex: 0 0 auto; background: #eef2ff; color: #4338ca; }
+  .fr-head__t { font-size: 1.06rem; font-weight: 700; color: #0f1e2e; margin: 0; }
+  .fr-head__s { font-size: .82rem; color: #64748b; margin: 5px 0 0; max-width: 660px; }
+  .fr-toolbar { display:flex; gap:10px; align-items:center; padding:14px 22px; border-bottom:1px solid #f1f5f9; }
+  .fr-control { border:1px solid #dbe3ec; border-radius:9px; padding:8px 12px; font-size:.85rem; }
+  .fr-control:focus { outline:none; border-color:#4da3ff; box-shadow:0 0 0 3px rgba(77,163,255,.15); }
+  .fr-btn { border:0; border-radius:9px; padding:8px 14px; background:linear-gradient(180deg,#24405a,#16293b); color:#fff; font-weight:600; font-size:.83rem; cursor:pointer; }
+  .count-chip { font-size:.72rem; color:#64748b; margin-left:auto; }
+  .empty-state { text-align:center; color:#94a3b8; padding:36px 18px; }
+  .empty-state i { font-size:1.8rem; margin-bottom:10px; opacity:.6; }
+  .status-chip { background:#dcfce7; color:#15803d; padding:2px 9px; border-radius:100px; font-size:.66rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+</style>
+
+<div class="card fr-shell">
+  <div class="fr-head">
+    <div class="fr-ico"><i class="fas fa-building"></i></div>
+    <div>
+      <h3 class="fr-head__t">{% trans "Certified Companies" context "franchise" %}</h3>
+      <p class="fr-head__s">{% trans "Companies certified by the consultants working within your franchise and its sub-franchises." context "franchise" %}</p>
+    </div>
+  </div>
+
+  <form method="get" class="fr-toolbar">
+    <input type="text" name="q" value="{{ search_query }}" class="fr-control" style="min-width:220px;"
+           placeholder="{% trans "Search company, country, city…" context "franchise" %}">
+    <button type="submit" class="fr-btn"><i class="fas fa-search mr-1"></i>{% trans "Search" context "common" %}</button>
+    <span class="count-chip">{% blocktrans count counter=total_count %}{{ counter }} company{% plural %}{{ counter }} companies{% endblocktrans %}</span>
+  </form>
+
+  <div class="card-body p-0">
+    {% if companies %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="bg-light">
+          <tr>
+            <th>{% trans "Company" context "franchise" %}</th>
+            <th>{% trans "Location" context "franchise" %}</th>
+            <th>{% trans "Certified by" context "franchise" %}</th>
+            <th>{% trans "Certified on" context "franchise" %}</th>
+            <th>{% trans "Status" context "workflows" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in companies %}
+          <tr>
+            <td><strong>{{ c.name }}</strong></td>
+            <td class="small">{{ c.country }}{% if c.city %} · {{ c.city }}{% endif %}{% if c.state %} · {{ c.state }}{% endif %}</td>
+            <td class="small">
+              {% with cert=c.certified_by|default:c.consultant %}
+              {% if cert %}{{ cert.first_name }} {{ cert.last_name }}<div class="text-muted">{{ cert.email }}</div>{% else %}—{% endif %}
+              {% endwith %}
+            </td>
+            <td class="small">{% if c.certified_at %}{{ c.certified_at|date:"M j, Y" }}{% else %}—{% endif %}</td>
+            <td><span class="status-chip">{% trans "Certified" context "franchise" %}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div><i class="fas fa-building"></i></div>
+      {% if no_consultants %}
+      <p class="mb-0">{% trans "No consultants operate under your franchise yet, so there are no certified companies to show." context "franchise" %}</p>
+      {% else %}
+      <p class="mb-0">{% trans "No certified companies found." context "franchise" %}</p>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  {% if page_obj.has_other_pages %}
+  <div class="fr-toolbar" style="border-top:1px solid #f1f5f9; border-bottom:0; justify-content:flex-end; gap:8px;">
+    {% if page_obj.has_previous %}
+    <a class="fr-btn" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}">{% trans "Previous" context "common" %}</a>
+    {% endif %}
+    <span class="count-chip" style="margin:0;">{% blocktrans with num=page_obj.number total=page_obj.paginator.num_pages %}Page {{ num }} of {{ total }}{% endblocktrans %}</span>
+    {% if page_obj.has_next %}
+    <a class="fr-btn" href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}">{% trans "Next" context "common" %}</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,234 @@
+{% extends "base/base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Add Sub-Franchise" context "franchise" %}{% endblock %}
+
+{% block content %}
+
+<style>
+  .card.fr-shell { border: 1px solid #e8edf3; border-radius: 14px; box-shadow: 0 1px 3px rgba(15,23,42,.05); overflow: hidden; }
+  .fr-head { display: flex; gap: 14px; align-items: flex-start; padding: 20px 22px; border-bottom: 1px solid #f1f5f9; }
+  .fr-ico { width: 42px; height: 42px; border-radius: 11px; display: grid; place-items: center; font-size: 1.02rem; flex: 0 0 auto; background: #e7f7ee; color: #12a150; }
+  .fr-head__t { font-size: 1.06rem; font-weight: 700; color: #0f1e2e; margin: 0; }
+  .fr-head__s { font-size: .82rem; color: #64748b; margin: 5px 0 0; max-width: 660px; }
+  .fr-body { padding: 18px 22px; }
+  .fr-label { display:block; font-size:.78rem; font-weight:600; color:#334155; margin-bottom:6px; }
+  .fr-control { width:100%; border:1px solid #dbe3ec; border-radius:9px; padding:9px 12px; font-size:.86rem; }
+  .fr-control:focus { outline:none; border-color:#4da3ff; box-shadow:0 0 0 3px rgba(77,163,255,.15); }
+  .fr-btn { border:0; border-radius:9px; padding:10px 18px; background:linear-gradient(180deg,#24405a,#16293b); color:#fff; font-weight:600; font-size:.86rem; cursor:pointer; }
+  .fr-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .fr-grid .full { grid-column:1 / -1; }
+  .fr-sub { font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#94a3b8; border-bottom:1px solid #eef2f7; padding-bottom:6px; margin-top:4px; }
+  .fr-control[readonly] { background:#f8fafc; color:#64748b; }
+  @media (max-width:640px){ .fr-grid{ grid-template-columns:1fr; } }
+  .req { color:#e11d48; }
+  .empty-state { text-align:center; color:#94a3b8; padding:36px 18px; }
+  .empty-state i { font-size:1.8rem; margin-bottom:10px; opacity:.6; }
+</style>
+
+<div class="card fr-shell">
+  <div class="fr-head">
+    <div class="fr-ico"><i class="fas fa-sitemap"></i></div>
+    <div>
+      <h3 class="fr-head__t">{% trans "Add Sub-Franchise" context "franchise" %}</h3>
+      <p class="fr-head__s">{% trans "Propose a child franchise under one of your active franchises. Once you submit, it goes to the Platform Admin, who activates it after the contract is signed and the fee is paid." context "franchise" %}</p>
+    </div>
+  </div>
+
+  {% if has_active_node %}
+  <div class="fr-body">
+    <form method="post" action="{% url 'franchise-subfranchise-submit' %}">
+      {% csrf_token %}
+      <div class="fr-grid">
+        <div>
+          <label class="fr-label">{% trans "Parent franchise" context "franchise" %} <span class="req">*</span></label>
+          <select name="parent_node_id" id="sf-parent" class="fr-control" required>
+            {% for n in active_nodes %}
+            <option value="{{ n.id }}">{{ n.get_franchise_level_display }} — {{ n.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="fr-label">{% trans "Sub-franchise level" context "franchise" %} <span class="req">*</span></label>
+          <select name="requested_level" id="sf-level" class="fr-control" required></select>
+        </div>
+
+        <div class="full"><div class="fr-sub">{% trans "Territory (inside the parent's territory)" context "franchise" %}</div></div>
+        <div>
+          <label class="fr-label">{% trans "Country" context "franchise" %}</label>
+          <input type="text" id="sf-country" class="fr-control" readonly
+                 title="{% trans "Inherited from the parent franchise" context "franchise" %}">
+        </div>
+        <div>
+          <label class="fr-label">{% trans "State / Region" context "franchise" %} <span class="req" id="sf-region-req" style="display:none;">*</span></label>
+          {# Dropdown when the (inherited) country has known subdivisions; free-text fallback otherwise. Only the active one is enabled, so only it submits. #}
+          <select name="requested_region" id="sf-region-select" class="fr-control" style="display:none;" disabled></select>
+          <input type="text" name="requested_region" id="sf-region-text" class="fr-control"
+                 placeholder="{% trans "e.g. California" context "franchise" %}">
+        </div>
+        <div>
+          <label class="fr-label">{% trans "City / District" context "franchise" %} <span class="req" id="sf-city-req" style="display:none;">*</span></label>
+          <input type="text" name="requested_city" id="sf-city" class="fr-control"
+                 placeholder="{% trans "e.g. San Diego" context "franchise" %}">
+        </div>
+        <div>
+          <label class="fr-label">{% trans "Micro area (optional)" context "franchise" %}</label>
+          <input type="text" name="requested_local_area" id="sf-local" class="fr-control"
+                 placeholder="{% trans "Neighbourhood / district" context "franchise" %}">
+        </div>
+
+        <div class="full"><div class="fr-sub">{% trans "Franchisee" context "franchise" %}</div></div>
+        <div>
+          <label class="fr-label">{% trans "Legal name / Company name" context "franchise" %} <span class="req">*</span></label>
+          <input type="text" name="legal_name" class="fr-control" required
+                 placeholder="{% trans "e.g. Acme Retail LLC" context "franchise" %}">
+        </div>
+        <div>
+          <label class="fr-label">{% trans "Contact person" context "franchise" %} <span class="req">*</span></label>
+          <input type="text" name="contact_person" class="fr-control" required
+                 placeholder="{% trans "Full name" context "franchise" %}">
+        </div>
+        <div>
+          <label class="fr-label">{% trans "Email" context "franchise" %} <span class="req">*</span></label>
+          <input type="email" name="owner_email" class="fr-control" required
+                 placeholder="{% trans "owner@example.com" context "franchise" %}">
+          <div class="text-muted small mt-1">{% trans "The person who will hold this sub-franchise. They must already have an account." context "franchise" %}</div>
+        </div>
+        <div>
+          <label class="fr-label">{% trans "Phone" context "franchise" %}</label>
+          <input type="text" name="contact_phone" class="fr-control"
+                 placeholder="{% trans "+1 555 010 0000" context "franchise" %}">
+        </div>
+
+        <div class="full"><div class="fr-sub">{% trans "Status" context "workflows" %}</div></div>
+        <div>
+          <label class="fr-label">{% trans "Contract status" context "franchise" %}</label>
+          <select name="contract_status" class="fr-control">
+            {% for value, label in contract_choices %}
+            <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="fr-label">{% trans "Payment status" context "franchise" %}</label>
+          <select name="fee_status" class="fr-control">
+            {% for value, label in fee_choices %}
+            <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="full">
+          <label class="fr-label">{% trans "Notes (optional)" context "franchise" %}</label>
+          <textarea name="application_note" class="fr-control" rows="2"
+                    placeholder="{% trans "Anything the Platform Admin should know." context "franchise" %}"></textarea>
+        </div>
+      </div>
+      <div class="mt-3">
+        <button type="submit" class="fr-btn"><i class="fas fa-plus mr-1"></i>{% trans "Propose sub-franchise" context "franchise" %}</button>
+      </div>
+    </form>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    {% if suspended %}
+    <div style="color:#b91c1c;"><i class="fas fa-ban"></i></div>
+    <p class="mb-0">{% trans "Your franchise has been suspended by the Platform Admin, so you can't add sub-franchises." context "franchise" %}</p>
+    <p class="small mb-0">{% trans "You still have read-only access to your existing data. Access is restored once your franchise is reactivated." context "franchise" %}</p>
+    {% elif micro_only %}
+    <div><i class="fas fa-info-circle"></i></div>
+    <p class="mb-0">{% trans "A Micro-Franchise is the smallest unit — it can't have sub-franchises." context "franchise" %}</p>
+    <p class="small mb-0">{% trans "You can manage Standard Consultants in your territory from the Consultants page instead." context "franchise" %}</p>
+    {% else %}
+    <div><i class="fas fa-store-slash"></i></div>
+    <p class="mb-0">{% trans "You need an active franchise before you can add a sub-franchise." context "franchise" %}</p>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+{% if has_active_node %}
+{{ country_states|json_script:"sf-country-states" }}
+<script>
+  (function () {
+    var options = {{ node_options_json|safe }};
+    var byId = {};
+    options.forEach(function (o) { byId[o.id] = o; });
+
+    var parent = document.getElementById("sf-parent");
+    var level = document.getElementById("sf-level");
+    var country = document.getElementById("sf-country");
+    var regionSelect = document.getElementById("sf-region-select");
+    var regionText = document.getElementById("sf-region-text");
+    var city = document.getElementById("sf-city");
+    var local = document.getElementById("sf-local");
+    var regionReq = document.getElementById("sf-region-req");
+    var cityReq = document.getElementById("sf-city-req");
+
+    // Country -> list of states/regions (ISO subdivisions). Countries not in the
+    // map fall back to a free-text region field.
+    var statesNode = document.getElementById("sf-country-states");
+    var COUNTRY_STATES = statesNode ? JSON.parse(statesNode.textContent) : {};
+
+    function refreshLevels() {
+      var opt = byId[parent.value];
+      level.innerHTML = "";
+      // Country is inherited from the parent franchise (territory containment).
+      country.value = opt ? (opt.country || "") : "";
+      if (!opt) return;
+      opt.sub_levels.forEach(function (s) {
+        var el = document.createElement("option");
+        el.value = s.value;
+        el.textContent = s.label;
+        level.appendChild(el);
+      });
+      refreshRequired();
+    }
+
+    function renderRegion(needsRegion) {
+      var cc = (country.value || "").toUpperCase();
+      var opts = (cc && COUNTRY_STATES[cc]) || [];
+      var useSelect = opts.length > 0;
+      if (useSelect) {
+        var prev = regionSelect.value;
+        regionSelect.innerHTML = '<option value="">' + "{% trans 'Select State / Region' context 'franchise' %}" + '</option>';
+        opts.forEach(function (s) {
+          var o = document.createElement("option");
+          o.value = s; o.textContent = s;
+          if (s === prev) o.selected = true;
+          regionSelect.appendChild(o);
+        });
+      }
+      // Show + enable exactly one control; disabled fields are not submitted, so
+      // only the active one reaches the server under name="requested_region".
+      regionSelect.style.display = useSelect ? "" : "none";
+      regionText.style.display = useSelect ? "none" : "";
+      regionSelect.disabled = !(useSelect && needsRegion);
+      regionText.disabled = !(!useSelect && needsRegion);
+      regionSelect.required = useSelect && needsRegion;
+      regionText.required = !useSelect && needsRegion;
+    }
+
+    function refreshRequired() {
+      var lvl = level.value;
+      var needsRegion = lvl === "REGIONAL" || lvl === "MICRO";
+      var needsCity = lvl === "MICRO";
+      var needsLocal = lvl === "MICRO";
+      regionReq.style.display = needsRegion ? "" : "none";
+      cityReq.style.display = needsCity ? "" : "none";
+      city.required = needsCity;
+      // Deeper territory fields don't apply to shallower sub-levels (a National
+      // is country-scoped, a Regional stops at the state) — disabled inputs are
+      // not submitted, so canonical_territory stays clean.
+      city.disabled = !needsCity;
+      local.disabled = !needsLocal;
+      renderRegion(needsRegion);
+    }
+
+    parent.addEventListener("change", refreshLevels);
+    level.addEventListener("change", refreshRequired);
+    refreshLevels();
+  })();
+</script>
+{% endif %}
+
+{% endblock %}

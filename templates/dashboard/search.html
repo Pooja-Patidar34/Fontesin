@@ -28,7 +28,7 @@
             <th>{% trans "Name" context "common" %}</th>
             <th>{% trans "City" context "dashboard" %}</th>
             <th>{% trans "Country" context "common" %}</th>
-            {% if request.user.is_superuser %}<th>{% trans "Tenant" context "dashboard" %}</th>{% endif %}
+            {% if request.user.is_superuser %}<th>{% trans "Franchise" context "dashboard" %}</th>{% endif %}
             <th>{% trans "Status" context "common" %}</th>
           </tr>
         </thead>
@@ -112,7 +112,7 @@
           <tr>
             <th>{% trans "Name" context "common" %}</th>
             <th>{% trans "Email" context "common" %}</th>
-            {% if request.user.is_superuser %}<th>{% trans "Tenant" context "dashboard" %}</th>{% endif %}
+            {% if request.user.is_superuser %}<th>{% trans "Franchise" context "dashboard" %}</th>{% endif %}
             <th>{% trans "Status" context "common" %}</th>
           </tr>
         </thead>

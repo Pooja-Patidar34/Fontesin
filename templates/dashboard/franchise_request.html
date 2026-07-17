@@ -1,0 +1,482 @@
+{% extends "base/base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Request a Franchise" context "franchise" %}{% endblock %}
+
+{% block content %}
+
+<style>
+  .fr-wrap { max-width: 1120px; margin: 0 auto; }
+  .fr-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 20px; align-items: start; }
+  @media (max-width: 991px) { .fr-grid { grid-template-columns: 1fr; } }
+
+  .fr-card {
+    background: #fff; border: 1px solid #e8edf3; border-radius: 14px;
+    box-shadow: 0 1px 3px rgba(15,23,42,.05); overflow: hidden;
+  }
+  .fr-card + .fr-card { margin-top: 20px; }
+
+  .fr-head { display: flex; gap: 14px; align-items: flex-start; padding: 20px 22px; }
+  .fr-head--bd { border-bottom: 1px solid #f1f5f9; }
+  .fr-ico {
+    width: 42px; height: 42px; border-radius: 11px; display: grid; place-items: center;
+    font-size: 1.02rem; flex: 0 0 auto;
+  }
+  .fr-ico--blue  { background: #eaf2fb; color: #2f6dbd; }
+  .fr-ico--green { background: #e7f7ee; color: #12a150; }
+  .fr-ico--slate { background: #eef1f5; color: #64748b; }
+  .fr-head__t { font-size: 1.06rem; font-weight: 700; color: #0f1e2e; margin: 0; line-height: 1.25; }
+  .fr-head__s { font-size: .82rem; color: #64748b; margin: 5px 0 0; line-height: 1.5; }
+
+  .fr-body { padding: 20px 22px; }
+
+  .fr-field { margin-bottom: 16px; }
+  .fr-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 520px) { .fr-row { grid-template-columns: 1fr; } }
+  .fr-label {
+    display: block; font-size: .78rem; font-weight: 600; color: #334155;
+    margin-bottom: 6px; letter-spacing: .01em;
+  }
+  .fr-label .req { color: #e11d48; }
+  .fr-control {
+    width: 100%; border: 1px solid #dbe3ec; border-radius: 9px; padding: 10px 12px;
+    font-size: .86rem; color: #0f1e2e; background: #fff;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  select.fr-control { appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center; padding-right: 34px; }
+  .fr-control:focus { outline: none; border-color: #4da3ff; box-shadow: 0 0 0 3px rgba(77,163,255,.15); }
+  .fr-control::placeholder { color: #b4becb; }
+  .fr-hint { font-size: .74rem; color: #94a3b8; margin-top: 5px; }
+
+  .fr-btn {
+    width: 100%; border: 0; border-radius: 10px; padding: 12px 16px; cursor: pointer;
+    background: linear-gradient(180deg, #24405a, #16293b); color: #fff;
+    font-size: .9rem; font-weight: 600; letter-spacing: .01em;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    transition: filter .15s, transform .02s;
+  }
+  .fr-btn:hover { filter: brightness(1.08); }
+  .fr-btn:active { transform: translateY(1px); }
+
+  .fr-banner {
+    display: flex; gap: 12px; align-items: flex-start; margin: 4px 22px 22px;
+    padding: 14px 16px; border-radius: 11px; font-size: .84rem; line-height: 1.5;
+  }
+  .fr-banner i { margin-top: 2px; }
+  .fr-banner--success { background: #eafaf0; border: 1px solid #c9efd7; color: #12693a; }
+  .fr-banner--warn    { background: #fef8e7; border: 1px solid #f6e6b0; color: #8a6100; }
+
+  /* List items (franchises + requests) */
+  .fr-list { display: flex; flex-direction: column; }
+  .fr-item { padding: 16px 22px; border-top: 1px solid #f1f5f9; }
+  .fr-item:first-child { border-top: 0; }
+  .fr-item__top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .fr-item__name { font-size: .92rem; font-weight: 700; color: #0f1e2e; line-height: 1.3; }
+  .fr-item__sub { font-size: .78rem; color: #94a3b8; margin-top: 2px; }
+  .fr-meta { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .78rem; color: #475569; }
+  .fr-meta span { color: #94a3b8; margin-right: 5px; }
+  .fr-chain { margin-top: 11px; padding: 9px 12px; border-left: 3px solid #dbe3ec; background: #f8fafc; border-radius: 0 8px 8px 0; }
+  .fr-chain__h { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #94a3b8; margin-bottom: 6px; }
+  .fr-chain__row + .fr-chain__row { margin-top: 6px; padding-top: 6px; border-top: 1px dashed #e8edf3; }
+  .fr-chain__name { font-size: .82rem; font-weight: 600; color: #334155; }
+  .fr-chain__lvl { font-size: .64rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #4338ca; background: #eef2ff; padding: 1px 7px; border-radius: 100px; margin-left: 4px; }
+  .fr-chain__sub { font-size: .74rem; color: #64748b; margin-top: 2px; }
+  .fr-chain__toggle { margin-top: 8px; border: 0; background: transparent; color: #2563eb; font-size: .74rem; font-weight: 600; cursor: pointer; padding: 2px 0; display: inline-flex; align-items: center; gap: 5px; }
+  .fr-chain__toggle:hover { color: #1e40af; }
+  .fr-chain__toggle i { font-size: .62rem; transition: transform .15s ease; }
+  .fr-chain.is-expanded .fr-chain__toggle i { transform: rotate(180deg); }
+  .fr-reason { margin-top: 10px; background: #fff5f5; border: 1px solid #fbdada; border-radius: 8px;
+    padding: 8px 11px; font-size: .8rem; color: #9f1239; }
+
+  .fr-empty { text-align: center; color: #94a3b8; padding: 30px 18px; }
+  .fr-empty i { font-size: 1.6rem; margin-bottom: 8px; opacity: .6; }
+  .fr-empty p { margin: 0; font-size: .82rem; }
+
+  .pill {
+    display: inline-block; padding: 3px 10px; border-radius: 100px; white-space: nowrap;
+    font-size: .66rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+  }
+  .pill-submitted, .pill-pending_review, .pill-pending_contract, .pill-pending_payment { background: #fef3c7; color: #92600a; }
+  .pill-approved { background: #dbeafe; color: #1d4ed8; }
+  .pill-active   { background: #dcfce7; color: #15803d; }
+  .pill-rejected, .pill-cancelled, .pill-terminated, .pill-expired, .pill-suspended { background: #fee2e2; color: #b91c1c; }
+</style>
+
+<div class="fr-wrap">
+  <div class="fr-grid">
+
+    <!-- LEFT: request form / holder notice + My Requests (kept above the fold) -->
+    <div>
+    <div class="fr-card">
+      <div class="fr-head fr-head--bd">
+        <div class="fr-ico fr-ico--blue"><i class="fas fa-sitemap"></i></div>
+        <div>
+          <h3 class="fr-head__t">{% trans "Request a Franchise" context "franchise" %}</h3>
+          <p class="fr-head__s">
+            {% blocktrans trimmed context "franchise" %}
+            Choose the franchise level and the territory you want to operate. Your request goes
+            to the Platform Admin for approval — you can't assign a franchise to yourself. Once
+            approved, it activates after contract and payment.
+            {% endblocktrans %}
+          </p>
+        </div>
+      </div>
+
+      {% if is_franchise_holder %}
+      <div class="fr-banner fr-banner--success">
+        <i class="fas fa-check-circle"></i>
+        <div>
+          {% blocktrans trimmed context "franchise" %}
+          You're a franchise partner. You don't need to request another franchise here — manage
+          your territory and propose new sub-franchises from your <strong>Franchises</strong>
+          section. Your current franchises are listed on the right.
+          {% endblocktrans %}
+        </div>
+      </div>
+      {% elif has_open_application %}
+      <div class="fr-banner fr-banner--warn">
+        <i class="fas fa-hourglass-half"></i>
+        <div>{% trans "You already have a franchise request under review. You'll be notified of the decision." context "franchise" %}</div>
+      </div>
+      {% else %}
+      <form method="post" action="{% url 'franchise-request-submit' %}" class="fr-body">
+        {% csrf_token %}
+        <div class="fr-field">
+          <label class="fr-label">{% trans "Franchise level" context "franchise" %} <span class="req">*</span></label>
+          <select name="requested_level" id="fr-level" class="fr-control" required>
+            <option value="">{% trans "Select a level…" context "franchise" %}</option>
+            {% for value, label in level_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+          </select>
+          <div class="fr-hint">{% trans "Master, National, Regional, or Micro — defines the scope of your franchise." context "franchise" %}</div>
+        </div>
+
+        <div class="fr-field fr-row">
+          <div>
+            <label class="fr-label">{% trans "Country" context "franchise" %} <span class="req">*</span></label>
+            <select name="requested_country" class="fr-control" required>
+              <option value="">{% trans "Select a country…" context "franchise" %}</option>
+              {% for value, label in country_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+            </select>
+          </div>
+          <div id="fr-region-wrap">
+            <label class="fr-label">{% trans "Region / State" context "franchise" %} <span class="req" id="fr-region-star" style="display:none;">*</span></label>
+            {# Dropdown when the selected country has known subdivisions; free-text fallback otherwise. Only the active one is enabled, so only it submits. #}
+            <select name="requested_region" id="fr-region-select" class="fr-control" style="display:none;" disabled></select>
+            <input type="text" name="requested_region" id="fr-region-input" class="fr-control" placeholder="{% trans "e.g. California" context "franchise" %}">
+          </div>
+        </div>
+
+        <div class="fr-field fr-row" id="fr-citylocal-row">
+          <div>
+            <label class="fr-label">{% trans "City" context "franchise" %} <span class="req" id="fr-city-star" style="display:none;">*</span></label>
+            <input type="text" name="requested_city" id="fr-city-input" class="fr-control" placeholder="{% trans "e.g. San Francisco" context "franchise" %}">
+          </div>
+          <div>
+            <label class="fr-label">{% trans "Local area" context "franchise" %}</label>
+            <input type="text" name="requested_local_area" class="fr-control" placeholder="{% trans "Optional" context "franchise" %}">
+          </div>
+        </div>
+
+        <div class="fr-hint" id="fr-master-note" style="display:none; margin:-8px 0 14px;">
+          <i class="fas fa-info-circle"></i> {% trans "A Master Franchise covers the whole country, so region/city aren't needed." context "franchise" %}
+        </div>
+
+        <div class="fr-field">
+          <label class="fr-label">{% trans "Notes for the reviewer" context "franchise" %}</label>
+          <textarea name="application_note" rows="3" class="fr-control"
+                    placeholder="{% trans "Why you want this franchise, your network, expected companies…" context "franchise" %}"></textarea>
+        </div>
+
+        <div class="fr-banner fr-banner--warn" id="fr-conflict"
+             style="display:none; margin:0 0 16px; padding:12px 14px;">
+          <i class="fas fa-ban"></i>
+          <div id="fr-conflict-msg"></div>
+        </div>
+
+        <button type="submit" class="fr-btn">
+          <i class="fas fa-paper-plane"></i> {% trans "Request for approval" context "franchise" %}
+        </button>
+      </form>
+      {% endif %}
+    </div>
+
+      {% comment %} My Requests — placed in the left column so it's visible without
+         scrolling (the holder notice / form on the left is short). {% endcomment %}
+      <div class="fr-card">
+        <div class="fr-head">
+          <div class="fr-ico fr-ico--slate"><i class="fas fa-history"></i></div>
+          <div><h3 class="fr-head__t">{% trans "My Requests" context "franchise" %}</h3></div>
+        </div>
+        <div class="fr-list">
+          {% for a in applications %}
+          <div class="fr-item">
+            <div class="fr-item__top">
+              <div>
+                <div class="fr-item__name">{{ a.get_requested_level_display }}</div>
+                <div class="fr-item__sub">
+                  {{ a.requested_country }}{% if a.requested_region %} · {{ a.requested_region }}{% endif %}{% if a.requested_city %} · {{ a.requested_city }}{% endif %}
+                  · {{ a.created_at|date:"M j, Y H:i" }}
+                </div>
+              </div>
+              <span class="pill pill-{{ a.application_status|lower }}">{{ a.get_application_status_display }}</span>
+            </div>
+            {% if a.application_status == "REJECTED" and a.board_note %}
+            <div class="fr-reason"><strong>{% trans "Reason:" context "franchise" %}</strong> {{ a.board_note }}</div>
+            {% endif %}
+          </div>
+          {% empty %}
+          <div class="fr-empty">
+            <div><i class="fas fa-inbox"></i></div>
+            <p>{% trans "No franchise requests yet." context "franchise" %}</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: my franchises -->
+    <div>
+      <div class="fr-card">
+        <div class="fr-head">
+          <div class="fr-ico fr-ico--green"><i class="fas fa-store"></i></div>
+          <div><h3 class="fr-head__t">{% trans "My Franchises" context "franchise" %}</h3></div>
+        </div>
+        <div class="fr-list">
+          {% for f in owned_franchises %}
+          <div class="fr-item">
+            <div class="fr-item__top">
+              <div>
+                <div class="fr-item__name">{{ f.name }}</div>
+                <div class="fr-item__sub">{{ f.get_franchise_level_display }}</div>
+              </div>
+              <span class="pill pill-{{ f.franchise_status|lower }}">{{ f.get_franchise_status_display }}</span>
+            </div>
+            <div class="fr-meta">
+              {% if f.territory_country %}<div><span>{% trans "Territory:" context "franchise" %}</span>{{ f.territory_country }}{% if f.territory_region %} · {{ f.territory_region }}{% endif %}{% if f.territory_city %} · {{ f.territory_city }}{% endif %}</div>{% endif %}
+              {% if f.contract_status %}<div><span>{% trans "Contract:" context "franchise" %}</span>{{ f.get_contract_status_display }}</div>{% endif %}
+              {% if f.franchise_fee_status %}<div><span>{% trans "Franchise fee:" context "franchise" %}</span>{{ f.get_franchise_fee_status_display }}</div>{% endif %}
+              {% if f.activated_at %}<div><span>{% trans "Active since:" context "franchise" %}</span>{{ f.activated_at|date:"M j, Y" }}</div>{% endif %}
+            </div>
+            {% if f.parent_chain %}
+            {% comment %} Limited upward visibility (spec §10.2 / Rule 6): basic parent-chain
+               identity data only — no parent business/performance data. Only the
+               immediate parent shows by default; deeper ancestors collapse behind a
+               "Show more" toggle so a long chain doesn't bloat the card. {% endcomment %}
+            <div class="fr-chain" data-chain>
+              <div class="fr-chain__h"><i class="fas fa-level-up-alt"></i> {% trans "Operating under" context "franchise" %}</div>
+              {% for p in f.parent_chain %}
+              <div class="fr-chain__row{% if not forloop.first %} fr-chain__row--extra{% endif %}"{% if not forloop.first %} style="display:none;"{% endif %}>
+                <div class="fr-chain__name">{{ p.name }} <span class="fr-chain__lvl">{{ p.level }}</span></div>
+                <div class="fr-chain__sub">
+                  {% if p.territory %}{{ p.territory }}{% endif %}
+                  {% if p.contact_person %} · {% trans "Contact:" context "franchise" %} {{ p.contact_person }}{% endif %}
+                  · {% trans "Status:" context "franchise" %} {{ p.relationship_status }}
+                </div>
+              </div>
+              {% endfor %}
+              {% if f.parent_chain|length > 1 %}
+              {% with extra=f.parent_chain|length|add:"-1" %}
+              <button type="button" class="fr-chain__toggle" data-chain-toggle
+                      data-less="{% trans "Show less" context "franchise" %}">
+                <i class="fas fa-chevron-down"></i>
+                <span class="fr-chain__toggle-txt">{% blocktrans count counter=extra context "franchise" %}Show {{ counter }} more level{% plural %}Show {{ counter }} more levels{% endblocktrans %}</span>
+              </button>
+              {% endwith %}
+              {% endif %}
+            </div>
+            {% endif %}
+          </div>
+          {% empty %}
+          <div class="fr-empty">
+            <div><i class="fas fa-store-slash"></i></div>
+            <p>{% trans "You don't hold any franchises yet." context "franchise" %}</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{{ country_states|json_script:"fr-country-states" }}
+<script>
+  (function () {
+    var level = document.getElementById("fr-level");
+    if (!level) return;
+    var regionWrap = document.getElementById("fr-region-wrap");
+    var cityRow = document.getElementById("fr-citylocal-row");
+    var note = document.getElementById("fr-master-note");
+    var regionSelect = document.getElementById("fr-region-select");
+    var regionInput = document.getElementById("fr-region-input");
+    var cityInput = document.getElementById("fr-city-input");
+    var regionStar = document.getElementById("fr-region-star");
+    var cityStar = document.getElementById("fr-city-star");
+    var countrySel = document.querySelector('[name="requested_country"]');
+
+    // Country -> states/regions (ISO subdivisions). Countries not in the map
+    // fall back to the free-text region field.
+    var statesNode = document.getElementById("fr-country-states");
+    var COUNTRY_STATES = statesNode ? JSON.parse(statesNode.textContent) : {};
+
+    // Which territory fields each level must name (mirrors the server guard):
+    // a Regional names its state, a Micro its city. Master/National are
+    // country-scoped, so only the (always-required) country matters.
+    var REQUIRED = {
+      MASTER:   { region: false, city: false },
+      NATIONAL: { region: false, city: false },
+      REGIONAL: { region: true,  city: false },
+      MICRO:    { region: true,  city: true  }
+    };
+
+    function mark(input, star, required) {
+      if (input) input.required = required;
+      if (star) star.style.display = required ? "" : "none";
+    }
+
+    // Populate the region control from the selected country; show the dropdown
+    // when subdivisions are known, else the free-text input. Only the active
+    // control is enabled, so exactly one submits under name="requested_region".
+    function renderRegion(needsRegion) {
+      var cc = ((countrySel && countrySel.value) || "").toUpperCase();
+      var opts = (cc && COUNTRY_STATES[cc]) || [];
+      var useSelect = opts.length > 0;
+      if (useSelect) {
+        var prev = regionSelect.value;
+        regionSelect.innerHTML = '<option value="">' + "{% trans 'Select State / Region' context 'franchise' %}" + '</option>';
+        opts.forEach(function (s) {
+          var o = document.createElement("option");
+          o.value = s; o.textContent = s;
+          if (s === prev) o.selected = true;
+          regionSelect.appendChild(o);
+        });
+      }
+      regionSelect.style.display = useSelect ? "" : "none";
+      regionInput.style.display = useSelect ? "none" : "";
+      regionSelect.disabled = !(useSelect && needsRegion);
+      regionInput.disabled = !(!useSelect && needsRegion);
+      regionSelect.required = useSelect && needsRegion;
+      regionInput.required = !useSelect && needsRegion;
+      mark(null, regionStar, needsRegion);
+    }
+
+    function sync() {
+      var isMaster = level.value === "MASTER";
+      var req = REQUIRED[level.value] || { region: false, city: false };
+      // A Master covers the whole country — hide the narrower territory fields
+      // and clear them so nothing accidentally narrows the master's territory.
+      if (regionWrap) regionWrap.style.display = isMaster ? "none" : "";
+      if (cityRow) cityRow.style.display = isMaster ? "none" : "";
+      if (note) note.style.display = isMaster ? "" : "none";
+      if (isMaster) {
+        regionSelect && (regionSelect.value = "");
+        regionInput && (regionInput.value = "");
+        cityRow && cityRow.querySelectorAll("input").forEach(function (i) { i.value = ""; });
+      }
+      mark(cityInput, cityStar, !isMaster && req.city);
+      renderRegion(!isMaster && req.region);
+    }
+    level.addEventListener("change", sync);
+    if (countrySel) countrySel.addEventListener("change", sync);
+    sync();
+  })();
+
+  // Block requests for a territory already held (Master/National/Regional/…)
+  // right in the form — no round-trip. Mirrors territory_conflict() on the
+  // server (same level + exact territory); the POST view still re-checks.
+  (function () {
+    var form = document.querySelector('form[action$="request/submit/"], form[action*="franchise-request-submit"]');
+    // Fall back to the first form on the page that carries the level field.
+    var levelEl = document.getElementById("fr-level");
+    if (!form && levelEl) form = levelEl.closest("form");
+    if (!form || !levelEl) return;
+
+    var TAKEN = {{ taken_territories_json|safe }};
+    var MSG_TPL = "{% trans "This %(scope)s already has an active %(level)s (%(name)s), so it can't be granted twice." %}";
+
+    var banner = document.getElementById("fr-conflict");
+    var bannerMsg = document.getElementById("fr-conflict-msg");
+
+    function val(name) {
+      // A field may be rendered twice (region = dropdown + text fallback); read
+      // the ENABLED one, since only that submits.
+      var els = form.querySelectorAll('[name="' + name + '"]');
+      for (var i = 0; i < els.length; i++) { if (!els[i].disabled) return els[i].value; }
+      return els.length ? els[0].value : "";
+    }
+    function norm(s) { return (s || "").trim().toLowerCase(); }
+
+    function findConflict() {
+      var lvl = (val("requested_level") || "").trim().toUpperCase();
+      var country = (val("requested_country") || "").trim().toUpperCase();
+      if (!lvl || !country) return null;
+      // Compare only the fields this level occupies (mirrors canonical_territory
+      // on the server): Master/National = country, Regional = + state,
+      // Micro = + city (+ optional local area).
+      var keepRegion = lvl === "REGIONAL" || lvl === "MICRO";
+      var keepCity = lvl === "MICRO";
+      var region = keepRegion ? norm(val("requested_region")) : "";
+      var city = keepCity ? norm(val("requested_city")) : "";
+      var local = keepCity ? norm(val("requested_local_area")) : "";
+      for (var i = 0; i < TAKEN.length; i++) {
+        var t = TAKEN[i];
+        if (t.level === lvl && t.country === country &&
+            t.region === region && t.city === city && t.local_area === local) {
+          return t;
+        }
+      }
+      return null;
+    }
+
+    function showConflict(t) {
+      bannerMsg.textContent = MSG_TPL
+        .replace("%(scope)s", t.scope)
+        .replace("%(level)s", t.level_label)
+        .replace("%(name)s", t.name);
+      banner.style.display = "flex";
+    }
+    function hideConflict() { banner.style.display = "none"; }
+
+    form.addEventListener("submit", function (e) {
+      var t = findConflict();
+      if (t) {
+        e.preventDefault();
+        showConflict(t);
+        banner.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    });
+
+    // Clear the warning as soon as the applicant changes the territory.
+    ["requested_level", "requested_country", "requested_region",
+     "requested_city", "requested_local_area"].forEach(function (n) {
+      var el = form.querySelector('[name="' + n + '"]');
+      if (el) {
+        el.addEventListener("change", hideConflict);
+        el.addEventListener("input", hideConflict);
+      }
+    });
+  })();
+
+  // "Operating under" parent chain: reveal/collapse the deeper ancestors so a
+  // long hierarchy stays compact by default (only the immediate parent shows).
+  (function () {
+    document.addEventListener("click", function (e) {
+      var btn = e.target.closest("[data-chain-toggle]");
+      if (!btn) return;
+      var chain = btn.closest("[data-chain]");
+      if (!chain) return;
+      var expanded = chain.classList.toggle("is-expanded");
+      chain.querySelectorAll(".fr-chain__row--extra").forEach(function (r) {
+        r.style.display = expanded ? "" : "none";
+      });
+      var txt = btn.querySelector(".fr-chain__toggle-txt");
+      if (txt) {
+        if (expanded) { txt.dataset.more = txt.textContent; txt.textContent = btn.dataset.less; }
+        else if (txt.dataset.more) { txt.textContent = txt.dataset.more; }
+      }
+    });
+  })();
+</script>
+
+{% endblock %}

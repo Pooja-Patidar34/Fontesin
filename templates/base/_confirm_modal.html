@@ -1,0 +1,108 @@
+{% load i18n %}
+{% comment %}
+Reusable confirmation modal. Include once per page:  {% include "base/_confirm_modal.html" %}
+
+Any <form> that carries a [data-confirm] attribute is intercepted on submit and
+routed through this modal instead of the native confirm() dialog. Supported
+attributes (all optional except data-confirm):
+
+  data-confirm            marks the form (presence is enough)
+  data-confirm-tone       "primary" (default) or "warning" — colours icon + button
+  data-confirm-icon       Font Awesome glyph, e.g. "fa-bolt"
+  data-confirm-title      heading text
+  data-confirm-body       explanatory line
+  data-confirm-ok         confirm-button label
+  data-confirm-name       an entity name shown as a chip (optional)
+{% endcomment %}
+<style>
+  .cm-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.55); display: none; align-items: center; justify-content: center; z-index: 1080; padding: 1rem; opacity: 0; transition: opacity .16s ease; }
+  .cm-overlay.show { display: flex; opacity: 1; }
+  .cm-dialog { background: #fff; border-radius: 16px; width: 100%; max-width: 440px; box-shadow: 0 20px 50px rgba(15,23,42,.28); overflow: hidden; transform: translateY(10px) scale(.98); transition: transform .16s ease; }
+  .cm-overlay.show .cm-dialog { transform: translateY(0) scale(1); }
+  .cm-body { padding: 26px 26px 8px; text-align: center; }
+  .cm-ico { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; font-size: 1.35rem; margin: 0 auto 16px; }
+  .cm-ico.primary { background: #e7f0fb; color: #2f6dbd; }
+  .cm-ico.warning { background: #fef3e2; color: #b7791f; }
+  .cm-ico.danger  { background: #fde8e8; color: #c53030; }
+  .cm-title { font-size: 1.12rem; font-weight: 700; color: #0f1e2e; margin: 0 0 6px; }
+  .cm-name { display: inline-block; font-weight: 700; color: #1B2E3F; background: #f1f5f9; border-radius: 6px; padding: 1px 8px; margin-bottom: 8px; font-size: .82rem; }
+  .cm-text { font-size: .88rem; color: #64748b; line-height: 1.55; margin: 0; }
+  .cm-foot { display: flex; gap: 10px; padding: 18px 26px 24px; }
+  .cm-foot .btn { flex: 1; padding: .5rem .75rem; font-weight: 600; }
+</style>
+
+<div class="cm-overlay" id="cmOverlay" role="dialog" aria-modal="true" aria-labelledby="cmTitle">
+  <div class="cm-dialog">
+    <div class="cm-body">
+      <div class="cm-ico primary" id="cmIco"><i class="fas fa-question"></i></div>
+      <h4 class="cm-title" id="cmTitle"></h4>
+      <div class="cm-name" id="cmName" style="display:none;"></div>
+      <p class="cm-text" id="cmText"></p>
+    </div>
+    <div class="cm-foot">
+      <button type="button" class="btn btn-light border" id="cmCancel">{% trans "Cancel" context "common" %}</button>
+      <button type="button" class="btn btn-primary" id="cmOk"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Reusable confirmation modal for forms marked with [data-confirm].
+  (function () {
+    var overlay = document.getElementById("cmOverlay");
+    if (!overlay || overlay.dataset.bound === "1") return;  // include-once guard
+    overlay.dataset.bound = "1";
+
+    var ico    = document.getElementById("cmIco");
+    var title  = document.getElementById("cmTitle");
+    var name   = document.getElementById("cmName");
+    var text   = document.getElementById("cmText");
+    var okBtn  = document.getElementById("cmOk");
+    var cancel = document.getElementById("cmCancel");
+    var pending = null;
+
+    function close() {
+      overlay.classList.remove("show");
+      pending = null;
+    }
+
+    document.addEventListener("submit", function (e) {
+      var form = e.target.closest("form[data-confirm]");
+      if (!form || form.dataset.confirmed === "1") return;
+      e.preventDefault();
+      pending = form;
+
+      var tone = form.dataset.confirmTone || "primary";
+      ico.className = "cm-ico " + tone;
+      ico.innerHTML = '<i class="fas ' + (form.dataset.confirmIcon || "fa-question") + '"></i>';
+      title.textContent = form.dataset.confirmTitle || "Are you sure?";
+      text.textContent  = form.dataset.confirmBody || "";
+      if (form.dataset.confirmName) {
+        name.textContent = form.dataset.confirmName;
+        name.style.display = "";
+      } else {
+        name.style.display = "none";
+      }
+      okBtn.textContent = form.dataset.confirmOk || "Confirm";
+      okBtn.className = "btn " + (tone === "warning" ? "btn-warning" : tone === "danger" ? "btn-danger" : "btn-primary");
+
+      overlay.classList.add("show");
+      okBtn.focus();
+    });
+
+    okBtn.addEventListener("click", function () {
+      if (!pending) return;
+      var form = pending;
+      form.dataset.confirmed = "1";
+      close();
+      if (typeof form.requestSubmit === "function") { form.requestSubmit(); }
+      else { form.submit(); }
+    });
+
+    cancel.addEventListener("click", close);
+    overlay.addEventListener("click", function (e) { if (e.target === overlay) close(); });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && overlay.classList.contains("show")) close();
+    });
+  })();
+</script>

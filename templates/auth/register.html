@@ -334,13 +334,10 @@
                 </div>
               </label>
 
-              <label class="role-option">
-                <input type="radio" name="role" value="franchise" onchange="toggleOthersOption()"/>
-                <div>
-                  <div class="role-option__label">{% trans "🚀 Franchise Partner" context "auth.register" %}</div>
-                  <div class="role-option__desc">{% trans "Master / National / Local franchise" context "auth.register" %}</div>
-                </div>
-              </label>
+              {% comment %} Franchise Partner is intentionally NOT a self-select role at
+                 registration (spec §16 #1): a franchise account is never self-created.
+                 A Business User requests one via the "Request a Franchise" flow, and it
+                 becomes active only after approval + activation (§5). {% endcomment %}
 
             </div>
           </div>

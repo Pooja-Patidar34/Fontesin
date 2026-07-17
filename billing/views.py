@@ -257,12 +257,14 @@ def payment_approve(request, subscription_id):
 def commission_list(request):
     """Earnings page. Consultants see only their own rows; superusers see all
     rows across the platform (for payout review)."""
-    is_consultant = (
-        request.user.role
-        and request.user.role.code
-        and request.user.role.code.lower() == "consultant"
-    )
-    if not request.user.is_superuser and not is_consultant:
+    # Consultants and Micro-Franchise owners (who also earn plan commissions —
+    # spec §9.1.2) see their own rows; superusers see everything.
+    from accounts.utils.permissions import can_certify_companies, is_suspended_micro_owner
+    if not can_certify_companies(request.user):
+        # A suspended Micro owner keeps the tab but is shown a "suspended" message.
+        if is_suspended_micro_owner(request.user):
+            from django.utils.translation import gettext as _
+            return render(request, "dashboard/franchise_suspended.html", {"feature": _("Commissions")})
         raise PermissionDenied()
 
     qs = (
@@ -671,7 +673,7 @@ def _commission_company_for_subscription(user, sub):
     plan (`sub`): the FIRST CERTIFIED company the user created during this plan's
     window — from when this plan was initiated up to when the NEXT paid plan was
     initiated. Falls back to the latest certified company the user had before
-    this plan (carried over), else the primary company.
+    this plan (carried over), else the primary company.              
 
     Why the window is keyed on the subscription's `created_at` (when the plan
     was requested) and the NEXT subscription's `created_at`, NOT `start_date`:
@@ -792,10 +794,16 @@ def maybe_create_commission_for_subscription(sub, now):
     consultant = company.certified_by
     if not consultant:
         return
+    # The certifier earns the commission. This is a Standard Consultant or a
+    # Micro-Franchise owner (a consultant-level franchise — spec §9.1.2 "sell
+    # user plans", §11). A superadmin override certification doesn't generate a
+    # payout, so check the two earning roles explicitly rather than via
+    # can_certify_companies (which also allows superusers).
+    from accounts.utils.permissions import is_micro_franchise_owner
     consultant_role = (
         (consultant.role.code or "").lower() if getattr(consultant, "role", None) else ""
     )
-    if consultant_role != "consultant":
+    if consultant_role != "consultant" and not is_micro_franchise_owner(consultant):
         return
 
     invoice = Invoice.objects.filter(subscription=sub).order_by("-created_at").first()

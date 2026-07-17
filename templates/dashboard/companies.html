@@ -721,7 +721,7 @@
           <tr>
             <th>{% trans "Company Name" context "companies" %}</th>
             {% if request.user.is_superuser %}
-            <th>{% trans "Tenant" context "companies" %}</th>
+            <th>{% trans "Franchise" context "companies" %}</th>
             {% endif %}
             <th>{% trans "Industry" context "companies" %}</th>
             {% if is_business_user %}
@@ -795,7 +795,7 @@
 
           {% if request.user.is_superuser %}
           <div class="form-group">
-            <label>{% trans "Tenant" context "companies" %} <span class="text-danger">*</span></label>
+            <label>{% trans "Franchise" context "companies" %} <span class="text-danger">*</span></label>
             {{ form.tenant }}
           </div>
           {% else %}

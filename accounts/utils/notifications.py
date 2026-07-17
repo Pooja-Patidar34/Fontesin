@@ -593,6 +593,203 @@ def notify_application_decision(applicant, *, approved):
     )
 
 
+def _franchise_summary(application):
+    """Human label for a franchise application's requested level + territory."""
+    from accounts.constants import FranchiseLevel, CountryChoices
+
+    level_label = dict(FranchiseLevel.CHOICES).get(
+        application.requested_level, application.requested_level
+    )
+    country = (application.requested_country or "").strip()
+    country_label = str(dict(CountryChoices.CHOICES).get(country.upper(), country)) if country else ""
+    parts = [
+        application.requested_local_area,
+        application.requested_city,
+        application.requested_region,
+        country_label,
+    ]
+    territory = ", ".join(str(p) for p in parts if (p or "").strip())
+    return level_label, territory
+
+
+def notify_franchise_application_submitted(application):
+    """Notify the right reviewers of a new franchise application (spec §4.2).
+
+    MASTER → the Platform Admin(s). Sub-franchise → the DIRECT PARENT franchise
+    holder (the operational reviewer) AND the Platform Admin(s), each linked to
+    the queue they act in."""
+    from accounts.models import User
+
+    applicant = application.applicant_user
+    applicant_label = (
+        f"{applicant.first_name} {applicant.last_name}".strip() or applicant.email
+    )
+    level_label, territory = _franchise_summary(application)
+    parent = application.parent_franchise
+
+    def _su_link():
+        try:
+            return reverse("franchise-applications")
+        except NoReverseMatch:
+            return ""
+
+    def _parent_link():
+        try:
+            return reverse("franchise-child-requests")
+        except NoReverseMatch:
+            return ""
+
+    last = None
+    # Direct parent (operational reviewer) for a sub-franchise.
+    if parent is not None and parent.owner_user_id:
+        reviewer = parent.owner_user
+        with translation.override(user_language(reviewer)):
+            body = _(
+                "%(name)s has requested a %(level)s under %(parent)s and is awaiting your review."
+            ) % {"name": applicant_label, "level": level_label, "parent": parent.name}
+            if territory:
+                body += "\n" + _("Territory: %(territory)s.") % {"territory": territory}
+            last = notify(
+                recipient=reviewer,
+                sender=applicant,
+                kind=Notification.KIND_FRANCHISE_REQUEST,
+                title=_("New %(level)s request") % {"level": level_label},
+                body=body,
+                link_url=_parent_link(),
+            )
+
+    # Platform Admin(s) — always notified (§4.2 notification target).
+    for su in User.objects.filter(is_superuser=True, is_active=True):
+        with translation.override(user_language(su)):
+            if parent is not None:
+                body = _(
+                    "%(name)s requested a %(level)s under %(parent)s. %(parent)s reviews it; "
+                    "you'll activate it after approval."
+                ) % {"name": applicant_label, "level": level_label, "parent": parent.name}
+            else:
+                body = _(
+                    "%(name)s has requested a %(level)s and is awaiting your review."
+                ) % {"name": applicant_label, "level": level_label}
+            if territory:
+                body += "\n" + _("Territory: %(territory)s.") % {"territory": territory}
+            last = notify(
+                recipient=su,
+                sender=applicant,
+                kind=Notification.KIND_FRANCHISE_REQUEST,
+                title=_("New %(level)s request") % {"level": level_label},
+                body=body,
+                link_url=_su_link(),
+            )
+    return last
+
+
+def notify_franchise_awaiting_activation(node):
+    """A sub-franchise was approved by its parent and now awaits the Platform
+    Admin's activation (spec §4.2 final activation authority)."""
+    from accounts.models import User
+    from accounts.constants import FranchiseLevel
+
+    level_label = dict(FranchiseLevel.CHOICES).get(node.franchise_level, node.franchise_level or "")
+    try:
+        link = reverse("franchise-applications")
+    except NoReverseMatch:
+        link = ""
+    last = None
+    for su in User.objects.filter(is_superuser=True, is_active=True):
+        with translation.override(user_language(su)):
+            body = _(
+                "%(name)s was approved by its parent franchise and is awaiting activation "
+                "(contract & payment)."
+            ) % {"name": node.name}
+            last = notify(
+                recipient=su,
+                sender=node.approved_by,
+                kind=Notification.KIND_FRANCHISE_REQUEST,
+                title=_("%(level)s awaiting activation") % {"level": level_label},
+                body=body,
+                link_url=link,
+            )
+    return last
+
+
+def notify_franchise_application_decision(application, *, approved):
+    """Inform the applicant of the Super Admin's approve/reject decision."""
+    applicant = application.applicant_user
+    if not applicant:
+        return None
+    decider = application.approved_by if approved else application.rejected_by
+    decider_label = ""
+    if decider:
+        decider_label = (
+            f"{decider.first_name} {decider.last_name}".strip() or decider.email
+        )
+    level_label, territory = _franchise_summary(application)
+    try:
+        link = reverse("franchise-request")
+    except NoReverseMatch:
+        link = ""
+    with translation.override(user_language(applicant)):
+        if approved:
+            kind = Notification.KIND_FRANCHISE_APPROVED
+            title = _("Your %(level)s request was approved") % {"level": level_label}
+            body = _("Your %(level)s request was approved") % {"level": level_label}
+            if decider_label:
+                body += _(" by %(name)s") % {"name": decider_label}
+            body += _(
+                ". The franchise is now pending contract and payment — the Super "
+                "Admin will activate it once those are complete."
+            )
+        else:
+            kind = Notification.KIND_FRANCHISE_REJECTED
+            title = _("Your %(level)s request was rejected") % {"level": level_label}
+            reason = (application.board_note or "").strip()
+            body = _("Your %(level)s request was rejected") % {"level": level_label}
+            if decider_label:
+                body += _(" by %(name)s") % {"name": decider_label}
+            body += "."
+            if reason:
+                body += "\n" + _("Reason: %(reason)s") % {"reason": reason}
+    return notify(
+        recipient=applicant,
+        sender=decider,
+        kind=kind,
+        title=title,
+        body=body,
+        link_url=link,
+    )
+
+
+def notify_franchise_activated(node):
+    """Inform the franchise holder that their franchise is now ACTIVE (spec §2 —
+    activation grants the Franchise Management section)."""
+    owner = getattr(node, "owner_user", None)
+    if not owner:
+        return None
+    from accounts.constants import FranchiseLevel
+
+    level_label = dict(FranchiseLevel.CHOICES).get(
+        node.franchise_level, node.franchise_level or ""
+    )
+    try:
+        link = reverse("franchise-request")
+    except NoReverseMatch:
+        link = ""
+    with translation.override(user_language(owner)):
+        title = _("Your %(level)s is now active") % {"level": level_label}
+        body = _(
+            "%(name)s has been activated. Sign out and back in if your sidebar "
+            "doesn't show the Franchises section yet."
+        ) % {"name": node.name}
+    return notify(
+        recipient=owner,
+        sender=node.approved_by,
+        kind=Notification.KIND_FRANCHISE_ACTIVATED,
+        title=title,
+        body=body,
+        link_url=link,
+    )
+
+
 def notify_coordinator_request_decision(coord_request, *, approved):
     """Inform the requesting BU of the Super Admin's decision."""
     requester = coord_request.user

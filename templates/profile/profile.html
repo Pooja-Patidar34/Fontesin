@@ -55,7 +55,7 @@
             <td style="word-break:break-word; overflow-wrap:anywhere;">{{ request.user.role.name|default:"-" }}</td>
           </tr>
           <tr>
-            <td class="text-muted">{% trans "Tenant" context "dashboard" %}</td>
+            <td class="text-muted">{% trans "Franchise" context "dashboard" %}</td>
             <td style="word-break:break-word; overflow-wrap:anywhere;" title="{{ request.user.tenant.name|default:'-' }}">{{ request.user.tenant.name|default:"-" }}</td>
           </tr>
           <tr>
@@ -134,7 +134,7 @@
             <td>{{ user_company.fax|default:"-" }}</td>
           </tr>
           <tr>
-            <td class="text-muted">{% trans "Tenant Domain" context "profile" %}</td>
+            <td class="text-muted">{% trans "Franchise Domain" context "profile" %}</td>
             <td>{{ user_company.tenant.domain|default:"-" }}</td>
           </tr>
           <tr>

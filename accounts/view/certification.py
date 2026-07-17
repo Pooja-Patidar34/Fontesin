@@ -24,6 +24,13 @@ from django.utils.translation import gettext as _
 
 from accounts.models import AuditLog, Company
 from accounts.utils.ip import get_client_ip
+from accounts.utils.permissions import can_certify_companies, is_suspended_micro_owner
+
+
+def _suspended_page(request, feature):
+    """Render the 'your franchise is suspended' page for a suspended Micro owner
+    who tries to reach a certifier-only tab (spec §13 Rule 10)."""
+    return render(request, "dashboard/franchise_suspended.html", {"feature": feature})
 
 
 def _is_ajax(request):
@@ -31,13 +38,11 @@ def _is_ajax(request):
 
 
 def _require_consultant(user):
-    """Only users with the `consultant` role (or superusers) may use these
-    endpoints. Mirrors the partnership module's role gate so the failure mode
-    is consistent: a 403 page rather than a silent 404."""
-    if user.is_superuser:
-        return
-    role_code = (user.role.code or "").lower() if user.role else ""
-    if role_code != "consultant":
+    """Only certifiers may use these endpoints: superusers, Standard Consultants,
+    and Micro-Franchise owners (a consultant-level franchise — spec §9.1.2, §11).
+    Mirrors the partnership module's role gate so the failure mode is consistent:
+    a 403 page rather than a silent 404."""
+    if not can_certify_companies(user):
         raise PermissionDenied("Only consultants can manage certifications.")
 
 
@@ -62,11 +67,17 @@ def certification_list(request):
     role_code = _user_role_code(request.user)
 
     if role_code == "business_user":
-        # BUs see the status of every company they own (typically just one
-        # — their primary — but the model allows extras). All three states
-        # are surfaced as separate sections so the user can scan history
-        # without filtering tabs.
-        owned = Company.objects.filter(owner_user=request.user)
+        # A BU sees the certification status of just their ACTIVE company — the
+        # one selected in the company switcher (session), matching every other
+        # per-company page. A BU who owns several companies switches company to
+        # see another's certification, rather than seeing them all mixed here.
+        from billing.utils import resolve_active_company
+        active_company = resolve_active_company(request.user)
+        owned = (
+            Company.objects.filter(owner_user=request.user, id=active_company.id)
+            if active_company
+            else Company.objects.none()
+        )
 
         pending = owned.filter(
             certification_status="pending"
@@ -90,7 +101,12 @@ def certification_list(request):
             },
         )
 
-    # Default: reviewer view. Consultants and superusers only.
+    # A Micro-Franchise owner whose franchise is suspended keeps the tab visible
+    # but can't act — show a clear "suspended" message instead of a 403.
+    if is_suspended_micro_owner(request.user):
+        return _suspended_page(request, _("Certifications"))
+
+    # Default: reviewer view. Consultants, active Micro owners, superusers.
     _require_consultant(request.user)
 
     # Broadcast model: every consultant sees unclaimed pending requests plus
@@ -145,6 +161,13 @@ def certification_action(request, company_id):
               company remains out of the public directory. The owner_user
               can refile via the same form.
     """
+    # A suspended Micro owner can't certify — friendly message, not a 403.
+    if is_suspended_micro_owner(request.user):
+        msg = _("Your franchise is suspended, so you can't certify companies. Please contact the Platform Admin.")
+        if _is_ajax(request):
+            return JsonResponse({"ok": False, "message": msg}, status=403)
+        messages.error(request, msg)
+        return redirect("certifications")
     _require_consultant(request.user)
 
     decision = (request.POST.get("decision") or "").strip().lower()
@@ -267,8 +290,8 @@ def pending_certification_count(user):
     badge for users who shouldn't see the page in the first place."""
     if not user.is_authenticated:
         return 0
-    role_code = (user.role.code or "").lower() if user.role else ""
-    if not user.is_superuser and role_code != "consultant":
+    # Consultants, Micro-Franchise owners, and superusers all have a queue.
+    if not can_certify_companies(user):
         return 0
     qs = Company.objects.filter(certification_status="pending")
     if not user.is_superuser:

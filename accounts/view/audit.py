@@ -11,9 +11,33 @@ from django.shortcuts import get_object_or_404
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.decorators import login_required
 
+
+def _can_view_audit(user):
+    """Who may open the audit log (spec §14): Platform Admin, any role granted the
+    `audit.view` permission, and — for their own subtree only — a franchise owner."""
+    if user.is_superuser:
+        return True
+    if has_permission(user, "audit.view"):
+        return True
+    from accounts.view.franchise import _owns_any_node
+    return _owns_any_node(user)
+
+
+def _visible_audit_tenant_ids(request_user):
+    """Tenant ids whose audit rows `request_user` may see (spec §14).
+
+    A franchise owner sees their own franchise subtree (own nodes + descendants),
+    plus their own tenant's rows. Everyone else sees only their own tenant."""
+    from accounts.view.franchise import visible_node_ids
+    tenant_ids = set(visible_node_ids(request_user))  # franchise subtree; empty otherwise
+    if getattr(request_user, "tenant_id", None):
+        tenant_ids.add(request_user.tenant_id)
+    return tenant_ids
+
+
 @login_required
 def audit_logs(request):
-    if not has_permission(request.user, "audit.view"):
+    if not _can_view_audit(request.user):
         raise PermissionDenied()
 
     qs = AuditLog.objects.select_related(
@@ -22,10 +46,15 @@ def audit_logs(request):
 
     if request.user.is_superuser:
         pass
-    elif request.user.tenant:
-        qs = qs.filter(tenant=request.user.tenant)
     else:
-        raise PermissionDenied()
+        # A franchise owner may see the audit trail for actions inside their own
+        # subtree (spec §14, optional visibility): every franchise node they own
+        # plus its descendants, alongside their own tenant's rows. Non-franchise
+        # users get just their own tenant (visible_tenant_ids returns none).
+        tenant_ids = _visible_audit_tenant_ids(request.user)
+        if not tenant_ids:
+            raise PermissionDenied()
+        qs = qs.filter(tenant_id__in=tenant_ids)
 
     paginator = Paginator(qs, 10)
     page_number = request.GET.get("page", 1)
@@ -51,17 +80,18 @@ def audit_logs(request):
 
 @login_required
 def audit_log_detail_ajax(request, log_id):
-    if not has_permission(request.user, "audit.view"):
+    if not _can_view_audit(request.user):
         raise PermissionDenied()
 
     qs = AuditLog.objects.select_related("tenant", "actor")
 
     if request.user.is_superuser:
         log = get_object_or_404(qs, id=log_id)
-    elif request.user.tenant:
-        log = get_object_or_404(qs, id=log_id, tenant=request.user.tenant)
     else:
-        raise PermissionDenied()
+        tenant_ids = _visible_audit_tenant_ids(request.user)
+        if not tenant_ids:
+            raise PermissionDenied()
+        log = get_object_or_404(qs, id=log_id, tenant_id__in=tenant_ids)
 
     return JsonResponse({
         "actor": log.actor.email if log.actor else "System",

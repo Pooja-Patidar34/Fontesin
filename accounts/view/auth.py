@@ -333,6 +333,19 @@ def register_view(request):
 
         tenant, created = Tenant.objects.get_or_create(name="Default")
 
+        # A franchise account is NEVER self-created at registration (spec §16 #1):
+        # the "Franchise Partner" option is removed from the form, and this guard
+        # rejects any direct/stale POST of role=franchise. A Business User obtains
+        # a franchise through "Request a Franchise" (application → approval →
+        # activation, §5), which grants the franchise role only on activation.
+        if role_name.lower() == "franchise":
+            messages.error(
+                request,
+                _("Franchise accounts can't be created at sign-up. Register as a "
+                  "Business User, then use \"Request a Franchise\" from your dashboard."),
+            )
+            return render(request, "auth/register.html", ctx)
+
         role = Role.objects.filter(code__iexact=role_name).first()
 
         if not role:

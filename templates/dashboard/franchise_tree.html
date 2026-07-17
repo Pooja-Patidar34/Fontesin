@@ -1,0 +1,80 @@
+{% extends "base/base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Franchise Tree" context "franchise" %}{% endblock %}
+
+{% block content %}
+
+<style>
+  .card.fr-shell { border: 1px solid #e8edf3; border-radius: 14px; box-shadow: 0 1px 3px rgba(15,23,42,.05); overflow: hidden; }
+  .fr-head { display: flex; gap: 14px; align-items: flex-start; padding: 20px 22px; border-bottom: 1px solid #f1f5f9; }
+  .fr-ico { width: 42px; height: 42px; border-radius: 11px; display: grid; place-items: center; font-size: 1.02rem; flex: 0 0 auto; background: #eaf2fb; color: #2f6dbd; }
+  .fr-head__t { font-size: 1.06rem; font-weight: 700; color: #0f1e2e; margin: 0; line-height: 1.25; }
+  .fr-head__s { font-size: .82rem; color: #64748b; margin: 5px 0 0; line-height: 1.5; max-width: 680px; }
+
+  .ft-wrap { padding: 22px 24px; overflow-x: auto; }
+  ul.ft-root, ul.ft-children { list-style: none; margin: 0; padding: 0; }
+  ul.ft-children { margin-left: 26px; padding-left: 22px; border-left: 2px solid #e6ecf3; }
+  .ft-node { position: relative; margin: 10px 0; }
+  ul.ft-children > .ft-node::before {
+    content: ""; position: absolute; left: -22px; top: 24px; width: 20px; height: 2px; background: #e6ecf3;
+  }
+  .ft-card {
+    display: inline-block; min-width: 300px; background: #fff; border: 1px solid #e6ecf3;
+    border-left: 4px solid #cbd5e1; border-radius: 10px; padding: 10px 14px;
+    box-shadow: 0 1px 2px rgba(15,23,42,.04);
+  }
+  .ft-lvl-master   { border-left-color: #2f6dbd; }
+  .ft-lvl-national { border-left-color: #7c3aed; }
+  .ft-lvl-regional { border-left-color: #0ea5a4; }
+  .ft-lvl-micro    { border-left-color: #d97706; }
+  .ft-card__main { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .ft-name { font-weight: 700; color: #0f1e2e; font-size: .9rem; }
+  .ft-chip { font-size: .62rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: 2px 8px; border-radius: 100px; }
+  .ft-chip-master   { background: #e7effb; color: #1e4fa3; }
+  .ft-chip-national { background: #f1e9fe; color: #6d28d9; }
+  .ft-chip-regional { background: #e4f7f6; color: #0f766e; }
+  .ft-chip-micro    { background: #fdf0dc; color: #b45309; }
+  .ft-status { font-size: .62rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 2px 8px; border-radius: 100px; margin-left: auto; }
+  .ft-status-active { background: #dcfce7; color: #15803d; }
+  .ft-status-pending_contract, .ft-status-pending_payment { background: #fef3c7; color: #92600a; }
+  .ft-status-suspended, .ft-status-terminated, .ft-status-expired { background: #fee2e2; color: #b91c1c; }
+  .ft-meta { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 7px; font-size: .76rem; color: #64748b; }
+  .ft-meta i { color: #94a3b8; margin-right: 3px; }
+  .ft-empty { text-align: center; color: #94a3b8; padding: 40px 18px; }
+  .ft-empty i { font-size: 1.8rem; margin-bottom: 10px; opacity: .55; }
+</style>
+
+<div class="card fr-shell">
+  <div class="fr-head">
+    <div class="fr-ico"><i class="fas fa-project-diagram"></i></div>
+    <div>
+      <h3 class="fr-head__t">
+        {% if is_global %}{% trans "Franchise Tree — Global" context "franchise" %}{% else %}{% trans "My Franchise Tree" context "franchise" %}{% endif %}
+      </h3>
+      <p class="fr-head__s">
+        {% if is_global %}
+          {% trans "The complete franchise hierarchy across every territory." context "franchise" %}
+        {% else %}
+          {% trans "Your franchise and everything beneath it. Parallel branches and other franchises are not shown." context "franchise" %}
+        {% endif %}
+      </p>
+    </div>
+  </div>
+
+  <div class="ft-wrap">
+    {% if roots %}
+    <ul class="ft-root">
+      {% for node in roots %}
+        {% include "dashboard/_franchise_tree_node.html" with node=node %}
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="ft-empty">
+      <div><i class="fas fa-sitemap"></i></div>
+      <p class="mb-0">{% trans "No franchises to display yet." context "franchise" %}</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

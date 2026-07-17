@@ -26,11 +26,14 @@ def admin_context(request):
     new_commission_count = 0
     pending_coordinator_request_count = 0
     pending_application_count = 0
+    pending_franchise_application_count = 0
+    pending_child_franchise_request_count = 0
     has_pending_coordinator_request = False
     bu_certification_status = ""
     bu_certification_consultant_name = ""
     bu_certification_company_name = ""
     unread_message_count = 0
+    recent_notifications = []
     unread_contact_message_count = 0
     pending_invoice_count = 0
     has_pending_paid_upgrade = False
@@ -41,6 +44,10 @@ def admin_context(request):
     active_plan_code = ""
     owned_company_count = 0
     can_switch_company = False
+    is_micro_owner = False
+    owns_micro = False
+    is_active_franchise_owner = False
+    can_add_subfranchise = False
 
     if request.user.is_authenticated:
         if not request.user.is_superuser:
@@ -74,6 +81,34 @@ def admin_context(request):
             if request.user.role and request.user.role.code:
                 role_code = request.user.role.code.lower()
             is_business_user = role_code == "business_user"
+            # A Micro-Franchise owner is also a consultant (spec §9.1.2): they
+            # get the certify / commissions sidebar entries too. `owns_micro`
+            # (active OR suspended) keeps those tabs VISIBLE while suspended — the
+            # page then shows a "suspended" message on access.
+            from accounts.utils.permissions import is_micro_franchise_owner, owns_micro_franchise
+            is_micro_owner = is_micro_franchise_owner(request.user)
+            owns_micro = owns_micro_franchise(request.user)
+            # True once the account owns a franchise node that has been ACTIVATED
+            # (ACTIVE, or SUSPENDED = activated then paused — keeps historical
+            # access per §6.2). Drives the "Franchises" list tab so it appears only
+            # after activation, not for a franchise-role account with no live node.
+            if role_code == "franchise":
+                from accounts.models import Tenant as _Tenant
+                is_active_franchise_owner = _Tenant.objects.filter(
+                    owner_user=request.user,
+                    franchise_level__isnull=False,
+                    franchise_status__in=["ACTIVE", "SUSPENDED"],
+                ).exists()
+                # "Add Sub-Franchise" only makes sense for an owner whose franchise
+                # CAN have children — i.e. a non-Micro node (spec §8.2: a Micro is
+                # the deepest level, no child hierarchy). Include SUSPENDED so a
+                # suspended non-Micro owner still sees the tab and reaches the
+                # "suspended" explanation; a Micro-only owner never sees it.
+                can_add_subfranchise = _Tenant.objects.filter(
+                    owner_user=request.user,
+                    franchise_status__in=["ACTIVE", "SUSPENDED"],
+                    franchise_level__in=["MASTER", "NATIONAL", "REGIONAL"],
+                ).exists()
             is_basic_business_user = is_basic_plan and is_business_user
             is_pro_business_user = is_pro_plan and is_business_user
             is_global_business_user = is_global_plan and is_business_user
@@ -113,14 +148,14 @@ def admin_context(request):
             # (broadcast to all consultants) plus any they have claimed.
             # Use all_objects so pending rows that are still is_active=False
             # are still counted.
-            if role_code == "consultant":
+            if role_code == "consultant" or is_micro_owner:
                 from django.db.models import Q as _Q
                 pending_certification_count = Company.objects.filter(
                     certification_status="pending"
                 ).filter(
                     _Q(consultant__isnull=True) | _Q(consultant=request.user)
                 ).exclude(
-                    # A consultant can't certify their own company — don't count it.
+                    # A certifier can't certify their own company — don't count it.
                     owner_user=request.user
                 ).count()
 
@@ -148,30 +183,28 @@ def admin_context(request):
             # is misleading — the joining user didn't file the request and
             # shouldn't be told they did.
             if is_business_user:
-                # Reflect the MOST RECENT certification event across the
-                # companies this BU OWNS (created) — not just the primary one —
-                # so certifying a SECOND company updates the banner instead of
-                # repeating the first/primary company's status. Ordered by the
-                # decision time (certified_at, else last update). Joined
+                # Reflect the ACTIVE company's certification status — the one
+                # selected in the company switcher — so the banner matches the
+                # Certifications page and My Companies rather than jumping to
+                # whichever owned company was most recently decided. Joined
                 # companies are excluded: the certification belongs to the
-                # company's creator, not someone who merely joined it.
-                owned = list(
-                    Company.objects
-                    .filter(
-                        owner_user=request.user,
-                        certification_status__in=["pending", "certified", "rejected"],
-                    )
-                    .select_related("certified_by")
-                )
-                if owned:
-                    latest = max(owned, key=lambda c: c.certified_at or c.updated_at)
-                    bu_certification_status = latest.certification_status or ""
-                    bu_certification_company_name = latest.name
-                    if latest.certified_by:
+                # company's creator, so the banner is gated to owner_user ==
+                # request.user.
+                from billing.utils import resolve_active_company
+                active_company = resolve_active_company(request.user)
+                if (
+                    active_company
+                    and active_company.owner_user_id == request.user.id
+                    and active_company.certification_status
+                    in ("pending", "certified", "rejected")
+                ):
+                    bu_certification_status = active_company.certification_status or ""
+                    bu_certification_company_name = active_company.name
+                    if active_company.certified_by:
                         bu_certification_consultant_name = (
-                            f"{latest.certified_by.first_name} "
-                            f"{latest.certified_by.last_name}"
-                        ).strip() or latest.certified_by.email
+                            f"{active_company.certified_by.first_name} "
+                            f"{active_company.certified_by.last_name}"
+                        ).strip() or active_company.certified_by.email
 
         # Superusers get the global pending count so admins can step in.
         if request.user.is_superuser:
@@ -218,6 +251,23 @@ def admin_context(request):
             except Exception:
                 pending_application_count = 0
 
+            # Pending franchise applications (request → approve → activate) —
+            # Super Admin sidebar badge for the Franchise Requests queue.
+            try:
+                from accounts.view.franchise import pending_franchise_application_count as _pfac
+                pending_franchise_application_count = _pfac(request.user)
+            except Exception:
+                pending_franchise_application_count = 0
+
+        # Sub-franchise requests routed to this user as the direct-parent
+        # operational reviewer (spec §4.2) — franchise-holder sidebar badge.
+        if not request.user.is_superuser:
+            try:
+                from accounts.view.franchise import pending_child_request_count as _pcrc
+                pending_child_franchise_request_count = _pcrc(request.user)
+            except Exception:
+                pending_child_franchise_request_count = 0
+
         # Unread in-app messages — every account type sees this badge. For
         # business users it's scoped to the active company (+ account-level)
         # so the badge matches the company-scoped inbox.
@@ -227,8 +277,16 @@ def admin_context(request):
                 Notification.objects.filter(recipient=request.user, is_read=False),
                 request.user,
             ).count()
+            # A short recent-notifications list powers the top-right bell dropdown.
+            recent_notifications = list(
+                scope_notifications_qs(
+                    Notification.objects.filter(recipient=request.user),
+                    request.user,
+                ).order_by("-created_at")[:8]
+            )
         except Exception:
             unread_message_count = 0
+            recent_notifications = []
 
         # Unread website contact-form messages — drives the red badge on the
         # superuser-only "Messages" sidebar tab.
@@ -344,18 +402,37 @@ def admin_context(request):
         "show_partnership_upgrade_banner": show_partnership_upgrade_banner,
         "pending_certification_count": pending_certification_count,
         "new_commission_count": new_commission_count,
+        # A Micro-Franchise owner is also a consultant (spec §9.1.2) — drives the
+        # Certifications / Commissions sidebar entries for them.
+        "is_micro_franchise_owner": is_micro_owner,
+        # Owns a Micro node in any live state (active/suspended) — keeps the
+        # Certifications / Commissions tabs visible even while suspended.
+        "owns_micro_franchise": owns_micro,
+        # True when the account owns an activated franchise node — gates the
+        # "Franchises" list tab so it shows only after activation (spec §6.2).
+        "is_active_franchise_owner": is_active_franchise_owner,
+        # True when the owner has a non-Micro active node — gates "Add
+        # Sub-Franchise" (a Micro can't have children, spec §8.2).
+        "can_add_subfranchise": can_add_subfranchise,
         "pending_coordinator_request_count": pending_coordinator_request_count,
         "pending_application_count": pending_application_count,
+        "pending_franchise_application_count": pending_franchise_application_count,
+        "pending_child_franchise_request_count": pending_child_franchise_request_count,
         "has_pending_coordinator_request": has_pending_coordinator_request,
         # Sum of every superuser request queue — drives the red counter on
         # the sidebar "Requests" parent so admins see one aggregated total
         # while the dropdown still shows per-queue counts when expanded.
         # New queues (franchise / partner / etc.) just add themselves here.
-        "pending_requests_total": pending_coordinator_request_count + pending_application_count,
+        "pending_requests_total": (
+            pending_coordinator_request_count
+            + pending_application_count
+            + pending_franchise_application_count
+        ),
         "bu_certification_status": bu_certification_status,
         "bu_certification_consultant_name": bu_certification_consultant_name,
         "bu_certification_company_name": bu_certification_company_name,
         "unread_message_count": unread_message_count,
+        "recent_notifications": recent_notifications,
         "unread_contact_message_count": unread_contact_message_count,
         "pending_invoice_count": pending_invoice_count,
         # Company switcher (Business Users with multiple companies).

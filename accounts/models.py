@@ -7,8 +7,15 @@ from django.utils.text import slugify
 from accounts.constants import (
     CompanyClassificationChoices,
     CompanyEntityTypeChoices,
+    ConsultantAssignmentStatus,
+    ConsultantType,
+    ContractStatus,
     CountryChoices,
     EmployeeCountRangeChoices,
+    FranchiseApplicationStatus,
+    FranchiseFeeStatus,
+    FranchiseLevel,
+    FranchiseUnitStatus,
     SupportedLocale,
 )
 from accounts.common.active_manager import ActiveManager
@@ -16,6 +23,15 @@ from django.utils import timezone
 
 
 class Tenant(models.Model):
+    """Org-partition boundary AND franchise-tree node.
+
+    A Tenant row is a franchise node when `franchise_level` is set; a row with a
+    null level is a plain partition (the legacy meaning, unchanged). The MVP
+    franchise hierarchy (spec §8) is layered on here instead of a standalone
+    table: `parent` builds the tree, the `territory_*` fields carry the assigned
+    area, and `franchise_status` drives the access lifecycle. "Franchise" is the
+    user-facing name for this model throughout the UI.
+    """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     name = models.CharField(max_length=255, unique=True)
@@ -24,6 +40,91 @@ class Tenant(models.Model):
 
     is_active = models.BooleanField(default=True)
 
+    # ---- Franchise hierarchy (spec §8.1) ----
+    # Parent node in the franchise tree. Null for a Master (top of a tree) or a
+    # legacy non-franchise partition. PROTECT so a node can't be hard-deleted
+    # out from under its children (soft-delete via `is_deleted` instead).
+    parent = models.ForeignKey(
+        "self",
+        on_delete=models.PROTECT,
+        related_name="children",
+        null=True,
+        blank=True,
+    )
+    franchise_level = models.CharField(
+        max_length=20,
+        choices=FranchiseLevel.CHOICES,
+        null=True,
+        blank=True,
+    )
+    # The franchise holder (the user who owns/operates this node) and the
+    # primary company behind it. Both optional until the node is set up.
+    owner_user = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        related_name="owned_franchises",
+        null=True,
+        blank=True,
+    )
+    owner_company = models.ForeignKey(
+        "Company",
+        on_delete=models.SET_NULL,
+        related_name="owned_franchises",
+        null=True,
+        blank=True,
+    )
+
+    # ---- Assigned territory (spec §8.5, denormalised) ----
+    # Territory is stored as ISO-alpha-2 country + free-text subdivisions,
+    # matching the existing convention on User (territory_country, etc.). An
+    # empty deeper level means "the whole of the level above" (e.g. blank city
+    # = the whole region). These four fields together form the exclusivity key
+    # for Micro-Franchises.
+    territory_country = models.CharField(max_length=2, blank=True, default="")
+    territory_region = models.CharField(max_length=120, blank=True, default="")
+    territory_city = models.CharField(max_length=120, blank=True, default="")
+    territory_local_area = models.CharField(max_length=120, blank=True, default="")
+
+    # ---- Exclusivity & lifecycle (spec §8.1, §9.2) ----
+    is_exclusive = models.BooleanField(default=False)
+    franchise_status = models.CharField(
+        max_length=20,
+        choices=FranchiseUnitStatus.CHOICES,
+        null=True,
+        blank=True,
+    )
+    franchise_fee_status = models.CharField(
+        max_length=20,
+        choices=FranchiseFeeStatus.CHOICES,
+        null=True,
+        blank=True,
+    )
+    contract_status = models.CharField(
+        max_length=20,
+        choices=ContractStatus.CHOICES,
+        null=True,
+        blank=True,
+    )
+
+    approved_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        related_name="approved_franchises",
+        null=True,
+        blank=True,
+    )
+    approved_at = models.DateTimeField(null=True, blank=True)
+    activated_at = models.DateTimeField(null=True, blank=True)
+    suspended_at = models.DateTimeField(null=True, blank=True)
+    terminated_at = models.DateTimeField(null=True, blank=True)
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        related_name="created_franchises",
+        null=True,
+        blank=True,
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_deleted = models.BooleanField(default=False)
@@ -31,9 +132,99 @@ class Tenant(models.Model):
     objects = ActiveManager()
     all_objects = models.Manager()
 
+    class Meta:
+        constraints = [
+            # Micro-Franchise exclusivity (spec §5.3, §11.2, Rule 7): at most one
+            # ACTIVE Micro-Franchise per territory. Enforced at the DB level so a
+            # race between two activations can't create a duplicate. Legacy
+            # partitions and non-micro nodes are excluded by the condition.
+            models.UniqueConstraint(
+                fields=[
+                    "territory_country",
+                    "territory_region",
+                    "territory_city",
+                    "territory_local_area",
+                ],
+                condition=Q(
+                    franchise_level=FranchiseLevel.MICRO,
+                    franchise_status=FranchiseUnitStatus.ACTIVE,
+                    is_deleted=False,
+                ),
+                name="unique_active_micro_franchise_per_territory",
+            ),
+        ]
+
     def __str__(self):
-        
+
         return self.name
+
+    # ---- Franchise helpers ----
+    @property
+    def is_franchise_node(self):
+        """True when this Tenant participates in the franchise tree."""
+        return self.franchise_level is not None
+
+    @property
+    def is_franchise_active(self):
+        """A node only holds full franchise rights while ACTIVE (spec §9.2)."""
+        return self.franchise_status == FranchiseUnitStatus.ACTIVE
+
+    @property
+    def territory_key(self):
+        """Normalised (country, region, city, local_area) tuple used for
+        territory comparison and exclusivity."""
+        return (
+            (self.territory_country or "").strip().upper(),
+            (self.territory_region or "").strip().casefold(),
+            (self.territory_city or "").strip().casefold(),
+            (self.territory_local_area or "").strip().casefold(),
+        )
+
+    def is_territory_within(self, other):
+        """True when this node's territory is contained in `other`'s (spec Rule
+        3). A blank level on the parent means "no constraint at that level", so
+        a parent covering a whole country contains any region/city inside it."""
+        for mine, theirs in zip(self.territory_key, other.territory_key):
+            if not theirs:
+                # Parent doesn't constrain this level (or anything deeper).
+                break
+            if mine != theirs:
+                return False
+        return True
+
+    def get_ancestors(self):
+        """Return ancestor nodes from immediate parent up to the root (Master).
+
+        Upward visibility is deliberately limited (spec §7.2) — callers should
+        expose only basic info from these, never their business data."""
+        ancestors = []
+        node = self.parent
+        seen = {self.id}
+        while node is not None and node.id not in seen:
+            ancestors.append(node)
+            seen.add(node.id)
+            node = node.parent
+        return ancestors
+
+    def get_descendant_ids(self, include_self=False):
+        """Return the ids of every node in this node's subtree.
+
+        This is the backbone of downward visibility (spec §7.1): a franchise
+        holder sees its own node plus everything beneath it, and nothing on a
+        parallel branch. Iterative BFS over `children` (no DB CTE dependency)."""
+        collected = set()
+        frontier = [self.id]
+        while frontier:
+            batch = (
+                Tenant.objects.filter(parent_id__in=frontier)
+                .values_list("id", flat=True)
+            )
+            batch = [tid for tid in batch if tid not in collected]
+            collected.update(batch)
+            frontier = batch
+        if include_self:
+            collected.add(self.id)
+        return collected
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -50,6 +241,81 @@ class Tenant(models.Model):
             self.slug = slug
 
         super().save(*args, **kwargs)
+
+    def clean(self):
+        """Validate franchise-tree invariants (spec §10, §11, §15).
+
+        Only runs for franchise nodes (level set). Django doesn't call this on
+        every save() — it backs ModelForm/full_clean() and the franchise
+        service layer, giving friendly errors ahead of the DB constraints."""
+        from django.core.exceptions import ValidationError
+
+        if self.franchise_level is None:
+            return  # Plain partition — no franchise rules apply.
+
+        # Rule 1 (structural): a node can't be its own parent.
+        if self.parent_id and self.parent_id == self.id:
+            raise ValidationError({"parent": "A franchise cannot be its own parent."})
+
+        is_master = self.franchise_level == FranchiseLevel.MASTER
+
+        if is_master and self.parent_id:
+            raise ValidationError(
+                {"parent": "A Master Franchise sits at the top of a tree and has no parent."}
+            )
+        if not is_master and not self.parent_id:
+            raise ValidationError(
+                {"parent": "A sub-franchise must have a parent franchise (spec §10.2)."}
+            )
+
+        if self.parent_id:
+            parent = self.parent
+            # Rule 2: the parent must itself be a franchise node and be ACTIVE.
+            if not parent.is_franchise_node:
+                raise ValidationError(
+                    {"parent": "The selected parent is not a franchise node."}
+                )
+            if not parent.is_franchise_active:
+                raise ValidationError(
+                    {"parent": "The parent franchise must be ACTIVE before adding a sub-franchise (spec Rule 2)."}
+                )
+            # Depth: child must be strictly deeper than parent (gaps allowed).
+            child_rank = FranchiseLevel.RANK.get(self.franchise_level, 0)
+            parent_rank = FranchiseLevel.RANK.get(parent.franchise_level, 0)
+            if child_rank <= parent_rank:
+                raise ValidationError(
+                    {"franchise_level": "A sub-franchise must be a lower tier than its parent."}
+                )
+            # Rule 3: the child territory must sit inside the parent territory.
+            if not self.is_territory_within(parent):
+                raise ValidationError(
+                    "The franchise territory must be inside the parent franchise's territory (spec Rule 3)."
+                )
+
+        # Exclusivity (spec §11.1): an active franchise unit is exclusive within
+        # its territory AND level — at most one ACTIVE franchise of a given level
+        # per territory. Enforced for every level here; the Micro level ALSO has
+        # a DB unique constraint as an authoritative backstop (spec §5.3/§11.2).
+        if self.franchise_status == FranchiseUnitStatus.ACTIVE:
+            clash = (
+                Tenant.objects.filter(
+                    franchise_level=self.franchise_level,
+                    franchise_status=FranchiseUnitStatus.ACTIVE,
+                    territory_country=self.territory_country,
+                    territory_region=self.territory_region,
+                    territory_city=self.territory_city,
+                    territory_local_area=self.territory_local_area,
+                )
+                .exclude(id=self.id)
+                .exists()
+            )
+            if clash:
+                from accounts.constants import FranchiseLevel as _FL
+                level_label = dict(_FL.CHOICES).get(self.franchise_level, self.franchise_level)
+                raise ValidationError(
+                    "An active %(level)s already exists in this territory (spec §11.1)."
+                    % {"level": level_label}
+                )
 
 
 class IndustryCodeBase(models.Model):
@@ -908,6 +1174,10 @@ class Notification(models.Model):
     KIND_APPLICATION_REQUEST = "application_request"
     KIND_APPLICATION_APPROVED = "application_approved"
     KIND_APPLICATION_DECLINED = "application_declined"
+    KIND_FRANCHISE_REQUEST = "franchise_request"
+    KIND_FRANCHISE_APPROVED = "franchise_approved"
+    KIND_FRANCHISE_REJECTED = "franchise_rejected"
+    KIND_FRANCHISE_ACTIVATED = "franchise_activated"
     KIND_NEW_USER = "new_user"
     KIND_GENERIC = "generic"
     KIND_CHOICES = (
@@ -920,6 +1190,10 @@ class Notification(models.Model):
         (KIND_APPLICATION_REQUEST, "Account application submitted"),
         (KIND_APPLICATION_APPROVED, "Account application approved"),
         (KIND_APPLICATION_DECLINED, "Account application declined"),
+        (KIND_FRANCHISE_REQUEST, "Franchise application submitted"),
+        (KIND_FRANCHISE_APPROVED, "Franchise application approved"),
+        (KIND_FRANCHISE_REJECTED, "Franchise application rejected"),
+        (KIND_FRANCHISE_ACTIVATED, "Franchise activated"),
         (KIND_NEW_USER, "New user in region"),
         (KIND_GENERIC, "Generic"),
     )
@@ -1065,3 +1339,170 @@ class CoordinatorRequest(models.Model):
 
     def __str__(self):
         return f"CoordinatorRequest({self.user_id}, {self.status})"
+
+
+class FranchiseApplication(models.Model):
+    """A user's request to hold a franchise (spec §2, §8.4).
+
+    A user never self-assigns a franchise role. They submit an application for a
+    target level + territory, it routes to the approver (Master applications →
+    Platform/Super Admin; sub-franchise applications → the parent franchise
+    holder), and only after approval + contract + payment is a franchise node
+    (Tenant) activated. This is distinct from the staff-registration flow stored
+    inline on User.application_status — that gates dashboard access for
+    consultant/coordinator/franchise *roles*; this models the franchise *tree*.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    applicant_user = models.ForeignKey(
+        "User",
+        on_delete=models.CASCADE,
+        related_name="franchise_applications",
+    )
+    requested_level = models.CharField(
+        max_length=20,
+        choices=FranchiseLevel.CHOICES,
+    )
+    # Requested territory (denormalised, same shape as Tenant's territory_*).
+    requested_country = models.CharField(max_length=2, blank=True, default="")
+    requested_region = models.CharField(max_length=120, blank=True, default="")
+    requested_city = models.CharField(max_length=120, blank=True, default="")
+    requested_local_area = models.CharField(max_length=120, blank=True, default="")
+
+    # The node this franchise would attach under. Null for a Master application
+    # (approved by the Super Admin, becomes the root of a new tree).
+    parent_franchise = models.ForeignKey(
+        Tenant,
+        on_delete=models.SET_NULL,
+        related_name="child_applications",
+        null=True,
+        blank=True,
+    )
+
+    # Prospective franchisee's business + contact details captured on the
+    # Add Sub-Franchise form (spec §8.1). The owner is still linked via
+    # `applicant_user` (an existing account), but these record the legal entity
+    # and contact the holder proposed, so the Platform Admin has them on hand at
+    # activation. Blank for the outside-applicant flow, which doesn't collect them.
+    legal_name = models.CharField(max_length=255, blank=True, default="")
+    contact_person = models.CharField(max_length=255, blank=True, default="")
+    contact_phone = models.CharField(max_length=40, blank=True, default="")
+
+    application_status = models.CharField(
+        max_length=20,
+        choices=FranchiseApplicationStatus.CHOICES,
+        default=FranchiseApplicationStatus.SUBMITTED,
+    )
+    application_note = models.TextField(blank=True)
+    board_note = models.TextField(blank=True)
+
+    approved_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        related_name="approved_franchise_applications",
+        null=True,
+        blank=True,
+    )
+    approved_at = models.DateTimeField(null=True, blank=True)
+    rejected_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        related_name="rejected_franchise_applications",
+        null=True,
+        blank=True,
+    )
+    rejected_at = models.DateTimeField(null=True, blank=True)
+
+    # The franchise node created when this application is approved (spec §16 —
+    # "an active Master Franchise is created only after approval").
+    created_franchise = models.ForeignKey(
+        Tenant,
+        on_delete=models.SET_NULL,
+        related_name="source_application",
+        null=True,
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["application_status", "-created_at"]),
+            models.Index(fields=["applicant_user", "-created_at"]),
+            models.Index(fields=["parent_franchise", "application_status"]),
+        ]
+
+    def __str__(self):
+        return f"FranchiseApplication({self.requested_level}, {self.application_status})"
+
+
+class ConsultantAssignment(models.Model):
+    """Links a consultant to the franchise node they operate under (spec §8.3).
+
+    Standard Consultants are NOT franchise nodes — they are attached to a node
+    via this table. A Micro-Franchise owner also appears here (as
+    MICRO_FRANCHISE_OWNER) so a node's consultant roster is queryable in one
+    place. Only the Micro owner carries territorial exclusivity; standard
+    consultants never block a territory (spec §6, Rule 8).
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    consultant_user = models.ForeignKey(
+        "User",
+        on_delete=models.CASCADE,
+        related_name="consultant_assignments",
+    )
+    franchise_node = models.ForeignKey(
+        Tenant,
+        on_delete=models.CASCADE,
+        related_name="consultant_assignments",
+    )
+
+    # Territory the consultant works (denormalised; may narrow the node's area).
+    territory_country = models.CharField(max_length=2, blank=True, default="")
+    territory_region = models.CharField(max_length=120, blank=True, default="")
+    territory_city = models.CharField(max_length=120, blank=True, default="")
+
+    consultant_type = models.CharField(
+        max_length=30,
+        choices=ConsultantType.CHOICES,
+        default=ConsultantType.STANDARD_CONSULTANT,
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=ConsultantAssignmentStatus.CHOICES,
+        default=ConsultantAssignmentStatus.ACTIVE,
+    )
+
+    assigned_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        related_name="made_consultant_assignments",
+        null=True,
+        blank=True,
+    )
+    assigned_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["franchise_node", "status"]),
+            models.Index(fields=["consultant_user", "status"]),
+        ]
+        constraints = [
+            # A consultant holds one active assignment per node.
+            models.UniqueConstraint(
+                fields=["consultant_user", "franchise_node"],
+                condition=Q(status=ConsultantAssignmentStatus.ACTIVE),
+                name="unique_active_assignment_per_node",
+            ),
+        ]
+
+    def __str__(self):
+        return f"ConsultantAssignment({self.consultant_user_id}, {self.consultant_type})"
