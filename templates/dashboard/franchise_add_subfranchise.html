@@ -184,7 +184,10 @@
       refreshRequired();
     }
 
-    function renderRegion(needsRegion) {
+    // `enabled` = the field can be used at all (National enables it optionally);
+    // `needsRegion` = it's required (Regional/Micro). Disabled fields aren't
+    // submitted, so only the active + enabled control reaches the server.
+    function renderRegion(enabled, needsRegion) {
       var cc = (country.value || "").toUpperCase();
       var opts = (cc && COUNTRY_STATES[cc]) || [];
       var useSelect = opts.length > 0;
@@ -198,12 +201,10 @@
           regionSelect.appendChild(o);
         });
       }
-      // Show + enable exactly one control; disabled fields are not submitted, so
-      // only the active one reaches the server under name="requested_region".
       regionSelect.style.display = useSelect ? "" : "none";
       regionText.style.display = useSelect ? "none" : "";
-      regionSelect.disabled = !(useSelect && needsRegion);
-      regionText.disabled = !(!useSelect && needsRegion);
+      regionSelect.disabled = !(useSelect && enabled);
+      regionText.disabled = !(!useSelect && enabled);
       regionSelect.required = useSelect && needsRegion;
       regionText.required = !useSelect && needsRegion;
     }
@@ -216,12 +217,14 @@
       regionReq.style.display = needsRegion ? "" : "none";
       cityReq.style.display = needsCity ? "" : "none";
       city.required = needsCity;
-      // Deeper territory fields don't apply to shallower sub-levels (a National
-      // is country-scoped, a Regional stops at the state) — disabled inputs are
-      // not submitted, so canonical_territory stays clean.
+      // City/local only apply to a Micro; a National may OPTIONALLY name a state
+      // (region enabled but not required). Disabled inputs aren't submitted, so
+      // canonical_territory stays clean.
       city.disabled = !needsCity;
       local.disabled = !needsLocal;
-      renderRegion(needsRegion);
+      // Region is usable for any chosen sub-level (National optional, Regional/
+      // Micro required); a Master is never a sub-franchise level here.
+      renderRegion(!!lvl, needsRegion);
     }
 
     parent.addEventListener("change", refreshLevels);

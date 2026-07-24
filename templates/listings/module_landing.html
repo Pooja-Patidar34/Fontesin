@@ -1,0 +1,102 @@
+{% extends "base/base.html" %}
+{% load i18n %}
+{% block title %}{{ module.name }}{% endblock %}
+
+{% block content %}
+{% include "listings/_ps_styles.html" %}
+
+<section class="content pt-3"><div class="container-fluid">
+
+  <!-- Hero -->
+  <div class="ps-hero mb-4">
+    <div class="d-flex align-items-center" style="gap:1rem; flex-wrap:wrap;">
+      <span class="ps-hero__icon"><i class="{{ module.icon }}"></i></span>
+      <div class="flex-grow-1">
+        <h1>{{ module.name }}
+          {% if module.status != 'live' %}<span class="badge badge-warning ml-2 align-middle">{% trans "Coming soon" %}</span>{% endif %}
+        </h1>
+        <p>{{ module.description }}</p>
+      </div>
+      {% if is_business_user and module.status == 'live' %}
+      <div class="text-nowrap">
+        <a href="{% url 'listings_web:add' %}?type=offer&module={{ module.slug }}" class="btn btn-light">
+          <i class="fas fa-plus mr-1"></i>{% trans "Add Offer" %}</a>
+        <a href="{% url 'listings_web:add' %}?type=demand&module={{ module.slug }}" class="btn btn-outline-light">
+          <i class="fas fa-plus mr-1"></i>{% trans "Add Demand" %}</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if module.status == 'live' %}
+    <!-- Stats -->
+    <div class="row mb-4">
+      <div class="col-md-4 mb-3">
+        <div class="ps-stat">
+          <span class="ps-stat__icon ps-ic-offer"><i class="fas fa-bullhorn"></i></span>
+          <div><div class="ps-stat__num">{{ stats.offers }}</div>
+            <div class="ps-stat__label">{% trans "Active Offers" %}</div></div>
+        </div>
+      </div>
+      <div class="col-md-4 mb-3">
+        <div class="ps-stat">
+          <span class="ps-stat__icon ps-ic-demand"><i class="fas fa-search"></i></span>
+          <div><div class="ps-stat__num">{{ stats.demands }}</div>
+            <div class="ps-stat__label">{% trans "Active Demands" %}</div></div>
+        </div>
+      </div>
+      <div class="col-md-4 mb-3">
+        <div class="ps-stat">
+          <span class="ps-stat__icon ps-ic-total"><i class="fas fa-layer-group"></i></span>
+          <div><div class="ps-stat__num">{{ stats.offers|add:stats.demands }}</div>
+            <div class="ps-stat__label">{% trans "Total Listings" %}</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Explore tiles -->
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <a href="{% url 'listings_web:browse' %}?listing_type=offer" class="ps-card ps-card--offer text-decoration-none">
+          <div><span class="ps-pill ps-pill--offer"><i class="fas fa-bullhorn"></i>{% trans "Offers" %}</span></div>
+          <div class="ps-card__title">{% trans "Browse Offers" %}</div>
+          <p class="ps-card__desc">{% trans "Products and services available from providers." %}</p>
+          <div class="ps-card__foot"><span></span>
+            <span class="btn btn-sm btn-outline-primary">{% trans "Explore" %} <i class="fas fa-arrow-right ml-1"></i></span></div>
+        </a>
+      </div>
+      <div class="col-md-4 mb-3">
+        <a href="{% url 'listings_web:browse' %}?listing_type=demand" class="ps-card ps-card--demand text-decoration-none">
+          <div><span class="ps-pill ps-pill--demand"><i class="fas fa-search"></i>{% trans "Demands" %}</span></div>
+          <div class="ps-card__title">{% trans "Browse Demands" %}</div>
+          <p class="ps-card__desc">{% trans "What buyers are actively looking for." %}</p>
+          <div class="ps-card__foot"><span></span>
+            <span class="btn btn-sm btn-outline-warning">{% trans "Explore" %} <i class="fas fa-arrow-right ml-1"></i></span></div>
+        </a>
+      </div>
+      <div class="col-md-4 mb-3">
+        <a href="{% url 'listings_web:browse' %}" class="ps-card text-decoration-none" style="--accent:#12805c;">
+          <div><span class="ps-chip"><i class="fas fa-layer-group mr-1"></i>{% trans "All" %}</span></div>
+          <div class="ps-card__title">{% trans "Browse Everything" %}</div>
+          <p class="ps-card__desc">{% trans "Search all active offers and demands in one place." %}</p>
+          <div class="ps-card__foot"><span></span>
+            <span class="btn btn-sm btn-outline-secondary">{% trans "Explore" %} <i class="fas fa-arrow-right ml-1"></i></span></div>
+        </a>
+      </div>
+    </div>
+
+    {% if 'ai_analytics' in module.sections %}
+    <div class="alert alert-secondary d-flex align-items-center mt-2">
+      <i class="fas fa-robot fa-lg mr-3 text-muted"></i>
+      <span>{% trans "AI analytics is a future-ready section for this module. MVP Phase 3 collects the structured data; automated matching/scoring is a later phase." %}</span>
+    </div>
+    {% endif %}
+  {% else %}
+    <div class="alert alert-info">
+      {% trans "This professional module is registered and will use the same offers, demands, reactions and admin logic. Module-specific fields will be enabled by configuration." %}
+    </div>
+  {% endif %}
+
+  <a href="{% url 'modules:dashboard' %}" class="btn btn-link mt-2 pl-0">&larr; {% trans "All modules" %}</a>
+</div></section>
+{% endblock %}

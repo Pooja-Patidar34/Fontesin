@@ -672,11 +672,78 @@
           {% endif %}
           {% endwith %}
 
-          {% comment %} Request a Franchise — standard accounts (Business Users) apply
-             to hold a franchise, and franchise holders use it to see "My
-             Franchises". Consultants/coordinators cannot create franchises
-             (spec §6, §17 #11), so it's hidden from them. {% endcomment %}
-          {% if not request.user.is_superuser and request.user.role.code|lower == "business_user" or is_active_franchise_owner %}
+          {% comment %}
+            Listings (Products & Services) — the MVP Phase 3 Listings Engine.
+            Browse is open to every member role; the create/manage entries show
+            only for Business Users (who own the companies that publish). The
+            platform admin gets the "All Listings" moderation grid instead.
+          {% endcomment %}
+          {% with lst_role=request.user.role.code|lower %}
+          {% if request.user.is_superuser or lst_role == "business_user" or lst_role == "consultant" %}
+          <li class="nav-item">
+            <a href="{% url 'modules:dashboard' %}" class="nav-link {% if active_menu == 'modules' %}active{% endif %}">
+              <i class="nav-icon fas fa-th-large"></i>
+              <p>{% trans "Professional Modules" context "sidebar" %}</p>
+            </a>
+          </li>
+          {% endif %}
+          {% if request.user.is_superuser or lst_role == "business_user" or lst_role == "consultant" or lst_role == "franchise" or lst_role == "coordinator" %}
+          <li class="nav-item has-treeview {% if active_menu == 'listings-browse' or active_menu == 'listings-add' or active_menu == 'listings-my-listings' or active_menu == 'listings-my-offers' or active_menu == 'listings-my-demands' or active_menu == 'listings-reactions' or active_menu == 'listings-admin' %}menu-open{% endif %}">
+            <a href="#" class="nav-link {% if active_menu == 'listings-browse' or active_menu == 'listings-add' or active_menu == 'listings-my-listings' or active_menu == 'listings-my-offers' or active_menu == 'listings-my-demands' or active_menu == 'listings-reactions' or active_menu == 'listings-admin' %}active{% endif %}">
+              <i class="nav-icon fas fa-store"></i>
+              <p>{% trans "Products & Services" context "sidebar" %}<i class="right fas fa-angle-left"></i></p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="{% url 'listings_web:browse' %}" class="nav-link {% if active_menu == 'listings-browse' %}active{% endif %}">
+                  <i class="far fa-circle nav-icon"></i><p>{% trans "Browse Listings" context "sidebar" %}</p>
+                </a>
+              </li>
+              {% if request.user.is_superuser or lst_role == "business_user" %}
+              <li class="nav-item">
+                <a href="{% url 'listings_web:add' %}?type=offer" class="nav-link {% if active_menu == 'listings-add' %}active{% endif %}">
+                  <i class="far fa-circle nav-icon"></i><p>{% trans "Add Listing" context "sidebar" %}</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{% url 'listings_web:my-listings' %}" class="nav-link {% if active_menu == 'listings-my-listings' %}active{% endif %}">
+                  <i class="far fa-circle nav-icon"></i><p>{% trans "My Listings" context "sidebar" %}</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{% url 'listings_web:my-offers' %}" class="nav-link {% if active_menu == 'listings-my-offers' %}active{% endif %}">
+                  <i class="far fa-circle nav-icon"></i><p>{% trans "My Offers" context "sidebar" %}</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{% url 'listings_web:my-demands' %}" class="nav-link {% if active_menu == 'listings-my-demands' %}active{% endif %}">
+                  <i class="far fa-circle nav-icon"></i><p>{% trans "My Demands" context "sidebar" %}</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{% url 'listings_web:my-reactions' %}" class="nav-link {% if active_menu == 'listings-reactions' %}active{% endif %}">
+                  <i class="far fa-circle nav-icon"></i><p>{% trans "Reactions Received" context "sidebar" %}</p>
+                </a>
+              </li>
+              {% endif %}
+              {% if request.user.is_superuser %}
+              <li class="nav-item">
+                <a href="{% url 'listings_web:admin' %}" class="nav-link {% if active_menu == 'listings-admin' %}active{% endif %}">
+                  <i class="far fa-circle nav-icon"></i><p>{% trans "All Listings" context "sidebar" %}</p>
+                </a>
+              </li>
+              {% endif %}
+            </ul>
+          </li>
+          {% endif %}
+          {% endwith %}
+
+          {% comment %} Request a Franchise — any non-superuser account (Business
+             Users, Consultants, Coordinators, etc.) may apply to hold a franchise;
+             franchise holders use this group to manage "My Franchises". The
+             flat request link shows until the account owns an ACTIVATED node,
+             at which point the Manage-Franchises group replaces it. {% endcomment %}
+          {% if not request.user.is_superuser %}
 
           {% comment %} A Business User who holds no franchise yet has only this one
              entry point, so it stays a flat item — there is nothing to group it

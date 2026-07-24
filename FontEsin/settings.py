@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'accounts_api',
     'billing',
     "drf_spectacular",
+    'listings'
 ]
 
 AUTH_USER_MODEL = "accounts.User"

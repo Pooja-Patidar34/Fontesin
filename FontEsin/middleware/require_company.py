@@ -1,5 +1,7 @@
+from django.contrib import messages
 from django.shortcuts import redirect
 from django.urls import reverse, NoReverseMatch
+from django.utils.translation import gettext as _
 
 
 class RequireCompanyForBusinessUserMiddleware:
@@ -53,6 +55,10 @@ class RequireCompanyForBusinessUserMiddleware:
         "/admin/",
         "/veriff/",
         "/i18n/",
+        # Read-only NACE/NAICS autocomplete used BY the Add Company form itself —
+        # a company-less BU must reach it to pick a classification, otherwise the
+        # AJAX call gets bounced to /dashboard/ and the picker returns no results.
+        "/api/industry-codes/",
     )
 
     def __init__(self, get_response):
@@ -72,9 +78,28 @@ class RequireCompanyForBusinessUserMiddleware:
         if not self._needs_redirect(request):
             return self.get_response(request)
         try:
-            return redirect("dashboard")
+            response = redirect("dashboard")
         except NoReverseMatch:
             return self.get_response(request)
+        # Explain the bounce instead of silently landing on the dashboard: the
+        # gated section (e.g. Request a Franchise) needs a company first. Only
+        # message on a real page navigation so AJAX/asset fetches don't stack
+        # duplicate alerts before the dashboard renders.
+        self._notify_company_required(request)
+        return response
+
+    def _notify_company_required(self, request):
+        if request.method != "GET":
+            return
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return
+        if "text/html" not in request.headers.get("accept", ""):
+            return
+        text = _(
+            "Please create your company first — you can access this section "
+            "once you have at least one company."
+        )
+        messages.warning(request, text)
 
     def _needs_redirect(self, request):
         user = getattr(request, "user", None)

@@ -1,0 +1,41 @@
+{% extends "base/base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Reactions Received" %}{% endblock %}
+
+{% block content %}
+<div class="content-header"><h1 class="m-0">{% trans "Reactions Received" %}</h1></div>
+<section class="content"><div class="container-fluid">
+<div class="card"><div class="card-body table-responsive">
+<table class="table table-hover">
+  <thead><tr>
+    <th>{% trans "Listing" %}</th><th>{% trans "From" %}</th><th>{% trans "Company" %}</th>
+    <th>{% trans "Message" %}</th><th>{% trans "Status" %}</th><th>{% trans "Received" %}</th>
+  </tr></thead>
+  <tbody>
+  {% for r in page_obj %}
+    <tr class="{% if r.status == 'new' %}font-weight-bold{% endif %}">
+      <td><a href="{% url 'listings_web:detail' r.listing_id %}">{{ r.listing.title }}</a></td>
+      <td>{{ r.from_user.get_full_name|default:r.from_user.email }}</td>
+      <td>{{ r.from_company.name|default:"—" }}</td>
+      <td>{{ r.message|truncatechars:80 }}</td>
+      <td style="min-width:150px">
+        <form method="post" action="{% url 'listings_web:reaction-set-status' %}" class="d-inline">{% csrf_token %}
+          <input type="hidden" name="reaction_id" value="{{ r.id }}">
+          <select name="status" class="form-control form-control-sm" onchange="this.form.submit()">
+            {% for val, label in status_choices %}
+              <option value="{{ val }}" {% if r.status == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </form>
+      </td>
+      <td>{{ r.created_at|date:"Y-m-d H:i" }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="6" class="text-center text-muted">{% trans "No reactions yet." %}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% include "listings/_pagination.html" %}
+</div></div>
+</div></section>
+{% endblock %}

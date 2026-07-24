@@ -1,0 +1,62 @@
+{% extends "base/base.html" %}
+{% load i18n %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="content-header d-flex justify-content-between align-items-center">
+  <h1 class="m-0">{{ title }}</h1>
+  <div class="text-nowrap">
+  {% if combined %}
+    <a href="{% url 'listings_web:add' %}?type=offer" class="btn btn-primary btn-sm">{% trans "Add Offer" %}</a>
+    <a href="{% url 'listings_web:add' %}?type=demand" class="btn btn-outline-primary btn-sm">{% trans "Add Demand" %}</a>
+  {% else %}
+    <a href="{% url 'listings_web:add' %}?type={{ listing_type }}" class="btn btn-primary btn-sm">
+      {% if listing_type == 'offer' %}{% trans "Add Offer" %}{% else %}{% trans "Add Demand" %}{% endif %}
+    </a>
+  {% endif %}
+  </div>
+</div>
+
+<section class="content"><div class="container-fluid">
+{% if combined %}
+<ul class="nav nav-pills mb-3">
+  <li class="nav-item"><a class="nav-link {% if not current_type %}active{% endif %}" href="{% url 'listings_web:my-listings' %}">{% trans "All" %}</a></li>
+  <li class="nav-item"><a class="nav-link {% if current_type == 'offer' %}active{% endif %}" href="{% url 'listings_web:my-listings' %}?type=offer">{% trans "Offers" %}</a></li>
+  <li class="nav-item"><a class="nav-link {% if current_type == 'demand' %}active{% endif %}" href="{% url 'listings_web:my-listings' %}?type=demand">{% trans "Demands" %}</a></li>
+</ul>
+{% endif %}
+<div class="card"><div class="card-body table-responsive">
+<table class="table table-hover">
+  <thead><tr>
+    <th>{% trans "Title" %}</th>{% if combined %}<th>{% trans "Type" %}</th>{% endif %}<th>{% trans "Category" %}</th><th>{% trans "Company" %}</th>
+    <th>{% trans "Status" %}</th><th>{% trans "Created" %}</th><th>{% trans "Actions" %}</th>
+  </tr></thead>
+  <tbody>
+  {% for l in page_obj %}
+    <tr>
+      <td><a href="{% url 'listings_web:detail' l.id %}">{{ l.title }}</a></td>
+      {% if combined %}<td>{{ l.get_listing_type_display|capfirst }}</td>{% endif %}
+      <td>{{ l.get_category_type_display|capfirst }}</td>
+      <td>{{ l.owner_company.name }}</td>
+      <td><span class="badge badge-{% if l.status == 'active' %}success{% elif l.status == 'suspended' %}danger{% elif l.status == 'draft' %}secondary{% else %}warning{% endif %}">{{ l.get_status_display|capfirst }}</span></td>
+      <td>{{ l.created_at|date:"Y-m-d" }}</td>
+      <td class="text-nowrap">
+        <a href="{% url 'listings_web:edit' l.id %}" class="btn btn-sm btn-outline-primary">{% trans "Edit" %}</a>
+        {% if l.status == 'active' %}
+          <form method="post" action="{% url 'listings_web:deactivate' l.id %}" class="d-inline">{% csrf_token %}
+            <button class="btn btn-sm btn-outline-warning">{% trans "Deactivate" %}</button></form>
+        {% elif l.status == 'inactive' or l.status == 'draft' %}
+          <form method="post" action="{% url 'listings_web:activate' l.id %}" class="d-inline">{% csrf_token %}
+            <button class="btn btn-sm btn-outline-success">{% trans "Activate" %}</button></form>
+        {% endif %}
+      </td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="{% if combined %}7{% else %}6{% endif %}" class="text-center text-muted">{% trans "No listings yet." %}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% include "listings/_pagination.html" %}
+</div></div>
+</div></section>
+{% endblock %}

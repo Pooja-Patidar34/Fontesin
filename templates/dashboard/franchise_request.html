@@ -321,8 +321,9 @@
     var COUNTRY_STATES = statesNode ? JSON.parse(statesNode.textContent) : {};
 
     // Which territory fields each level must name (mirrors the server guard):
-    // a Regional names its state, a Micro its city. Master/National are
-    // country-scoped, so only the (always-required) country matters.
+    // a Regional names its state, a Micro its city. Master is country-only;
+    // National may OPTIONALLY name a state (region enabled but not required),
+    // so `region` here is the *required* flag — enablement is handled separately.
     var REQUIRED = {
       MASTER:   { region: false, city: false },
       NATIONAL: { region: false, city: false },
@@ -338,7 +339,9 @@
     // Populate the region control from the selected country; show the dropdown
     // when subdivisions are known, else the free-text input. Only the active
     // control is enabled, so exactly one submits under name="requested_region".
-    function renderRegion(needsRegion) {
+    // `enabled` controls whether the field can be used at all (National enables
+    // it optionally); `needsRegion` controls whether it's required (Regional/Micro).
+    function renderRegion(enabled, needsRegion) {
       var cc = ((countrySel && countrySel.value) || "").toUpperCase();
       var opts = (cc && COUNTRY_STATES[cc]) || [];
       var useSelect = opts.length > 0;
@@ -354,8 +357,8 @@
       }
       regionSelect.style.display = useSelect ? "" : "none";
       regionInput.style.display = useSelect ? "none" : "";
-      regionSelect.disabled = !(useSelect && needsRegion);
-      regionInput.disabled = !(!useSelect && needsRegion);
+      regionSelect.disabled = !(useSelect && enabled);
+      regionInput.disabled = !(!useSelect && enabled);
       regionSelect.required = useSelect && needsRegion;
       regionInput.required = !useSelect && needsRegion;
       mark(null, regionStar, needsRegion);
@@ -375,7 +378,10 @@
         cityRow && cityRow.querySelectorAll("input").forEach(function (i) { i.value = ""; });
       }
       mark(cityInput, cityStar, !isMaster && req.city);
-      renderRegion(!isMaster && req.region);
+      // Region field is usable for any non-Master level once a level is chosen;
+      // it's only *required* for Regional/Micro (National keeps it optional).
+      var regionEnabled = !!level.value && !isMaster;
+      renderRegion(regionEnabled, !isMaster && req.region);
     }
     level.addEventListener("change", sync);
     if (countrySel) countrySel.addEventListener("change", sync);
@@ -412,9 +418,9 @@
       var country = (val("requested_country") || "").trim().toUpperCase();
       if (!lvl || !country) return null;
       // Compare only the fields this level occupies (mirrors canonical_territory
-      // on the server): Master/National = country, Regional = + state,
-      // Micro = + city (+ optional local area).
-      var keepRegion = lvl === "REGIONAL" || lvl === "MICRO";
+      // on the server): Master = country, National = + optional state,
+      // Regional = + state, Micro = + city (+ optional local area).
+      var keepRegion = lvl === "NATIONAL" || lvl === "REGIONAL" || lvl === "MICRO";
       var keepCity = lvl === "MICRO";
       var region = keepRegion ? norm(val("requested_region")) : "";
       var city = keepCity ? norm(val("requested_city")) : "";

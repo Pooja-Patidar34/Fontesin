@@ -477,9 +477,38 @@
     if (window.history && history.replaceState) history.replaceState(null, "", "#" + btn.dataset.pane);
     else location.hash = btn.dataset.pane;
   });
-  // On load, open the tab named in the hash (set by a paginate link or a tab click).
+
+  // An action (suspend / activate / approve / reject …) POSTs and the server
+  // redirects back here. A URL fragment is never sent to the server, so the
+  // redirect drops the "#tab" and the page would reopen on Pending. Stash the
+  // active tab just before the form actually navigates, then restore it below.
+  var CR_KEY = "franchiseActiveTab";
+  function crCurrent() {
+    var active = document.querySelector(".cr-tab.active");
+    return active ? active.dataset.pane : "";
+  }
+  document.addEventListener("submit", function (e) {
+    var form = e.target;
+    if (!form || form.tagName !== "FORM") return;
+    // A [data-confirm] form's first submit is cancelled by the confirm modal;
+    // only the confirmed re-submit (or a plain form) actually navigates away.
+    if (form.matches("[data-confirm]") && form.dataset.confirmed !== "1") return;
+    try { sessionStorage.setItem(CR_KEY, crCurrent()); } catch (err) {}
+  });
+
+  // On load: an explicit hash (tab click / paginate link) wins; otherwise fall
+  // back to the tab we saved before the last action, then clear it.
   var crInitial = (location.hash || "").replace("#", "");
-  if (crInitial) crActivate(crInitial);
+  if (!crInitial) {
+    try {
+      crInitial = sessionStorage.getItem(CR_KEY) || "";
+      if (crInitial) sessionStorage.removeItem(CR_KEY);
+    } catch (err) {}
+  }
+  if (crInitial) {
+    crActivate(crInitial);
+    if (window.history && history.replaceState) history.replaceState(null, "", "#" + crInitial);
+  }
 </script>
 
 {% endblock %}

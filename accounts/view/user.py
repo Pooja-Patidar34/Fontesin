@@ -469,6 +469,41 @@ def user_delete(request, user_id):
     user.is_active = False
     user.save(update_fields=["is_deleted", "is_active", "updated_at"])
 
+    # Cascade the soft-delete to everything this user created, so their
+    # companies and listings disappear alongside the account.
+    #
+    # We can't hard-delete (the user delete itself is a soft delete, so the
+    # DB-level CASCADE on Listing.owner_user never fires; and Company has
+    # PROTECTed commission/audit references that block a hard delete). Instead
+    # we mirror the soft-delete conventions each model already uses:
+    #   - Company: is_deleted=True / is_active=False (see company_delete), plus
+    #     detaching primary_company + UserCompany rows so it stops showing up
+    #     via direct FKs.
+    #   - Listing: is_deleted=True (its ActiveManager hides deleted rows from
+    #     every view, including the admin listings table).
+    from django.utils import timezone
+    from accounts.models import User as _User, UserCompany as _UserCompany
+    from listings.models import Listing as _Listing
+
+    now = timezone.now()
+
+    owned_company_ids = list(
+        Company.all_objects.filter(owner_user=user, is_deleted=False)
+        .values_list("id", flat=True)
+    )
+    if owned_company_ids:
+        Company.all_objects.filter(id__in=owned_company_ids).update(
+            is_deleted=True, is_active=False, updated_at=now
+        )
+        _User.objects.filter(primary_company_id__in=owned_company_ids).update(
+            primary_company=None
+        )
+        _UserCompany.objects.filter(company_id__in=owned_company_ids).delete()
+
+    _Listing.objects.filter(owner_user=user).update(
+        is_deleted=True, updated_at=now
+    )
+
     try:
         AuditLog.objects.create(
             tenant=tenant,

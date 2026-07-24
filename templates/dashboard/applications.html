@@ -463,15 +463,51 @@
 {% endfor %}
 
 <script>
-  document.addEventListener("click", function (e) {
-    var btn = e.target.closest(".cr-tab");
+  function crActivate(name) {
+    var btn = document.querySelector('.cr-tab[data-pane="' + name + '"]');
     if (!btn) return;
     document.querySelectorAll(".cr-tab").forEach(function (t) { t.classList.remove("active"); });
     document.querySelectorAll(".cr-pane").forEach(function (p) { p.classList.remove("active"); });
     btn.classList.add("active");
-    var pane = document.getElementById("pane-" + btn.dataset.pane);
+    var pane = document.getElementById("pane-" + name);
     if (pane) pane.classList.add("active");
+  }
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest(".cr-tab");
+    if (!btn) return;
+    crActivate(btn.dataset.pane);
+    if (window.history && history.replaceState) history.replaceState(null, "", "#" + btn.dataset.pane);
+    else location.hash = btn.dataset.pane;
   });
+
+  // Keep the active tab across an action's POST→redirect: a URL fragment is
+  // never sent to the server, so stash the tab before the form navigates and
+  // restore it on load.
+  var CR_KEY = "applicationsActiveTab";
+  function crCurrent() {
+    var active = document.querySelector(".cr-tab.active");
+    return active ? active.dataset.pane : "";
+  }
+  document.addEventListener("submit", function (e) {
+    var form = e.target;
+    if (!form || form.tagName !== "FORM") return;
+    // A [data-confirm] form's first submit is cancelled by the confirm modal;
+    // only the confirmed re-submit (or a plain form) actually navigates away.
+    if (form.matches("[data-confirm]") && form.dataset.confirmed !== "1") return;
+    try { sessionStorage.setItem(CR_KEY, crCurrent()); } catch (err) {}
+  });
+
+  var crInitial = (location.hash || "").replace("#", "");
+  if (!crInitial) {
+    try {
+      crInitial = sessionStorage.getItem(CR_KEY) || "";
+      if (crInitial) sessionStorage.removeItem(CR_KEY);
+    } catch (err) {}
+  }
+  if (crInitial) {
+    crActivate(crInitial);
+    if (window.history && history.replaceState) history.replaceState(null, "", "#" + crInitial);
+  }
 </script>
 
 {% endblock %}

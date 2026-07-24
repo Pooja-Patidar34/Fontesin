@@ -1,0 +1,68 @@
+{% extends "base/base.html" %}
+{% load i18n %}
+{% block title %}{% trans "All Listings" %}{% endblock %}
+
+{% block content %}
+<div class="content-header"><h1 class="m-0">{% trans "All Listings" %}</h1></div>
+<section class="content"><div class="container-fluid">
+<div class="card"><div class="card-body">
+  <form method="get" class="mb-3" style="display:flex; flex-wrap:wrap; gap:.75rem; align-items:center;">
+    <select name="status" class="form-control" style="flex:1 1 150px; min-width:120px; width:auto;">
+      <option value="">{% trans "All statuses" %}</option>
+      {% for val, label in status_choices %}
+        <option value="{{ val }}" {% if filters.status == val %}selected{% endif %}>{{ label|capfirst }}</option>
+      {% endfor %}
+    </select>
+    <select name="listing_type" class="form-control" style="flex:1 1 150px; min-width:120px; width:auto;">
+      <option value="">{% trans "All types" %}</option>
+      {% for val, label in listing_type_choices %}
+        <option value="{{ val }}" {% if filters.listing_type == val %}selected{% endif %}>{{ label|capfirst }}</option>
+      {% endfor %}
+    </select>
+    <input type="text" name="keyword" class="form-control" style="flex:2 1 220px; min-width:160px; width:auto;" placeholder="{% trans 'Search title or description' %}" value="{{ filters.keyword }}">
+    <button class="btn btn-primary" style="flex:0 0 auto; min-width:110px;">{% trans "Filter" %}</button>
+  </form>
+
+  <div class="table-responsive">
+  <table class="table table-sm table-hover">
+    <thead><tr>
+      <th>{% trans "Title" %}</th><th>{% trans "Type" %}</th><th>{% trans "Owner" %}</th>
+      <th>{% trans "Company" %}</th><th>{% trans "Status" %}</th><th>{% trans "Created" %}</th><th></th>
+    </tr></thead>
+    <tbody>
+    {% for l in page_obj %}
+      <tr>
+        <td><a href="{% url 'listings_web:detail' l.id %}">{{ l.title }}</a></td>
+        <td>{{ l.get_listing_type_display|capfirst }}</td>
+        <td>{{ l.owner_user.email }}</td>
+        <td>{{ l.owner_company.name }}</td>
+        <td><span class="badge badge-{% if l.status == 'active' %}success{% elif l.status == 'suspended' %}danger{% elif l.status == 'draft' %}secondary{% else %}warning{% endif %}">{{ l.get_status_display|capfirst }}</span></td>
+        <td>{{ l.created_at|date:"Y-m-d" }}</td>
+        <td class="text-nowrap">
+          <a href="{% url 'listings_web:history' l.id %}" class="btn btn-sm btn-outline-secondary">{% trans "History" %}</a>
+          {% if l.status == 'suspended' %}
+            <form method="post" action="{% url 'listings_web:reactivate' l.id %}" class="d-inline">{% csrf_token %}
+              <button class="btn btn-sm btn-outline-success">{% trans "Reactivate" %}</button></form>
+          {% else %}
+            <button class="btn btn-sm btn-outline-danger" data-toggle="collapse" data-target="#suspend-{{ l.id }}">{% trans "Suspend" %}</button>
+          {% endif %}
+        </td>
+      </tr>
+      {% if l.status != 'suspended' %}
+      <tr class="collapse" id="suspend-{{ l.id }}"><td colspan="7">
+        <form method="post" action="{% url 'listings_web:suspend' l.id %}" class="form-inline">{% csrf_token %}
+          <input type="text" name="reason" class="form-control form-control-sm mr-2" style="min-width:320px" placeholder="{% trans 'Suspension reason (min 5 chars)' %}" required>
+          <button class="btn btn-sm btn-danger">{% trans "Confirm Suspend" %}</button>
+        </form>
+      </td></tr>
+      {% endif %}
+    {% empty %}
+      <tr><td colspan="7" class="text-center text-muted">{% trans "No listings." %}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% include "listings/_pagination.html" %}
+</div></div>
+</div></section>
+{% endblock %}

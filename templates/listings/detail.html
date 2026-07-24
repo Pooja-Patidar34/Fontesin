@@ -1,0 +1,103 @@
+{% extends "base/base.html" %}
+{% load i18n %}
+{% block title %}{{ listing.title }}{% endblock %}
+
+{% block content %}
+{% include "listings/_ps_styles.html" %}
+
+<div class="content-header d-flex justify-content-between align-items-center">
+  <a href="{% url 'listings_web:browse' %}" class="btn btn-sm btn-link pl-0 text-muted">
+    <i class="fas fa-arrow-left mr-1"></i>{% trans "Back to listings" %}</a>
+  <span class="text-nowrap">
+    {% if is_owner %}<a href="{% url 'listings_web:edit' listing.id %}" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit mr-1"></i>{% trans "Edit" %}</a>{% endif %}
+    {% if is_owner or is_admin %}<a href="{% url 'listings_web:history' listing.id %}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-history mr-1"></i>{% trans "History" %}</a>{% endif %}
+  </span>
+</div>
+
+<section class="content"><div class="container-fluid"><div class="row">
+  <div class="col-lg-8">
+
+    <div class="ps-panel mb-3"><div class="ps-panel__body">
+      <div class="ps-detail-head">
+        <span class="ps-pill ps-pill--{{ listing.listing_type }}">
+          <i class="fas {% if listing.listing_type == 'offer' %}fa-bullhorn{% else %}fa-search{% endif %}"></i>{{ listing.get_listing_type_display }}
+        </span>
+        <span class="ps-chip">{{ listing.get_category_type_display|capfirst }}</span>
+        <span class="badge badge-{% if listing.status == 'active' %}success{% elif listing.status == 'suspended' %}danger{% elif listing.status == 'draft' %}secondary{% else %}warning{% endif %}">{{ listing.get_status_display|capfirst }}</span>
+      </div>
+
+      <h1 class="ps-detail-title">{{ listing.title }}</h1>
+
+      <div class="ps-detail-main">
+        {% if listing.product_image %}
+        <div class="ps-detail-media">
+          <img src="{{ listing.product_image.url }}" alt="{% trans 'Product image' %}">
+        </div>
+        {% endif %}
+        <div class="ps-detail-text">
+          <p>{{ listing.description }}</p>
+          {% if listing.keywords %}
+          <div class="ps-tags">{% for k in listing.keywords %}<span class="ps-tag">{{ k }}</span>{% endfor %}</div>
+          {% endif %}
+          {% if listing.video_url or listing.certification_text or listing.certification_image %}
+          <div class="ps-extra">
+            {% if listing.video_url %}<a href="{{ listing.video_url }}" target="_blank" rel="noopener"><i class="fas fa-video mr-1"></i>{% trans "Video" %}</a>{% endif %}
+            {% if listing.certification_image %}<a href="{{ listing.certification_image.url }}" target="_blank" rel="noopener"><i class="fas fa-award mr-1"></i>{% trans "Certificate" %}</a>{% endif %}
+            {% if listing.certification_text %}<span><i class="fas fa-certificate mr-1"></i>{{ listing.certification_text|truncatechars:80 }}</span>{% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if listing.module_specific_data %}
+      <dl class="row mb-0 mt-3 pt-3 border-top">
+        {% for key, val in listing.module_specific_data.items %}
+          <dt class="col-sm-4 text-muted" style="font-weight:600; font-size:.82rem;">{{ key|title }}</dt><dd class="col-sm-8" style="font-size:.88rem;">{{ val }}</dd>
+        {% endfor %}
+      </dl>
+      {% endif %}
+
+      {% if listing.status == 'suspended' and is_owner %}
+        <div class="alert alert-danger mt-3 mb-0 py-2"><i class="fas fa-ban mr-2"></i>{% trans "This listing was suspended." %} {{ listing.suspension_reason }}</div>
+      {% endif %}
+    </div></div>
+
+    {% if can_react %}
+    <div class="ps-panel ps-interest"><div class="ps-panel__body">
+      <div class="ps-interest__head">
+        <span class="ps-interest__icon"><i class="fas fa-handshake"></i></span>
+        <div>
+          <p class="ps-interest__title">{% trans "I am interested" %}</p>
+          <p class="ps-interest__sub">{% trans "Send an expression of interest to start a conversation through FONTESIN." %}</p>
+        </div>
+      </div>
+      <form method="post" action="{% url 'listings_web:react' listing.id %}">
+        {% csrf_token %}
+        <textarea name="message" class="form-control" rows="2" placeholder="{% trans 'Add an optional message…' %}"></textarea>
+        <div class="d-flex justify-content-end mt-2">
+          <button class="ps-btn-gradient"><i class="fas fa-paper-plane mr-2"></i>{% trans "Send Interest" %}</button>
+        </div>
+      </form>
+    </div></div>
+    {% elif already_reacted %}
+      <div class="alert alert-info py-2"><i class="fas fa-check-circle mr-2"></i>{% trans "You have already expressed interest in this listing." %}</div>
+    {% endif %}
+  </div>
+
+  <div class="col-lg-4">
+    <div class="ps-panel mb-4"><div class="ps-panel__body">
+      <h6 class="text-muted text-uppercase mb-3" style="font-size:.72rem; letter-spacing:.03em;">{% trans "Details" %}</h6>
+      <dl class="ps-dl">
+        <dt>{% trans "Company" %}</dt><dd><i class="fas fa-building text-muted mr-1"></i>{{ listing.owner_company.name }}</dd>
+        {% if listing.nace_code %}<dt>{% trans "Classification" %}</dt><dd>{{ listing.nace_code.code }} — {{ listing.nace_code.title }}</dd>{% endif %}
+        {% if listing.listing_type == 'offer' %}
+          {% if listing.price_without_vat %}<dt>{% trans "Price (excl. VAT)" %}</dt><dd class="ps-price">{{ listing.price_without_vat }} <small>{{ listing.currency }}</small></dd>{% endif %}
+          {% if listing.minimum_quantity_or_scope %}<dt>{% trans "Min. qty / scope" %}</dt><dd>{{ listing.minimum_quantity_or_scope }} {{ listing.unit }}</dd>{% endif %}
+        {% endif %}
+        <dt>{% trans "Location" %}</dt><dd><i class="fas fa-map-marker-alt text-muted mr-1"></i>{{ listing.city }}{% if listing.city and listing.country %}, {% endif %}{{ listing.country|default:"—" }}</dd>
+        <dt>{% trans "Visibility" %}</dt><dd>{{ listing.get_visibility_scope_display|capfirst }}</dd>
+      </dl>
+    </div></div>
+  </div>
+</div></div></section>
+{% endblock %}

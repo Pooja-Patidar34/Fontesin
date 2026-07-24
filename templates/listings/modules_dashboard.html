@@ -1,0 +1,90 @@
+{% extends "base/base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Professional Modules" %}{% endblock %}
+
+{% block content %}
+{% include "listings/_ps_styles.html" %}
+<style>
+  /* Cover-banner module card: gradient header with a floating icon badge. */
+  .ps-mod2 {
+    position: relative; background: var(--ps-surface);
+    border: 1px solid var(--ps-border); border-radius: 1.1rem; overflow: hidden;
+    box-shadow: 0 6px 20px rgba(16, 24, 40, .07);
+    display: flex; flex-direction: column; height: 100%; text-align: center;
+    transition: transform .25s cubic-bezier(.2,.7,.3,1), box-shadow .25s ease;
+  }
+  .ps-mod2:hover { transform: translateY(-6px); box-shadow: 0 28px 48px -16px var(--mshadow); }
+
+  .ps-mod2__cover {
+    height: 92px; position: relative;
+    background: linear-gradient(135deg, var(--m1) 0%, var(--m2) 100%);
+  }
+  /* subtle decorative circles on the cover */
+  .ps-mod2__cover::before,
+  .ps-mod2__cover::after {
+    content: ""; position: absolute; border-radius: 50%; background: rgba(255, 255, 255, .13);
+  }
+  .ps-mod2__cover::before { width: 120px; height: 120px; right: -30px; top: -46px; }
+  .ps-mod2__cover::after  { width: 64px; height: 64px; left: -18px; bottom: -26px; background: rgba(255, 255, 255, .10); }
+
+  .ps-mod2__icon {
+    position: absolute; left: 50%; bottom: -34px; transform: translateX(-50%);
+    width: 72px; height: 72px; border-radius: 20px; z-index: 2;
+    background: var(--ps-surface); color: var(--m1);
+    display: flex; align-items: center; justify-content: center; font-size: 1.7rem;
+    box-shadow: 0 10px 22px -8px var(--mshadow); border: 1px solid var(--ps-border);
+    transition: transform .28s cubic-bezier(.2,.7,.3,1);
+  }
+  .ps-mod2:hover .ps-mod2__icon { transform: translateX(-50%) translateY(-3px) scale(1.05); }
+
+  .ps-mod2__body { padding: 2.85rem 1.45rem 1.55rem; display: flex; flex-direction: column; flex-grow: 1; }
+  .ps-mod2__title { font-weight: 700; font-size: 1.18rem; margin: 0 0 .4rem; color: var(--ps-ink); }
+  .ps-mod2__desc { color: var(--ps-muted); font-size: .89rem; flex-grow: 1; margin-bottom: 1.1rem; }
+
+  .ps-mod2__btn {
+    border: 0; color: #fff; font-weight: 600; border-radius: .65rem; padding: .64rem 1rem; width: 100%;
+    background: linear-gradient(135deg, var(--m1), var(--m2));
+    box-shadow: 0 10px 20px -8px var(--mshadow);
+    transition: filter .2s ease, transform .2s ease, box-shadow .2s ease;
+  }
+  .ps-mod2__btn:hover { filter: brightness(1.06); color: #fff; text-decoration: none; transform: translateY(-1px); box-shadow: 0 14px 26px -8px var(--mshadow); }
+  .ps-mod2__ghost {
+    border: 1px solid var(--ps-border); background: transparent; color: var(--ps-muted);
+    font-weight: 600; border-radius: .65rem; padding: .6rem 1rem; width: 100%; display: block;
+  }
+  .ps-mod2__ghost:hover { color: var(--m1); border-color: var(--m1); text-decoration: none; }
+  .ps-mod2__soon {
+    position: absolute; top: .8rem; right: .8rem; z-index: 3;
+    background: rgba(255, 255, 255, .9); color: #7a5b12; font-size: .68rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .03em; padding: .18rem .5rem; border-radius: 999px;
+  }
+</style>
+
+<div class="content-header"><h1 class="m-0"><i class="fas fa-th-large text-primary mr-2"></i>{% trans "Professional Modules" %}</h1></div>
+
+<section class="content"><div class="container-fluid">
+  <div class="row">
+    {% for m in modules %}
+    <div class="col-lg-4 col-md-6 mb-4">
+      <div class="ps-mod2" style="{% if m.slug == 'investments' %}--m1:#1f9d74;--m2:#3cbb92;--mshadow:rgba(31,157,116,.30){% elif m.slug == 'education' %}--m1:#7a5bd6;--m2:#9d7ceb;--mshadow:rgba(122,91,214,.30){% else %}--m1:#3d6fd6;--m2:#5a97ea;--mshadow:rgba(61,111,214,.30){% endif %}">
+        {% if m.status != 'live' %}<span class="ps-mod2__soon">{% trans "Coming soon" %}</span>{% endif %}
+        <div class="ps-mod2__cover">
+          <span class="ps-mod2__icon"><i class="{{ m.icon }}"></i></span>
+        </div>
+        <div class="ps-mod2__body">
+          <h4 class="ps-mod2__title">{{ m.name }}</h4>
+          <p class="ps-mod2__desc">{{ m.description }}</p>
+          {% if m.status == 'live' %}
+            <a href="{% url 'modules:landing' m.slug %}" class="ps-mod2__btn">{% trans "Open Module" %} <i class="fas fa-arrow-right ml-1"></i></a>
+          {% else %}
+            <a href="{% url 'modules:landing' m.slug %}" class="ps-mod2__ghost">{% trans "Preview" %}</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="col-12"><div class="alert alert-info">{% trans "No modules available for your role." %}</div></div>
+    {% endfor %}
+  </div>
+</div></section>
+{% endblock %}

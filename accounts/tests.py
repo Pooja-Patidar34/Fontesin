@@ -10048,6 +10048,59 @@ class UserDeleteGapTests(BaseIAMTestCase):
         response = self.client.post(reverse("user-delete", args=[uuid.uuid4()]))
         self.assertEqual(response.status_code, 404)
 
+    def test_delete_cascades_to_owned_company_and_listings(self):
+        from listings.models import Listing
+
+        self.client.login(email="admin@test.com", password="admin123")
+        target = User.objects.create_user(
+            email="cascade@test.com", password="test123", tenant=self.tenant
+        )
+        owned_company = Company.objects.create(
+            tenant=self.tenant,
+            name="Cascade Co",
+            owner_user=target,
+        )
+        # A listing owned by the target user (should be deactivated).
+        listing = Listing.objects.create(
+            listing_type=Listing.OFFER,
+            tenant=self.tenant,
+            owner_company=owned_company,
+            owner_user=target,
+            title="Cascade Listing",
+            description="x",
+            category_type=Listing.PRODUCT,
+            module_id="mod",
+            status=Listing.ACTIVE,
+        )
+        # A listing owned by a different user must NOT be touched.
+        other_listing = Listing.objects.create(
+            listing_type=Listing.OFFER,
+            tenant=self.tenant,
+            owner_company=self.company,
+            owner_user=self.user,
+            title="Other Listing",
+            description="x",
+            category_type=Listing.PRODUCT,
+            module_id="mod",
+            status=Listing.ACTIVE,
+        )
+
+        response = self.client.post(reverse("user-delete", args=[target.id]))
+        self.assertEqual(response.status_code, 302)
+
+        # Company owned by the deleted user is soft-deleted.
+        owned_company.refresh_from_db()
+        self.assertTrue(owned_company.is_deleted)
+        self.assertFalse(owned_company.is_active)
+
+        # The deleted user's listing is soft-deleted (hidden from every view,
+        # including the admin table); other users' listings are untouched.
+        self.assertFalse(Listing.objects.filter(id=listing.id).exists())
+        self.assertTrue(Listing.all_objects.get(id=listing.id).is_deleted)
+        other_listing.refresh_from_db()
+        self.assertFalse(other_listing.is_deleted)
+        self.assertTrue(Listing.objects.filter(id=other_listing.id).exists())
+
 
 # ═══════════════════════════════════════════════════════════════════════
 # user.py — user_edit validation branches (634-726)

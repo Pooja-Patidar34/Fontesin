@@ -237,20 +237,25 @@ def canonical_territory(level, country, region, city, local_area):
     """Reduce a territory to the granularity its level actually occupies, so
     'one franchise per territory+level' compares the right fields:
 
-      Master / National → country
-      Regional          → country + region/state
-      Micro             → country + region + city (+ optional local area)
+      Master   → country
+      National → country + optional region/state
+      Regional → country + region/state
+      Micro    → country + region + city (+ optional local area)
 
-    Trimming the deeper fields means a stray city typed on a Regional request
-    can't slip a duplicate past territory_conflict(). Returns a normalised
+    National may name a region/state but isn't required to (product decision,
+    Jul 2026): a National with a region is exclusive within that state, one
+    without stays country-wide. Only a Master is strictly country-only, so
+    region is trimmed for Master alone. Trimming the deeper fields means a stray
+    city typed on a Regional request can't slip a duplicate past
+    territory_conflict(). Returns a normalised
     (country, region, city, local_area) tuple."""
     country = (country or "").strip().upper()[:2]
     region = (region or "").strip()[:120]
     city = (city or "").strip()[:120]
     local_area = (local_area or "").strip()[:120]
     rank = FranchiseLevel.RANK.get(level, 0)
-    if rank < FranchiseLevel.RANK[FranchiseLevel.REGIONAL]:
-        region = ""
+    if rank < FranchiseLevel.RANK[FranchiseLevel.NATIONAL]:
+        region = ""  # Master is country-only; National and deeper may carry a region.
     if rank < FranchiseLevel.RANK[FranchiseLevel.MICRO]:
         city = ""
         local_area = ""
@@ -429,11 +434,11 @@ def franchise_request_view(request):
         # The Super Admin manages franchises from the review queue, not here.
         return redirect("franchise-applications")
 
-    # Only a standard account (Business User) or an existing franchise holder
-    # may open this page. Standard consultants / coordinators cannot create
-    # franchises (spec §6, §17 #11) — deny them access.
-    if _role_code(request.user) not in ("business_user", "franchise"):
-        raise PermissionDenied("Only standard accounts can request a franchise.")
+    # Any authenticated non-superuser account may request a franchise — Business
+    # Users, Consultants, Coordinators alike (product decision, Jul 2026). The
+    # request routes to the Super Admin queue; the applicant's current role has
+    # no bearing on eligibility, and on activation the holder is granted the
+    # franchise role like any other applicant.
 
     applications = (
         FranchiseApplication.objects.filter(applicant_user=request.user)
@@ -515,10 +520,9 @@ def franchise_request_submit(request):
     if request.user.is_superuser:
         raise PermissionDenied("The Super Admin does not request franchises.")
 
-    # Only standard accounts (Business Users) request franchises. Consultants /
-    # coordinators cannot create franchises (spec §6, §17 #11).
-    if _role_code(request.user) != "business_user":
-        raise PermissionDenied("Only standard accounts can request a franchise.")
+    # Any authenticated non-superuser may request a franchise (Business Users,
+    # Consultants, Coordinators, etc.). The Super Admin reviews and gates the
+    # request; role is not an eligibility criterion.
 
     # Existing franchise holders don't re-request through this form — they
     # propose sub-franchises from their Franchise Management section (spec §13).
@@ -544,17 +548,19 @@ def franchise_request_submit(request):
         messages.error(request, _("Please select the target country for the franchise."))
         return redirect("franchise-request")
 
-    # Reduce the territory to what this level actually occupies (Master/National
-    # = country, Regional = + state, Micro = + city). This makes a Master
-    # correctly contain every sub-franchise beneath it and stops a stray deeper
-    # field from slipping a duplicate past the one-per-territory check below.
+    # Reduce the territory to what this level actually occupies (Master = country,
+    # National = country + optional state, Regional = + required state, Micro =
+    # + city). This makes a Master correctly contain every sub-franchise beneath
+    # it and stops a stray deeper field from slipping a duplicate past the
+    # one-per-territory check below.
     country, region, city, local_area = canonical_territory(
         level, country, region, city, local_area
     )
 
     # Territory granularity required per level (mirrors the form's dynamic
     # required-field markers): a Regional must name its region/state, a Micro
-    # must name both its region and city. Master/National are country-scoped.
+    # must name both its region and city. Master is country-only; National may
+    # name a region/state but doesn't have to.
     if level in (FranchiseLevel.REGIONAL, FranchiseLevel.MICRO) and not region:
         messages.error(request, _("Please enter the region / state for this franchise level."))
         return redirect("franchise-request")

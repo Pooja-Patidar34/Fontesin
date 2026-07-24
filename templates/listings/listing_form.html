@@ -1,0 +1,391 @@
+{% extends "base/base.html" %}
+{% load i18n %}
+{% block title %}{% if listing %}{% trans "Edit Listing" %}{% elif is_offer %}{% trans "Add Offer" %}{% else %}{% trans "Add Demand" %}{% endif %}{% endblock %}
+
+{% block content %}
+{% include "listings/_ps_styles.html" %}
+<style>
+  /* Clean, light, professional listing form. Accent tint varies by type. */
+  .lf-wrap { max-width: 920px; margin: 0 auto; }
+
+  .lf-header {
+    display: flex; align-items: center; gap: 1rem;
+    padding: 1.15rem 1.35rem; border-radius: .85rem .85rem 0 0;
+    background: var(--lf-tint); border: 1px solid var(--ps-border); border-bottom: 0;
+  }
+  .lf-header__icon {
+    width: 52px; height: 52px; border-radius: 14px; flex: 0 0 auto;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 1.35rem;
+    background: #fff; color: var(--lf-accent); box-shadow: 0 4px 12px rgba(16, 24, 40, .09);
+  }
+  .lf-header__title { font-size: 1.25rem; font-weight: 700; margin: 0; color: var(--ps-ink); }
+  .lf-header__sub { font-size: .83rem; color: var(--ps-muted); margin: .1rem 0 0; }
+
+  .lf-body {
+    background: var(--ps-surface); border: 1px solid var(--ps-border); border-radius: 0 0 .85rem .85rem;
+    padding: 1.45rem 1.45rem .5rem; box-shadow: 0 6px 22px rgba(16, 24, 40, .05);
+  }
+
+  .lf-section { margin-bottom: 1.5rem; }
+  .lf-section__title {
+    display: flex; align-items: center; gap: .5rem;
+    font-size: .74rem; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; color: var(--ps-muted);
+    margin-bottom: .85rem; padding-bottom: .5rem; border-bottom: 1px solid var(--ps-border);
+  }
+  .lf-section__title i { color: var(--lf-accent); font-size: .82rem; }
+
+  .lf-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0 1.15rem; }
+  .lf-grid .full { grid-column: 1 / -1; }
+  .lf-grid .form-group { margin-bottom: .95rem; }
+  .lf-grid label { font-size: .82rem; font-weight: 600; color: #3a4453; margin-bottom: .3rem; }
+  .lf-req { color: #d0654f; font-weight: 700; }
+
+  .lf-body .form-control, .lf-body .form-control-file { border-radius: .55rem; }
+  .lf-body .form-control {
+    border-color: #d9dee7; font-size: .9rem; padding: .45rem .7rem; height: auto;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .lf-body .form-control:focus { border-color: var(--lf-accent); box-shadow: 0 0 0 .18rem var(--lf-ring); }
+  .lf-body textarea.form-control { min-height: 70px; }
+  .lf-help { font-size: .76rem; color: var(--ps-muted); font-weight: 400; }
+
+  .lf-actions {
+    position: sticky; bottom: 0;
+    display: flex; align-items: center; gap: .6rem; flex-wrap: wrap;
+    padding: .9rem 0; margin-top: .3rem; border-top: 1px solid var(--ps-border);
+    background: var(--ps-surface);
+  }
+  .lf-btn-primary {
+    background: #2563eb; border: 0; color: #fff; font-weight: 600; border-radius: .55rem; padding: .55rem 1.5rem;
+    box-shadow: 0 8px 18px -7px rgba(37, 99, 235, .5); transition: filter .15s ease, transform .15s ease;
+  }
+  .lf-btn-primary:hover { filter: brightness(1.06); color: #fff; transform: translateY(-1px); }
+  .lf-btn-ghost {
+    background: #fff; border: 1px solid #d9dee7; color: #475467; font-weight: 600; border-radius: .55rem; padding: .55rem 1.2rem;
+  }
+  .lf-btn-ghost:hover { background: #f7f8fb; color: #344054; text-decoration: none; }
+
+  body.dark-mode .lf-header__icon { background: #2b3648; }
+  body.dark-mode .lf-body .form-control { background: #222c3c; color: #e9edf5; border-color: #3b4759; }
+  body.dark-mode .lf-btn-ghost { background: #2b3648; border-color: #3b4759; color: #cdd6e6; }
+</style>
+
+<section class="content pt-3"><div class="container-fluid">
+<div class="lf-wrap" style="{% if is_offer %}--lf-accent:#2563eb;--lf-tint:#f4f8ff;--lf-ring:rgba(37,99,235,.14){% else %}--lf-accent:#b9770f;--lf-tint:#fbf6ee;--lf-ring:rgba(185,119,15,.14){% endif %}">
+
+  <!-- Header -->
+  <div class="lf-header">
+    <span class="lf-header__icon">
+      <i class="fas {% if listing %}fa-pen{% elif is_offer %}fa-bullhorn{% else %}fa-search{% endif %}"></i>
+    </span>
+    <div>
+      <p class="lf-header__title">
+        {% if listing %}{% trans "Edit Listing" %}{% elif is_offer %}{% trans "Add Offer" %}{% else %}{% trans "Add Demand" %}{% endif %}
+      </p>
+      <p class="lf-header__sub">
+        {{ module_name }} ·
+        {% if listing %}{% trans "Update your listing details." %}
+        {% elif is_offer %}{% trans "Create a product or service offer." %}
+        {% else %}{% trans "Create a product or service demand." %}{% endif %}
+      </p>
+    </div>
+  </div>
+
+  <div class="lf-body">
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="hidden" name="listing_type" value="{{ listing_type }}">
+    <input type="hidden" name="module_id" value="{{ module_id }}">
+
+    <!-- Basics -->
+    <div class="lf-section">
+      <div class="lf-section__title"><i class="fas fa-info-circle"></i>{% trans "Basic information" %}</div>
+      <div class="lf-grid">
+        <div class="form-group">
+          <label>{% trans "Category Type" %} <span class="lf-req">*</span></label>
+          <select name="category_type" class="form-control">
+            {% for val, label in category_choices %}
+              <option value="{{ val }}" {% if values.category_type == val %}selected{% endif %}>{{ label|capfirst }}</option>
+            {% endfor %}
+          </select>
+          {% if errors.category_type %}<small class="text-danger">{{ errors.category_type.0 }}</small>{% endif %}
+        </div>
+        <div class="form-group">
+          <label>{% trans "Company" %} <span class="lf-req">*</span></label>
+          <select name="owner_company" class="form-control">
+            <option value="">{% trans "Select company" %}</option>
+            {% for c in companies %}
+              <option value="{{ c.id }}" {% if values.owner_company == c.id %}selected{% endif %}>{{ c.name }}</option>
+            {% endfor %}
+          </select>
+          {% if errors.owner_company %}<small class="text-danger">{{ errors.owner_company.0 }}</small>{% endif %}
+        </div>
+        <div class="form-group">
+          <label>{% trans "Visibility Scope" %} <span class="lf-req">*</span></label>
+          <select name="visibility_scope" class="form-control">
+            {% for val, label in visibility_choices %}
+              <option value="{{ val }}" {% if values.visibility_scope == val %}selected{% endif %}>{{ label|capfirst }}</option>
+            {% endfor %}
+          </select>
+          {% if errors.visibility_scope %}<small class="text-danger">{{ errors.visibility_scope.0 }}</small>{% endif %}
+        </div>
+
+        <div class="form-group full">
+          <label>{% trans "NACE / ISIC Classification" %} <span class="lf-req">*</span></label>
+          <div class="lf-nace" style="position:relative;">
+            <input type="hidden" name="nace_code" id="lf-nace-hidden" value="{{ values.nace_code|default:'' }}">
+            <input type="text" id="lf-nace-search" class="form-control" autocomplete="off"
+                   placeholder="{% trans 'Type a code or industry name…' %}" value="{{ nace_display }}">
+            <ul id="lf-nace-results" class="list-group"
+                style="position:absolute; z-index:1050; width:100%; max-height:260px; overflow:auto; display:none; box-shadow:0 6px 18px rgba(0,0,0,.12);"></ul>
+          </div>
+          {% if errors.nace_code %}<small class="text-danger">{{ errors.nace_code.0 }}</small>{% endif %}
+        </div>
+
+        <div class="form-group full">
+          <label>{% trans "Title" %} <span class="lf-req">*</span></label>
+          <input type="text" name="title" class="form-control" maxlength="40" value="{{ values.title|default:'' }}" placeholder="{% trans 'A short, clear title' %}">
+          {% if errors.title %}<small class="text-danger">{{ errors.title.0 }}</small>{% endif %}
+        </div>
+
+        <div class="form-group full">
+          <label>{% trans "Description" %} <span class="lf-req">*</span></label>
+          <textarea name="description" class="form-control" rows="3" maxlength="200" placeholder="{% trans 'Describe what you offer or need…' %}">{{ values.description|default:'' }}</textarea>
+          {% if errors.description %}<small class="text-danger">{{ errors.description.0 }}</small>{% endif %}
+        </div>
+
+        <div class="form-group full">
+          <label>{% trans "Keywords" %} <span class="lf-req">*</span> <span class="lf-help">({% trans "comma-separated, 1–20" %})</span></label>
+          <input type="text" name="keywords" class="form-control" value="{{ values.keywords|default:'' }}" placeholder="{% trans 'e.g. steel, pipes, export' %}">
+          {% if errors.keywords %}<small class="text-danger">{{ errors.keywords.0 }}</small>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    {% if is_offer %}
+    <!-- Offer details -->
+    <div class="lf-section">
+      <div class="lf-section__title"><i class="fas fa-tag"></i>{% trans "Offer details" %}</div>
+      <div class="lf-grid">
+        <div class="form-group">
+          <label>{% trans "Price without VAT" %}</label>
+          <input type="number" step="0.01" min="0" name="price_without_vat" class="form-control" value="{{ values.price_without_vat|default:'' }}">
+          {% if errors.price_without_vat %}<small class="text-danger">{{ errors.price_without_vat.0 }}</small>{% endif %}
+        </div>
+        <div class="form-group">
+          <label>{% trans "Currency" %}</label>
+          <select name="currency" class="form-control">
+            <option value="">—</option>
+            {% for val, label in currency_choices %}
+              <option value="{{ val }}" {% if values.currency == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+          {% if errors.currency %}<small class="text-danger">{{ errors.currency.0 }}</small>{% endif %}
+        </div>
+        <div class="form-group">
+          <label>{% trans "Unit" %}</label>
+          <input type="text" name="unit" class="form-control" inputmode="numeric" pattern="[0-9]*" value="{{ values.unit|default:'' }}">
+          {% if errors.unit %}<small class="text-danger">{{ errors.unit.0 }}</small>{% endif %}
+        </div>
+        <div class="form-group">
+          <label>{% trans "Minimum Quantity / Service Scope" %}</label>
+          <input type="text" name="minimum_quantity_or_scope" class="form-control" inputmode="numeric" pattern="[0-9]*" value="{{ values.minimum_quantity_or_scope|default:'' }}">
+          {% if errors.minimum_quantity_or_scope %}<small class="text-danger">{{ errors.minimum_quantity_or_scope.0 }}</small>{% endif %}
+        </div>
+        <div class="form-group">
+          <label>{% trans "Video URL" %}</label>
+          <input type="url" name="video_url" class="form-control" value="{{ values.video_url|default:'' }}">
+          {% if errors.video_url %}<small class="text-danger">{{ errors.video_url.0 }}</small>{% endif %}
+        </div>
+        <div class="form-group">
+          <label>{% trans "Product Image" %} <span class="lf-help">({% trans "Product Offer only" %})</span></label>
+          <input type="file" name="product_image" class="form-control-file" accept="image/png,image/jpeg,image/webp">
+          {% if listing.product_image %}<small class="d-block mt-1 lf-help">{% trans "Current" %}: <a href="{{ listing.product_image.url }}" target="_blank">{% trans "view" %}</a></small>{% endif %}
+          {% if errors.product_image_id %}<small class="text-danger">{{ errors.product_image_id.0 }}</small>{% endif %}
+        </div>
+        <div class="form-group">
+          <label>{% trans "Certification Image" %}</label>
+          <input type="file" name="certification_image" class="form-control-file" accept="image/png,image/jpeg,image/webp">
+          {% if listing.certification_image %}<small class="d-block mt-1 lf-help">{% trans "Current" %}: <a href="{{ listing.certification_image.url }}" target="_blank">{% trans "view" %}</a></small>{% endif %}
+        </div>
+        <div class="form-group full">
+          <label>{% trans "Certification Text" %}</label>
+          <textarea name="certification_text" id="certification_text" class="form-control" rows="2" maxlength="100">{{ values.certification_text|default:'' }}</textarea>
+          <small class="d-block mt-1 lf-help text-right"><span id="certification_text_count">0</span>/100</small>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if module_fields %}
+    <!-- Module-specific -->
+    <div class="lf-section">
+      <div class="lf-section__title"><i class="fas fa-sliders-h"></i>{{ module_name }} {% trans "details" %}</div>
+      <div class="lf-grid">
+        {% for f in module_fields %}
+        <div class="form-group {% if f.type == 'textarea' %}full{% endif %}">
+          <label>{{ f.label }}{% if f.required %} <span class="lf-req">*</span>{% endif %}</label>
+          {% if f.type == 'select' %}
+            <select name="{{ f.name }}" class="form-control">
+              <option value="">—</option>
+              {% for opt in f.options %}
+                <option value="{{ opt }}" {% if f.value == opt %}selected{% endif %}>{{ opt }}</option>
+              {% endfor %}
+            </select>
+          {% elif f.type == 'textarea' %}
+            <textarea name="{{ f.name }}" class="form-control" rows="2">{{ f.value }}</textarea>
+          {% elif f.type == 'boolean' %}
+            <div class="form-check mt-2">
+              <input type="checkbox" class="form-check-input" name="{{ f.name }}" value="1" id="{{ f.name }}" {% if f.value %}checked{% endif %}>
+              <label class="form-check-label" for="{{ f.name }}">{% trans "Yes" %}</label>
+            </div>
+          {% else %}
+            <input type="text" name="{{ f.name }}" class="form-control" value="{{ f.value }}">
+          {% endif %}
+          {% if f.error %}<small class="text-danger">{{ f.error }}</small>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Location -->
+    <div class="lf-section">
+      <div class="lf-section__title"><i class="fas fa-map-marker-alt"></i>{% trans "Location" %}</div>
+      <div class="lf-grid">
+        <div class="form-group">
+          <label>{% trans "Country" %}</label>
+          <select name="country" id="listing_country" class="form-control">
+            <option value="">{% trans "Select country" %}</option>
+            {% for code, name in country_choices %}
+              <option value="{{ code }}" {% if values.country == code or values.country == name %}selected{% endif %}>{{ name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>{% trans "Region" %}</label>
+          <select name="region" id="listing_region" class="form-control" data-current="{{ values.region|default:'' }}">
+            <option value="">{% trans "Select region" %}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>{% trans "City" %}</label>
+          <input type="text" name="city" class="form-control" value="{{ values.city|default:'' }}">
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="lf-actions">
+      {% if listing %}
+        <button type="submit" name="action" value="save" class="lf-btn-primary"><i class="fas fa-check mr-1"></i>{% trans "Save Changes" %}</button>
+      {% else %}
+        <button type="submit" name="action" value="publish" class="lf-btn-primary"><i class="fas fa-paper-plane mr-1"></i>{% trans "Publish" %}</button>
+        <button type="submit" name="action" value="draft" class="lf-btn-ghost"><i class="far fa-save mr-1"></i>{% trans "Save Draft" %}</button>
+      {% endif %}
+      <a href="{% url 'listings_web:browse' %}" class="btn btn-link text-muted">{% trans "Cancel" %}</a>
+    </div>
+  </form>
+  </div>
+</div>
+</div></section>
+
+<script>
+/* Searchable NACE / ISIC picker — replaces a 500-option native select with a
+   contained, scrollable results list backed by /api/industry-codes/nace/. */
+(function () {
+  var search = document.getElementById("lf-nace-search");
+  var hidden = document.getElementById("lf-nace-hidden");
+  var results = document.getElementById("lf-nace-results");
+  if (!search) return;
+  var timer = null;
+
+  function hide() { results.style.display = "none"; }
+
+  function fetchCodes() {
+    var q = search.value.trim();
+    if (!q) { hide(); return; }
+    fetch("/api/industry-codes/nace/?q=" + encodeURIComponent(q) + "&limit=20", {
+      credentials: "same-origin",
+      headers: { "X-Requested-With": "XMLHttpRequest", "Accept": "application/json" },
+    })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+      .then(function (d) { render(d.data || []); })
+      .catch(function () { hide(); });
+  }
+
+  function render(rows) {
+    results.innerHTML = "";
+    if (!rows.length) { hide(); return; }
+    rows.forEach(function (row) {
+      var item = document.createElement("button");
+      item.type = "button";
+      item.className = "list-group-item list-group-item-action py-1 text-left";
+      item.textContent = row.code + " — " + row.title;
+      item.addEventListener("click", function () {
+        hidden.value = row.id;
+        search.value = row.code + " — " + row.title;
+        hide();
+      });
+      results.appendChild(item);
+    });
+    results.style.display = "block";
+  }
+
+  search.addEventListener("input", function () {
+    hidden.value = "";               // force re-selection from the list
+    clearTimeout(timer);
+    timer = setTimeout(fetchCodes, 200);
+  });
+  search.addEventListener("focus", function () { if (search.value.trim()) fetchCodes(); });
+  document.addEventListener("click", function (e) {
+    if (!results.contains(e.target) && e.target !== search) hide();
+  });
+})();
+</script>
+
+{% comment %} Country → region (subdivision) map, indexed client-side on country change. {% endcomment %}
+{{ country_states|json_script:"listing-country-states" }}
+<script>
+/* Cascading Country → Region dropdown + Certification Text char counter. */
+(function () {
+  var dataNode = document.getElementById("listing-country-states");
+  var countryStates = dataNode ? JSON.parse(dataNode.textContent) : {};
+  var countrySel = document.getElementById("listing_country");
+  var regionSel = document.getElementById("listing_region");
+
+  if (countrySel && regionSel) {
+    function rebuildRegions(code, preserve) {
+      var states = (code && countryStates[code]) || [];
+      var current = preserve != null ? preserve : (regionSel.getAttribute("data-current") || "");
+      var placeholder = regionSel.options[0] ? regionSel.options[0].outerHTML
+                        : '<option value="">—</option>';
+      if (!states.length) {
+        regionSel.innerHTML = placeholder;
+        regionSel.disabled = true;
+        return;
+      }
+      var html = placeholder;
+      states.forEach(function (s) {
+        var sel = s === current ? " selected" : "";
+        html += '<option value="' + s + '"' + sel + '>' + s + '</option>';
+      });
+      regionSel.innerHTML = html;
+      regionSel.disabled = false;
+    }
+    rebuildRegions(countrySel.value);
+    countrySel.addEventListener("change", function () {
+      rebuildRegions(countrySel.value, "");
+    });
+  }
+
+  var certText = document.getElementById("certification_text");
+  var certCount = document.getElementById("certification_text_count");
+  if (certText && certCount) {
+    function updateCount() { certCount.textContent = certText.value.length; }
+    certText.addEventListener("input", updateCount);
+    updateCount();
+  }
+})();
+</script>
+{% endblock %}
