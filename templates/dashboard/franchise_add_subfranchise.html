@@ -43,7 +43,7 @@
           <label class="fr-label">{% trans "Parent franchise" context "franchise" %} <span class="req">*</span></label>
           <select name="parent_node_id" id="sf-parent" class="fr-control" required>
             {% for n in active_nodes %}
-            <option value="{{ n.id }}">{{ n.get_franchise_level_display }} — {{ n.name }}</option>
+            <option value="{{ n.id }}"{% if form_data.parent_node_id == n.id|stringformat:'s' %} selected{% endif %}>{{ n.get_franchise_level_display }} — {{ n.name }}</option>
             {% endfor %}
           </select>
         </div>
@@ -63,40 +63,40 @@
           {# Dropdown when the (inherited) country has known subdivisions; free-text fallback otherwise. Only the active one is enabled, so only it submits. #}
           <select name="requested_region" id="sf-region-select" class="fr-control" style="display:none;" disabled></select>
           <input type="text" name="requested_region" id="sf-region-text" class="fr-control"
-                 placeholder="{% trans "e.g. California" context "franchise" %}">
+                 placeholder="{% trans "e.g. California" context "franchise" %}" value="{{ form_data.requested_region|default:'' }}">
         </div>
-        <div>
+        <div id="sf-city-wrap">
           <label class="fr-label">{% trans "City / District" context "franchise" %} <span class="req" id="sf-city-req" style="display:none;">*</span></label>
           <input type="text" name="requested_city" id="sf-city" class="fr-control"
-                 placeholder="{% trans "e.g. San Diego" context "franchise" %}">
+                 placeholder="{% trans "e.g. San Diego" context "franchise" %}" value="{{ form_data.requested_city|default:'' }}">
         </div>
-        <div>
+        <div id="sf-local-wrap">
           <label class="fr-label">{% trans "Micro area (optional)" context "franchise" %}</label>
           <input type="text" name="requested_local_area" id="sf-local" class="fr-control"
-                 placeholder="{% trans "Neighbourhood / district" context "franchise" %}">
+                 placeholder="{% trans "Neighbourhood / district" context "franchise" %}" value="{{ form_data.requested_local_area|default:'' }}">
         </div>
 
         <div class="full"><div class="fr-sub">{% trans "Franchisee" context "franchise" %}</div></div>
         <div>
           <label class="fr-label">{% trans "Legal name / Company name" context "franchise" %} <span class="req">*</span></label>
           <input type="text" name="legal_name" class="fr-control" required
-                 placeholder="{% trans "e.g. Acme Retail LLC" context "franchise" %}">
+                 placeholder="{% trans "e.g. Acme Retail LLC" context "franchise" %}" value="{{ form_data.legal_name|default:'' }}">
         </div>
         <div>
           <label class="fr-label">{% trans "Contact person" context "franchise" %} <span class="req">*</span></label>
           <input type="text" name="contact_person" class="fr-control" required
-                 placeholder="{% trans "Full name" context "franchise" %}">
+                 placeholder="{% trans "Full name" context "franchise" %}" value="{{ form_data.contact_person|default:'' }}">
         </div>
         <div>
           <label class="fr-label">{% trans "Email" context "franchise" %} <span class="req">*</span></label>
           <input type="email" name="owner_email" class="fr-control" required
-                 placeholder="{% trans "owner@example.com" context "franchise" %}">
+                 placeholder="{% trans "owner@example.com" context "franchise" %}" value="{{ form_data.owner_email|default:'' }}">
           <div class="text-muted small mt-1">{% trans "The person who will hold this sub-franchise. They must already have an account." context "franchise" %}</div>
         </div>
         <div>
           <label class="fr-label">{% trans "Phone" context "franchise" %}</label>
           <input type="text" name="contact_phone" class="fr-control"
-                 placeholder="{% trans "+1 555 010 0000" context "franchise" %}">
+                 placeholder="{% trans "+1 555 010 0000" context "franchise" %}" value="{{ form_data.contact_phone|default:'' }}">
         </div>
 
         <div class="full"><div class="fr-sub">{% trans "Status" context "workflows" %}</div></div>
@@ -104,7 +104,7 @@
           <label class="fr-label">{% trans "Contract status" context "franchise" %}</label>
           <select name="contract_status" class="fr-control">
             {% for value, label in contract_choices %}
-            <option value="{{ value }}">{{ label }}</option>
+            <option value="{{ value }}"{% if form_data.contract_status == value %} selected{% endif %}>{{ label }}</option>
             {% endfor %}
           </select>
         </div>
@@ -112,7 +112,7 @@
           <label class="fr-label">{% trans "Payment status" context "franchise" %}</label>
           <select name="fee_status" class="fr-control">
             {% for value, label in fee_choices %}
-            <option value="{{ value }}">{{ label }}</option>
+            <option value="{{ value }}"{% if form_data.fee_status == value %} selected{% endif %}>{{ label }}</option>
             {% endfor %}
           </select>
         </div>
@@ -120,7 +120,7 @@
         <div class="full">
           <label class="fr-label">{% trans "Notes (optional)" context "franchise" %}</label>
           <textarea name="application_note" class="fr-control" rows="2"
-                    placeholder="{% trans "Anything the Platform Admin should know." context "franchise" %}"></textarea>
+                    placeholder="{% trans "Anything the Platform Admin should know." context "franchise" %}">{{ form_data.application_note|default:'' }}</textarea>
         </div>
       </div>
       <div class="mt-3">
@@ -148,6 +148,7 @@
 
 {% if has_active_node %}
 {{ country_states|json_script:"sf-country-states" }}
+{{ form_data|json_script:"sf-form-data" }}
 <script>
   (function () {
     var options = {{ node_options_json|safe }};
@@ -161,6 +162,8 @@
     var regionText = document.getElementById("sf-region-text");
     var city = document.getElementById("sf-city");
     var local = document.getElementById("sf-local");
+    var cityWrap = document.getElementById("sf-city-wrap");
+    var localWrap = document.getElementById("sf-local-wrap");
     var regionReq = document.getElementById("sf-region-req");
     var cityReq = document.getElementById("sf-city-req");
 
@@ -168,6 +171,15 @@
     // map fall back to a free-text region field.
     var statesNode = document.getElementById("sf-country-states");
     var COUNTRY_STATES = statesNode ? JSON.parse(statesNode.textContent) : {};
+
+    // Values preserved from a rejected submit. The parent select and all the
+    // free-text/status fields are pre-filled server-side; the level and region
+    // dropdowns are built by JS, so we re-select the saved values once, the
+    // first time each is built, then clear them so later edits behave normally.
+    var initNode = document.getElementById("sf-form-data");
+    var INITIAL = initNode ? JSON.parse(initNode.textContent) : {};
+    var initialLevel = (INITIAL && INITIAL.requested_level) || "";
+    var initialRegion = (INITIAL && INITIAL.requested_region) || "";
 
     function refreshLevels() {
       var opt = byId[parent.value];
@@ -181,6 +193,13 @@
         el.textContent = s.label;
         level.appendChild(el);
       });
+      // Re-select the saved level if it's offered under this parent (one-shot).
+      if (initialLevel) {
+        for (var i = 0; i < level.options.length; i++) {
+          if (level.options[i].value === initialLevel) { level.value = initialLevel; break; }
+        }
+        initialLevel = "";
+      }
       refreshRequired();
     }
 
@@ -192,7 +211,7 @@
       var opts = (cc && COUNTRY_STATES[cc]) || [];
       var useSelect = opts.length > 0;
       if (useSelect) {
-        var prev = regionSelect.value;
+        var prev = regionSelect.value || initialRegion;
         regionSelect.innerHTML = '<option value="">' + "{% trans 'Select State / Region' context 'franchise' %}" + '</option>';
         opts.forEach(function (s) {
           var o = document.createElement("option");
@@ -201,6 +220,7 @@
           regionSelect.appendChild(o);
         });
       }
+      initialRegion = "";  // one-shot: only pre-select on the first build
       regionSelect.style.display = useSelect ? "" : "none";
       regionText.style.display = useSelect ? "none" : "";
       regionSelect.disabled = !(useSelect && enabled);
@@ -217,11 +237,17 @@
       regionReq.style.display = needsRegion ? "" : "none";
       cityReq.style.display = needsCity ? "" : "none";
       city.required = needsCity;
-      // City/local only apply to a Micro; a National may OPTIONALLY name a state
-      // (region enabled but not required). Disabled inputs aren't submitted, so
-      // canonical_territory stays clean.
+      // City / Micro-area apply ONLY to a Micro (a Regional covers a whole
+      // region/state, a National a whole country/state). Hide AND clear them for
+      // other levels so the reviewer never sees a value that canonical_territory
+      // would silently strip — the source of the "city not displayed" confusion.
+      // Disabled inputs aren't submitted either, so canonical_territory stays clean.
+      cityWrap.style.display = needsCity ? "" : "none";
+      localWrap.style.display = needsLocal ? "" : "none";
       city.disabled = !needsCity;
       local.disabled = !needsLocal;
+      if (!needsCity) city.value = "";
+      if (!needsLocal) local.value = "";
       // Region is usable for any chosen sub-level (National optional, Regional/
       // Micro required); a Master is never a sub-franchise level here.
       renderRegion(!!lvl, needsRegion);

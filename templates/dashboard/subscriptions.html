@@ -525,7 +525,7 @@
         </div>
 
         <div class="form-row">
-          <label for="features-{{ forloop.counter }}">{% trans "Features (one per line — prefix with \"- \" for an excluded feature)" context "billing" %}</label>
+          <label for="features-{{ forloop.counter }}">{% trans "Features (one per line — prefix with “- ” for an excluded feature)" context "billing" %}</label>
           {% comment %}
             Pre-fill in the same shape the save handler expects: plain text per line,
             with a leading "- " on excluded features. Rendering a dict would dump the

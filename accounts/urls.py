@@ -51,6 +51,10 @@ from .view.franchise import (
     franchise_child_action,
     franchise_tree,
     franchise_suspend,
+    franchise_remove,
+    franchise_removal_request,
+    franchise_removal_cancel,
+    franchise_removal_action,
     franchise_consultants,
     assign_consultant,
     consultant_assignment_remove,
@@ -148,6 +152,16 @@ urlpatterns = [
     # Franchise tree (scoped by visibility) + suspension + consultant management
     path("franchise-tree/", franchise_tree, name="franchise-tree"),
     path("franchises/<uuid:tenant_id>/suspend/", franchise_suspend, name="franchise-suspend"),
+    # Removal (§9.2 wind-down): ends the franchise for its holder and every
+    # sub-franchise beneath it. Distinct from tenant-delete, which is the plain
+    # partition delete for a non-franchise tenant.
+    path("franchises/<uuid:tenant_id>/remove/", franchise_remove, name="franchise-remove"),
+    # Holder-initiated exit: request → the granting authority (direct parent
+    # holder, or the Platform Admin for a Master) approves before anything is
+    # wound down.
+    path("franchises/<uuid:tenant_id>/removal-request/", franchise_removal_request, name="franchise-removal-request"),
+    path("franchise-removals/<uuid:removal_id>/cancel/", franchise_removal_cancel, name="franchise-removal-cancel"),
+    path("franchise-removals/<uuid:removal_id>/action/", franchise_removal_action, name="franchise-removal-action"),
     path("franchise-consultants/", franchise_consultants, name="franchise-consultants"),
     path("franchise-consultants/assign/", assign_consultant, name="assign-consultant"),
     path("franchise-consultants/<uuid:assignment_id>/remove/", consultant_assignment_remove, name="consultant-assignment-remove"),

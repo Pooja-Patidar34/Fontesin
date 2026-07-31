@@ -21,7 +21,11 @@
   .cr-info-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 18px; font-size: .8rem; color: #475569; margin-top: 6px; }
   .cr-info-grid div { min-width: 0; overflow-wrap: anywhere; }
   .cr-info-grid div span { color: #94a3b8; margin-right: 4px; }
-  .cr-motivation { background: #f8fafc; border: 1px solid #eef2f7; border-radius: 8px; padding: 8px 10px; font-size: .82rem; color: #1f2937; white-space: pre-wrap; margin-top: 8px; }
+  .cr-motivation { background: #f8fafc; border: 1px solid #eef2f7; border-radius: 8px; padding: 8px 10px; font-size: .82rem; color: #1f2937; white-space: pre-wrap; margin-top: 8px; overflow-wrap: anywhere; word-break: break-word; }
+  /* Rejection reason can be long, free-text and (as pasted) unbroken — cap its
+     width and force wrapping so one cell can't stretch the whole table. */
+  .cr-reason-cell { max-width: 360px; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
+  .cr-note-count { font-size: .7rem; color: #94a3b8; text-align: right; margin-top: 3px; }
   .pill { display: inline-block; padding: 2px 10px; border-radius: 100px; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
   .pill-approved { background: #dbeafe; color: #1e40af; }
   .pill-active { background: #dcfce7; color: #166534; }
@@ -65,6 +69,11 @@
     </button>
     <button type="button" class="cr-tab" data-pane="rejected">
       {% trans "Rejected" context "workflows" %}{% if counts.rejected %}<span class="badge badge-secondary">{{ counts.rejected }}</span>{% endif %}
+    </button>
+    {% comment %} Master holders asking to give up their franchise (a sub-franchise
+       exit is its direct parent's call and shows in their own queue). {% endcomment %}
+    <button type="button" class="cr-tab" data-pane="removals">
+      {% trans "Removal Requests" context "franchise" %}{% if counts.removals %}<span class="badge badge-warning">{{ counts.removals }}</span>{% endif %}
     </button>
   </div>
 
@@ -130,8 +139,10 @@
                       style="display:none; margin-top: 8px;">
                   {% csrf_token %}
                   <input type="hidden" name="decision" value="reject">
-                  <textarea name="board_note" rows="2" class="form-control form-control-sm"
+                  <textarea name="board_note" rows="2" class="form-control form-control-sm js-note-count"
+                            maxlength="200"
                             placeholder="{% trans "Reason (shown to applicant)" context "franchise" %}" style="font-size:.78rem;"></textarea>
+                  <div class="cr-note-count"><span>0</span>/200</div>
                   <button type="submit" class="btn btn-sm btn-danger mt-1">
                     <i class="fas fa-paper-plane mr-1"></i> {% trans "Submit rejection" context "franchise" %}
                   </button>
@@ -234,8 +245,10 @@
                       style="display:none; margin-top: 8px;">
                   {% csrf_token %}
                   <input type="hidden" name="decision" value="reject">
-                  <textarea name="board_note" rows="2" class="form-control form-control-sm"
+                  <textarea name="board_note" rows="2" class="form-control form-control-sm js-note-count"
+                            maxlength="200"
                             placeholder="{% trans "Reason (shown to applicant)" context "franchise" %}" style="font-size:.78rem;"></textarea>
+                  <div class="cr-note-count"><span>0</span>/200</div>
                   <button type="submit" class="btn btn-sm btn-danger mt-1">
                     <i class="fas fa-paper-plane mr-1"></i> {% trans "Submit rejection" context "franchise" %}
                   </button>
@@ -309,6 +322,9 @@
                     <i class="fas fa-bolt mr-1"></i> {% trans "Activate" context "franchise" %}
                   </button>
                 </form>
+                {% comment %} A node can be taken back before it ever goes ACTIVE —
+                   e.g. the contract falls through. {% endcomment %}
+                {% include "dashboard/_franchise_remove_form.html" with node=a.created_franchise %}
               </td>
             </tr>
             {% endfor %}
@@ -399,6 +415,10 @@
                     </button>
                   </form>
                   {% endif %}
+                  {% comment %} Removal is offered next to every status — suspend
+                     only pauses the holder's rights, it never takes the
+                     territory back. {% endcomment %}
+                  {% include "dashboard/_franchise_remove_form.html" with node=a.created_franchise %}
                 {% else %}—{% endif %}
               </td>
             </tr>
@@ -439,7 +459,7 @@
               </td>
               <td class="small text-muted">{{ a.get_requested_level_display }} · {{ a.requested_country }}</td>
               <td class="small text-muted">{{ a.rejected_at|date:"M j, Y H:i" }}</td>
-              <td class="small text-muted">{{ a.board_note|default:"—" }}</td>
+              <td class="small text-muted cr-reason-cell">{{ a.board_note|default:"—" }}</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -453,6 +473,11 @@
       {% endif %}
     </div>
     {% include "dashboard/_cr_pager.html" with page=rejected param="rejected_page" tab="rejected" %}
+  </div>
+
+  <!-- REMOVAL REQUESTS -->
+  <div class="cr-pane" id="pane-removals">
+    {% include "dashboard/_franchise_removal_panel.html" %}
   </div>
 
 </div>
@@ -469,6 +494,16 @@
     var pane = document.getElementById("pane-" + name);
     if (pane) pane.classList.add("active");
   }
+  // Live counter for the rejection reason (hard-capped at 200 by maxlength;
+  // this mirrors the count so the reviewer sees how much is left). Delegated —
+  // one listener covers every row's textarea.
+  document.addEventListener("input", function (e) {
+    var ta = e.target.closest(".js-note-count");
+    if (!ta) return;
+    var out = ta.parentNode.querySelector(".cr-note-count span");
+    if (out) out.textContent = ta.value.length;
+  });
+
   document.addEventListener("click", function (e) {
     var btn = e.target.closest(".cr-tab");
     if (!btn) return;

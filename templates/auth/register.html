@@ -659,12 +659,12 @@
             country: countryName,
             min: phoneRules.min,
             max: phoneRules.max
-          }), "error");
+          }, true), "error");
         } else {
           showToast(interpolate(gettext("Phone number for %(country)s must be %(min)s digits."), {
             country: countryName,
             min: phoneRules.min
-          }), "error");
+          }, true), "error");
         }
         phone.focus();
         return;

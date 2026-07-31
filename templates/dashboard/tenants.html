@@ -46,6 +46,10 @@
 
 </div>
 
+{% comment %} The rows' "Remove franchise" action is a [data-confirm] form, so the
+   shared confirm modal has to be on the page (include-once guarded). {% endcomment %}
+{% include "base/_confirm_modal.html" %}
+
 
 <!-- Modal (Create + Update) -->
 <div class="modal fade" id="tenantModal" tabindex="-1">

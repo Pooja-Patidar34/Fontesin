@@ -1,9 +1,11 @@
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import render, get_object_or_404, redirect
 
 from accounts.models import Company, Tenant, AuditLog
+from accounts.constants import FranchiseUnitStatus
+from django.utils import timezone
 from accounts.utils.permissions import has_permission
 from accounts.utils.ip import get_client_ip
 from accounts.forms.tenant_form import TenantForm
@@ -11,7 +13,7 @@ from django.contrib import messages
 from django.db import IntegrityError, transaction
 from django.db.models import Count, Q
 from django.http import JsonResponse
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as _, ngettext
 import logging
 
 business_logger = logging.getLogger("business")
@@ -89,8 +91,14 @@ def tenant_list(request):
         if request.user.role and request.user.role.code
         else ""
     )
-    is_business_user = role_code == "business_user"
-    is_franchise_partner = role_code == "franchise"
+    # A franchise holder is identified by the nodes they own, not by a role —
+    # a Business User who buys a franchise keeps the business_user role, so
+    # test franchise ownership FIRST and let it win over the business-user
+    # branch below (which would otherwise scope them to their own tenant and
+    # hide the franchise they just bought).
+    from accounts.utils.franchise_access import is_franchise_holder
+    is_franchise_partner = is_franchise_holder(request.user)
+    is_business_user = role_code == "business_user" and not is_franchise_partner
 
     if not request.user.is_superuser and not is_business_user and not is_franchise_partner:
         raise PermissionDenied()
@@ -256,7 +264,60 @@ def toggle_tenant(request, tenant_id):
 
     old_status = tenant.is_active
     tenant.is_active = not tenant.is_active
-    tenant.save(update_fields=["is_active"])
+    update_fields = ["is_active"]
+
+    # A franchise node carries a separate lifecycle status (`franchise_status`)
+    # that the Franchise Tree and every franchise rule read. This generic
+    # activate/deactivate toggle used to move only `is_active`, so a franchise
+    # deactivated here still showed ACTIVE in the tree and kept its franchise
+    # rights. Mirror the toggle onto `franchise_status` using the same
+    # ACTIVE<->SUSPENDED transition as the dedicated Suspend/Reactivate action
+    # (accounts/view/franchise.py:franchise_suspend), so both surfaces agree and
+    # the deactivation actually takes effect. Only that one transition is
+    # mirrored; pending/terminated/expired nodes keep their lifecycle status.
+    synced_franchise_status = False
+    if tenant.franchise_level is not None:
+        if not tenant.is_active and tenant.franchise_status == FranchiseUnitStatus.ACTIVE:
+            tenant.franchise_status = FranchiseUnitStatus.SUSPENDED
+            tenant.suspended_at = timezone.now()
+            update_fields += ["franchise_status", "suspended_at", "updated_at"]
+            synced_franchise_status = True
+        elif tenant.is_active and tenant.franchise_status == FranchiseUnitStatus.SUSPENDED:
+            tenant.franchise_status = FranchiseUnitStatus.ACTIVE
+            try:
+                tenant.clean()  # re-check exclusivity/parent on the way back to ACTIVE
+            except ValidationError as exc:
+                messages.error(request, " ".join(exc.messages))
+                return redirect(request.META.get("HTTP_REFERER", "tenants"))
+            update_fields += ["franchise_status", "updated_at"]
+            synced_franchise_status = True
+
+    try:
+        tenant.save(update_fields=update_fields)
+    except IntegrityError:
+        # Reactivation lost the Micro-Franchise exclusivity race (another Micro is
+        # already active in this territory). Leave the node as-is and explain.
+        messages.error(
+            request,
+            _("Cannot reactivate: a Micro-Franchise already occupies this territory."),
+        )
+        return redirect(request.META.get("HTTP_REFERER", "tenants"))
+
+    # Keep a Micro owner's consultant self-assignment in step with the node's
+    # status (certify rights track it), mirroring franchise_suspend.
+    if synced_franchise_status:
+        try:
+            from accounts.view.franchise import _sync_micro_owner_assignment
+            from accounts.constants import ConsultantAssignmentStatus
+            _sync_micro_owner_assignment(
+                tenant,
+                ConsultantAssignmentStatus.ACTIVE if tenant.is_active
+                else ConsultantAssignmentStatus.SUSPENDED,
+            )
+        except Exception:
+            technical_logger.exception(
+                "toggle_tenant: micro-owner assignment sync failed for %s", tenant.id
+            )
 
     action = (
         "tenant.activated"
@@ -287,14 +348,24 @@ def tenant_detail_ajax(request, tenant_id):
         if request.user.role and request.user.role.code
         else ""
     )
-    is_business_user = role_code == "business_user"
-    is_franchise_partner = role_code == "franchise"
+    # See tenant_list: franchise access follows node ownership, so a Business
+    # User holding a franchise reads their franchise subtree here rather than
+    # being pinned to their own tenant.
+    from accounts.utils.franchise_access import is_franchise_holder
+    is_franchise_partner = is_franchise_holder(request.user)
+    is_business_user = role_code == "business_user" and not is_franchise_partner
 
     if not request.user.is_superuser and not is_business_user and not is_franchise_partner:
         raise PermissionDenied()
 
     if is_business_user and str(tenant_id) != str(request.user.tenant_id):
         raise PermissionDenied()
+
+    if is_franchise_partner and not request.user.is_superuser:
+        from accounts.view.franchise import visible_node_ids
+        allowed = visible_node_ids(request.user)
+        if str(tenant_id) != str(request.user.tenant_id) and tenant_id not in allowed:
+            raise PermissionDenied()
 
     tenant = get_object_or_404(Tenant, id=tenant_id)
 
@@ -318,6 +389,33 @@ def tenant_delete(request, tenant_id):
     if request.method == "POST":
 
         tenant_name = tenant.name
+
+        # A franchise node is not just a hidden row: its sub-franchises, the
+        # consultants under it, the applications behind it and its holders' roles
+        # all have to be wound down together, or the subtree survives as live
+        # ACTIVE nodes hanging off a parent the rest of the app filters out.
+        # remove_franchise does the whole cascade (and its own audit rows).
+        if tenant.franchise_level is not None:
+            from accounts.utils.franchise_removal import remove_franchise
+
+            result = remove_franchise(
+                tenant, actor=request.user, ip_address=get_client_ip(request),
+            )
+            descendants = result["descendant_count"]
+            if descendants:
+                messages.success(
+                    request,
+                    ngettext(
+                        "%(name)s was removed, along with the %(count)s sub-franchise beneath it.",
+                        "%(name)s was removed, along with the %(count)s sub-franchises beneath it.",
+                        descendants,
+                    ) % {"name": tenant_name, "count": descendants},
+                )
+            else:
+                messages.success(
+                    request, _("%(name)s was removed.") % {"name": tenant_name},
+                )
+            return redirect("tenants")
 
         AuditLog.objects.create(
             tenant=tenant,   # FIXED

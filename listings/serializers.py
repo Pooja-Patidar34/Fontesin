@@ -103,8 +103,8 @@ class ListingWriteSerializer(serializers.ModelSerializer):
 
     # ---- field-level validation (cookbook Section 6) ----
     def validate_title(self, value):
-        if not value or len(value) < 3 or len(value) > 40:
-            raise serializers.ValidationError(_("Title must be between 3 and 40 characters."))
+        if not value or len(value) < 3 or len(value) > 100:
+            raise serializers.ValidationError(_("Title must be between 3 and 100 characters."))
         if _has_emoji(value):
             raise serializers.ValidationError(_("Title must not contain emojis."))
         return value

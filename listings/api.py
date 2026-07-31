@@ -10,6 +10,7 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import DatabaseError, IntegrityError
 from django.db.models import Q
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
@@ -19,6 +20,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from FontEsin.i18n.drf import APILocaleMixin
+from accounts.utils.i18n_messages import Msg
 from accounts.utils.notifications import notify
 
 from listings.models import Listing, ListingReaction
@@ -42,7 +44,7 @@ def _audit_snapshot(listing):
     return json.loads(json.dumps(data, cls=DjangoJSONEncoder))
 
 
-def _notify_listing_owner(listing, sender, title, body=""):
+def _notify_listing_owner(listing, sender, title, body="", link_url=""):
     """Drop an in-app notification on the listing owner (cookbook `notifyUser`).
 
     `notify()` swallows its own errors, so a notification failure can never
@@ -53,6 +55,7 @@ def _notify_listing_owner(listing, sender, title, body=""):
         sender=sender,
         title=title,
         body=body,
+        link_url=link_url,
         related_company=listing.owner_company,
     )
 
@@ -77,15 +80,21 @@ class ListingCollectionAPIView(APILocaleMixin, APIView):
                 "listing_type": "listing_type",
                 "category_type": "category_type",
                 "module_id": "module_id",
-                "nace_isic_code": "nace_code__code",
                 "company_id": "owner_company_id",
-                "country": "country",
                 "region": "region",
             }
             for param, field in filter_map.items():
                 value = params.get(param)
                 if value:
                     qs = qs.filter(**{field: value})
+
+            # NACE and country go through the same helpers the browse page uses,
+            # so both surfaces agree: a section matches its whole subtree, and a
+            # country matches whether it arrives as an ISO code or English name.
+            if params.get("nace_isic_code"):
+                qs = qs.filter(services.nace_filter(params["nace_isic_code"])[0])
+            if params.get("country"):
+                qs = qs.filter(services.country_filter(params["country"]))
 
             keyword = params.get("keyword")
             if keyword:
@@ -358,8 +367,9 @@ class ListingReactionAPIView(APILocaleMixin, APIView):
         _notify_listing_owner(
             listing,
             sender=user,
-            title=_("New reaction to your listing"),
-            body=_("%(title)s received a new reaction.") % {"title": listing.title},
+            title=Msg("New reaction to your listing"),
+            body=Msg("%(title)s received a new reaction.", title=listing.title),
+            link_url=reverse("listings_web:listing-reactions", args=[listing.id]),
         )
         return Response(
             {"status": True, "data": ListingReactionSerializer(reaction).data},
@@ -408,8 +418,9 @@ class ListingSuspendAPIView(APILocaleMixin, APIView):
         _notify_listing_owner(
             listing,
             sender=user,
-            title=_("Your listing was suspended"),
-            body=_("%(title)s was suspended. Reason: %(reason)s") % {"title": listing.title, "reason": reason},
+            title=Msg("Your listing was suspended"),
+            body=Msg("%(title)s was suspended. Reason: %(reason)s",
+                     title=listing.title, reason=reason),
         )
         return Response({"status": True, "data": ListingReadSerializer(listing).data})
 

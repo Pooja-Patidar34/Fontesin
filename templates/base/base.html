@@ -547,7 +547,7 @@
           <div class="topbar-bell__list">
             {% for n in recent_notifications %}
             <a href="{% if n.link_url %}{{ n.link_url }}{% else %}{% url 'messages' %}{% endif %}" class="topbar-bell__item {% if not n.is_read %}is-unread{% endif %}">
-              <div class="topbar-bell__title">{{ n.title }}</div>
+              <div class="topbar-bell__title">{{ n.display_title }}</div>
               {% if n.body %}<div class="topbar-bell__body">{{ n.body|truncatechars:90 }}</div>{% endif %}
               <div class="topbar-bell__time">{{ n.created_at|timesince }} {% trans "ago" context "nav" %}</div>
             </a>
@@ -688,26 +688,21 @@
           </li>
           {% endif %}
           {% if request.user.is_superuser or lst_role == "business_user" or lst_role == "consultant" or lst_role == "franchise" or lst_role == "coordinator" %}
-          <li class="nav-item has-treeview {% if active_menu == 'listings-browse' or active_menu == 'listings-add' or active_menu == 'listings-my-listings' or active_menu == 'listings-my-offers' or active_menu == 'listings-my-demands' or active_menu == 'listings-reactions' or active_menu == 'listings-admin' %}menu-open{% endif %}">
-            <a href="#" class="nav-link {% if active_menu == 'listings-browse' or active_menu == 'listings-add' or active_menu == 'listings-my-listings' or active_menu == 'listings-my-offers' or active_menu == 'listings-my-demands' or active_menu == 'listings-reactions' or active_menu == 'listings-admin' %}active{% endif %}">
+          <li class="nav-item has-treeview {% if active_menu == 'listings-browse' or active_menu == 'listings-add-offer' or active_menu == 'listings-add-demand' or active_menu == 'listings-my-offers' or active_menu == 'listings-my-demands' or active_menu == 'listings-admin' %}menu-open{% endif %}">
+            <a href="#" class="nav-link {% if active_menu == 'listings-browse' or active_menu == 'listings-add-offer' or active_menu == 'listings-add-demand' or active_menu == 'listings-my-offers' or active_menu == 'listings-my-demands' or active_menu == 'listings-admin' %}active{% endif %}">
               <i class="nav-icon fas fa-store"></i>
               <p>{% trans "Products & Services" context "sidebar" %}<i class="right fas fa-angle-left"></i></p>
             </a>
             <ul class="nav nav-treeview">
               <li class="nav-item">
                 <a href="{% url 'listings_web:browse' %}" class="nav-link {% if active_menu == 'listings-browse' %}active{% endif %}">
-                  <i class="far fa-circle nav-icon"></i><p>{% trans "Browse Listings" context "sidebar" %}</p>
+                  <i class="far fa-circle nav-icon"></i><p>{% trans "Browse Offers & Demands" context "sidebar" %}</p>
                 </a>
               </li>
               {% if request.user.is_superuser or lst_role == "business_user" %}
               <li class="nav-item">
-                <a href="{% url 'listings_web:add' %}?type=offer" class="nav-link {% if active_menu == 'listings-add' %}active{% endif %}">
-                  <i class="far fa-circle nav-icon"></i><p>{% trans "Add Listing" context "sidebar" %}</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="{% url 'listings_web:my-listings' %}" class="nav-link {% if active_menu == 'listings-my-listings' %}active{% endif %}">
-                  <i class="far fa-circle nav-icon"></i><p>{% trans "My Listings" context "sidebar" %}</p>
+                <a href="{% url 'listings_web:add' %}?type=offer" class="nav-link {% if active_menu == 'listings-add-offer' %}active{% endif %}">
+                  <i class="far fa-circle nav-icon"></i><p>{% trans "Add Offer" context "sidebar" %}</p>
                 </a>
               </li>
               <li class="nav-item">
@@ -716,13 +711,13 @@
                 </a>
               </li>
               <li class="nav-item">
-                <a href="{% url 'listings_web:my-demands' %}" class="nav-link {% if active_menu == 'listings-my-demands' %}active{% endif %}">
-                  <i class="far fa-circle nav-icon"></i><p>{% trans "My Demands" context "sidebar" %}</p>
+                <a href="{% url 'listings_web:add' %}?type=demand" class="nav-link {% if active_menu == 'listings-add-demand' %}active{% endif %}">
+                  <i class="far fa-circle nav-icon"></i><p>{% trans "Add Demand" context "sidebar" %}</p>
                 </a>
               </li>
               <li class="nav-item">
-                <a href="{% url 'listings_web:my-reactions' %}" class="nav-link {% if active_menu == 'listings-reactions' %}active{% endif %}">
-                  <i class="far fa-circle nav-icon"></i><p>{% trans "Reactions Received" context "sidebar" %}</p>
+                <a href="{% url 'listings_web:my-demands' %}" class="nav-link {% if active_menu == 'listings-my-demands' %}active{% endif %}">
+                  <i class="far fa-circle nav-icon"></i><p>{% trans "My Demands" context "sidebar" %}</p>
                 </a>
               </li>
               {% endif %}
@@ -747,7 +742,10 @@
 
           {% comment %} A Business User who holds no franchise yet has only this one
              entry point, so it stays a flat item — there is nothing to group it
-             with until they own an activated node. {% endcomment %}
+             with until they own an activated node. Once they do, the same page
+             becomes "My Franchises" inside the group below: it lists what they
+             hold AND keeps the request form, so a holder can buy further
+             franchises in other territories. {% endcomment %}
           {% if not is_active_franchise_owner %}
           <li class="nav-item">
             <a href="{% url 'franchise-request' %}"
@@ -1668,35 +1666,38 @@
             {% endcomment %}
             <select name="target_region" class="form-control" required>
               <option value="">{% trans "Select your target region..." context "modal" %}</option>
+              {% comment %} value= is pinned to the English name so the submitted
+                 region keeps mapping to coordinator_territory_q; only the label
+                 is translated. {% endcomment %}
               <optgroup label="{% trans "Europe" context "modal" %}">
-                <option>Czech Republic</option>
-                <option>Germany</option>
-                <option>Austria</option>
-                <option>Switzerland</option>
-                <option>Poland</option>
-                <option>France</option>
-                <option>United Kingdom</option>
-                <option>Benelux (Belgium, Netherlands, Luxembourg)</option>
-                <option>Scandinavia</option>
-                <option>Other European country</option>
+                <option value="Czech Republic">{% trans "Czech Republic" context "region" %}</option>
+                <option value="Germany">{% trans "Germany" context "region" %}</option>
+                <option value="Austria">{% trans "Austria" context "region" %}</option>
+                <option value="Switzerland">{% trans "Switzerland" context "region" %}</option>
+                <option value="Poland">{% trans "Poland" context "region" %}</option>
+                <option value="France">{% trans "France" context "region" %}</option>
+                <option value="United Kingdom">{% trans "United Kingdom" context "region" %}</option>
+                <option value="Benelux (Belgium, Netherlands, Luxembourg)">{% trans "Benelux (Belgium, Netherlands, Luxembourg)" context "region" %}</option>
+                <option value="Scandinavia">{% trans "Scandinavia" context "region" %}</option>
+                <option value="Other European country">{% trans "Other European country" context "region" %}</option>
               </optgroup>
               <optgroup label="{% trans "Middle East & Africa" context "modal" %}">
-                <option>UAE</option>
-                <option>Saudi Arabia</option>
-                <option>Other MENA country</option>
+                <option value="UAE">{% trans "UAE" context "region" %}</option>
+                <option value="Saudi Arabia">{% trans "Saudi Arabia" context "region" %}</option>
+                <option value="Other MENA country">{% trans "Other MENA country" context "region" %}</option>
               </optgroup>
               <optgroup label="{% trans "Asia Pacific" context "modal" %}">
-                <option>Japan</option>
-                <option>South Korea</option>
-                <option>Australia</option>
-                <option>Other APAC country</option>
+                <option value="Japan">{% trans "Japan" context "region" %}</option>
+                <option value="South Korea">{% trans "South Korea" context "region" %}</option>
+                <option value="Australia">{% trans "Australia" context "region" %}</option>
+                <option value="Other APAC country">{% trans "Other APAC country" context "region" %}</option>
               </optgroup>
               <optgroup label="{% trans "Americas" context "modal" %}">
-                <option>United States</option>
-                <option>Canada</option>
-                <option>Brazil</option>
-                <option>Mexico</option>
-                <option>Other Americas country</option>
+                <option value="United States">{% trans "United States" context "region" %}</option>
+                <option value="Canada">{% trans "Canada" context "region" %}</option>
+                <option value="Brazil">{% trans "Brazil" context "region" %}</option>
+                <option value="Mexico">{% trans "Mexico" context "region" %}</option>
+                <option value="Other Americas country">{% trans "Other Americas country" context "region" %}</option>
               </optgroup>
             </select>
           </div>

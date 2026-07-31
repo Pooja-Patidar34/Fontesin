@@ -5,17 +5,23 @@ celery tasks) can drop a notification without dragging in the messages view's
 dependencies. All helpers silently swallow errors — notification delivery
 should never break the originating user action.
 
-Notification title/body strings are translated at write-time in the
-recipient's preferred language via ``translation.override``.
+Notification title/body strings are composed as ``Msg`` / ``MsgSeq`` objects
+(see ``accounts.utils.i18n_messages``) rather than finished sentences. The
+msgid and its parameters are stored alongside the text, so the inbox is
+re-translated on every read and follows the reader's current language choice
+instead of freezing in whatever language they preferred when the row was
+written. The plain ``title`` / ``body`` columns are still filled — in the
+recipient's preferred language — as the fallback for anything that can't be
+re-rendered.
 """
 
 import logging
 
 from django.urls import reverse, NoReverseMatch
 from django.utils import translation
-from django.utils.translation import gettext as _
 
 from accounts.models import Notification
+from accounts.utils.i18n_messages import Msg, MsgSeq, render_payload, to_payload
 from FontEsin.i18n import user_language
 
 
@@ -53,16 +59,30 @@ def scope_notifications_qs(qs, user):
 def notify(*, recipient, sender=None, kind=Notification.KIND_GENERIC,
            title, body="", link_url="", related_company=None):
     """Create a Notification. Recipient must be authenticated User; everything
-    else is optional. Returns the Notification or None on failure."""
+    else is optional. Returns the Notification or None on failure.
+
+    `title` / `body` may be ``Msg`` / ``MsgSeq`` objects — preferred, because
+    those keep the catalog entry and re-translate on read — or plain strings,
+    which are stored as-is and can never be re-translated.
+    """
     if not recipient:
         return None
+    title_i18n = to_payload(title)
+    body_i18n = to_payload(body)
+    # The frozen columns are the fallback, so render them in the language the
+    # recipient prefers today rather than the acting user's request locale.
+    with translation.override(user_language(recipient)):
+        title_text = render_payload(title_i18n) if title_i18n else str(title or "")
+        body_text = render_payload(body_i18n) if body_i18n else str(body or "")
     try:
         return Notification.objects.create(
             recipient=recipient,
             sender=sender,
             kind=kind,
-            title=title,
-            body=body or "",
+            title=title_text[:200],
+            body=body_text,
+            title_i18n=title_i18n,
+            body_i18n=body_i18n,
             link_url=link_url or "",
             related_company=related_company,
         )
@@ -71,21 +91,35 @@ def notify(*, recipient, sender=None, kind=Notification.KIND_GENERIC,
         return None
 
 
-def _localized_notify(recipient, *, sender=None, kind=Notification.KIND_GENERIC,
-                      title="", body="", link_url="", related_company=None):
-    """Create a notification with title/body translated for the recipient."""
-    if not recipient:
-        return None
-    with translation.override(user_language(recipient)):
-        return notify(
-            recipient=recipient,
-            sender=sender,
-            kind=kind,
-            title=title,
-            body=body,
-            link_url=link_url,
-            related_company=related_company,
-        )
+def _user_label(user):
+    """Display name for a user — never translated, it's their own name."""
+    if not user:
+        return ""
+    return f"{user.first_name} {user.last_name}".strip() or user.email
+
+
+def _reverse(name):
+    try:
+        return reverse(name)
+    except NoReverseMatch:
+        return ""
+
+
+def _level_label(level_code):
+    """Translatable label for a franchise tier (lazy — resolved at render)."""
+    from accounts.constants import FranchiseLevel
+
+    return dict(FranchiseLevel.CHOICES).get(level_code, level_code or "")
+
+
+def _country_label(code):
+    """Translatable label for a country code (lazy — resolved at render)."""
+    from accounts.constants import CountryChoices
+
+    code = (code or "").strip()
+    if not code:
+        return ""
+    return dict(CountryChoices.CHOICES).get(code.upper(), code)
 
 
 def _commission_labels(commission):
@@ -93,18 +127,12 @@ def _commission_labels(commission):
     consultant = commission.consultant
     amount = f"{commission.commission_amount} {commission.currency}"
     bu = getattr(commission, "business_user", None)
-    bu_label = (
-        (f"{bu.first_name} {bu.last_name}".strip() or bu.email) if bu else None
-    )
+    bu_label = _user_label(bu) if bu else None
     company_name = commission.company.name if getattr(commission, "company_id", None) else ""
-    via = company_name  # translated wrapper applied in message templates
-    consultant_label = (
-        f"{consultant.first_name} {consultant.last_name}".strip() or consultant.email
-    )
-    return amount, bu_label, via, consultant_label
+    return amount, bu_label, company_name, _user_label(consultant)
 
 
-def _notify_commission(commission, *, build_consultant_msgs, build_su_msgs):
+def _notify_commission(commission, *, consultant_msgs, su_msgs):
     """Send a commission notification to the consultant AND every active
     superuser. Shared by the pending + earned (paid) notifications."""
     from accounts.models import User
@@ -112,13 +140,9 @@ def _notify_commission(commission, *, build_consultant_msgs, build_su_msgs):
     consultant = getattr(commission, "consultant", None)
     if not consultant:
         return None
-    try:
-        link = reverse("commissions")
-    except NoReverseMatch:
-        link = ""
+    link = _reverse("commissions")
 
-    with translation.override(user_language(consultant)):
-        consultant_title, consultant_body = build_consultant_msgs()
+    consultant_title, consultant_body = consultant_msgs
     last = notify(
         recipient=consultant,
         kind=Notification.KIND_GENERIC,
@@ -126,9 +150,8 @@ def _notify_commission(commission, *, build_consultant_msgs, build_su_msgs):
         body=consultant_body,
         link_url=link,
     )
+    su_title, su_body = su_msgs
     for su in User.objects.filter(is_superuser=True, is_active=True):
-        with translation.override(user_language(su)):
-            su_title, su_body = build_su_msgs()
         last = notify(
             recipient=su,
             sender=consultant,
@@ -147,40 +170,28 @@ def notify_commission_pending(commission):
         return None
     amount, bu_label, via_company, consultant_label = _commission_labels(commission)
 
-    def _bu_text():
-        return bu_label or _("a business user")
-
-    def _via_text():
-        return _(" via %(company)s") % {"company": via_company} if via_company else ""
-
-    def build_consultant_msgs():
-        return (
-            _("Commission pending — %(amount)s") % {"amount": amount},
-            _(
-                "A %(amount)s commission from %(user)s's subscription%(via)s is pending. "
-                "You'll be notified once it's marked paid."
-            ) % {"amount": amount, "user": _bu_text(), "via": _via_text()},
-        )
-
-    def build_su_msgs():
-        return (
-            _("Commission pending: %(consultant)s (%(amount)s)")
-            % {"consultant": consultant_label, "amount": amount},
-            _(
-                "%(consultant)s has a pending %(amount)s commission from "
-                "%(user)s's subscription%(via)s."
-            ) % {
-                "consultant": consultant_label,
-                "amount": amount,
-                "user": _bu_text(),
-                "via": _via_text(),
-            },
-        )
+    bu_text = bu_label or Msg("a business user")
+    via_text = Msg(" via %(company)s", company=via_company) if via_company else ""
 
     return _notify_commission(
         commission,
-        build_consultant_msgs=build_consultant_msgs,
-        build_su_msgs=build_su_msgs,
+        consultant_msgs=(
+            Msg("Commission pending — %(amount)s", amount=amount),
+            Msg(
+                "A %(amount)s commission from %(user)s's subscription%(via)s is pending. "
+                "You'll be notified once it's marked paid.",
+                amount=amount, user=bu_text, via=via_text,
+            ),
+        ),
+        su_msgs=(
+            Msg("Commission pending: %(consultant)s (%(amount)s)",
+                consultant=consultant_label, amount=amount),
+            Msg(
+                "%(consultant)s has a pending %(amount)s commission from "
+                "%(user)s's subscription%(via)s.",
+                consultant=consultant_label, amount=amount, user=bu_text, via=via_text,
+            ),
+        ),
     )
 
 
@@ -191,39 +202,27 @@ def notify_commission_earned(commission):
         return None
     amount, bu_label, via_company, consultant_label = _commission_labels(commission)
 
-    def _bu_text():
-        return bu_label or _("a business user")
-
-    def _via_text():
-        return _(" via %(company)s") % {"company": via_company} if via_company else ""
-
-    def build_consultant_msgs():
-        return (
-            _("You earned a commission of %(amount)s") % {"amount": amount},
-            _(
-                "Your %(amount)s commission from %(user)s's subscription%(via)s has been paid."
-            ) % {"amount": amount, "user": _bu_text(), "via": _via_text()},
-        )
-
-    def build_su_msgs():
-        return (
-            _("Commission paid: %(consultant)s (%(amount)s)")
-            % {"consultant": consultant_label, "amount": amount},
-            _(
-                "You marked %(consultant)s's %(amount)s commission from "
-                "%(user)s's subscription%(via)s as paid."
-            ) % {
-                "consultant": consultant_label,
-                "amount": amount,
-                "user": _bu_text(),
-                "via": _via_text(),
-            },
-        )
+    bu_text = bu_label or Msg("a business user")
+    via_text = Msg(" via %(company)s", company=via_company) if via_company else ""
 
     return _notify_commission(
         commission,
-        build_consultant_msgs=build_consultant_msgs,
-        build_su_msgs=build_su_msgs,
+        consultant_msgs=(
+            Msg("You earned a commission of %(amount)s", amount=amount),
+            Msg(
+                "Your %(amount)s commission from %(user)s's subscription%(via)s has been paid.",
+                amount=amount, user=bu_text, via=via_text,
+            ),
+        ),
+        su_msgs=(
+            Msg("Commission paid: %(consultant)s (%(amount)s)",
+                consultant=consultant_label, amount=amount),
+            Msg(
+                "You marked %(consultant)s's %(amount)s commission from "
+                "%(user)s's subscription%(via)s as paid.",
+                consultant=consultant_label, amount=amount, user=bu_text, via=via_text,
+            ),
+        ),
     )
 
 
@@ -248,50 +247,33 @@ def notify_plan_request(subscription):
 
     plan_name = plan.name or (plan.code or "").upper()
     company_name = company.name
-    buyer_label = ""
-    if buyer:
-        buyer_label = f"{buyer.first_name} {buyer.last_name}".strip() or buyer.email
+    buyer_label = _user_label(buyer)
+    consultant_label = _user_label(getattr(company, "certified_by", None))
 
-    consultant = getattr(company, "certified_by", None)
-    consultant_label = ""
-    if consultant:
-        consultant_label = (
-            f"{consultant.first_name} {consultant.last_name}".strip() or consultant.email
-        )
+    title = Msg("Plan request: %(company)s → %(plan)s",
+                company=company_name, plan=plan_name)
+    body = MsgSeq(Msg(
+        "%(buyer)s is requesting the %(plan)s plan for %(company)s. "
+        "Approve it once payment arrives to activate the plan.",
+        buyer=buyer_label or Msg("A business user"),
+        plan=plan_name, company=company_name,
+    ))
+    if consultant_label:
+        body.line(Msg("Certifying consultant (commission on approval): %(consultant)s.",
+                      consultant=consultant_label))
 
-    try:
-        link = reverse("payments")
-    except NoReverseMatch:
-        link = ""
-
+    link = _reverse("payments")
     last = None
     for su in User.objects.filter(is_superuser=True, is_active=True):
-        with translation.override(user_language(su)):
-            title = _("Plan request: %(company)s → %(plan)s") % {
-                "company": company_name,
-                "plan": plan_name,
-            }
-            body = _(
-                "%(buyer)s is requesting the %(plan)s plan for %(company)s. "
-                "Approve it once payment arrives to activate the plan."
-            ) % {
-                "buyer": buyer_label or _("A business user"),
-                "plan": plan_name,
-                "company": company_name,
-            }
-            if consultant_label:
-                body += "\n" + _(
-                    "Certifying consultant (commission on approval): %(consultant)s."
-                ) % {"consultant": consultant_label}
-            last = notify(
-                recipient=su,
-                sender=buyer,
-                kind=Notification.KIND_GENERIC,
-                title=title,
-                body=body,
-                link_url=link,
-                related_company=company,
-            )
+        last = notify(
+            recipient=su,
+            sender=buyer,
+            kind=Notification.KIND_GENERIC,
+            title=title,
+            body=body,
+            link_url=link,
+            related_company=company,
+        )
     return last
 
 
@@ -304,33 +286,26 @@ def notify_certification_request(company, *, submitted_by):
     )
     if not consultants.exists():
         return None
-    try:
-        link = reverse("certifications")
-    except NoReverseMatch:
-        link = ""
-    submitter_label = ""
-    if submitted_by:
-        submitter_label = (
-            f"{submitted_by.first_name} {submitted_by.last_name}".strip()
-            or submitted_by.email
-        )
+    link = _reverse("certifications")
+    submitter_label = _user_label(submitted_by)
+
+    title = Msg("New certification request: %(company)s", company=company.name)
+    body = MsgSeq(Msg("%(company)s has requested certification and is awaiting review.",
+                      company=company.name))
+    if submitter_label:
+        body.line(Msg("Submitted by %(name)s.", name=submitter_label))
+
     last = None
     for consultant in consultants:
-        with translation.override(user_language(consultant)):
-            body = _(
-                "%(company)s has requested certification and is awaiting review."
-            ) % {"company": company.name}
-            if submitter_label:
-                body += "\n" + _("Submitted by %(name)s.") % {"name": submitter_label}
-            last = notify(
-                recipient=consultant,
-                sender=submitted_by,
-                kind=Notification.KIND_CERTIFICATION_REQUEST,
-                title=_("New certification request: %(company)s") % {"company": company.name},
-                body=body,
-                link_url=link,
-                related_company=company,
-            )
+        last = notify(
+            recipient=consultant,
+            sender=submitted_by,
+            kind=Notification.KIND_CERTIFICATION_REQUEST,
+            title=title,
+            body=body,
+            link_url=link,
+            related_company=company,
+        )
     return last
 
 
@@ -339,33 +314,24 @@ def notify_certification_decision(company, *, decided_by, approved):
     owner = getattr(company, "owner_user", None)
     if not owner:
         return None
-    try:
-        link = reverse("certifications")
-    except NoReverseMatch:
-        link = ""
-    decider_label = ""
-    if decided_by:
-        decider_label = (
-            f"{decided_by.first_name} {decided_by.last_name}".strip()
-            or decided_by.email
-        )
-    with translation.override(user_language(owner)):
-        if approved:
-            kind = Notification.KIND_CERTIFICATION_APPROVED
-            title = _("%(company)s has been certified") % {"company": company.name}
-            body = _("Your certification request was approved")
-            if decider_label:
-                body += _(" by %(name)s") % {"name": decider_label}
-            body += _(". Your company is now visible in the public directory.")
-        else:
-            kind = Notification.KIND_CERTIFICATION_DECLINED
-            title = _("Certification declined for %(company)s") % {"company": company.name}
-            body = _("Your certification request was declined")
-            if decider_label:
-                body += _(" by %(name)s") % {"name": decider_label}
-            body += _(
-                ". You can update your company details and resubmit from your profile."
-            )
+    link = _reverse("certifications")
+    decider_label = _user_label(decided_by)
+
+    if approved:
+        kind = Notification.KIND_CERTIFICATION_APPROVED
+        title = Msg("%(company)s has been certified", company=company.name)
+        body = MsgSeq(Msg("Your certification request was approved"))
+        if decider_label:
+            body.add(Msg(" by %(name)s", name=decider_label))
+        body.add(Msg(". Your company is now visible in the public directory."))
+    else:
+        kind = Notification.KIND_CERTIFICATION_DECLINED
+        title = Msg("Certification declined for %(company)s", company=company.name)
+        body = MsgSeq(Msg("Your certification request was declined"))
+        if decider_label:
+            body.add(Msg(" by %(name)s", name=decider_label))
+        body.add(Msg(". You can update your company details and resubmit from your profile."))
+
     return notify(
         recipient=owner,
         sender=decided_by,
@@ -388,57 +354,42 @@ def notify_consultants_new_user(new_user, *, language="", interest=""):
     if not consultants.exists():
         return None
 
-    user_label = (
-        f"{new_user.first_name} {new_user.last_name}".strip() or new_user.email
-    )
+    user_label = _user_label(new_user)
     role_label = ""
     if getattr(new_user, "role", None) and new_user.role.name:
         role_label = new_user.role.name.replace("_", " ").title()
+    country_label = _country_label(getattr(new_user, "country", ""))
+    link = _reverse("business-users")
 
-    country = (getattr(new_user, "country", "") or "").strip()
-    country_label = ""
-    if country:
-        from accounts.constants import CountryChoices
-        country_label = dict(CountryChoices.CHOICES).get(country.upper(), country)
+    body = MsgSeq(Msg("%(name)s is using the system.", name=user_label))
+    body.blank_line(Msg("Registration details:"))
+    body.line(Msg("Name: %(name)s", name=user_label))
+    body.line(Msg("Email: %(email)s", email=new_user.email))
+    if getattr(new_user, "phone", ""):
+        prefix = (getattr(new_user, "national_prefix", "") or "").strip()
+        phone = f"+{prefix} {new_user.phone}".strip() if prefix else new_user.phone
+        body.line(Msg("Phone: %(phone)s", phone=phone))
+    if country_label:
+        body.line(Msg("Country: %(country)s", country=country_label))
+    if role_label:
+        body.line(Msg("Registering as: %(role)s", role=role_label))
+    if language:
+        body.line(Msg("Preferred language: %(lang)s", lang=language))
+    if interest:
+        body.line(Msg("Interest: %(interest)s", interest=interest))
+    body.blank_line(Msg("Open the Users tab to view the full profile."))
 
-    try:
-        link = reverse("business-users")
-    except NoReverseMatch:
-        link = ""
-
+    title = Msg("%(name)s is using the system", name=user_label)
     last = None
     for consultant in consultants:
-        with translation.override(user_language(consultant)):
-            lines = [
-                _("%(name)s is using the system.") % {"name": user_label},
-                "",
-                _("Registration details:"),
-                _("Name: %(name)s") % {"name": user_label},
-                _("Email: %(email)s") % {"email": new_user.email},
-            ]
-            if getattr(new_user, "phone", ""):
-                prefix = (getattr(new_user, "national_prefix", "") or "").strip()
-                phone = f"+{prefix} {new_user.phone}".strip() if prefix else new_user.phone
-                lines.append(_("Phone: %(phone)s") % {"phone": phone})
-            if country_label:
-                lines.append(_("Country: %(country)s") % {"country": country_label})
-            if role_label:
-                lines.append(_("Registering as: %(role)s") % {"role": role_label})
-            if language:
-                lines.append(_("Preferred language: %(lang)s") % {"lang": language})
-            if interest:
-                lines.append(_("Interest: %(interest)s") % {"interest": interest})
-            lines.append("")
-            lines.append(_("Open the Users tab to view the full profile."))
-            body = "\n".join(lines)
-            last = notify(
-                recipient=consultant,
-                sender=new_user,
-                kind=Notification.KIND_NEW_USER,
-                title=_("%(name)s is using the system") % {"name": user_label},
-                body=body,
-                link_url=link,
-            )
+        last = notify(
+            recipient=consultant,
+            sender=new_user,
+            kind=Notification.KIND_NEW_USER,
+            title=title,
+            body=body,
+            link_url=link,
+        )
     return last
 
 
@@ -446,34 +397,30 @@ def notify_contact_message(contact_msg):
     """Broadcast a contact form message to every active superuser."""
     from accounts.models import User
 
-    try:
-        link = reverse("contact-messages")
-    except NoReverseMatch:
-        link = ""
-
+    link = _reverse("contact-messages")
     who = contact_msg.full_name
-    superusers = User.objects.filter(is_superuser=True, is_active=True)
+
+    body = MsgSeq(Msg("%(who)s sent a message via the website contact form.", who=who))
+    if contact_msg.subject:
+        body.line(Msg("Subject: %(subject)s", subject=contact_msg.subject))
+    body.line(Msg("Email: %(email)s", email=contact_msg.email))
+    if contact_msg.phone:
+        body.line(Msg("Phone: %(phone)s", phone=contact_msg.phone))
+    if contact_msg.company_name:
+        body.line(Msg("Company: %(company)s", company=contact_msg.company_name))
+    # The visitor's own words — never translated.
+    body.blank_line(contact_msg.message)
+
+    title = Msg("New contact message from %(who)s", who=who)
     last = None
-    for su in superusers:
-        with translation.override(user_language(su)):
-            lines = [_("%(who)s sent a message via the website contact form.") % {"who": who}]
-            if contact_msg.subject:
-                lines.append(_("Subject: %(subject)s") % {"subject": contact_msg.subject})
-            lines.append(_("Email: %(email)s") % {"email": contact_msg.email})
-            if contact_msg.phone:
-                lines.append(_("Phone: %(phone)s") % {"phone": contact_msg.phone})
-            if contact_msg.company_name:
-                lines.append(_("Company: %(company)s") % {"company": contact_msg.company_name})
-            lines.append("")
-            lines.append(contact_msg.message)
-            body = "\n".join(lines)
-            last = notify(
-                recipient=su,
-                kind=Notification.KIND_GENERIC,
-                title=_("New contact message from %(who)s") % {"who": who},
-                body=body,
-                link_url=link,
-            )
+    for su in User.objects.filter(is_superuser=True, is_active=True):
+        last = notify(
+            recipient=su,
+            kind=Notification.KIND_GENERIC,
+            title=title,
+            body=body,
+            link_url=link,
+        )
     return last
 
 
@@ -482,31 +429,24 @@ def notify_coordinator_request_submitted(coord_request):
     from accounts.models import User
 
     requester = coord_request.user
-    requester_label = (
-        f"{requester.first_name} {requester.last_name}".strip()
-        or requester.email
-    )
-    try:
-        link = reverse("coordinator-requests")
-    except NoReverseMatch:
-        link = ""
-    superusers = User.objects.filter(is_superuser=True, is_active=True)
+    requester_label = _user_label(requester)
+    link = _reverse("coordinator-requests")
+
+    body = MsgSeq(Msg("%(name)s has requested to become a Coordinator.",
+                      name=requester_label))
+    if coord_request.target_region:
+        body.line(Msg("Target region: %(region)s.", region=coord_request.target_region))
+
     last = None
-    for su in superusers:
-        with translation.override(user_language(su)):
-            body = _("%(name)s has requested to become a Coordinator.") % {"name": requester_label}
-            if coord_request.target_region:
-                body += "\n" + _("Target region: %(region)s.") % {
-                    "region": coord_request.target_region
-                }
-            last = notify(
-                recipient=su,
-                sender=requester,
-                kind=Notification.KIND_COORDINATOR_REQUEST,
-                title=_("New coordinator role request"),
-                body=body,
-                link_url=link,
-            )
+    for su in User.objects.filter(is_superuser=True, is_active=True):
+        last = notify(
+            recipient=su,
+            sender=requester,
+            kind=Notification.KIND_COORDINATOR_REQUEST,
+            title=Msg("New coordinator role request"),
+            body=body,
+            link_url=link,
+        )
     return last
 
 
@@ -514,37 +454,31 @@ def notify_application_submitted(applicant):
     """Broadcast a franchise/coordinator application to every superuser."""
     from accounts.models import User
 
-    applicant_label = (
-        f"{applicant.first_name} {applicant.last_name}".strip()
-        or applicant.email
-    )
+    applicant_label = _user_label(applicant)
     role_label = (
         (applicant.role.name or applicant.role.code or "applicant").replace("_", " ").title()
         if applicant.role else "applicant"
     )
-    try:
-        link = reverse("applications")
-    except NoReverseMatch:
-        link = ""
-    superusers = User.objects.filter(is_superuser=True, is_active=True)
+    link = _reverse("applications")
+
+    body = MsgSeq(Msg(
+        "%(name)s submitted a %(role)s account application and is awaiting your review.",
+        name=applicant_label, role=role_label,
+    ))
+    if applicant.target_region:
+        body.line(Msg("Target region: %(region)s.", region=applicant.target_region))
+
+    title = Msg("New %(role)s application", role=role_label)
     last = None
-    for su in superusers:
-        with translation.override(user_language(su)):
-            body = _(
-                "%(name)s submitted a %(role)s account application and is awaiting your review."
-            ) % {"name": applicant_label, "role": role_label}
-            if applicant.target_region:
-                body += "\n" + _("Target region: %(region)s.") % {
-                    "region": applicant.target_region
-                }
-            last = notify(
-                recipient=su,
-                sender=applicant,
-                kind=Notification.KIND_APPLICATION_REQUEST,
-                title=_("New %(role)s application") % {"role": role_label},
-                body=body,
-                link_url=link,
-            )
+    for su in User.objects.filter(is_superuser=True, is_active=True):
+        last = notify(
+            recipient=su,
+            sender=applicant,
+            kind=Notification.KIND_APPLICATION_REQUEST,
+            title=title,
+            body=body,
+            link_url=link,
+        )
     return last
 
 
@@ -553,36 +487,29 @@ def notify_application_decision(applicant, *, approved):
     if not applicant:
         return None
     decider = applicant.application_decided_by
-    decider_label = ""
-    if decider:
-        decider_label = (
-            f"{decider.first_name} {decider.last_name}".strip()
-            or decider.email
-        )
-    try:
-        link = reverse("dashboard") if approved else reverse("application-pending")
-    except NoReverseMatch:
-        link = ""
-    with translation.override(user_language(applicant)):
-        if approved:
-            kind = Notification.KIND_APPLICATION_APPROVED
-            title = _("Your account application has been approved")
-            body = _("Your account application was approved")
-            if decider_label:
-                body += _(" by %(name)s") % {"name": decider_label}
-            body += _(
-                ". You now have full access — sign out and back in if your sidebar doesn't update."
-            )
-        else:
-            kind = Notification.KIND_APPLICATION_DECLINED
-            title = _("Your account application was declined")
-            reason = (applicant.application_decline_reason or "").strip()
-            body = _("Your account application was declined")
-            if decider_label:
-                body += _(" by %(name)s") % {"name": decider_label}
-            body += "."
-            if reason:
-                body += "\n" + _("Reason: %(reason)s") % {"reason": reason}
+    decider_label = _user_label(decider)
+    link = _reverse("dashboard") if approved else _reverse("application-pending")
+
+    if approved:
+        kind = Notification.KIND_APPLICATION_APPROVED
+        title = Msg("Your account application has been approved")
+        body = MsgSeq(Msg("Your account application was approved"))
+        if decider_label:
+            body.add(Msg(" by %(name)s", name=decider_label))
+        body.add(Msg(
+            ". You now have full access — sign out and back in if your sidebar doesn't update."
+        ))
+    else:
+        kind = Notification.KIND_APPLICATION_DECLINED
+        title = Msg("Your account application was declined")
+        body = MsgSeq(Msg("Your account application was declined"))
+        if decider_label:
+            body.add(Msg(" by %(name)s", name=decider_label))
+        body.add(".")
+        reason = (applicant.application_decline_reason or "").strip()
+        if reason:
+            body.line(Msg("Reason: %(reason)s", reason=reason))
+
     return notify(
         recipient=applicant,
         sender=decider,
@@ -594,22 +521,24 @@ def notify_application_decision(applicant, *, approved):
 
 
 def _franchise_summary(application):
-    """Human label for a franchise application's requested level + territory."""
-    from accounts.constants import FranchiseLevel, CountryChoices
+    """Human label for a franchise application's requested level + territory.
 
-    level_label = dict(FranchiseLevel.CHOICES).get(
-        application.requested_level, application.requested_level
-    )
-    country = (application.requested_country or "").strip()
-    country_label = str(dict(CountryChoices.CHOICES).get(country.upper(), country)) if country else ""
+    The territory is a sequence rather than a finished string so the country
+    part keeps its catalog entry and translates with everything else.
+    """
+    level_label = _level_label(application.requested_level)
     parts = [
         application.requested_local_area,
         application.requested_city,
         application.requested_region,
-        country_label,
+        _country_label(application.requested_country),
     ]
-    territory = ", ".join(str(p) for p in parts if (p or "").strip())
-    return level_label, territory
+    territory = MsgSeq()
+    for part in parts:
+        if not str(part or "").strip():
+            continue
+        territory.add(part, sep=", " if len(territory) else "")
+    return level_label, (territory if len(territory) else None)
 
 
 def notify_franchise_application_submitted(application):
@@ -621,65 +550,55 @@ def notify_franchise_application_submitted(application):
     from accounts.models import User
 
     applicant = application.applicant_user
-    applicant_label = (
-        f"{applicant.first_name} {applicant.last_name}".strip() or applicant.email
-    )
+    applicant_label = _user_label(applicant)
     level_label, territory = _franchise_summary(application)
     parent = application.parent_franchise
 
-    def _su_link():
-        try:
-            return reverse("franchise-applications")
-        except NoReverseMatch:
-            return ""
-
-    def _parent_link():
-        try:
-            return reverse("franchise-child-requests")
-        except NoReverseMatch:
-            return ""
+    title = Msg("New %(level)s request", level=level_label)
 
     last = None
     # Direct parent (operational reviewer) for a sub-franchise.
     if parent is not None and parent.owner_user_id:
-        reviewer = parent.owner_user
-        with translation.override(user_language(reviewer)):
-            body = _(
-                "%(name)s has requested a %(level)s under %(parent)s and is awaiting your review."
-            ) % {"name": applicant_label, "level": level_label, "parent": parent.name}
-            if territory:
-                body += "\n" + _("Territory: %(territory)s.") % {"territory": territory}
-            last = notify(
-                recipient=reviewer,
-                sender=applicant,
-                kind=Notification.KIND_FRANCHISE_REQUEST,
-                title=_("New %(level)s request") % {"level": level_label},
-                body=body,
-                link_url=_parent_link(),
-            )
+        body = MsgSeq(Msg(
+            "%(name)s has requested a %(level)s under %(parent)s and is awaiting your review.",
+            name=applicant_label, level=level_label, parent=parent.name,
+        ))
+        if territory:
+            body.line(Msg("Territory: %(territory)s.", territory=territory))
+        last = notify(
+            recipient=parent.owner_user,
+            sender=applicant,
+            kind=Notification.KIND_FRANCHISE_REQUEST,
+            title=title,
+            body=body,
+            link_url=_reverse("franchise-child-requests"),
+        )
 
     # Platform Admin(s) — always notified (§4.2 notification target).
+    if parent is not None:
+        su_body = MsgSeq(Msg(
+            "%(name)s requested a %(level)s under %(parent)s. %(parent)s reviews it; "
+            "you'll activate it after approval.",
+            name=applicant_label, level=level_label, parent=parent.name,
+        ))
+    else:
+        su_body = MsgSeq(Msg(
+            "%(name)s has requested a %(level)s and is awaiting your review.",
+            name=applicant_label, level=level_label,
+        ))
+    if territory:
+        su_body.line(Msg("Territory: %(territory)s.", territory=territory))
+
+    su_link = _reverse("franchise-applications")
     for su in User.objects.filter(is_superuser=True, is_active=True):
-        with translation.override(user_language(su)):
-            if parent is not None:
-                body = _(
-                    "%(name)s requested a %(level)s under %(parent)s. %(parent)s reviews it; "
-                    "you'll activate it after approval."
-                ) % {"name": applicant_label, "level": level_label, "parent": parent.name}
-            else:
-                body = _(
-                    "%(name)s has requested a %(level)s and is awaiting your review."
-                ) % {"name": applicant_label, "level": level_label}
-            if territory:
-                body += "\n" + _("Territory: %(territory)s.") % {"territory": territory}
-            last = notify(
-                recipient=su,
-                sender=applicant,
-                kind=Notification.KIND_FRANCHISE_REQUEST,
-                title=_("New %(level)s request") % {"level": level_label},
-                body=body,
-                link_url=_su_link(),
-            )
+        last = notify(
+            recipient=su,
+            sender=applicant,
+            kind=Notification.KIND_FRANCHISE_REQUEST,
+            title=title,
+            body=su_body,
+            link_url=su_link,
+        )
     return last
 
 
@@ -687,28 +606,25 @@ def notify_franchise_awaiting_activation(node):
     """A sub-franchise was approved by its parent and now awaits the Platform
     Admin's activation (spec §4.2 final activation authority)."""
     from accounts.models import User
-    from accounts.constants import FranchiseLevel
 
-    level_label = dict(FranchiseLevel.CHOICES).get(node.franchise_level, node.franchise_level or "")
-    try:
-        link = reverse("franchise-applications")
-    except NoReverseMatch:
-        link = ""
+    level_label = _level_label(node.franchise_level)
+    link = _reverse("franchise-applications")
+    title = Msg("%(level)s awaiting activation", level=level_label)
+    body = Msg(
+        "%(name)s was approved by its parent franchise and is awaiting activation "
+        "(contract & payment).",
+        name=node.name,
+    )
     last = None
     for su in User.objects.filter(is_superuser=True, is_active=True):
-        with translation.override(user_language(su)):
-            body = _(
-                "%(name)s was approved by its parent franchise and is awaiting activation "
-                "(contract & payment)."
-            ) % {"name": node.name}
-            last = notify(
-                recipient=su,
-                sender=node.approved_by,
-                kind=Notification.KIND_FRANCHISE_REQUEST,
-                title=_("%(level)s awaiting activation") % {"level": level_label},
-                body=body,
-                link_url=link,
-            )
+        last = notify(
+            recipient=su,
+            sender=node.approved_by,
+            kind=Notification.KIND_FRANCHISE_REQUEST,
+            title=title,
+            body=body,
+            link_url=link,
+        )
     return last
 
 
@@ -718,37 +634,31 @@ def notify_franchise_application_decision(application, *, approved):
     if not applicant:
         return None
     decider = application.approved_by if approved else application.rejected_by
-    decider_label = ""
-    if decider:
-        decider_label = (
-            f"{decider.first_name} {decider.last_name}".strip() or decider.email
-        )
-    level_label, territory = _franchise_summary(application)
-    try:
-        link = reverse("franchise-request")
-    except NoReverseMatch:
-        link = ""
-    with translation.override(user_language(applicant)):
-        if approved:
-            kind = Notification.KIND_FRANCHISE_APPROVED
-            title = _("Your %(level)s request was approved") % {"level": level_label}
-            body = _("Your %(level)s request was approved") % {"level": level_label}
-            if decider_label:
-                body += _(" by %(name)s") % {"name": decider_label}
-            body += _(
-                ". The franchise is now pending contract and payment — the Super "
-                "Admin will activate it once those are complete."
-            )
-        else:
-            kind = Notification.KIND_FRANCHISE_REJECTED
-            title = _("Your %(level)s request was rejected") % {"level": level_label}
-            reason = (application.board_note or "").strip()
-            body = _("Your %(level)s request was rejected") % {"level": level_label}
-            if decider_label:
-                body += _(" by %(name)s") % {"name": decider_label}
-            body += "."
-            if reason:
-                body += "\n" + _("Reason: %(reason)s") % {"reason": reason}
+    decider_label = _user_label(decider)
+    level_label, _territory = _franchise_summary(application)
+    link = _reverse("franchise-request")
+
+    if approved:
+        kind = Notification.KIND_FRANCHISE_APPROVED
+        title = Msg("Your %(level)s request was approved", level=level_label)
+        body = MsgSeq(Msg("Your %(level)s request was approved", level=level_label))
+        if decider_label:
+            body.add(Msg(" by %(name)s", name=decider_label))
+        body.add(Msg(
+            ". The franchise is now pending contract and payment — the Super "
+            "Admin will activate it once those are complete."
+        ))
+    else:
+        kind = Notification.KIND_FRANCHISE_REJECTED
+        title = Msg("Your %(level)s request was rejected", level=level_label)
+        body = MsgSeq(Msg("Your %(level)s request was rejected", level=level_label))
+        if decider_label:
+            body.add(Msg(" by %(name)s", name=decider_label))
+        body.add(".")
+        reason = (application.board_note or "").strip()
+        if reason:
+            body.line(Msg("Reason: %(reason)s", reason=reason))
+
     return notify(
         recipient=applicant,
         sender=decider,
@@ -765,28 +675,55 @@ def notify_franchise_activated(node):
     owner = getattr(node, "owner_user", None)
     if not owner:
         return None
-    from accounts.constants import FranchiseLevel
-
-    level_label = dict(FranchiseLevel.CHOICES).get(
-        node.franchise_level, node.franchise_level or ""
-    )
-    try:
-        link = reverse("franchise-request")
-    except NoReverseMatch:
-        link = ""
-    with translation.override(user_language(owner)):
-        title = _("Your %(level)s is now active") % {"level": level_label}
-        body = _(
-            "%(name)s has been activated. Sign out and back in if your sidebar "
-            "doesn't show the Franchises section yet."
-        ) % {"name": node.name}
     return notify(
         recipient=owner,
         sender=node.approved_by,
         kind=Notification.KIND_FRANCHISE_ACTIVATED,
+        title=Msg("Your %(level)s is now active", level=_level_label(node.franchise_level)),
+        body=Msg(
+            "%(name)s has been activated. Sign out and back in if your sidebar "
+            "doesn't show the Franchises section yet.",
+            name=node.name,
+        ),
+        link_url=_reverse("franchise-request"),
+    )
+
+
+def notify_franchise_removed(node, *, removed_by=None, reason="", cascaded=False):
+    """Tell a holder their franchise was removed by the Platform Admin.
+
+    `cascaded` marks a sub-franchise that went with its parent: the holder did
+    nothing wrong and their own node was not the one the admin acted on, so the
+    body says so rather than leaving them guessing."""
+    owner = getattr(node, "owner_user", None)
+    if not owner:
+        return None
+
+    title = Msg("Your %(level)s was removed", level=_level_label(node.franchise_level))
+    if cascaded:
+        body = MsgSeq(Msg(
+            "%(name)s was removed because the franchise above it was removed by "
+            "the Platform Admin. Your existing data is preserved, but the "
+            "franchise rights for this territory have ended.",
+            name=node.name,
+        ))
+    else:
+        body = MsgSeq(Msg(
+            "%(name)s was removed by the Platform Admin. Your existing data is "
+            "preserved, but the franchise rights for this territory have ended.",
+            name=node.name,
+        ))
+    reason = (reason or "").strip()
+    if reason:
+        body.line(Msg("Reason: %(reason)s", reason=reason))
+
+    return notify(
+        recipient=owner,
+        sender=removed_by if removed_by and removed_by.is_authenticated else None,
+        kind=Notification.KIND_FRANCHISE_REMOVED,
         title=title,
         body=body,
-        link_url=link,
+        link_url=_reverse("franchise-request"),
     )
 
 
@@ -796,41 +733,108 @@ def notify_coordinator_request_decision(coord_request, *, approved):
     if not requester:
         return None
     decider = coord_request.decided_by
-    decider_label = ""
-    if decider:
-        decider_label = (
-            f"{decider.first_name} {decider.last_name}".strip()
-            or decider.email
-        )
-    try:
-        link = reverse("profile")
-    except NoReverseMatch:
-        link = ""
-    with translation.override(user_language(requester)):
-        if approved:
-            kind = Notification.KIND_COORDINATOR_APPROVED
-            title = _("Your Coordinator role has been approved")
-            body = _("Your request to become a Coordinator was approved")
-            if decider_label:
-                body += _(" by %(name)s") % {"name": decider_label}
-            body += _(
-                ". Sign out and back in to see the Coordinator features in your sidebar."
-            )
-        else:
-            kind = Notification.KIND_COORDINATOR_DECLINED
-            title = _("Your Coordinator request was declined")
-            reason = (coord_request.decline_reason or "").strip()
-            body = _("Your request to become a Coordinator was declined")
-            if decider_label:
-                body += _(" by %(name)s") % {"name": decider_label}
-            body += "."
-            if reason:
-                body += "\n" + _("Reason: %(reason)s") % {"reason": reason}
+    decider_label = _user_label(decider)
+
+    if approved:
+        kind = Notification.KIND_COORDINATOR_APPROVED
+        title = Msg("Your Coordinator role has been approved")
+        body = MsgSeq(Msg("Your request to become a Coordinator was approved"))
+        if decider_label:
+            body.add(Msg(" by %(name)s", name=decider_label))
+        body.add(Msg(
+            ". Sign out and back in to see the Coordinator features in your sidebar."
+        ))
+    else:
+        kind = Notification.KIND_COORDINATOR_DECLINED
+        title = Msg("Your Coordinator request was declined")
+        body = MsgSeq(Msg("Your request to become a Coordinator was declined"))
+        if decider_label:
+            body.add(Msg(" by %(name)s", name=decider_label))
+        body.add(".")
+        reason = (coord_request.decline_reason or "").strip()
+        if reason:
+            body.line(Msg("Reason: %(reason)s", reason=reason))
+
     return notify(
         recipient=requester,
         sender=decider,
         kind=kind,
         title=title,
         body=body,
-        link_url=link,
+        link_url=_reverse("profile"),
+    )
+
+
+def notify_franchise_removal_requested(removal_request):
+    """Tell the reviewer a holder wants to give up their franchise.
+
+    Routing mirrors the application flow in reverse: a Master exit goes to the
+    Platform Admin(s); a sub-franchise exit goes to the DIRECT PARENT holder,
+    who granted the territory in the first place.
+    """
+    from accounts.models import User
+
+    node = removal_request.node
+    requester = removal_request.requested_by
+    requester_label = _user_label(requester)
+    level_label = _level_label(node.franchise_level)
+    reviewer_node = removal_request.reviewer_franchise
+
+    title = Msg("Request to remove a %(level)s", level=level_label)
+    body = MsgSeq(Msg(
+        "%(name)s has asked to give up %(node)s and is awaiting your decision.",
+        name=requester_label, node=node.name,
+    ))
+    reason = (removal_request.reason or "").strip()
+    if reason:
+        body.line(Msg("Reason: %(reason)s", reason=reason))
+
+    def _send(recipient, link):
+        return notify(
+            recipient=recipient,
+            sender=requester,
+            kind=Notification.KIND_FRANCHISE_REQUEST,
+            title=title,
+            body=body,
+            link_url=link,
+        )
+
+    last = None
+    if reviewer_node is not None and reviewer_node.owner_user_id:
+        last = _send(reviewer_node.owner_user, _reverse("franchise-child-requests"))
+    else:
+        for admin in User.objects.filter(is_superuser=True, is_active=True):
+            last = _send(admin, _reverse("franchise-applications"))
+    return last
+
+
+def notify_franchise_removal_decision(removal_request, *, approved):
+    """Tell the holder whether their request to give up a franchise was granted.
+
+    The approved case is followed by `notify_franchise_removed` from the
+    wind-down itself, so this one stays short and only carries the decision.
+    """
+    requester = removal_request.requested_by
+    if not requester:
+        return None
+    node = removal_request.node
+
+    if approved:
+        title = Msg("Your removal request was approved")
+        body = MsgSeq(Msg("%(node)s will be removed from your account.", node=node.name))
+    else:
+        title = Msg("Your removal request was declined")
+        body = MsgSeq(Msg("%(node)s stays with you for now.", node=node.name))
+    note = (removal_request.decision_note or "").strip()
+    if note:
+        body.line(Msg("Note: %(note)s", note=note))
+
+    return notify(
+        recipient=requester,
+        sender=removal_request.decided_by,
+        kind=(Notification.KIND_FRANCHISE_APPROVED if approved
+              else Notification.KIND_FRANCHISE_REJECTED),
+        title=title,
+        body=body,
+        link_url=_reverse("franchise-request"),
     )

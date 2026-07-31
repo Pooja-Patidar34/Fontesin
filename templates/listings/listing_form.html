@@ -49,6 +49,13 @@
   .lf-body textarea.form-control { min-height: 70px; }
   .lf-help { font-size: .76rem; color: var(--ps-muted); font-weight: 400; }
 
+  /* Existing / newly-picked image preview above each file input. */
+  .lf-thumb { display: flex; align-items: center; gap: .6rem; margin-bottom: .45rem; }
+  .lf-thumb img {
+    width: 64px; height: 64px; object-fit: cover; flex: 0 0 auto;
+    border-radius: .5rem; border: 1px solid var(--ps-border); background: #fff;
+  }
+
   .lf-actions {
     position: sticky; bottom: 0;
     display: flex; align-items: center; gap: .6rem; flex-wrap: wrap;
@@ -115,7 +122,11 @@
           <select name="owner_company" class="form-control">
             <option value="">{% trans "Select company" %}</option>
             {% for c in companies %}
-              <option value="{{ c.id }}" {% if values.owner_company == c.id %}selected{% endif %}>{{ c.name }}</option>
+              {% comment %}
+              Compare as text: on a validation redisplay owner_company is the raw
+              POST string, while on edit it's a UUID — "==" alone misses one.
+              {% endcomment %}
+              <option value="{{ c.id }}" {% if values.owner_company|stringformat:"s" == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
             {% endfor %}
           </select>
           {% if errors.owner_company %}<small class="text-danger">{{ errors.owner_company.0 }}</small>{% endif %}
@@ -144,7 +155,7 @@
 
         <div class="form-group full">
           <label>{% trans "Title" %} <span class="lf-req">*</span></label>
-          <input type="text" name="title" class="form-control" maxlength="40" value="{{ values.title|default:'' }}" placeholder="{% trans 'A short, clear title' %}">
+          <input type="text" name="title" class="form-control" maxlength="100" value="{{ values.title|default:'' }}" placeholder="{% trans 'A short, clear title' %}">
           {% if errors.title %}<small class="text-danger">{{ errors.title.0 }}</small>{% endif %}
         </div>
 
@@ -199,14 +210,22 @@
         </div>
         <div class="form-group">
           <label>{% trans "Product Image" %} <span class="lf-help">({% trans "Product Offer only" %})</span></label>
-          <input type="file" name="product_image" class="form-control-file" accept="image/png,image/jpeg,image/webp">
-          {% if listing.product_image %}<small class="d-block mt-1 lf-help">{% trans "Current" %}: <a href="{{ listing.product_image.url }}" target="_blank">{% trans "view" %}</a></small>{% endif %}
+          <div class="lf-thumb{% if not listing.product_image %} d-none{% endif %}" id="product_image_thumb">
+            <img data-thumb-img {% if listing.product_image %}src="{{ listing.product_image.url }}"{% endif %} alt="{% trans 'Product image' %}">
+            <span class="lf-help" data-thumb-hint>{% trans "Current image — leave the field empty to keep it." %}</span>
+          </div>
+          <input type="file" name="product_image" class="form-control-file" accept="image/png,image/jpeg,image/webp"
+                 data-image-input data-thumb="product_image_thumb">
           {% if errors.product_image_id %}<small class="text-danger">{{ errors.product_image_id.0 }}</small>{% endif %}
         </div>
         <div class="form-group">
           <label>{% trans "Certification Image" %}</label>
-          <input type="file" name="certification_image" class="form-control-file" accept="image/png,image/jpeg,image/webp">
-          {% if listing.certification_image %}<small class="d-block mt-1 lf-help">{% trans "Current" %}: <a href="{{ listing.certification_image.url }}" target="_blank">{% trans "view" %}</a></small>{% endif %}
+          <div class="lf-thumb{% if not listing.certification_image %} d-none{% endif %}" id="certification_image_thumb">
+            <img data-thumb-img {% if listing.certification_image %}src="{{ listing.certification_image.url }}"{% endif %} alt="{% trans 'Certification image' %}">
+            <span class="lf-help" data-thumb-hint>{% trans "Current image — leave the field empty to keep it." %}</span>
+          </div>
+          <input type="file" name="certification_image" class="form-control-file" accept="image/png,image/jpeg,image/webp"
+                 data-image-input data-thumb="certification_image_thumb">
         </div>
         <div class="form-group full">
           <label>{% trans "Certification Text" %}</label>
@@ -289,6 +308,40 @@
   </div>
 </div>
 </div></section>
+
+<script>
+/* Image previews: keep the stored image visible while editing (picking a new
+   file is what replaces it — an empty input leaves the stored one untouched). */
+(function () {
+  document.querySelectorAll("[data-image-input]").forEach(function (input) {
+    var thumb = document.getElementById(input.dataset.thumb);
+    if (!thumb) return;
+    var img = thumb.querySelector("[data-thumb-img]");
+    var hint = thumb.querySelector("[data-thumb-hint]");
+    var storedSrc = img.getAttribute("src") || "";
+    var storedHint = hint.textContent;
+    var objectUrl = null;
+
+    input.addEventListener("change", function () {
+      if (objectUrl) { URL.revokeObjectURL(objectUrl); objectUrl = null; }
+      var file = input.files && input.files[0];
+      if (file) {
+        objectUrl = URL.createObjectURL(file);
+        img.src = objectUrl;
+        hint.textContent = "{% trans 'New image — replaces the current one when you save.' %}";
+        thumb.classList.remove("d-none");
+      } else if (storedSrc) {
+        img.src = storedSrc;
+        hint.textContent = storedHint;
+        thumb.classList.remove("d-none");
+      } else {
+        img.removeAttribute("src");
+        thumb.classList.add("d-none");
+      }
+    });
+  });
+})();
+</script>
 
 <script>
 /* Searchable NACE / ISIC picker — replaces a 500-option native select with a

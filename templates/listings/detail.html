@@ -10,6 +10,7 @@
     <i class="fas fa-arrow-left mr-1"></i>{% trans "Back to listings" %}</a>
   <span class="text-nowrap">
     {% if is_owner %}<a href="{% url 'listings_web:edit' listing.id %}" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit mr-1"></i>{% trans "Edit" %}</a>{% endif %}
+    {% if is_owner or is_admin %}<a href="{% url 'listings_web:listing-reactions' listing.id %}" class="btn btn-sm btn-outline-info"><i class="fas fa-comments mr-1"></i>{% trans "Reactions" %}</a>{% endif %}
     {% if is_owner or is_admin %}<a href="{% url 'listings_web:history' listing.id %}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-history mr-1"></i>{% trans "History" %}</a>{% endif %}
   </span>
 </div>
@@ -92,9 +93,10 @@
         {% if listing.nace_code %}<dt>{% trans "Classification" %}</dt><dd>{{ listing.nace_code.code }} — {{ listing.nace_code.title }}</dd>{% endif %}
         {% if listing.listing_type == 'offer' %}
           {% if listing.price_without_vat %}<dt>{% trans "Price (excl. VAT)" %}</dt><dd class="ps-price">{{ listing.price_without_vat }} <small>{{ listing.currency }}</small></dd>{% endif %}
-          {% if listing.minimum_quantity_or_scope %}<dt>{% trans "Min. qty / scope" %}</dt><dd>{{ listing.minimum_quantity_or_scope }} {{ listing.unit }}</dd>{% endif %}
+          {% if listing.minimum_quantity_or_scope %}<dt>{% trans "Min. qty / scope" %}</dt><dd>{{ listing.minimum_quantity_or_scope }}</dd>{% endif %}
+          {% if listing.unit %}<dt>{% trans "Unit" %}</dt><dd>{{ listing.unit }}</dd>{% endif %}
         {% endif %}
-        <dt>{% trans "Location" %}</dt><dd><i class="fas fa-map-marker-alt text-muted mr-1"></i>{{ listing.city }}{% if listing.city and listing.country %}, {% endif %}{{ listing.country|default:"—" }}</dd>
+        <dt>{% trans "Location" %}</dt><dd><i class="fas fa-map-marker-alt text-muted mr-1"></i>{{ location_display|default:"—" }}</dd>
         <dt>{% trans "Visibility" %}</dt><dd>{{ listing.get_visibility_scope_display|capfirst }}</dd>
       </dl>
     </div></div>

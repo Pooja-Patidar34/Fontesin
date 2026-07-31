@@ -1,5 +1,6 @@
 {% extends "base/base.html" %}
 {% load i18n %}
+{% load i18n_extras %}
 
 {% block title %}{% trans "Profile" context "profile" %} - FONTESIN{% endblock %}
 
@@ -52,7 +53,9 @@
           </tr>
           <tr>
             <td class="text-muted">{% trans "Role" context "profile" %}</td>
-            <td style="word-break:break-word; overflow-wrap:anywhere;">{{ request.user.role.name|default:"-" }}</td>
+            {% comment %} Franchise holders read as "Franchise Partner" here even
+               though their underlying role is unchanged — see accounts.role_i18n. {% endcomment %}
+            <td style="word-break:break-word; overflow-wrap:anywhere;">{{ request.user|localized_role_label_filter|default:"-" }}</td>
           </tr>
           <tr>
             <td class="text-muted">{% trans "Franchise" context "dashboard" %}</td>
@@ -538,8 +541,11 @@
 (function () {
   var g = function (s) { return (typeof gettext === 'function') ? gettext(s) : s; };
   window.PROFILE_I18N = {
-    noCompaniesMatchPrefix: '{% filter escapejs %}{% trans "No companies match \"" context "profile" %}{% endfilter %}',
-    noCompaniesMatchSuffix: '{% filter escapejs %}{% trans "\"." context "profile" %}{% endfilter %}',
+    {% comment %} Typographic quotes on purpose: makemessages' templatize()
+       truncates a {% trans %} literal at an escaped \" , which produced a
+       broken msgid that no catalog could ever match. {% endcomment %}
+    noCompaniesMatchPrefix: '{% filter escapejs %}{% trans "No companies match “" context "profile" %}{% endfilter %}',
+    noCompaniesMatchSuffix: '{% filter escapejs %}{% trans "”." context "profile" %}{% endfilter %}',
     noCompaniesAvailable: '{% filter escapejs %}{% trans "No companies available yet." context "profile" %}{% endfilter %}',
     failedLoadCompanies: '{% filter escapejs %}{% trans "Failed to load companies. Please try again." context "profile" %}{% endfilter %}',
     profileUpdatedSuccess: '{% filter escapejs %}{% trans "Profile updated successfully." context "profile" %}{% endfilter %}',

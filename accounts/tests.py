@@ -454,6 +454,727 @@ class TenantToggleTests(BaseIAMTestCase):
         self.assertEqual(log.entity_type, "Tenant")
         self.assertEqual(log.action, "tenant.deactivated")
 
+
+class FranchiseToggleStatusSyncTests(BaseIAMTestCase):
+    """Toggling a FRANCHISE node from the Franchises list must keep its
+    lifecycle `franchise_status` (what the Franchise Tree renders) in step with
+    the generic `is_active` flag, so both surfaces agree and the deactivation
+    actually drops franchise rights."""
+
+    def _make_franchise(self, **overrides):
+        from accounts.constants import FranchiseUnitStatus, FranchiseLevel
+        defaults = dict(
+            name="Master Franchise — Testland",
+            slug="master-franchise-testland",
+            franchise_level=FranchiseLevel.MASTER,
+            franchise_status=FranchiseUnitStatus.ACTIVE,
+            is_active=True,
+        )
+        defaults.update(overrides)
+        return Tenant.objects.create(**defaults)
+
+    def test_deactivate_suspends_franchise_status(self):
+        from accounts.constants import FranchiseUnitStatus
+        node = self._make_franchise()
+        self.client.login(email="admin@test.com", password="admin123")
+        self.client.get(reverse("tenant-toggle", args=[node.id]))
+
+        node.refresh_from_db()
+        self.assertFalse(node.is_active)
+        self.assertEqual(node.franchise_status, FranchiseUnitStatus.SUSPENDED)
+        self.assertIsNotNone(node.suspended_at)
+
+    def test_reactivate_restores_active_franchise_status(self):
+        from accounts.constants import FranchiseUnitStatus
+        node = self._make_franchise(
+            is_active=False, franchise_status=FranchiseUnitStatus.SUSPENDED,
+        )
+        self.client.login(email="admin@test.com", password="admin123")
+        self.client.get(reverse("tenant-toggle", args=[node.id]))
+
+        node.refresh_from_db()
+        self.assertTrue(node.is_active)
+        self.assertEqual(node.franchise_status, FranchiseUnitStatus.ACTIVE)
+
+    def test_plain_tenant_toggle_leaves_franchise_status_untouched(self):
+        # A non-franchise tenant (franchise_level is None) must behave exactly as
+        # before: only is_active flips, no franchise_status is invented.
+        self.client.login(email="admin@test.com", password="admin123")
+        self.client.get(reverse("tenant-toggle", args=[self.tenant.id]))
+
+        self.tenant.refresh_from_db()
+        self.assertFalse(self.tenant.is_active)
+        self.assertIsNone(self.tenant.franchise_status)
+
+
+class MultipleFranchisesPerOwnerTests(BaseIAMTestCase):
+    """A user may hold MANY franchises — different countries, bought by
+    different companies they own — but never two on the same branch, which
+    would make them their own franchisee (Tenant.clean invariant)."""
+
+    def _owner(self):
+        return User.objects.create_user(
+            email="holder@test.com", password="test123", is_active=True,
+            tenant=self.tenant,
+        )
+
+    def _node(self, owner, name, status, country="DE", level=None, parent=None):
+        from accounts.constants import FranchiseLevel
+        return Tenant.objects.create(
+            name=name, slug=name.lower().replace(" ", "-"),
+            franchise_level=level or FranchiseLevel.MASTER,
+            franchise_status=status,
+            owner_user=owner,
+            territory_country=country,
+            parent=parent,
+        )
+
+    def test_second_franchise_on_another_branch_is_allowed(self):
+        from accounts.constants import FranchiseUnitStatus, FranchiseLevel
+        owner = self._owner()
+        self._node(owner, "Master Germany", FranchiseUnitStatus.ACTIVE, country="DE")
+
+        second = Tenant(
+            name="Master Brazil", slug="master-brazil",
+            franchise_level=FranchiseLevel.MASTER,
+            franchise_status=FranchiseUnitStatus.PENDING_CONTRACT,
+            owner_user=owner, territory_country="BR",
+        )
+        second.clean()  # should not raise — a parallel tree
+        second.save()
+
+    def test_franchise_beneath_own_node_is_rejected(self):
+        from django.core.exceptions import ValidationError as DjangoValidationError
+        from accounts.constants import FranchiseUnitStatus, FranchiseLevel
+        owner = self._owner()
+        master = self._node(owner, "Master Germany", FranchiseUnitStatus.ACTIVE, country="DE")
+
+        child = Tenant(
+            name="National Germany", slug="national-germany",
+            franchise_level=FranchiseLevel.NATIONAL,
+            franchise_status=FranchiseUnitStatus.PENDING_CONTRACT,
+            owner_user=owner, territory_country="DE", parent=master,
+        )
+        with self.assertRaises(DjangoValidationError):
+            child.clean()
+
+    def test_reactivating_same_node_is_allowed(self):
+        # clean() excludes self, so activating/reactivating the owner's OWN node
+        # must not trip the same-branch guard.
+        from accounts.constants import FranchiseUnitStatus
+        owner = self._owner()
+        node = self._node(owner, "Master Solo", FranchiseUnitStatus.SUSPENDED)
+        node.franchise_status = FranchiseUnitStatus.ACTIVE
+        node.clean()  # should not raise
+
+    def test_former_holder_with_terminated_node_can_own_again(self):
+        from accounts.constants import FranchiseUnitStatus, FranchiseLevel
+        owner = self._owner()
+        self._node(owner, "Master Old", FranchiseUnitStatus.TERMINATED)
+
+        fresh = Tenant(
+            name="Master New", slug="master-new",
+            franchise_level=FranchiseLevel.MASTER,
+            franchise_status=FranchiseUnitStatus.PENDING_CONTRACT,
+            owner_user=owner,
+        )
+        fresh.clean()  # should not raise — the old node is wound down
+
+
+class TerritoryWhitespaceNormalizationTests(BaseIAMTestCase):
+    """A territory differing only by internal whitespace ('Ganga Ghat' vs
+    'Ganga  Ghat') must resolve to the same territory, so a duplicate Micro
+    request can't slip past the exclusivity check."""
+
+    def test_canonical_territory_collapses_whitespace(self):
+        from accounts.view.franchise import canonical_territory
+        from accounts.constants import FranchiseLevel
+        _, region, city, local = canonical_territory(
+            FranchiseLevel.MICRO, "in", "Uttar  Pradesh", " Prayagraj ", "Ganga  Ghat",
+        )
+        self.assertEqual(region, "Uttar Pradesh")
+        self.assertEqual(city, "Prayagraj")
+        self.assertEqual(local, "Ganga Ghat")
+
+    def test_territory_conflict_matches_whitespace_variant(self):
+        from accounts.view.franchise import territory_conflict
+        from accounts.constants import FranchiseLevel, FranchiseUnitStatus
+        node = Tenant.objects.create(
+            name="Micro Ganga", slug="micro-ganga",
+            franchise_level=FranchiseLevel.MICRO,
+            franchise_status=FranchiseUnitStatus.ACTIVE,
+            territory_country="IN", territory_region="Uttar Pradesh",
+            territory_city="Prayagraj", territory_local_area="Ganga Ghat",
+        )
+        # A second request with a double space must still find the existing node.
+        conflict = territory_conflict(
+            FranchiseLevel.MICRO, "IN", "Uttar Pradesh", "Prayagraj", "Ganga  Ghat",
+        )
+        self.assertEqual(conflict, node)
+
+
+class BusinessUserKeepsCompaniesAfterBuyingFranchiseTests(BaseIAMTestCase):
+    """Buying a franchise must not cost a Business User their companies.
+
+    Activation used to overwrite the holder's role with `franchise`, which
+    stripped every business-user capability — a BU with three companies could
+    act as only one of them afterwards and could never switch back. Activation
+    is now additive: the role is untouched, the franchise section is unlocked by
+    node ownership, and the account merely reads as "Franchise Partner"."""
+
+    def setUp(self):
+        super().setUp()
+        from accounts.constants import FranchiseLevel, FranchiseUnitStatus
+        self.bu_role, _ = Role.objects.get_or_create(
+            name="Business User", defaults={"tier_level": 5, "code": "business_user"},
+        )
+        if (self.bu_role.code or "").lower() != "business_user":
+            self.bu_role.code = "business_user"
+            self.bu_role.save(update_fields=["code"])
+
+        self.bu = User.objects.create_user(
+            email="multi@test.com", password="test123", is_active=True,
+            tenant=self.tenant, role=self.bu_role,
+        )
+        self.companies = [
+            Company.objects.create(tenant=self.tenant, name=f"Company {n}", owner_user=self.bu)
+            for n in (1, 2, 3)
+        ]
+        # An approved franchise awaiting the Platform Admin's activation.
+        self.node = Tenant.objects.create(
+            name="Master DE", slug="master-de",
+            franchise_level=FranchiseLevel.MASTER,
+            franchise_status=FranchiseUnitStatus.PENDING_CONTRACT,
+            owner_user=self.bu, owner_company=self.companies[1],
+            territory_country="DE",
+        )
+
+    def _activate(self):
+        self.client.login(email="admin@test.com", password="admin123")
+        self.client.post(reverse("franchise-activate", args=[self.node.id]))
+        self.client.logout()
+        self.bu.refresh_from_db()
+
+    def test_activation_leaves_the_business_user_role_intact(self):
+        self._activate()
+        self.node.refresh_from_db()
+        from accounts.constants import FranchiseUnitStatus
+        self.assertEqual(self.node.franchise_status, FranchiseUnitStatus.ACTIVE)
+        self.assertEqual((self.bu.role.code or "").lower(), "business_user")
+
+    def test_holder_can_still_switch_between_all_their_companies(self):
+        self._activate()
+        self.client.login(email="multi@test.com", password="test123")
+        # The company picker is business-user-only; a franchise holder who is a
+        # BU must still reach it and select any of their companies.
+        self.assertEqual(self.client.get(reverse("select-company")).status_code, 200)
+        for company in self.companies:
+            self.client.post(reverse("select-company"), {"company_id": str(company.id)})
+            self.assertEqual(
+                str(self.client.session.get("active_company_id")), str(company.id),
+            )
+
+    def test_holder_reads_as_franchise_partner(self):
+        self._activate()
+        from accounts.role_i18n import localized_role_label
+        self.assertEqual(str(localized_role_label(self.bu)), "Franchise Partner")
+
+    def test_franchise_section_is_unlocked_by_ownership(self):
+        from accounts.utils.franchise_access import is_franchise_holder
+        self.assertFalse(is_franchise_holder(self.bu))  # not activated yet
+        self._activate()
+        self.bu._is_franchise_holder = None
+        self.assertTrue(is_franchise_holder(self.bu))
+        self.client.login(email="multi@test.com", password="test123")
+        # A multi-company BU picks the company they act as before anything else
+        # (ActiveCompanyMiddleware) — that flow is untouched by holding a franchise.
+        self.client.post(reverse("select-company"), {"company_id": str(self.companies[1].id)})
+        self.assertEqual(self.client.get(reverse("franchise-tree")).status_code, 200)
+
+
+class FranchiseRemovalRequestTests(BaseIAMTestCase):
+    """A holder can give up a franchise, but never unilaterally: a Master exit
+    is approved by the Platform Admin, every sub-franchise exit by the franchise
+    directly above it (a Regional's exit by its National)."""
+
+    def setUp(self):
+        super().setUp()
+        from accounts.constants import FranchiseLevel, FranchiseUnitStatus
+        self.role = Role.objects.create(name="Franchise", code="franchise", tier_level=1)
+
+        def _user(email):
+            return User.objects.create_user(
+                email=email, password="test123", is_active=True,
+                tenant=self.tenant, role=self.role, application_status="approved",
+            )
+
+        self.master_owner = _user("master@test.com")
+        self.national_owner = _user("national@test.com")
+        self.regional_owner = _user("regional@test.com")
+
+        self.master = Tenant.objects.create(
+            name="Master DE", franchise_level=FranchiseLevel.MASTER,
+            franchise_status=FranchiseUnitStatus.ACTIVE,
+            owner_user=self.master_owner, territory_country="DE",
+        )
+        self.national = Tenant.objects.create(
+            name="National DE", franchise_level=FranchiseLevel.NATIONAL,
+            franchise_status=FranchiseUnitStatus.ACTIVE, parent=self.master,
+            owner_user=self.national_owner, territory_country="DE",
+        )
+        self.regional = Tenant.objects.create(
+            name="Regional Bayern", franchise_level=FranchiseLevel.REGIONAL,
+            franchise_status=FranchiseUnitStatus.ACTIVE, parent=self.national,
+            owner_user=self.regional_owner, territory_country="DE",
+            territory_region="Bavaria",
+        )
+
+    def _request_removal(self, email, node, reason="Retiring"):
+        self.client.login(email=email, password="test123")
+        resp = self.client.post(
+            reverse("franchise-removal-request", args=[node.id]), {"reason": reason},
+        )
+        self.client.logout()
+        return resp
+
+    # ---- routing ----
+    def test_subfranchise_removal_routes_to_the_direct_parent(self):
+        from accounts.models import FranchiseRemovalRequest
+        self._request_removal("regional@test.com", self.regional)
+        removal = FranchiseRemovalRequest.objects.get(node=self.regional)
+        self.assertEqual(removal.status, FranchiseRemovalRequest.PENDING)
+        self.assertEqual(removal.reviewer_franchise_id, self.national.id)
+        # Nothing is removed until the National decides.
+        self.regional.refresh_from_db()
+        self.assertFalse(self.regional.is_deleted)
+
+    def test_master_removal_routes_to_the_platform_admin(self):
+        from accounts.models import FranchiseRemovalRequest
+        self._request_removal("master@test.com", self.master)
+        removal = FranchiseRemovalRequest.objects.get(node=self.master)
+        self.assertIsNone(removal.reviewer_franchise_id)
+
+    def test_holder_cannot_request_removal_of_someone_elses_franchise(self):
+        from accounts.models import FranchiseRemovalRequest
+        self._request_removal("regional@test.com", self.national)
+        self.assertFalse(FranchiseRemovalRequest.objects.filter(node=self.national).exists())
+
+    # ---- decisions ----
+    def test_parent_approval_winds_the_node_down(self):
+        from accounts.models import FranchiseRemovalRequest
+        self._request_removal("regional@test.com", self.regional)
+        removal = FranchiseRemovalRequest.objects.get(node=self.regional)
+
+        self.client.login(email="national@test.com", password="test123")
+        self.client.post(reverse("franchise-removal-action", args=[removal.id]),
+                         {"decision": "approve"})
+        removal.refresh_from_db()
+        self.assertEqual(removal.status, FranchiseRemovalRequest.APPROVED)
+        self.assertFalse(Tenant.objects.filter(id=self.regional.id).exists())  # soft-deleted
+
+    def test_parent_can_decline_and_the_node_stays(self):
+        from accounts.models import FranchiseRemovalRequest
+        self._request_removal("regional@test.com", self.regional)
+        removal = FranchiseRemovalRequest.objects.get(node=self.regional)
+
+        self.client.login(email="national@test.com", password="test123")
+        self.client.post(reverse("franchise-removal-action", args=[removal.id]),
+                         {"decision": "reject", "decision_note": "Finish the season first"})
+        removal.refresh_from_db()
+        self.assertEqual(removal.status, FranchiseRemovalRequest.REJECTED)
+        self.assertEqual(removal.decision_note, "Finish the season first")
+        self.assertTrue(Tenant.objects.filter(id=self.regional.id).exists())
+
+    def test_an_unrelated_holder_cannot_decide(self):
+        from accounts.models import FranchiseRemovalRequest
+        self._request_removal("regional@test.com", self.regional)
+        removal = FranchiseRemovalRequest.objects.get(node=self.regional)
+
+        # The Master is two levels up — the National is the reviewer, not them.
+        self.client.login(email="master@test.com", password="test123")
+        resp = self.client.post(reverse("franchise-removal-action", args=[removal.id]),
+                                {"decision": "approve"})
+        self.assertEqual(resp.status_code, 403)
+        removal.refresh_from_db()
+        self.assertEqual(removal.status, FranchiseRemovalRequest.PENDING)
+
+    def test_admin_approves_a_master_exit(self):
+        from accounts.models import FranchiseRemovalRequest
+        self._request_removal("master@test.com", self.master)
+        removal = FranchiseRemovalRequest.objects.get(node=self.master)
+
+        self.client.login(email="admin@test.com", password="admin123")
+        self.client.post(reverse("franchise-removal-action", args=[removal.id]),
+                         {"decision": "approve"})
+        removal.refresh_from_db()
+        self.assertEqual(removal.status, FranchiseRemovalRequest.APPROVED)
+        # The whole branch goes with it (spec §9.2 wind-down).
+        self.assertFalse(Tenant.objects.filter(id=self.master.id).exists())
+        self.assertFalse(Tenant.objects.filter(id=self.regional.id).exists())
+
+    def test_holder_can_withdraw_their_own_request(self):
+        from accounts.models import FranchiseRemovalRequest
+        self._request_removal("regional@test.com", self.regional)
+        removal = FranchiseRemovalRequest.objects.get(node=self.regional)
+
+        self.client.login(email="regional@test.com", password="test123")
+        self.client.post(reverse("franchise-removal-cancel", args=[removal.id]))
+        removal.refresh_from_db()
+        self.assertEqual(removal.status, FranchiseRemovalRequest.CANCELLED)
+        self.assertTrue(Tenant.objects.filter(id=self.regional.id).exists())
+
+    def test_only_one_open_request_per_node(self):
+        from accounts.models import FranchiseRemovalRequest
+        self._request_removal("regional@test.com", self.regional)
+        self._request_removal("regional@test.com", self.regional)
+        self.assertEqual(
+            FranchiseRemovalRequest.objects.filter(node=self.regional).count(), 1,
+        )
+
+    def test_reviewer_sees_the_request_in_their_queue(self):
+        self._request_removal("regional@test.com", self.regional)
+        self.client.login(email="national@test.com", password="test123")
+        resp = self.client.get(reverse("franchise-child-requests"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Regional Bayern")
+
+    def test_holder_is_notified_of_the_decision(self):
+        from accounts.models import FranchiseRemovalRequest, Notification
+        self._request_removal("regional@test.com", self.regional)
+        removal = FranchiseRemovalRequest.objects.get(node=self.regional)
+        self.client.login(email="national@test.com", password="test123")
+        self.client.post(reverse("franchise-removal-action", args=[removal.id]),
+                         {"decision": "reject"})
+        self.assertTrue(
+            Notification.objects.filter(recipient=self.regional_owner).exists()
+        )
+
+
+class SubFranchiseOwnerAlreadyHoldsTests(BaseIAMTestCase):
+    """A holder proposing a sub-franchise can't name an owner whose existing
+    franchise territory overlaps the proposed one — so no user ends up holding
+    both a territory and a piece of it (drives the submit view end-to-end).
+    Non-overlapping territories are fine: a user may hold several franchises."""
+
+    def setUp(self):
+        super().setUp()
+        from accounts.constants import FranchiseLevel, FranchiseUnitStatus
+        self.franchise_role = Role.objects.create(
+            name="Franchise", code="franchise", tier_level=1,
+        )
+        # Proposing holder owns an ACTIVE Master covering India. A real holder
+        # was vetted through activation (application_status="approved"), which is
+        # what lets them past RequireApplicationApprovalMiddleware to the view.
+        self.holder = User.objects.create_user(
+            email="master@test.com", password="test123", is_active=True,
+            tenant=self.tenant, role=self.franchise_role,
+            application_status="approved",
+        )
+        self.master = Tenant.objects.create(
+            name="Master IN", slug="master-in",
+            franchise_level=FranchiseLevel.MASTER,
+            franchise_status=FranchiseUnitStatus.ACTIVE,
+            owner_user=self.holder, territory_country="IN",
+        )
+        # A different user who ALREADY owns a National franchise.
+        self.national_owner = User.objects.create_user(
+            email="national@test.com", password="test123", is_active=True,
+            tenant=self.tenant, role=self.franchise_role,
+        )
+        self.national = Tenant.objects.create(
+            name="National IN", slug="national-in",
+            franchise_level=FranchiseLevel.NATIONAL,
+            franchise_status=FranchiseUnitStatus.ACTIVE,
+            owner_user=self.national_owner, territory_country="IN",
+            parent=self.master,
+        )
+
+    def test_existing_franchise_owner_cannot_be_assigned_a_subfranchise(self):
+        from accounts.models import FranchiseApplication
+        self.client.login(email="master@test.com", password="test123")
+        before = FranchiseApplication.objects.count()
+        self.client.post(reverse("franchise-subfranchise-submit"), {
+            "parent_node_id": str(self.master.id),
+            "requested_level": "REGIONAL",
+            "requested_region": "Uttar Pradesh",
+            "legal_name": "Regional Co",
+            "contact_person": "Someone",
+            "owner_email": "national@test.com",
+        })
+        # Rejected: no application row and no Regional node for the National owner.
+        self.assertEqual(FranchiseApplication.objects.count(), before)
+        self.assertFalse(
+            Tenant.objects.filter(
+                owner_user=self.national_owner, franchise_level="REGIONAL",
+            ).exists()
+        )
+
+    def test_franchiseless_owner_is_accepted(self):
+        # Positive control: the SAME request with a user who holds no franchise
+        # must succeed, proving the rejection above is the owner-already-holds
+        # guard and not an unrelated validation failure.
+        from accounts.models import FranchiseApplication
+        fresh = User.objects.create_user(
+            email="fresh@test.com", password="test123", is_active=True,
+            tenant=self.tenant, role=self.franchise_role,
+        )
+        self.client.login(email="master@test.com", password="test123")
+        self.client.post(reverse("franchise-subfranchise-submit"), {
+            "parent_node_id": str(self.master.id),
+            "requested_level": "REGIONAL",
+            "requested_region": "Uttar Pradesh",
+            "legal_name": "Regional Co",
+            "contact_person": "Someone",
+            "owner_email": "fresh@test.com",
+        })
+        self.assertTrue(
+            Tenant.objects.filter(
+                owner_user=fresh, franchise_level="REGIONAL",
+            ).exists()
+        )
+
+    def test_micro_owner_can_also_take_a_national_in_another_country(self):
+        # A holder may buy franchises around the world (product decision, Jul
+        # 2026): a user who owns an ACTIVE Micro in India is proposed as the
+        # owner of a National under a separate Master (Japan). The territories
+        # don't overlap, so the proposal goes through.
+        from accounts.constants import FranchiseLevel, FranchiseUnitStatus
+        from accounts.models import FranchiseApplication
+        micro_owner = User.objects.create_user(
+            email="shivendra@test.com", password="test123", is_active=True,
+            tenant=self.tenant, role=self.franchise_role,
+        )
+        Tenant.objects.create(
+            name="Micro Ganga", slug="micro-ganga",
+            franchise_level=FranchiseLevel.MICRO,
+            franchise_status=FranchiseUnitStatus.ACTIVE,
+            owner_user=micro_owner, territory_country="IN",
+            territory_region="Uttar Pradesh", territory_city="Prayagraj",
+        )
+        # A Master-Japan holder (approved) proposes a National (JP) for them.
+        jp_holder = User.objects.create_user(
+            email="japan@test.com", password="test123", is_active=True,
+            tenant=self.tenant, role=self.franchise_role,
+            application_status="approved",
+        )
+        jp_master = Tenant.objects.create(
+            name="Master JP", slug="master-jp",
+            franchise_level=FranchiseLevel.MASTER,
+            franchise_status=FranchiseUnitStatus.ACTIVE,
+            owner_user=jp_holder, territory_country="JP",
+        )
+        self.client.login(email="japan@test.com", password="test123")
+        before = FranchiseApplication.objects.count()
+        self.client.post(reverse("franchise-subfranchise-submit"), {
+            "parent_node_id": str(jp_master.id),
+            "requested_level": "NATIONAL",
+            "legal_name": "siku private limited",
+            "contact_person": "Someone",
+            "owner_email": "shivendra@test.com",
+        })
+        self.assertEqual(FranchiseApplication.objects.count(), before + 1)
+        self.assertTrue(
+            Tenant.objects.filter(
+                owner_user=micro_owner, franchise_level=FranchiseLevel.NATIONAL,
+            ).exists()
+        )
+
+    def test_national_holder_cannot_own_a_regional_under_their_own_node(self):
+        # The National holder opens Add Sub-Franchise on their OWN National node
+        # and types their own email as the Regional owner. Nobody may hold a
+        # territory and a slice of it at the same time.
+        from accounts.constants import FranchiseLevel
+        from accounts.models import FranchiseApplication
+        self.national_owner.application_status = "approved"
+        self.national_owner.save(update_fields=["application_status"])
+        self.client.login(email="national@test.com", password="test123")
+        before = FranchiseApplication.objects.count()
+        self.client.post(reverse("franchise-subfranchise-submit"), {
+            "parent_node_id": str(self.national.id),
+            "requested_level": "REGIONAL",
+            "requested_region": "Uttar Pradesh",
+            "legal_name": "Regional Co",
+            "contact_person": "Someone",
+            "owner_email": "national@test.com",  # themselves
+        })
+        self.assertEqual(FranchiseApplication.objects.count(), before)
+        self.assertFalse(
+            Tenant.objects.filter(
+                owner_user=self.national_owner,
+                franchise_level=FranchiseLevel.REGIONAL,
+            ).exists()
+        )
+
+    def test_save_itself_refuses_an_overlapping_franchise_for_one_owner(self):
+        # Last line of defence: even a direct create() that never goes through a
+        # view or clean() cannot hand the National owner a Regional inside their
+        # own territory.
+        from django.core.exceptions import ValidationError
+        from accounts.constants import FranchiseLevel, FranchiseUnitStatus
+        with self.assertRaises(ValidationError):
+            Tenant.objects.create(
+                name="Regional UP", slug="regional-up",
+                franchise_level=FranchiseLevel.REGIONAL,
+                franchise_status=FranchiseUnitStatus.PENDING_CONTRACT,
+                owner_user=self.national_owner, parent=self.national,
+                territory_country="IN", territory_region="Uttar Pradesh",
+            )
+        self.assertFalse(
+            Tenant.objects.filter(slug="regional-up").exists()
+        )
+
+    def test_winding_down_a_duplicate_is_still_allowed(self):
+        # The save-time guard must never trap bad legacy data: terminating one of
+        # two nodes is how an admin cleans it up.
+        from accounts.constants import FranchiseUnitStatus
+        self.national.franchise_status = FranchiseUnitStatus.TERMINATED
+        self.national.save()
+        self.national.refresh_from_db()
+        self.assertEqual(
+            self.national.franchise_status, FranchiseUnitStatus.TERMINATED,
+        )
+
+    def test_subfranchise_form_repopulates_after_error(self):
+        # A proposal rejected because the owner already holds a franchise must
+        # come back with the typed fields intact.
+        self.client.login(email="master@test.com", password="test123")
+        resp = self.client.post(reverse("franchise-subfranchise-submit"), {
+            "parent_node_id": str(self.master.id),
+            "requested_level": "REGIONAL",
+            "requested_region": "Uttar Pradesh",
+            "legal_name": "Regional Co",
+            "contact_person": "Someone",
+            "owner_email": "national@test.com",  # already owns a franchise → error
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(
+            self.client.session["subfranchise_form"]["legal_name"], "Regional Co",
+        )
+        get = self.client.get(reverse("franchise-add-subfranchise"))
+        self.assertContains(get, "Regional Co")
+        self.assertNotIn("subfranchise_form", self.client.session)
+
+
+class FranchiseFormPersistenceTests(BaseIAMTestCase):
+    """After a validation error, the Request-a-Franchise and Add-Sub-Franchise
+    forms repopulate from the session instead of wiping what the user typed."""
+
+    def test_request_form_repopulates_after_error(self):
+        self.client.login(email="user@test.com", password="test123")
+        resp = self.client.post(reverse("franchise-request-submit"), {
+            "requested_level": "REGIONAL",
+            "requested_country": "IN",
+            "requested_region": "",  # missing region → validation error
+            "application_note": "please review my request",
+        })
+        self.assertEqual(resp.status_code, 302)
+        # Values are stashed on the error path...
+        self.assertEqual(
+            self.client.session["franchise_request_form"]["application_note"],
+            "please review my request",
+        )
+        # ...rendered back on the follow-up GET, then cleared (one-shot).
+        get = self.client.get(reverse("franchise-request"))
+        self.assertContains(get, "please review my request")
+        self.assertNotIn("franchise_request_form", self.client.session)
+
+    def test_request_form_cleared_after_success(self):
+        self.client.login(email="user@test.com", password="test123")
+        self.client.post(reverse("franchise-request-submit"), {
+            "requested_level": "MASTER",
+            "requested_country": "IN",
+            "application_note": "master please",
+        })
+        # A Master request has no parent requirement → submitted successfully,
+        # so nothing should linger to pre-fill the next visit.
+        self.assertNotIn("franchise_request_form", self.client.session)
+
+
+class FranchiseListActionVisibilityTests(BaseIAMTestCase):
+    """The Franchises list exposes Edit / Deactivate / Delete only to the
+    Platform Admin (those views are superuser-only). A franchise partner gets a
+    read-only View, so the actions no longer 403 on click."""
+
+    def setUp(self):
+        super().setUp()
+        from accounts.constants import FranchiseLevel, FranchiseUnitStatus
+        self.franchise_role = Role.objects.create(
+            name="Franchise", code="franchise", tier_level=1,
+        )
+        self.holder = User.objects.create_user(
+            email="fp@test.com", password="test123", is_active=True,
+            tenant=self.tenant, role=self.franchise_role,
+            application_status="approved",
+        )
+        self.node = Tenant.objects.create(
+            name="FP Master", slug="fp-master",
+            franchise_level=FranchiseLevel.MASTER,
+            franchise_status=FranchiseUnitStatus.ACTIVE,
+            owner_user=self.holder, territory_country="IN",
+        )
+
+    def test_franchise_partner_sees_no_mutating_actions(self):
+        self.client.login(email="fp@test.com", password="test123")
+        resp = self.client.get(reverse("tenants"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotContains(resp, reverse("tenant-toggle", args=[self.node.id]))
+        self.assertNotContains(resp, reverse("tenant-delete", args=[self.node.id]))
+
+    def test_superuser_still_sees_mutating_actions(self):
+        self.client.login(email="admin@test.com", password="admin123")
+        resp = self.client.get(reverse("tenants"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, reverse("tenant-toggle", args=[self.node.id]))
+        # A franchise node is wound down through franchise-remove (which also
+        # reaches its sub-franchises and consultant rosters); the plain
+        # tenant-delete is only offered for non-franchise tenants.
+        self.assertContains(resp, reverse("franchise-remove", args=[self.node.id]))
+
+
+class CsrfFailureHandlingTests(BaseIAMTestCase):
+    """A failed CSRF check (stale form / rotated session) must not surface as a
+    bare 403 "Access Denied" page: a browser POST bounces back to the form with
+    a retry message; AJAX/JSON callers get a machine-readable 403."""
+
+    def setUp(self):
+        super().setUp()
+        from accounts.models import Company
+        biz = Role.objects.create(name="Business User", code="business_user", tier_level=1)
+        self.bu = User.objects.create_user(
+            email="csrfbu@test.com", password="test123", is_active=True,
+            tenant=self.tenant, role=biz, verification_status="approved",
+        )
+        # Owned company so the BU clears the identity + company middleware gates
+        # and actually reaches the CSRF check.
+        Company.objects.create(tenant=self.tenant, name="CSRF Co", owner_user=self.bu)
+
+    def _csrf_client(self):
+        from django.test import Client
+        c = Client(enforce_csrf_checks=True)
+        c.login(email="csrfbu@test.com", password="test123")
+        return c
+
+    def test_html_csrf_failure_redirects_instead_of_403(self):
+        c = self._csrf_client()
+        resp = c.post(
+            reverse("franchise-request-submit"),
+            {"requested_level": "MASTER", "requested_country": "IN"},
+            HTTP_REFERER="http://testserver/franchise-request/",
+        )
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp["Location"], "http://testserver/franchise-request/")
+
+    def test_json_csrf_failure_returns_403_json(self):
+        c = self._csrf_client()
+        resp = c.post(
+            reverse("franchise-request-submit"),
+            {"requested_level": "MASTER"},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(resp.status_code, 403)
+        self.assertIn("application/json", resp["Content-Type"])
+
+
 #user list and toggle tests
 
 class UserListViewTests(BaseIAMTestCase):

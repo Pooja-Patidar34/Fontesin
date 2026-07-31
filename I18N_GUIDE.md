@@ -40,7 +40,7 @@ FontEsin uses **Django's built-in Internationalization (i18n) framework** togeth
 | `en` | English |
 | `de` | German |
 | `fr` | French |
-| `cs` | Czech |
+| `es` | Spanish |
 
 These are declared in `FontEsin/settings.py` (`LANGUAGES`) and mirrored in `accounts.constants.SupportedLocale`. Both must stay in sync when adding or removing a language. See also [Adding a New Language](#6-adding-a-new-language) and [FAQ — How do I add a new language?](#how-do-i-add-a-new-language).
 
@@ -78,7 +78,7 @@ locale/
 ├── de/
 │   └── LC_MESSAGES/
 │       └── …
-├── cs/
+├── es/
 │   └── LC_MESSAGES/
 │       └── …
 └── fr/
@@ -260,7 +260,35 @@ Wrap API error strings with `gettext` at the point they are returned.
 
 ### Notifications
 
-Notification titles and bodies are translated at write time in the recipient's preferred language. See `accounts/utils/notifications.py` and use `translation.override(user_language(recipient))` when composing strings. See [FAQ — How do I translate emails and notifications?](#how-do-i-translate-emails-and-notifications).
+Notifications are stored in the database and read back long after they were written, possibly after the recipient has switched language. Translating them once at write time froze them in the old language, so they are stored as **ingredients rather than finished sentences**: the msgid, its context, and its interpolation parameters, re-rendered through `gettext` on every read.
+
+Compose them with `Msg` / `MsgSeq` from `accounts/utils/i18n_messages.py` and hand those to `notify()`:
+
+```python
+from accounts.utils.i18n_messages import Msg, MsgSeq
+from accounts.utils.notifications import notify
+
+body = MsgSeq(Msg("%(name)s has requested a %(level)s and is awaiting your review.",
+                  name=applicant_label, level=level_label))
+if territory:
+    body.line(Msg("Territory: %(territory)s.", territory=territory))
+
+notify(recipient=reviewer,
+       title=Msg("New %(level)s request", level=level_label),
+       body=body)
+```
+
+- **`Msg(msgid, ctx=None, **params)`** — one translatable sentence. Parameters may be plain strings (names, amounts, company names — never translated), other `Msg` objects, `MsgSeq` sequences, or `gettext_lazy` proxies from `accounts/constants.py`, whose msgid is recovered so choice labels (franchise level, country) translate too.
+- **`MsgSeq`** — an ordered run: `.add(x)` appends directly, `.line(x)` on a new line, `.blank_line(x)` after a blank line.
+- **Never `str()` a lazy label before passing it in** — that freezes it at the acting user's request locale.
+
+`notify()` also writes the rendered text into the plain `title` / `body` columns, in the recipient's preferred language, as the fallback for rows that predate this mechanism. Templates must read **`note.display_title`** and **`note.display_body`**, never `note.title` / `note.body`.
+
+Emails are still translated at send time with `translation.override(user_language(recipient))` — they are delivered once and never re-read from the database. See [FAQ — How do I translate emails and notifications?](#how-do-i-translate-emails-and-notifications).
+
+#### Extraction
+
+`xgettext` does not know `Msg()` is a translation call and Django's `makemessages` has no flag to add a keyword, so `scripts/i18n_refresh.py` runs a **second extraction pass** (`xgettext --keyword=Msg:1`) over the project's Python files and merges the result into the POT. A bare `manage.py makemessages` therefore misses every notification string — always refresh via the script.
 
 ### Billing plan copy
 
@@ -297,9 +325,57 @@ python manage.py makemessages -a -d djangojs
 
 This updates `locale/<lang>/LC_MESSAGES/django.po` and `djangojs.po` with new `msgid` entries and file references.
 
+#### On Windows, `makemessages` silently updates nothing
+
+Windows extraction writes a POT whose wrapped `#:` reference comments lose their
+`#:` prefix on continuation lines. `msguniq` then aborts with `syntax error` and
+**no `.po` file is touched** — the command fails after the strings were already
+extracted, so it is easy to believe the catalogs were refreshed when they were
+not. This is what left the whole Franchise section (and other newer screens)
+marked translatable in the templates but English in the UI.
+
+Use the wrapper instead of a bare `makemessages` on Windows:
+
+```bash
+python scripts/i18n_refresh.py          # extract, repair the POT, merge into de/es/fr/en
+python scripts/i18n_refresh.py --stats  # just report untranslated / fuzzy counts
+```
+
+New entries are merged with `--no-fuzzy-matching` on purpose: msgmerge's guesses
+for this codebase were wrong more often than right (it paired *Master Franchise*
+with *Save Franchise*), and a confidently wrong translation is worse than an
+empty one.
+
+`i18n_refresh.py` covers the `django` domain only. The `djangojs` catalogs are
+maintained by hand because most of their entries have no extractable source, so
+regenerating them with `--no-obsolete` would delete them.
+
+The script also runs a second `xgettext --keyword=Msg:1` pass so notification
+strings written as `Msg("…")` are extracted — `makemessages` alone never sees
+them. See [Notifications](#notifications).
+
+#### Escaped quotes break extraction
+
+`{% trans "… \"Memo\" …" %}` renders correctly but `templatize()` truncates the
+msgid at the escaped quote, so the string can never match a catalog entry and
+stays English forever. Use typographic quotes (`“ ”`) inside translatable
+literals instead.
+
 ### Step 3 — Translate new entries
 
-Open each non-English `.po` file (`de`, `cs`, `fr`) and fill in `msgstr` for every new `msgid`. Leave `msgstr ""` only for strings you intentionally defer.
+Open each non-English `.po` file (`de`, `es`, `fr`) and fill in `msgstr` for every new `msgid`. Leave `msgstr ""` only for strings you intentionally defer.
+
+For a large batch, put the reviewed strings in `scripts/i18n_translations.json`
+(`{ctx, id, plural, de, es, fr}` per entry, written exactly as they appear inside
+the `.po` quotes) and let the filler apply them — it emits a supplement catalog
+and folds it in with `msgcat`/`msgmerge`, so quoting, wrapping and plural layout
+stay gettext's problem rather than yours. It also replaces `fuzzy` entries, which
+gettext ignores at runtime and which therefore show as English:
+
+```bash
+python scripts/i18n_fill.py           # fill de/es/fr from the map, then en from msgid
+python scripts/i18n_fill.py --check   # list untranslated entries with no mapping
+```
 
 Example:
 
@@ -318,7 +394,7 @@ msgid "Export"
 msgstr "Exportieren"
 ```
 
-Keep all four locale files synchronized — every `msgid` present in `en` should have a corresponding entry in `de`, `cs`, and `fr`.
+Keep all four locale files synchronized — every `msgid` present in `en` should have a corresponding entry in `de`, `es`, and `fr`.
 
 ### Step 4 — Compile catalogs
 
@@ -337,7 +413,7 @@ See [Deployment Notes](#deployment-notes) for production requirements.
 ### Step 5 — Verify in the UI
 
 1. Start the dev server.
-2. Switch language via the header globe icon (or `?lang=de`, `?lang=cs`, `?lang=fr`).
+2. Switch language via the header globe icon (or `?lang=de`, `?lang=es`, `?lang=fr`).
 3. Confirm new strings appear translated on the page.
 4. For JavaScript strings, hard-refresh the browser (see [Troubleshooting](#9-troubleshooting)).
 
@@ -354,7 +430,7 @@ Wrap with gettext() / {% trans %} / gettext() in JS
         ↓
 Run makemessages (-a for django, -a -d djangojs for JavaScript)
         ↓
-Translate .po files (de, cs, fr — keep in sync with en)
+Translate .po files (de, es, fr — keep in sync with en)
         ↓
 Run compilemessages
         ↓
@@ -429,7 +505,7 @@ LANGUAGES = [
     ("en", _("English")),
     ("de", _("German")),
     ("fr", _("French")),
-    ("cs", _("Czech")),
+    ("es", _("Spanish")),
     ("it", _("Italian")),  # new
 ]
 ```
@@ -485,7 +561,7 @@ python manage.py compilemessages
 Add the new locale to the validation loop in `.github/workflows/i18n.yml`:
 
 ```yaml
-for loc in en de cs fr it; do
+for loc in en de es fr it; do
 ```
 
 ---
@@ -508,7 +584,7 @@ for loc in en de cs fr it; do
 
 4. **Use `context` / `pgettext` for ambiguous words.** The project uses contexts like `"common"`, `"companies"`, `"dashboard"`, and `"billing"`. See [Common Mistakes — Missing translation context](#missing-translation-context-pgettext).
 
-5. **Keep all locale files synchronized.** When you add a `msgid` to `en`, add and translate it in `de`, `cs`, and `fr` before merging.
+5. **Keep all locale files synchronized.** When you add a `msgid` to `en`, add and translate it in `de`, `es`, and `fr` before merging.
 
 6. **Do not translate internal identifiers.** Database values, enum keys, API field names, URL slugs, and log messages stay in English. Only translate **display text** (labels shown to users). See [Common Mistakes — Translating database values](#translating-database-values-instead-of-display-labels).
 
@@ -600,7 +676,7 @@ Whenever you add features, treat i18n as part of the definition of done.
 | **New button / label** | Same as templates. Prefer existing contexts (`"common"` for shared actions like Save, Cancel, View). |
 | **New validation message** | Wrap with `_()` in Python `clean_*` or serializer validation; for client-side JS validation, add `gettext('…')` and update `djangojs.po`. |
 | **New email** | Wrap subject and body with `_()`; send inside `translation.override(user_language(recipient))`. |
-| **New notification** | Use helpers in `accounts/utils/notifications.py` or follow the same `translation.override` pattern. |
+| **New notification** | Compose `title` / `body` as `Msg` / `MsgSeq` (see [Notifications](#notifications)) so the text re-translates on read; render with `note.display_title` / `note.display_body`; extract via `scripts/i18n_refresh.py`. |
 | **New API error message** | Use `gettext()`; ensure the view uses `APILocaleMixin` if clients rely on `Accept-Language`. |
 | **New model choice label** | `_()` on the label tuple only; keep the stored value as a stable ASCII key. |
 | **New billing plan text** | Update `billing/plan_i18n.py` and run extraction for the `billing.plan.*` contexts. |
@@ -609,7 +685,7 @@ Whenever you add features, treat i18n as part of the definition of done.
 
 1. Implement feature with all strings wrapped.
 2. `python manage.py makemessages -a && python manage.py makemessages -a -d djangojs`
-3. Translate new entries in `de`, `cs`, `fr`.
+3. Translate new entries in `de`, `es`, `fr`.
 4. `python manage.py compilemessages`
 5. Manually verify at least one non-English locale.
 6. Open PR — CI runs `compilemessages` and `msgfmt --check`.
@@ -688,14 +764,14 @@ Before merging code that touches user-facing text:
 - [ ] All new UI strings use `_()`, `{% trans %}`, `{% blocktrans %}`, or `gettext()` — no raw English in templates, views, forms, or JS shown to users.
 - [ ] Context (`context "…"` / `pgettext`) added where the same English word appears in multiple places.
 - [ ] `python manage.py makemessages -a` run (and `-d djangojs` if JS strings changed).
-- [ ] New `msgid` entries translated in `locale/de/`, `locale/cs/`, and `locale/fr/`.
+- [ ] New `msgid` entries translated in `locale/de/`, `locale/es/`, and `locale/fr/`.
 - [ ] `python manage.py compilemessages` run successfully.
 - [ ] `.mo` files updated (if committed) or CI compile step will run on merge.
 - [ ] Verified at least one non-English locale in the browser.
 - [ ] JavaScript strings added to `djangojs-catalog.js` when used in client-side code.
 - [ ] `SupportedLocale` and `LANGUAGES` still aligned (if locales changed).
 - [ ] API views returning translated errors use `APILocaleMixin`.
-- [ ] Notifications/emails use `translation.override(user_language(…))`.
+- [ ] Emails use `translation.override(user_language(…))`; in-app notifications use `Msg` / `MsgSeq` and are rendered with `display_title` / `display_body`.
 - [ ] No translation applied to DB keys, enum values, or internal API identifiers.
 
 For PR reviewers, see the expanded [Code Review Checklist](#code-review-checklist).
@@ -707,9 +783,9 @@ For PR reviewers, see the expanded [Code Review Checklist](#code-review-checklis
 Use this list when reviewing pull requests that touch user-facing text. It complements the author-facing [Maintenance Checklist](#10-maintenance-checklist).
 
 - [ ] **All new strings are wrapped** — Python (`_()` / `gettext()`), templates (`{% trans %}` / `{% blocktrans %}`), and JavaScript (`gettext()`).
-- [ ] **Translation files updated** — `makemessages -a` (and `-d djangojs` when JS changed); new `msgid` entries present in `en`, `de`, `cs`, and `fr`.
+- [ ] **Translation files updated** — `makemessages -a` (and `-d djangojs` when JS changed); new `msgid` entries present in `en`, `de`, `es`, and `fr`.
 - [ ] **`compilemessages` executed** — `.mo` files regenerated locally or CI compile step will run on merge.
-- [ ] **UI tested in every supported language** — at minimum German, Czech, and French for new screens; use the header switcher or `?lang=de`, `?lang=cs`, `?lang=fr`.
+- [ ] **UI tested in every supported language** — at minimum German, Spanish, and French for new screens; use the header switcher or `?lang=de`, `?lang=es`, `?lang=fr`.
 - [ ] **No hardcoded English strings remain** — check templates, inline JS, form attrs, and API `message` / `error` fields.
 - [ ] **JavaScript translations verified** — strings anchored in `djangojs-catalog.js`; `djangojs.po` updated; hard refresh after compile.
 - [ ] **API responses localized where applicable** — views returning user-facing errors inherit `APILocaleMixin`; strings use `gettext()` at return time.
@@ -829,13 +905,15 @@ with translation.override(user_language(recipient)):
     }
 ```
 
-Notification helpers in `accounts/utils/notifications.py` follow this pattern. Translate at **send time** in the recipient's language, not at write time in the sender's language.
+That is the right pattern for **emails**, which are delivered once and never re-read. **In-app notifications** go further: they live in the database and are re-read after the user may have switched language, so they store their msgid and parameters and re-translate on every read. See [Notifications](#notifications) for the `Msg` / `MsgSeq` API.
+
+Either way, translate for the **recipient**, never in the acting user's request locale.
 
 ---
 
 ## 11. Current Implementation Status
 
-- **Four languages are fully configured:** English, German, French, and Czech (`en`, `de`, `fr`, `cs`).
+- **Four languages are fully configured:** English, German, French, and Spanish (`en`, `de`, `fr`, `es`).
 - **Multilingual infrastructure is complete:** middleware, language switcher, user preference persistence, JavaScript catalog, REST API locale mixin, notification localization, and billing plan i18n are in place.
 - **Translation catalogs are populated:** `locale/` contains `django.po` and `djangojs.po` (and compiled `.mo` files) for all four locales.
 - **CI guards quality:** `.github/workflows/i18n.yml` runs `compilemessages` and validates `.po` syntax on every push/PR.

@@ -1,0 +1,4927 @@
+[
+ {
+  "ctx": null,
+  "id": "Please create your company first — you can access this section once you have at least one company.",
+  "plural": null,
+  "de": "Bitte erstellen Sie zuerst Ihr Unternehmen — Sie erhalten Zugriff auf diesen Bereich, sobald Sie mindestens ein Unternehmen haben.",
+  "es": "Primero cree su empresa: podrá acceder a esta sección cuando tenga al menos una empresa.",
+  "fr": "Veuillez d'abord créer votre entreprise — vous pourrez accéder à cette section dès que vous aurez au moins une entreprise."
+ },
+ {
+  "ctx": null,
+  "id": "Master Franchise",
+  "plural": null,
+  "de": "Master-Franchise",
+  "es": "Franquicia Máster",
+  "fr": "Franchise Maître"
+ },
+ {
+  "ctx": null,
+  "id": "National Sub-Franchise",
+  "plural": null,
+  "de": "Nationale Sub-Franchise",
+  "es": "Sub-Franquicia Nacional",
+  "fr": "Sous-Franchise Nationale"
+ },
+ {
+  "ctx": null,
+  "id": "Regional Sub-Franchise",
+  "plural": null,
+  "de": "Regionale Sub-Franchise",
+  "es": "Sub-Franquicia Regional",
+  "fr": "Sous-Franchise Régionale"
+ },
+ {
+  "ctx": null,
+  "id": "Micro-Franchise",
+  "plural": null,
+  "de": "Mikro-Franchise",
+  "es": "Micro-Franquicia",
+  "fr": "Micro-Franchise"
+ },
+ {
+  "ctx": null,
+  "id": "Pending Contract",
+  "plural": null,
+  "de": "Vertrag ausstehend",
+  "es": "Contrato pendiente",
+  "fr": "Contrat en attente"
+ },
+ {
+  "ctx": null,
+  "id": "Pending Payment",
+  "plural": null,
+  "de": "Zahlung ausstehend",
+  "es": "Pago pendiente",
+  "fr": "Paiement en attente"
+ },
+ {
+  "ctx": null,
+  "id": "Active",
+  "plural": null,
+  "de": "Aktiv",
+  "es": "Activo",
+  "fr": "Actif"
+ },
+ {
+  "ctx": null,
+  "id": "Suspended",
+  "plural": null,
+  "de": "Ausgesetzt",
+  "es": "Suspendido",
+  "fr": "Suspendu"
+ },
+ {
+  "ctx": null,
+  "id": "Terminated",
+  "plural": null,
+  "de": "Beendet",
+  "es": "Rescindido",
+  "fr": "Résilié"
+ },
+ {
+  "ctx": null,
+  "id": "Expired",
+  "plural": null,
+  "de": "Abgelaufen",
+  "es": "Vencido",
+  "fr": "Expiré"
+ },
+ {
+  "ctx": null,
+  "id": "Draft",
+  "plural": null,
+  "de": "Entwurf",
+  "es": "Borrador",
+  "fr": "Brouillon"
+ },
+ {
+  "ctx": null,
+  "id": "Submitted",
+  "plural": null,
+  "de": "Eingereicht",
+  "es": "Enviado",
+  "fr": "Soumis"
+ },
+ {
+  "ctx": null,
+  "id": "Pending Review",
+  "plural": null,
+  "de": "Prüfung ausstehend",
+  "es": "Pendiente de revisión",
+  "fr": "En attente d'examen"
+ },
+ {
+  "ctx": null,
+  "id": "Approved",
+  "plural": null,
+  "de": "Genehmigt",
+  "es": "Aprobado",
+  "fr": "Approuvé"
+ },
+ {
+  "ctx": null,
+  "id": "Rejected",
+  "plural": null,
+  "de": "Abgelehnt",
+  "es": "Rechazado",
+  "fr": "Rejeté"
+ },
+ {
+  "ctx": null,
+  "id": "Cancelled",
+  "plural": null,
+  "de": "Storniert",
+  "es": "Cancelado",
+  "fr": "Annulé"
+ },
+ {
+  "ctx": null,
+  "id": "Micro-Franchise Owner",
+  "plural": null,
+  "de": "Mikro-Franchise-Inhaber",
+  "es": "Titular de Micro-Franquicia",
+  "fr": "Titulaire de Micro-Franchise"
+ },
+ {
+  "ctx": null,
+  "id": "Standard Consultant",
+  "plural": null,
+  "de": "Standardberater",
+  "es": "Consultor Estándar",
+  "fr": "Consultant Standard"
+ },
+ {
+  "ctx": null,
+  "id": "Pending",
+  "plural": null,
+  "de": "Ausstehend",
+  "es": "Pendiente",
+  "fr": "En attente"
+ },
+ {
+  "ctx": null,
+  "id": "Unpaid",
+  "plural": null,
+  "de": "Unbezahlt",
+  "es": "Sin pagar",
+  "fr": "Non payé"
+ },
+ {
+  "ctx": null,
+  "id": "Paid",
+  "plural": null,
+  "de": "Bezahlt",
+  "es": "Pagado",
+  "fr": "Payé"
+ },
+ {
+  "ctx": null,
+  "id": "Waived",
+  "plural": null,
+  "de": "Erlassen",
+  "es": "Exonerado",
+  "fr": "Exonéré"
+ },
+ {
+  "ctx": null,
+  "id": "Signed",
+  "plural": null,
+  "de": "Unterzeichnet",
+  "es": "Firmado",
+  "fr": "Signé"
+ },
+ {
+  "ctx": null,
+  "id": "A company named '%(name)s' already exists in %(country)s. If this is a different legal entity, please provide a Registration ID to distinguish it.",
+  "plural": null,
+  "de": "Ein Unternehmen mit dem Namen '%(name)s' existiert in %(country)s bereits. Wenn es sich um eine andere juristische Person handelt, geben Sie bitte eine Registrierungs-ID zur Unterscheidung an.",
+  "es": "Ya existe una empresa llamada '%(name)s' en %(country)s. Si se trata de una entidad jurídica distinta, indique un ID de registro para diferenciarla.",
+  "fr": "Une entreprise nommée '%(name)s' existe déjà en %(country)s. S'il s'agit d'une entité juridique différente, veuillez indiquer un identifiant d'enregistrement pour la distinguer."
+ },
+ {
+  "ctx": null,
+  "id": "Plan request: %(company)s → %(plan)s",
+  "plural": null,
+  "de": "Plan-Anfrage: %(company)s → %(plan)s",
+  "es": "Solicitud de plan: %(company)s → %(plan)s",
+  "fr": "Demande de forfait : %(company)s → %(plan)s"
+ },
+ {
+  "ctx": null,
+  "id": "%(buyer)s is requesting the %(plan)s plan for %(company)s. Approve it once payment arrives to activate the plan.",
+  "plural": null,
+  "de": "%(buyer)s beantragt den Plan %(plan)s für %(company)s. Genehmigen Sie ihn nach Zahlungseingang, um den Plan zu aktivieren.",
+  "es": "%(buyer)s solicita el plan %(plan)s para %(company)s. Apruébelo cuando llegue el pago para activar el plan.",
+  "fr": "%(buyer)s demande le forfait %(plan)s pour %(company)s. Approuvez-le dès réception du paiement pour activer le forfait."
+ },
+ {
+  "ctx": null,
+  "id": "A business user",
+  "plural": null,
+  "de": "Ein Geschäftsbenutzer",
+  "es": "Un usuario empresarial",
+  "fr": "Un utilisateur professionnel"
+ },
+ {
+  "ctx": null,
+  "id": "Certifying consultant (commission on approval): %(consultant)s.",
+  "plural": null,
+  "de": "Zertifizierender Berater (Provision bei Genehmigung): %(consultant)s.",
+  "es": "Consultor certificador (comisión al aprobar): %(consultant)s.",
+  "fr": "Consultant certificateur (commission à l'approbation) : %(consultant)s."
+ },
+ {
+  "ctx": null,
+  "id": "%(name)s has requested a %(level)s under %(parent)s and is awaiting your review.",
+  "plural": null,
+  "de": "%(name)s hat eine %(level)s unter %(parent)s beantragt und wartet auf Ihre Prüfung.",
+  "es": "%(name)s ha solicitado una %(level)s bajo %(parent)s y espera su revisión.",
+  "fr": "%(name)s a demandé une %(level)s sous %(parent)s et attend votre examen."
+ },
+ {
+  "ctx": null,
+  "id": "Territory: %(territory)s.",
+  "plural": null,
+  "de": "Gebiet: %(territory)s.",
+  "es": "Territorio: %(territory)s.",
+  "fr": "Territoire : %(territory)s."
+ },
+ {
+  "ctx": null,
+  "id": "New %(level)s request",
+  "plural": null,
+  "de": "Neue Anfrage für %(level)s",
+  "es": "Nueva solicitud de %(level)s",
+  "fr": "Nouvelle demande de %(level)s"
+ },
+ {
+  "ctx": null,
+  "id": "%(name)s requested a %(level)s under %(parent)s. %(parent)s reviews it; you'll activate it after approval.",
+  "plural": null,
+  "de": "%(name)s hat eine %(level)s unter %(parent)s beantragt. %(parent)s prüft die Anfrage; Sie aktivieren sie nach der Genehmigung.",
+  "es": "%(name)s solicitó una %(level)s bajo %(parent)s. %(parent)s la revisa; usted la activará tras la aprobación.",
+  "fr": "%(name)s a demandé une %(level)s sous %(parent)s. %(parent)s l'examine ; vous l'activerez après l'approbation."
+ },
+ {
+  "ctx": null,
+  "id": "%(name)s has requested a %(level)s and is awaiting your review.",
+  "plural": null,
+  "de": "%(name)s hat eine %(level)s beantragt und wartet auf Ihre Prüfung.",
+  "es": "%(name)s ha solicitado una %(level)s y espera su revisión.",
+  "fr": "%(name)s a demandé une %(level)s et attend votre examen."
+ },
+ {
+  "ctx": null,
+  "id": "%(name)s was approved by its parent franchise and is awaiting activation (contract & payment).",
+  "plural": null,
+  "de": "%(name)s wurde von der übergeordneten Franchise genehmigt und wartet auf die Aktivierung (Vertrag & Zahlung).",
+  "es": "%(name)s fue aprobada por su franquicia superior y espera la activación (contrato y pago).",
+  "fr": "%(name)s a été approuvée par sa franchise parente et attend l'activation (contrat et paiement)."
+ },
+ {
+  "ctx": null,
+  "id": "%(level)s awaiting activation",
+  "plural": null,
+  "de": "%(level)s wartet auf Aktivierung",
+  "es": "%(level)s en espera de activación",
+  "fr": "%(level)s en attente d'activation"
+ },
+ {
+  "ctx": null,
+  "id": "Your %(level)s request was approved",
+  "plural": null,
+  "de": "Ihre Anfrage für %(level)s wurde genehmigt",
+  "es": "Su solicitud de %(level)s fue aprobada",
+  "fr": "Votre demande de %(level)s a été approuvée"
+ },
+ {
+  "ctx": null,
+  "id": ". The franchise is now pending contract and payment — the Super Admin will activate it once those are complete.",
+  "plural": null,
+  "de": ". Die Franchise wartet nun auf Vertrag und Zahlung — der Super Admin aktiviert sie, sobald beides vorliegt.",
+  "es": ". La franquicia está pendiente de contrato y pago: el Super Admin la activará cuando ambos estén completos.",
+  "fr": ". La franchise est désormais en attente de contrat et de paiement — le Super Admin l'activera dès que ce sera fait."
+ },
+ {
+  "ctx": null,
+  "id": "Your %(level)s request was rejected",
+  "plural": null,
+  "de": "Ihre Anfrage für %(level)s wurde abgelehnt",
+  "es": "Su solicitud de %(level)s fue rechazada",
+  "fr": "Votre demande de %(level)s a été rejetée"
+ },
+ {
+  "ctx": null,
+  "id": "Your %(level)s is now active",
+  "plural": null,
+  "de": "Ihre %(level)s ist jetzt aktiv",
+  "es": "Su %(level)s ya está activa",
+  "fr": "Votre %(level)s est maintenant active"
+ },
+ {
+  "ctx": null,
+  "id": "%(name)s has been activated. Sign out and back in if your sidebar doesn't show the Franchises section yet.",
+  "plural": null,
+  "de": "%(name)s wurde aktiviert. Melden Sie sich ab und wieder an, falls der Bereich Franchises noch nicht in Ihrer Seitenleiste erscheint.",
+  "es": "%(name)s se ha activado. Cierre la sesión y vuelva a iniciarla si la sección Franquicias aún no aparece en su barra lateral.",
+  "fr": "%(name)s a été activée. Déconnectez-vous puis reconnectez-vous si la section Franchises n'apparaît pas encore dans votre barre latérale."
+ },
+ {
+  "ctx": null,
+  "id": "Franchise accounts can't be created at sign-up. Register as a Business User, then use \\\"Request a Franchise\\\" from your dashboard.",
+  "plural": null,
+  "de": "Franchise-Konten können bei der Registrierung nicht erstellt werden. Registrieren Sie sich als Geschäftsbenutzer und verwenden Sie dann \\\"Franchise anfragen\\\" in Ihrem Dashboard.",
+  "es": "Las cuentas de franquicia no pueden crearse durante el registro. Regístrese como Usuario empresarial y luego use \\\"Solicitar una franquicia\\\" en su panel.",
+  "fr": "Les comptes de franchise ne peuvent pas être créés à l'inscription. Inscrivez-vous comme Utilisateur professionnel, puis utilisez \\\"Demander une franchise\\\" depuis votre tableau de bord."
+ },
+ {
+  "ctx": null,
+  "id": "Certifications",
+  "plural": null,
+  "de": "Zertifizierungen",
+  "es": "Certificaciones",
+  "fr": "Certifications"
+ },
+ {
+  "ctx": null,
+  "id": "Your franchise is suspended, so you can't certify companies. Please contact the Platform Admin.",
+  "plural": null,
+  "de": "Ihre Franchise ist ausgesetzt, daher können Sie keine Unternehmen zertifizieren. Bitte wenden Sie sich an den Plattformadministrator.",
+  "es": "Su franquicia está suspendida, por lo que no puede certificar empresas. Póngase en contacto con el Administrador de la plataforma.",
+  "fr": "Votre franchise est suspendue, vous ne pouvez donc pas certifier d'entreprises. Veuillez contacter l'Administrateur de la plateforme."
+ },
+ {
+  "ctx": null,
+  "id": "This company couldn't be saved — a company with the same name or Registration ID already exists. Please review those fields and try again.",
+  "plural": null,
+  "de": "Dieses Unternehmen konnte nicht gespeichert werden — es existiert bereits ein Unternehmen mit demselben Namen oder derselben Registrierungs-ID. Bitte prüfen Sie diese Felder und versuchen Sie es erneut.",
+  "es": "No se pudo guardar esta empresa: ya existe una empresa con el mismo nombre o ID de registro. Revise esos campos e inténtelo de nuevo.",
+  "fr": "Cette entreprise n'a pas pu être enregistrée — une entreprise portant le même nom ou le même identifiant d'enregistrement existe déjà. Veuillez vérifier ces champs et réessayer."
+ },
+ {
+  "ctx": null,
+  "id": "Please choose a company to continue.",
+  "plural": null,
+  "de": "Bitte wählen Sie ein Unternehmen aus, um fortzufahren.",
+  "es": "Elija una empresa para continuar.",
+  "fr": "Veuillez choisir une entreprise pour continuer."
+ },
+ {
+  "ctx": null,
+  "id": "Free",
+  "plural": null,
+  "de": "Kostenlos",
+  "es": "Gratis",
+  "fr": "Gratuit"
+ },
+ {
+  "ctx": null,
+  "id": "Your session or the form expired before it could be submitted. Please try again.",
+  "plural": null,
+  "de": "Ihre Sitzung oder das Formular ist abgelaufen, bevor es abgesendet werden konnte. Bitte versuchen Sie es erneut.",
+  "es": "Su sesión o el formulario caducó antes de poder enviarse. Inténtelo de nuevo.",
+  "fr": "Votre session ou le formulaire a expiré avant l'envoi. Veuillez réessayer."
+ },
+ {
+  "ctx": null,
+  "id": "country",
+  "plural": null,
+  "de": "Land",
+  "es": "país",
+  "fr": "pays"
+ },
+ {
+  "ctx": null,
+  "id": "state / region",
+  "plural": null,
+  "de": "Bundesland/Region",
+  "es": "estado / región",
+  "fr": "état / région"
+ },
+ {
+  "ctx": null,
+  "id": "city",
+  "plural": null,
+  "de": "Stadt",
+  "es": "ciudad",
+  "fr": "ville"
+ },
+ {
+  "ctx": null,
+  "id": "territory",
+  "plural": null,
+  "de": "Gebiet",
+  "es": "territorio",
+  "fr": "territoire"
+ },
+ {
+  "ctx": null,
+  "id": "This %(scope)s already has an active %(level)s (%(name)s), so it can't be granted twice.",
+  "plural": null,
+  "de": "Für dieses %(scope)s existiert bereits eine aktive %(level)s (%(name)s) und kann nicht zweimal vergeben werden.",
+  "es": "Este %(scope)s ya tiene una %(level)s activa (%(name)s), por lo que no puede concederse dos veces.",
+  "fr": "Ce %(scope)s possède déjà une %(level)s active (%(name)s) ; elle ne peut pas être accordée deux fois."
+ },
+ {
+  "ctx": null,
+  "id": "You already hold a franchise. New sub-franchises are proposed from your Franchises section.",
+  "plural": null,
+  "de": "Sie besitzen bereits eine Franchise. Neue Sub-Franchises werden über Ihren Bereich Franchises vorgeschlagen.",
+  "es": "Ya posee una franquicia. Las nuevas sub-franquicias se proponen desde su sección Franquicias.",
+  "fr": "Vous détenez déjà une franchise. Les nouvelles sous-franchises se proposent depuis votre section Franchises."
+ },
+ {
+  "ctx": null,
+  "id": "Please choose a valid franchise level.",
+  "plural": null,
+  "de": "Bitte wählen Sie eine gültige Franchise-Ebene.",
+  "es": "Elija un nivel de franquicia válido.",
+  "fr": "Veuillez choisir un niveau de franchise valide."
+ },
+ {
+  "ctx": null,
+  "id": "Please select the target country for the franchise.",
+  "plural": null,
+  "de": "Bitte wählen Sie das Zielland für die Franchise.",
+  "es": "Seleccione el país de destino para la franquicia.",
+  "fr": "Veuillez sélectionner le pays cible de la franchise."
+ },
+ {
+  "ctx": null,
+  "id": "Please enter the region / state for this franchise level.",
+  "plural": null,
+  "de": "Bitte geben Sie die Region / das Bundesland für diese Franchise-Ebene an.",
+  "es": "Indique la región / el estado para este nivel de franquicia.",
+  "fr": "Veuillez indiquer la région / l'état pour ce niveau de franchise."
+ },
+ {
+  "ctx": null,
+  "id": "Please enter the city for a Micro-Franchise.",
+  "plural": null,
+  "de": "Bitte geben Sie die Stadt für eine Mikro-Franchise an.",
+  "es": "Indique la ciudad para una Micro-Franquicia.",
+  "fr": "Veuillez indiquer la ville pour une Micro-Franchise."
+ },
+ {
+  "ctx": null,
+  "id": "Please choose a valid state / region for the selected country.",
+  "plural": null,
+  "de": "Bitte wählen Sie ein gültiges Bundesland / eine gültige Region für das ausgewählte Land.",
+  "es": "Elija un estado / región válido para el país seleccionado.",
+  "fr": "Veuillez choisir un état / une région valide pour le pays sélectionné."
+ },
+ {
+  "ctx": null,
+  "id": "You already have a franchise request under review. Please wait for the decision.",
+  "plural": null,
+  "de": "Sie haben bereits eine Franchise-Anfrage in Prüfung. Bitte warten Sie auf die Entscheidung.",
+  "es": "Ya tiene una solicitud de franquicia en revisión. Espere la decisión.",
+  "fr": "Vous avez déjà une demande de franchise en cours d'examen. Veuillez attendre la décision."
+ },
+ {
+  "ctx": null,
+  "id": "No active parent franchise covers this territory yet. A higher-level franchise must be active before you can request a sub-franchise here.",
+  "plural": null,
+  "de": "Für dieses Gebiet gibt es noch keine aktive übergeordnete Franchise. Eine Franchise höherer Ebene muss aktiv sein, bevor Sie hier eine Sub-Franchise beantragen können.",
+  "es": "Todavía no hay una franquicia superior activa que cubra este territorio. Una franquicia de nivel superior debe estar activa antes de solicitar una sub-franquicia aquí.",
+  "fr": "Aucune franchise parente active ne couvre encore ce territoire. Une franchise de niveau supérieur doit être active avant de pouvoir demander une sous-franchise ici."
+ },
+ {
+  "ctx": null,
+  "id": "Your request has been submitted to %(parent)s for review.",
+  "plural": null,
+  "de": "Ihre Anfrage wurde %(parent)s zur Prüfung übermittelt.",
+  "es": "Su solicitud se ha enviado a %(parent)s para su revisión.",
+  "fr": "Votre demande a été transmise à %(parent)s pour examen."
+ },
+ {
+  "ctx": null,
+  "id": "Your franchise request has been submitted. The Platform Admin will review it shortly.",
+  "plural": null,
+  "de": "Ihre Franchise-Anfrage wurde übermittelt. Der Plattformadministrator prüft sie in Kürze.",
+  "es": "Su solicitud de franquicia se ha enviado. El Administrador de la plataforma la revisará en breve.",
+  "fr": "Votre demande de franchise a été envoyée. L'Administrateur de la plateforme l'examinera sous peu."
+ },
+ {
+  "ctx": null,
+  "id": "Rejected the franchise request from %(email)s.",
+  "plural": null,
+  "de": "Die Franchise-Anfrage von %(email)s wurde abgelehnt.",
+  "es": "Se rechazó la solicitud de franquicia de %(email)s.",
+  "fr": "La demande de franchise de %(email)s a été rejetée."
+ },
+ {
+  "ctx": null,
+  "id": "Can't approve — %(reason)s Reject this request instead.",
+  "plural": null,
+  "de": "Genehmigung nicht möglich — %(reason)s Lehnen Sie diese Anfrage stattdessen ab.",
+  "es": "No se puede aprobar: %(reason)s Rechace esta solicitud en su lugar.",
+  "fr": "Approbation impossible — %(reason)s Rejetez plutôt cette demande."
+ },
+ {
+  "ctx": null,
+  "id": "Approved %(name)s. It's now pending contract & payment — activate it once those are done.",
+  "plural": null,
+  "de": "%(name)s genehmigt. Vertrag & Zahlung stehen noch aus — aktivieren Sie sie, sobald beides erledigt ist.",
+  "es": "%(name)s aprobada. Está pendiente de contrato y pago: actívela cuando ambos estén listos.",
+  "fr": "%(name)s approuvée. Contrat et paiement sont en attente — activez-la dès que ce sera fait."
+ },
+ {
+  "ctx": null,
+  "id": "Rejected the sub-franchise request from %(email)s.",
+  "plural": null,
+  "de": "Die Sub-Franchise-Anfrage von %(email)s wurde abgelehnt.",
+  "es": "Se rechazó la solicitud de sub-franquicia de %(email)s.",
+  "fr": "La demande de sous-franchise de %(email)s a été rejetée."
+ },
+ {
+  "ctx": null,
+  "id": "Approved %(name)s. The Platform Admin will activate it after contract & payment.",
+  "plural": null,
+  "de": "%(name)s genehmigt. Der Plattformadministrator aktiviert sie nach Vertrag & Zahlung.",
+  "es": "%(name)s aprobada. El Administrador de la plataforma la activará tras el contrato y el pago.",
+  "fr": "%(name)s approuvée. L'Administrateur de la plateforme l'activera après le contrat et le paiement."
+ },
+ {
+  "ctx": null,
+  "id": "That franchise is already active.",
+  "plural": null,
+  "de": "Diese Franchise ist bereits aktiv.",
+  "es": "Esa franquicia ya está activa.",
+  "fr": "Cette franchise est déjà active."
+ },
+ {
+  "ctx": null,
+  "id": "Could not activate: an active Micro-Franchise already exists in this territory.",
+  "plural": null,
+  "de": "Aktivierung nicht möglich: In diesem Gebiet existiert bereits eine aktive Mikro-Franchise.",
+  "es": "No se pudo activar: ya existe una Micro-Franquicia activa en este territorio.",
+  "fr": "Activation impossible : une Micro-Franchise active existe déjà sur ce territoire."
+ },
+ {
+  "ctx": null,
+  "id": "%(name)s is now active.",
+  "plural": null,
+  "de": "%(name)s ist jetzt aktiv.",
+  "es": "%(name)s ya está activa.",
+  "fr": "%(name)s est maintenant active."
+ },
+ {
+  "ctx": null,
+  "id": "Only an active franchise can be suspended.",
+  "plural": null,
+  "de": "Nur eine aktive Franchise kann ausgesetzt werden.",
+  "es": "Solo se puede suspender una franquicia activa.",
+  "fr": "Seule une franchise active peut être suspendue."
+ },
+ {
+  "ctx": null,
+  "id": "%(name)s has been suspended.",
+  "plural": null,
+  "de": "%(name)s wurde ausgesetzt.",
+  "es": "%(name)s ha sido suspendida.",
+  "fr": "%(name)s a été suspendue."
+ },
+ {
+  "ctx": null,
+  "id": "Only a suspended franchise can be reactivated.",
+  "plural": null,
+  "de": "Nur eine ausgesetzte Franchise kann reaktiviert werden.",
+  "es": "Solo se puede reactivar una franquicia suspendida.",
+  "fr": "Seule une franchise suspendue peut être réactivée."
+ },
+ {
+  "ctx": null,
+  "id": "Cannot reactivate: a Micro-Franchise already occupies this territory.",
+  "plural": null,
+  "de": "Reaktivierung nicht möglich: Eine Mikro-Franchise belegt dieses Gebiet bereits.",
+  "es": "No se puede reactivar: una Micro-Franquicia ya ocupa este territorio.",
+  "fr": "Réactivation impossible : une Micro-Franchise occupe déjà ce territoire."
+ },
+ {
+  "ctx": null,
+  "id": "%(name)s has been reactivated.",
+  "plural": null,
+  "de": "%(name)s wurde reaktiviert.",
+  "es": "%(name)s ha sido reactivada.",
+  "fr": "%(name)s a été réactivée."
+ },
+ {
+  "ctx": null,
+  "id": "A Micro-Franchise can't manage consultants.",
+  "plural": null,
+  "de": "Eine Mikro-Franchise kann keine Berater verwalten.",
+  "es": "Una Micro-Franquicia no puede gestionar consultores.",
+  "fr": "Une Micro-Franchise ne peut pas gérer de consultants."
+ },
+ {
+  "ctx": null,
+  "id": "This franchise is suspended — you can't assign consultants while suspended.",
+  "plural": null,
+  "de": "Diese Franchise ist ausgesetzt — solange sie ausgesetzt ist, können Sie keine Berater zuweisen.",
+  "es": "Esta franquicia está suspendida: no puede asignar consultores mientras lo esté.",
+  "fr": "Cette franchise est suspendue — vous ne pouvez pas affecter de consultants pendant la suspension."
+ },
+ {
+  "ctx": null,
+  "id": "You can only assign consultants under an active franchise.",
+  "plural": null,
+  "de": "Sie können Berater nur unter einer aktiven Franchise zuweisen.",
+  "es": "Solo puede asignar consultores bajo una franquicia activa.",
+  "fr": "Vous ne pouvez affecter des consultants que sous une franchise active."
+ },
+ {
+  "ctx": null,
+  "id": "No active user found with that email.",
+  "plural": null,
+  "de": "Kein aktiver Benutzer mit dieser E-Mail-Adresse gefunden.",
+  "es": "No se encontró ningún usuario activo con ese correo electrónico.",
+  "fr": "Aucun utilisateur actif trouvé avec cet e-mail."
+ },
+ {
+  "ctx": null,
+  "id": "You can't assign yourself as a consultant.",
+  "plural": null,
+  "de": "Sie können sich nicht selbst als Berater zuweisen.",
+  "es": "No puede asignarse a sí mismo como consultor.",
+  "fr": "Vous ne pouvez pas vous affecter vous-même comme consultant."
+ },
+ {
+  "ctx": null,
+  "id": "That consultant is already assigned to this franchise.",
+  "plural": null,
+  "de": "Dieser Berater ist dieser Franchise bereits zugewiesen.",
+  "es": "Ese consultor ya está asignado a esta franquicia.",
+  "fr": "Ce consultant est déjà affecté à cette franchise."
+ },
+ {
+  "ctx": null,
+  "id": "Assigned %(email)s as a consultant.",
+  "plural": null,
+  "de": "%(email)s wurde als Berater zugewiesen.",
+  "es": "Se asignó a %(email)s como consultor.",
+  "fr": "%(email)s a été affecté comme consultant."
+ },
+ {
+  "ctx": null,
+  "id": "Consultant removed.",
+  "plural": null,
+  "de": "Berater entfernt.",
+  "es": "Consultor eliminado.",
+  "fr": "Consultant retiré."
+ },
+ {
+  "ctx": null,
+  "id": "You can only add sub-franchises under an active franchise.",
+  "plural": null,
+  "de": "Sie können Sub-Franchises nur unter einer aktiven Franchise anlegen.",
+  "es": "Solo puede añadir sub-franquicias bajo una franquicia activa.",
+  "fr": "Vous ne pouvez ajouter des sous-franchises que sous une franchise active."
+ },
+ {
+  "ctx": null,
+  "id": "Please choose a valid sub-franchise level.",
+  "plural": null,
+  "de": "Bitte wählen Sie eine gültige Sub-Franchise-Ebene.",
+  "es": "Elija un nivel de sub-franquicia válido.",
+  "fr": "Veuillez choisir un niveau de sous-franchise valide."
+ },
+ {
+  "ctx": null,
+  "id": "A sub-franchise must sit below the parent franchise's level.",
+  "plural": null,
+  "de": "Eine Sub-Franchise muss unterhalb der Ebene der übergeordneten Franchise liegen.",
+  "es": "Una sub-franquicia debe situarse por debajo del nivel de la franquicia superior.",
+  "fr": "Une sous-franchise doit se situer sous le niveau de la franchise parente."
+ },
+ {
+  "ctx": null,
+  "id": "Please enter the region / state for this sub-franchise.",
+  "plural": null,
+  "de": "Bitte geben Sie die Region / das Bundesland für diese Sub-Franchise an.",
+  "es": "Indique la región / el estado para esta sub-franquicia.",
+  "fr": "Veuillez indiquer la région / l'état pour cette sous-franchise."
+ },
+ {
+  "ctx": null,
+  "id": "The sub-franchise territory must be inside the parent franchise's territory.",
+  "plural": null,
+  "de": "Das Gebiet der Sub-Franchise muss innerhalb des Gebiets der übergeordneten Franchise liegen.",
+  "es": "El territorio de la sub-franquicia debe estar dentro del territorio de la franquicia superior.",
+  "fr": "Le territoire de la sous-franchise doit se trouver à l'intérieur de celui de la franchise parente."
+ },
+ {
+  "ctx": null,
+  "id": "Please enter the email of the sub-franchise owner.",
+  "plural": null,
+  "de": "Bitte geben Sie die E-Mail-Adresse des Inhabers der Sub-Franchise an.",
+  "es": "Indique el correo electrónico del titular de la sub-franquicia.",
+  "fr": "Veuillez indiquer l'e-mail du titulaire de la sous-franchise."
+ },
+ {
+  "ctx": null,
+  "id": "No active user found with that email. The sub-franchise owner must already have an account.",
+  "plural": null,
+  "de": "Kein aktiver Benutzer mit dieser E-Mail-Adresse gefunden. Der Inhaber der Sub-Franchise muss bereits ein Konto haben.",
+  "es": "No se encontró ningún usuario activo con ese correo electrónico. El titular de la sub-franquicia debe tener ya una cuenta.",
+  "fr": "Aucun utilisateur actif trouvé avec cet e-mail. Le titulaire de la sous-franchise doit déjà avoir un compte."
+ },
+ {
+  "ctx": null,
+  "id": "%(email)s already owns a franchise. A user can hold only one franchise at a time.",
+  "plural": null,
+  "de": "%(email)s besitzt bereits eine Franchise. Ein Benutzer kann nur eine Franchise gleichzeitig halten.",
+  "es": "%(email)s ya posee una franquicia. Un usuario solo puede tener una franquicia a la vez.",
+  "fr": "%(email)s détient déjà une franchise. Un utilisateur ne peut détenir qu'une seule franchise à la fois."
+ },
+ {
+  "ctx": null,
+  "id": "Please enter the legal / company name for the sub-franchise.",
+  "plural": null,
+  "de": "Bitte geben Sie den rechtlichen Namen / Firmennamen für die Sub-Franchise an.",
+  "es": "Indique el nombre legal / de la empresa para la sub-franquicia.",
+  "fr": "Veuillez indiquer la raison sociale / le nom de l'entreprise pour la sous-franchise."
+ },
+ {
+  "ctx": null,
+  "id": "Please enter the contact person for the sub-franchise.",
+  "plural": null,
+  "de": "Bitte geben Sie die Kontaktperson für die Sub-Franchise an.",
+  "es": "Indique la persona de contacto para la sub-franquicia.",
+  "fr": "Veuillez indiquer la personne de contact pour la sous-franchise."
+ },
+ {
+  "ctx": null,
+  "id": "Proposed %(name)s under %(parent)s. The Platform Admin will activate it after contract & payment.",
+  "plural": null,
+  "de": "%(name)s unter %(parent)s vorgeschlagen. Der Plattformadministrator aktiviert sie nach Vertrag & Zahlung.",
+  "es": "Se propuso %(name)s bajo %(parent)s. El Administrador de la plataforma la activará tras el contrato y el pago.",
+  "fr": "%(name)s proposée sous %(parent)s. L'Administrateur de la plateforme l'activera après le contrat et le paiement."
+ },
+ {
+  "ctx": null,
+  "id": "This franchise was removed by the Platform Admin.",
+  "plural": null,
+  "de": "Diese Franchise wurde vom Plattformadministrator entfernt.",
+  "es": "Esta franquicia fue eliminada por el Administrador de la plataforma.",
+  "fr": "Cette franchise a été supprimée par l'Administrateur de la plateforme."
+ },
+ {
+  "ctx": null,
+  "id": "%(company)s must be certified by a consultant before you can select a paid plan for it.",
+  "plural": null,
+  "de": "%(company)s muss von einem Berater zertifiziert werden, bevor Sie einen kostenpflichtigen Plan dafür auswählen können.",
+  "es": "%(company)s debe ser certificada por un consultor antes de que pueda seleccionar un plan de pago para ella.",
+  "fr": "%(company)s doit être certifiée par un consultant avant que vous puissiez sélectionner un forfait payant."
+ },
+ {
+  "ctx": null,
+  "id": "Please choose which company this plan is for.",
+  "plural": null,
+  "de": "Bitte wählen Sie, für welches Unternehmen dieser Plan gilt.",
+  "es": "Elija para qué empresa es este plan.",
+  "fr": "Veuillez choisir l'entreprise concernée par ce forfait."
+ },
+ {
+  "ctx": null,
+  "id": "You can select a paid plan for %(company)s only after it has been certified by a consultant.",
+  "plural": null,
+  "de": "Sie können einen kostenpflichtigen Plan für %(company)s erst auswählen, nachdem das Unternehmen von einem Berater zertifiziert wurde.",
+  "es": "Solo puede seleccionar un plan de pago para %(company)s después de que un consultor la haya certificado.",
+  "fr": "Vous ne pouvez sélectionner un forfait payant pour %(company)s qu'après sa certification par un consultant."
+ },
+ {
+  "ctx": null,
+  "id": "The upgrade to the %(plan)s plan for %(company)s is already pending admin approval.",
+  "plural": null,
+  "de": "Das Upgrade auf den Plan %(plan)s für %(company)s wartet bereits auf die Genehmigung durch den Administrator.",
+  "es": "La mejora al plan %(plan)s para %(company)s ya está pendiente de aprobación del administrador.",
+  "fr": "Le passage au forfait %(plan)s pour %(company)s est déjà en attente d'approbation par l'administrateur."
+ },
+ {
+  "ctx": null,
+  "id": "%(company)s is already on the Free plan.",
+  "plural": null,
+  "de": "%(company)s nutzt bereits den kostenlosen Plan.",
+  "es": "%(company)s ya está en el plan Gratis.",
+  "fr": "%(company)s utilise déjà le forfait gratuit."
+ },
+ {
+  "ctx": null,
+  "id": "%(company)s has been moved to the Free plan.",
+  "plural": null,
+  "de": "%(company)s wurde auf den kostenlosen Plan umgestellt.",
+  "es": "%(company)s se ha cambiado al plan Gratis.",
+  "fr": "%(company)s a été basculée sur le forfait gratuit."
+ },
+ {
+  "ctx": null,
+  "id": "%(company)s is already on the %(plan)s plan.",
+  "plural": null,
+  "de": "%(company)s nutzt bereits den Plan %(plan)s.",
+  "es": "%(company)s ya está en el plan %(plan)s.",
+  "fr": "%(company)s utilise déjà le forfait %(plan)s."
+ },
+ {
+  "ctx": null,
+  "id": "Commissions",
+  "plural": null,
+  "de": "Provisionen",
+  "es": "Comisiones",
+  "fr": "Commissions"
+ },
+ {
+  "ctx": null,
+  "id": "Database error while searching listings",
+  "plural": null,
+  "de": "Datenbankfehler bei der Suche nach Inseraten",
+  "es": "Error de base de datos al buscar anuncios",
+  "fr": "Erreur de base de données lors de la recherche d'annonces"
+ },
+ {
+  "ctx": null,
+  "id": "Unable to search listings",
+  "plural": null,
+  "de": "Inserate konnten nicht durchsucht werden",
+  "es": "No se pueden buscar anuncios",
+  "fr": "Impossible de rechercher des annonces"
+ },
+ {
+  "ctx": null,
+  "id": "Only Business Users can create listings.",
+  "plural": null,
+  "de": "Nur Geschäftsbenutzer können Inserate erstellen.",
+  "es": "Solo los Usuarios empresariales pueden crear anuncios.",
+  "fr": "Seuls les Utilisateurs professionnels peuvent créer des annonces."
+ },
+ {
+  "ctx": null,
+  "id": "You can only create listings for a company you own.",
+  "plural": null,
+  "de": "Sie können Inserate nur für ein Unternehmen erstellen, das Ihnen gehört.",
+  "es": "Solo puede crear anuncios para una empresa de su propiedad.",
+  "fr": "Vous ne pouvez créer des annonces que pour une entreprise qui vous appartient."
+ },
+ {
+  "ctx": null,
+  "id": "You do not have access to this module.",
+  "plural": null,
+  "de": "Sie haben keinen Zugriff auf dieses Modul.",
+  "es": "No tiene acceso a este módulo.",
+  "fr": "Vous n'avez pas accès à ce module."
+ },
+ {
+  "ctx": null,
+  "id": "You are not allowed to publish to this visibility scope.",
+  "plural": null,
+  "de": "Sie dürfen nicht in diesem Sichtbarkeitsbereich veröffentlichen.",
+  "es": "No tiene permiso para publicar en este ámbito de visibilidad.",
+  "fr": "Vous n'êtes pas autorisé à publier dans cette portée de visibilité."
+ },
+ {
+  "ctx": null,
+  "id": "Database error while creating listing",
+  "plural": null,
+  "de": "Datenbankfehler beim Erstellen des Inserats",
+  "es": "Error de base de datos al crear el anuncio",
+  "fr": "Erreur de base de données lors de la création de l'annonce"
+ },
+ {
+  "ctx": null,
+  "id": "Unable to create listing",
+  "plural": null,
+  "de": "Inserat konnte nicht erstellt werden",
+  "es": "No se puede crear el anuncio",
+  "fr": "Impossible de créer l'annonce"
+ },
+ {
+  "ctx": null,
+  "id": "Listing not found",
+  "plural": null,
+  "de": "Inserat nicht gefunden",
+  "es": "Anuncio no encontrado",
+  "fr": "Annonce introuvable"
+ },
+ {
+  "ctx": null,
+  "id": "You cannot edit another user's listing.",
+  "plural": null,
+  "de": "Sie können das Inserat eines anderen Benutzers nicht bearbeiten.",
+  "es": "No puede editar el anuncio de otro usuario.",
+  "fr": "Vous ne pouvez pas modifier l'annonce d'un autre utilisateur."
+ },
+ {
+  "ctx": null,
+  "id": "Suspended listing cannot be edited by Business User.",
+  "plural": null,
+  "de": "Ein ausgesetztes Inserat kann von einem Geschäftsbenutzer nicht bearbeitet werden.",
+  "es": "Un anuncio suspendido no puede ser editado por un Usuario empresarial.",
+  "fr": "Une annonce suspendue ne peut pas être modifiée par un Utilisateur professionnel."
+ },
+ {
+  "ctx": null,
+  "id": "Database error while updating listing",
+  "plural": null,
+  "de": "Datenbankfehler beim Aktualisieren des Inserats",
+  "es": "Error de base de datos al actualizar el anuncio",
+  "fr": "Erreur de base de données lors de la mise à jour de l'annonce"
+ },
+ {
+  "ctx": null,
+  "id": "You cannot modify another user's listing.",
+  "plural": null,
+  "de": "Sie können das Inserat eines anderen Benutzers nicht ändern.",
+  "es": "No puede modificar el anuncio de otro usuario.",
+  "fr": "Vous ne pouvez pas modifier l'annonce d'un autre utilisateur."
+ },
+ {
+  "ctx": null,
+  "id": "Suspended listing cannot be changed by Business User.",
+  "plural": null,
+  "de": "Ein ausgesetztes Inserat kann von einem Geschäftsbenutzer nicht geändert werden.",
+  "es": "Un anuncio suspendido no puede ser cambiado por un Usuario empresarial.",
+  "fr": "Une annonce suspendue ne peut pas être changée par un Utilisateur professionnel."
+ },
+ {
+  "ctx": null,
+  "id": "I am interested in this listing and would like to start communication through FONTESIN.",
+  "plural": null,
+  "de": "Ich interessiere mich für dieses Inserat und möchte die Kommunikation über FONTESIN aufnehmen.",
+  "es": "Me interesa este anuncio y me gustaría iniciar la comunicación a través de FONTESIN.",
+  "fr": "Cette annonce m'intéresse et je souhaite entamer la communication via FONTESIN."
+ },
+ {
+  "ctx": null,
+  "id": "Reaction is allowed only for active listings.",
+  "plural": null,
+  "de": "Reaktionen sind nur bei aktiven Inseraten möglich.",
+  "es": "Solo se permiten reacciones en anuncios activos.",
+  "fr": "Les réactions ne sont autorisées que pour les annonces actives."
+ },
+ {
+  "ctx": null,
+  "id": "You cannot react to your own listing.",
+  "plural": null,
+  "de": "Sie können nicht auf Ihr eigenes Inserat reagieren.",
+  "es": "No puede reaccionar a su propio anuncio.",
+  "fr": "Vous ne pouvez pas réagir à votre propre annonce."
+ },
+ {
+  "ctx": null,
+  "id": "You have already reacted to this listing.",
+  "plural": null,
+  "de": "Sie haben auf dieses Inserat bereits reagiert.",
+  "es": "Ya ha reaccionado a este anuncio.",
+  "fr": "Vous avez déjà réagi à cette annonce."
+ },
+ {
+  "ctx": null,
+  "id": "New reaction to your listing",
+  "plural": null,
+  "de": "Neue Reaktion auf Ihr Inserat",
+  "es": "Nueva reacción a su anuncio",
+  "fr": "Nouvelle réaction à votre annonce"
+ },
+ {
+  "ctx": null,
+  "id": "%(title)s received a new reaction.",
+  "plural": null,
+  "de": "%(title)s hat eine neue Reaktion erhalten.",
+  "es": "%(title)s recibió una nueva reacción.",
+  "fr": "%(title)s a reçu une nouvelle réaction."
+ },
+ {
+  "ctx": null,
+  "id": "Suspension reason is required.",
+  "plural": null,
+  "de": "Ein Grund für die Aussetzung ist erforderlich.",
+  "es": "Se requiere un motivo de suspensión.",
+  "fr": "Un motif de suspension est requis."
+ },
+ {
+  "ctx": null,
+  "id": "Your listing was suspended",
+  "plural": null,
+  "de": "Ihr Inserat wurde ausgesetzt",
+  "es": "Su anuncio fue suspendido",
+  "fr": "Votre annonce a été suspendue"
+ },
+ {
+  "ctx": null,
+  "id": "%(title)s was suspended. Reason: %(reason)s",
+  "plural": null,
+  "de": "%(title)s wurde ausgesetzt. Grund: %(reason)s",
+  "es": "%(title)s fue suspendido. Motivo: %(reason)s",
+  "fr": "%(title)s a été suspendue. Motif : %(reason)s"
+ },
+ {
+  "ctx": null,
+  "id": "Title must be between 3 and 100 characters.",
+  "plural": null,
+  "de": "Der Titel muss zwischen 3 und 100 Zeichen lang sein.",
+  "es": "El título debe tener entre 3 y 100 caracteres.",
+  "fr": "Le titre doit comporter entre 3 et 100 caractères."
+ },
+ {
+  "ctx": null,
+  "id": "Title must not contain emojis.",
+  "plural": null,
+  "de": "Der Titel darf keine Emojis enthalten.",
+  "es": "El título no debe contener emojis.",
+  "fr": "Le titre ne doit pas contenir d'émojis."
+ },
+ {
+  "ctx": null,
+  "id": "Description must be between 20 and 200 characters.",
+  "plural": null,
+  "de": "Die Beschreibung muss zwischen 20 und 200 Zeichen lang sein.",
+  "es": "La descripción debe tener entre 20 y 200 caracteres.",
+  "fr": "La description doit comporter entre 20 et 200 caractères."
+ },
+ {
+  "ctx": null,
+  "id": "Description must not contain emojis.",
+  "plural": null,
+  "de": "Die Beschreibung darf keine Emojis enthalten.",
+  "es": "La descripción no debe contener emojis.",
+  "fr": "La description ne doit pas contenir d'émojis."
+ },
+ {
+  "ctx": null,
+  "id": "Certification text must not exceed 100 characters.",
+  "plural": null,
+  "de": "Der Zertifizierungstext darf 100 Zeichen nicht überschreiten.",
+  "es": "El texto de certificación no debe superar los 100 caracteres.",
+  "fr": "Le texte de certification ne doit pas dépasser 100 caractères."
+ },
+ {
+  "ctx": null,
+  "id": "At least 1 and maximum 20 keywords are required.",
+  "plural": null,
+  "de": "Es sind mindestens 1 und maximal 20 Schlüsselwörter erforderlich.",
+  "es": "Se requieren como mínimo 1 y como máximo 20 palabras clave.",
+  "fr": "Au moins 1 et au maximum 20 mots-clés sont requis."
+ },
+ {
+  "ctx": null,
+  "id": "Price must be positive.",
+  "plural": null,
+  "de": "Der Preis muss positiv sein.",
+  "es": "El precio debe ser positivo.",
+  "fr": "Le prix doit être positif."
+ },
+ {
+  "ctx": null,
+  "id": "Unit must contain digits only.",
+  "plural": null,
+  "de": "Die Einheit darf nur Ziffern enthalten.",
+  "es": "La unidad solo debe contener dígitos.",
+  "fr": "L'unité ne doit contenir que des chiffres."
+ },
+ {
+  "ctx": null,
+  "id": "Minimum quantity must contain digits only.",
+  "plural": null,
+  "de": "Die Mindestmenge darf nur Ziffern enthalten.",
+  "es": "La cantidad mínima solo debe contener dígitos.",
+  "fr": "La quantité minimale ne doit contenir que des chiffres."
+ },
+ {
+  "ctx": null,
+  "id": "NACE / ISIC classification is required.",
+  "plural": null,
+  "de": "Eine NACE-/ISIC-Klassifizierung ist erforderlich.",
+  "es": "La clasificación NACE / ISIC es obligatoria.",
+  "fr": "La classification NACE / ISIC est obligatoire."
+ },
+ {
+  "ctx": null,
+  "id": "Visibility scope is required.",
+  "plural": null,
+  "de": "Ein Sichtbarkeitsbereich ist erforderlich.",
+  "es": "El ámbito de visibilidad es obligatorio.",
+  "fr": "La portée de visibilité est obligatoire."
+ },
+ {
+  "ctx": null,
+  "id": "Currency is required when price is filled.",
+  "plural": null,
+  "de": "Eine Währung ist erforderlich, wenn ein Preis angegeben ist.",
+  "es": "La divisa es obligatoria cuando se indica un precio.",
+  "fr": "La devise est obligatoire lorsque le prix est renseigné."
+ },
+ {
+  "ctx": null,
+  "id": "Product image is allowed only for Product Offer.",
+  "plural": null,
+  "de": "Ein Produktbild ist nur bei einem Produktangebot erlaubt.",
+  "es": "La imagen del producto solo se permite en una Oferta de producto.",
+  "fr": "L'image du produit n'est autorisée que pour une Offre de produit."
+ },
+ {
+  "ctx": null,
+  "id": "Demand must not contain product image.",
+  "plural": null,
+  "de": "Eine Nachfrage darf kein Produktbild enthalten.",
+  "es": "Una demanda no debe contener imagen de producto.",
+  "fr": "Une demande ne doit pas contenir d'image de produit."
+ },
+ {
+  "ctx": null,
+  "id": "Demand must not contain video URL in MVP.",
+  "plural": null,
+  "de": "Eine Nachfrage darf im MVP keine Video-URL enthalten.",
+  "es": "Una demanda no debe contener URL de vídeo en el MVP.",
+  "fr": "Une demande ne doit pas contenir d'URL vidéo dans le MVP."
+ },
+ {
+  "ctx": null,
+  "id": "Demand must not contain certification image in MVP.",
+  "plural": null,
+  "de": "Eine Nachfrage darf im MVP kein Zertifizierungsbild enthalten.",
+  "es": "Una demanda no debe contener imagen de certificación en el MVP.",
+  "fr": "Une demande ne doit pas contenir d'image de certification dans le MVP."
+ },
+ {
+  "ctx": null,
+  "id": "%(label)s is required.",
+  "plural": null,
+  "de": "%(label)s ist erforderlich.",
+  "es": "%(label)s es obligatorio.",
+  "fr": "%(label)s est obligatoire."
+ },
+ {
+  "ctx": null,
+  "id": "Module not found.",
+  "plural": null,
+  "de": "Modul nicht gefunden.",
+  "es": "Módulo no encontrado.",
+  "fr": "Module introuvable."
+ },
+ {
+  "ctx": null,
+  "id": "Please correct the errors below.",
+  "plural": null,
+  "de": "Bitte korrigieren Sie die folgenden Fehler.",
+  "es": "Corrija los errores que se indican a continuación.",
+  "fr": "Veuillez corriger les erreurs ci-dessous."
+ },
+ {
+  "ctx": null,
+  "id": "Not your company.",
+  "plural": null,
+  "de": "Nicht Ihr Unternehmen.",
+  "es": "No es su empresa.",
+  "fr": "Ce n'est pas votre entreprise."
+ },
+ {
+  "ctx": null,
+  "id": "Listing saved.",
+  "plural": null,
+  "de": "Inserat gespeichert.",
+  "es": "Anuncio guardado.",
+  "fr": "Annonce enregistrée."
+ },
+ {
+  "ctx": null,
+  "id": "Suspended listing cannot be edited.",
+  "plural": null,
+  "de": "Ein ausgesetztes Inserat kann nicht bearbeitet werden.",
+  "es": "Un anuncio suspendido no se puede editar.",
+  "fr": "Une annonce suspendue ne peut pas être modifiée."
+ },
+ {
+  "ctx": null,
+  "id": "Listing updated.",
+  "plural": null,
+  "de": "Inserat aktualisiert.",
+  "es": "Anuncio actualizado.",
+  "fr": "Annonce mise à jour."
+ },
+ {
+  "ctx": null,
+  "id": "My Listings",
+  "plural": null,
+  "de": "Meine Inserate",
+  "es": "Mis anuncios",
+  "fr": "Mes annonces"
+ },
+ {
+  "ctx": null,
+  "id": "My Offers",
+  "plural": null,
+  "de": "Meine Angebote",
+  "es": "Mis ofertas",
+  "fr": "Mes offres"
+ },
+ {
+  "ctx": null,
+  "id": "My Demands",
+  "plural": null,
+  "de": "Meine Nachfragen",
+  "es": "Mis demandas",
+  "fr": "Mes demandes"
+ },
+ {
+  "ctx": null,
+  "id": "Permission denied.",
+  "plural": null,
+  "de": "Zugriff verweigert.",
+  "es": "Permiso denegado.",
+  "fr": "Autorisation refusée."
+ },
+ {
+  "ctx": null,
+  "id": "Invalid status.",
+  "plural": null,
+  "de": "Ungültiger Status.",
+  "es": "Estado no válido.",
+  "fr": "Statut non valide."
+ },
+ {
+  "ctx": null,
+  "id": "Reaction status updated.",
+  "plural": null,
+  "de": "Reaktionsstatus aktualisiert.",
+  "es": "Estado de la reacción actualizado.",
+  "fr": "Statut de la réaction mis à jour."
+ },
+ {
+  "ctx": null,
+  "id": "Suspended listing cannot be changed.",
+  "plural": null,
+  "de": "Ein ausgesetztes Inserat kann nicht geändert werden.",
+  "es": "Un anuncio suspendido no se puede cambiar.",
+  "fr": "Une annonce suspendue ne peut pas être changée."
+ },
+ {
+  "ctx": null,
+  "id": "Status updated.",
+  "plural": null,
+  "de": "Status aktualisiert.",
+  "es": "Estado actualizado.",
+  "fr": "Statut mis à jour."
+ },
+ {
+  "ctx": null,
+  "id": "Your interest was sent.",
+  "plural": null,
+  "de": "Ihr Interesse wurde gesendet.",
+  "es": "Se envió su interés.",
+  "fr": "Votre marque d'intérêt a été envoyée."
+ },
+ {
+  "ctx": null,
+  "id": "Suspension reason is required (min 5 characters).",
+  "plural": null,
+  "de": "Ein Grund für die Aussetzung ist erforderlich (min. 5 Zeichen).",
+  "es": "Se requiere un motivo de suspensión (mín. 5 caracteres).",
+  "fr": "Un motif de suspension est requis (5 caractères min.)."
+ },
+ {
+  "ctx": null,
+  "id": "Listing suspended.",
+  "plural": null,
+  "de": "Inserat ausgesetzt.",
+  "es": "Anuncio suspendido.",
+  "fr": "Annonce suspendue."
+ },
+ {
+  "ctx": null,
+  "id": "Listing reactivated.",
+  "plural": null,
+  "de": "Inserat reaktiviert.",
+  "es": "Anuncio reactivado.",
+  "fr": "Annonce réactivée."
+ },
+ {
+  "ctx": "auth.login",
+  "id": "By logging in, you agree to our <a href=\\\"#\\\" style=\\\"color:var(--primary);\\\">Terms of Service</a> and <a href=\\\"#\\\" style=\\\"color:var(--primary);\\\">Privacy Policy</a>.",
+  "plural": null,
+  "de": "Mit der Anmeldung stimmen Sie unseren <a href=\\\"#\\\" style=\\\"color:var(--primary);\\\">Nutzungsbedingungen</a> und unserer <a href=\\\"#\\\" style=\\\"color:var(--primary);\\\">Datenschutzerklärung</a> zu.",
+  "es": "Al iniciar sesión, acepta nuestros <a href=\\\"#\\\" style=\\\"color:var(--primary);\\\">Términos del servicio</a> y nuestra <a href=\\\"#\\\" style=\\\"color:var(--primary);\\\">Política de privacidad</a>.",
+  "fr": "En vous connectant, vous acceptez nos <a href=\\\"#\\\" style=\\\"color:var(--primary);\\\">Conditions d'utilisation</a> et notre <a href=\\\"#\\\" style=\\\"color:var(--primary);\\\">Politique de confidentialité</a>."
+ },
+ {
+  "ctx": "companies",
+  "id": "Switch company",
+  "plural": null,
+  "de": "Unternehmen wechseln",
+  "es": "Cambiar de empresa",
+  "fr": "Changer d'entreprise"
+ },
+ {
+  "ctx": "companies",
+  "id": "Active company",
+  "plural": null,
+  "de": "Aktives Unternehmen",
+  "es": "Empresa activa",
+  "fr": "Entreprise active"
+ },
+ {
+  "ctx": "nav",
+  "id": "Notifications",
+  "plural": null,
+  "de": "Benachrichtigungen",
+  "es": "Notificaciones",
+  "fr": "Notifications"
+ },
+ {
+  "ctx": null,
+  "id": "%(count)s new",
+  "plural": null,
+  "de": "%(count)s neu",
+  "es": "%(count)s nuevas",
+  "fr": "%(count)s nouvelles"
+ },
+ {
+  "ctx": "nav",
+  "id": "ago",
+  "plural": null,
+  "de": "her",
+  "es": "hace",
+  "fr": "il y a"
+ },
+ {
+  "ctx": "nav",
+  "id": "No notifications yet.",
+  "plural": null,
+  "de": "Noch keine Benachrichtigungen.",
+  "es": "Aún no hay notificaciones.",
+  "fr": "Aucune notification pour le moment."
+ },
+ {
+  "ctx": "nav",
+  "id": "View all notifications",
+  "plural": null,
+  "de": "Alle Benachrichtigungen anzeigen",
+  "es": "Ver todas las notificaciones",
+  "fr": "Voir toutes les notifications"
+ },
+ {
+  "ctx": "sidebar",
+  "id": "Professional Modules",
+  "plural": null,
+  "de": "Professionelle Module",
+  "es": "Módulos profesionales",
+  "fr": "Modules professionnels"
+ },
+ {
+  "ctx": "sidebar",
+  "id": "Products & Services",
+  "plural": null,
+  "de": "Produkte & Dienstleistungen",
+  "es": "Productos y servicios",
+  "fr": "Produits et services"
+ },
+ {
+  "ctx": "sidebar",
+  "id": "Browse Listings",
+  "plural": null,
+  "de": "Inserate durchsuchen",
+  "es": "Explorar anuncios",
+  "fr": "Parcourir les annonces"
+ },
+ {
+  "ctx": "sidebar",
+  "id": "Add Listing",
+  "plural": null,
+  "de": "Inserat hinzufügen",
+  "es": "Añadir anuncio",
+  "fr": "Ajouter une annonce"
+ },
+ {
+  "ctx": "sidebar",
+  "id": "My Listings",
+  "plural": null,
+  "de": "Meine Inserate",
+  "es": "Mis anuncios",
+  "fr": "Mes annonces"
+ },
+ {
+  "ctx": "sidebar",
+  "id": "My Offers",
+  "plural": null,
+  "de": "Meine Angebote",
+  "es": "Mis ofertas",
+  "fr": "Mes offres"
+ },
+ {
+  "ctx": "sidebar",
+  "id": "My Demands",
+  "plural": null,
+  "de": "Meine Nachfragen",
+  "es": "Mis demandas",
+  "fr": "Mes demandes"
+ },
+ {
+  "ctx": "sidebar",
+  "id": "Reactions Received",
+  "plural": null,
+  "de": "Erhaltene Reaktionen",
+  "es": "Reacciones recibidas",
+  "fr": "Réactions reçues"
+ },
+ {
+  "ctx": "sidebar",
+  "id": "All Listings",
+  "plural": null,
+  "de": "Alle Inserate",
+  "es": "Todos los anuncios",
+  "fr": "Toutes les annonces"
+ },
+ {
+  "ctx": "sidebar",
+  "id": "Request a Franchise",
+  "plural": null,
+  "de": "Franchise anfragen",
+  "es": "Solicitar una franquicia",
+  "fr": "Demander une franchise"
+ },
+ {
+  "ctx": "sidebar",
+  "id": "Manage Franchises",
+  "plural": null,
+  "de": "Franchises verwalten",
+  "es": "Gestionar franquicias",
+  "fr": "Gérer les franchises"
+ },
+ {
+  "ctx": null,
+  "id": "%(count)s pending sub-franchise requests",
+  "plural": null,
+  "de": "%(count)s ausstehende Sub-Franchise-Anfragen",
+  "es": "%(count)s solicitudes de sub-franquicia pendientes",
+  "fr": "%(count)s demandes de sous-franchise en attente"
+ },
+ {
+  "ctx": "sidebar",
+  "id": "My Franchises",
+  "plural": null,
+  "de": "Meine Franchises",
+  "es": "Mis franquicias",
+  "fr": "Mes franchises"
+ },
+ {
+  "ctx": "sidebar",
+  "id": "Sub-Franchise Requests",
+  "plural": null,
+  "de": "Sub-Franchise-Anfragen",
+  "es": "Solicitudes de sub-franquicia",
+  "fr": "Demandes de sous-franchise"
+ },
+ {
+  "ctx": "sidebar",
+  "id": "Franchise Tree",
+  "plural": null,
+  "de": "Franchise-Baum",
+  "es": "Árbol de franquicias",
+  "fr": "Arborescence des franchises"
+ },
+ {
+  "ctx": "sidebar",
+  "id": "Add Sub-Franchise",
+  "plural": null,
+  "de": "Sub-Franchise hinzufügen",
+  "es": "Añadir sub-franquicia",
+  "fr": "Ajouter une sous-franchise"
+ },
+ {
+  "ctx": "sidebar",
+  "id": "Consultants",
+  "plural": null,
+  "de": "Berater",
+  "es": "Consultores",
+  "fr": "Consultants"
+ },
+ {
+  "ctx": "sidebar",
+  "id": "Certified Companies",
+  "plural": null,
+  "de": "Zertifizierte Unternehmen",
+  "es": "Empresas certificadas",
+  "fr": "Entreprises certifiées"
+ },
+ {
+  "ctx": "sidebar",
+  "id": "Sales / Plans",
+  "plural": null,
+  "de": "Verkäufe / Pläne",
+  "es": "Ventas / Planes",
+  "fr": "Ventes / Forfaits"
+ },
+ {
+  "ctx": "sidebar",
+  "id": "Franchise Requests",
+  "plural": null,
+  "de": "Franchise-Anfragen",
+  "es": "Solicitudes de franquicia",
+  "fr": "Demandes de franchise"
+ },
+ {
+  "ctx": null,
+  "id": "%(count)s pending franchise requests",
+  "plural": null,
+  "de": "%(count)s ausstehende Franchise-Anfragen",
+  "es": "%(count)s solicitudes de franquicia pendientes",
+  "fr": "%(count)s demandes de franchise en attente"
+ },
+ {
+  "ctx": "region",
+  "id": "Czech Republic",
+  "plural": null,
+  "de": "Tschechien",
+  "es": "República Checa",
+  "fr": "République tchèque"
+ },
+ {
+  "ctx": "region",
+  "id": "Germany",
+  "plural": null,
+  "de": "Deutschland",
+  "es": "Alemania",
+  "fr": "Allemagne"
+ },
+ {
+  "ctx": "region",
+  "id": "Austria",
+  "plural": null,
+  "de": "Österreich",
+  "es": "Austria",
+  "fr": "Autriche"
+ },
+ {
+  "ctx": "region",
+  "id": "Switzerland",
+  "plural": null,
+  "de": "Schweiz",
+  "es": "Suiza",
+  "fr": "Suisse"
+ },
+ {
+  "ctx": "region",
+  "id": "Poland",
+  "plural": null,
+  "de": "Polen",
+  "es": "Polonia",
+  "fr": "Pologne"
+ },
+ {
+  "ctx": "region",
+  "id": "France",
+  "plural": null,
+  "de": "Frankreich",
+  "es": "Francia",
+  "fr": "France"
+ },
+ {
+  "ctx": "region",
+  "id": "United Kingdom",
+  "plural": null,
+  "de": "Vereinigtes Königreich",
+  "es": "Reino Unido",
+  "fr": "Royaume-Uni"
+ },
+ {
+  "ctx": "region",
+  "id": "Benelux (Belgium, Netherlands, Luxembourg)",
+  "plural": null,
+  "de": "Benelux (Belgien, Niederlande, Luxemburg)",
+  "es": "Benelux (Bélgica, Países Bajos, Luxemburgo)",
+  "fr": "Benelux (Belgique, Pays-Bas, Luxembourg)"
+ },
+ {
+  "ctx": "region",
+  "id": "Scandinavia",
+  "plural": null,
+  "de": "Skandinavien",
+  "es": "Escandinavia",
+  "fr": "Scandinavie"
+ },
+ {
+  "ctx": "region",
+  "id": "Other European country",
+  "plural": null,
+  "de": "Anderes europäisches Land",
+  "es": "Otro país europeo",
+  "fr": "Autre pays européen"
+ },
+ {
+  "ctx": "region",
+  "id": "UAE",
+  "plural": null,
+  "de": "VAE",
+  "es": "EAU",
+  "fr": "EAU"
+ },
+ {
+  "ctx": "region",
+  "id": "Saudi Arabia",
+  "plural": null,
+  "de": "Saudi-Arabien",
+  "es": "Arabia Saudita",
+  "fr": "Arabie saoudite"
+ },
+ {
+  "ctx": "region",
+  "id": "Other MENA country",
+  "plural": null,
+  "de": "Anderes Land in MENA",
+  "es": "Otro país de MENA",
+  "fr": "Autre pays MENA"
+ },
+ {
+  "ctx": "region",
+  "id": "Japan",
+  "plural": null,
+  "de": "Japan",
+  "es": "Japón",
+  "fr": "Japon"
+ },
+ {
+  "ctx": "region",
+  "id": "South Korea",
+  "plural": null,
+  "de": "Südkorea",
+  "es": "Corea del Sur",
+  "fr": "Corée du Sud"
+ },
+ {
+  "ctx": "region",
+  "id": "Australia",
+  "plural": null,
+  "de": "Australien",
+  "es": "Australia",
+  "fr": "Australie"
+ },
+ {
+  "ctx": "region",
+  "id": "Other APAC country",
+  "plural": null,
+  "de": "Anderes Land in APAC",
+  "es": "Otro país de APAC",
+  "fr": "Autre pays APAC"
+ },
+ {
+  "ctx": "region",
+  "id": "United States",
+  "plural": null,
+  "de": "Vereinigte Staaten",
+  "es": "Estados Unidos",
+  "fr": "États-Unis"
+ },
+ {
+  "ctx": "region",
+  "id": "Canada",
+  "plural": null,
+  "de": "Kanada",
+  "es": "Canadá",
+  "fr": "Canada"
+ },
+ {
+  "ctx": "region",
+  "id": "Brazil",
+  "plural": null,
+  "de": "Brasilien",
+  "es": "Brasil",
+  "fr": "Brésil"
+ },
+ {
+  "ctx": "region",
+  "id": "Mexico",
+  "plural": null,
+  "de": "Mexiko",
+  "es": "México",
+  "fr": "Mexique"
+ },
+ {
+  "ctx": "region",
+  "id": "Other Americas country",
+  "plural": null,
+  "de": "Anderes Land in Amerika",
+  "es": "Otro país de América",
+  "fr": "Autre pays des Amériques"
+ },
+ {
+  "ctx": "companies",
+  "id": "Franchise",
+  "plural": null,
+  "de": "Franchise",
+  "es": "Franquicia",
+  "fr": "Franchise"
+ },
+ {
+  "ctx": "companies",
+  "id": "A consultant will be assigned when your certification request is reviewed. Their name and contact details will appear automatically and are maintained by them — not editable from your account.",
+  "plural": null,
+  "de": "Ein Berater wird zugewiesen, sobald Ihre Zertifizierungsanfrage geprüft wird. Name und Kontaktdaten erscheinen automatisch und werden vom Berater selbst gepflegt — sie sind über Ihr Konto nicht bearbeitbar.",
+  "es": "Se le asignará un consultor cuando se revise su solicitud de certificación. Su nombre y datos de contacto aparecerán automáticamente y los mantiene el propio consultor: no son editables desde su cuenta.",
+  "fr": "Un consultant sera affecté lors de l'examen de votre demande de certification. Son nom et ses coordonnées apparaîtront automatiquement et sont tenus à jour par lui — non modifiables depuis votre compte."
+ },
+ {
+  "ctx": null,
+  "id": "Page %(num)s of %(total)s",
+  "plural": null,
+  "de": "Seite %(num)s von %(total)s",
+  "es": "Página %(num)s de %(total)s",
+  "fr": "Page %(num)s sur %(total)s"
+ },
+ {
+  "ctx": "billing",
+  "id": "Company / Consultant",
+  "plural": null,
+  "de": "Unternehmen / Berater",
+  "es": "Empresa / Consultor",
+  "fr": "Entreprise / Consultant"
+ },
+ {
+  "ctx": "billing",
+  "id": "Consultant: %(name)s",
+  "plural": null,
+  "de": "Berater: %(name)s",
+  "es": "Consultor: %(name)s",
+  "fr": "Consultant : %(name)s"
+ },
+ {
+  "ctx": "billing",
+  "id": "Not certified",
+  "plural": null,
+  "de": "Nicht zertifiziert",
+  "es": "Sin certificar",
+  "fr": "Non certifiée"
+ },
+ {
+  "ctx": "billing",
+  "id": "Account-level",
+  "plural": null,
+  "de": "Kontoebene",
+  "es": "Nivel de cuenta",
+  "fr": "Niveau du compte"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Add Sub-Franchise",
+  "plural": null,
+  "de": "Sub-Franchise hinzufügen",
+  "es": "Añadir sub-franquicia",
+  "fr": "Ajouter une sous-franchise"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Propose a child franchise under one of your active franchises. Once you submit, it goes to the Platform Admin, who activates it after the contract is signed and the fee is paid.",
+  "plural": null,
+  "de": "Schlagen Sie eine untergeordnete Franchise unter einer Ihrer aktiven Franchises vor. Nach dem Absenden geht der Vorschlag an den Plattformadministrator, der sie aktiviert, sobald der Vertrag unterzeichnet und die Gebühr bezahlt ist.",
+  "es": "Proponga una franquicia hija bajo una de sus franquicias activas. Al enviarla, pasa al Administrador de la plataforma, que la activa una vez firmado el contrato y pagada la cuota.",
+  "fr": "Proposez une franchise enfant sous l'une de vos franchises actives. Après envoi, la demande est transmise à l'Administrateur de la plateforme, qui l'active une fois le contrat signé et les frais payés."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Parent franchise",
+  "plural": null,
+  "de": "Übergeordnete Franchise",
+  "es": "Franquicia superior",
+  "fr": "Franchise parente"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Sub-franchise level",
+  "plural": null,
+  "de": "Sub-Franchise-Ebene",
+  "es": "Nivel de sub-franquicia",
+  "fr": "Niveau de sous-franchise"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Territory (inside the parent's territory)",
+  "plural": null,
+  "de": "Gebiet (innerhalb des Gebiets der übergeordneten Franchise)",
+  "es": "Territorio (dentro del territorio de la franquicia superior)",
+  "fr": "Territoire (à l'intérieur de celui de la franchise parente)"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Country",
+  "plural": null,
+  "de": "Land",
+  "es": "País",
+  "fr": "Pays"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Inherited from the parent franchise",
+  "plural": null,
+  "de": "Von der übergeordneten Franchise übernommen",
+  "es": "Heredado de la franquicia superior",
+  "fr": "Hérité de la franchise parente"
+ },
+ {
+  "ctx": "franchise",
+  "id": "State / Region",
+  "plural": null,
+  "de": "Bundesland/Region",
+  "es": "Estado / Región",
+  "fr": "État / Région"
+ },
+ {
+  "ctx": "franchise",
+  "id": "e.g. California",
+  "plural": null,
+  "de": "z. B. Kalifornien",
+  "es": "p. ej. California",
+  "fr": "p. ex. Californie"
+ },
+ {
+  "ctx": "franchise",
+  "id": "City / District",
+  "plural": null,
+  "de": "Stadt / Bezirk",
+  "es": "Ciudad / Distrito",
+  "fr": "Ville / District"
+ },
+ {
+  "ctx": "franchise",
+  "id": "e.g. San Diego",
+  "plural": null,
+  "de": "z. B. San Diego",
+  "es": "p. ej. San Diego",
+  "fr": "p. ex. San Diego"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Micro area (optional)",
+  "plural": null,
+  "de": "Mikrogebiet (optional)",
+  "es": "Microzona (opcional)",
+  "fr": "Micro-zone (facultatif)"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Neighbourhood / district",
+  "plural": null,
+  "de": "Stadtteil / Bezirk",
+  "es": "Barrio / distrito",
+  "fr": "Quartier / district"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Franchisee",
+  "plural": null,
+  "de": "Franchisenehmer",
+  "es": "Franquiciado",
+  "fr": "Franchisé"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Legal name / Company name",
+  "plural": null,
+  "de": "Rechtlicher Name / Firmenname",
+  "es": "Nombre legal / Nombre de la empresa",
+  "fr": "Raison sociale / Nom de l'entreprise"
+ },
+ {
+  "ctx": "franchise",
+  "id": "e.g. Acme Retail LLC",
+  "plural": null,
+  "de": "z. B. Acme Retail LLC",
+  "es": "p. ej. Acme Retail LLC",
+  "fr": "p. ex. Acme Retail LLC"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Contact person",
+  "plural": null,
+  "de": "Kontaktperson",
+  "es": "Persona de contacto",
+  "fr": "Personne de contact"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Full name",
+  "plural": null,
+  "de": "Vollständiger Name",
+  "es": "Nombre completo",
+  "fr": "Nom complet"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Email",
+  "plural": null,
+  "de": "E-Mail",
+  "es": "Correo electrónico",
+  "fr": "E-mail"
+ },
+ {
+  "ctx": "franchise",
+  "id": "owner@example.com",
+  "plural": null,
+  "de": "inhaber@beispiel.com",
+  "es": "titular@ejemplo.com",
+  "fr": "proprietaire@exemple.com"
+ },
+ {
+  "ctx": "franchise",
+  "id": "The person who will hold this sub-franchise. They must already have an account.",
+  "plural": null,
+  "de": "Die Person, die diese Sub-Franchise halten wird. Sie muss bereits ein Konto haben.",
+  "es": "La persona que será titular de esta sub-franquicia. Debe tener ya una cuenta.",
+  "fr": "La personne qui détiendra cette sous-franchise. Elle doit déjà avoir un compte."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Phone",
+  "plural": null,
+  "de": "Telefon",
+  "es": "Teléfono",
+  "fr": "Téléphone"
+ },
+ {
+  "ctx": "franchise",
+  "id": "+1 555 010 0000",
+  "plural": null,
+  "de": "+1 555 010 0000",
+  "es": "+1 555 010 0000",
+  "fr": "+1 555 010 0000"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Contract status",
+  "plural": null,
+  "de": "Vertragsstatus",
+  "es": "Estado del contrato",
+  "fr": "Statut du contrat"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Payment status",
+  "plural": null,
+  "de": "Zahlungsstatus",
+  "es": "Estado del pago",
+  "fr": "Statut du paiement"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Notes (optional)",
+  "plural": null,
+  "de": "Notizen (optional)",
+  "es": "Notas (opcional)",
+  "fr": "Remarques (facultatif)"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Anything the Platform Admin should know.",
+  "plural": null,
+  "de": "Alles, was der Plattformadministrator wissen sollte.",
+  "es": "Cualquier cosa que el Administrador de la plataforma deba saber.",
+  "fr": "Tout ce que l'Administrateur de la plateforme devrait savoir."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Propose sub-franchise",
+  "plural": null,
+  "de": "Sub-Franchise vorschlagen",
+  "es": "Proponer sub-franquicia",
+  "fr": "Proposer une sous-franchise"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Your franchise has been suspended by the Platform Admin, so you can't add sub-franchises.",
+  "plural": null,
+  "de": "Ihre Franchise wurde vom Plattformadministrator ausgesetzt, daher können Sie keine Sub-Franchises hinzufügen.",
+  "es": "Su franquicia ha sido suspendida por el Administrador de la plataforma, por lo que no puede añadir sub-franquicias.",
+  "fr": "Votre franchise a été suspendue par l'Administrateur de la plateforme ; vous ne pouvez donc pas ajouter de sous-franchises."
+ },
+ {
+  "ctx": "franchise",
+  "id": "You still have read-only access to your existing data. Access is restored once your franchise is reactivated.",
+  "plural": null,
+  "de": "Sie haben weiterhin lesenden Zugriff auf Ihre vorhandenen Daten. Der Zugriff wird wiederhergestellt, sobald Ihre Franchise reaktiviert wird.",
+  "es": "Sigue teniendo acceso de solo lectura a sus datos existentes. El acceso se restablece cuando su franquicia se reactive.",
+  "fr": "Vous conservez un accès en lecture seule à vos données existantes. L'accès est rétabli dès la réactivation de votre franchise."
+ },
+ {
+  "ctx": "franchise",
+  "id": "A Micro-Franchise is the smallest unit — it can't have sub-franchises.",
+  "plural": null,
+  "de": "Eine Mikro-Franchise ist die kleinste Einheit — sie kann keine Sub-Franchises haben.",
+  "es": "Una Micro-Franquicia es la unidad más pequeña: no puede tener sub-franquicias.",
+  "fr": "Une Micro-Franchise est la plus petite unité — elle ne peut pas avoir de sous-franchises."
+ },
+ {
+  "ctx": "franchise",
+  "id": "You can manage Standard Consultants in your territory from the Consultants page instead.",
+  "plural": null,
+  "de": "Standardberater in Ihrem Gebiet können Sie stattdessen auf der Seite Berater verwalten.",
+  "es": "En su lugar, puede gestionar los Consultores Estándar de su territorio desde la página Consultores.",
+  "fr": "Vous pouvez en revanche gérer les Consultants Standard de votre territoire depuis la page Consultants."
+ },
+ {
+  "ctx": "franchise",
+  "id": "You need an active franchise before you can add a sub-franchise.",
+  "plural": null,
+  "de": "Sie benötigen eine aktive Franchise, bevor Sie eine Sub-Franchise hinzufügen können.",
+  "es": "Necesita una franquicia activa antes de poder añadir una sub-franquicia.",
+  "fr": "Vous devez disposer d'une franchise active avant de pouvoir ajouter une sous-franchise."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Select State / Region",
+  "plural": null,
+  "de": "Bundesland/Region auswählen",
+  "es": "Seleccionar estado / región",
+  "fr": "Sélectionner un état / une région"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Franchise Requests",
+  "plural": null,
+  "de": "Franchise-Anfragen",
+  "es": "Solicitudes de franquicia",
+  "fr": "Demandes de franchise"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Master Franchise requests to review, plus every approved franchise (Master or sub) awaiting activation. Approve a Master to create it, then Activate once contract &amp; payment are complete. Sub-franchise requests are reviewed by their parent franchise.",
+  "plural": null,
+  "de": "Zu prüfende Master-Franchise-Anfragen sowie alle genehmigten Franchises (Master oder Sub), die auf die Aktivierung warten. Genehmigen Sie eine Master-Franchise, um sie anzulegen, und aktivieren Sie sie, sobald Vertrag &amp; Zahlung abgeschlossen sind. Sub-Franchise-Anfragen werden von der jeweils übergeordneten Franchise geprüft.",
+  "es": "Solicitudes de Franquicia Máster por revisar, además de todas las franquicias aprobadas (Máster o sub) en espera de activación. Apruebe una Máster para crearla y luego actívela cuando el contrato &amp; el pago estén completos. Las solicitudes de sub-franquicia las revisa su franquicia superior.",
+  "fr": "Demandes de Franchise Maître à examiner, ainsi que toutes les franchises approuvées (Maître ou sous-franchise) en attente d'activation. Approuvez une Maître pour la créer, puis activez-la lorsque le contrat &amp; le paiement sont complets. Les demandes de sous-franchise sont examinées par leur franchise parente."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Sub-Franchise Requests",
+  "plural": null,
+  "de": "Sub-Franchise-Anfragen",
+  "es": "Solicitudes de sub-franquicia",
+  "fr": "Demandes de sous-franchise"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Awaiting Activation",
+  "plural": null,
+  "de": "Warten auf Aktivierung",
+  "es": "En espera de activación",
+  "fr": "En attente d'activation"
+ },
+ {
+  "ctx": "workflows",
+  "id": "Rejected",
+  "plural": null,
+  "de": "Abgelehnt",
+  "es": "Rechazado",
+  "fr": "Rejeté"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Applicant",
+  "plural": null,
+  "de": "Antragsteller",
+  "es": "Solicitante",
+  "fr": "Demandeur"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Request",
+  "plural": null,
+  "de": "Anfrage",
+  "es": "Solicitud",
+  "fr": "Demande"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Level:",
+  "plural": null,
+  "de": "Ebene:",
+  "es": "Nivel:",
+  "fr": "Niveau :"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Country:",
+  "plural": null,
+  "de": "Land:",
+  "es": "País:",
+  "fr": "Pays :"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Region:",
+  "plural": null,
+  "de": "Region:",
+  "es": "Región:",
+  "fr": "Région :"
+ },
+ {
+  "ctx": "franchise",
+  "id": "City:",
+  "plural": null,
+  "de": "Stadt:",
+  "es": "Ciudad:",
+  "fr": "Ville :"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Local area:",
+  "plural": null,
+  "de": "Lokales Gebiet:",
+  "es": "Zona local:",
+  "fr": "Zone locale :"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Notes:",
+  "plural": null,
+  "de": "Notizen:",
+  "es": "Notas:",
+  "fr": "Remarques :"
+ },
+ {
+  "ctx": "franchise",
+  "id": "This territory is already held by <strong>%(name)s</strong>. Only one franchise is allowed per territory — reject this request.",
+  "plural": null,
+  "de": "Dieses Gebiet wird bereits von <strong>%(name)s</strong> gehalten. Pro Gebiet ist nur eine Franchise erlaubt — lehnen Sie diese Anfrage ab.",
+  "es": "Este territorio ya está en manos de <strong>%(name)s</strong>. Solo se permite una franquicia por territorio: rechace esta solicitud.",
+  "fr": "Ce territoire est déjà détenu par <strong>%(name)s</strong>. Une seule franchise est autorisée par territoire — rejetez cette demande."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Reason (shown to applicant)",
+  "plural": null,
+  "de": "Grund (für den Antragsteller sichtbar)",
+  "es": "Motivo (visible para el solicitante)",
+  "fr": "Motif (visible par le demandeur)"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Submit rejection",
+  "plural": null,
+  "de": "Ablehnung absenden",
+  "es": "Enviar rechazo",
+  "fr": "Envoyer le rejet"
+ },
+ {
+  "ctx": "franchise",
+  "id": "No pending franchise requests.",
+  "plural": null,
+  "de": "Keine ausstehenden Franchise-Anfragen.",
+  "es": "No hay solicitudes de franquicia pendientes.",
+  "fr": "Aucune demande de franchise en attente."
+ },
+ {
+  "ctx": "franchise",
+  "id": "When a user requests a franchise, it appears here.",
+  "plural": null,
+  "de": "Wenn ein Benutzer eine Franchise anfragt, erscheint sie hier.",
+  "es": "Cuando un usuario solicita una franquicia, aparece aquí.",
+  "fr": "Lorsqu'un utilisateur demande une franchise, elle apparaît ici."
+ },
+ {
+  "ctx": "franchise",
+  "id": "These sub-franchise requests are routed to their parent franchise for review. You can step in and approve or reject one here if the parent hasn't acted.",
+  "plural": null,
+  "de": "Diese Sub-Franchise-Anfragen werden zur Prüfung an die jeweils übergeordnete Franchise geleitet. Sie können eingreifen und eine Anfrage hier genehmigen oder ablehnen, wenn die übergeordnete Franchise nicht reagiert hat.",
+  "es": "Estas solicitudes de sub-franquicia se dirigen a su franquicia superior para revisión. Puede intervenir y aprobar o rechazar una aquí si la franquicia superior no ha actuado.",
+  "fr": "Ces demandes de sous-franchise sont acheminées vers leur franchise parente pour examen. Vous pouvez intervenir et en approuver ou rejeter une ici si la franchise parente n'a pas agi."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Routed to",
+  "plural": null,
+  "de": "Geleitet an",
+  "es": "Dirigida a",
+  "fr": "Acheminée vers"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Awaiting parent — you may override",
+  "plural": null,
+  "de": "Wartet auf übergeordnete Franchise — Sie können übersteuern",
+  "es": "En espera de la franquicia superior: puede anularla",
+  "fr": "En attente de la franchise parente — vous pouvez passer outre"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Approve on the parent's behalf?",
+  "plural": null,
+  "de": "Im Namen der übergeordneten Franchise genehmigen?",
+  "es": "¿Aprobar en nombre de la franquicia superior?",
+  "fr": "Approuver au nom de la franchise parente ?"
+ },
+ {
+  "ctx": "franchise",
+  "id": "This overrides the parent franchise's review and creates the sub-franchise, pending contract & payment.",
+  "plural": null,
+  "de": "Dies übersteuert die Prüfung durch die übergeordnete Franchise und erstellt die Sub-Franchise; Vertrag & Zahlung stehen dann noch aus.",
+  "es": "Esto anula la revisión de la franquicia superior y crea la sub-franquicia, pendiente de contrato y pago.",
+  "fr": "Cela passe outre l'examen de la franchise parente et crée la sous-franchise, en attente de contrat et de paiement."
+ },
+ {
+  "ctx": "franchise",
+  "id": "No sub-franchise requests awaiting a parent.",
+  "plural": null,
+  "de": "Keine Sub-Franchise-Anfragen, die auf eine übergeordnete Franchise warten.",
+  "es": "No hay solicitudes de sub-franquicia en espera de una franquicia superior.",
+  "fr": "Aucune demande de sous-franchise en attente d'une franchise parente."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Requests routed to a parent franchise appear here so you can step in if needed.",
+  "plural": null,
+  "de": "Anfragen, die an eine übergeordnete Franchise geleitet wurden, erscheinen hier, damit Sie bei Bedarf eingreifen können.",
+  "es": "Las solicitudes dirigidas a una franquicia superior aparecen aquí para que pueda intervenir si es necesario.",
+  "fr": "Les demandes acheminées vers une franchise parente apparaissent ici afin que vous puissiez intervenir si nécessaire."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Approved franchises still awaiting activation. Once contract &amp; payment are complete, click Activate to grant the holder full active rights.",
+  "plural": null,
+  "de": "Genehmigte Franchises, die noch auf die Aktivierung warten. Sobald Vertrag &amp; Zahlung abgeschlossen sind, klicken Sie auf Aktivieren, um dem Inhaber alle aktiven Rechte zu erteilen.",
+  "es": "Franquicias aprobadas que aún esperan activación. Cuando el contrato &amp; el pago estén completos, haga clic en Activar para otorgar al titular todos los derechos activos.",
+  "fr": "Franchises approuvées en attente d'activation. Lorsque le contrat &amp; le paiement sont complets, cliquez sur Activer pour accorder au titulaire tous les droits actifs."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Franchise",
+  "plural": null,
+  "de": "Franchise",
+  "es": "Franquicia",
+  "fr": "Franchise"
+ },
+ {
+  "ctx": "franchise",
+  "id": "under",
+  "plural": null,
+  "de": "unter",
+  "es": "bajo",
+  "fr": "sous"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Activate franchise?",
+  "plural": null,
+  "de": "Franchise aktivieren?",
+  "es": "¿Activar la franquicia?",
+  "fr": "Activer la franchise ?"
+ },
+ {
+  "ctx": "franchise",
+  "id": "This confirms contract & payment and grants the holder full active rights.",
+  "plural": null,
+  "de": "Damit werden Vertrag & Zahlung bestätigt und dem Inhaber alle aktiven Rechte erteilt.",
+  "es": "Esto confirma el contrato y el pago y otorga al titular todos los derechos activos.",
+  "fr": "Cela confirme le contrat et le paiement et accorde au titulaire tous les droits actifs."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Activate",
+  "plural": null,
+  "de": "Aktivieren",
+  "es": "Activar",
+  "fr": "Activer"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Nothing awaiting activation.",
+  "plural": null,
+  "de": "Nichts wartet auf Aktivierung.",
+  "es": "Nada en espera de activación.",
+  "fr": "Rien en attente d'activation."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Approved franchises pending contract & payment appear here, ready to activate.",
+  "plural": null,
+  "de": "Genehmigte Franchises, bei denen Vertrag & Zahlung noch ausstehen, erscheinen hier und können aktiviert werden.",
+  "es": "Las franquicias aprobadas pendientes de contrato y pago aparecen aquí, listas para activar.",
+  "fr": "Les franchises approuvées en attente de contrat et de paiement apparaissent ici, prêtes à être activées."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Suspend franchise?",
+  "plural": null,
+  "de": "Franchise aussetzen?",
+  "es": "¿Suspender la franquicia?",
+  "fr": "Suspendre la franchise ?"
+ },
+ {
+  "ctx": "franchise",
+  "id": "The holder keeps historical data but loses active rights until reactivated.",
+  "plural": null,
+  "de": "Der Inhaber behält historische Daten, verliert jedoch die aktiven Rechte bis zur Reaktivierung.",
+  "es": "El titular conserva los datos históricos, pero pierde los derechos activos hasta que se reactive.",
+  "fr": "Le titulaire conserve les données historiques mais perd ses droits actifs jusqu'à la réactivation."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Suspend",
+  "plural": null,
+  "de": "Aussetzen",
+  "es": "Suspender",
+  "fr": "Suspendre"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Suspended",
+  "plural": null,
+  "de": "Ausgesetzt",
+  "es": "Suspendida",
+  "fr": "Suspendue"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Reactivate",
+  "plural": null,
+  "de": "Reaktivieren",
+  "es": "Reactivar",
+  "fr": "Réactiver"
+ },
+ {
+  "ctx": "franchise",
+  "id": "No approved franchises yet.",
+  "plural": null,
+  "de": "Noch keine genehmigten Franchises.",
+  "es": "Aún no hay franquicias aprobadas.",
+  "fr": "Aucune franchise approuvée pour le moment."
+ },
+ {
+  "ctx": "franchise",
+  "id": "No rejected franchise requests.",
+  "plural": null,
+  "de": "Keine abgelehnten Franchise-Anfragen.",
+  "es": "No hay solicitudes de franquicia rechazadas.",
+  "fr": "Aucune demande de franchise rejetée."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Certified Companies",
+  "plural": null,
+  "de": "Zertifizierte Unternehmen",
+  "es": "Empresas certificadas",
+  "fr": "Entreprises certifiées"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Companies certified by the consultants working within your franchise and its sub-franchises.",
+  "plural": null,
+  "de": "Unternehmen, die von den Beratern innerhalb Ihrer Franchise und ihrer Sub-Franchises zertifiziert wurden.",
+  "es": "Empresas certificadas por los consultores que trabajan dentro de su franquicia y sus sub-franquicias.",
+  "fr": "Entreprises certifiées par les consultants travaillant au sein de votre franchise et de ses sous-franchises."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Search company, country, city…",
+  "plural": null,
+  "de": "Unternehmen, Land, Stadt suchen…",
+  "es": "Buscar empresa, país, ciudad…",
+  "fr": "Rechercher une entreprise, un pays, une ville…"
+ },
+ {
+  "ctx": null,
+  "id": "%(counter)s company",
+  "plural": "%(counter)s companies",
+  "de": [
+   "%(counter)s Unternehmen",
+   "%(counter)s Unternehmen"
+  ],
+  "es": [
+   "%(counter)s empresa",
+   "%(counter)s empresas"
+  ],
+  "fr": [
+   "%(counter)s entreprise",
+   "%(counter)s entreprises"
+  ]
+ },
+ {
+  "ctx": "franchise",
+  "id": "Company",
+  "plural": null,
+  "de": "Unternehmen",
+  "es": "Empresa",
+  "fr": "Entreprise"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Location",
+  "plural": null,
+  "de": "Standort",
+  "es": "Ubicación",
+  "fr": "Emplacement"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Certified by",
+  "plural": null,
+  "de": "Zertifiziert von",
+  "es": "Certificada por",
+  "fr": "Certifiée par"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Certified on",
+  "plural": null,
+  "de": "Zertifiziert am",
+  "es": "Certificada el",
+  "fr": "Certifiée le"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Certified",
+  "plural": null,
+  "de": "Zertifiziert",
+  "es": "Certificada",
+  "fr": "Certifiée"
+ },
+ {
+  "ctx": "franchise",
+  "id": "No consultants operate under your franchise yet, so there are no certified companies to show.",
+  "plural": null,
+  "de": "Unter Ihrer Franchise arbeiten noch keine Berater, daher gibt es keine zertifizierten Unternehmen anzuzeigen.",
+  "es": "Aún no hay consultores operando bajo su franquicia, por lo que no hay empresas certificadas que mostrar.",
+  "fr": "Aucun consultant n'opère encore sous votre franchise ; il n'y a donc pas d'entreprises certifiées à afficher."
+ },
+ {
+  "ctx": "franchise",
+  "id": "No certified companies found.",
+  "plural": null,
+  "de": "Keine zertifizierten Unternehmen gefunden.",
+  "es": "No se encontraron empresas certificadas.",
+  "fr": "Aucune entreprise certifiée trouvée."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Requests to open a franchise inside your territory. Approve to create it under your tree — the Platform Admin then activates it after contract &amp; payment.",
+  "plural": null,
+  "de": "Anfragen zur Eröffnung einer Franchise in Ihrem Gebiet. Genehmigen Sie sie, um sie in Ihrem Baum anzulegen — der Plattformadministrator aktiviert sie anschließend nach Vertrag &amp; Zahlung.",
+  "es": "Solicitudes para abrir una franquicia dentro de su territorio. Apruébelas para crearlas en su árbol: después el Administrador de la plataforma las activa tras el contrato &amp; el pago.",
+  "fr": "Demandes d'ouverture d'une franchise sur votre territoire. Approuvez-les pour les créer dans votre arborescence — l'Administrateur de la plateforme les active ensuite après le contrat &amp; le paiement."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Under:",
+  "plural": null,
+  "de": "Unter:",
+  "es": "Bajo:",
+  "fr": "Sous :"
+ },
+ {
+  "ctx": "franchise",
+  "id": "No pending sub-franchise requests.",
+  "plural": null,
+  "de": "Keine ausstehenden Sub-Franchise-Anfragen.",
+  "es": "No hay solicitudes de sub-franquicia pendientes.",
+  "fr": "Aucune demande de sous-franchise en attente."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Requests to open a franchise inside your territory appear here.",
+  "plural": null,
+  "de": "Anfragen zur Eröffnung einer Franchise in Ihrem Gebiet erscheinen hier.",
+  "es": "Las solicitudes para abrir una franquicia dentro de su territorio aparecen aquí.",
+  "fr": "Les demandes d'ouverture d'une franchise sur votre territoire apparaissent ici."
+ },
+ {
+  "ctx": "franchise",
+  "id": "No approved sub-franchises yet.",
+  "plural": null,
+  "de": "Noch keine genehmigten Sub-Franchises.",
+  "es": "Aún no hay sub-franquicias aprobadas.",
+  "fr": "Aucune sous-franchise approuvée pour le moment."
+ },
+ {
+  "ctx": "franchise",
+  "id": "No rejected sub-franchise requests.",
+  "plural": null,
+  "de": "Keine abgelehnten Sub-Franchise-Anfragen.",
+  "es": "No hay solicitudes de sub-franquicia rechazadas.",
+  "fr": "Aucune demande de sous-franchise rejetée."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Consultants",
+  "plural": null,
+  "de": "Berater",
+  "es": "Consultores",
+  "fr": "Consultants"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Standard consultants working under your franchise. They can certify companies and sell plans in your territory, but hold no exclusivity.",
+  "plural": null,
+  "de": "Standardberater, die unter Ihrer Franchise arbeiten. Sie können Unternehmen zertifizieren und Pläne in Ihrem Gebiet verkaufen, haben aber keine Exklusivität.",
+  "es": "Consultores estándar que trabajan bajo su franquicia. Pueden certificar empresas y vender planes en su territorio, pero no tienen exclusividad.",
+  "fr": "Consultants standard travaillant sous votre franchise. Ils peuvent certifier des entreprises et vendre des forfaits sur votre territoire, mais sans exclusivité."
+ },
+ {
+  "ctx": "franchise",
+  "id": "One or more of your franchises is suspended. You can't assign consultants under a suspended franchise until it's reactivated.",
+  "plural": null,
+  "de": "Eine oder mehrere Ihrer Franchises sind ausgesetzt. Solange eine Franchise ausgesetzt ist, können Sie ihr keine Berater zuweisen.",
+  "es": "Una o más de sus franquicias está suspendida. No puede asignar consultores bajo una franquicia suspendida hasta que se reactive.",
+  "fr": "Une ou plusieurs de vos franchises sont suspendues. Vous ne pouvez pas affecter de consultants sous une franchise suspendue avant sa réactivation."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Consultant email",
+  "plural": null,
+  "de": "E-Mail des Beraters",
+  "es": "Correo electrónico del consultor",
+  "fr": "E-mail du consultant"
+ },
+ {
+  "ctx": "franchise",
+  "id": "consultant@example.com",
+  "plural": null,
+  "de": "berater@beispiel.com",
+  "es": "consultor@ejemplo.com",
+  "fr": "consultant@exemple.com"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Under franchise",
+  "plural": null,
+  "de": "Unter Franchise",
+  "es": "Bajo la franquicia",
+  "fr": "Sous la franchise"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Assign",
+  "plural": null,
+  "de": "Zuweisen",
+  "es": "Asignar",
+  "fr": "Affecter"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Consultant",
+  "plural": null,
+  "de": "Berater",
+  "es": "Consultor",
+  "fr": "Consultant"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Type",
+  "plural": null,
+  "de": "Typ",
+  "es": "Tipo",
+  "fr": "Type"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Remove this consultant?",
+  "plural": null,
+  "de": "Diesen Berater entfernen?",
+  "es": "¿Eliminar a este consultor?",
+  "fr": "Retirer ce consultant ?"
+ },
+ {
+  "ctx": "franchise",
+  "id": "They will lose access to certify companies and sell plans under this franchise.",
+  "plural": null,
+  "de": "Er verliert die Berechtigung, unter dieser Franchise Unternehmen zu zertifizieren und Pläne zu verkaufen.",
+  "es": "Perderá el acceso para certificar empresas y vender planes bajo esta franquicia.",
+  "fr": "Il perdra l'accès pour certifier des entreprises et vendre des forfaits sous cette franchise."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Remove",
+  "plural": null,
+  "de": "Entfernen",
+  "es": "Quitar",
+  "fr": "Retirer"
+ },
+ {
+  "ctx": "franchise",
+  "id": "No consultants assigned yet.",
+  "plural": null,
+  "de": "Noch keine Berater zugewiesen.",
+  "es": "Aún no hay consultores asignados.",
+  "fr": "Aucun consultant affecté pour le moment."
+ },
+ {
+  "ctx": "franchise",
+  "id": "You need an active franchise before you can assign consultants.",
+  "plural": null,
+  "de": "Sie benötigen eine aktive Franchise, bevor Sie Berater zuweisen können.",
+  "es": "Necesita una franquicia activa antes de poder asignar consultores.",
+  "fr": "Vous devez disposer d'une franchise active avant de pouvoir affecter des consultants."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Reports",
+  "plural": null,
+  "de": "Berichte",
+  "es": "Informes",
+  "fr": "Rapports"
+ },
+ {
+  "ctx": "franchise",
+  "id": "A summary of your franchise subtree. Use the filters to narrow by period, territory, level, consultant, or status.",
+  "plural": null,
+  "de": "Eine Übersicht über Ihren Franchise-Teilbaum. Nutzen Sie die Filter, um nach Zeitraum, Gebiet, Ebene, Berater oder Status einzuschränken.",
+  "es": "Un resumen de su subárbol de franquicias. Use los filtros para acotar por periodo, territorio, nivel, consultor o estado.",
+  "fr": "Un résumé de votre sous-arborescence de franchises. Utilisez les filtres pour restreindre par période, territoire, niveau, consultant ou statut."
+ },
+ {
+  "ctx": "franchise",
+  "id": "From",
+  "plural": null,
+  "de": "Von",
+  "es": "Desde",
+  "fr": "Du"
+ },
+ {
+  "ctx": "franchise",
+  "id": "To",
+  "plural": null,
+  "de": "Bis",
+  "es": "Hasta",
+  "fr": "Au"
+ },
+ {
+  "ctx": "common",
+  "id": "All",
+  "plural": null,
+  "de": "Alle",
+  "es": "Todos",
+  "fr": "Tous"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Region / State",
+  "plural": null,
+  "de": "Region / Bundesland",
+  "es": "Región / Estado",
+  "fr": "Région / État"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Franchise level",
+  "plural": null,
+  "de": "Franchise-Ebene",
+  "es": "Nivel de franquicia",
+  "fr": "Niveau de franchise"
+ },
+ {
+  "ctx": "common",
+  "id": "Reset",
+  "plural": null,
+  "de": "Zurücksetzen",
+  "es": "Restablecer",
+  "fr": "Réinitialiser"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Franchises",
+  "plural": null,
+  "de": "Franchises",
+  "es": "Franquicias",
+  "fr": "Franchises"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Active",
+  "plural": null,
+  "de": "Aktiv",
+  "es": "Activas",
+  "fr": "Actives"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Certified cos.",
+  "plural": null,
+  "de": "Zertif. Untern.",
+  "es": "Empresas cert.",
+  "fr": "Entrep. certifiées"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Plan sales",
+  "plural": null,
+  "de": "Plan-Verkäufe",
+  "es": "Ventas de planes",
+  "fr": "Ventes de forfaits"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Franchises in scope",
+  "plural": null,
+  "de": "Franchises im Umfang",
+  "es": "Franquicias en el alcance",
+  "fr": "Franchises concernées"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Level",
+  "plural": null,
+  "de": "Ebene",
+  "es": "Nivel",
+  "fr": "Niveau"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Territory",
+  "plural": null,
+  "de": "Gebiet",
+  "es": "Territorio",
+  "fr": "Territoire"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Owner",
+  "plural": null,
+  "de": "Eigentümer",
+  "es": "Titular",
+  "fr": "Titulaire"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Activated",
+  "plural": null,
+  "de": "Aktiviert",
+  "es": "Activada",
+  "fr": "Activée"
+ },
+ {
+  "ctx": "franchise",
+  "id": "No franchises match these filters.",
+  "plural": null,
+  "de": "Keine Franchises entsprechen diesen Filtern.",
+  "es": "Ninguna franquicia coincide con estos filtros.",
+  "fr": "Aucune franchise ne correspond à ces filtres."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Request a Franchise",
+  "plural": null,
+  "de": "Franchise anfragen",
+  "es": "Solicitar una franquicia",
+  "fr": "Demander une franchise"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Choose the franchise level and the territory you want to operate. Your request goes to the Platform Admin for approval — you can't assign a franchise to yourself. Once approved, it activates after contract and payment.",
+  "plural": null,
+  "de": "Wählen Sie die Franchise-Ebene und das Gebiet, in dem Sie tätig werden möchten. Ihre Anfrage geht zur Genehmigung an den Plattformadministrator — Sie können sich selbst keine Franchise zuweisen. Nach der Genehmigung wird sie nach Vertrag und Zahlung aktiviert.",
+  "es": "Elija el nivel de franquicia y el territorio en el que desea operar. Su solicitud pasa al Administrador de la plataforma para su aprobación: no puede asignarse una franquicia a sí mismo. Una vez aprobada, se activa tras el contrato y el pago.",
+  "fr": "Choisissez le niveau de franchise et le territoire sur lequel vous souhaitez opérer. Votre demande est transmise à l'Administrateur de la plateforme pour approbation — vous ne pouvez pas vous attribuer une franchise. Après approbation, elle est activée une fois le contrat et le paiement effectués."
+ },
+ {
+  "ctx": "franchise",
+  "id": "You're a franchise partner. You don't need to request another franchise here — manage your territory and propose new sub-franchises from your <strong>Franchises</strong> section. Your current franchises are listed on the right.",
+  "plural": null,
+  "de": "Sie sind Franchise-Partner. Sie müssen hier keine weitere Franchise anfragen — verwalten Sie Ihr Gebiet und schlagen Sie neue Sub-Franchises in Ihrem Bereich <strong>Franchises</strong> vor. Ihre aktuellen Franchises sind rechts aufgeführt.",
+  "es": "Usted es socio de franquicia. No necesita solicitar otra franquicia aquí: gestione su territorio y proponga nuevas sub-franquicias desde su sección <strong>Franquicias</strong>. Sus franquicias actuales se listan a la derecha.",
+  "fr": "Vous êtes partenaire franchisé. Vous n'avez pas besoin de demander une autre franchise ici — gérez votre territoire et proposez de nouvelles sous-franchises depuis votre section <strong>Franchises</strong>. Vos franchises actuelles sont listées à droite."
+ },
+ {
+  "ctx": "franchise",
+  "id": "You already have a franchise request under review. You'll be notified of the decision.",
+  "plural": null,
+  "de": "Sie haben bereits eine Franchise-Anfrage in Prüfung. Sie werden über die Entscheidung benachrichtigt.",
+  "es": "Ya tiene una solicitud de franquicia en revisión. Se le notificará la decisión.",
+  "fr": "Vous avez déjà une demande de franchise en cours d'examen. Vous serez informé de la décision."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Select a level…",
+  "plural": null,
+  "de": "Ebene auswählen…",
+  "es": "Seleccione un nivel…",
+  "fr": "Sélectionnez un niveau…"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Master, National, Regional, or Micro — defines the scope of your franchise.",
+  "plural": null,
+  "de": "Master, National, Regional oder Mikro — legt den Umfang Ihrer Franchise fest.",
+  "es": "Máster, Nacional, Regional o Micro: define el alcance de su franquicia.",
+  "fr": "Maître, Nationale, Régionale ou Micro — définit la portée de votre franchise."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Select a country…",
+  "plural": null,
+  "de": "Land auswählen…",
+  "es": "Seleccione un país…",
+  "fr": "Sélectionnez un pays…"
+ },
+ {
+  "ctx": "franchise",
+  "id": "City",
+  "plural": null,
+  "de": "Stadt",
+  "es": "Ciudad",
+  "fr": "Ville"
+ },
+ {
+  "ctx": "franchise",
+  "id": "e.g. San Francisco",
+  "plural": null,
+  "de": "z. B. San Francisco",
+  "es": "p. ej. San Francisco",
+  "fr": "p. ex. San Francisco"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Local area",
+  "plural": null,
+  "de": "Lokales Gebiet",
+  "es": "Zona local",
+  "fr": "Zone locale"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Optional",
+  "plural": null,
+  "de": "Optional",
+  "es": "Opcional",
+  "fr": "Facultatif"
+ },
+ {
+  "ctx": "franchise",
+  "id": "A Master Franchise covers the whole country, so region/city aren't needed.",
+  "plural": null,
+  "de": "Eine Master-Franchise umfasst das gesamte Land, daher sind Region/Stadt nicht erforderlich.",
+  "es": "Una Franquicia Máster cubre todo el país, por lo que no se necesitan región ni ciudad.",
+  "fr": "Une Franchise Maître couvre tout le pays ; la région et la ville ne sont donc pas nécessaires."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Notes for the reviewer",
+  "plural": null,
+  "de": "Notizen für den Prüfer",
+  "es": "Notas para el revisor",
+  "fr": "Remarques pour l'examinateur"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Why you want this franchise, your network, expected companies…",
+  "plural": null,
+  "de": "Warum Sie diese Franchise möchten, Ihr Netzwerk, erwartete Unternehmen…",
+  "es": "Por qué desea esta franquicia, su red de contactos, empresas previstas…",
+  "fr": "Pourquoi vous souhaitez cette franchise, votre réseau, les entreprises attendues…"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Request for approval",
+  "plural": null,
+  "de": "Zur Genehmigung einreichen",
+  "es": "Solicitar aprobación",
+  "fr": "Demander l'approbation"
+ },
+ {
+  "ctx": "franchise",
+  "id": "My Requests",
+  "plural": null,
+  "de": "Meine Anfragen",
+  "es": "Mis solicitudes",
+  "fr": "Mes demandes"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Reason:",
+  "plural": null,
+  "de": "Grund:",
+  "es": "Motivo:",
+  "fr": "Motif :"
+ },
+ {
+  "ctx": "franchise",
+  "id": "No franchise requests yet.",
+  "plural": null,
+  "de": "Noch keine Franchise-Anfragen.",
+  "es": "Aún no hay solicitudes de franquicia.",
+  "fr": "Aucune demande de franchise pour le moment."
+ },
+ {
+  "ctx": "franchise",
+  "id": "My Franchises",
+  "plural": null,
+  "de": "Meine Franchises",
+  "es": "Mis franquicias",
+  "fr": "Mes franchises"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Territory:",
+  "plural": null,
+  "de": "Gebiet:",
+  "es": "Territorio:",
+  "fr": "Territoire :"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Contract:",
+  "plural": null,
+  "de": "Vertrag:",
+  "es": "Contrato:",
+  "fr": "Contrat :"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Franchise fee:",
+  "plural": null,
+  "de": "Franchise-Gebühr:",
+  "es": "Cuota de franquicia:",
+  "fr": "Frais de franchise :"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Active since:",
+  "plural": null,
+  "de": "Aktiv seit:",
+  "es": "Activa desde:",
+  "fr": "Active depuis :"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Operating under",
+  "plural": null,
+  "de": "Tätig unter",
+  "es": "Opera bajo",
+  "fr": "Opère sous"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Contact:",
+  "plural": null,
+  "de": "Kontakt:",
+  "es": "Contacto:",
+  "fr": "Contact :"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Status:",
+  "plural": null,
+  "de": "Status:",
+  "es": "Estado:",
+  "fr": "Statut :"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Show less",
+  "plural": null,
+  "de": "Weniger anzeigen",
+  "es": "Mostrar menos",
+  "fr": "Afficher moins"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Show %(counter)s more level",
+  "plural": "Show %(counter)s more levels",
+  "de": [
+   "%(counter)s weitere Ebene anzeigen",
+   "%(counter)s weitere Ebenen anzeigen"
+  ],
+  "es": [
+   "Mostrar %(counter)s nivel más",
+   "Mostrar %(counter)s niveles más"
+  ],
+  "fr": [
+   "Afficher %(counter)s niveau de plus",
+   "Afficher %(counter)s niveaux de plus"
+  ]
+ },
+ {
+  "ctx": "franchise",
+  "id": "You don't hold any franchises yet.",
+  "plural": null,
+  "de": "Sie halten noch keine Franchises.",
+  "es": "Todavía no posee ninguna franquicia.",
+  "fr": "Vous ne détenez encore aucune franchise."
+ },
+ {
+  "ctx": null,
+  "id": "This %%(scope)s already has an active %%(level)s (%%(name)s), so it can't be granted twice.",
+  "plural": null,
+  "de": "Für dieses %%(scope)s existiert bereits eine aktive %%(level)s (%%(name)s) und kann nicht zweimal vergeben werden.",
+  "es": "Este %%(scope)s ya tiene una %%(level)s activa (%%(name)s), por lo que no puede concederse dos veces.",
+  "fr": "Ce %%(scope)s possède déjà une %%(level)s active (%%(name)s) ; elle ne peut pas être accordée deux fois."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Sales / Plans",
+  "plural": null,
+  "de": "Verkäufe / Pläne",
+  "es": "Ventas / Planes",
+  "fr": "Ventes / Forfaits"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Plan subscriptions bought by companies certified within your franchise and its sub-franchises.",
+  "plural": null,
+  "de": "Plan-Abonnements, die von Unternehmen gekauft wurden, die innerhalb Ihrer Franchise und ihrer Sub-Franchises zertifiziert sind.",
+  "es": "Suscripciones a planes compradas por empresas certificadas dentro de su franquicia y sus sub-franquicias.",
+  "fr": "Abonnements aux forfaits achetés par des entreprises certifiées au sein de votre franchise et de ses sous-franchises."
+ },
+ {
+  "ctx": "common",
+  "id": "Filter",
+  "plural": null,
+  "de": "Filtern",
+  "es": "Filtrar",
+  "fr": "Filtrer"
+ },
+ {
+  "ctx": null,
+  "id": "%(counter)s sale",
+  "plural": "%(counter)s sales",
+  "de": [
+   "%(counter)s Verkauf",
+   "%(counter)s Verkäufe"
+  ],
+  "es": [
+   "%(counter)s venta",
+   "%(counter)s ventas"
+  ],
+  "fr": [
+   "%(counter)s vente",
+   "%(counter)s ventes"
+  ]
+ },
+ {
+  "ctx": "franchise",
+  "id": "Plan",
+  "plural": null,
+  "de": "Plan",
+  "es": "Plan",
+  "fr": "Forfait"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Buyer",
+  "plural": null,
+  "de": "Käufer",
+  "es": "Comprador",
+  "fr": "Acheteur"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Amount",
+  "plural": null,
+  "de": "Betrag",
+  "es": "Importe",
+  "fr": "Montant"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Period",
+  "plural": null,
+  "de": "Zeitraum",
+  "es": "Periodo",
+  "fr": "Période"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Sold on",
+  "plural": null,
+  "de": "Verkauft am",
+  "es": "Vendido el",
+  "fr": "Vendu le"
+ },
+ {
+  "ctx": "franchise",
+  "id": "No consultants operate under your franchise yet, so there are no plan sales to show.",
+  "plural": null,
+  "de": "Unter Ihrer Franchise arbeiten noch keine Berater, daher gibt es keine Plan-Verkäufe anzuzeigen.",
+  "es": "Aún no hay consultores operando bajo su franquicia, por lo que no hay ventas de planes que mostrar.",
+  "fr": "Aucun consultant n'opère encore sous votre franchise ; il n'y a donc pas de ventes de forfaits à afficher."
+ },
+ {
+  "ctx": "franchise",
+  "id": "No plan sales found.",
+  "plural": null,
+  "de": "Keine Plan-Verkäufe gefunden.",
+  "es": "No se encontraron ventas de planes.",
+  "fr": "Aucune vente de forfait trouvée."
+ },
+ {
+  "ctx": null,
+  "id": "Access suspended",
+  "plural": null,
+  "de": "Zugriff ausgesetzt",
+  "es": "Acceso suspendido",
+  "fr": "Accès suspendu"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Your account is suspended",
+  "plural": null,
+  "de": "Ihr Konto ist ausgesetzt",
+  "es": "Su cuenta está suspendida",
+  "fr": "Votre compte est suspendu"
+ },
+ {
+  "ctx": null,
+  "id": "this section",
+  "plural": null,
+  "de": "diesen Bereich",
+  "es": "esta sección",
+  "fr": "cette section"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Your franchise has been suspended by the Platform Admin, so you can't access %(feature)s right now. Your existing data is preserved and access is restored once your franchise is reactivated.",
+  "plural": null,
+  "de": "Ihre Franchise wurde vom Plattformadministrator ausgesetzt, daher können Sie %(feature)s derzeit nicht aufrufen. Ihre vorhandenen Daten bleiben erhalten und der Zugriff wird wiederhergestellt, sobald Ihre Franchise reaktiviert wird.",
+  "es": "Su franquicia ha sido suspendida por el Administrador de la plataforma, por lo que no puede acceder a %(feature)s en este momento. Sus datos existentes se conservan y el acceso se restablece cuando su franquicia se reactive.",
+  "fr": "Votre franchise a été suspendue par l'Administrateur de la plateforme ; vous ne pouvez donc pas accéder à %(feature)s pour le moment. Vos données existantes sont conservées et l'accès est rétabli dès la réactivation de votre franchise."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Please contact the Platform Admin if you think this is a mistake.",
+  "plural": null,
+  "de": "Bitte wenden Sie sich an den Plattformadministrator, wenn Sie glauben, dass dies ein Fehler ist.",
+  "es": "Póngase en contacto con el Administrador de la plataforma si cree que se trata de un error.",
+  "fr": "Veuillez contacter l'Administrateur de la plateforme si vous pensez qu'il s'agit d'une erreur."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Franchise Tree",
+  "plural": null,
+  "de": "Franchise-Baum",
+  "es": "Árbol de franquicias",
+  "fr": "Arborescence des franchises"
+ },
+ {
+  "ctx": "franchise",
+  "id": "Franchise Tree — Global",
+  "plural": null,
+  "de": "Franchise-Baum — Global",
+  "es": "Árbol de franquicias — Global",
+  "fr": "Arborescence des franchises — Global"
+ },
+ {
+  "ctx": "franchise",
+  "id": "My Franchise Tree",
+  "plural": null,
+  "de": "Mein Franchise-Baum",
+  "es": "Mi árbol de franquicias",
+  "fr": "Mon arborescence de franchises"
+ },
+ {
+  "ctx": "franchise",
+  "id": "The complete franchise hierarchy across every territory.",
+  "plural": null,
+  "de": "Die vollständige Franchise-Hierarchie über alle Gebiete hinweg.",
+  "es": "La jerarquía completa de franquicias en todos los territorios.",
+  "fr": "La hiérarchie complète des franchises sur tous les territoires."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Your franchise and everything beneath it. Parallel branches and other franchises are not shown.",
+  "plural": null,
+  "de": "Ihre Franchise und alles darunter. Parallele Zweige und andere Franchises werden nicht angezeigt.",
+  "es": "Su franquicia y todo lo que está por debajo. No se muestran las ramas paralelas ni otras franquicias.",
+  "fr": "Votre franchise et tout ce qui se trouve en dessous. Les branches parallèles et les autres franchises ne sont pas affichées."
+ },
+ {
+  "ctx": "franchise",
+  "id": "No franchises to display yet.",
+  "plural": null,
+  "de": "Noch keine Franchises zum Anzeigen.",
+  "es": "Aún no hay franquicias que mostrar.",
+  "fr": "Aucune franchise à afficher pour le moment."
+ },
+ {
+  "ctx": "companies",
+  "id": "Plan awaiting admin approval",
+  "plural": null,
+  "de": "Plan wartet auf Genehmigung durch den Administrator",
+  "es": "Plan en espera de aprobación del administrador",
+  "fr": "Forfait en attente d'approbation par l'administrateur"
+ },
+ {
+  "ctx": "companies",
+  "id": "Current plan",
+  "plural": null,
+  "de": "Aktueller Plan",
+  "es": "Plan actual",
+  "fr": "Forfait actuel"
+ },
+ {
+  "ctx": "companies",
+  "id": "Manage Plan",
+  "plural": null,
+  "de": "Plan verwalten",
+  "es": "Gestionar el plan",
+  "fr": "Gérer le forfait"
+ },
+ {
+  "ctx": "companies",
+  "id": "Select Plan",
+  "plural": null,
+  "de": "Plan auswählen",
+  "es": "Seleccionar plan",
+  "fr": "Choisir un forfait"
+ },
+ {
+  "ctx": "billing",
+  "id": "Current plan and history for %(company)s. Each company has its own plan.",
+  "plural": null,
+  "de": "Aktueller Plan und Verlauf für %(company)s. Jedes Unternehmen hat seinen eigenen Plan.",
+  "es": "Plan actual e historial de %(company)s. Cada empresa tiene su propio plan.",
+  "fr": "Forfait actuel et historique de %(company)s. Chaque entreprise a son propre forfait."
+ },
+ {
+  "ctx": "dashboard",
+  "id": "Franchise",
+  "plural": null,
+  "de": "Franchise",
+  "es": "Franquicia",
+  "fr": "Franchise"
+ },
+ {
+  "ctx": "companies",
+  "id": "Choose a Company",
+  "plural": null,
+  "de": "Unternehmen auswählen",
+  "es": "Elija una empresa",
+  "fr": "Choisir une entreprise"
+ },
+ {
+  "ctx": "companies",
+  "id": "Choose a company to continue",
+  "plural": null,
+  "de": "Wählen Sie ein Unternehmen, um fortzufahren",
+  "es": "Elija una empresa para continuar",
+  "fr": "Choisissez une entreprise pour continuer"
+ },
+ {
+  "ctx": "companies",
+  "id": "You have more than one company. The one you pick sets the plan the system uses for this session.",
+  "plural": null,
+  "de": "Sie haben mehr als ein Unternehmen. Das ausgewählte Unternehmen bestimmt den Plan, den das System in dieser Sitzung verwendet.",
+  "es": "Tiene más de una empresa. La que elija determina el plan que el sistema usa en esta sesión.",
+  "fr": "Vous avez plusieurs entreprises. Celle que vous choisissez détermine le forfait utilisé par le système pour cette session."
+ },
+ {
+  "ctx": "auth.login",
+  "id": "Log out",
+  "plural": null,
+  "de": "Abmelden",
+  "es": "Cerrar sesión",
+  "fr": "Se déconnecter"
+ },
+ {
+  "ctx": "billing",
+  "id": "Features (one per line — prefix with “- ” for an excluded feature)",
+  "plural": null,
+  "de": "Funktionen (eine pro Zeile — mit “- ” beginnen für eine ausgeschlossene Funktion)",
+  "es": "Características (una por línea: use el prefijo “- ” para una característica excluida)",
+  "fr": "Fonctionnalités (une par ligne — préfixez avec “- ” pour une fonctionnalité exclue)"
+ },
+ {
+  "ctx": null,
+  "id": "View",
+  "plural": null,
+  "de": "Ansehen",
+  "es": "Ver",
+  "fr": "Voir"
+ },
+ {
+  "ctx": null,
+  "id": "No listings found",
+  "plural": null,
+  "de": "Keine Inserate gefunden",
+  "es": "No se encontraron anuncios",
+  "fr": "Aucune annonce trouvée"
+ },
+ {
+  "ctx": null,
+  "id": "No active listings match your filters. Try broadening your search.",
+  "plural": null,
+  "de": "Keine aktiven Inserate entsprechen Ihren Filtern. Versuchen Sie, Ihre Suche zu erweitern.",
+  "es": "Ningún anuncio activo coincide con sus filtros. Pruebe a ampliar la búsqueda.",
+  "fr": "Aucune annonce active ne correspond à vos filtres. Essayez d'élargir votre recherche."
+ },
+ {
+  "ctx": null,
+  "id": "All Listings",
+  "plural": null,
+  "de": "Alle Inserate",
+  "es": "Todos los anuncios",
+  "fr": "Toutes les annonces"
+ },
+ {
+  "ctx": null,
+  "id": "All statuses",
+  "plural": null,
+  "de": "Alle Status",
+  "es": "Todos los estados",
+  "fr": "Tous les statuts"
+ },
+ {
+  "ctx": null,
+  "id": "All types",
+  "plural": null,
+  "de": "Alle Typen",
+  "es": "Todos los tipos",
+  "fr": "Tous les types"
+ },
+ {
+  "ctx": null,
+  "id": "Search title or description",
+  "plural": null,
+  "de": "Titel oder Beschreibung suchen",
+  "es": "Buscar título o descripción",
+  "fr": "Rechercher un titre ou une description"
+ },
+ {
+  "ctx": null,
+  "id": "Filter",
+  "plural": null,
+  "de": "Filtern",
+  "es": "Filtrar",
+  "fr": "Filtrer"
+ },
+ {
+  "ctx": null,
+  "id": "Title",
+  "plural": null,
+  "de": "Titel",
+  "es": "Título",
+  "fr": "Titre"
+ },
+ {
+  "ctx": null,
+  "id": "Type",
+  "plural": null,
+  "de": "Typ",
+  "es": "Tipo",
+  "fr": "Type"
+ },
+ {
+  "ctx": null,
+  "id": "Owner",
+  "plural": null,
+  "de": "Eigentümer",
+  "es": "Propietario",
+  "fr": "Propriétaire"
+ },
+ {
+  "ctx": null,
+  "id": "Created",
+  "plural": null,
+  "de": "Erstellt",
+  "es": "Creado",
+  "fr": "Créé"
+ },
+ {
+  "ctx": null,
+  "id": "History",
+  "plural": null,
+  "de": "Verlauf",
+  "es": "Historial",
+  "fr": "Historique"
+ },
+ {
+  "ctx": null,
+  "id": "Reactivate",
+  "plural": null,
+  "de": "Reaktivieren",
+  "es": "Reactivar",
+  "fr": "Réactiver"
+ },
+ {
+  "ctx": null,
+  "id": "Suspend",
+  "plural": null,
+  "de": "Aussetzen",
+  "es": "Suspender",
+  "fr": "Suspendre"
+ },
+ {
+  "ctx": null,
+  "id": "Suspension reason (min 5 chars)",
+  "plural": null,
+  "de": "Grund der Aussetzung (min. 5 Zeichen)",
+  "es": "Motivo de la suspensión (mín. 5 caracteres)",
+  "fr": "Motif de la suspension (5 caractères min.)"
+ },
+ {
+  "ctx": null,
+  "id": "Confirm Suspend",
+  "plural": null,
+  "de": "Aussetzen bestätigen",
+  "es": "Confirmar suspensión",
+  "fr": "Confirmer la suspension"
+ },
+ {
+  "ctx": null,
+  "id": "No listings.",
+  "plural": null,
+  "de": "Keine Inserate.",
+  "es": "No hay anuncios.",
+  "fr": "Aucune annonce."
+ },
+ {
+  "ctx": null,
+  "id": "Audit History",
+  "plural": null,
+  "de": "Prüfverlauf",
+  "es": "Historial de auditoría",
+  "fr": "Historique d'audit"
+ },
+ {
+  "ctx": null,
+  "id": "When",
+  "plural": null,
+  "de": "Wann",
+  "es": "Cuándo",
+  "fr": "Quand"
+ },
+ {
+  "ctx": null,
+  "id": "Action",
+  "plural": null,
+  "de": "Aktion",
+  "es": "Acción",
+  "fr": "Action"
+ },
+ {
+  "ctx": null,
+  "id": "By",
+  "plural": null,
+  "de": "Von",
+  "es": "Por",
+  "fr": "Par"
+ },
+ {
+  "ctx": null,
+  "id": "No audit entries.",
+  "plural": null,
+  "de": "Keine Prüfeinträge.",
+  "es": "No hay entradas de auditoría.",
+  "fr": "Aucune entrée d'audit."
+ },
+ {
+  "ctx": null,
+  "id": "Browse Listings",
+  "plural": null,
+  "de": "Inserate durchsuchen",
+  "es": "Explorar anuncios",
+  "fr": "Parcourir les annonces"
+ },
+ {
+  "ctx": null,
+  "id": "Add Offer",
+  "plural": null,
+  "de": "Angebot hinzufügen",
+  "es": "Añadir oferta",
+  "fr": "Ajouter une offre"
+ },
+ {
+  "ctx": null,
+  "id": "Add Demand",
+  "plural": null,
+  "de": "Nachfrage hinzufügen",
+  "es": "Añadir demanda",
+  "fr": "Ajouter une demande"
+ },
+ {
+  "ctx": null,
+  "id": "All categories",
+  "plural": null,
+  "de": "Alle Kategorien",
+  "es": "Todas las categorías",
+  "fr": "Toutes les catégories"
+ },
+ {
+  "ctx": null,
+  "id": "NACE / ISIC",
+  "plural": null,
+  "de": "NACE / ISIC",
+  "es": "NACE / ISIC",
+  "fr": "NACE / ISIC"
+ },
+ {
+  "ctx": null,
+  "id": "All countries",
+  "plural": null,
+  "de": "Alle Länder",
+  "es": "Todos los países",
+  "fr": "Tous les pays"
+ },
+ {
+  "ctx": null,
+  "id": "Search title, description or keywords",
+  "plural": null,
+  "de": "Titel, Beschreibung oder Schlüsselwörter suchen",
+  "es": "Buscar título, descripción o palabras clave",
+  "fr": "Rechercher un titre, une description ou des mots-clés"
+ },
+ {
+  "ctx": null,
+  "id": "Back to listings",
+  "plural": null,
+  "de": "Zurück zu den Inseraten",
+  "es": "Volver a los anuncios",
+  "fr": "Retour aux annonces"
+ },
+ {
+  "ctx": null,
+  "id": "Edit",
+  "plural": null,
+  "de": "Bearbeiten",
+  "es": "Editar",
+  "fr": "Modifier"
+ },
+ {
+  "ctx": null,
+  "id": "Product image",
+  "plural": null,
+  "de": "Produktbild",
+  "es": "Imagen del producto",
+  "fr": "Image du produit"
+ },
+ {
+  "ctx": null,
+  "id": "Video",
+  "plural": null,
+  "de": "Video",
+  "es": "Vídeo",
+  "fr": "Vidéo"
+ },
+ {
+  "ctx": null,
+  "id": "Certificate",
+  "plural": null,
+  "de": "Zertifikat",
+  "es": "Certificado",
+  "fr": "Certificat"
+ },
+ {
+  "ctx": null,
+  "id": "This listing was suspended.",
+  "plural": null,
+  "de": "Dieses Inserat wurde ausgesetzt.",
+  "es": "Este anuncio fue suspendido.",
+  "fr": "Cette annonce a été suspendue."
+ },
+ {
+  "ctx": null,
+  "id": "I am interested",
+  "plural": null,
+  "de": "Ich bin interessiert",
+  "es": "Me interesa",
+  "fr": "Cela m'intéresse"
+ },
+ {
+  "ctx": null,
+  "id": "Send an expression of interest to start a conversation through FONTESIN.",
+  "plural": null,
+  "de": "Senden Sie eine Interessensbekundung, um über FONTESIN ein Gespräch zu beginnen.",
+  "es": "Envíe una manifestación de interés para iniciar una conversación a través de FONTESIN.",
+  "fr": "Envoyez une marque d'intérêt pour entamer une conversation via FONTESIN."
+ },
+ {
+  "ctx": null,
+  "id": "Add an optional message…",
+  "plural": null,
+  "de": "Optionale Nachricht hinzufügen…",
+  "es": "Añadir un mensaje opcional…",
+  "fr": "Ajouter un message facultatif…"
+ },
+ {
+  "ctx": null,
+  "id": "Send Interest",
+  "plural": null,
+  "de": "Interesse senden",
+  "es": "Enviar interés",
+  "fr": "Envoyer l'intérêt"
+ },
+ {
+  "ctx": null,
+  "id": "You have already expressed interest in this listing.",
+  "plural": null,
+  "de": "Sie haben für dieses Inserat bereits Interesse bekundet.",
+  "es": "Ya ha manifestado interés en este anuncio.",
+  "fr": "Vous avez déjà manifesté votre intérêt pour cette annonce."
+ },
+ {
+  "ctx": null,
+  "id": "Details",
+  "plural": null,
+  "de": "Details",
+  "es": "Detalles",
+  "fr": "Détails"
+ },
+ {
+  "ctx": null,
+  "id": "Classification",
+  "plural": null,
+  "de": "Klassifizierung",
+  "es": "Clasificación",
+  "fr": "Classification"
+ },
+ {
+  "ctx": null,
+  "id": "Price (excl. VAT)",
+  "plural": null,
+  "de": "Preis (exkl. MwSt.)",
+  "es": "Precio (sin IVA)",
+  "fr": "Prix (hors TVA)"
+ },
+ {
+  "ctx": null,
+  "id": "Min. qty / scope",
+  "plural": null,
+  "de": "Mindestmenge / Umfang",
+  "es": "Cant. mín. / alcance",
+  "fr": "Qté min. / portée"
+ },
+ {
+  "ctx": null,
+  "id": "Unit",
+  "plural": null,
+  "de": "Einheit",
+  "es": "Unidad",
+  "fr": "Unité"
+ },
+ {
+  "ctx": null,
+  "id": "Location",
+  "plural": null,
+  "de": "Standort",
+  "es": "Ubicación",
+  "fr": "Emplacement"
+ },
+ {
+  "ctx": null,
+  "id": "Visibility",
+  "plural": null,
+  "de": "Sichtbarkeit",
+  "es": "Visibilidad",
+  "fr": "Visibilité"
+ },
+ {
+  "ctx": null,
+  "id": "Edit Listing",
+  "plural": null,
+  "de": "Inserat bearbeiten",
+  "es": "Editar anuncio",
+  "fr": "Modifier l'annonce"
+ },
+ {
+  "ctx": null,
+  "id": "Update your listing details.",
+  "plural": null,
+  "de": "Aktualisieren Sie die Angaben zu Ihrem Inserat.",
+  "es": "Actualice los datos de su anuncio.",
+  "fr": "Mettez à jour les informations de votre annonce."
+ },
+ {
+  "ctx": null,
+  "id": "Create a product or service offer.",
+  "plural": null,
+  "de": "Erstellen Sie ein Produkt- oder Dienstleistungsangebot.",
+  "es": "Cree una oferta de producto o servicio.",
+  "fr": "Créez une offre de produit ou de service."
+ },
+ {
+  "ctx": null,
+  "id": "Create a product or service demand.",
+  "plural": null,
+  "de": "Erstellen Sie eine Produkt- oder Dienstleistungsnachfrage.",
+  "es": "Cree una demanda de producto o servicio.",
+  "fr": "Créez une demande de produit ou de service."
+ },
+ {
+  "ctx": null,
+  "id": "Basic information",
+  "plural": null,
+  "de": "Grundangaben",
+  "es": "Información básica",
+  "fr": "Informations de base"
+ },
+ {
+  "ctx": null,
+  "id": "Category Type",
+  "plural": null,
+  "de": "Kategorietyp",
+  "es": "Tipo de categoría",
+  "fr": "Type de catégorie"
+ },
+ {
+  "ctx": null,
+  "id": "Select company",
+  "plural": null,
+  "de": "Unternehmen auswählen",
+  "es": "Seleccionar empresa",
+  "fr": "Sélectionner une entreprise"
+ },
+ {
+  "ctx": null,
+  "id": "Visibility Scope",
+  "plural": null,
+  "de": "Sichtbarkeitsbereich",
+  "es": "Ámbito de visibilidad",
+  "fr": "Portée de visibilité"
+ },
+ {
+  "ctx": null,
+  "id": "NACE / ISIC Classification",
+  "plural": null,
+  "de": "NACE-/ISIC-Klassifizierung",
+  "es": "Clasificación NACE / ISIC",
+  "fr": "Classification NACE / ISIC"
+ },
+ {
+  "ctx": null,
+  "id": "Type a code or industry name…",
+  "plural": null,
+  "de": "Code oder Branchenbezeichnung eingeben…",
+  "es": "Escriba un código o el nombre de un sector…",
+  "fr": "Saisissez un code ou un nom de secteur…"
+ },
+ {
+  "ctx": null,
+  "id": "A short, clear title",
+  "plural": null,
+  "de": "Ein kurzer, klarer Titel",
+  "es": "Un título breve y claro",
+  "fr": "Un titre court et clair"
+ },
+ {
+  "ctx": null,
+  "id": "Description",
+  "plural": null,
+  "de": "Beschreibung",
+  "es": "Descripción",
+  "fr": "Description"
+ },
+ {
+  "ctx": null,
+  "id": "Describe what you offer or need…",
+  "plural": null,
+  "de": "Beschreiben Sie, was Sie anbieten oder benötigen…",
+  "es": "Describa lo que ofrece o necesita…",
+  "fr": "Décrivez ce que vous proposez ou recherchez…"
+ },
+ {
+  "ctx": null,
+  "id": "Keywords",
+  "plural": null,
+  "de": "Schlüsselwörter",
+  "es": "Palabras clave",
+  "fr": "Mots-clés"
+ },
+ {
+  "ctx": null,
+  "id": "comma-separated, 1–20",
+  "plural": null,
+  "de": "kommagetrennt, 1–20",
+  "es": "separadas por comas, 1–20",
+  "fr": "séparés par des virgules, 1–20"
+ },
+ {
+  "ctx": null,
+  "id": "e.g. steel, pipes, export",
+  "plural": null,
+  "de": "z. B. Stahl, Rohre, Export",
+  "es": "p. ej. acero, tuberías, exportación",
+  "fr": "p. ex. acier, tuyaux, export"
+ },
+ {
+  "ctx": null,
+  "id": "Offer details",
+  "plural": null,
+  "de": "Angebotsdetails",
+  "es": "Detalles de la oferta",
+  "fr": "Détails de l'offre"
+ },
+ {
+  "ctx": null,
+  "id": "Price without VAT",
+  "plural": null,
+  "de": "Preis ohne MwSt.",
+  "es": "Precio sin IVA",
+  "fr": "Prix hors TVA"
+ },
+ {
+  "ctx": null,
+  "id": "Currency",
+  "plural": null,
+  "de": "Währung",
+  "es": "Divisa",
+  "fr": "Devise"
+ },
+ {
+  "ctx": null,
+  "id": "Minimum Quantity / Service Scope",
+  "plural": null,
+  "de": "Mindestmenge / Leistungsumfang",
+  "es": "Cantidad mínima / Alcance del servicio",
+  "fr": "Quantité minimale / Portée du service"
+ },
+ {
+  "ctx": null,
+  "id": "Video URL",
+  "plural": null,
+  "de": "Video-URL",
+  "es": "URL del vídeo",
+  "fr": "URL de la vidéo"
+ },
+ {
+  "ctx": null,
+  "id": "Product Image",
+  "plural": null,
+  "de": "Produktbild",
+  "es": "Imagen del producto",
+  "fr": "Image du produit"
+ },
+ {
+  "ctx": null,
+  "id": "Product Offer only",
+  "plural": null,
+  "de": "Nur bei Produktangebot",
+  "es": "Solo para Oferta de producto",
+  "fr": "Offre de produit uniquement"
+ },
+ {
+  "ctx": null,
+  "id": "Current image — leave the field empty to keep it.",
+  "plural": null,
+  "de": "Aktuelles Bild — lassen Sie das Feld leer, um es zu behalten.",
+  "es": "Imagen actual: deje el campo vacío para conservarla.",
+  "fr": "Image actuelle — laissez le champ vide pour la conserver."
+ },
+ {
+  "ctx": null,
+  "id": "Certification Image",
+  "plural": null,
+  "de": "Zertifizierungsbild",
+  "es": "Imagen de certificación",
+  "fr": "Image de certification"
+ },
+ {
+  "ctx": null,
+  "id": "Certification image",
+  "plural": null,
+  "de": "Zertifizierungsbild",
+  "es": "Imagen de certificación",
+  "fr": "Image de certification"
+ },
+ {
+  "ctx": null,
+  "id": "Certification Text",
+  "plural": null,
+  "de": "Zertifizierungstext",
+  "es": "Texto de certificación",
+  "fr": "Texte de certification"
+ },
+ {
+  "ctx": null,
+  "id": "details",
+  "plural": null,
+  "de": "Details",
+  "es": "detalles",
+  "fr": "détails"
+ },
+ {
+  "ctx": null,
+  "id": "Select country",
+  "plural": null,
+  "de": "Land auswählen",
+  "es": "Seleccionar país",
+  "fr": "Sélectionner un pays"
+ },
+ {
+  "ctx": null,
+  "id": "Select region",
+  "plural": null,
+  "de": "Region auswählen",
+  "es": "Seleccionar región",
+  "fr": "Sélectionner une région"
+ },
+ {
+  "ctx": null,
+  "id": "City",
+  "plural": null,
+  "de": "Stadt",
+  "es": "Ciudad",
+  "fr": "Ville"
+ },
+ {
+  "ctx": null,
+  "id": "Save Changes",
+  "plural": null,
+  "de": "Änderungen speichern",
+  "es": "Guardar cambios",
+  "fr": "Enregistrer les modifications"
+ },
+ {
+  "ctx": null,
+  "id": "Publish",
+  "plural": null,
+  "de": "Veröffentlichen",
+  "es": "Publicar",
+  "fr": "Publier"
+ },
+ {
+  "ctx": null,
+  "id": "Save Draft",
+  "plural": null,
+  "de": "Entwurf speichern",
+  "es": "Guardar borrador",
+  "fr": "Enregistrer le brouillon"
+ },
+ {
+  "ctx": null,
+  "id": "Cancel",
+  "plural": null,
+  "de": "Abbrechen",
+  "es": "Cancelar",
+  "fr": "Annuler"
+ },
+ {
+  "ctx": null,
+  "id": "New image — replaces the current one when you save.",
+  "plural": null,
+  "de": "Neues Bild — ersetzt beim Speichern das aktuelle.",
+  "es": "Nueva imagen: sustituye a la actual al guardar.",
+  "fr": "Nouvelle image — remplace l'actuelle lors de l'enregistrement."
+ },
+ {
+  "ctx": null,
+  "id": "Coming soon",
+  "plural": null,
+  "de": "Demnächst verfügbar",
+  "es": "Próximamente",
+  "fr": "Bientôt disponible"
+ },
+ {
+  "ctx": null,
+  "id": "Active Offers",
+  "plural": null,
+  "de": "Aktive Angebote",
+  "es": "Ofertas activas",
+  "fr": "Offres actives"
+ },
+ {
+  "ctx": null,
+  "id": "Active Demands",
+  "plural": null,
+  "de": "Aktive Nachfragen",
+  "es": "Demandas activas",
+  "fr": "Demandes actives"
+ },
+ {
+  "ctx": null,
+  "id": "Total Listings",
+  "plural": null,
+  "de": "Inserate insgesamt",
+  "es": "Total de anuncios",
+  "fr": "Total des annonces"
+ },
+ {
+  "ctx": null,
+  "id": "Offers",
+  "plural": null,
+  "de": "Angebote",
+  "es": "Ofertas",
+  "fr": "Offres"
+ },
+ {
+  "ctx": null,
+  "id": "Browse Offers",
+  "plural": null,
+  "de": "Angebote durchsuchen",
+  "es": "Explorar ofertas",
+  "fr": "Parcourir les offres"
+ },
+ {
+  "ctx": null,
+  "id": "Products and services available from providers.",
+  "plural": null,
+  "de": "Produkte und Dienstleistungen, die von Anbietern verfügbar sind.",
+  "es": "Productos y servicios disponibles de los proveedores.",
+  "fr": "Produits et services proposés par les fournisseurs."
+ },
+ {
+  "ctx": null,
+  "id": "Explore",
+  "plural": null,
+  "de": "Entdecken",
+  "es": "Explorar",
+  "fr": "Découvrir"
+ },
+ {
+  "ctx": null,
+  "id": "Demands",
+  "plural": null,
+  "de": "Nachfragen",
+  "es": "Demandas",
+  "fr": "Demandes"
+ },
+ {
+  "ctx": null,
+  "id": "Browse Demands",
+  "plural": null,
+  "de": "Nachfragen durchsuchen",
+  "es": "Explorar demandas",
+  "fr": "Parcourir les demandes"
+ },
+ {
+  "ctx": null,
+  "id": "What buyers are actively looking for.",
+  "plural": null,
+  "de": "Wonach Käufer aktiv suchen.",
+  "es": "Lo que los compradores buscan activamente.",
+  "fr": "Ce que les acheteurs recherchent activement."
+ },
+ {
+  "ctx": null,
+  "id": "All",
+  "plural": null,
+  "de": "Alle",
+  "es": "Todos",
+  "fr": "Tous"
+ },
+ {
+  "ctx": null,
+  "id": "Browse Everything",
+  "plural": null,
+  "de": "Alles durchsuchen",
+  "es": "Explorar todo",
+  "fr": "Tout parcourir"
+ },
+ {
+  "ctx": null,
+  "id": "Search all active offers and demands in one place.",
+  "plural": null,
+  "de": "Durchsuchen Sie alle aktiven Angebote und Nachfragen an einem Ort.",
+  "es": "Busque todas las ofertas y demandas activas en un solo lugar.",
+  "fr": "Recherchez toutes les offres et demandes actives en un seul endroit."
+ },
+ {
+  "ctx": null,
+  "id": "AI analytics is a future-ready section for this module. MVP Phase 3 collects the structured data; automated matching/scoring is a later phase.",
+  "plural": null,
+  "de": "Die KI-Analyse ist ein zukunftsfähiger Bereich dieses Moduls. In MVP-Phase 3 werden die strukturierten Daten erfasst; automatisches Matching/Scoring folgt in einer späteren Phase.",
+  "es": "El análisis con IA es una sección preparada para el futuro de este módulo. La fase 3 del MVP recopila los datos estructurados; el emparejamiento y la puntuación automáticos llegarán en una fase posterior.",
+  "fr": "L'analyse par IA est une section évolutive de ce module. La phase 3 du MVP collecte les données structurées ; l'appariement et la notation automatiques viendront dans une phase ultérieure."
+ },
+ {
+  "ctx": null,
+  "id": "This professional module is registered and will use the same offers, demands, reactions and admin logic. Module-specific fields will be enabled by configuration.",
+  "plural": null,
+  "de": "Dieses professionelle Modul ist registriert und verwendet dieselbe Logik für Angebote, Nachfragen, Reaktionen und Administration. Modulspezifische Felder werden per Konfiguration aktiviert.",
+  "es": "Este módulo profesional está registrado y usará la misma lógica de ofertas, demandas, reacciones y administración. Los campos específicos del módulo se habilitarán por configuración.",
+  "fr": "Ce module professionnel est enregistré et utilisera la même logique pour les offres, demandes, réactions et l'administration. Les champs propres au module seront activés par configuration."
+ },
+ {
+  "ctx": null,
+  "id": "All modules",
+  "plural": null,
+  "de": "Alle Module",
+  "es": "Todos los módulos",
+  "fr": "Tous les modules"
+ },
+ {
+  "ctx": null,
+  "id": "Professional Modules",
+  "plural": null,
+  "de": "Professionelle Module",
+  "es": "Módulos profesionales",
+  "fr": "Modules professionnels"
+ },
+ {
+  "ctx": null,
+  "id": "Open Module",
+  "plural": null,
+  "de": "Modul öffnen",
+  "es": "Abrir módulo",
+  "fr": "Ouvrir le module"
+ },
+ {
+  "ctx": null,
+  "id": "Preview",
+  "plural": null,
+  "de": "Vorschau",
+  "es": "Vista previa",
+  "fr": "Aperçu"
+ },
+ {
+  "ctx": null,
+  "id": "No modules available for your role.",
+  "plural": null,
+  "de": "Für Ihre Rolle sind keine Module verfügbar.",
+  "es": "No hay módulos disponibles para su rol.",
+  "fr": "Aucun module disponible pour votre rôle."
+ },
+ {
+  "ctx": null,
+  "id": "Category",
+  "plural": null,
+  "de": "Kategorie",
+  "es": "Categoría",
+  "fr": "Catégorie"
+ },
+ {
+  "ctx": null,
+  "id": "Actions",
+  "plural": null,
+  "de": "Aktionen",
+  "es": "Acciones",
+  "fr": "Actions"
+ },
+ {
+  "ctx": null,
+  "id": "Deactivate",
+  "plural": null,
+  "de": "Deaktivieren",
+  "es": "Desactivar",
+  "fr": "Désactiver"
+ },
+ {
+  "ctx": null,
+  "id": "Activate",
+  "plural": null,
+  "de": "Aktivieren",
+  "es": "Activar",
+  "fr": "Activer"
+ },
+ {
+  "ctx": null,
+  "id": "No listings yet.",
+  "plural": null,
+  "de": "Noch keine Inserate.",
+  "es": "Aún no hay anuncios.",
+  "fr": "Aucune annonce pour le moment."
+ },
+ {
+  "ctx": null,
+  "id": "Reactions Received",
+  "plural": null,
+  "de": "Erhaltene Reaktionen",
+  "es": "Reacciones recibidas",
+  "fr": "Réactions reçues"
+ },
+ {
+  "ctx": null,
+  "id": "Listing",
+  "plural": null,
+  "de": "Inserat",
+  "es": "Anuncio",
+  "fr": "Annonce"
+ },
+ {
+  "ctx": null,
+  "id": "From",
+  "plural": null,
+  "de": "Von",
+  "es": "De",
+  "fr": "De"
+ },
+ {
+  "ctx": null,
+  "id": "Message",
+  "plural": null,
+  "de": "Nachricht",
+  "es": "Mensaje",
+  "fr": "Message"
+ },
+ {
+  "ctx": null,
+  "id": "Received",
+  "plural": null,
+  "de": "Erhalten",
+  "es": "Recibido",
+  "fr": "Reçu"
+ },
+ {
+  "ctx": null,
+  "id": "No reactions yet.",
+  "plural": null,
+  "de": "Noch keine Reaktionen.",
+  "es": "Aún no hay reacciones.",
+  "fr": "Aucune réaction pour le moment."
+ },
+ {
+  "ctx": "billing",
+  "id": "Your %(plan)s plan is up for renewal.",
+  "plural": null,
+  "de": "Ihr Plan %(plan)s steht zur Verlängerung an.",
+  "es": "Su plan %(plan)s está listo para renovarse.",
+  "fr": "Votre forfait %(plan)s arrive à renouvellement."
+ },
+ {
+  "ctx": "billing",
+  "id": "Renew Plan",
+  "plural": null,
+  "de": "Plan verlängern",
+  "es": "Renovar plan",
+  "fr": "Renouveler le forfait"
+ },
+ {
+  "ctx": "billing",
+  "id": "An invoice is generated and, once the admin approves payment, a fresh term starts.",
+  "plural": null,
+  "de": "Es wird eine Rechnung erstellt und sobald der Administrator die Zahlung genehmigt, beginnt eine neue Laufzeit.",
+  "es": "Se genera una factura y, una vez que el administrador apruebe el pago, comienza un nuevo periodo.",
+  "fr": "Une facture est générée et, dès que l'administrateur approuve le paiement, une nouvelle période commence."
+ },
+ {
+  "ctx": "billing",
+  "id": "%(company)s must be certified by a consultant before you can select a paid plan.",
+  "plural": null,
+  "de": "%(company)s muss von einem Berater zertifiziert werden, bevor Sie einen kostenpflichtigen Plan auswählen können.",
+  "es": "%(company)s debe ser certificada por un consultor antes de que pueda seleccionar un plan de pago.",
+  "fr": "%(company)s doit être certifiée par un consultant avant que vous puissiez sélectionner un forfait payant."
+ },
+ {
+  "ctx": "billing",
+  "id": "Your company must be certified by a consultant before you can select a paid plan.",
+  "plural": null,
+  "de": "Ihr Unternehmen muss von einem Berater zertifiziert werden, bevor Sie einen kostenpflichtigen Plan auswählen können.",
+  "es": "Su empresa debe ser certificada por un consultor antes de que pueda seleccionar un plan de pago.",
+  "fr": "Votre entreprise doit être certifiée par un consultant avant que vous puissiez sélectionner un forfait payant."
+ },
+ {
+  "ctx": "profile",
+  "id": "Franchise Domain",
+  "plural": null,
+  "de": "Franchise-Domain",
+  "es": "Dominio de la franquicia",
+  "fr": "Domaine de la franchise"
+ },
+ {
+  "ctx": "profile",
+  "id": "No companies match “",
+  "plural": null,
+  "de": "Keine Unternehmen entsprechen “",
+  "es": "Ninguna empresa coincide con “",
+  "fr": "Aucune entreprise ne correspond à “"
+ },
+ {
+  "ctx": "profile",
+  "id": "”.",
+  "plural": null,
+  "de": "”.",
+  "es": "”.",
+  "fr": "”."
+ },
+ {
+  "ctx": "website",
+  "id": "English speakers: ~75%% (expat-driven)",
+  "plural": null,
+  "de": "Englischsprachige: ~75%% (durch Expats geprägt)",
+  "es": "Hablantes de inglés: ~75%% (impulsado por expatriados)",
+  "fr": "Anglophones : ~75%% (portée par les expatriés)"
+ },
+ {
+  "ctx": "website",
+  "id": "9%% (from 2023)",
+  "plural": null,
+  "de": "9%% (ab 2023)",
+  "es": "9%% (desde 2023)",
+  "fr": "9%% (depuis 2023)"
+ },
+ {
+  "ctx": "website",
+  "id": "Debt-to-GDP: 29.6%%",
+  "plural": null,
+  "de": "Schulden-zu-BIP: 29,6%%",
+  "es": "Deuda/PIB: 29,6%%",
+  "fr": "Dette/PIB : 29,6%%"
+ },
+ {
+  "ctx": "website",
+  "id": "LLC (Limited Liability Company)",
+  "plural": null,
+  "de": "LLC (Gesellschaft mit beschränkter Haftung)",
+  "es": "LLC (sociedad de responsabilidad limitada)",
+  "fr": "LLC (société à responsabilité limitée)"
+ },
+ {
+  "ctx": "website",
+  "id": "Most common form; requires local sponsor or 100%% foreign ownership in free zones.",
+  "plural": null,
+  "de": "Häufigste Form; erfordert einen lokalen Sponsor oder 100%% ausländisches Eigentum in Freihandelszonen.",
+  "es": "Forma más común; requiere un patrocinador local o el 100%% de propiedad extranjera en zonas francas.",
+  "fr": "Forme la plus courante ; nécessite un sponsor local ou 100%% de propriété étrangère en zone franche."
+ },
+ {
+  "ctx": "website",
+  "id": "100%% foreign ownership; tax exemptions; limited to free zone operations.",
+  "plural": null,
+  "de": "100%% ausländisches Eigentum; Steuerbefreiungen; auf Tätigkeiten in der Freihandelszone begrenzt.",
+  "es": "100%% de propiedad extranjera; exenciones fiscales; limitado a operaciones en zona franca.",
+  "fr": "100%% de propriété étrangère ; exonérations fiscales ; limité aux activités en zone franche."
+ },
+ {
+  "ctx": "website",
+  "id": "English speakers: 27%%",
+  "plural": null,
+  "de": "Englischsprachige: 27%%",
+  "es": "Hablantes de inglés: 27%%",
+  "fr": "Anglophones : 27%%"
+ },
+ {
+  "ctx": "website",
+  "id": "Debt-to-GDP: 44.2%%",
+  "plural": null,
+  "de": "Schulden-zu-BIP: 44,2%%",
+  "es": "Deuda/PIB: 44,2%%",
+  "fr": "Dette/PIB : 44,2%%"
+ },
+ {
+  "ctx": "website",
+  "id": "English speakers: 56%%",
+  "plural": null,
+  "de": "Englischsprachige: 56%%",
+  "es": "Hablantes de inglés: 56%%",
+  "fr": "Anglophones : 56%%"
+ },
+ {
+  "ctx": "website",
+  "id": "Debt-to-GDP: 63.6%%",
+  "plural": null,
+  "de": "Schulden-zu-BIP: 63,6%%",
+  "es": "Deuda/PIB: 63,6%%",
+  "fr": "Dette/PIB : 63,6%%"
+ },
+ {
+  "ctx": "website",
+  "id": "English speakers: ~30%%",
+  "plural": null,
+  "de": "Englischsprachige: ~30%%",
+  "es": "Hablantes de inglés: ~30%%",
+  "fr": "Anglophones : ~30%%"
+ },
+ {
+  "ctx": "website",
+  "id": "Debt-to-GDP: 261%%",
+  "plural": null,
+  "de": "Schulden-zu-BIP: 261%%",
+  "es": "Deuda/PIB: 261%%",
+  "fr": "Dette/PIB : 261%%"
+ },
+ {
+  "ctx": "website",
+  "id": "English speakers: 95%%",
+  "plural": null,
+  "de": "Englischsprachige: 95%%",
+  "es": "Hablantes de inglés: 95%%",
+  "fr": "Anglophones : 95%%"
+ },
+ {
+  "ctx": "website",
+  "id": "Debt-to-GDP: 121%%",
+  "plural": null,
+  "de": "Schulden-zu-BIP: 121%%",
+  "es": "Deuda/PIB: 121%%",
+  "fr": "Dette/PIB : 121%%"
+ },
+ {
+  "ctx": null,
+  "id": "%(country_name)s - FONTESIN Region",
+  "plural": null,
+  "de": "%(country_name)s – FONTESIN-Region",
+  "es": "%(country_name)s: región de FONTESIN",
+  "fr": "%(country_name)s – Région FONTESIN"
+ },
+ {
+  "ctx": null,
+  "id": "FONTESIN region profile for %(country_name)s: capital, region, official language, currency, and rollout status.",
+  "plural": null,
+  "de": "FONTESIN-Regionsprofil für %(country_name)s: Hauptstadt, Region, Amtssprache, Währung und Rollout-Status.",
+  "es": "Perfil de región FONTESIN de %(country_name)s: capital, región, idioma oficial, divisa y estado del despliegue.",
+  "fr": "Profil de région FONTESIN pour %(country_name)s : capitale, région, langue officielle, devise et état du déploiement."
+ },
+ {
+  "ctx": null,
+  "id": "%(country_name)s is part of FONTESIN's global rollout (%(rollout_status)s). The full economic and regulatory profile for this market is being prepared. Below are the key facts available today.",
+  "plural": null,
+  "de": "%(country_name)s ist Teil des globalen Rollouts von FONTESIN (%(rollout_status)s). Das vollständige wirtschaftliche und regulatorische Profil dieses Marktes wird derzeit erstellt. Nachfolgend die heute verfügbaren Kernangaben.",
+  "es": "%(country_name)s forma parte del despliegue global de FONTESIN (%(rollout_status)s). El perfil económico y regulatorio completo de este mercado está en preparación. A continuación, los datos clave disponibles hoy.",
+  "fr": "%(country_name)s fait partie du déploiement mondial de FONTESIN (%(rollout_status)s). Le profil économique et réglementaire complet de ce marché est en préparation. Voici les informations clés disponibles à ce jour."
+ },
+ {
+  "ctx": "website",
+  "id": "Capital",
+  "plural": null,
+  "de": "Hauptstadt",
+  "es": "Capital",
+  "fr": "Capitale"
+ },
+ {
+  "ctx": null,
+  "id": "Apply for franchise, request activation, or contact our regional team to explore opportunities in %(country_name)s.",
+  "plural": null,
+  "de": "Beantragen Sie eine Franchise, fordern Sie eine Aktivierung an oder kontaktieren Sie unser Regionalteam, um Möglichkeiten in %(country_name)s zu erkunden.",
+  "es": "Solicite una franquicia, pida la activación o contacte con nuestro equipo regional para explorar oportunidades en %(country_name)s.",
+  "fr": "Demandez une franchise, sollicitez une activation ou contactez notre équipe régionale pour explorer les opportunités en %(country_name)s."
+ },
+ {
+  "ctx": "website",
+  "id": "You must include this reference in the wire's “Memo” / Section 70 field. If space is short, include as much as possible.",
+  "plural": null,
+  "de": "Sie müssen diese Referenz im Feld “Memo” / Feld 70 der Überweisung angeben. Wenn der Platz nicht ausreicht, geben Sie so viel wie möglich an.",
+  "es": "Debe incluir esta referencia en el campo “Memo” / campo 70 de la transferencia. Si el espacio es limitado, incluya todo lo que pueda.",
+  "fr": "Vous devez indiquer cette référence dans le champ “Memo” / champ 70 du virement. Si la place manque, indiquez-en le plus possible."
+ },
+ {
+  "ctx": "website",
+  "id": "Selecting a plan for %(company)s",
+  "plural": null,
+  "de": "Plan für %(company)s auswählen",
+  "es": "Selección de plan para %(company)s",
+  "fr": "Sélection d'un forfait pour %(company)s"
+ },
+ {
+  "ctx": "website",
+  "id": "Open this page from a certified company in “My Companies” to select its plan.",
+  "plural": null,
+  "de": "Öffnen Sie diese Seite über ein zertifiziertes Unternehmen unter “Meine Unternehmen”, um seinen Plan auszuwählen.",
+  "es": "Abra esta página desde una empresa certificada en “Mis empresas” para seleccionar su plan.",
+  "fr": "Ouvrez cette page depuis une entreprise certifiée dans “Mes entreprises” pour sélectionner son forfait."
+ },
+ {
+  "ctx": "website",
+  "id": "Choose a company first",
+  "plural": null,
+  "de": "Wählen Sie zuerst ein Unternehmen",
+  "es": "Elija primero una empresa",
+  "fr": "Choisissez d'abord une entreprise"
+ },
+ {
+  "ctx": null,
+  "id": "%(consultant)s has a pending %(amount)s commission from %(user)s's subscription%(via)s.",
+  "plural": null,
+  "de": "%(consultant)s hat eine ausstehende Provision von %(amount)s aus dem Abonnement von %(user)s%(via)s.",
+  "es": "%(consultant)s tiene una comisión pendiente de %(amount)s de la suscripción de %(user)s%(via)s.",
+  "fr": "%(consultant)s a une commission de %(amount)s en attente sur l'abonnement de %(user)s%(via)s."
+ },
+ {
+  "ctx": null,
+  "id": "You marked %(consultant)s's %(amount)s commission from %(user)s's subscription%(via)s as paid.",
+  "plural": null,
+  "de": "Sie haben die Provision von %(amount)s für %(consultant)s aus dem Abonnement von %(user)s%(via)s als bezahlt markiert.",
+  "es": "Ha marcado como pagada la comisión de %(amount)s de %(consultant)s por la suscripción de %(user)s%(via)s.",
+  "fr": "Vous avez marqué comme payée la commission de %(amount)s de %(consultant)s sur l'abonnement de %(user)s%(via)s."
+ },
+ {
+  "ctx": null,
+  "id": "Your %(plan)s plan was deactivated by the admin. You have been moved to the Free plan. Please activate another plan to continue.",
+  "plural": null,
+  "de": "Ihr Plan %(plan)s wurde vom Administrator deaktiviert. Sie wurden auf den kostenlosen Plan umgestellt. Bitte aktivieren Sie einen anderen Plan, um fortzufahren.",
+  "es": "El administrador desactivó su plan %(plan)s. Se le ha cambiado al plan Gratis. Active otro plan para continuar.",
+  "fr": "Votre forfait %(plan)s a été désactivé par l'administrateur. Vous avez été basculé sur le forfait gratuit. Veuillez activer un autre forfait pour continuer."
+ },
+ {
+  "ctx": null,
+  "id": "Your %(plan)s plan was deactivated by the admin. You have been moved to the Free plan. Please activate another plan from the options below.",
+  "plural": null,
+  "de": "Ihr Plan %(plan)s wurde vom Administrator deaktiviert. Sie wurden auf den kostenlosen Plan umgestellt. Bitte aktivieren Sie unten einen anderen Plan.",
+  "es": "El administrador desactivó su plan %(plan)s. Se le ha cambiado al plan Gratis. Active otro plan entre las opciones siguientes.",
+  "fr": "Votre forfait %(plan)s a été désactivé par l'administrateur. Vous avez été basculé sur le forfait gratuit. Veuillez activer un autre forfait parmi les options ci-dessous."
+ },
+ {
+  "ctx": "auth.verify_otp",
+  "id": "We've sent a 6-digit verification code to <strong>%(email)s</strong>. Enter it below.",
+  "plural": null,
+  "de": "Wir haben einen 6-stelligen Bestätigungscode an <strong>%(email)s</strong> gesendet. Geben Sie ihn unten ein.",
+  "es": "Hemos enviado un código de verificación de 6 dígitos a <strong>%(email)s</strong>. Introdúzcalo a continuación.",
+  "fr": "Nous avons envoyé un code de vérification à 6 chiffres à <strong>%(email)s</strong>. Saisissez-le ci-dessous."
+ },
+ {
+  "ctx": "users",
+  "id": "%(counter)s result for &ldquo;%(query)s&rdquo;",
+  "plural": "%(counter)s results for &ldquo;%(query)s&rdquo;",
+  "de": [
+   "%(counter)s Ergebnis für &ldquo;%(query)s&rdquo;",
+   "%(counter)s Ergebnisse für &ldquo;%(query)s&rdquo;"
+  ],
+  "es": [
+   "%(counter)s resultado para &ldquo;%(query)s&rdquo;",
+   "%(counter)s resultados para &ldquo;%(query)s&rdquo;"
+  ],
+  "fr": [
+   "%(counter)s résultat pour &ldquo;%(query)s&rdquo;",
+   "%(counter)s résultats pour &ldquo;%(query)s&rdquo;"
+  ]
+ },
+ {
+  "ctx": "billing",
+  "id": "Save %(pct)s%%",
+  "plural": null,
+  "de": "Sparen Sie %(pct)s%%",
+  "es": "Ahorre %(pct)s%%",
+  "fr": "Économisez %(pct)s%%"
+ },
+ {
+  "ctx": null,
+  "id": "About %(country_name)s",
+  "plural": null,
+  "de": "Über %(country_name)s",
+  "es": "Acerca de %(country_name)s",
+  "fr": "À propos de %(country_name)s"
+ },
+ {
+  "ctx": null,
+  "id": "Your %(level)s was removed",
+  "plural": null,
+  "de": "Ihre %(level)s wurde entfernt",
+  "es": "Su %(level)s fue eliminada",
+  "fr": "Votre %(level)s a été supprimée"
+ },
+ {
+  "ctx": null,
+  "id": "%(name)s was removed because the franchise above it was removed by the Platform Admin. Your existing data is preserved, but the franchise rights for this territory have ended.",
+  "plural": null,
+  "de": "%(name)s wurde entfernt, weil die übergeordnete Franchise vom Plattformadministrator entfernt wurde. Ihre vorhandenen Daten bleiben erhalten, die Franchise-Rechte für dieses Gebiet sind jedoch beendet.",
+  "es": "%(name)s se eliminó porque el Administrador de la plataforma eliminó la franquicia superior. Sus datos existentes se conservan, pero los derechos de franquicia para este territorio han finalizado.",
+  "fr": "%(name)s a été supprimée car la franchise située au-dessus a été supprimée par l'Administrateur de la plateforme. Vos données existantes sont conservées, mais les droits de franchise sur ce territoire ont pris fin."
+ },
+ {
+  "ctx": null,
+  "id": "%(name)s was removed by the Platform Admin. Your existing data is preserved, but the franchise rights for this territory have ended.",
+  "plural": null,
+  "de": "%(name)s wurde vom Plattformadministrator entfernt. Ihre vorhandenen Daten bleiben erhalten, die Franchise-Rechte für dieses Gebiet sind jedoch beendet.",
+  "es": "%(name)s fue eliminada por el Administrador de la plataforma. Sus datos existentes se conservan, pero los derechos de franquicia para este territorio han finalizado.",
+  "fr": "%(name)s a été supprimée par l'Administrateur de la plateforme. Vos données existantes sont conservées, mais les droits de franchise sur ce territoire ont pris fin."
+ },
+ {
+  "ctx": null,
+  "id": "%(name)s was removed, along with the %(count)s sub-franchise beneath it.",
+  "plural": "%(name)s was removed, along with the %(count)s sub-franchises beneath it.",
+  "de": [
+   "%(name)s wurde entfernt, zusammen mit der %(count)s darunterliegenden Sub-Franchise.",
+   "%(name)s wurde entfernt, zusammen mit den %(count)s darunterliegenden Sub-Franchises."
+  ],
+  "es": [
+   "%(name)s se eliminó, junto con la %(count)s sub-franquicia que había debajo.",
+   "%(name)s se eliminó, junto con las %(count)s sub-franquicias que había debajo."
+  ],
+  "fr": [
+   "%(name)s a été supprimée, ainsi que la %(count)s sous-franchise située en dessous.",
+   "%(name)s a été supprimée, ainsi que les %(count)s sous-franchises situées en dessous."
+  ]
+ },
+ {
+  "ctx": null,
+  "id": "%(name)s was removed.",
+  "plural": null,
+  "de": "%(name)s wurde entfernt.",
+  "es": "%(name)s se eliminó.",
+  "fr": "%(name)s a été supprimée."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Remove this franchise?",
+  "plural": null,
+  "de": "Diese Franchise entfernen?",
+  "es": "¿Eliminar esta franquicia?",
+  "fr": "Supprimer cette franchise ?"
+ },
+ {
+  "ctx": "franchise",
+  "id": "The holder loses all franchise rights for this territory, and every sub-franchise beneath it is removed as well. Historical data is kept.",
+  "plural": null,
+  "de": "Der Inhaber verliert alle Franchise-Rechte für dieses Gebiet und jede darunterliegende Sub-Franchise wird ebenfalls entfernt. Historische Daten bleiben erhalten.",
+  "es": "El titular pierde todos los derechos de franquicia de este territorio y también se eliminan todas las sub-franquicias que haya debajo. Los datos históricos se conservan.",
+  "fr": "Le titulaire perd tous ses droits de franchise sur ce territoire, et chaque sous-franchise située en dessous est également supprimée. Les données historiques sont conservées."
+ },
+ {
+  "ctx": "franchise",
+  "id": "The holder loses all franchise rights for this territory. Historical data is kept and the territory becomes available again.",
+  "plural": null,
+  "de": "Der Inhaber verliert alle Franchise-Rechte für dieses Gebiet. Historische Daten bleiben erhalten und das Gebiet wird wieder verfügbar.",
+  "es": "El titular pierde todos los derechos de franquicia de este territorio. Los datos históricos se conservan y el territorio vuelve a estar disponible.",
+  "fr": "Le titulaire perd tous ses droits de franchise sur ce territoire. Les données historiques sont conservées et le territoire redevient disponible."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Remove franchise",
+  "plural": null,
+  "de": "Franchise entfernen",
+  "es": "Eliminar franquicia",
+  "fr": "Supprimer la franchise"
+ },
+ {
+  "ctx": null,
+  "id": "This territory sits under your own franchise %(name)s. Add it from your Franchises section as a sub-franchise instead.",
+  "plural": null,
+  "de": "Dieses Gebiet liegt innerhalb Ihrer eigenen Franchise %(name)s. Fügen Sie es stattdessen in Ihrem Bereich „Franchises“ als Sub-Franchise hinzu.",
+  "es": "Este territorio pertenece a su propia franquicia %(name)s. Agréguelo como sub-franquicia desde su sección Franquicias.",
+  "fr": "Ce territoire relève de votre propre franchise %(name)s. Ajoutez-le plutôt comme sous-franchise depuis votre section Franchises."
+ },
+ {
+  "ctx": null,
+  "id": "A removal request for %(name)s is already awaiting a decision.",
+  "plural": null,
+  "de": "Für %(name)s liegt bereits ein Entfernungsantrag zur Entscheidung vor.",
+  "es": "Ya hay una solicitud de eliminación de %(name)s pendiente de decisión.",
+  "fr": "Une demande de retrait pour %(name)s est déjà en attente de décision."
+ },
+ {
+  "ctx": null,
+  "id": "Your request to give up %(name)s was sent to %(reviewer)s for approval.",
+  "plural": null,
+  "de": "Ihr Antrag auf Aufgabe von %(name)s wurde %(reviewer)s zur Genehmigung übermittelt.",
+  "es": "Su solicitud para renunciar a %(name)s se envió a %(reviewer)s para su aprobación.",
+  "fr": "Votre demande d'abandon de %(name)s a été envoyée à %(reviewer)s pour approbation."
+ },
+ {
+  "ctx": null,
+  "id": "Your request to give up %(name)s was sent to the Platform Admin for approval.",
+  "plural": null,
+  "de": "Ihr Antrag auf Aufgabe von %(name)s wurde dem Plattformadministrator zur Genehmigung übermittelt.",
+  "es": "Su solicitud para renunciar a %(name)s se envió al Administrador de la plataforma para su aprobación.",
+  "fr": "Votre demande d'abandon de %(name)s a été envoyée à l'Administrateur de la plateforme pour approbation."
+ },
+ {
+  "ctx": null,
+  "id": "Your removal request for %(name)s was withdrawn.",
+  "plural": null,
+  "de": "Ihr Entfernungsantrag für %(name)s wurde zurückgezogen.",
+  "es": "Su solicitud de eliminación de %(name)s fue retirada.",
+  "fr": "Votre demande de retrait pour %(name)s a été annulée."
+ },
+ {
+  "ctx": null,
+  "id": "Declined the request to remove %(name)s.",
+  "plural": null,
+  "de": "Der Antrag auf Entfernung von %(name)s wurde abgelehnt.",
+  "es": "Se rechazó la solicitud de eliminación de %(name)s.",
+  "fr": "La demande de retrait de %(name)s a été refusée."
+ },
+ {
+  "ctx": null,
+  "id": "%(email)s already holds %(name)s, whose territory overlaps this one. A holder cannot also hold a franchise inside their own territory.",
+  "plural": null,
+  "de": "%(email)s hält bereits %(name)s, dessen Gebiet sich mit diesem überschneidet. Ein Inhaber kann nicht zusätzlich eine Franchise innerhalb seines eigenen Gebiets halten.",
+  "es": "%(email)s ya posee %(name)s, cuyo territorio se solapa con este. Un titular no puede poseer además una franquicia dentro de su propio territorio.",
+  "fr": "%(email)s détient déjà %(name)s, dont le territoire chevauche celui-ci. Un titulaire ne peut pas détenir en plus une franchise à l'intérieur de son propre territoire."
+ },
+ {
+  "ctx": "franchise",
+  "id": "You're a franchise partner. You can buy further franchises in any territory that is still available — your current franchises are listed on the right. Territories inside a franchise you already hold are added from your <strong>Franchises</strong> section as sub-franchises instead.",
+  "plural": null,
+  "de": "Sie sind Franchise-Partner. Sie können weitere Franchises in jedem noch verfügbaren Gebiet erwerben — Ihre aktuellen Franchises sind rechts aufgeführt. Gebiete innerhalb einer bereits von Ihnen gehaltenen Franchise fügen Sie stattdessen in Ihrem Bereich <strong>Franchises</strong> als Sub-Franchises hinzu.",
+  "es": "Usted es socio de franquicia. Puede adquirir más franquicias en cualquier territorio que siga disponible: sus franquicias actuales aparecen a la derecha. Los territorios dentro de una franquicia que ya posee se agregan como sub-franquicias desde su sección <strong>Franquicias</strong>.",
+  "fr": "Vous êtes partenaire franchisé. Vous pouvez acheter d'autres franchises dans tout territoire encore disponible — vos franchises actuelles sont listées à droite. Les territoires situés dans une franchise que vous détenez déjà s'ajoutent plutôt comme sous-franchises depuis votre section <strong>Franchises</strong>."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Removal requested — waiting for %(reviewer)s to decide.",
+  "plural": null,
+  "de": "Entfernung beantragt — Entscheidung von %(reviewer)s steht aus.",
+  "es": "Eliminación solicitada: a la espera de la decisión de %(reviewer)s.",
+  "fr": "Retrait demandé — en attente de la décision de %(reviewer)s."
+ },
+ {
+  "ctx": "franchise",
+  "id": "Request removal — approved by %(reviewer)s",
+  "plural": null,
+  "de": "Entfernung beantragen — genehmigt durch %(reviewer)s",
+  "es": "Solicitar eliminación: aprobada por %(reviewer)s",
+  "fr": "Demander le retrait — approuvé par %(reviewer)s"
+ },
+ {
+  "ctx": null,
+  "id": "Request to remove a %(level)s",
+  "plural": null,
+  "de": "Antrag auf Entfernung einer %(level)s",
+  "es": "Solicitud de eliminación de una %(level)s",
+  "fr": "Demande de retrait d'une %(level)s"
+ },
+ {
+  "ctx": null,
+  "id": "%(name)s has asked to give up %(node)s and is awaiting your decision.",
+  "plural": null,
+  "de": "%(name)s hat beantragt, %(node)s aufzugeben, und wartet auf Ihre Entscheidung.",
+  "es": "%(name)s ha solicitado renunciar a %(node)s y espera su decisión.",
+  "fr": "%(name)s a demandé à abandonner %(node)s et attend votre décision."
+ },
+ {
+  "ctx": null,
+  "id": "Your removal request was approved",
+  "plural": null,
+  "de": "Ihr Entfernungsantrag wurde genehmigt",
+  "es": "Su solicitud de eliminación fue aprobada",
+  "fr": "Votre demande de retrait a été approuvée"
+ },
+ {
+  "ctx": null,
+  "id": "%(node)s will be removed from your account.",
+  "plural": null,
+  "de": "%(node)s wird aus Ihrem Konto entfernt.",
+  "es": "%(node)s se eliminará de su cuenta.",
+  "fr": "%(node)s sera retiré de votre compte."
+ },
+ {
+  "ctx": null,
+  "id": "Your removal request was declined",
+  "plural": null,
+  "de": "Ihr Entfernungsantrag wurde abgelehnt",
+  "es": "Su solicitud de eliminación fue rechazada",
+  "fr": "Votre demande de retrait a été refusée"
+ },
+ {
+  "ctx": null,
+  "id": "%(node)s stays with you for now.",
+  "plural": null,
+  "de": "%(node)s verbleibt vorerst bei Ihnen.",
+  "es": "%(node)s permanece con usted por ahora.",
+  "fr": "%(node)s reste pour l'instant sous votre responsabilité."
+ },
+ {
+  "ctx": null,
+  "id": "Note: %(note)s",
+  "plural": null,
+  "de": "Hinweis: %(note)s",
+  "es": "Nota: %(note)s",
+  "fr": "Remarque : %(note)s"
+ },
+ {
+  "ctx": null,
+  "id": "Join request from %(name)s",
+  "plural": null,
+  "de": "Beitrittsanfrage von %(name)s",
+  "es": "Solicitud de unión de %(name)s",
+  "fr": "Demande d'adhésion de %(name)s"
+ },
+ {
+  "ctx": null,
+  "id": "%(name)s has requested to join %(company)s. Open the Join Requests tab to approve or decline.",
+  "plural": null,
+  "de": "%(name)s hat den Beitritt zu %(company)s beantragt. Öffnen Sie die Registerkarte „Beitrittsanfragen“, um zu genehmigen oder abzulehnen.",
+  "es": "%(name)s ha solicitado unirse a %(company)s. Abra la pestaña Solicitudes de unión para aprobar o rechazar.",
+  "fr": "%(name)s a demandé à rejoindre %(company)s. Ouvrez l'onglet Demandes d'adhésion pour approuver ou refuser."
+ },
+ {
+  "ctx": null,
+  "id": "You've joined %(company)s",
+  "plural": null,
+  "de": "Sie sind %(company)s beigetreten",
+  "es": "Se ha unido a %(company)s",
+  "fr": "Vous avez rejoint %(company)s"
+ },
+ {
+  "ctx": null,
+  "id": "%(name)s approved your request to join %(company)s. It now appears in your My Companies.",
+  "plural": null,
+  "de": "%(name)s hat Ihre Beitrittsanfrage für %(company)s genehmigt. Das Unternehmen erscheint jetzt unter „Meine Unternehmen“.",
+  "es": "%(name)s aprobó su solicitud para unirse a %(company)s. Ahora aparece en Mis Empresas.",
+  "fr": "%(name)s a approuvé votre demande d'adhésion à %(company)s. Elle apparaît désormais dans Mes entreprises."
+ },
+ {
+  "ctx": null,
+  "id": "Your request to join %(company)s was declined",
+  "plural": null,
+  "de": "Ihre Beitrittsanfrage für %(company)s wurde abgelehnt",
+  "es": "Su solicitud para unirse a %(company)s fue rechazada",
+  "fr": "Votre demande d'adhésion à %(company)s a été refusée"
+ },
+ {
+  "ctx": null,
+  "id": "%(name)s declined your request to join %(company)s.",
+  "plural": null,
+  "de": "%(name)s hat Ihre Beitrittsanfrage für %(company)s abgelehnt.",
+  "es": "%(name)s rechazó su solicitud para unirse a %(company)s.",
+  "fr": "%(name)s a refusé votre demande d'adhésion à %(company)s."
+ },
+ {
+  "ctx": null,
+  "id": "%(name)s left %(company)s",
+  "plural": null,
+  "de": "%(name)s hat %(company)s verlassen",
+  "es": "%(name)s ha dejado %(company)s",
+  "fr": "%(name)s a quitté %(company)s"
+ },
+ {
+  "ctx": null,
+  "id": "%(name)s has left your company %(company)s.",
+  "plural": null,
+  "de": "%(name)s hat Ihr Unternehmen %(company)s verlassen.",
+  "es": "%(name)s ha dejado su empresa %(company)s.",
+  "fr": "%(name)s a quitté votre entreprise %(company)s."
+ },
+ {
+  "ctx": null,
+  "id": "The company owner",
+  "plural": null,
+  "de": "Der Unternehmensinhaber",
+  "es": "El propietario de la empresa",
+  "fr": "Le propriétaire de l'entreprise"
+ },
+ {
+  "ctx": null,
+  "id": "Your access to %(company)s was removed",
+  "plural": null,
+  "de": "Ihr Zugriff auf %(company)s wurde entfernt",
+  "es": "Se ha eliminado su acceso a %(company)s",
+  "fr": "Votre accès à %(company)s a été supprimé"
+ },
+ {
+  "ctx": null,
+  "id": "%(name)s removed your membership in %(company)s. You no longer have access to this company.",
+  "plural": null,
+  "de": "%(name)s hat Ihre Mitgliedschaft bei %(company)s entfernt. Sie haben keinen Zugriff mehr auf dieses Unternehmen.",
+  "es": "%(name)s eliminó su membresía en %(company)s. Ya no tiene acceso a esta empresa.",
+  "fr": "%(name)s a supprimé votre adhésion à %(company)s. Vous n'avez plus accès à cette entreprise."
+ },
+ {
+  "ctx": null,
+  "id": "Partnership with %(company)s was confirmed",
+  "plural": null,
+  "de": "Partnerschaft mit %(company)s wurde bestätigt",
+  "es": "La asociación con %(company)s fue confirmada",
+  "fr": "Le partenariat avec %(company)s a été confirmé"
+ },
+ {
+  "ctx": null,
+  "id": "%(name)s accepted your partnership request with %(company)s. You now have view access to the company.",
+  "plural": null,
+  "de": "%(name)s hat Ihre Partnerschaftsanfrage mit %(company)s angenommen. Sie haben jetzt Lesezugriff auf das Unternehmen.",
+  "es": "%(name)s aceptó su solicitud de asociación con %(company)s. Ahora tiene acceso de lectura a la empresa.",
+  "fr": "%(name)s a accepté votre demande de partenariat avec %(company)s. Vous avez désormais un accès en consultation à l'entreprise."
+ },
+ {
+  "ctx": null,
+  "id": "You confirmed the partnership with %(name)s",
+  "plural": null,
+  "de": "Sie haben die Partnerschaft mit %(name)s bestätigt",
+  "es": "Ha confirmado la asociación con %(name)s",
+  "fr": "Vous avez confirmé le partenariat avec %(name)s"
+ },
+ {
+  "ctx": null,
+  "id": "You accepted %(name)s's partnership request with %(company)s.",
+  "plural": null,
+  "de": "Sie haben die Partnerschaftsanfrage von %(name)s mit %(company)s angenommen.",
+  "es": "Ha aceptado la solicitud de asociación de %(name)s con %(company)s.",
+  "fr": "Vous avez accepté la demande de partenariat de %(name)s avec %(company)s."
+ },
+ {
+  "ctx": null,
+  "id": "Partnership with %(company)s was declined",
+  "plural": null,
+  "de": "Partnerschaft mit %(company)s wurde abgelehnt",
+  "es": "La asociación con %(company)s fue rechazada",
+  "fr": "Le partenariat avec %(company)s a été refusé"
+ },
+ {
+  "ctx": null,
+  "id": "%(name)s declined your partnership request with %(company)s.",
+  "plural": null,
+  "de": "%(name)s hat Ihre Partnerschaftsanfrage mit %(company)s abgelehnt.",
+  "es": "%(name)s rechazó su solicitud de asociación con %(company)s.",
+  "fr": "%(name)s a refusé votre demande de partenariat avec %(company)s."
+ },
+ {
+  "ctx": null,
+  "id": "You declined the partnership with %(name)s",
+  "plural": null,
+  "de": "Sie haben die Partnerschaft mit %(name)s abgelehnt",
+  "es": "Ha rechazado la asociación con %(name)s",
+  "fr": "Vous avez refusé le partenariat avec %(name)s"
+ },
+ {
+  "ctx": null,
+  "id": "You declined %(name)s's partnership request with %(company)s.",
+  "plural": null,
+  "de": "Sie haben die Partnerschaftsanfrage von %(name)s mit %(company)s abgelehnt.",
+  "es": "Ha rechazado la solicitud de asociación de %(name)s con %(company)s.",
+  "fr": "Vous avez refusé la demande de partenariat de %(name)s avec %(company)s."
+ },
+ {
+  "ctx": null,
+  "id": "New partnership request from %(name)s",
+  "plural": null,
+  "de": "Neue Partnerschaftsanfrage von %(name)s",
+  "es": "Nueva solicitud de asociación de %(name)s",
+  "fr": "Nouvelle demande de partenariat de %(name)s"
+ },
+ {
+  "ctx": null,
+  "id": "%(name)s has requested a partnership with %(company)s. Open the Partnerships tab to confirm or decline.",
+  "plural": null,
+  "de": "%(name)s hat eine Partnerschaft mit %(company)s angefragt. Öffnen Sie die Registerkarte „Partnerschaften“, um zu bestätigen oder abzulehnen.",
+  "es": "%(name)s ha solicitado una asociación con %(company)s. Abra la pestaña Asociaciones para confirmar o rechazar.",
+  "fr": "%(name)s a demandé un partenariat avec %(company)s. Ouvrez l'onglet Partenariats pour confirmer ou refuser."
+ },
+ {
+  "ctx": null,
+  "id": "Your certifying consultant's contact info was updated",
+  "plural": null,
+  "de": "Die Kontaktdaten Ihres zertifizierenden Beraters wurden aktualisiert",
+  "es": "Se actualizó la información de contacto de su consultor certificador",
+  "fr": "Les coordonnées de votre consultant certificateur ont été mises à jour"
+ },
+ {
+  "ctx": null,
+  "id": "%(name)s updated their contact information. You can see the latest details on the %(company)s company view.",
+  "plural": null,
+  "de": "%(name)s hat die Kontaktdaten aktualisiert. Die aktuellen Angaben finden Sie in der Unternehmensansicht von %(company)s.",
+  "es": "%(name)s actualizó su información de contacto. Puede ver los datos más recientes en la vista de empresa de %(company)s.",
+  "fr": "%(name)s a mis à jour ses coordonnées. Vous pouvez consulter les dernières informations dans la vue entreprise de %(company)s."
+ }
+]

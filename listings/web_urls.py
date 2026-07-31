@@ -16,6 +16,7 @@ urlpatterns = [
     path("my-offers/", web.my_offers, name="my-offers"),
     path("my-demands/", web.my_demands, name="my-demands"),
     path("my-reactions/", web.my_reactions, name="my-reactions"),
+    path("<uuid:listing_id>/reactions/", web.listing_reactions, name="listing-reactions"),
     path("reactions/set-status/", web.reaction_set_status, name="reaction-set-status"),
     path("<uuid:listing_id>/edit/", web.edit_listing, name="edit"),
     path("<uuid:listing_id>/activate/", web.set_status, {"target": "activate"}, name="activate"),

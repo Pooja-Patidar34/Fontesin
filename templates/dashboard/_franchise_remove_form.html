@@ -1,0 +1,42 @@
+{% load i18n %}
+{% comment %}
+Platform-Admin "Remove" action for a franchise node, shared by the Franchise
+Requests queue and the Franchises list.
+
+  node  — the Tenant franchise node to remove (required)
+  next  — "tenants" to land back on the Franchises list; omit for the queue
+  style — "menu" renders a dropdown item instead of a button
+
+Deliberately offered for EVERY level and status: suspension only pauses a
+holder's rights, so removal is the admin's only way to actually take a territory
+back. Removal cascades to every sub-franchise beneath the node
+(accounts/utils/franchise_removal.py), so the confirm text says so whenever the
+node has children.
+{% endcomment %}
+{% with child_count=node.children.count %}
+<form method="post" action="{% url 'franchise-remove' node.id %}"
+      class="{% if style == 'menu' %}m-0{% else %}d-inline m-0 ml-1{% endif %}"
+      data-confirm
+      data-confirm-tone="danger"
+      data-confirm-icon="fa-user-slash"
+      data-confirm-title="{% trans "Remove this franchise?" context "franchise" %}"
+      {% if child_count %}
+      data-confirm-body="{% trans "The holder loses all franchise rights for this territory, and every sub-franchise beneath it is removed as well. Historical data is kept." context "franchise" %}"
+      {% else %}
+      data-confirm-body="{% trans "The holder loses all franchise rights for this territory. Historical data is kept and the territory becomes available again." context "franchise" %}"
+      {% endif %}
+      data-confirm-ok="{% trans "Remove franchise" context "franchise" %}"
+      data-confirm-name="{{ node.name }}">
+  {% csrf_token %}
+  {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+  {% if style == 'menu' %}
+  <button type="submit" class="dropdown-item text-danger">
+    <i class="fas fa-user-slash mr-2"></i> {% trans "Remove franchise" context "franchise" %}
+  </button>
+  {% else %}
+  <button type="submit" class="btn btn-sm btn-outline-danger">
+    <i class="fas fa-user-slash mr-1"></i> {% trans "Remove" context "franchise" %}
+  </button>
+  {% endif %}
+</form>
+{% endwith %}

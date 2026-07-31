@@ -34,6 +34,13 @@ CSRF_TRUSTED_ORIGINS = config(
     cast=lambda v: [s.strip() for s in v.split(",") if s.strip()],
 )
 
+# A failed CSRF check (stale form / rotated session) otherwise renders Django's
+# bare "403 Forbidden" page, which reads as "Access Denied" and hides the real,
+# recoverable cause. Route it through a friendly handler that bounces the user
+# back with a "please try again" message. (handler403 only covers PermissionDenied,
+# not CSRF failures — Django dispatches those to CSRF_FAILURE_VIEW.)
+CSRF_FAILURE_VIEW = "accounts.view.error.csrf_failure"
+
 # Cloudflare and nginx terminate TLS and proxy plain HTTP to gunicorn on
 # 127.0.0.1. Without this header mapping, Django sees `http://` and
 # `request.is_secure()` returns False — which breaks Secure cookies,
@@ -338,7 +345,7 @@ LOGGING = {
     },
 }
 
-#varriff
+#varriff  
 
 
 # Email settings

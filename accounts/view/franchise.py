@@ -23,7 +23,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as _, ngettext
 
 from accounts.constants import (
     ConsultantAssignmentStatus,
@@ -41,9 +41,13 @@ from accounts.models import (
     Company,
     ConsultantAssignment,
     FranchiseApplication,
-    Role,
+    FranchiseRemovalRequest,
     Tenant,
     User,
+)
+from accounts.utils.franchise_access import (
+    franchise_manager_required,
+    is_franchise_holder,
 )
 
 
@@ -149,14 +153,27 @@ def parent_chain_basic(node):
     return chain
 
 
-def _role_code(user):
-    return (user.role.code or "").lower() if getattr(user, "role", None) else ""
-
-
 def _owns_any_node(user):
     return Tenant.objects.filter(
         owner_user=user, franchise_level__isnull=False
     ).exists()
+
+
+def _requesting_company(request):
+    """The company a franchise request is bought for — the one the applicant is
+    currently acting as in the company switcher.
+
+    A Business User with several companies buys each franchise for a specific
+    company, so the node ends up attributed to it. Returns None for applicants
+    with no company at all (consultants, coordinators)."""
+    company_id = (request.POST.get("applicant_company") or "").strip()
+    owned = Company.objects.filter(owner_user=request.user)
+    if company_id:
+        chosen = owned.filter(id=company_id).first()
+        if chosen is not None:
+            return chosen
+    from billing.utils import resolve_active_company
+    return resolve_active_company(request.user)
 
 
 def visible_node_ids(user):
@@ -233,6 +250,12 @@ OCCUPYING_STATUSES = [
 ]
 
 
+# Rejection reasons are short, applicant-facing notes — same 200-char budget the
+# applicant gets for their own request note. The textarea caps this client-side;
+# this is the server-side guard for anything that bypasses the form.
+BOARD_NOTE_MAX = 200
+
+
 def canonical_territory(level, country, region, city, local_area):
     """Reduce a territory to the granularity its level actually occupies, so
     'one franchise per territory+level' compares the right fields:
@@ -249,10 +272,16 @@ def canonical_territory(level, country, region, city, local_area):
     city typed on a Regional request can't slip a duplicate past
     territory_conflict(). Returns a normalised
     (country, region, city, local_area) tuple."""
+    # Collapse internal whitespace (and trim) so cosmetically-different spellings
+    # of the same place — "Ganga Ghat" vs "Ganga  Ghat" — normalise to one value.
+    # Without this, the exclusivity check (territory_conflict) and the Micro DB
+    # constraint compare the raw strings and let a whitespace-only duplicate slip
+    # through. `" ".join(s.split())` splits on any run of whitespace and rejoins
+    # with single spaces.
     country = (country or "").strip().upper()[:2]
-    region = (region or "").strip()[:120]
-    city = (city or "").strip()[:120]
-    local_area = (local_area or "").strip()[:120]
+    region = " ".join((region or "").split())[:120]
+    city = " ".join((city or "").split())[:120]
+    local_area = " ".join((local_area or "").split())[:120]
     rank = FranchiseLevel.RANK.get(level, 0)
     if rank < FranchiseLevel.RANK[FranchiseLevel.NATIONAL]:
         region = ""  # Master is country-only; National and deeper may carry a region.
@@ -285,13 +314,17 @@ def territory_conflict(level, country, region, city, local_area, exclude_node_id
     (spec §11.1 — one franchise per territory+level). Considers active + in-flight
     (pending/suspended) nodes so a second applicant can't be approved into a
     territory that's already taken or being set up."""
+    # Match the whitespace/case normalisation used when territories are stored
+    # (canonical_territory), so "Ganga Ghat" and "Ganga  Ghat" resolve to the
+    # same territory here too — otherwise a whitespace-only duplicate reads as a
+    # free territory. `__iexact` covers case; `" ".join(split())` covers spacing.
     qs = Tenant.objects.filter(
         franchise_level=level,
         franchise_status__in=OCCUPYING_STATUSES,
         territory_country=(country or "").strip().upper(),
-        territory_region__iexact=(region or "").strip(),
-        territory_city__iexact=(city or "").strip(),
-        territory_local_area__iexact=(local_area or "").strip(),
+        territory_region__iexact=" ".join((region or "").split()),
+        territory_city__iexact=" ".join((city or "").split()),
+        territory_local_area__iexact=" ".join((local_area or "").split()),
     ).select_related("owner_user")
     if exclude_node_id:
         qs = qs.exclude(id=exclude_node_id)
@@ -398,6 +431,8 @@ def _create_node_from_application(application, parent, reviewer, now,
         is_exclusive=(application.requested_level == FranchiseLevel.MICRO),
         parent=parent,
         owner_user=applicant,
+        # The company that bought it (My Franchises groups nodes by company).
+        owner_company=application.applicant_company,
         territory_country=application.requested_country,
         territory_region=t_region,
         territory_city=t_city,
@@ -447,25 +482,52 @@ def franchise_request_view(request):
     )
     owned = list(
         Tenant.objects.filter(owner_user=request.user, franchise_level__isnull=False)
-        .select_related("parent", "parent__owner_user", "owner_user")
+        .select_related("parent", "parent__owner_user", "owner_user", "owner_company")
         .order_by("name")
     )
     # Limited upward visibility (spec §10.2 / Rule 6): expose only the allowed
     # basic identity data about each owned node's parent chain — never parent
     # business data.
+    open_removals = {
+        r.node_id: r for r in FranchiseRemovalRequest.objects.filter(
+            requested_by=request.user, status=FranchiseRemovalRequest.PENDING,
+        )
+    }
     for n in owned:
         n.parent_chain = parent_chain_basic(n)
+        # Giving up a franchise needs the granting authority's approval, so each
+        # card shows either the request action or the decision it's waiting on.
+        n.open_removal = open_removals.get(n.id)
+        reviewer_node = _removal_reviewer_node(n)
+        n.removal_reviewer_name = reviewer_node.name if reviewer_node else ""
+
+    removal_history = list(
+        FranchiseRemovalRequest.objects.filter(requested_by=request.user)
+        .exclude(status=FranchiseRemovalRequest.PENDING)
+        .select_related("node", "reviewer_franchise")
+        .order_by("-decided_at")[:20]
+    )
 
     has_open = applications.filter(
         application_status__in=FranchiseApplicationStatus.OPEN
     ).exists()
 
-    # "Request a Franchise" is the become-a-franchise flow (spec §2) — it's for
-    # users who don't hold a franchise yet. Once a user owns a franchise node
-    # (approved/pending/active), they no longer re-request here; they propose
-    # sub-franchises from their Franchise Management section instead. So the
-    # form is hidden for existing holders.
+    # Holding a franchise no longer closes this form. A holder may buy further
+    # franchises anywhere in the world that is still available — one per
+    # company they own, in different countries — so the form stays open and the
+    # holder simply sees their existing franchises alongside it. The only
+    # territories they can't buy here are the ones under their OWN node; those
+    # are added as sub-franchise proposals (guarded in the submit view).
     is_franchise_holder = bool(owned)
+
+    # The company a new franchise would be bought for. A Business User picks
+    # among the companies they own; everyone else has none and the node is
+    # simply held by the user.
+    from billing.utils import resolve_active_company
+    owned_companies = list(
+        Company.objects.filter(owner_user=request.user).order_by("name")
+    )
+    active_company = resolve_active_company(request.user)
 
     # Territories already held (active or in-flight) at each level, so the form
     # can warn the applicant the moment they pick a taken territory — without a
@@ -493,6 +555,9 @@ def franchise_request_view(request):
             "name": n.name,
         })
 
+    # Values from a rejected submit (if any), popped so they only pre-fill once.
+    form_data = request.session.pop("franchise_request_form", None) or {}
+
     return render(
         request,
         "dashboard/franchise_request.html",
@@ -502,12 +567,18 @@ def franchise_request_view(request):
             "owned_franchises": owned,
             "has_open_application": has_open,
             "is_franchise_holder": is_franchise_holder,
+            "owned_companies": owned_companies,
+            "active_company": active_company,
+            "removal_history": removal_history,
             "level_choices": FranchiseLevel.CHOICES,
             "country_choices": CountryChoices.CHOICES,
             "taken_territories_json": json.dumps(taken_territories),
             # Country -> subdivisions for the State/Region dropdown (falls back
             # to free text for countries not in the map).
             "country_states": COUNTRY_STATES,
+            # Repopulate the form after a validation-error redirect.
+            "form_data": form_data,
+            "form_data_json": json.dumps(form_data),
         },
     )
 
@@ -524,14 +595,14 @@ def franchise_request_submit(request):
     # Consultants, Coordinators, etc.). The Super Admin reviews and gates the
     # request; role is not an eligibility criterion.
 
-    # Existing franchise holders don't re-request through this form — they
-    # propose sub-franchises from their Franchise Management section (spec §13).
-    if _owns_any_node(request.user):
-        messages.info(
-            request,
-            _("You already hold a franchise. New sub-franchises are proposed from your Franchises section."),
+    # Preserve what the applicant typed so a validation-error redirect can
+    # repopulate the form instead of wiping it (cleared on success below).
+    request.session["franchise_request_form"] = {
+        k: (request.POST.get(k) or "") for k in (
+            "requested_level", "requested_country", "requested_region",
+            "requested_city", "requested_local_area", "application_note",
         )
-        return redirect("franchise-request")
+    }
 
     level = (request.POST.get("requested_level") or "").strip().upper()
     if level not in dict(FranchiseLevel.CHOICES):
@@ -542,7 +613,7 @@ def franchise_request_submit(request):
     region = (request.POST.get("requested_region") or "").strip()[:120]
     city = (request.POST.get("requested_city") or "").strip()[:120]
     local_area = (request.POST.get("requested_local_area") or "").strip()[:120]
-    note = (request.POST.get("application_note") or "").strip()
+    note = (request.POST.get("application_note") or "").strip()[:200]
 
     if not country:
         messages.error(request, _("Please select the target country for the franchise."))
@@ -587,14 +658,21 @@ def franchise_request_submit(request):
         messages.error(request, _territory_taken_reason(conflict))
         return redirect("franchise-request")
 
-    # One open application at a time keeps the queue unambiguous.
+    # A holder may buy franchises in several territories, so several requests can
+    # be in flight at once — but not two for the SAME level + territory, which
+    # would queue a request that can only be rejected.
     if FranchiseApplication.objects.filter(
         applicant_user=request.user,
         application_status__in=FranchiseApplicationStatus.OPEN,
+        requested_level=level,
+        requested_country=country,
+        requested_region=region,
+        requested_city=city,
+        requested_local_area=local_area,
     ).exists():
         messages.info(
             request,
-            _("You already have a franchise request under review. Please wait for the decision."),
+            _("You already have a request under review for this territory. Please wait for the decision."),
         )
         return redirect("franchise-request")
 
@@ -610,8 +688,20 @@ def franchise_request_submit(request):
         )
         return redirect("franchise-request")
 
+    # You can't become your own franchisee: a territory that falls under a node
+    # this user already holds is added from their own Franchises section as a
+    # sub-franchise proposal, not bought through this form.
+    if parent is not None and parent.owner_user_id == request.user.id:
+        messages.info(
+            request,
+            _("This territory sits under your own franchise %(name)s. Add it from "
+              "your Franchises section as a sub-franchise instead.") % {"name": parent.name},
+        )
+        return redirect("franchise-request")
+
     application = FranchiseApplication.objects.create(
         applicant_user=request.user,
+        applicant_company=_requesting_company(request),
         requested_level=level,
         requested_country=country,
         requested_region=region,
@@ -636,6 +726,10 @@ def franchise_request_submit(request):
         notify_franchise_application_submitted(application)
     except Exception:
         pass
+
+    # Submitted cleanly — drop the preserved form values so the form comes back
+    # empty rather than pre-filled with the just-submitted request.
+    request.session.pop("franchise_request_form", None)
 
     if parent is not None:
         messages.success(
@@ -702,6 +796,16 @@ def franchise_applications_list(request):
         application_status=FranchiseApplicationStatus.REJECTED
     ).order_by("-rejected_at")
 
+    # Holders giving up a franchise: the Admin decides Master (and orphaned)
+    # exits; sub-franchise exits are their direct parent's call and show there.
+    removal_pending = list(pending_removal_requests_for(request.user).order_by("-created_at"))
+    removal_decided = list(
+        FranchiseRemovalRequest.objects
+        .exclude(status=FranchiseRemovalRequest.PENDING)
+        .select_related("node", "requested_by", "reviewer_franchise", "decided_by")
+        .order_by("-decided_at")[:50]
+    )
+
     # Total counts drive the tab badges (before pagination trims each list).
     counts = {
         "pending": len(pending),
@@ -709,6 +813,7 @@ def franchise_applications_list(request):
         "awaiting": len(awaiting_activation),
         "approved": approved.count(),
         "rejected": rejected.count(),
+        "removals": len(removal_pending),
     }
     # Each tab paginates independently via its own query param (e.g. approved_page).
     pending = _paginate_named(request, pending, "pending_page")
@@ -728,6 +833,9 @@ def franchise_applications_list(request):
             "approved": approved,
             "rejected": rejected,
             "counts": counts,
+            "removal_pending": removal_pending,
+            "removal_decided": removal_decided,
+            "removal_next": "franchise-applications",
         },
     )
 
@@ -763,7 +871,7 @@ def franchise_application_action(request, application_id):
     now = timezone.now()
 
     if decision == "reject":
-        board_note = (request.POST.get("board_note") or "").strip()
+        board_note = (request.POST.get("board_note") or "").strip()[:BOARD_NOTE_MAX]
         if not board_note:
             # Auto-explain "territory already taken" so the applicant learns why.
             conflict = _application_conflict(application)
@@ -874,6 +982,17 @@ def franchise_child_requests(request):
         application_status=FranchiseApplicationStatus.REJECTED
     ).order_by("-rejected_at")[:50]
 
+    # Holders below this one asking to give up their franchise land in the same
+    # queue — the direct parent is the authority for both directions.
+    removal_pending = list(pending_removal_requests_for(request.user).order_by("-created_at"))
+    removal_decided = list(
+        FranchiseRemovalRequest.objects.filter(
+            reviewer_franchise_id__in=parent_ids,
+        ).exclude(status=FranchiseRemovalRequest.PENDING)
+        .select_related("node", "requested_by")
+        .order_by("-decided_at")[:50]
+    )
+
     return render(
         request,
         "dashboard/franchise_child_requests.html",
@@ -883,6 +1002,9 @@ def franchise_child_requests(request):
             "approved": approved,
             "rejected": rejected,
             "is_reviewer": bool(parent_ids),
+            "removal_pending": removal_pending,
+            "removal_decided": removal_decided,
+            "removal_next": "franchise-child-requests",
         },
     )
 
@@ -913,7 +1035,7 @@ def franchise_child_action(request, application_id):
     parent = application.parent_franchise
 
     if decision == "reject":
-        board_note = (request.POST.get("board_note") or "").strip()
+        board_note = (request.POST.get("board_note") or "").strip()[:BOARD_NOTE_MAX]
         if not board_note:
             conflict = _application_conflict(application)
             if conflict:
@@ -1026,21 +1148,22 @@ def franchise_activate(request, tenant_id):
         )
         return redirect("franchise-applications")
 
-    # Grant the holder the Franchise role so the sidebar Franchises section
-    # appears (spec §2). Existing role is left alone if already franchise.
+    # Owning a franchise is ADDITIVE — the holder's role is left exactly as it
+    # was. Activation used to overwrite it with the `franchise` role, which
+    # stripped a Business User of every business-user capability: the company
+    # switcher, plans, partnerships and the rest, so a BU with three companies
+    # could act as only one of them ever again. The Franchise Management
+    # section is driven by node ownership instead (accounts.utils.
+    # franchise_access), and the UI simply relabels the holder as
+    # "Franchise Partner" (accounts.role_i18n).
     owner = node.owner_user
     if owner is not None:
-        franchise_role = Role.objects.filter(code__iexact="franchise").first()
         owner_fields = []
-        if franchise_role and owner.role_id != franchise_role.id:
-            owner.role = franchise_role
-            owner_fields.append("role")
-        # Switching to the franchise role puts the account under the staff
-        # application gate (RequireApplicationApprovalMiddleware gates
-        # consultant/coordinator/franchise until application_status ==
-        # "approved"). This holder was vetted through the franchise application
-        # instead, so mark the staff application approved — otherwise the gate
-        # bounces them onto the /apply/ region form on the next page load.
+        # Applicants who registered under a staff role (consultant / coordinator
+        # / franchise) sit behind RequireApplicationApprovalMiddleware until
+        # application_status == "approved". This holder was vetted through the
+        # franchise application instead, so mark the staff application approved —
+        # otherwise the gate bounces them onto the /apply/ region form.
         if (owner.application_status or "") != "approved":
             owner.application_status = "approved"
             owner.application_decided_by = request.user
@@ -1125,7 +1248,10 @@ def franchise_suspend(request, tenant_id):
             return redirect("franchise-applications")
         node.franchise_status = FranchiseUnitStatus.SUSPENDED
         node.suspended_at = now
-        node.save(update_fields=["franchise_status", "suspended_at", "updated_at"])
+        # Keep the generic `is_active` flag (the Franchises-list Status badge) in
+        # step with the lifecycle status, so the list and the tree agree.
+        node.is_active = False
+        node.save(update_fields=["franchise_status", "suspended_at", "is_active", "updated_at"])
         # Keep a Micro owner's self-assignment in step so the suspended node's
         # roster doesn't list them as an active consultant (certify rights are
         # already off — is_micro_franchise_owner keys on the node's status).
@@ -1138,13 +1264,14 @@ def franchise_suspend(request, tenant_id):
             messages.error(request, _("Only a suspended franchise can be reactivated."))
             return redirect("franchise-applications")
         node.franchise_status = FranchiseUnitStatus.ACTIVE
+        node.is_active = True
         try:
             node.clean()  # re-check exclusivity/parent on the way back to ACTIVE
         except ValidationError as exc:
             messages.error(request, " ".join(exc.messages))
             return redirect("franchise-applications")
         try:
-            node.save(update_fields=["franchise_status", "updated_at"])
+            node.save(update_fields=["franchise_status", "is_active", "updated_at"])
         except IntegrityError:
             messages.error(
                 request,
@@ -1161,9 +1288,281 @@ def franchise_suspend(request, tenant_id):
 
 
 @login_required
+@require_POST
+def franchise_remove(request, tenant_id):
+    """Platform Admin removes a franchise from its holder (spec §9.2 wind-down).
+
+    Available for every level and every status — including a node that never
+    reached ACTIVE — because the admin is the only authority that can take a
+    territory back. Suspension pauses rights; removal ends them: the node and
+    its sub-franchises are TERMINATED and soft-deleted, consultant rosters are
+    closed, the applications behind them are CANCELLED, and each holder who is
+    left with no franchise returns to Business User.
+
+    `next` chooses where to land, so the same endpoint serves the Franchise
+    Requests queue and the Franchises list.
+    """
+    if not request.user.is_superuser:
+        raise PermissionDenied()
+
+    reason = (request.POST.get("reason") or "").strip()
+    redirect_to = "tenants" if request.POST.get("next") == "tenants" else "franchise-applications"
+
+    # `Tenant.objects` hides soft-deleted rows, so an already-removed node 404s
+    # instead of being wound down a second time.
+    node = get_object_or_404(
+        Tenant.objects.filter(franchise_level__isnull=False), id=tenant_id
+    )
+    name = node.name
+
+    from accounts.utils.franchise_removal import remove_franchise
+
+    result = remove_franchise(
+        node, actor=request.user, reason=reason, ip_address=_client_ip(request),
+    )
+
+    descendants = result["descendant_count"]
+    if descendants:
+        messages.success(
+            request,
+            ngettext(
+                "%(name)s was removed, along with the %(count)s sub-franchise beneath it.",
+                "%(name)s was removed, along with the %(count)s sub-franchises beneath it.",
+                descendants,
+            ) % {"name": name, "count": descendants},
+        )
+    else:
+        messages.success(
+            request, _("%(name)s was removed.") % {"name": name},
+        )
+    return redirect(redirect_to)
+
+
+# ---------------------------------------------------------------------------
+# Giving up a franchise — the holder asks, the granting authority decides
+# ---------------------------------------------------------------------------
+
+def _removal_reviewer_node(node):
+    """The node whose holder reviews a request to remove `node`.
+
+    A sub-franchise is reviewed by its DIRECT parent — the holder who granted
+    the territory (a Regional's exit is decided by the National above it). A
+    Master has no parent, so it returns None and the request goes to the
+    Platform Admin. A parent that is no longer active can't review anything, so
+    that also falls back to the Admin.
+    """
+    parent = node.parent
+    if parent is None or not parent.is_franchise_node:
+        return None
+    if parent.franchise_status != FranchiseUnitStatus.ACTIVE or not parent.owner_user_id:
+        return None
+    # Never route a request to the person making it — a holder who owns both the
+    # node and its parent would otherwise approve their own exit.
+    if parent.owner_user_id == node.owner_user_id:
+        return None
+    return parent
+
+
+@login_required
+@require_POST
+@transaction.atomic
+def franchise_removal_request(request, tenant_id):
+    """A holder asks to give up one of their own franchises.
+
+    Nothing is removed here: the request routes to the granting authority
+    (direct parent holder, or the Platform Admin for a Master / an orphaned
+    node) and only their approval winds the node down.
+    """
+    node = get_object_or_404(
+        Tenant.objects.filter(franchise_level__isnull=False), id=tenant_id
+    )
+    if node.owner_user_id != request.user.id:
+        messages.error(request, _("You can only give up a franchise you hold."))
+        return redirect("franchise-request")
+
+    if FranchiseRemovalRequest.objects.filter(
+        node=node, status=FranchiseRemovalRequest.PENDING
+    ).exists():
+        messages.info(
+            request,
+            _("A removal request for %(name)s is already awaiting a decision.")
+            % {"name": node.name},
+        )
+        return redirect("franchise-request")
+
+    reviewer_node = _removal_reviewer_node(node)
+    removal = FranchiseRemovalRequest.objects.create(
+        node=node,
+        requested_by=request.user,
+        reviewer_franchise=reviewer_node,
+        reason=(request.POST.get("reason") or "").strip()[:BOARD_NOTE_MAX],
+    )
+    _audit(request, node, "franchise.removal_requested",
+           removal_request_id=str(removal.id), level=node.franchise_level,
+           reviewer=(reviewer_node.name if reviewer_node else "platform_admin"))
+    try:
+        from accounts.utils.notifications import notify_franchise_removal_requested
+        notify_franchise_removal_requested(removal)
+    except Exception:
+        pass
+
+    if reviewer_node is not None:
+        messages.success(
+            request,
+            _("Your request to give up %(name)s was sent to %(reviewer)s for approval.")
+            % {"name": node.name, "reviewer": reviewer_node.name},
+        )
+    else:
+        messages.success(
+            request,
+            _("Your request to give up %(name)s was sent to the Platform Admin for approval.")
+            % {"name": node.name},
+        )
+    return redirect("franchise-request")
+
+
+@login_required
+@require_POST
+@transaction.atomic
+def franchise_removal_cancel(request, removal_id):
+    """The holder withdraws their own pending removal request."""
+    removal = get_object_or_404(
+        FranchiseRemovalRequest.objects.filter(
+            requested_by=request.user, status=FranchiseRemovalRequest.PENDING,
+        ),
+        id=removal_id,
+    )
+    removal.status = FranchiseRemovalRequest.CANCELLED
+    removal.decided_by = request.user
+    removal.decided_at = timezone.now()
+    removal.save(update_fields=["status", "decided_by", "decided_at", "updated_at"])
+    _audit(request, removal.node, "franchise.removal_cancelled",
+           removal_request_id=str(removal.id))
+    messages.success(
+        request,
+        _("Your removal request for %(name)s was withdrawn.") % {"name": removal.node.name},
+    )
+    return redirect("franchise-request")
+
+
+def _can_decide_removal(user, removal):
+    """The Platform Admin decides Master (and orphaned) exits; a sub-franchise
+    exit is decided by the holder of the reviewing parent node. The Admin can
+    always step in, mirroring the override they have on applications."""
+    if getattr(user, "is_superuser", False):
+        return True
+    reviewer_node = removal.reviewer_franchise
+    return bool(
+        reviewer_node is not None
+        and reviewer_node.owner_user_id == user.id
+        and reviewer_node.franchise_status == FranchiseUnitStatus.ACTIVE
+    )
+
+
+@login_required
+@require_POST
+@transaction.atomic
+def franchise_removal_action(request, removal_id):
+    """The reviewer approves or rejects a holder's request to give up a node.
+
+    Approval runs the same wind-down as an admin removal: the node and its
+    sub-franchises are TERMINATED and soft-deleted, consultant rosters close and
+    the applications behind them are CANCELLED.
+    """
+    removal = get_object_or_404(
+        FranchiseRemovalRequest.objects.select_related("node", "reviewer_franchise"),
+        id=removal_id, status=FranchiseRemovalRequest.PENDING,
+    )
+    if not _can_decide_removal(request.user, removal):
+        raise PermissionDenied()
+
+    decision = (request.POST.get("decision") or "").strip().lower()
+    if decision not in ("approve", "reject"):
+        messages.error(request, _("Invalid action."))
+        return redirect(_removal_queue_redirect(request))
+
+    removal.decision_note = (request.POST.get("decision_note") or "").strip()[:BOARD_NOTE_MAX]
+    removal.decided_by = request.user
+    removal.decided_at = timezone.now()
+
+    if decision == "reject":
+        removal.status = FranchiseRemovalRequest.REJECTED
+        removal.save(update_fields=[
+            "status", "decision_note", "decided_by", "decided_at", "updated_at",
+        ])
+        _audit(request, removal.node, "franchise.removal_rejected",
+               removal_request_id=str(removal.id), note=removal.decision_note)
+        try:
+            from accounts.utils.notifications import notify_franchise_removal_decision
+            notify_franchise_removal_decision(removal, approved=False)
+        except Exception:
+            pass
+        messages.success(
+            request,
+            _("Declined the request to remove %(name)s.") % {"name": removal.node.name},
+        )
+        return redirect(_removal_queue_redirect(request))
+
+    node = removal.node
+    name = node.name
+    removal.status = FranchiseRemovalRequest.APPROVED
+    removal.save(update_fields=[
+        "status", "decision_note", "decided_by", "decided_at", "updated_at",
+    ])
+    _audit(request, node, "franchise.removal_approved",
+           removal_request_id=str(removal.id), note=removal.decision_note)
+    try:
+        from accounts.utils.notifications import notify_franchise_removal_decision
+        notify_franchise_removal_decision(removal, approved=True)
+    except Exception:
+        pass
+
+    from accounts.utils.franchise_removal import remove_franchise
+    result = remove_franchise(
+        node, actor=request.user, reason=removal.decision_note or removal.reason,
+        ip_address=_client_ip(request),
+    )
+    descendants = result["descendant_count"]
+    if descendants:
+        messages.success(
+            request,
+            ngettext(
+                "%(name)s was removed, along with the %(count)s sub-franchise beneath it.",
+                "%(name)s was removed, along with the %(count)s sub-franchises beneath it.",
+                descendants,
+            ) % {"name": name, "count": descendants},
+        )
+    else:
+        messages.success(request, _("%(name)s was removed.") % {"name": name})
+    return redirect(_removal_queue_redirect(request))
+
+
+def _removal_queue_redirect(request):
+    """Land back on the queue the reviewer acted from."""
+    target = (request.POST.get("next") or "").strip()
+    if target in ("franchise-applications", "franchise-child-requests", "tenants"):
+        return target
+    return "franchise-applications" if request.user.is_superuser else "franchise-child-requests"
+
+
+def pending_removal_requests_for(user):
+    """Open removal requests `user` is the reviewer for — the Platform Admin's
+    Master/orphaned exits, or a holder's own sub-franchise exits."""
+    qs = FranchiseRemovalRequest.objects.filter(
+        status=FranchiseRemovalRequest.PENDING
+    ).select_related("node", "requested_by", "reviewer_franchise")
+    if getattr(user, "is_superuser", False):
+        return qs.filter(reviewer_franchise__isnull=True)
+    parent_ids = _reviewer_parent_ids(user)
+    if not parent_ids:
+        return qs.none()
+    return qs.filter(reviewer_franchise_id__in=parent_ids)
+
+
+@login_required
 def franchise_consultants(request):
     """A franchise holder's consultant roster + assign form (spec §8.3, §12)."""
-    if not request.user.is_superuser and _role_code(request.user) != "franchise":
+    if not franchise_manager_required(request.user):
         raise PermissionDenied()
 
     owned = list(
@@ -1210,7 +1609,7 @@ def assign_consultant(request):
 
     A SUSPENDED node cannot add consultants (Rule 9, §17 #12); a standard
     consultant carries no exclusivity (spec §6, Rule 8)."""
-    if _role_code(request.user) != "franchise":
+    if not is_franchise_holder(request.user):
         raise PermissionDenied()
 
     node = get_object_or_404(
@@ -1272,7 +1671,7 @@ def assign_consultant(request):
 @transaction.atomic
 def consultant_assignment_remove(request, assignment_id):
     """Revoke a consultant assignment the holder made."""
-    if _role_code(request.user) != "franchise":
+    if not is_franchise_holder(request.user):
         raise PermissionDenied()
     assignment = get_object_or_404(
         ConsultantAssignment.objects.filter(franchise_node__owner_user=request.user),
@@ -1298,7 +1697,7 @@ def franchise_tree(request):
     Platform Admin → the whole global forest (§7.4). A franchise holder → their
     own node(s) plus descendants only, so parallel branches are invisible
     (§7.1/§7.3, §17 #9). Others are denied."""
-    if not request.user.is_superuser and _role_code(request.user) != "franchise":
+    if not franchise_manager_required(request.user):
         raise PermissionDenied()
 
     nodes = list(
@@ -1365,12 +1764,17 @@ def pending_franchise_application_count(user):
             FranchiseUnitStatus.PENDING_CONTRACT, FranchiseUnitStatus.PENDING_PAYMENT,
         ],
     ).count()
-    return open_requests + awaiting_activation
+    # Master holders asking to give up their franchise are the Admin's call too.
+    open_removals = FranchiseRemovalRequest.objects.filter(
+        status=FranchiseRemovalRequest.PENDING, reviewer_franchise__isnull=True,
+    ).count()
+    return open_requests + awaiting_activation + open_removals
 
 
 def pending_child_request_count(user):
     """Sidebar badge for a franchise holder — sub-franchise requests routed to
-    their node(s) as the direct-parent operational reviewer (spec §4.2)."""
+    their node(s) as the direct-parent operational reviewer (spec §4.2), plus
+    requests from those sub-franchises to give their territory back."""
     if not user.is_authenticated or user.is_superuser:
         return 0
     parent_ids = _reviewer_parent_ids(user)
@@ -1379,6 +1783,9 @@ def pending_child_request_count(user):
     return FranchiseApplication.objects.filter(
         parent_franchise_id__in=parent_ids,
         application_status__in=FranchiseApplicationStatus.OPEN,
+    ).count() + FranchiseRemovalRequest.objects.filter(
+        reviewer_franchise_id__in=parent_ids,
+        status=FranchiseRemovalRequest.PENDING,
     ).count()
 
 
@@ -1397,7 +1804,7 @@ def franchise_add_subfranchise(request):
     the Platform Admin activates it after contract + payment — the same
     approved→activate tail as the outside-applicant flow, minus the review step
     the parent would otherwise perform."""
-    if _role_code(request.user) != "franchise":
+    if not is_franchise_holder(request.user):
         raise PermissionDenied()
 
     owned = list(
@@ -1453,6 +1860,9 @@ def franchise_add_subfranchise(request):
         # Country -> subdivisions for the State/Region dropdown (falls back to
         # free text for countries not in the map).
         "country_states": COUNTRY_STATES,
+        # Repopulate the form after a validation-error redirect (popped so it
+        # only pre-fills once).
+        "form_data": request.session.pop("subfranchise_form", None) or {},
     })
 
 
@@ -1462,8 +1872,19 @@ def franchise_add_subfranchise(request):
 def franchise_subfranchise_submit(request):
     """Process a holder's Add Sub-Franchise proposal (see
     `franchise_add_subfranchise`)."""
-    if _role_code(request.user) != "franchise":
+    if not is_franchise_holder(request.user):
         raise PermissionDenied()
+
+    # Preserve the proposal so a validation-error redirect repopulates the form
+    # rather than wiping every field (cleared on success below).
+    request.session["subfranchise_form"] = {
+        k: (request.POST.get(k) or "") for k in (
+            "parent_node_id", "requested_level", "requested_region",
+            "requested_city", "requested_local_area", "legal_name",
+            "contact_person", "owner_email", "contact_phone",
+            "contract_status", "fee_status", "application_note",
+        )
+    }
 
     parent = get_object_or_404(
         Tenant.objects.filter(owner_user=request.user, franchise_level__isnull=False),
@@ -1525,6 +1946,24 @@ def franchise_subfranchise_submit(request):
     owner = User.objects.filter(email__iexact=email, is_active=True, is_deleted=False).first()
     if not owner:
         messages.error(request, _("No active user found with that email. The sub-franchise owner must already have an account."))
+        return redirect("franchise-add-subfranchise")
+
+    # A user may hold several franchises, but never two whose territories
+    # overlap — they'd be their own franchisee. The model's clean() is the
+    # authoritative backstop (and rolls the row back); checking here gives the
+    # proposing holder a clear message up front.
+    overlap = Tenant(
+        parent=parent, owner_user=owner, franchise_level=level,
+        territory_country=country, territory_region=region,
+        territory_city=city, territory_local_area=local_area,
+    ).conflicting_franchise_owned()
+    if overlap is not None:
+        messages.error(
+            request,
+            _("%(email)s already holds %(name)s, whose territory overlaps this one. "
+              "A holder cannot also hold a franchise inside their own territory.")
+            % {"email": owner.email, "name": overlap.name},
+        )
         return redirect("franchise-add-subfranchise")
 
     # One franchise per territory+level (spec §11.1).
@@ -1594,6 +2033,9 @@ def franchise_subfranchise_submit(request):
         pass
     _notify_decision(application, approved=True)
 
+    # Proposed cleanly — drop the preserved values so the form comes back empty.
+    request.session.pop("subfranchise_form", None)
+
     messages.success(
         request,
         _("Proposed %(name)s under %(parent)s. The Platform Admin will activate it after contract & payment.")
@@ -1612,7 +2054,7 @@ def franchise_subfranchise_submit(request):
 def franchise_certified_companies(request):
     """Companies certified by the consultants operating within the viewer's
     franchise subtree (spec §6.3 'Certified Companies')."""
-    if not request.user.is_superuser and _role_code(request.user) != "franchise":
+    if not franchise_manager_required(request.user):
         raise PermissionDenied()
 
     consultant_ids = subtree_consultant_ids(request.user)
@@ -1650,7 +2092,7 @@ def franchise_sales(request):
     """Plan subscriptions sold within the viewer's franchise subtree — plans
     bought by companies certified by the subtree's consultants (spec §6.3
     'Sales / Plans')."""
-    if not request.user.is_superuser and _role_code(request.user) != "franchise":
+    if not franchise_manager_required(request.user):
         raise PermissionDenied()
 
     from billing.models import Subscription
@@ -1689,7 +2131,7 @@ def franchise_reports(request):
     franchise nodes, and the business KPIs (consultants, certified companies,
     plan sales) resolve through the consultants operating under the filtered
     nodes."""
-    if not request.user.is_superuser and _role_code(request.user) != "franchise":
+    if not franchise_manager_required(request.user):
         raise PermissionDenied()
 
     node_ids = visible_node_ids(request.user)

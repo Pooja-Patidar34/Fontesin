@@ -10,6 +10,14 @@ def localized_role_label(user) -> str:
     if user.is_superuser:
         return pgettext("roles", "Platform Admin")
 
+    # Holding a franchise no longer changes the account's role — it only
+    # changes what the account is CALLED. A Business User who bought a
+    # franchise keeps every business-user capability and reads as
+    # "Franchise Partner" everywhere the role is displayed.
+    from accounts.utils.franchise_access import is_franchise_holder
+    if is_franchise_holder(user):
+        return pgettext("roles", "Franchise Partner")
+
     role = getattr(user, "role", None)
     if not role:
         return pgettext("roles", "User")

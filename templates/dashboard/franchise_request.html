@@ -87,7 +87,9 @@
   .fr-chain__toggle i { font-size: .62rem; transition: transform .15s ease; }
   .fr-chain.is-expanded .fr-chain__toggle i { transform: rotate(180deg); }
   .fr-reason { margin-top: 10px; background: #fff5f5; border: 1px solid #fbdada; border-radius: 8px;
-    padding: 8px 11px; font-size: .8rem; color: #9f1239; }
+    padding: 8px 11px; font-size: .8rem; color: #9f1239;
+    overflow-wrap: anywhere; word-break: break-word; }
+  .fr-note-count { text-align: right; }
 
   .fr-empty { text-align: center; color: #94a3b8; padding: 30px 18px; }
   .fr-empty i { font-size: 1.6rem; margin-bottom: 8px; opacity: .6; }
@@ -128,25 +130,38 @@
         <i class="fas fa-check-circle"></i>
         <div>
           {% blocktrans trimmed context "franchise" %}
-          You're a franchise partner. You don't need to request another franchise here — manage
-          your territory and propose new sub-franchises from your <strong>Franchises</strong>
-          section. Your current franchises are listed on the right.
+          You're a franchise partner. You can buy further franchises in any territory that is
+          still available — your current franchises are listed on the right. Territories inside
+          a franchise you already hold are added from your <strong>Franchises</strong> section
+          as sub-franchises instead.
           {% endblocktrans %}
         </div>
       </div>
-      {% elif has_open_application %}
+      {% endif %}
+      {% if has_open_application %}
       <div class="fr-banner fr-banner--warn">
         <i class="fas fa-hourglass-half"></i>
-        <div>{% trans "You already have a franchise request under review. You'll be notified of the decision." context "franchise" %}</div>
+        <div>{% trans "You have a franchise request under review. You'll be notified of the decision — you can still request another territory below." context "franchise" %}</div>
       </div>
-      {% else %}
+      {% endif %}
       <form method="post" action="{% url 'franchise-request-submit' %}" class="fr-body">
         {% csrf_token %}
+        {% if owned_companies %}
+        <div class="fr-field">
+          <label class="fr-label">{% trans "Buying for company" context "franchise" %} <span class="req">*</span></label>
+          <select name="applicant_company" class="fr-control" required>
+            {% for c in owned_companies %}
+            <option value="{{ c.id }}"{% if active_company and active_company.id == c.id %} selected{% endif %}>{{ c.name }}</option>
+            {% endfor %}
+          </select>
+          <div class="fr-hint">{% trans "Each of your companies can hold its own franchise in a different territory." context "franchise" %}</div>
+        </div>
+        {% endif %}
         <div class="fr-field">
           <label class="fr-label">{% trans "Franchise level" context "franchise" %} <span class="req">*</span></label>
           <select name="requested_level" id="fr-level" class="fr-control" required>
             <option value="">{% trans "Select a level…" context "franchise" %}</option>
-            {% for value, label in level_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+            {% for value, label in level_choices %}<option value="{{ value }}"{% if form_data.requested_level == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
           </select>
           <div class="fr-hint">{% trans "Master, National, Regional, or Micro — defines the scope of your franchise." context "franchise" %}</div>
         </div>
@@ -156,25 +171,25 @@
             <label class="fr-label">{% trans "Country" context "franchise" %} <span class="req">*</span></label>
             <select name="requested_country" class="fr-control" required>
               <option value="">{% trans "Select a country…" context "franchise" %}</option>
-              {% for value, label in country_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+              {% for value, label in country_choices %}<option value="{{ value }}"{% if form_data.requested_country == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
             </select>
           </div>
           <div id="fr-region-wrap">
             <label class="fr-label">{% trans "Region / State" context "franchise" %} <span class="req" id="fr-region-star" style="display:none;">*</span></label>
             {# Dropdown when the selected country has known subdivisions; free-text fallback otherwise. Only the active one is enabled, so only it submits. #}
             <select name="requested_region" id="fr-region-select" class="fr-control" style="display:none;" disabled></select>
-            <input type="text" name="requested_region" id="fr-region-input" class="fr-control" placeholder="{% trans "e.g. California" context "franchise" %}">
+            <input type="text" name="requested_region" id="fr-region-input" class="fr-control" placeholder="{% trans "e.g. California" context "franchise" %}" value="{{ form_data.requested_region|default:'' }}">
           </div>
         </div>
 
         <div class="fr-field fr-row" id="fr-citylocal-row">
           <div>
             <label class="fr-label">{% trans "City" context "franchise" %} <span class="req" id="fr-city-star" style="display:none;">*</span></label>
-            <input type="text" name="requested_city" id="fr-city-input" class="fr-control" placeholder="{% trans "e.g. San Francisco" context "franchise" %}">
+            <input type="text" name="requested_city" id="fr-city-input" class="fr-control" placeholder="{% trans "e.g. San Francisco" context "franchise" %}" value="{{ form_data.requested_city|default:'' }}">
           </div>
           <div>
             <label class="fr-label">{% trans "Local area" context "franchise" %}</label>
-            <input type="text" name="requested_local_area" class="fr-control" placeholder="{% trans "Optional" context "franchise" %}">
+            <input type="text" name="requested_local_area" class="fr-control" placeholder="{% trans "Optional" context "franchise" %}" value="{{ form_data.requested_local_area|default:'' }}">
           </div>
         </div>
 
@@ -184,8 +199,9 @@
 
         <div class="fr-field">
           <label class="fr-label">{% trans "Notes for the reviewer" context "franchise" %}</label>
-          <textarea name="application_note" rows="3" class="fr-control"
-                    placeholder="{% trans "Why you want this franchise, your network, expected companies…" context "franchise" %}"></textarea>
+          <textarea name="application_note" id="fr-note" rows="3" class="fr-control" maxlength="200"
+                    placeholder="{% trans "Why you want this franchise, your network, expected companies…" context "franchise" %}">{{ form_data.application_note|default:'' }}</textarea>
+          <div class="fr-hint fr-note-count"><span id="fr-note-count">0</span>/200</div>
         </div>
 
         <div class="fr-banner fr-banner--warn" id="fr-conflict"
@@ -198,7 +214,6 @@
           <i class="fas fa-paper-plane"></i> {% trans "Request for approval" context "franchise" %}
         </button>
       </form>
-      {% endif %}
     </div>
 
       {% comment %} My Requests — placed in the left column so it's visible without
@@ -221,7 +236,7 @@
               </div>
               <span class="pill pill-{{ a.application_status|lower }}">{{ a.get_application_status_display }}</span>
             </div>
-            {% if a.application_status == "REJECTED" and a.board_note %}
+            {% if a.board_note and a.application_status == "REJECTED" or a.board_note and a.application_status == "CANCELLED" %}
             <div class="fr-reason"><strong>{% trans "Reason:" context "franchise" %}</strong> {{ a.board_note }}</div>
             {% endif %}
           </div>
@@ -253,6 +268,7 @@
               <span class="pill pill-{{ f.franchise_status|lower }}">{{ f.get_franchise_status_display }}</span>
             </div>
             <div class="fr-meta">
+              {% if f.owner_company %}<div><span>{% trans "Held by:" context "franchise" %}</span>{{ f.owner_company.name }}</div>{% endif %}
               {% if f.territory_country %}<div><span>{% trans "Territory:" context "franchise" %}</span>{{ f.territory_country }}{% if f.territory_region %} · {{ f.territory_region }}{% endif %}{% if f.territory_city %} · {{ f.territory_city }}{% endif %}</div>{% endif %}
               {% if f.contract_status %}<div><span>{% trans "Contract:" context "franchise" %}</span>{{ f.get_contract_status_display }}</div>{% endif %}
               {% if f.franchise_fee_status %}<div><span>{% trans "Franchise fee:" context "franchise" %}</span>{{ f.get_franchise_fee_status_display }}</div>{% endif %}
@@ -286,6 +302,46 @@
               {% endif %}
             </div>
             {% endif %}
+
+            {% comment %} Giving up a franchise is never immediate: a Master exit is
+               approved by the Platform Admin, every sub-franchise exit by the
+               franchise directly above it (a Regional's exit by its National). {% endcomment %}
+            {% if f.open_removal %}
+            <div class="fr-banner fr-banner--warn" style="margin:12px 0 0; padding:10px 12px;">
+              <i class="fas fa-hourglass-half"></i>
+              <div>
+                {% if f.removal_reviewer_name %}
+                  {% blocktrans trimmed with reviewer=f.removal_reviewer_name context "franchise" %}
+                  Removal requested — waiting for {{ reviewer }} to decide.
+                  {% endblocktrans %}
+                {% else %}
+                  {% trans "Removal requested — waiting for the Platform Admin to decide." context "franchise" %}
+                {% endif %}
+                <form method="post" action="{% url 'franchise-removal-cancel' f.open_removal.id %}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="fr-chain__toggle" style="margin-left:6px;">
+                    {% trans "Withdraw" context "franchise" %}
+                  </button>
+                </form>
+              </div>
+            </div>
+            {% else %}
+            <form method="post" action="{% url 'franchise-removal-request' f.id %}" class="fr-remove" style="margin-top:12px;">
+              {% csrf_token %}
+              <input type="text" name="reason" class="fr-control" maxlength="200"
+                     placeholder="{% trans "Why you want to give up this franchise (optional)" context "franchise" %}">
+              <button type="submit" class="fr-chain__toggle" style="margin-top:8px;">
+                <i class="fas fa-times-circle"></i>
+                {% if f.removal_reviewer_name %}
+                  {% blocktrans trimmed with reviewer=f.removal_reviewer_name context "franchise" %}
+                  Request removal — approved by {{ reviewer }}
+                  {% endblocktrans %}
+                {% else %}
+                  {% trans "Request removal — approved by the Platform Admin" context "franchise" %}
+                {% endif %}
+              </button>
+            </form>
+            {% endif %}
           </div>
           {% empty %}
           <div class="fr-empty">
@@ -295,12 +351,41 @@
           {% endfor %}
         </div>
       </div>
+
+      {% if removal_history %}
+      <div class="fr-card">
+        <div class="fr-head">
+          <div class="fr-ico fr-ico--slate"><i class="fas fa-times-circle"></i></div>
+          <div><h3 class="fr-head__t">{% trans "My Removal Requests" context "franchise" %}</h3></div>
+        </div>
+        <div class="fr-list">
+          {% for r in removal_history %}
+          <div class="fr-item">
+            <div class="fr-item__top">
+              <div>
+                <div class="fr-item__name">{{ r.node.name }}</div>
+                <div class="fr-item__sub">
+                  {% if r.reviewer_franchise %}{{ r.reviewer_franchise.name }}{% else %}{% trans "Platform Admin" context "franchise" %}{% endif %}
+                  {% if r.decided_at %} · {{ r.decided_at|date:"M j, Y H:i" }}{% endif %}
+                </div>
+              </div>
+              <span class="pill pill-{{ r.status|lower }}">{{ r.get_status_display }}</span>
+            </div>
+            {% if r.decision_note %}
+            <div class="fr-reason"><strong>{% trans "Note:" context "franchise" %}</strong> {{ r.decision_note }}</div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
     </div>
 
   </div>
 </div>
 
 {{ country_states|json_script:"fr-country-states" }}
+{{ form_data|json_script:"fr-form-data" }}
 <script>
   (function () {
     var level = document.getElementById("fr-level");
@@ -319,6 +404,14 @@
     // fall back to the free-text region field.
     var statesNode = document.getElementById("fr-country-states");
     var COUNTRY_STATES = statesNode ? JSON.parse(statesNode.textContent) : {};
+
+    // A region preserved from a rejected submit. The free-text fallback is
+    // pre-filled server-side; for the dropdown case we select it once, the first
+    // time the options are built (see renderRegion), then clear it so later
+    // country changes reset the field normally.
+    var initNode = document.getElementById("fr-form-data");
+    var INITIAL = initNode ? JSON.parse(initNode.textContent) : {};
+    var initialRegion = (INITIAL && INITIAL.requested_region) || "";
 
     // Which territory fields each level must name (mirrors the server guard):
     // a Regional names its state, a Micro its city. Master is country-only;
@@ -346,7 +439,7 @@
       var opts = (cc && COUNTRY_STATES[cc]) || [];
       var useSelect = opts.length > 0;
       if (useSelect) {
-        var prev = regionSelect.value;
+        var prev = regionSelect.value || initialRegion;
         regionSelect.innerHTML = '<option value="">' + "{% trans 'Select State / Region' context 'franchise' %}" + '</option>';
         opts.forEach(function (s) {
           var o = document.createElement("option");
@@ -355,6 +448,7 @@
           regionSelect.appendChild(o);
         });
       }
+      initialRegion = "";  // one-shot: only pre-select on the first build
       regionSelect.style.display = useSelect ? "" : "none";
       regionInput.style.display = useSelect ? "none" : "";
       regionSelect.disabled = !(useSelect && enabled);
@@ -366,15 +460,24 @@
 
     function sync() {
       var isMaster = level.value === "MASTER";
+      var isMicro = level.value === "MICRO";
       var req = REQUIRED[level.value] || { region: false, city: false };
       // A Master covers the whole country — hide the narrower territory fields
       // and clear them so nothing accidentally narrows the master's territory.
       if (regionWrap) regionWrap.style.display = isMaster ? "none" : "";
-      if (cityRow) cityRow.style.display = isMaster ? "none" : "";
+      // City / local area apply ONLY to a Micro (a Regional covers a whole
+      // region/state, a National a whole country/state). Show them for Micro
+      // only; for other levels canonical_territory strips anything typed here,
+      // so leaving the fields visible just misleads the applicant/reviewer.
+      if (cityRow) cityRow.style.display = isMicro ? "" : "none";
       if (note) note.style.display = isMaster ? "" : "none";
       if (isMaster) {
         regionSelect && (regionSelect.value = "");
         regionInput && (regionInput.value = "");
+      }
+      // Clear city/local whenever they don't apply, so a value typed under Micro
+      // doesn't linger (and get silently dropped) after switching to a wider level.
+      if (!isMicro) {
         cityRow && cityRow.querySelectorAll("input").forEach(function (i) { i.value = ""; });
       }
       mark(cityInput, cityStar, !isMaster && req.city);
@@ -386,6 +489,17 @@
     level.addEventListener("change", sync);
     if (countrySel) countrySel.addEventListener("change", sync);
     sync();
+  })();
+
+  // Live character counter for the reviewer note (hard-capped at 200 by
+  // maxlength; this mirrors the count so the applicant sees how much is left).
+  (function () {
+    var note = document.getElementById("fr-note");
+    var out = document.getElementById("fr-note-count");
+    if (!note || !out) return;
+    function update() { out.textContent = note.value.length; }
+    note.addEventListener("input", update);
+    update();
   })();
 
   // Block requests for a territory already held (Master/National/Regional/…)
@@ -411,7 +525,9 @@
       for (var i = 0; i < els.length; i++) { if (!els[i].disabled) return els[i].value; }
       return els.length ? els[0].value : "";
     }
-    function norm(s) { return (s || "").trim().toLowerCase(); }
+    // Collapse internal whitespace too (matches canonical_territory on the
+    // server) so "Ganga Ghat" and "Ganga  Ghat" compare as the same territory.
+    function norm(s) { return (s || "").trim().toLowerCase().replace(/\s+/g, " "); }
 
     function findConflict() {
       var lvl = (val("requested_level") || "").trim().toUpperCase();

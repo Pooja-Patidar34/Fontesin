@@ -116,6 +116,7 @@ def partnership_action(request, connection_id):
     # self-confirmation receipt so the action shows up in their own inbox.
     try:
         from accounts.utils.notifications import notify
+        from accounts.utils.i18n_messages import Msg
         from accounts.models import Notification
 
         approved = decision == "approve"
@@ -132,26 +133,31 @@ def partnership_action(request, connection_id):
         link = reverse("partnerships")
 
         if approved:
-            requester_title = f"Partnership with {company_name} was confirmed"
-            requester_body = (
-                f"{owner_label} accepted your partnership request with "
-                f"{company_name}. You now have view access to the company."
+            requester_title = Msg("Partnership with %(company)s was confirmed",
+                                  company=company_name)
+            requester_body = Msg(
+                "%(name)s accepted your partnership request with %(company)s. "
+                "You now have view access to the company.",
+                name=owner_label, company=company_name,
             )
-            owner_title = f"You confirmed the partnership with {requester_label}"
-            owner_body = (
-                f"You accepted {requester_label}'s partnership request with "
-                f"{company_name}."
+            owner_title = Msg("You confirmed the partnership with %(name)s",
+                              name=requester_label)
+            owner_body = Msg(
+                "You accepted %(name)s's partnership request with %(company)s.",
+                name=requester_label, company=company_name,
             )
         else:
-            requester_title = f"Partnership with {company_name} was declined"
-            requester_body = (
-                f"{owner_label} declined your partnership request with "
-                f"{company_name}."
+            requester_title = Msg("Partnership with %(company)s was declined",
+                                  company=company_name)
+            requester_body = Msg(
+                "%(name)s declined your partnership request with %(company)s.",
+                name=owner_label, company=company_name,
             )
-            owner_title = f"You declined the partnership with {requester_label}"
-            owner_body = (
-                f"You declined {requester_label}'s partnership request with "
-                f"{company_name}."
+            owner_title = Msg("You declined the partnership with %(name)s",
+                              name=requester_label)
+            owner_body = Msg(
+                "You declined %(name)s's partnership request with %(company)s.",
+                name=requester_label, company=company_name,
             )
 
         notify(

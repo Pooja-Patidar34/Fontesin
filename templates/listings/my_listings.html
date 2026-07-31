@@ -29,7 +29,7 @@
 <table class="table table-hover">
   <thead><tr>
     <th>{% trans "Title" %}</th>{% if combined %}<th>{% trans "Type" %}</th>{% endif %}<th>{% trans "Category" %}</th><th>{% trans "Company" %}</th>
-    <th>{% trans "Status" %}</th><th>{% trans "Created" %}</th><th>{% trans "Actions" %}</th>
+    <th>{% trans "Status" %}</th><th>{% trans "Reactions" %}</th><th>{% trans "Created" %}</th><th>{% trans "Actions" %}</th>
   </tr></thead>
   <tbody>
   {% for l in page_obj %}
@@ -39,6 +39,12 @@
       <td>{{ l.get_category_type_display|capfirst }}</td>
       <td>{{ l.owner_company.name }}</td>
       <td><span class="badge badge-{% if l.status == 'active' %}success{% elif l.status == 'suspended' %}danger{% elif l.status == 'draft' %}secondary{% else %}warning{% endif %}">{{ l.get_status_display|capfirst }}</span></td>
+      <td>
+        <a href="{% url 'listings_web:listing-reactions' l.id %}" class="btn btn-sm btn-outline-info">
+          {% trans "Reactions" %} ({{ l.reaction_count }})
+          {% if l.new_reaction_count %}<span class="badge badge-danger">{{ l.new_reaction_count }} {% trans "new" %}</span>{% endif %}
+        </a>
+      </td>
       <td>{{ l.created_at|date:"Y-m-d" }}</td>
       <td class="text-nowrap">
         <a href="{% url 'listings_web:edit' l.id %}" class="btn btn-sm btn-outline-primary">{% trans "Edit" %}</a>
@@ -52,7 +58,7 @@
       </td>
     </tr>
   {% empty %}
-    <tr><td colspan="{% if combined %}7{% else %}6{% endif %}" class="text-center text-muted">{% trans "No listings yet." %}</td></tr>
+    <tr><td colspan="{% if combined %}8{% else %}7{% endif %}" class="text-center text-muted">{% trans "No listings yet." %}</td></tr>
   {% endfor %}
   </tbody>
 </table>

@@ -66,8 +66,14 @@
                     <i class="fas fa-eye mr-2"></i> {% trans "View" context "common" %}
                   </button>
 
-                  {# Basic plan: only View allowed in Action menu. #}
-                  {% if not is_basic_plan %}
+                  {% comment %}
+                  Edit / Activate-Deactivate / Delete mutate a franchise and are
+                  Platform-Admin-only server-side (tenant_list POST, toggle_tenant,
+                  tenant_delete all require is_superuser). A franchise partner or
+                  business user gets read-only View here; showing them the other
+                  actions only led to a 403 on click.
+                  {% endcomment %}
+                  {% if request.user.is_superuser %}
 
                   <button class="dropdown-item edit-tenant-btn"
                           data-url="{% url 'tenant-detail' tenant.id %}">
@@ -95,6 +101,14 @@
                   {% if not is_global_plan %}
                   <div class="dropdown-divider"></div>
 
+                  {% comment %} A franchise node is removed, not merely deleted: the
+                     wind-down has to reach its sub-franchises, consultant rosters and
+                     the holders' roles, which is what franchise-remove does. Plain
+                     (non-franchise) tenants keep the generic delete. {% endcomment %}
+                  {% if tenant.franchise_level %}
+                  {% include "dashboard/_franchise_remove_form.html" with node=tenant next="tenants" style="menu" %}
+                  {% else %}
+
                   <form method="post"
                         action="{% url 'tenant-delete' tenant.id %}"
                         id="tenant-delete-form-{{ tenant.id }}">
@@ -104,11 +118,12 @@
                       <i class="fas fa-trash mr-2"></i> {% trans "Delete" context "common" %}
                     </button>
                   </form>
+                  {% endif %}{# /franchise_level #}
                   {% endif %}
 
                   {% endif %}{# /not is_pro_plan #}
 
-                  {% endif %}{# /not is_basic_plan #}
+                  {% endif %}{# /is_superuser #}
 
                 </div>
               </div>

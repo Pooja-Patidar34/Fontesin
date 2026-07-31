@@ -13,7 +13,7 @@ import uuid
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -29,10 +29,41 @@ from listings import module_registry
 # ---------------------------------------------------------------------------
 # helpers
 # ---------------------------------------------------------------------------
-def _owned_companies(user):
+def _owned_companies(user, selected_id=None):
+    """Companies the user may file a listing for.
+
+    ``selected_id`` is the company currently chosen in the form. It is added
+    back to the list when it is missing but the user is still allowed to use it
+    (e.g. an admin acting across the tenant), so a validation redisplay can
+    never silently drop the selection and leave the picker blank.
+    """
     if services.is_admin(user):
-        return Company.objects.filter(tenant=user.tenant)
-    return Company.objects.filter(owner_user=user)
+        qs = Company.objects.filter(tenant=user.tenant)
+    else:
+        qs = Company.objects.filter(owner_user=user)
+    if not selected_id:
+        return qs
+    companies = list(qs)
+    if any(str(c.id) == str(selected_id) for c in companies):
+        return companies
+    extra = Company.objects.filter(id=selected_id).first()
+    if extra is not None and services.company_belongs_to_user(extra, user):
+        companies.append(extra)
+    return companies
+
+
+def _default_company_id(request, companies):
+    """Company to preselect on a fresh form: the one the session is acting as,
+    then the primary company, then the only company the user owns."""
+    candidates = [
+        getattr(getattr(request, "active_company", None), "id", None),
+        getattr(request.user, "primary_company_id", None),
+    ]
+    ids = {c.id for c in companies}
+    for candidate in candidates:
+        if candidate in ids:
+            return candidate
+    return companies[0].id if len(companies) == 1 else None
 
 
 def _parse_keywords(raw):
@@ -137,6 +168,21 @@ def _apply_images(request, listing):
         listing.save(update_fields=fields)
 
 
+def _location_display(listing):
+    """Full location line: "City, Region, Country" (country shown by name).
+
+    Any missing part is simply dropped, so a listing with only a country still
+    renders cleanly.
+    """
+    country = listing.country or ""
+    parts = [
+        listing.city or "",
+        listing.region or "",
+        COUNTRY_ENGLISH_NAMES.get(country, country),
+    ]
+    return ", ".join(p for p in parts if p)
+
+
 def _form_context(user, listing_type, module_id="products_services", values=None, errors=None):
     module = next((m for m in module_registry.MODULE_REGISTRY if m["id"] == module_id), None)
     values = values or {}
@@ -164,7 +210,7 @@ def _form_context(user, listing_type, module_id="products_services", values=None
     return {
         "listing_type": listing_type,
         "is_offer": listing_type == Listing.OFFER,
-        "companies": _owned_companies(user),
+        "companies": _owned_companies(user, values.get("owner_company")),
         "nace_display": nace_display,
         "category_choices": Listing.CATEGORY_CHOICES,
         "currency_choices": Listing.CURRENCY_CHOICES,
@@ -179,8 +225,19 @@ def _form_context(user, listing_type, module_id="products_services", values=None
         "country_states": COUNTRY_STATES,
         "values": values,
         "errors": errors,
-        "active_menu": "listings-add",
+        # Add Offer / Add Demand are separate sidebar entries, so the highlighted
+        # one follows the type being created.
+        "active_menu": "listings-add-offer" if listing_type == Listing.OFFER else "listings-add-demand",
     }
+
+
+def _with_reaction_counts(qs):
+    """Annotate total + unread reaction counts so My Offers / My Demands can
+    surface reactions per listing (they are no longer a sidebar tab)."""
+    return qs.annotate(
+        reaction_count=Count("reactions", distinct=True),
+        new_reaction_count=Count("reactions", filter=Q(reactions__status=ListingReaction.NEW), distinct=True),
+    )
 
 
 def _paginate(request, qs, per_page=10):
@@ -285,7 +342,11 @@ def add_listing(request):
         messages.success(request, _("Listing saved."))
         return redirect("listings_web:my-offers" if listing_type == Listing.OFFER else "listings_web:my-demands")
 
-    return render(request, "listings/listing_form.html", _form_context(user, listing_type, module_id))
+    # Fresh form: preselect the company the user is acting as, so the picker
+    # starts filled instead of on the "Select company" placeholder.
+    values = {"owner_company": _default_company_id(request, _owned_companies(user))}
+    return render(request, "listings/listing_form.html",
+                  _form_context(user, listing_type, module_id, values))
 
 
 @login_required
@@ -349,8 +410,10 @@ def my_listings(request):
 
     Optional ?type=offer|demand narrows the same screen without leaving it.
     """
-    qs = (Listing.objects.filter(owner_user=request.user)
-          .select_related("owner_company").order_by("-created_at"))
+    qs = _with_reaction_counts(
+        Listing.objects.filter(owner_user=request.user)
+        .select_related("owner_company").order_by("-created_at")
+    )
     current_type = request.GET.get("type", "")
     if current_type in (Listing.OFFER, Listing.DEMAND):
         qs = qs.filter(listing_type=current_type)
@@ -362,7 +425,9 @@ def my_listings(request):
 
 @login_required
 def my_offers(request):
-    qs = Listing.objects.filter(owner_user=request.user, listing_type=Listing.OFFER).select_related("owner_company")
+    qs = _with_reaction_counts(
+        Listing.objects.filter(owner_user=request.user, listing_type=Listing.OFFER).select_related("owner_company")
+    )
     return render(request, "listings/my_listings.html", {
         "page_obj": _paginate(request, qs), "listing_type": Listing.OFFER, "title": _("My Offers"),
         "active_menu": "listings-my-offers",
@@ -371,7 +436,9 @@ def my_offers(request):
 
 @login_required
 def my_demands(request):
-    qs = Listing.objects.filter(owner_user=request.user, listing_type=Listing.DEMAND).select_related("owner_company")
+    qs = _with_reaction_counts(
+        Listing.objects.filter(owner_user=request.user, listing_type=Listing.DEMAND).select_related("owner_company")
+    )
     return render(request, "listings/my_listings.html", {
         "page_obj": _paginate(request, qs), "listing_type": Listing.DEMAND, "title": _("My Demands"),
         "active_menu": "listings-my-demands",
@@ -383,20 +450,44 @@ def my_reactions(request):
     qs = (ListingReaction.objects.filter(to_user=request.user)
           .select_related("listing", "from_user", "from_company"))
     return render(request, "listings/my_reactions.html", {
-        "page_obj": _paginate(request, qs), "active_menu": "listings-reactions",
+        "page_obj": _paginate(request, qs), "active_menu": "listings-my-offers",
         "status_choices": ListingReaction.STATUS_CHOICES,
+    })
+
+
+@login_required
+def listing_reactions(request, listing_id):
+    """Reactions received on ONE listing.
+
+    Reactions are no longer a sidebar tab: the owner reaches them from the
+    My Offers / My Demands row for the listing, or from the notification the
+    reaction itself raised.
+    """
+    listing = get_object_or_404(Listing.objects.select_related("owner_company"), id=listing_id)
+    if not services.is_listing_owner(listing, request.user) and not services.is_admin(request.user):
+        messages.error(request, _("Permission denied."))
+        return redirect("listings_web:browse")
+
+    qs = (ListingReaction.objects.filter(listing=listing)
+          .select_related("from_user", "from_company").order_by("-created_at"))
+    back = "listings-my-offers" if listing.listing_type == Listing.OFFER else "listings-my-demands"
+    return render(request, "listings/listing_reactions.html", {
+        "listing": listing, "page_obj": _paginate(request, qs),
+        "status_choices": ListingReaction.STATUS_CHOICES, "active_menu": back,
     })
 
 
 @login_required
 def reaction_set_status(request):
     """Owner advances a received reaction through new→read→replied→closed."""
+    fallback = redirect("listings_web:my-offers")
     if request.method != "POST":
-        return redirect("listings_web:my-reactions")
+        return fallback
     reaction = get_object_or_404(ListingReaction, id=request.POST.get("reaction_id"))
+    back = redirect("listings_web:listing-reactions", listing_id=reaction.listing_id)
     if reaction.to_user_id != request.user.id:
         messages.error(request, _("Permission denied."))
-        return redirect("listings_web:my-reactions")
+        return fallback
     new_status = request.POST.get("status")
     if new_status not in dict(ListingReaction.STATUS_CHOICES):
         messages.error(request, _("Invalid status."))
@@ -404,7 +495,7 @@ def reaction_set_status(request):
         reaction.status = new_status
         reaction.save(update_fields=["status", "updated_at"])
         messages.success(request, _("Reaction status updated."))
-    return redirect("listings_web:my-reactions")
+    return back
 
 
 @login_required
@@ -452,24 +543,35 @@ def browse_listings(request):
         qs = qs.filter(listing_type=f["listing_type"])
     if f.get("category_type") in (Listing.PRODUCT, Listing.SERVICE):
         qs = qs.filter(category_type=f["category_type"])
+    nace_display = ""
     if f.get("nace_isic_code"):
-        nace = f["nace_isic_code"]
-        qs = qs.filter(Q(nace_code__code__icontains=nace) | Q(nace_code__title__icontains=nace))
+        nace_q, nace_display = services.nace_filter(f["nace_isic_code"])
+        qs = qs.filter(nace_q)
     if f.get("country"):
-        qs = qs.filter(country__icontains=f["country"])
+        qs = qs.filter(services.country_filter(f["country"]))
     if f.get("keyword"):
         kw = f["keyword"]
         qs = qs.filter(
             Q(title__icontains=kw) | Q(description__icontains=kw) | Q(keywords__icontains=kw)
         )
 
-    return render(request, "listings/browse.html", {
+    ctx = {
         "page_obj": _paginate(request, qs),
         "filters": f,
         "listing_type_choices": Listing.LISTING_TYPE_CHOICES,
         "category_choices": Listing.CATEGORY_CHOICES,
+        "country_choices": sorted(COUNTRY_ENGLISH_NAMES.items(), key=lambda kv: kv[1]),
+        # Normalised to an ISO code so the dropdown re-opens on the right entry
+        # even when the URL carries the English name.
+        "country_selected": services.country_code(f.get("country", "")),
+        "nace_display": nace_display,
         "active_menu": "listings-browse",
-    })
+    }
+    # The filter bar fetches ?partial=1 and swaps just the results block, so the
+    # page never reloads. Without JS the same URL renders the full page.
+    if f.get("partial") == "1":
+        return render(request, "listings/_browse_results.html", ctx)
+    return render(request, "listings/browse.html", ctx)
 
 
 @login_required
@@ -489,6 +591,7 @@ def listing_detail(request, listing_id):
     already_reacted = ListingReaction.objects.filter(listing=listing, from_user=user).exists()
     return render(request, "listings/detail.html", {
         "listing": listing, "is_owner": is_owner, "is_admin": services.is_admin(user),
+        "location_display": _location_display(listing),
         "can_react": (not is_owner) and listing.status == Listing.ACTIVE and not already_reacted,
         "already_reacted": already_reacted,
         "active_menu": "listings-browse",
@@ -519,10 +622,15 @@ def react_listing(request, listing_id):
             ),
         )
         if created:
+            from django.urls import reverse
             from accounts.utils.notifications import notify
+            from accounts.utils.i18n_messages import Msg
+            # Link straight to the listing's reactions page so the owner can
+            # open and answer it from the notification tab.
             notify(recipient=listing.owner_user, sender=user,
-                   title=_("New reaction to your listing"),
-                   body=_("%(title)s received a new reaction.") % {"title": listing.title},
+                   title=Msg("New reaction to your listing"),
+                   body=Msg("%(title)s received a new reaction.", title=listing.title),
+                   link_url=reverse("listings_web:listing-reactions", args=[listing.id]),
                    related_company=listing.owner_company)
             messages.success(request, _("Your interest was sent."))
         else:
@@ -591,9 +699,11 @@ def admin_suspend(request, listing_id):
     listing.save(update_fields=["status", "suspension_reason", "suspended_at", "updated_at"])
     services.create_audit_log(listing, "listing_suspended", None, None, user)
     from accounts.utils.notifications import notify
+    from accounts.utils.i18n_messages import Msg
     notify(recipient=listing.owner_user, sender=user,
-           title=_("Your listing was suspended"),
-           body=_("%(title)s was suspended. Reason: %(reason)s") % {"title": listing.title, "reason": reason},
+           title=Msg("Your listing was suspended"),
+           body=Msg("%(title)s was suspended. Reason: %(reason)s",
+                    title=listing.title, reason=reason),
            related_company=listing.owner_company)
     messages.success(request, _("Listing suspended."))
     return redirect("listings_web:admin")

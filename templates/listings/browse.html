@@ -1,12 +1,12 @@
 {% extends "base/base.html" %}
 {% load i18n %}
-{% block title %}{% trans "Browse Listings" %}{% endblock %}
+{% block title %}{% trans "Browse Offers & Demands" %}{% endblock %}
 
 {% block content %}
 {% include "listings/_ps_styles.html" %}
 
 <div class="content-header d-flex justify-content-between align-items-center">
-  <h1 class="m-0"><i class="fas fa-store text-primary mr-2"></i>{% trans "Browse Listings" %}</h1>
+  <h1 class="m-0"><i class="fas fa-store text-primary mr-2"></i>{% trans "Browse Offers & Demands" %}</h1>
   <span class="text-nowrap">
     <a href="{% url 'listings_web:add' %}?type=offer" class="btn btn-sm btn-primary"><i class="fas fa-plus mr-1"></i>{% trans "Add Offer" %}</a>
     <a href="{% url 'listings_web:add' %}?type=demand" class="btn btn-sm btn-outline-primary"><i class="fas fa-plus mr-1"></i>{% trans "Add Demand" %}</a>
@@ -15,7 +15,7 @@
 
 <section class="content"><div class="container-fluid">
 
-  <form method="get" class="ps-toolbar">
+  <form method="get" class="ps-toolbar" id="lb-filter-form" action="{% url 'listings_web:browse' %}">
     <select name="listing_type" class="form-control" style="flex:1 1 140px; min-width:120px; width:auto;">
       <option value="">{% trans "All types" %}</option>
       {% for val, label in listing_type_choices %}
@@ -28,58 +28,193 @@
         <option value="{{ val }}" {% if filters.category_type == val %}selected{% endif %}>{{ label|capfirst }}</option>
       {% endfor %}
     </select>
-    <input type="text" name="nace_isic_code" class="form-control" style="flex:1 1 150px; min-width:120px; width:auto;" placeholder="{% trans 'NACE / ISIC' %}" value="{{ filters.nace_isic_code }}">
-    <input type="text" name="country" class="form-control" style="flex:1 1 140px; min-width:110px; width:auto;" placeholder="{% trans 'Country' %}" value="{{ filters.country }}">
+    {% comment %} Same searchable picker as the create form: the hidden field carries
+       the bare code (shareable URLs, exact subtree match server-side) while the
+       visible box shows "CODE — Title". {% endcomment %}
+    <div style="flex:1 1 190px; min-width:150px; position:relative;">
+      <input type="hidden" name="nace_isic_code" id="lb-nace-hidden" value="{{ filters.nace_isic_code }}">
+      <input type="text" id="lb-nace-search" class="form-control" autocomplete="off"
+             placeholder="{% trans 'NACE / ISIC' %}" value="{{ nace_display }}">
+      <ul id="lb-nace-results" class="list-group"
+          style="display:none; position:absolute; z-index:1050; left:0; right:0; max-height:240px; overflow-y:auto;"></ul>
+    </div>
+    <select name="country" class="form-control" style="flex:1 1 140px; min-width:110px; width:auto;">
+      <option value="">{% trans "All countries" %}</option>
+      {% for code, name in country_choices %}
+        <option value="{{ code }}" {% if country_selected == code %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
     <div style="flex:2 1 240px; min-width:180px; position:relative;">
       <i class="fas fa-search" style="position:absolute; left:.7rem; top:50%; transform:translateY(-50%); color:#98a2b3;"></i>
-      <input type="text" name="keyword" class="form-control pl-4" placeholder="{% trans 'Search title, description or keywords' %}" value="{{ filters.keyword }}">
+      <input type="text" name="keyword" class="form-control pl-4 mx-1" placeholder="{% trans 'Search title, description or keywords' %}" value="{{ filters.keyword }}">
     </div>
     <button class="btn btn-primary" style="flex:0 0 auto;"><i class="fas fa-filter mr-1"></i>{% trans "Filter" %}</button>
-    {% if filters.listing_type or filters.category_type or filters.nace_isic_code or filters.country or filters.keyword %}
-      <a href="{% url 'listings_web:browse' %}" class="btn btn-link text-muted" style="flex:0 0 auto;">{% trans "Clear" %}</a>
-    {% endif %}
+    <a href="{% url 'listings_web:browse' %}" id="lb-clear" class="btn btn-link text-muted"
+       style="flex:0 0 auto;{% if not filters.listing_type and not filters.category_type and not filters.nace_isic_code and not filters.country and not filters.keyword %} display:none;{% endif %}">{% trans "Clear" %}</a>
   </form>
 
-  {% if page_obj %}
-  <div class="ps-grid">
-    {% for l in page_obj %}
-      <div class="ps-card ps-card--{{ l.listing_type }}">
-        <a href="{% url 'listings_web:detail' l.id %}" class="ps-card__media">
-          {% if l.product_image %}
-            <img src="{{ l.product_image.url }}" alt="{{ l.title }}">
-          {% else %}
-            <div class="ps-card__ph"><i class="fas {% if l.category_type == 'service' %}fa-concierge-bell{% else %}fa-box-open{% endif %}"></i></div>
-          {% endif %}
-        </a>
-
-        <div class="d-flex align-items-center" style="gap:.4rem;">
-          <span class="ps-pill ps-pill--{{ l.listing_type }}">
-            <i class="fas {% if l.listing_type == 'offer' %}fa-bullhorn{% else %}fa-search{% endif %}"></i>{{ l.get_listing_type_display }}
-          </span>
-          <span class="ps-chip">{{ l.get_category_type_display|capfirst }}</span>
-        </div>
-
-        <h3 class="ps-card__title"><a href="{% url 'listings_web:detail' l.id %}">{{ l.title|truncatechars:48 }}</a></h3>
-
-        <div class="ps-card__foot">
-          {% if l.listing_type == 'offer' and l.price_without_vat %}
-            <span class="ps-price">{{ l.price_without_vat }} <small>{{ l.currency }}</small></span>
-          {% else %}
-            <span></span>
-          {% endif %}
-          <a href="{% url 'listings_web:detail' l.id %}" class="btn btn-sm btn-outline-primary">{% trans "View" %} <i class="fas fa-arrow-right ml-1"></i></a>
-        </div>
-      </div>
-    {% endfor %}
+  <div id="lb-results" style="transition:opacity .15s;">
+    {% include "listings/_browse_results.html" %}
   </div>
-  {% else %}
-    <div class="ps-empty">
-      <div><i class="fas fa-box-open"></i></div>
-      <h5>{% trans "No listings found" %}</h5>
-      <p>{% trans "No active listings match your filters. Try broadening your search." %}</p>
-    </div>
-  {% endif %}
 
-  <div class="mt-3">{% include "listings/_pagination.html" %}</div>
 </div></section>
+
+<script>
+// Filtering and paging swap only the results block — the page itself never
+// reloads. The server returns the same fragment for ?partial=1.
+(function () {
+  var form = document.getElementById("lb-filter-form");
+  var box = document.getElementById("lb-results");
+  var clear = document.getElementById("lb-clear");
+  if (!form || !box || !window.fetch) return;  // no JS/fetch: plain GET still works
+
+  var FIELDS = ["listing_type", "category_type", "nace_isic_code", "country", "keyword"];
+  var busy = false;
+
+  function query(page) {
+    var p = new URLSearchParams();
+    FIELDS.forEach(function (name) {
+      var el = form.elements[name];
+      var v = el && el.value ? el.value.trim() : "";
+      if (v) p.set(name, v);
+    });
+    if (page && page !== "1") p.set("page", page);
+    return p;
+  }
+
+  function load(page, push) {
+    if (busy) return;
+    busy = true;
+    box.style.opacity = ".45";
+    var p = query(page);
+    var qs = p.toString();
+    fetch(form.action + "?partial=1" + (qs ? "&" + qs : ""), {
+      headers: { "X-Requested-With": "XMLHttpRequest" },
+      credentials: "same-origin",
+    })
+      .then(function (r) {
+        // A redirect means the session expired and we were bounced to login —
+        // don't paint the login page into the grid.
+        if (r.redirected) { location.href = r.url; throw new Error("redirected"); }
+        if (!r.ok) throw new Error(r.status);
+        return r.text();
+      })
+      .then(function (html) {
+        box.innerHTML = html;
+        // Keep the URL shareable/bookmarkable and the Back button meaningful.
+        if (push !== false && window.history && history.pushState) {
+          history.pushState({ lb: qs }, "", qs ? "?" + qs : location.pathname);
+        }
+        clear.style.display = qs.replace(/(^|&)page=[^&]*/, "") ? "" : "none";
+      })
+      .catch(function (err) {                 // fall back to a normal reload
+        if (err && err.message !== "redirected") form.submit();
+      })
+      .then(function () { busy = false; box.style.opacity = ""; });
+  }
+
+  form.addEventListener("submit", function (e) { e.preventDefault(); load(null, true); });
+
+  clear.addEventListener("click", function (e) {
+    e.preventDefault();
+    FIELDS.forEach(function (name) { if (form.elements[name]) form.elements[name].value = ""; });
+    var naceBox = document.getElementById("lb-nace-search");
+    if (naceBox) naceBox.value = "";       // hidden code + visible label clear together
+    load(null, true);
+  });
+
+  // Pagination lives inside the swapped fragment, so delegate. Its hrefs carry
+  // only ?page=N; query() re-attaches the active filters.
+  box.addEventListener("click", function (e) {
+    var link = e.target.closest(".page-link");
+    if (!link || !link.getAttribute("href")) return;
+    e.preventDefault();
+    var page = new URLSearchParams(link.getAttribute("href").slice(1)).get("page");
+    if (!page) return;
+    load(page, true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  // Back/forward: restore the filters from the URL, then re-fetch without
+  // pushing another entry.
+  window.addEventListener("popstate", function () {
+    var p = new URLSearchParams(location.search);
+    FIELDS.forEach(function (name) {
+      if (form.elements[name]) form.elements[name].value = p.get(name) || "";
+    });
+    var naceBox = document.getElementById("lb-nace-search");
+    if (naceBox) {
+      // The URL carries only the code; show the label we cached when it was
+      // picked, else fall back to the code itself.
+      var c = p.get("nace_isic_code") || "";
+      naceBox.value = c ? (window.__lbNaceLabels[c] || c) : "";
+    }
+    load(p.get("page"), false);
+  });
+})();
+
+/* Searchable NACE / ISIC picker for the filter bar — same widget and endpoint
+   as the create form. The hidden input holds the code that actually filters;
+   the visible box is the human-readable label. Typing without picking still
+   works: the server falls back to a title search. */
+(function () {
+  var search = document.getElementById("lb-nace-search");
+  var hidden = document.getElementById("lb-nace-hidden");
+  var results = document.getElementById("lb-nace-results");
+  var form = document.getElementById("lb-filter-form");
+  if (!search || !window.fetch) return;
+
+  var timer = null;
+  // code → "CODE — Title", so Back/Forward can repaint the box.
+  window.__lbNaceLabels = {};
+  if (hidden.value && search.value) window.__lbNaceLabels[hidden.value] = search.value;
+
+  function hide() { results.style.display = "none"; }
+
+  function fetchCodes() {
+    var q = search.value.trim();
+    if (!q) { hide(); return; }
+    fetch("/api/industry-codes/nace/?q=" + encodeURIComponent(q) + "&limit=20", {
+      credentials: "same-origin",
+      headers: { "X-Requested-With": "XMLHttpRequest", "Accept": "application/json" },
+    })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+      .then(function (d) { render(d.data || []); })
+      .catch(function () { hide(); });
+  }
+
+  function render(rows) {
+    results.innerHTML = "";
+    if (!rows.length) { hide(); return; }
+    rows.forEach(function (row) {
+      var label = row.code + " — " + row.title;
+      var item = document.createElement("button");
+      item.type = "button";
+      item.className = "list-group-item list-group-item-action py-1 text-left";
+      item.textContent = label;
+      item.addEventListener("click", function () {
+        hidden.value = row.code;
+        search.value = label;
+        window.__lbNaceLabels[row.code] = label;
+        hide();
+        if (form) form.dispatchEvent(new Event("submit", { cancelable: true }));
+      });
+      results.appendChild(item);
+    });
+    results.style.display = "block";
+  }
+
+  search.addEventListener("input", function () {
+    // Free-typed text filters on its own (title search) — mirror it into the
+    // hidden field so hitting Filter without picking still searches.
+    hidden.value = search.value.trim();
+    clearTimeout(timer);
+    timer = setTimeout(fetchCodes, 200);
+  });
+  search.addEventListener("focus", function () { if (search.value.trim()) fetchCodes(); });
+  document.addEventListener("click", function (e) {
+    if (!results.contains(e.target) && e.target !== search) hide();
+  });
+})();
+</script>
 {% endblock %}

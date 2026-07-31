@@ -191,8 +191,10 @@
         {% endif %}
 
         <div class="msg-body">
-          <div class="msg-title">{{ note.title }}</div>
-          {% if note.body %}<div class="msg-text">{{ note.body|linebreaksbr }}</div>{% endif %}
+          <div class="msg-title">{{ note.display_title }}</div>
+          {% with body=note.display_body %}
+            {% if body %}<div class="msg-text">{{ body|linebreaksbr }}</div>{% endif %}
+          {% endwith %}
           <div class="msg-meta">
             <span><i class="far fa-clock mr-1"></i>{{ note.created_at|date:"M j, Y · g:i a" }}</span>
             {% if note.sender %}

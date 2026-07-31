@@ -345,6 +345,7 @@ def profile_view(request):
                 if changed:
                     try:
                         from accounts.utils.notifications import notify
+                        from accounts.utils.i18n_messages import Msg
                         from accounts.models import Notification
 
                         full_name = f"{first_name} {last_name}".strip() or user.email
@@ -361,10 +362,11 @@ def profile_view(request):
                                 recipient=owner,
                                 sender=user,
                                 kind=Notification.KIND_GENERIC,
-                                title="Your certifying consultant's contact info was updated",
-                                body=(
-                                    f"{full_name} updated their contact information. "
-                                    f"You can see the latest details on the {comp.name} company view."
+                                title=Msg("Your certifying consultant's contact info was updated"),
+                                body=Msg(
+                                    "%(name)s updated their contact information. "
+                                    "You can see the latest details on the %(company)s company view.",
+                                    name=full_name, company=comp.name,
                                 ),
                                 related_company=comp,
                             )

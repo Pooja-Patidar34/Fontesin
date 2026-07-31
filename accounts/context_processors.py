@@ -92,23 +92,17 @@ def admin_context(request):
             # (ACTIVE, or SUSPENDED = activated then paused — keeps historical
             # access per §6.2). Drives the "Franchises" list tab so it appears only
             # after activation, not for a franchise-role account with no live node.
-            if role_code == "franchise":
-                from accounts.models import Tenant as _Tenant
-                is_active_franchise_owner = _Tenant.objects.filter(
-                    owner_user=request.user,
-                    franchise_level__isnull=False,
-                    franchise_status__in=["ACTIVE", "SUSPENDED"],
-                ).exists()
-                # "Add Sub-Franchise" only makes sense for an owner whose franchise
-                # CAN have children — i.e. a non-Micro node (spec §8.2: a Micro is
-                # the deepest level, no child hierarchy). Include SUSPENDED so a
-                # suspended non-Micro owner still sees the tab and reaches the
-                # "suspended" explanation; a Micro-only owner never sees it.
-                can_add_subfranchise = _Tenant.objects.filter(
-                    owner_user=request.user,
-                    franchise_status__in=["ACTIVE", "SUSPENDED"],
-                    franchise_level__in=["MASTER", "NATIONAL", "REGIONAL"],
-                ).exists()
+            # Keyed on ownership, not on the role: buying a franchise no longer
+            # rewrites the account's role, so a Business User who holds a
+            # franchise keeps every business-user tab AND gets the franchise
+            # section. "Add Sub-Franchise" additionally requires a node that CAN
+            # have children — a non-Micro level (spec §8.2).
+            from accounts.utils.franchise_access import (
+                can_add_subfranchise as _can_add_sub,
+                is_franchise_holder as _is_holder,
+            )
+            is_active_franchise_owner = _is_holder(request.user)
+            can_add_subfranchise = _can_add_sub(request.user)
             is_basic_business_user = is_basic_plan and is_business_user
             is_pro_business_user = is_pro_plan and is_business_user
             is_global_business_user = is_global_plan and is_business_user

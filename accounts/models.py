@@ -20,6 +20,7 @@ from accounts.constants import (
 )
 from accounts.common.active_manager import ActiveManager
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 
 class Tenant(models.Model):
@@ -226,21 +227,21 @@ class Tenant(models.Model):
             collected.add(self.id)
         return collected
 
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            max_slug_len = self._meta.get_field("slug").max_length
-            base_slug = slugify(self.name)[:max_slug_len]
-            slug = base_slug
-            counter = 1
+    def _ensure_slug(self):
+        """Derive a unique slug from the name when none was supplied."""
+        if self.slug:
+            return
+        max_slug_len = self._meta.get_field("slug").max_length
+        base_slug = slugify(self.name)[:max_slug_len]
+        slug = base_slug
+        counter = 1
 
-            while Tenant.all_objects.filter(slug=slug).exclude(id=self.id).exists():
-                suffix = f"-{counter}"
-                slug = base_slug[: max_slug_len - len(suffix)] + suffix
-                counter += 1
+        while Tenant.all_objects.filter(slug=slug).exclude(id=self.id).exists():
+            suffix = f"-{counter}"
+            slug = base_slug[: max_slug_len - len(suffix)] + suffix
+            counter += 1
 
-            self.slug = slug
-
-        super().save(*args, **kwargs)
+        self.slug = slug
 
     def clean(self):
         """Validate franchise-tree invariants (spec §10, §11, §15).
@@ -316,6 +317,81 @@ class Tenant(models.Model):
                     "An active %(level)s already exists in this territory (spec §11.1)."
                     % {"level": level_label}
                 )
+
+        # A user may hold MANY franchises — different countries, different
+        # levels, bought by different companies they own (product decision,
+        # Jul 2026; supersedes the earlier one-franchise-per-user rule). What is
+        # still forbidden is holding two franchises whose territories overlap:
+        # you cannot be your own franchisee, so a German National holder can't
+        # also take a Regional inside Germany, while a Brazilian Master is fine.
+        # Territory exclusivity (above) separately keeps two DIFFERENT holders
+        # out of the same territory.
+        self.validate_owner_territories_do_not_overlap()
+
+    def conflicting_franchise_owned(self):
+        """A live franchise node held by this node's owner whose territory
+        overlaps this node's — one contains the other — if any.
+
+        "Live" excludes wound-down (TERMINATED/EXPIRED) and soft-deleted nodes,
+        so a former holder can be granted a new franchise. Containment is
+        checked both ways, which covers the parent/child case (a child territory
+        is always inside its parent's) as well as a same-level duplicate.
+        Territories that don't overlap — a German National and a Brazilian
+        Master, say — are fine and are not reported here."""
+        if not self.owner_user_id or self.franchise_level is None:
+            return None
+        others = (
+            Tenant.objects.filter(
+                owner_user_id=self.owner_user_id,
+                franchise_level__isnull=False,
+            )
+            .exclude(id=self.id)
+            .exclude(franchise_status__in=[
+                FranchiseUnitStatus.TERMINATED,
+                FranchiseUnitStatus.EXPIRED,
+            ])
+        )
+        for other in others:
+            if self.is_territory_within(other) or other.is_territory_within(self):
+                return other
+        return None
+
+    def validate_owner_territories_do_not_overlap(self):
+        from django.core.exceptions import ValidationError
+
+        other = self.conflicting_franchise_owned()
+        if other is not None:
+            raise ValidationError(
+                {"owner_user":
+                    "This user already holds %(name)s, whose territory overlaps "
+                    "this one. A holder cannot also hold a franchise inside (or "
+                    "containing) their own territory — pick another territory."
+                    % {"name": other.name}}
+            )
+
+    def save(self, *args, **kwargs):
+        """Fill in the slug, then enforce the overlapping-territory owner rule.
+
+        `clean()` carries the full tree ruleset but Django never calls it from
+        `save()`, so it only guards the paths that invoke it explicitly. The
+        owner rule is the one invariant that must hold no matter how the row is
+        written — view, shell, data import or fixture — so it runs here too.
+        Only this single rule is re-checked; the structural/territory rules stay
+        in `clean()` because legitimate transitions (suspending a parent, for
+        instance) re-save children that would otherwise trip them.
+
+        Winding a node down (terminate / expire / soft-delete) is always allowed
+        — otherwise a pre-existing duplicate could never be cleaned up."""
+        self._ensure_slug()
+        winding_down = (
+            self.is_deleted
+            or self.franchise_status in (
+                FranchiseUnitStatus.TERMINATED, FranchiseUnitStatus.EXPIRED,
+            )
+        )
+        if not winding_down:
+            self.validate_owner_territories_do_not_overlap()
+        return super().save(*args, **kwargs)
 
 
 class IndustryCodeBase(models.Model):
@@ -1178,6 +1254,7 @@ class Notification(models.Model):
     KIND_FRANCHISE_APPROVED = "franchise_approved"
     KIND_FRANCHISE_REJECTED = "franchise_rejected"
     KIND_FRANCHISE_ACTIVATED = "franchise_activated"
+    KIND_FRANCHISE_REMOVED = "franchise_removed"
     KIND_NEW_USER = "new_user"
     KIND_GENERIC = "generic"
     KIND_CHOICES = (
@@ -1194,6 +1271,7 @@ class Notification(models.Model):
         (KIND_FRANCHISE_APPROVED, "Franchise application approved"),
         (KIND_FRANCHISE_REJECTED, "Franchise application rejected"),
         (KIND_FRANCHISE_ACTIVATED, "Franchise activated"),
+        (KIND_FRANCHISE_REMOVED, "Franchise removed"),
         (KIND_NEW_USER, "New user in region"),
         (KIND_GENERIC, "Generic"),
     )
@@ -1214,6 +1292,14 @@ class Notification(models.Model):
     kind = models.CharField(max_length=40, choices=KIND_CHOICES, default=KIND_GENERIC)
     title = models.CharField(max_length=200)
     body = models.TextField(blank=True)
+    # Catalog-backed source of `title` / `body`: the msgids plus their
+    # interpolation params, re-rendered through gettext on every read so the
+    # inbox follows the language switcher instead of freezing in whatever
+    # language the recipient preferred when the row was written. The two text
+    # columns stay as the fallback for rows written before this existed (and
+    # for the few call sites that pass raw, untranslatable text).
+    title_i18n = models.JSONField(null=True, blank=True)
+    body_i18n = models.JSONField(null=True, blank=True)
     link_url = models.CharField(max_length=500, blank=True)
     related_company = models.ForeignKey(
         "Company",
@@ -1234,6 +1320,20 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"Notification({self.kind}) → {self.recipient_id}"
+
+    @property
+    def display_title(self):
+        """Title in the language the viewer has selected right now."""
+        from accounts.utils.i18n_messages import render_payload
+
+        return render_payload(self.title_i18n) or self.title
+
+    @property
+    def display_body(self):
+        """Body in the language the viewer has selected right now."""
+        from accounts.utils.i18n_messages import render_payload
+
+        return render_payload(self.body_i18n) or self.body
 
     def mark_read(self):
         if not self.is_read:
@@ -1359,6 +1459,19 @@ class FranchiseApplication(models.Model):
         "User",
         on_delete=models.CASCADE,
         related_name="franchise_applications",
+    )
+    # The company the applicant was acting as when they bought the franchise.
+    # A Business User with several companies can buy a franchise for each of
+    # them in different territories, so the holding company is recorded here and
+    # copied onto the node's `owner_company` at approval. Blank for applicants
+    # who have no company (consultants, coordinators) or for the pre-Jul-2026
+    # rows that predate the field.
+    applicant_company = models.ForeignKey(
+        "Company",
+        on_delete=models.SET_NULL,
+        related_name="franchise_applications",
+        null=True,
+        blank=True,
     )
     requested_level = models.CharField(
         max_length=20,
@@ -1506,3 +1619,89 @@ class ConsultantAssignment(models.Model):
 
     def __str__(self):
         return f"ConsultantAssignment({self.consultant_user_id}, {self.consultant_type})"
+
+
+class FranchiseRemovalRequest(models.Model):
+    """A holder's request to give up one of their franchises.
+
+    A holder can't simply drop a territory: ending a franchise ends its
+    sub-franchises and consultant rosters too, so it goes through the same
+    approver that granted it (mirroring FranchiseApplication in the opposite
+    direction). A Master is reviewed by the Platform Admin; every sub-franchise
+    is reviewed by its DIRECT parent holder — a Regional's exit is approved by
+    the National above it. On approval the node is wound down through
+    `accounts.utils.franchise_removal.remove_franchise`.
+    """
+
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    CANCELLED = "CANCELLED"
+
+    STATUS_CHOICES = [
+        (PENDING, _("Pending")),
+        (APPROVED, _("Approved")),
+        (REJECTED, _("Rejected")),
+        (CANCELLED, _("Cancelled")),
+    ]
+
+    # Statuses that still occupy the reviewer's queue.
+    OPEN = frozenset({PENDING})
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    node = models.ForeignKey(
+        Tenant,
+        on_delete=models.CASCADE,
+        related_name="removal_requests",
+    )
+    requested_by = models.ForeignKey(
+        "User",
+        on_delete=models.CASCADE,
+        related_name="franchise_removal_requests",
+    )
+    # The node whose holder reviews this request — the direct parent. Null for a
+    # Master, which the Platform Admin reviews (same convention as
+    # FranchiseApplication.parent_franchise).
+    reviewer_franchise = models.ForeignKey(
+        Tenant,
+        on_delete=models.SET_NULL,
+        related_name="child_removal_requests",
+        null=True,
+        blank=True,
+    )
+
+    reason = models.TextField(blank=True, default="")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
+    decision_note = models.TextField(blank=True, default="")
+
+    decided_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        related_name="decided_franchise_removal_requests",
+        null=True,
+        blank=True,
+    )
+    decided_at = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["status", "-created_at"]),
+            models.Index(fields=["reviewer_franchise", "status"]),
+            models.Index(fields=["requested_by", "-created_at"]),
+        ]
+        constraints = [
+            # One open request per node keeps the queue unambiguous.
+            models.UniqueConstraint(
+                fields=["node"],
+                condition=Q(status="PENDING"),
+                name="unique_open_removal_request_per_node",
+            ),
+        ]
+
+    def __str__(self):
+        return f"FranchiseRemovalRequest({self.node_id}, {self.status})"

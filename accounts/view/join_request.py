@@ -109,6 +109,7 @@ def create_join_request(user, company, message=None):
     if company.owner_user_id and company.owner_user_id != user.id:
         try:
             from accounts.utils.notifications import notify
+            from accounts.utils.i18n_messages import Msg
 
             requester_label = (
                 f"{user.first_name} {user.last_name}".strip() or user.email
@@ -117,10 +118,11 @@ def create_join_request(user, company, message=None):
                 recipient=company.owner_user,
                 sender=user,
                 kind=Notification.KIND_GENERIC,
-                title=f"Join request from {requester_label}",
-                body=(
-                    f"{requester_label} has requested to join {company.name}. "
-                    f"Open the Join Requests tab to approve or decline."
+                title=Msg("Join request from %(name)s", name=requester_label),
+                body=Msg(
+                    "%(name)s has requested to join %(company)s. "
+                    "Open the Join Requests tab to approve or decline.",
+                    name=requester_label, company=company.name,
                 ),
                 link_url=reverse("join-requests"),
                 related_company=company,
@@ -271,17 +273,21 @@ def join_request_action(request, request_id):
     # Tell the requester the verdict.
     try:
         from accounts.utils.notifications import notify
+        from accounts.utils.i18n_messages import Msg
 
         owner_label = f"{owner.first_name} {owner.last_name}".strip() or owner.email
         if decision == "approve":
-            title = f"You've joined {company.name}"
-            body = (
-                f"{owner_label} approved your request to join {company.name}. "
-                f"It now appears in your My Companies."
+            title = Msg("You've joined %(company)s", company=company.name)
+            body = Msg(
+                "%(name)s approved your request to join %(company)s. "
+                "It now appears in your My Companies.",
+                name=owner_label, company=company.name,
             )
         else:
-            title = f"Your request to join {company.name} was declined"
-            body = f"{owner_label} declined your request to join {company.name}."
+            title = Msg("Your request to join %(company)s was declined",
+                        company=company.name)
+            body = Msg("%(name)s declined your request to join %(company)s.",
+                       name=owner_label, company=company.name)
         notify(
             recipient=requester,
             sender=owner,
@@ -374,13 +380,15 @@ def company_leave(request, company_id):
     if company.owner_user_id and company.owner_user_id != user.id:
         try:
             from accounts.utils.notifications import notify
+            from accounts.utils.i18n_messages import Msg
             who = f"{user.first_name} {user.last_name}".strip() or user.email
             notify(
                 recipient=company.owner_user,
                 sender=user,
                 kind=Notification.KIND_GENERIC,
-                title=f"{who} left {company.name}",
-                body=f"{who} has left your company {company.name}.",
+                title=Msg("%(name)s left %(company)s", name=who, company=company.name),
+                body=Msg("%(name)s has left your company %(company)s.",
+                         name=who, company=company.name),
                 link_url=reverse("join-requests"),
                 related_company=company,
             )
@@ -461,18 +469,21 @@ def join_request_cancel(request, request_id):
     if was_approved:
         try:
             from accounts.utils.notifications import notify
+            from accounts.utils.i18n_messages import Msg
             if is_owner and not is_requester:
                 owner_label = (
                     f"{owner.first_name} {owner.last_name}".strip() or owner.email
-                ) if owner else "The company owner"
+                ) if owner else Msg("The company owner")
                 notify(
                     recipient=requester,
                     sender=request.user,
                     kind=Notification.KIND_GENERIC,
-                    title=f"Your access to {company.name} was removed",
-                    body=(
-                        f"{owner_label} removed your membership in {company.name}. "
-                        f"You no longer have access to this company."
+                    title=Msg("Your access to %(company)s was removed",
+                              company=company.name),
+                    body=Msg(
+                        "%(name)s removed your membership in %(company)s. "
+                        "You no longer have access to this company.",
+                        name=owner_label, company=company.name,
                     ),
                     link_url=reverse("my-companies"),
                     related_company=company,
@@ -483,8 +494,9 @@ def join_request_cancel(request, request_id):
                     recipient=owner,
                     sender=requester,
                     kind=Notification.KIND_GENERIC,
-                    title=f"{who} left {company.name}",
-                    body=f"{who} has left your company {company.name}.",
+                    title=Msg("%(name)s left %(company)s", name=who, company=company.name),
+                    body=Msg("%(name)s has left your company %(company)s.",
+                             name=who, company=company.name),
                     link_url=reverse("join-requests"),
                     related_company=company,
                 )

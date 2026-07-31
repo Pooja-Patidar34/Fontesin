@@ -201,6 +201,7 @@ def company_connect(request, company_id):
     if (created or resent) and company.owner_user_id and company.owner_user_id != request.user.id:
         try:
             from accounts.utils.notifications import notify
+            from accounts.utils.i18n_messages import Msg
             from accounts.models import Notification
 
             requester = request.user
@@ -212,11 +213,11 @@ def company_connect(request, company_id):
                 recipient=company.owner_user,
                 sender=requester,
                 kind=Notification.KIND_GENERIC,
-                title=f"New partnership request from {requester_label}",
-                body=(
-                    f"{requester_label} has requested a partnership with "
-                    f"{company.name}. Open the Partnerships tab to confirm "
-                    f"or decline."
+                title=Msg("New partnership request from %(name)s", name=requester_label),
+                body=Msg(
+                    "%(name)s has requested a partnership with %(company)s. "
+                    "Open the Partnerships tab to confirm or decline.",
+                    name=requester_label, company=company.name,
                 ),
                 link_url=reverse("partnerships"),
                 related_company=company,

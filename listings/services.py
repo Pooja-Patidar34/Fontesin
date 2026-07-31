@@ -11,6 +11,12 @@ The plan-scope visibility functions are intentionally MVP *placeholders*
 real plan-tier logic on Day 9 without touching the views.
 """
 
+import re
+
+from django.db.models import Q
+
+from accounts.constants import COUNTRY_ENGLISH_NAMES
+from accounts.models import NaceCode
 from listings.models import Listing, ListingAuditLog
 
 
@@ -93,3 +99,70 @@ def create_audit_log(listing, action, old_value, new_value, changed_by):
         new_value=new_value,
         changed_by=changed_by,
     )
+
+
+# ---------------------------------------------------------------------------
+# Browse / search filters (shared by the web page and the JSON API)
+# ---------------------------------------------------------------------------
+def nace_filter(raw):
+    """Build the NACE/ISIC browse filter from whatever the box submitted.
+
+    The picker submits a bare code ("A"), but the box is still a text input, so
+    it can also arrive as the display string ("A — AGRICULTURE, FORESTRY AND
+    FISHING", e.g. pasted from a listing's detail page) or as free-typed words.
+    All three have to work; previously only a raw substring was tried, which
+    matched nothing for the first two.
+
+    Returns (Q, display_string_for_the_search_box).
+    """
+    raw = (raw or "").strip()
+    # "CODE — Title" → "CODE". Both dash forms, since the em dash survives a
+    # copy/paste but a hand-typed value usually uses a hyphen.
+    head = re.split(r"\s+[—-]\s+", raw, maxsplit=1)[0].strip()
+
+    code = NaceCode.objects.filter(code__iexact=head).first()
+    if code:
+        # A section or division means "everything underneath it". NACE codes are
+        # prefix-structured (A → A01 → A0111), so the prefix IS the subtree.
+        return Q(nace_code__code__istartswith=code.code), f"{code.code} — {code.title}"
+
+    # Not a known code — treat it as a search term over code prefix and title.
+    # startswith (not contains) on the code, so "A" doesn't drag in every code
+    # that merely happens to contain the letter.
+    return (
+        Q(nace_code__code__istartswith=raw) | Q(nace_code__title__icontains=raw),
+        raw,
+    )
+
+
+def country_code(raw):
+    """Resolve whatever the country box submitted to its ISO code, if known.
+
+    Returns "" when the value matches no known country, so the dropdown falls
+    back to "All countries" rather than silently selecting the wrong entry.
+    """
+    raw = (raw or "").strip()
+    if not raw:
+        return ""
+    if raw.upper() in COUNTRY_ENGLISH_NAMES:
+        return raw.upper()
+    for iso, name in COUNTRY_ENGLISH_NAMES.items():
+        if raw.lower() == name.lower():
+            return iso
+    return ""
+
+
+def country_filter(raw):
+    """Match the country box against how countries are actually stored.
+
+    The create form's dropdown stores an ISO code ("IN"), so filtering on the
+    English name ("India") found nothing. Accept either, and keep the substring
+    match as a fallback for legacy rows that hold a free-typed name.
+    """
+    raw = (raw or "").strip()
+    q = Q(country__iexact=raw) | Q(country__icontains=raw)
+    # Selected/typed a name → also try its ISO code, and vice versa.
+    iso = country_code(raw)
+    if iso:
+        q |= Q(country__iexact=iso) | Q(country__iexact=COUNTRY_ENGLISH_NAMES[iso])
+    return q

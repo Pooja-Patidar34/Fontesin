@@ -1,0 +1,46 @@
+{% load i18n %}
+{% comment %}
+Results-only fragment: rendered inside browse.html on a full load, and on its
+own for the AJAX filter so applying a filter never reloads the whole page.
+{% endcomment %}
+{% if page_obj %}
+<div class="ps-grid">
+  {% for l in page_obj %}
+    <div class="ps-card ps-card--{{ l.listing_type }}">
+      <a href="{% url 'listings_web:detail' l.id %}" class="ps-card__media">
+        {% if l.product_image %}
+          <img src="{{ l.product_image.url }}" alt="{{ l.title }}">
+        {% else %}
+          <div class="ps-card__ph"><i class="fas {% if l.category_type == 'service' %}fa-concierge-bell{% else %}fa-box-open{% endif %}"></i></div>
+        {% endif %}
+      </a>
+
+      <div class="d-flex align-items-center" style="gap:.4rem;">
+        <span class="ps-pill ps-pill--{{ l.listing_type }}">
+          <i class="fas {% if l.listing_type == 'offer' %}fa-bullhorn{% else %}fa-search{% endif %}"></i>{{ l.get_listing_type_display }}
+        </span>
+        <span class="ps-chip">{{ l.get_category_type_display|capfirst }}</span>
+      </div>
+
+      <h3 class="ps-card__title"><a href="{% url 'listings_web:detail' l.id %}">{{ l.title|truncatechars:48 }}</a></h3>
+
+      <div class="ps-card__foot">
+        {% if l.listing_type == 'offer' and l.price_without_vat %}
+          <span class="ps-price">{{ l.price_without_vat }} <small>{{ l.currency }}</small></span>
+        {% else %}
+          <span></span>
+        {% endif %}
+        <a href="{% url 'listings_web:detail' l.id %}" class="btn btn-sm btn-outline-primary">{% trans "View" %} <i class="fas fa-arrow-right ml-1"></i></a>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% else %}
+  <div class="ps-empty">
+    <div><i class="fas fa-box-open"></i></div>
+    <h5>{% trans "No listings found" %}</h5>
+    <p>{% trans "No active listings match your filters. Try broadening your search." %}</p>
+  </div>
+{% endif %}
+
+<div class="mt-3">{% include "listings/_pagination.html" %}</div>
