@@ -21,6 +21,7 @@ from django.db import IntegrityError
 from accounts.constants import (
     CountryChoices,
     COUNTRY_ENGLISH_NAMES,
+    COUNTRY_STATES,
     LanguageChoices,
     SupportedLocale,
 )
@@ -173,8 +174,15 @@ def admin_login(request):
         try:
             from billing.utils import ensure_account_free_subscription
             ensure_account_free_subscription(user)
-        except Exception:
-            pass
+        except Exception as e:
+            # Non-blocking: never keep a user out of the app over the Free floor.
+            # But the helper already absorbs its own idempotency/IntegrityError
+            # race, so anything reaching here is genuinely unexpected — log it,
+            # or a user silently ends up with no plan and no trace of why.
+            logger.exception(
+                "login: ensure_account_free_subscription failed for user %s: %s",
+                getattr(user, "pk", None), e,
+            )
 
         # When a BU owns MORE THAN ONE company they must pick which one to act
         # as (its plan governs the session); a single-company owner is
@@ -212,6 +220,7 @@ def register_view(request):
     ctx = {
         "companies": companies,
         "country_choices": CountryChoices.CHOICES,
+        "country_states": COUNTRY_STATES,
         "language_choices": LanguageChoices.CHOICES,
     }
 
@@ -222,6 +231,8 @@ def register_view(request):
         email = request.POST.get("email", "").strip()
         phone = request.POST.get("phone", "").strip()
         country = request.POST.get("country", "").strip()
+        state_region = request.POST.get("state_region", "").strip()
+        city = " ".join(request.POST.get("city", "").split())
         password = request.POST.get("password", "")
         confirm_password = request.POST.get("confirm_password", "")
 
@@ -235,6 +246,8 @@ def register_view(request):
             _("Email"): email,
             _("Phone"): phone,
             _("Country"): country,
+            _("State / Region"): state_region,
+            _("City / Town"): city,
             _("Password"): password,
             _("Role"): role_name,
         }
@@ -315,6 +328,19 @@ def register_view(request):
             )
             return render(request, "auth/register.html", ctx)
 
+        # The State dropdown is populated client-side from COUNTRY_STATES, so a
+        # mismatched pair only reaches here via a stale form or a direct POST.
+        # Reject it rather than store it: state/city anchor the plan discovery
+        # scope, and a state that doesn't belong to the country produces a
+        # user whose home market can never be resolved.
+        valid_states = COUNTRY_STATES.get(country, [])
+        if valid_states and state_region not in valid_states:
+            messages.error(
+                request,
+                _("Please select a valid state / region for the chosen country."),
+            )
+            return render(request, "auth/register.html", ctx)
+
         if len(password) < 8:
             messages.error(request, _("Password must be at least 8 characters."))
             return render(request, "auth/register.html", ctx)
@@ -365,6 +391,12 @@ def register_view(request):
                 role=role,
                 phone=phone,
                 country=country,
+                # Home market for plan-based discovery scope
+                # (billing.utils.get_user_geographic_scope): the active company
+                # takes precedence once one exists, and these are the fallback
+                # that makes the Free floor usable before that.
+                state_region=state_region,
+                city=city,
                 # Identity verification has not happened yet — the account
                 # stays gated on the /verify/ step (see
                 # RequireIdentityVerificationMiddleware) and cannot reach plan
@@ -422,8 +454,15 @@ def register_view(request):
             try:
                 from billing.utils import ensure_account_free_subscription
                 ensure_account_free_subscription(user)
-            except Exception:
-                pass
+            except Exception as e:
+                # Non-blocking: a failed Free floor must not block signup. The
+                # helper absorbs its own idempotency race, so anything here is
+                # unexpected and needs a trace — otherwise the new BU lands
+                # without a plan for no discoverable reason.
+                logger.exception(
+                    "signup: ensure_account_free_subscription failed for user %s: %s",
+                    getattr(user, "pk", None), e,
+                )
 
         login(request, user, backend="django.contrib.auth.backends.ModelBackend")
 
@@ -681,7 +720,7 @@ def forgot_password(request):
                     user_language=(user.preferred_language or "en"),
                 )
             except Exception as e:
-                logger.error("Failed to send OTP email to %s: %s", email, e)
+                logger.exception("Failed to send OTP email to %s: %s", email, e)
                 messages.error(
                     request,
                     _("Something went wrong while sending the verification code. Please try again."),

@@ -9,7 +9,7 @@ from django.db import IntegrityError, transaction
 from django.http import Http404, JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as _, ngettext
 
 # Optional phone field. If non-empty: 7–15 digits total, with optional leading
 # "+" and spaces, hyphens, or parentheses for formatting (overall 7–20 chars).
@@ -52,19 +52,26 @@ def add_user(request):
 
     missing = []
     if not email:
-        missing.append("Email")
+        missing.append(_("Email"))
     if not password:
-        missing.append("Password")
+        missing.append(_("Password"))
     if not first_name:
-        missing.append("First name")
+        missing.append(_("First name"))
     if not last_name:
-        missing.append("Last name")
+        missing.append(_("Last name"))
     if missing:
         fields = ", ".join(missing)
-        verb = _("is") if len(missing) == 1 else _("are")
+        # ngettext rather than swapping an "is"/"are" fragment into a shared
+        # sentence: agreement isn't a standalone word in every language, so a
+        # translator needs the whole sentence in each plural form to render it
+        # naturally (and some locales have more than two forms).
         return JsonResponse({
             "status": False,
-            "message": _("%(fields)s %(verb)s required.") % {"fields": fields, "verb": verb},
+            "message": ngettext(
+                "%(fields)s is required.",
+                "%(fields)s are required.",
+                len(missing),
+            ) % {"fields": fields},
         }, status=400)
 
     # --------------------

@@ -260,6 +260,63 @@ class ListingsAPITestCase(TestCase):
         rx.refresh_from_db()
         self.assertEqual(rx.status, "replied")
 
+    def test_web_reaction_without_primary_company_is_attributed_to_owned_company(self):
+        """A reaction is company-to-company, but plenty of accounts have no
+        `primary_company` set — that null used to hit the NOT NULL constraint on
+        ListingReaction.from_company and 500 on "Send Interest"."""
+        from django.test import Client
+        from django.urls import reverse
+        from listings.models import ListingReaction
+
+        lid = _json(self.create_listing())["data"]["id"]
+        self.other.primary_company = None
+        self.other.save(update_fields=["primary_company"])
+
+        web = Client()
+        web.force_login(self.other)
+        r = web.post(reverse("listings_web:react", args=[lid]),
+                     {"message": "Interested"}, SERVER_NAME="localhost")
+        self.assertEqual(r.status_code, 302)
+        rx = ListingReaction.objects.get(listing_id=lid, from_user=self.other)
+        self.assertEqual(rx.from_company_id, self.other_company.id)
+
+    def test_web_reaction_follows_the_active_company(self):
+        """Owning several companies, the reaction is attributed to the one the
+        session is acting as — the same company you'd publish a listing as."""
+        from django.test import Client
+        from django.urls import reverse
+        from listings.models import ListingReaction
+
+        second = Company.objects.create(
+            tenant=self.tenant, name="Other Co Two", owner_user=self.other,
+        )
+        lid = _json(self.create_listing())["data"]["id"]
+
+        web = Client()
+        web.force_login(self.other)
+        session = web.session
+        session["active_company_id"] = str(second.id)
+        session.save()
+        r = web.post(reverse("listings_web:react", args=[lid]),
+                     {"message": "Interested"}, SERVER_NAME="localhost")
+        self.assertEqual(r.status_code, 302)
+        rx = ListingReaction.objects.get(listing_id=lid, from_user=self.other)
+        self.assertEqual(rx.from_company_id, second.id)
+
+    def test_api_reaction_without_any_company_is_refused_not_crashed(self):
+        companyless = User.objects.create_user(
+            email="nocompany@example.com", password="x",
+            tenant=self.tenant, role=self.business_role,
+        )
+        lid = _json(self.create_listing())["data"]["id"]
+        body = self.call(api.ListingReactionAPIView.as_view(), "post", companyless, lid,
+                         {"message": "Interested"})
+        self.assertFalse(body["status"])
+        from listings.models import ListingReaction
+        self.assertFalse(
+            ListingReaction.objects.filter(listing_id=lid, from_user=companyless).exists()
+        )
+
     def test_web_module_create_with_specific_data_and_image(self):
         from django.test import Client
         from django.urls import reverse

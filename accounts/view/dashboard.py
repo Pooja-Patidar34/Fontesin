@@ -256,9 +256,16 @@ def dashboard(request):
                 recent_activity.append({
                     "time": inv.due_date,
                     "title": pgettext("dashboard", "Invoice overdue"),
+                    # Invoice.currency is per-invoice (not always USD), so the
+                    # symbol can't be hardcoded — render the stored code the way
+                    # the other dashboard money lines do: "USD 120.00".
                     "desc": pgettext(
-                        "dashboard", "%(email)s – $%(amount)s pending"
-                    ) % {"email": email, "amount": inv.amount},
+                        "dashboard", "%(email)s – %(currency)s %(amount)s pending"
+                    ) % {
+                        "email": email,
+                        "currency": inv.currency,
+                        "amount": inv.amount,
+                    },
                     "color": "#d97706",
                 })
 

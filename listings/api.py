@@ -347,12 +347,24 @@ class ListingReactionAPIView(APILocaleMixin, APIView):
         if not services.can_view_scope(user, listing.visibility_scope):
             return Response({"status": False, "message": _("Permission denied")}, status=status.HTTP_403_FORBIDDEN)
 
+        # A reaction is company-to-company (from_company is NOT NULL). Resolve
+        # the company the user is acting as — primary_company alone is blank on
+        # plenty of accounts and used to reach the insert as a null, where the
+        # IntegrityError below reported it as "already reacted".
+        from_company = services.acting_company(user, request)
+        if from_company is None:
+            return Response(
+                {"status": False,
+                 "message": _("Add a company to your account before reacting to a listing.")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         message = (request.data.get("message") or "").strip() or self.DEFAULT_MESSAGE
         try:
             reaction = ListingReaction.objects.create(
                 listing=listing,
                 from_user=user,
-                from_company=user.primary_company,
+                from_company=from_company,
                 to_user=listing.owner_user,
                 to_company=listing.owner_company,
                 message=message,

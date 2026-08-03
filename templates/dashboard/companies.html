@@ -723,15 +723,22 @@
             {% if request.user.is_superuser %}
             <th>{% trans "Franchise" context "companies" %}</th>
             {% endif %}
+            {% comment %} Free plan is a name-only directory of the user's own town —
+               Industry and Location are paid detail, so both columns are dropped
+               (the row template drops the matching cells). {% endcomment %}
+            {% if not free_plan_names_only %}
             <th>{% trans "Industry" context "companies" %}</th>
+            {% endif %}
             {% if is_business_user %}
             {% comment %} All business-user plans use the limited fields — Location instead
-               of Status. Plans differ only in scope + actions:
-                 Free   = country,  View/Connect disabled, Join enabled
-                 Basic  = country,  all actions enabled
-                 Pro    = region,   all actions enabled
-                 Global = worldwide, all actions enabled {% endcomment %}
+               of Status. Plans differ in scope, detail and actions:
+                 Free   = own town,  names only, View/Connect disabled, Join enabled
+                 Basic  = country,   all details, all actions enabled
+                 Pro    = continent, all details, all actions enabled
+                 Global = worldwide, all details, all actions enabled {% endcomment %}
+            {% if not free_plan_names_only %}
             <th>{% trans "Location" context "companies" %}</th>
+            {% endif %}
             {% else %}
             <th>{% trans "Status" context "companies" %}</th>
             {% endif %}

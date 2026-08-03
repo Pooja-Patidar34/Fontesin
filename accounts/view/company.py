@@ -104,42 +104,32 @@ def coordinator_territory_q(user):
 def business_user_plan_scope_q(user):
     """Discovery-scope Q for a business user's Company Database list.
 
-    Visibility (which companies show in the list) by plan:
+    Visibility (which companies show in the list) by plan — each tier is one
+    geographic step wider than the last:
 
-        free   → ALL active companies worldwide (read-only: no View/Connect)
-        basic  → selected country
-        pro    → region (group of countries, e.g. North America = US/CA/MX)
+        free   → the user's own TOWN, names only (no View/Connect)
+        basic  → the user's own STATE in a state-level country (US: Colorado),
+                 otherwise their whole country (Germany, Poland, …)
+        pro    → the user's whole continent (North America = US/CA/MX, …)
         global → worldwide
 
-    Free plan deliberately sees the whole directory so users can browse what's
-    available before upgrading — but they get no actual access: the View
-    button stays locked (requires an approved connection) and Connect is a
-    paid-only action, so a free user can never open company details. The
-    paid tiers' geographic scope comes from the canonical billing model
+    A Free user gets a genuine local directory rather than a window onto the
+    whole country: they see the companies in their town, by name only (the row
+    template hides every other column — see `is_free_plan`), with no actual
+    access — View stays locked behind an approved connection and Connect is a
+    paid-only action. Every tier's reach comes from the canonical billing model
     (billing.utils.get_user_geographic_scope).
 
     The billing scope yields ISO codes; Company.country is free-text, so each
     code is matched across its ISO code + canonical English name + aliases
     via country_match_q.
 
-    Returns None when the plan grants no discovery scope — no plan at all, or
-    a country/region plan where the user hasn't set a country yet. Callers OR
-    this with their linkage query, so None keeps the user's linked-company
-    view rather than widening it to the whole directory.
+    Returns None when the plan grants no discovery scope — no plan at all, a
+    country/region plan where the user hasn't set a country yet, or a Free plan
+    with no town on file. Callers OR this with their linkage query, so None
+    keeps the user's linked-company view rather than widening it to the whole
+    directory.
     """
-    # Free plan: companies in the user's REGISTERED country only, shown with a
-    # limited set of fields and no actions (read-only teaser — see the row /
-    # header templates gated on is_free_plan). Country is the only location
-    # signal captured at sign-up (User.country, an ISO code), matched across
-    # code + English name + aliases via country_match_q. No country set → no discovery
-    # scope (the user keeps their linkage-only view).
-    plan_code = _plan_code_for_business_user(user)
-    if plan_code == "free":
-        country = (getattr(user, "country", "") or "").strip()
-        if not country:
-            return None
-        return country_match_q(country) & Q(is_active=True)
-
     scope = get_user_geographic_scope(user)
     mode = scope.get("mode")
 
@@ -149,7 +139,10 @@ def business_user_plan_scope_q(user):
     if mode == "none":
         return None
 
-    # mode == "country" or "region": match every code in the allowed set.
+    # mode == "city", "state", "country" or "region": match every code in the
+    # allowed set. For "city"/"state" that set is the town's/state's country,
+    # pinned below — both are required, so a user with a town but no country
+    # resolves to an empty set here and keeps their linkage-only view.
     countries = [c for c in (scope.get("countries") or []) if c]
     if not countries:
         return None
@@ -157,7 +150,13 @@ def business_user_plan_scope_q(user):
     country_q = Q()
     for code in countries:
         country_q |= country_match_q(code)
-    return country_q & Q(is_active=True)
+    scope_q = country_q & Q(is_active=True)
+
+    if mode == "city":
+        scope_q &= Q(city__iexact=scope.get("city"))
+    elif mode == "state":
+        scope_q &= Q(state__iexact=scope.get("state"))
+    return scope_q
 
 
 def editable_companies_qs(user):
@@ -245,9 +244,9 @@ def business_user_visible_companies(user):
     )
 
     # Discovery scope by plan (see business_user_plan_scope_q):
-    #   free   → all active companies worldwide (read-only)
-    #   basic  → selected country
-    #   pro    → region (group of countries)
+    #   free   → the user's own town, names only
+    #   basic  → the user's country
+    #   pro    → the user's continent
     #   global → worldwide
     # Read-only restrictions for free plan (View / Connect / Edit) are still
     # applied by the templates via is_free_plan.
@@ -744,9 +743,9 @@ def company_list(request):
 
             # Business-user discovery scope, by plan (see
             # business_user_plan_scope_q):
-            #   free   → all active companies worldwide (read-only)
-            #   basic  → selected country
-            #   pro    → region (group of countries, e.g. North America)
+            #   free   → the user's own town, names only (read-only)
+            #   basic  → the user's country
+            #   pro    → the user's continent (e.g. North America)
             #   global → all active companies worldwide
             # The "no details" / read-only restriction for free plan is applied
             # by the row templates via is_free_plan, not here.
@@ -754,8 +753,9 @@ def company_list(request):
             # The billing scope yields ISO codes; Company.country is free-text,
             # so each code is matched across code + label + aliases inside
             # business_user_plan_scope_q. It returns None when the plan grants
-            # no discovery scope (no plan, or no country set on a country/region
-            # plan), in which case the user keeps their linkage-only view.
+            # no discovery scope (no plan, no country set, or no town on file
+            # for a Free plan), in which case the user keeps their linkage-only
+            # view.
             scope_q = business_user_plan_scope_q(request.user)
 
             if scope_q is not None:

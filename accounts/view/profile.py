@@ -169,13 +169,13 @@ def company_search_ajax(request):
     past a small directory.
 
     Scoped to the user's PLAN, matching the Company Database:
-        free   → registered country
-        basic  → registered country
-        pro    → country's region (group of countries)
+        free   → their own town
+        basic  → their country
+        pro    → their whole continent
         global → worldwide
     So a business user can only request to join companies within their plan's
-    geographic reach. No plan scope (e.g. no plan / no country set) → no
-    joinable companies, mirroring the discovery list.
+    geographic reach. No plan scope (e.g. no plan, no country, or no town on a
+    Free plan) → no joinable companies, mirroring the discovery list.
     """
     q = (request.GET.get("q") or "").strip()
 
@@ -282,6 +282,8 @@ def profile_view(request):
             last_name = request.POST.get("last_name", "").strip()
             phone = request.POST.get("phone", "").strip()
             country = request.POST.get("country", "").strip().upper()
+            state_region = request.POST.get("state_region", "").strip()
+            city = " ".join(request.POST.get("city", "").split())
 
             if not first_name or not NAME_RE.match(first_name):
                 return _fail(_("Enter a valid first name (2-50 characters; letters, spaces, hyphens, apostrophes)."))
@@ -297,6 +299,19 @@ def profile_view(request):
 
             if country and country not in COUNTRY_CODES:
                 return _fail(_("Please select a valid country from the list."))
+
+            # State is optional here (unlike registration, which always collects
+            # it) so an existing profile can be saved without one. When given it
+            # must belong to the selected country: a mismatched pair would leave
+            # a home market that plan scope can never resolve.
+            if state_region:
+                if not country:
+                    return _fail(_("Select a country before choosing a state / region."))
+                valid_states = COUNTRY_STATES.get(country, [])
+                if valid_states and state_region not in valid_states:
+                    return _fail(
+                        _("Please select a valid state / region for the chosen country.")
+                    )
 
             preferred_language_raw = request.POST.get("preferred_language")
             if preferred_language_raw is not None:
@@ -323,9 +338,16 @@ def profile_view(request):
             user.last_name = last_name
             user.phone = phone or None
             user.country = country or None
+            # Clearing the country invalidates any state under it, so drop the
+            # state too rather than leave an orphan that outlives its country.
+            user.state_region = (state_region or None) if country else None
+            user.city = city or None
             language_changed = preferred_language != old_language
             user.persist_preferred_language(preferred_language)
-            user.save(update_fields=["first_name", "last_name", "phone", "country", "updated_at"])
+            user.save(update_fields=[
+                "first_name", "last_name", "phone", "country",
+                "state_region", "city", "updated_at",
+            ])
 
             # Consultants are the visible "Certifying Consultant" on the
             # companies they approved. When they edit their contact info,
@@ -384,6 +406,8 @@ def profile_view(request):
                         "last_name": user.last_name,
                         "phone": user.phone or "",
                         "country": user.country or "",
+                        "state_region": user.state_region or "",
+                        "city": user.city or "",
                         "preferred_language": user.preferred_language,
                         "preferred_language_display": LANGUAGE_DISPLAY_NAMES.get(
                             user.preferred_language, user.preferred_language

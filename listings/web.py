@@ -604,6 +604,7 @@ def react_listing(request, listing_id):
         return redirect("listings_web:detail", listing_id=listing_id)
     listing = get_object_or_404(Listing, id=listing_id)
     user = request.user
+    from_company = services.acting_company(user, request)
 
     if listing.status != Listing.ACTIVE:
         messages.error(request, _("Reaction is allowed only for active listings."))
@@ -611,13 +612,22 @@ def react_listing(request, listing_id):
         messages.error(request, _("You cannot react to your own listing."))
     elif not services.can_view_scope(user, listing.visibility_scope):
         messages.error(request, _("Permission denied."))
+    elif from_company is None:
+        # A reaction is company-to-company (from_company is NOT NULL), so a
+        # user with no company at all can't send one. Say so instead of
+        # crashing on the insert.
+        messages.error(
+            request,
+            _("Add a company to your account before sending an expression of interest."),
+        )
     else:
         default_msg = _("I am interested in this listing and would like to start communication through FONTESIN.")
         message = (request.POST.get("message") or "").strip() or default_msg
         reaction, created = ListingReaction.objects.get_or_create(
             listing=listing, from_user=user,
             defaults=dict(
-                from_company=user.primary_company, to_user=listing.owner_user,
+                from_company=from_company,
+                to_user=listing.owner_user,
                 to_company=listing.owner_company, message=message, status=ListingReaction.NEW,
             ),
         )

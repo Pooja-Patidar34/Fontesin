@@ -48,6 +48,14 @@
             <td id="profile-country" style="word-break:break-word; overflow-wrap:anywhere;">{{ request.user.country|default:"-" }}</td>
           </tr>
           <tr>
+            <td class="text-muted">{% trans "State / Region" context "profile" %}</td>
+            <td id="profile-state-region" style="word-break:break-word; overflow-wrap:anywhere;">{{ request.user.state_region|default:"-" }}</td>
+          </tr>
+          <tr>
+            <td class="text-muted">{% trans "City / Town" context "profile" %}</td>
+            <td id="profile-city" style="word-break:break-word; overflow-wrap:anywhere;">{{ request.user.city|default:"-" }}</td>
+          </tr>
+          <tr>
             <td class="text-muted">{% trans "Language" context "common" %}</td>
             <td id="profile-language" style="word-break:break-word; overflow-wrap:anywhere;">{{ preferred_language_display }}</td>
           </tr>
@@ -748,7 +756,13 @@
             </div>
             <div class="form-group col-md-6">
               <label>{% trans "Country" context "common" %}</label>
-              <select name="country" class="form-control">
+              {% comment %}
+                NOT id="profile-country" — that belongs to the summary table's
+                <td> above, which the AJAX save handler rewrites. A duplicate id
+                makes getElementById return the <td>, whose .value is undefined,
+                and the State dropdown then silently renders empty.
+              {% endcomment %}
+              <select name="country" id="edit-profile-country" class="form-control">
                 <option value="">{% trans "— Select country —" context "profile" %}</option>
                 {% for code, label in countries %}
                   <option value="{{ code }}" {% if request.user.country == code %}selected{% endif %}>{{ label }}</option>
@@ -756,6 +770,32 @@
               </select>
             </div>
           </div>
+
+          {% comment %}
+            State / city are editable here because they anchor plan-based
+            discovery scope for a business user with no company yet
+            (billing.utils.get_user_geographic_scope): Free reaches their town,
+            Basic their state. Once they own a company its address takes over.
+          {% endcomment %}
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label>{% trans "State / Region" context "profile" %}</label>
+              <select name="state_region" id="edit-profile-state" class="form-control"
+                      data-initial="{{ request.user.state_region|default:'' }}">
+                <option value="">{% trans "— Select state / region —" context "profile" %}</option>
+              </select>
+            </div>
+            <div class="form-group col-md-6">
+              <label>{% trans "City / Town" context "profile" %}</label>
+              <input type="text" name="city" class="form-control"
+                     value="{{ request.user.city|default:'' }}"
+                     placeholder="{% filter escapejs %}{% trans 'Arvada' context 'profile' %}{% endfilter %}"
+                     maxlength="150">
+            </div>
+          </div>
+          <small class="text-muted d-block mb-2">
+            {% trans "Your home market — used to decide which companies you can discover until you add a company." context "profile" %}
+          </small>
 
           <div class="form-group">
             <label>{% trans "Language" context "common" %}</label>
@@ -776,13 +816,48 @@
   </div>
 </div>
 
+{% comment %} Country → state map for the Edit Profile modal's State dropdown. {% endcomment %}
+{{ country_states|json_script:"profile-country-states" }}
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   const form = document.getElementById("edit-profile-form");
   if (!form) return;
 
   const saveBtn = document.getElementById("edit-profile-save-btn");
-  const fields = form.querySelectorAll('[name="first_name"], [name="last_name"], [name="phone"], [name="country"], [name="preferred_language"]');
+  const fields = form.querySelectorAll('[name="first_name"], [name="last_name"], [name="phone"], [name="country"], [name="state_region"], [name="city"], [name="preferred_language"]');
+
+  // Country → states, same source as the Add Company and registration forms.
+  // The State dropdown ships empty and is filled in here, so it always agrees
+  // with whichever country is currently selected.
+  const PROFILE_STATES = (function () {
+    const node = document.getElementById("profile-country-states");
+    return node ? JSON.parse(node.textContent) : {};
+  })();
+  const countrySel = document.getElementById("edit-profile-country");
+  const stateSel = document.getElementById("edit-profile-state");
+
+  function rebuildProfileStates(preserveValue) {
+    if (!countrySel || !stateSel) return;
+    const placeholder = stateSel.options.length ? stateSel.options[0].text : "";
+    const options = PROFILE_STATES[countrySel.value] || [];
+    const current = preserveValue != null ? preserveValue : stateSel.value;
+
+    let html = '<option value="">' + placeholder + "</option>";
+    for (let i = 0; i < options.length; i++) {
+      const name = options[i];
+      html += '<option value="' + name + '"' + (name === current ? " selected" : "") + ">" + name + "</option>";
+    }
+    stateSel.innerHTML = html;
+    stateSel.disabled = options.length === 0;
+  }
+
+  // Seed from the saved value, then follow the country box. Changing country
+  // clears the state rather than carrying a stale one across borders.
+  if (stateSel) rebuildProfileStates(stateSel.dataset.initial || "");
+  if (countrySel) {
+    countrySel.addEventListener("change", function () { rebuildProfileStates(""); syncSaveBtn(); });
+  }
 
   // Snapshot the values rendered into the form so we can detect changes.
   // Refreshed after a successful AJAX save so the button stays disabled
@@ -839,6 +914,10 @@ document.addEventListener("DOMContentLoaded", function () {
     fields.forEach(function (el) {
       if (initial[el.name] !== undefined) el.value = initial[el.name];
     });
+    // The country box was just restored, but the State options may still be
+    // the ones built for a country the user picked and then abandoned —
+    // rebuild so the snapshot value has an option to select.
+    rebuildProfileStates(initial["state_region"] || "");
     lastSubmitted = null;
     syncSaveBtn();
   });
@@ -877,6 +956,10 @@ document.addEventListener("DOMContentLoaded", function () {
           if (phoneEl) phoneEl.textContent = u.phone ? u.phone : "-";
           const countryEl = document.getElementById("profile-country");
           if (countryEl) countryEl.textContent = u.country ? u.country : "-";
+          const stateEl = document.getElementById("profile-state-region");
+          if (stateEl) stateEl.textContent = u.state_region ? u.state_region : "-";
+          const cityEl = document.getElementById("profile-city");
+          if (cityEl) cityEl.textContent = u.city ? u.city : "-";
           const languageEl = document.getElementById("profile-language");
           if (languageEl) {
             languageEl.textContent = u.preferred_language_display || u.preferred_language || "-";

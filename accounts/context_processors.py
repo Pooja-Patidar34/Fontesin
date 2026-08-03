@@ -369,6 +369,15 @@ def admin_context(request):
                     )
                     active_company = None
 
+    # Business-user role check, independent of plan. Computed here rather than
+    # in the branch above so it is defined for superusers and anonymous
+    # visitors too.
+    is_business_user_role = (
+        request.user.is_authenticated and not request.user.is_superuser
+        and request.user.role is not None
+        and (request.user.role.code or "").lower() == "business_user"
+    )
+
     return {
         "is_tenant_admin": is_tenant_admin,
         "sidebar_company_count": sidebar_company_count,
@@ -385,11 +394,13 @@ def admin_context(request):
         "is_basic_or_pro_business_user": is_paid_business_user,
         # True for any BU regardless of plan (free / basic / pro / global).
         # Used to gate features like Connect that are now available on free.
-        "is_business_user": (
-            request.user.is_authenticated and not request.user.is_superuser
-            and request.user.role is not None
-            and (request.user.role.code or "").lower() == "business_user"
-        ),
+        "is_business_user": is_business_user_role,
+        # The Free plan's Company Database is a NAME-ONLY directory of the
+        # user's own town: the Industry and Location columns are dropped from
+        # both the header and every row (details are what the paid tiers buy).
+        # `is_free_plan` alone isn't enough — it's also true for non-business
+        # roles, whose table keeps its normal columns.
+        "free_plan_names_only": is_free_plan and is_business_user_role,
         "pending_partnership_count": pending_partnership_count,
         "pending_join_request_count": pending_join_request_count,
         "owns_any_company": owns_any_company,

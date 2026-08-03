@@ -251,6 +251,30 @@
             </select>
           </div>
 
+          {% comment %}
+            State + city are collected here, not only on the Add Company form,
+            because they are the anchor for plan-based discovery scope
+            (billing.utils.get_user_geographic_scope): a Free business user sees
+            the companies in their own town, Basic their country. Without a town
+            on the account, a new BU sits on the Free floor with nothing to
+            discover until they create their first company.
+          {% endcomment %}
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">{% trans "State / Region" context "auth.register" %} *</label>
+              <select name="state_region" id="reg-state" class="form-control" disabled>
+                <option value="">{% trans "Select a country first..." context "auth.register" %}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">{% trans "City / Town" context "auth.register" %} *</label>
+              <input type="text" name="city" id="reg-city" class="form-control" placeholder="{% trans 'Arvada' context 'auth.register' %}" maxlength="150" oninput="this.value=this.value.replace(/\s+/g,' ').replace(/^ /,'')"/>
+            </div>
+          </div>
+          <small style="color:#5F7383;font-size:.75rem;margin:-12px 0 18px;display:block;">
+            {% trans "Your home market — this decides which companies you can discover on the Free and Basic plans." context "auth.register" %}
+          </small>
+
           <div class="form-group">
             <label class="form-label">{% trans "Phone Number" context "auth.register" %} *</label>
             <div style="display:flex;gap:8px;">
@@ -465,6 +489,9 @@
   </div>
 </div>
 
+{% comment %} Country → state map, indexed client-side when a country is picked. {% endcomment %}
+{{ country_states|json_script:"reg-country-states" }}
+
 <script src="{% url 'javascript-catalog' %}"></script>
 <script src="{% static 'adminlte/js/main.js' %}"></script>
 <script src="{% static 'adminlte/js/no_emoji.js' %}"></script>
@@ -533,7 +560,48 @@
     PHONE_RULES[k] = { min: COUNTRY_PHONE[k].min, max: COUNTRY_PHONE[k].max, name: COUNTRY_PHONE[k].name };
   }
 
+  // Country → states, same source as the Add Company form (accounts.constants
+  // .COUNTRY_STATES) so the town/state a user registers with matches what the
+  // company form will later accept.
+  var REG_COUNTRY_STATES = (function() {
+    var node = document.getElementById('reg-country-states');
+    return node ? JSON.parse(node.textContent) : {};
+  })();
+
+  var SELECT_STATE_LABEL = "{% filter escapejs %}{% trans 'Select your state / region...' context 'auth.register' %}{% endfilter %}";
+  var PICK_COUNTRY_LABEL = "{% filter escapejs %}{% trans 'Select a country first...' context 'auth.register' %}{% endfilter %}";
+
+  // Repopulate the State dropdown for the chosen country. Called on every
+  // country change and once at load, so a browser-restored country (soft
+  // refresh, back button) still gets its states without a manual re-pick.
+  window.rebuildRegStates = function(preserveValue) {
+    var stateSel = document.getElementById('reg-state');
+    var countrySel = document.getElementById('reg-country');
+    if (!stateSel || !countrySel) return;
+
+    var options = REG_COUNTRY_STATES[countrySel.value] || [];
+    var current = preserveValue != null ? preserveValue : stateSel.value;
+
+    if (!options.length) {
+      stateSel.innerHTML = '<option value="">' + PICK_COUNTRY_LABEL + '</option>';
+      stateSel.disabled = true;
+      return;
+    }
+
+    var html = '<option value="">' + SELECT_STATE_LABEL + '</option>';
+    for (var i = 0; i < options.length; i++) {
+      var name = options[i];
+      var selected = (name === current) ? ' selected' : '';
+      html += '<option value="' + name + '"' + selected + '>' + name + '</option>';
+    }
+    stateSel.innerHTML = html;
+    stateSel.disabled = false;
+  };
+
   window.updatePhoneCode = function() {
+    // Country drives both the phone rules and the State list; the select's
+    // inline onchange calls this one function, so keep them together.
+    rebuildRegStates('');
     var country = document.getElementById('reg-country').value;
     var phoneCodeEl = document.getElementById('reg-phone-code');
     var phoneCodeHidden = document.getElementById('reg-phone-code-hidden');
@@ -586,6 +654,8 @@
       const email = document.getElementById('reg-email');
       const phone = document.getElementById('reg-phone');
       const country = document.getElementById('reg-country');
+      const state = document.getElementById('reg-state');
+      const city = document.getElementById('reg-city');
       const pass  = document.getElementById('reg-pass');
       const pass2 = document.getElementById('reg-pass2');
       const phoneCode = document.getElementById('reg-phone-code');
@@ -595,9 +665,10 @@
       lname.value = lname.value.trim();
       email.value = email.value.trim();
       phone.value = phone.value.trim();
+      city.value = city.value.trim();
 
       // Required fields check
-      const requiredFields = [fname, lname, email, country, phone, pass, pass2];
+      const requiredFields = [fname, lname, email, country, state, city, phone, pass, pass2];
 
       for (let field of requiredFields) {
         if (!field.value) {
@@ -638,6 +709,21 @@
       if (!country.value) {
         showToast(gettext("Please select your country."), "error");
         country.focus();
+        return;
+      }
+
+      // State / city validation. Both anchor the plan discovery scope, so an
+      // empty town would leave a Free business user with nothing to browse.
+      if (!state.value) {
+        showToast(gettext("Please select your state / region."), "error");
+        state.focus();
+        return;
+      }
+
+      const cityRegex = /^[A-Za-zÀ-ÖØ-öø-ÿ0-9\s'.\-]+$/;
+      if (emojiRegex.test(city.value) || !cityRegex.test(city.value)) {
+        showToast(gettext("Enter a valid city / town name."), "error");
+        city.focus();
         return;
       }
 
@@ -806,6 +892,10 @@
   // Sync the company picker / business-user notice with whichever role radio
   // is checked at page load (covers browser-retained state on soft refresh).
   toggleOthersOption();
+
+  // Same reason: a browser-restored country selection never fires `change`, so
+  // seed the State dropdown from whatever the country box holds at load.
+  rebuildRegStates();
 </script>
 
 </body>

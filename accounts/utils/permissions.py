@@ -48,6 +48,29 @@ def get_effective_permissions(role):
     return permissions
 
 
+def _micro_statuses(user):
+    """Statuses of the Micro-Franchise nodes `user` owns (empty when none).
+
+    The three predicates below all answer questions about the same small set, so
+    they share this one fetch instead of each running its own EXISTS — these run
+    on every request via the sidebar context processor and again inside the
+    views. Returns a frozenset so callers can only ask membership questions.
+
+    Scoped to the company the user is acting as, like every other franchise
+    capability: a Micro-Franchise bought by company A does not make the same
+    user a certifier while they are acting as company B."""
+    if not user or not getattr(user, "is_authenticated", False):
+        return frozenset()
+    # Imported lazily to avoid a circular import at module load.
+    from accounts.constants import FranchiseLevel
+    from accounts.utils.franchise_access import owned_franchise_nodes
+    return frozenset(
+        owned_franchise_nodes(user)
+        .filter(franchise_level=FranchiseLevel.MICRO)
+        .values_list("franchise_status", flat=True)
+    )
+
+
 def is_micro_franchise_owner(user):
     """True when `user` owns an ACTIVE Micro-Franchise node.
 
@@ -55,16 +78,8 @@ def is_micro_franchise_owner(user):
     companies and earn plan commissions just like a Standard Consultant. Keying
     on the node's ACTIVE status means suspending the Micro-Franchise revokes the
     capability automatically (spec §9.1.5 / suspension rule)."""
-    if not user or not getattr(user, "is_authenticated", False):
-        return False
-    # Imported lazily to avoid a circular import at module load.
-    from accounts.models import Tenant
-    from accounts.constants import FranchiseLevel, FranchiseUnitStatus
-    return Tenant.objects.filter(
-        owner_user=user,
-        franchise_level=FranchiseLevel.MICRO,
-        franchise_status=FranchiseUnitStatus.ACTIVE,
-    ).exists()
+    from accounts.constants import FranchiseUnitStatus
+    return FranchiseUnitStatus.ACTIVE in _micro_statuses(user)
 
 
 def owns_micro_franchise(user):
@@ -72,29 +87,20 @@ def owns_micro_franchise(user):
     SUSPENDED). Drives sidebar visibility of the certify/commission tabs so a
     suspended Micro owner still sees them (and gets a 'suspended' message on
     access) rather than the tabs silently vanishing."""
-    if not user or not getattr(user, "is_authenticated", False):
-        return False
-    from accounts.models import Tenant
-    from accounts.constants import FranchiseLevel, FranchiseUnitStatus
-    return Tenant.objects.filter(
-        owner_user=user,
-        franchise_level=FranchiseLevel.MICRO,
-        franchise_status__in=[FranchiseUnitStatus.ACTIVE, FranchiseUnitStatus.SUSPENDED],
-    ).exists()
+    from accounts.constants import FranchiseUnitStatus
+    live = {FranchiseUnitStatus.ACTIVE, FranchiseUnitStatus.SUSPENDED}
+    return bool(_micro_statuses(user) & live)
 
 
 def is_suspended_micro_owner(user):
     """True when the user owns a SUSPENDED Micro-Franchise and has no ACTIVE one —
     i.e. they'd be a certifier if reactivated. Lets the certify/commission pages
     show a 'your account is suspended' message instead of a blunt 403."""
-    if not user or not getattr(user, "is_authenticated", False):
-        return False
-    from accounts.models import Tenant
-    from accounts.constants import FranchiseLevel, FranchiseUnitStatus
-    qs = Tenant.objects.filter(owner_user=user, franchise_level=FranchiseLevel.MICRO)
+    from accounts.constants import FranchiseUnitStatus
+    statuses = _micro_statuses(user)
     return (
-        qs.filter(franchise_status=FranchiseUnitStatus.SUSPENDED).exists()
-        and not qs.filter(franchise_status=FranchiseUnitStatus.ACTIVE).exists()
+        FranchiseUnitStatus.SUSPENDED in statuses
+        and FranchiseUnitStatus.ACTIVE not in statuses
     )
 
 

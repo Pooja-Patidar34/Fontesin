@@ -62,6 +62,45 @@ def is_listing_owner(listing, user):
     return listing.owner_user_id == user.id
 
 
+def acting_company(user, request=None):
+    """The company `user` is acting as right now, or None when they have none.
+
+    A reaction is company-to-company (`ListingReaction.from_company` is NOT
+    NULL), so every reaction has to be attributed. `user.primary_company` alone
+    is not a safe answer: it is blank for plenty of accounts — someone who owns
+    companies but never set a primary, or who reached the platform through a
+    join request — and passing that NULL straight into the insert produced an
+    IntegrityError 500 on "Send Interest".
+
+    Resolution order mirrors the listing form's `_default_company_id`, so the
+    company you react AS is the company you'd publish AS:
+
+      1. the session's active company (the login-time company picker);
+      2. `primary_company` — the user's declared company, owned or joined;
+      3. the only company they own, when there is exactly one.
+
+    Returns None when nothing resolves — the caller must refuse the action
+    with a message rather than write a null.
+    """
+    from accounts.models import Company
+
+    if user is None or not getattr(user, "is_authenticated", False):
+        return None
+
+    active = getattr(request, "active_company", None) if request is not None else None
+    if active is None:
+        active = getattr(user, "_active_company", None)
+    if active is not None:
+        return active
+
+    primary = getattr(user, "primary_company", None)
+    if primary is not None:
+        return primary
+
+    owned = list(Company.objects.filter(owner_user=user).order_by("created_at")[:2])
+    return owned[0] if len(owned) == 1 else None
+
+
 # ---------------------------------------------------------------------------
 # Visibility placeholders (cookbook Step 2.9 - swap for plan logic on Day 9)
 # ---------------------------------------------------------------------------

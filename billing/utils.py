@@ -4,7 +4,8 @@ from django.shortcuts import redirect, render
 from django.http import JsonResponse
 from django.utils.translation import gettext as _
 
-from accounts.utils.country_matching import country_match_q
+from accounts.constants import COUNTRY_CODES
+from accounts.utils.country_matching import country_match_q, resolve_country_code
 from billing.models import Subscription, CommercialPlan
 
 
@@ -304,15 +305,53 @@ PLAN_TIERS = {
 
 
 # ── Geographic scope by plan ──
-# Region -> list of ISO 2-letter country codes that belong to that region.
+# Continent -> ISO 2-letter country codes on that continent. This is the Pro
+# plan's reach: a Pro user sees the whole continent they sit on — an American
+# sees all of North America, a Pole all of Europe, and so on.
+#
+# Continents, not commercial regions: "Middle East" used to be its own bucket,
+# which left a UAE Pro user seeing only the UAE while every other Pro user got a
+# multi-country reach. The UAE is in Asia.
+#
+# `africa` is deliberately present but empty — no African country is a supported
+# market yet (accounts.constants.CountryChoices). It exists so adding one is a
+# single-line change here, and the assert below makes forgetting impossible.
 PLAN_REGIONS = {
     "europe": ["DE", "CZ", "GB", "FR", "NL", "PL", "AT", "CH", "SE"],
     "north_america": ["US", "CA", "MX"],
     "south_america": ["BR"],
-    "asia": ["JP", "SG", "IN", "KR"],
-    "middle_east": ["AE"],
+    "africa": [],
+    "asia": ["AE", "IN", "JP", "KR", "SG"],
     "australia_oceania": ["AU"],
 }
+
+# Every supported country must sit on exactly one continent, or a Pro user from
+# the missing country silently gets an EMPTY scope (mode="region", countries=[])
+# — they'd see nothing at all rather than too much, which is easy to miss.
+_MAPPED_COUNTRIES = [code for codes in PLAN_REGIONS.values() for code in codes]
+assert len(_MAPPED_COUNTRIES) == len(set(_MAPPED_COUNTRIES)), (
+    "A country appears on two continents in PLAN_REGIONS: "
+    f"{sorted({c for c in _MAPPED_COUNTRIES if _MAPPED_COUNTRIES.count(c) > 1})}"
+)
+assert set(_MAPPED_COUNTRIES) == set(COUNTRY_CODES), (
+    "PLAN_REGIONS and accounts.constants.COUNTRY_CODES have drifted: "
+    f"unmapped countries={sorted(set(COUNTRY_CODES) - set(_MAPPED_COUNTRIES))}, "
+    f"unknown codes in PLAN_REGIONS={sorted(set(_MAPPED_COUNTRIES) - set(COUNTRY_CODES))}. "
+    "Every supported country needs a continent."
+)
+
+
+# Countries where the BASIC plan reaches one STATE rather than the whole
+# country. The spec's worked example is a BU in Arvada, Colorado, US whose
+# ladder is Arvada → Colorado → North America → world: the USA itself is never
+# a scope level, because in that model the US is a union of states the way
+# Europe is a union of countries. The same spec lists "Germany, Poland" as
+# Basic scopes — whole countries — so everywhere else Basic stays country-wide.
+#
+# Add a country here to move it to state-level Basic (e.g. if Canada should be
+# province-wide rather than country-wide). Countries absent from COUNTRY_STATES
+# fall back to country scope automatically, as does a user with no state on file.
+BASIC_STATE_LEVEL_COUNTRIES = {"US"}
 
 
 def _region_for_country(country_code):
@@ -329,19 +368,32 @@ def _region_for_country(country_code):
 def get_user_geographic_scope(user, plan=None, company=None):
     """
     Return the allowed geographic scope for the user's ACTIVE company as a dict:
-        {"mode": "country"|"region"|"worldwide"|"none",
-         "countries": [list of country codes] | None}
+        {"mode": "city"|"state"|"country"|"region"|"worldwide"|"none",
+         "countries": [list of country codes] | None,
+         "city": <town name> | None,
+         "state": <state / region name> | None}
 
-    Plans are company-scoped, so the anchor country is the active company's
-    country (its plan's home market), falling back to the user's own country
-    when there's no active company (e.g. the Free floor before a company
+    Each plan widens the reach by one geographic step:
+
+    - FREE:   mode="city",      the user's own TOWN (countries pins the town's
+                                country so "Springfield" doesn't match every
+                                Springfield on earth)
+    - BASIC:  mode="state",     the user's own STATE, in the countries listed in
+                                BASIC_STATE_LEVEL_COUNTRIES (countries pins the
+                                state's country, since state names repeat across
+                                countries) …
+              mode="country",   … and the whole country everywhere else
+    - PRO:    mode="region",    countries=<every country on that continent>
+    - GLOBAL: mode="worldwide", countries=None (no filter)
+    - No plan: mode="none",     countries=[] (block everything)
+
+    Plans are company-scoped, so the anchor is the active company's town /
+    state / country (its plan's home market), falling back to the user's own
+    when there is no active company (e.g. the Free floor before a company
     exists).
 
-    - FREE:   mode="country", countries=[company country] (domicile only)
-    - BASIC:  mode="country", countries=[company country] (selected country)
-    - PRO:    mode="region",  countries=<all codes in that country's region>
-    - GLOBAL: mode="worldwide", countries=None (no filter)
-    - No plan: mode="none", countries=[] (block everything)
+    `city` is only meaningful for mode="city" and `state` only for mode="state";
+    both are None everywhere else.
     """
     if company is None:
         company = resolve_active_company(user)
@@ -350,16 +402,57 @@ def get_user_geographic_scope(user, plan=None, company=None):
 
     code = plan.code if plan else None
     anchor_country = (getattr(company, "country", None) if company else None) or getattr(user, "country", None)
-    user_country = (anchor_country or "").strip().upper() or None
+    # Company.country is free text — it may hold "US", "United States" or
+    # "USA". Resolve to an ISO code so the continent lookup and the downstream
+    # country_match_q (which expands a CODE into all its spellings) work the
+    # same either way; unresolvable values fall through as-is.
+    user_country = (
+        resolve_country_code(anchor_country) or (anchor_country or "").strip().upper() or None
+    )
 
-    if code in ("free", "basic"):
-        return {"mode": "country", "countries": [user_country] if user_country else []}
+    if code == "free":
+        anchor_city = (getattr(company, "city", None) if company else None) or getattr(user, "city", None)
+        city = (anchor_city or "").strip() or None
+        return {
+            "mode": "city",
+            "countries": [user_country] if (city and user_country) else [],
+            "city": city,
+            "state": None,
+        }
+    if code == "basic":
+        if user_country in BASIC_STATE_LEVEL_COUNTRIES:
+            # Company stores the state as `state`, User as `state_region`.
+            anchor_state = (getattr(company, "state", None) if company else None) or getattr(
+                user, "state_region", None
+            )
+            state = (anchor_state or "").strip() or None
+            # No state on file → fall through to whole-country rather than
+            # return an empty scope. Losing the state is a data gap, not a
+            # reason to hide the directory the user is paying for.
+            if state:
+                return {
+                    "mode": "state",
+                    "countries": [user_country],
+                    "city": None,
+                    "state": state,
+                }
+        return {
+            "mode": "country",
+            "countries": [user_country] if user_country else [],
+            "city": None,
+            "state": None,
+        }
     if code == "pro":
         region = _region_for_country(user_country)
-        return {"mode": "region", "countries": PLAN_REGIONS.get(region, []) if region else []}
+        return {
+            "mode": "region",
+            "countries": PLAN_REGIONS.get(region, []) if region else [],
+            "city": None,
+            "state": None,
+        }
     if code == "global":
-        return {"mode": "worldwide", "countries": None}
-    return {"mode": "none", "countries": []}
+        return {"mode": "worldwide", "countries": None, "city": None, "state": None}
+    return {"mode": "none", "countries": [], "city": None, "state": None}
 
 
 def filter_companies_by_plan_scope(queryset, user, country_field="country"):
@@ -367,8 +460,10 @@ def filter_companies_by_plan_scope(queryset, user, country_field="country"):
     Restrict a Company queryset to the user's plan geographic scope.
 
     Superusers bypass filtering. GLOBAL plan returns the queryset unchanged.
-    For country/region-scoped plans, matches both ISO code and common full name
-    (case-insensitive) since Company.country is a free-text field.
+    For city/state/country/region-scoped plans, the country is matched on both
+    ISO code and common full name (case-insensitive) since Company.country is a
+    free-text field; a Free plan additionally pins the town, and a state-level
+    Basic plan additionally pins the state.
     """
     from django.db.models import Q
 
@@ -390,7 +485,18 @@ def filter_companies_by_plan_scope(queryset, user, country_field="country"):
     country_q = Q()
     for code in countries:
         country_q |= country_match_q(code, field=country_field)
-    return queryset.filter(country_q)
+    queryset = queryset.filter(country_q)
+
+    # Free plan: the user's own town only. Town names repeat across countries
+    # (and states), so this always rides on top of the country filter above.
+    if scope["mode"] == "city":
+        queryset = queryset.filter(city__iexact=scope["city"])
+    # Basic plan in a state-level country: the user's own state. Same reasoning
+    # as the town — state names repeat across countries, so this rides on top of
+    # the country filter rather than replacing it.
+    elif scope["mode"] == "state":
+        queryset = queryset.filter(state__iexact=scope["state"])
+    return queryset
 
 
 def get_plan_tier(user, plan=None):

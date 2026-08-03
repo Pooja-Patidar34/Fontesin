@@ -12,9 +12,17 @@ unlocked by the franchise nodes the user actually owns. The role *label* shown
 in the UI becomes "Franchise Partner" (see ``accounts.role_i18n``), which is the
 only visible change the holder asked for.
 
-Every helper here answers "does this user own a franchise node in state X?" and
-is safe to call for anonymous users.
+Ownership is additionally scoped to the COMPANY the user is currently acting
+as. A franchise is bought by one company, not by the person: a Business User
+who owns companies A, B and C and buys a franchise while logged in as A gets a
+franchise partner account for A only. Acting as B or C they are a plain
+Business User with the restricted franchise rights (bug report, Aug 2026).
+Every helper here therefore answers "does this user own a franchise node in
+state X *for the company they are acting as*?" and is safe to call for
+anonymous users.
 """
+
+from django.db.models import Q
 
 from accounts.constants import FranchiseLevel, FranchiseUnitStatus
 
@@ -25,11 +33,79 @@ from accounts.constants import FranchiseLevel, FranchiseUnitStatus
 LIVE_STATUSES = [FranchiseUnitStatus.ACTIVE, FranchiseUnitStatus.SUSPENDED]
 
 
+def scoping_company(user):
+    """The company whose franchises `user` may act on right now, or None when
+    the question isn't company-scoped at all.
+
+    Deliberately NOT ``billing.utils.resolve_active_company``: that resolver
+    guesses (primary company, else the oldest) when a multi-company owner has
+    made no selection, and a guess is the wrong basis for REVOKING a
+    capability — it would hide a real franchise behind an arbitrary company.
+    Only two answers are certain:
+
+      • an explicit session selection stashed by ActiveCompanyMiddleware — the
+        company the user picked at login, which is also what gets stamped on
+        the node's ``owner_company`` when the franchise is approved;
+      • the single company of a one-company owner, where there is nothing to
+        pick.
+
+    Everything else (no company at all — consultants, coordinators; or a
+    multi-company owner outside a request, e.g. a management command) returns
+    None and leaves the query unscoped. In the app itself that gap is closed by
+    ActiveCompanyMiddleware, which forces a multi-company Business User to the
+    picker before any page loads.
+    """
+    if not user or not getattr(user, "is_authenticated", False):
+        return None
+    selected = getattr(user, "_active_company", None)
+    if selected is not None:
+        return selected
+
+    from accounts.models import Company
+
+    owned = list(Company.objects.filter(owner_user=user)[:2])
+    return owned[0] if len(owned) == 1 else None
+
+
+def scope_to_active_company(qs, user):
+    """Restrict a franchise-node queryset to the company `user` acts as.
+
+    Nodes with a blank ``owner_company`` stay visible in every company context:
+    they are pre-Jul-2026 rows and admin- or parent-created nodes that were
+    never attributed to a company, and hiding them everywhere would strand
+    their holder.
+    """
+    company = scoping_company(user)
+    if company is None:
+        return qs
+    return qs.filter(Q(owner_company=company) | Q(owner_company__isnull=True))
+
+
 def owned_franchise_nodes(user, statuses=None):
-    """Queryset of franchise nodes (Tenant rows) owned by `user`.
+    """Queryset of franchise nodes (Tenant rows) owned by `user` **through the
+    company they are currently acting as** (see `scope_to_active_company`).
 
     `statuses` filters on ``franchise_status``; omit it to include in-flight
     nodes (DRAFT / PENDING / APPROVED) that are not activated yet.
+    """
+    from accounts.models import Tenant
+
+    if not user or not getattr(user, "is_authenticated", False):
+        return Tenant.objects.none()
+    qs = scope_to_active_company(
+        Tenant.objects.filter(owner_user=user, franchise_level__isnull=False), user,
+    )
+    if statuses:
+        qs = qs.filter(franchise_status__in=statuses)
+    return qs
+
+
+def all_owned_franchise_nodes(user, statuses=None):
+    """Every franchise node `user` owns, across ALL of their companies.
+
+    For the few places that are genuinely about the person rather than the
+    company they are acting as — "have you ever bought a franchise" checks and
+    the account-wide role cleanup after a removal.
     """
     from accounts.models import Tenant
 

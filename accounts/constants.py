@@ -162,6 +162,17 @@ COUNTRY_ENGLISH_NAME_TO_CODE = {
 # ISO codes valid for ORM validation — never build this from translated CHOICES.
 COUNTRY_CODES = frozenset(COUNTRY_ENGLISH_NAMES.keys())
 
+# Fail at import time if the two country lists drift apart. COUNTRY_CODES is
+# what ORM validation and resolve_country_code() trust, so a country added to
+# CountryChoices.CHOICES but not here would be selectable in the UI yet
+# rejected as invalid on save (and vice versa).
+assert COUNTRY_CODES == {code for code, _label in CountryChoices.CHOICES}, (
+    "COUNTRY_ENGLISH_NAMES and CountryChoices.CHOICES have drifted: "
+    f"only in CHOICES={sorted({c for c, _l in CountryChoices.CHOICES} - COUNTRY_CODES)}, "
+    f"only in COUNTRY_ENGLISH_NAMES={sorted(COUNTRY_CODES - {c for c, _l in CountryChoices.CHOICES})}. "
+    "Add the country to both."
+)
+
 
 # ISO-3166-1 alpha-2 → emoji flag (regional indicator pairs). The browser
 # renders these via the OS font; no image assets to ship.

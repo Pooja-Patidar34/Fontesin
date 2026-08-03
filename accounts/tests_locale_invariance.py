@@ -59,6 +59,17 @@ class CountryMatchingLocaleTests(BaseBillingTestCase):
     us_ids = _counts_across_locales(matched_us_ids)
     self.assertEqual(len(us_ids), 2)
 
+  def test_cached_label_map_is_immutable_and_shared(self):
+    """lru_cache hands every caller the same object, so it must be read-only —
+    one stray write would corrupt country resolution process-wide."""
+    from accounts.utils.country_matching import all_country_label_to_code
+    mapping = all_country_label_to_code()
+    self.assertIs(mapping, all_country_label_to_code())
+    with self.assertRaises(TypeError):
+      mapping["notacountry"] = "ZZ"
+    # Still resolves after the rejected write.
+    self.assertEqual(resolve_country_code("United States"), "US")
+
   def test_resolve_country_code_handles_translated_labels(self):
     with translation.override("de"):
       from accounts.constants import CountryChoices
@@ -101,16 +112,21 @@ class BusinessUserVisibilityLocaleTests(BaseBillingTestCase):
       tenant=self.tenant,
       role=self.bu_role,
       country="US",
+      city="Arvada",
     )
     self._create_subscription(self.bu, self.plan_free)
+    # The Free plan is scoped to the user's TOWN, so every row here shares the
+    # town — what's under test is that the COUNTRY half of the match is
+    # locale-invariant (ISO code vs canonical English name vs translated label).
     Company.objects.create(
-      tenant=self.tenant, name="US Co", country="US", is_active=True,
+      tenant=self.tenant, name="US Co", country="US", city="Arvada", is_active=True,
     )
     Company.objects.create(
-      tenant=self.tenant, name="US Name", country="United States", is_active=True,
+      tenant=self.tenant, name="US Name", country="United States", city="Arvada",
+      is_active=True,
     )
     Company.objects.create(
-      tenant=self.tenant, name="DE Co", country="Germany", is_active=True,
+      tenant=self.tenant, name="DE Co", country="Germany", city="Arvada", is_active=True,
     )
 
   def test_free_plan_visible_companies_invariant(self):
@@ -305,13 +321,32 @@ class GlobalSearchLocaleTests(BaseBillingTestCase):
       tenant=self.tenant,
       role=self.bu_role,
       country="US",
+      city="Arvada",
     )
-    self._create_subscription(self.bu, self.plan_free)
+    # RequireCompanyForBusinessUserMiddleware bounces a Business User who owns
+    # no company to /dashboard/, so without an owned company the request never
+    # reaches the search view at all. Named so it can't match the "Searchable"
+    # query and skew the result set the invariant is asserted on. It is also the
+    # active company, so it anchors the Free plan's town scope.
+    owner_company = Company.objects.create(
+      tenant=self.tenant, name="Owner Co", country="United States", city="Arvada",
+      is_active=True, owner_user=self.bu,
+    )
+    # Plans are company-scoped (billing.utils.get_active_subscription): the sub
+    # must hang off the ACTIVE company or the plan resolves to None and the
+    # discovery scope collapses to an empty queryset.
+    subscription = self._create_subscription(self.bu, self.plan_free)
+    subscription.company = owner_company
+    subscription.save(update_fields=["company"])
+    # Same town as the searcher (the Free plan is town-scoped); what varies is
+    # the country spelling, which is what the invariant is about.
     Company.objects.create(
-      tenant=self.tenant, name="Searchable US", country="United States", is_active=True,
+      tenant=self.tenant, name="Searchable US", country="United States", city="Arvada",
+      is_active=True,
     )
     Company.objects.create(
-      tenant=self.tenant, name="Hidden DE", country="Germany", is_active=True,
+      tenant=self.tenant, name="Hidden DE", country="Germany", city="Arvada",
+      is_active=True,
     )
 
   def test_global_search_company_ids_invariant(self):
@@ -319,8 +354,21 @@ class GlobalSearchLocaleTests(BaseBillingTestCase):
     client.force_login(self.bu)
 
     def search_ids():
-      response = client.get(reverse("global-search"), {"q": "Searchable"})
-      self.assertEqual(response.status_code, 200)
+      # UserLocaleMiddleware calls translation.activate() on every request, which
+      # overwrites the translation.override() this runs under — without ?lang=
+      # the search would execute in the user's profile language (English) all
+      # four times and the test would prove nothing. ?lang= is the one input the
+      # middleware honours ahead of the profile, so it is what actually varies
+      # the locale server-side; the Content-Language assert proves it took.
+      locale = translation.get_language()
+      response = client.get(
+        reverse("global-search"), {"q": "Searchable", "lang": locale},
+      )
+      self.assertEqual(
+        response.status_code, 200,
+        msg=f"lang={locale} redirected to {response.get('Location')!r}",
+      )
+      self.assertEqual(response.headers.get("Content-Language"), locale)
       return set(c.id for c in response.context["companies"])
 
     ids = _counts_across_locales(search_ids)

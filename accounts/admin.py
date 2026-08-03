@@ -61,6 +61,7 @@ class TenantAdmin(admin.ModelAdmin):
         "is_active",
     )
     list_filter = ("franchise_level", "franchise_status", "is_active", "is_deleted")
+    list_select_related = ("parent",)
     search_fields = ("name", "slug", "territory_country", "territory_region", "territory_city")
     raw_id_fields = ("parent", "owner_user", "owner_company", "approved_by", "created_by")
     readonly_fields = ("slug", "created_at", "updated_at")
@@ -79,6 +80,7 @@ class FranchiseApplicationAdmin(admin.ModelAdmin):
         "created_at",
     )
     list_filter = ("application_status", "requested_level")
+    list_select_related = ("applicant_user", "parent_franchise")
     search_fields = (
         "applicant_user__email",
         "requested_country",
@@ -107,6 +109,7 @@ class ConsultantAssignmentAdmin(admin.ModelAdmin):
         "assigned_at",
     )
     list_filter = ("consultant_type", "status")
+    list_select_related = ("consultant_user", "franchise_node")
     search_fields = ("consultant_user__email", "franchise_node__name")
     raw_id_fields = ("consultant_user", "franchise_node", "assigned_by")
     readonly_fields = ("created_at", "updated_at")

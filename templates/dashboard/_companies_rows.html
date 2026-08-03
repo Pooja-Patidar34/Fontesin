@@ -3,8 +3,15 @@
   {% include "dashboard/_company_row.html" %}
 {% empty %}
 <tr id="no-companies-row">
+  {% comment %}
+    Column count follows the header in companies.html: superusers get an extra
+    Franchise column, and a Free-plan business user loses Industry + Location
+    (name-only directory), leaving just Company Name + Action.
+  {% endcomment %}
   {% if request.user.is_superuser %}
     <td colspan="5" class="text-center text-muted py-4">{% trans "No companies found" context "companies" %}</td>
+  {% elif free_plan_names_only %}
+    <td colspan="2" class="text-center text-muted py-4">{% trans "No companies found" context "companies" %}</td>
   {% else %}
     <td colspan="4" class="text-center text-muted py-4">{% trans "No companies found" context "companies" %}</td>
   {% endif %}

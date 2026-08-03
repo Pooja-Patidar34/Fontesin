@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.models import Q
+from django.db.models.functions import Lower, Trim
 import uuid
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.auth.base_user import BaseUserManager
@@ -139,13 +140,19 @@ class Tenant(models.Model):
             # ACTIVE Micro-Franchise per territory. Enforced at the DB level so a
             # race between two activations can't create a duplicate. Legacy
             # partitions and non-micro nodes are excluded by the condition.
+            #
+            # Compared on Lower(Trim(...)) rather than the raw columns so that
+            # "Berlin", "berlin" and " Berlin " are one territory, matching
+            # `territory_key`. Without this, case/whitespace variants slipped
+            # past both this constraint and the clean() clash check and broke
+            # Rule 7. `save()` strips the values on write, so the Trim() here is
+            # really only covering rows written before that (bulk_create, raw
+            # SQL, legacy data).
             models.UniqueConstraint(
-                fields=[
-                    "territory_country",
-                    "territory_region",
-                    "territory_city",
-                    "territory_local_area",
-                ],
+                Lower(Trim("territory_country")),
+                Lower(Trim("territory_region")),
+                Lower(Trim("territory_city")),
+                Lower(Trim("territory_local_area")),
                 condition=Q(
                     franchise_level=FranchiseLevel.MICRO,
                     franchise_status=FranchiseUnitStatus.ACTIVE,
@@ -180,6 +187,26 @@ class Tenant(models.Model):
             (self.territory_city or "").strip().casefold(),
             (self.territory_local_area or "").strip().casefold(),
         )
+
+    def _normalise_territory(self):
+        """Canonicalise the territory columns before they are persisted.
+
+        Whitespace is collapsed (leading, trailing and internal) so " Berlin",
+        "Berlin" and "Ganga  Ghat" vs "Ganga Ghat" are stored identically — the
+        same rule `canonical_territory()` already applies on the franchise view
+        path, applied here so writes that bypass those views are canonical too.
+        The country code is upper-cased because it is an ISO-3166 code, not free
+        text.
+
+        Casing of region/city/local_area is deliberately left as the user typed
+        it — those values are shown in the franchise tree and reports, so folding
+        them would change what the UI displays. The case-insensitivity
+        exclusivity needs is handled by the Lower(Trim(...)) unique constraint
+        and the __iexact lookups in `clean()` instead."""
+        self.territory_country = (self.territory_country or "").strip().upper()
+        self.territory_region = " ".join((self.territory_region or "").split())
+        self.territory_city = " ".join((self.territory_city or "").split())
+        self.territory_local_area = " ".join((self.territory_local_area or "").split())
 
     def is_territory_within(self, other):
         """True when this node's territory is contained in `other`'s (spec Rule
@@ -256,17 +283,17 @@ class Tenant(models.Model):
 
         # Rule 1 (structural): a node can't be its own parent.
         if self.parent_id and self.parent_id == self.id:
-            raise ValidationError({"parent": "A franchise cannot be its own parent."})
+            raise ValidationError({"parent": _("A franchise cannot be its own parent.")})
 
         is_master = self.franchise_level == FranchiseLevel.MASTER
 
         if is_master and self.parent_id:
             raise ValidationError(
-                {"parent": "A Master Franchise sits at the top of a tree and has no parent."}
+                {"parent": _("A Master Franchise sits at the top of a tree and has no parent.")}
             )
         if not is_master and not self.parent_id:
             raise ValidationError(
-                {"parent": "A sub-franchise must have a parent franchise (spec §10.2)."}
+                {"parent": _("A sub-franchise must have a parent franchise (spec §10.2).")}
             )
 
         if self.parent_id:
@@ -274,38 +301,41 @@ class Tenant(models.Model):
             # Rule 2: the parent must itself be a franchise node and be ACTIVE.
             if not parent.is_franchise_node:
                 raise ValidationError(
-                    {"parent": "The selected parent is not a franchise node."}
+                    {"parent": _("The selected parent is not a franchise node.")}
                 )
             if not parent.is_franchise_active:
                 raise ValidationError(
-                    {"parent": "The parent franchise must be ACTIVE before adding a sub-franchise (spec Rule 2)."}
+                    {"parent": _("The parent franchise must be ACTIVE before adding a sub-franchise (spec Rule 2).")}
                 )
             # Depth: child must be strictly deeper than parent (gaps allowed).
             child_rank = FranchiseLevel.RANK.get(self.franchise_level, 0)
             parent_rank = FranchiseLevel.RANK.get(parent.franchise_level, 0)
             if child_rank <= parent_rank:
                 raise ValidationError(
-                    {"franchise_level": "A sub-franchise must be a lower tier than its parent."}
+                    {"franchise_level": _("A sub-franchise must be a lower tier than its parent.")}
                 )
             # Rule 3: the child territory must sit inside the parent territory.
             if not self.is_territory_within(parent):
                 raise ValidationError(
-                    "The franchise territory must be inside the parent franchise's territory (spec Rule 3)."
+                    _("The franchise territory must be inside the parent franchise's territory (spec Rule 3).")
                 )
 
         # Exclusivity (spec §11.1): an active franchise unit is exclusive within
         # its territory AND level — at most one ACTIVE franchise of a given level
         # per territory. Enforced for every level here; the Micro level ALSO has
         # a DB unique constraint as an authoritative backstop (spec §5.3/§11.2).
+        # Matched case-insensitively on the stripped values (same normalisation
+        # as `territory_key` and the DB constraint) — an exact match on the raw
+        # columns let " berlin" pass as a different territory from "Berlin".
         if self.franchise_status == FranchiseUnitStatus.ACTIVE:
             clash = (
                 Tenant.objects.filter(
                     franchise_level=self.franchise_level,
                     franchise_status=FranchiseUnitStatus.ACTIVE,
-                    territory_country=self.territory_country,
-                    territory_region=self.territory_region,
-                    territory_city=self.territory_city,
-                    territory_local_area=self.territory_local_area,
+                    territory_country__iexact=(self.territory_country or "").strip(),
+                    territory_region__iexact=(self.territory_region or "").strip(),
+                    territory_city__iexact=(self.territory_city or "").strip(),
+                    territory_local_area__iexact=(self.territory_local_area or "").strip(),
                 )
                 .exclude(id=self.id)
                 .exists()
@@ -314,7 +344,7 @@ class Tenant(models.Model):
                 from accounts.constants import FranchiseLevel as _FL
                 level_label = dict(_FL.CHOICES).get(self.franchise_level, self.franchise_level)
                 raise ValidationError(
-                    "An active %(level)s already exists in this territory (spec §11.1)."
+                    _("An active %(level)s already exists in this territory (spec §11.1).")
                     % {"level": level_label}
                 )
 
@@ -363,9 +393,9 @@ class Tenant(models.Model):
         if other is not None:
             raise ValidationError(
                 {"owner_user":
-                    "This user already holds %(name)s, whose territory overlaps "
-                    "this one. A holder cannot also hold a franchise inside (or "
-                    "containing) their own territory — pick another territory."
+                    _("This user already holds %(name)s, whose territory overlaps "
+                      "this one. A holder cannot also hold a franchise inside (or "
+                      "containing) their own territory — pick another territory.")
                     % {"name": other.name}}
             )
 
@@ -383,6 +413,7 @@ class Tenant(models.Model):
         Winding a node down (terminate / expire / soft-delete) is always allowed
         — otherwise a pre-existing duplicate could never be cleaned up."""
         self._ensure_slug()
+        self._normalise_territory()
         winding_down = (
             self.is_deleted
             or self.franchise_status in (
@@ -1146,10 +1177,14 @@ class CompanyJoinRequest(models.Model):
     STATUS_PENDING = "pending"
     STATUS_APPROVED = "approved"
     STATUS_DECLINED = "declined"
+    # Lazy so get_status_display() localizes: the label is embedded inside an
+    # already-translated sentence ("This request was already %(status)s."), and
+    # a plain string there renders an English word in an otherwise translated
+    # message for non-English users.
     STATUS_CHOICES = (
-        (STATUS_PENDING, "Pending"),
-        (STATUS_APPROVED, "Approved"),
-        (STATUS_DECLINED, "Declined"),
+        (STATUS_PENDING, _("Pending")),
+        (STATUS_APPROVED, _("Approved")),
+        (STATUS_DECLINED, _("Declined")),
     )
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -1532,7 +1567,10 @@ class FranchiseApplication(models.Model):
     created_franchise = models.ForeignKey(
         Tenant,
         on_delete=models.SET_NULL,
-        related_name="source_application",
+        # Plural: this is a ForeignKey, so the reverse side is a manager over
+        # every application that produced this node — a re-application after a
+        # cancelled or superseded one can point at the same franchise.
+        related_name="source_applications",
         null=True,
         blank=True,
     )

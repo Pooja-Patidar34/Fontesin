@@ -44,8 +44,8 @@ def global_search(request):
         # visibility helpers instead of a separate, stricter plan-scope filter:
         #
         #   • business_user → business_user_visible_companies (linkage + the
-        #     plan-based discovery scope: free = their own country, basic =
-        #     their selected country, pro = their region, global = all active
+        #     plan-based discovery scope: free = their own town, basic = their
+        #     country, pro = their whole continent, global = all active
         #     companies worldwide — with country-name aliases like
         #     "USA"/"US"/"United States").
         #   • coordinator   → linkage + the certified companies in the region

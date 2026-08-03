@@ -13,6 +13,8 @@ badges, and the notifications all behave the same way.
 """
 
 import json
+import logging
+import uuid
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -20,6 +22,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import IntegrityError, transaction
 from django.db.models import Q
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -48,7 +51,11 @@ from accounts.models import (
 from accounts.utils.franchise_access import (
     franchise_manager_required,
     is_franchise_holder,
+    owned_franchise_nodes,
 )
+
+
+logger = logging.getLogger("technical")
 
 
 # ---------------------------------------------------------------------------
@@ -77,8 +84,13 @@ def _audit(request, node, action, **metadata):
             metadata=metadata or {},
             ip_address=_client_ip(request),
         )
-    except Exception:
-        pass
+    except Exception as e:
+        # Best-effort by design — auditing must never break the action. But a
+        # silently dropped row means the Rule 10 trail has a hole nobody can
+        # see, so the failure itself has to be discoverable.
+        logger.exception(
+            "franchise audit failed (action=%s, node=%s): %s", action, node.id, e,
+        )
 
 
 def _audit_application(request, application, action, **metadata):
@@ -102,8 +114,25 @@ def _audit_application(request, application, action, **metadata):
             metadata=metadata or {},
             ip_address=_client_ip(request),
         )
-    except Exception:
-        pass
+    except Exception as e:
+        logger.exception(
+            "franchise application audit failed (action=%s, application=%s): %s",
+            action, application.id, e,
+        )
+
+
+def _node_id_or_404(raw):
+    """Parse a node id posted by the client, 404-ing on missing/malformed input.
+
+    Tenant.id is a UUID pk, and a value that isn't a valid UUID makes the field's
+    `to_python` raise ValidationError — which `get_object_or_404` does NOT
+    convert (it only catches DoesNotExist). Without this, an empty select or a
+    hand-edited form field surfaces as a 500 instead of the friendly 404 a
+    non-existent (but well-formed) id already gets."""
+    try:
+        return uuid.UUID((raw or "").strip())
+    except (ValueError, AttributeError, TypeError):
+        raise Http404("Invalid franchise node id.")
 
 
 def _unique_node_name(base):
@@ -114,6 +143,48 @@ def _unique_node_name(base):
         counter += 1
         name = f"{base} ({counter})"
     return name
+
+
+# Attempts to re-derive a colliding node name before giving up. A retry only
+# fires when a concurrent approval took the name in the window between our
+# uniqueness check and the INSERT, so a couple of spares is already generous.
+_NAME_RACE_ATTEMPTS = 3
+
+
+def _save_new_node(node, base_name):
+    """INSERT `node`, re-deriving its name if a concurrent approval stole it.
+
+    Both `_unique_node_name` and `Tenant._ensure_slug` check-then-create, so two
+    reviewers approving the same territory label at the same moment can each
+    pass their check and then collide on the global `name` / `slug` unique
+    constraints — surfacing a 500 to whichever reviewer loses. The clash is
+    cosmetic (the names differ only by suffix), so re-derive and retry rather
+    than fail the approval.
+
+    Each attempt runs in its own savepoint: the calling views are
+    `@transaction.atomic`, so an unguarded IntegrityError would poison the whole
+    transaction and make the retry — and the rest of the approval — unusable.
+
+    Territory exclusivity can't be the cause here: that constraint only covers
+    ACTIVE Micro nodes and a freshly approved node is PENDING_CONTRACT. Any
+    other IntegrityError still propagates once the attempts are exhausted."""
+    for attempt in range(_NAME_RACE_ATTEMPTS):
+        try:
+            with transaction.atomic():
+                node.save()
+            return node
+        except IntegrityError:
+            if attempt == _NAME_RACE_ATTEMPTS - 1:
+                raise
+            logger.warning(
+                "franchise node name race on %r — re-deriving (attempt %s/%s)",
+                node.name, attempt + 1, _NAME_RACE_ATTEMPTS,
+            )
+            node.name = _unique_node_name(base_name)
+            # _ensure_slug() no-ops when slug is already set, so clear it or the
+            # retry would reuse the slug that just collided.
+            node.slug = ""
+    return node
 
 
 def _territory_label(country, region, city, local_area):
@@ -153,10 +224,17 @@ def parent_chain_basic(node):
     return chain
 
 
+def _owned_nodes_qs(user):
+    """Franchise nodes owned by `user` through the company they are acting as.
+
+    The single entry point for "my franchises" inside this module — every
+    holder-side view scopes through it so a Business User who bought a
+    franchise for company A manages it only while acting as company A."""
+    return owned_franchise_nodes(user)
+
+
 def _owns_any_node(user):
-    return Tenant.objects.filter(
-        owner_user=user, franchise_level__isnull=False
-    ).exists()
+    return _owned_nodes_qs(user).exists()
 
 
 def _requesting_company(request):
@@ -182,14 +260,16 @@ def visible_node_ids(user):
     Superuser / Platform Admin → the whole tree (global visibility, §7.4).
     A franchise holder → their own node(s) plus every descendant (downward
     visibility, §7.1), and nothing on a parallel branch (§7.3). Everyone else
-    → nothing."""
+    → nothing. "Their own node(s)" means the ones held by the company they are
+    acting as — a franchise bought by another of their companies is on a
+    parallel branch as far as this session is concerned."""
     if getattr(user, "is_superuser", False):
         return set(
             Tenant.objects.filter(franchise_level__isnull=False)
             .values_list("id", flat=True)
         )
     ids = set()
-    for node in Tenant.objects.filter(owner_user=user, franchise_level__isnull=False):
+    for node in _owned_nodes_qs(user):
         ids |= node.get_descendant_ids(include_self=True)
     return ids
 
@@ -442,7 +522,7 @@ def _create_node_from_application(application, parent, reviewer, now,
         created_by=reviewer,
     )
     node.clean()  # may raise ValidationError
-    node.save()
+    _save_new_node(node, base_name)
 
     application.application_status = FranchiseApplicationStatus.APPROVED
     application.approved_by = reviewer
@@ -481,7 +561,7 @@ def franchise_request_view(request):
         .order_by("-created_at")
     )
     owned = list(
-        Tenant.objects.filter(owner_user=request.user, franchise_level__isnull=False)
+        _owned_nodes_qs(request.user)
         .select_related("parent", "parent__owner_user", "owner_user", "owner_company")
         .order_by("name")
     )
@@ -951,11 +1031,9 @@ def _reviewer_parent_ids(user):
     """Active franchise nodes owned by `user` — the nodes for which they are the
     direct-parent operational reviewer of incoming sub-franchise requests."""
     return list(
-        Tenant.objects.filter(
-            owner_user=user,
-            franchise_level__isnull=False,
-            franchise_status=FranchiseUnitStatus.ACTIVE,
-        ).values_list("id", flat=True)
+        _owned_nodes_qs(user)
+        .filter(franchise_status=FranchiseUnitStatus.ACTIVE)
+        .values_list("id", flat=True)
     )
 
 
@@ -1376,7 +1454,9 @@ def franchise_removal_request(request, tenant_id):
     node = get_object_or_404(
         Tenant.objects.filter(franchise_level__isnull=False), id=tenant_id
     )
-    if node.owner_user_id != request.user.id:
+    # Held by the company being acted as — a franchise bought by another of the
+    # user's companies is given up from that company's session, not this one.
+    if not _owned_nodes_qs(request.user).filter(id=node.id).exists():
         messages.error(request, _("You can only give up a franchise you hold."))
         return redirect("franchise-request")
 
@@ -1565,10 +1645,7 @@ def franchise_consultants(request):
     if not franchise_manager_required(request.user):
         raise PermissionDenied()
 
-    owned = list(
-        Tenant.objects.filter(owner_user=request.user, franchise_level__isnull=False)
-        .order_by("name")
-    )
+    owned = list(_owned_nodes_qs(request.user).order_by("name"))
     owned_ids = [n.id for n in owned]
     assignments_qs = (
         ConsultantAssignment.objects.filter(franchise_node_id__in=owned_ids)
@@ -1613,8 +1690,8 @@ def assign_consultant(request):
         raise PermissionDenied()
 
     node = get_object_or_404(
-        Tenant.objects.filter(owner_user=request.user, franchise_level__isnull=False),
-        id=(request.POST.get("franchise_node_id") or "").strip(),
+        _owned_nodes_qs(request.user),
+        id=_node_id_or_404(request.POST.get("franchise_node_id")),
     )
     # A Micro-Franchise owner IS a consultant with local exclusivity — the
     # deepest level, with no one below to manage (spec §9.6: "Manage Standard
@@ -1674,7 +1751,9 @@ def consultant_assignment_remove(request, assignment_id):
     if not is_franchise_holder(request.user):
         raise PermissionDenied()
     assignment = get_object_or_404(
-        ConsultantAssignment.objects.filter(franchise_node__owner_user=request.user),
+        ConsultantAssignment.objects.filter(
+            franchise_node__in=_owned_nodes_qs(request.user)
+        ),
         id=assignment_id,
     )
     assignment.status = ConsultantAssignmentStatus.TERMINATED
@@ -1807,12 +1886,7 @@ def franchise_add_subfranchise(request):
     if not is_franchise_holder(request.user):
         raise PermissionDenied()
 
-    owned = list(
-        Tenant.objects.filter(
-            owner_user=request.user,
-            franchise_level__isnull=False,
-        ).order_by("name")
-    )
+    owned = list(_owned_nodes_qs(request.user).order_by("name"))
     owned_active = [n for n in owned if n.franchise_status == FranchiseUnitStatus.ACTIVE]
     # Only nodes that can actually PARENT a sub-franchise belong in the form: a
     # Micro-Franchise is the deepest level and has no child levels (spec §8.2), so
@@ -1887,8 +1961,8 @@ def franchise_subfranchise_submit(request):
     }
 
     parent = get_object_or_404(
-        Tenant.objects.filter(owner_user=request.user, franchise_level__isnull=False),
-        id=(request.POST.get("parent_node_id") or "").strip(),
+        _owned_nodes_qs(request.user),
+        id=_node_id_or_404(request.POST.get("parent_node_id")),
     )
     if parent.franchise_status != FranchiseUnitStatus.ACTIVE:
         messages.error(request, _("You can only add sub-franchises under an active franchise."))

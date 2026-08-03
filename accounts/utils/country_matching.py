@@ -6,6 +6,7 @@ all business logic must use the helpers here instead of CountryChoices labels.
 """
 
 from functools import lru_cache
+from types import MappingProxyType
 
 from django.db.models import Q
 
@@ -28,7 +29,13 @@ COUNTRY_ALIASES = {
 
 @lru_cache(maxsize=1)
 def all_country_label_to_code():
-    """Map any known country label (English, alias, or translated) → ISO code."""
+    """Map any known country label (English, alias, or translated) → ISO code.
+
+    Returned as an immutable view: lru_cache hands every caller the SAME object,
+    so a stray `mapping[x] = y` anywhere would corrupt country resolution for the
+    whole process. Callers only ever read (`.get()`), and the proxy keeps it that
+    way — a mutation attempt raises TypeError at the call site instead of
+    silently poisoning the cache."""
     mapping = dict(COUNTRY_ENGLISH_NAME_TO_CODE)
     for code, aliases in COUNTRY_ALIASES.items():
         for alias in aliases:
@@ -43,7 +50,7 @@ def all_country_label_to_code():
                 label = dict(CountryChoices.CHOICES).get(code)
                 if label:
                     mapping[str(label).lower()] = code
-    return mapping
+    return MappingProxyType(mapping)
 
 
 def resolve_country_code(value):
@@ -62,7 +69,9 @@ def canonical_country_name(value):
     code = resolve_country_code(value)
     if code:
         return COUNTRY_ENGLISH_NAMES.get(code, code)
-    return text if (text := (value or "").strip()) else ""
+    # Unresolvable: hand back what the caller gave us, trimmed. `.strip()` on a
+    # blank or None value already yields "", so no empty-check is needed.
+    return (value or "").strip()
 
 
 def country_match_q(country_code, field="country"):

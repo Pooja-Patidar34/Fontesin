@@ -13,8 +13,11 @@
   {% comment %}
     Industry column: prefer the typed NACE FK; fall back to the legacy
     industry_code free text so older rows still surface a value while
-    the picker migration is in progress.
+    the picker migration is in progress. Dropped entirely on the Free plan,
+    which is a name-only directory (`free_plan_names_only`) — the header in
+    companies.html drops the matching <th>.
   {% endcomment %}
+  {% if not free_plan_names_only %}
   <td class="text-muted" style="max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
       {% if company.nace_code %}title="{{ company.nace_code.code }} — {{ company.nace_code.title }}"{% endif %}>
     {% if company.nace_code %}
@@ -26,12 +29,15 @@
       <span>—</span>
     {% endif %}
   </td>
+  {% endif %}
 
   {% if is_business_user %}
   {% comment %} All business-user plans: limited fields — Location (country /
      region / city) instead of Status. The Action menu still renders below; the
      dropdown enables/disables View & Connect per plan (Free: disabled;
-     Basic/Pro/Global: enabled), Join is enabled for all. {% endcomment %}
+     Basic/Pro/Global: enabled), Join is enabled for all. Free sees names only,
+     so it gets no Location cell either. {% endcomment %}
+  {% if not free_plan_names_only %}
   <td class="text-muted">
     {% if company.city or company.state or company.region or company.country %}
       {% if company.city %}{{ company.city }}{% endif %}{% if company.state %}{% if company.city %}, {% endif %}{{ company.state }}{% elif company.region %}{% if company.city %}, {% endif %}{{ company.region }}{% endif %}{% if company.country %}{% if company.city or company.state or company.region %}, {% endif %}{{ company.country }}{% endif %}
@@ -39,6 +45,7 @@
       <span>—</span>
     {% endif %}
   </td>
+  {% endif %}
   {% else %}
   <td>
     {% if company.is_active %}

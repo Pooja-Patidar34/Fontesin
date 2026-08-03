@@ -123,13 +123,26 @@ def _country_label(code):
 
 
 def _commission_labels(commission):
-    """Shared label bits for commission notifications (names stay untranslated)."""
+    """Shared label bits for commission notifications (names stay untranslated).
+
+    Returns the ready-to-interpolate pieces — including the "a business user"
+    fallback and the optional " via <company>" clause — so the pending and
+    earned senders can't drift apart."""
     consultant = commission.consultant
     amount = f"{commission.commission_amount} {commission.currency}"
     bu = getattr(commission, "business_user", None)
     bu_label = _user_label(bu) if bu else None
     company_name = commission.company.name if getattr(commission, "company_id", None) else ""
-    return amount, bu_label, company_name, _user_label(consultant)
+
+    bu_text = bu_label or Msg("a business user")
+    # The separating space is a literal part, NOT baked into the msgid: a msgid
+    # with a leading space is invisible in .po review and translators routinely
+    # drop it, which would silently glue the clause onto the preceding word.
+    via_text = (
+        MsgSeq(" ", Msg("via %(company)s", company=company_name))
+        if company_name else ""
+    )
+    return amount, bu_text, via_text, _user_label(consultant)
 
 
 def _notify_commission(commission, *, consultant_msgs, su_msgs):
@@ -168,10 +181,7 @@ def notify_commission_pending(commission):
     every superuser that a PENDING commission exists."""
     if not getattr(commission, "consultant", None):
         return None
-    amount, bu_label, via_company, consultant_label = _commission_labels(commission)
-
-    bu_text = bu_label or Msg("a business user")
-    via_text = Msg(" via %(company)s", company=via_company) if via_company else ""
+    amount, bu_text, via_text, consultant_label = _commission_labels(commission)
 
     return _notify_commission(
         commission,
@@ -200,10 +210,7 @@ def notify_commission_earned(commission):
     and every superuser."""
     if not getattr(commission, "consultant", None):
         return None
-    amount, bu_label, via_company, consultant_label = _commission_labels(commission)
-
-    bu_text = bu_label or Msg("a business user")
-    via_text = Msg(" via %(company)s", company=via_company) if via_company else ""
+    amount, bu_text, via_text, consultant_label = _commission_labels(commission)
 
     return _notify_commission(
         commission,
@@ -322,14 +329,14 @@ def notify_certification_decision(company, *, decided_by, approved):
         title = Msg("%(company)s has been certified", company=company.name)
         body = MsgSeq(Msg("Your certification request was approved"))
         if decider_label:
-            body.add(Msg(" by %(name)s", name=decider_label))
+            body.add(Msg("by %(name)s", name=decider_label), sep=" ")
         body.add(Msg(". Your company is now visible in the public directory."))
     else:
         kind = Notification.KIND_CERTIFICATION_DECLINED
         title = Msg("Certification declined for %(company)s", company=company.name)
         body = MsgSeq(Msg("Your certification request was declined"))
         if decider_label:
-            body.add(Msg(" by %(name)s", name=decider_label))
+            body.add(Msg("by %(name)s", name=decider_label), sep=" ")
         body.add(Msg(". You can update your company details and resubmit from your profile."))
 
     return notify(
@@ -495,7 +502,7 @@ def notify_application_decision(applicant, *, approved):
         title = Msg("Your account application has been approved")
         body = MsgSeq(Msg("Your account application was approved"))
         if decider_label:
-            body.add(Msg(" by %(name)s", name=decider_label))
+            body.add(Msg("by %(name)s", name=decider_label), sep=" ")
         body.add(Msg(
             ". You now have full access — sign out and back in if your sidebar doesn't update."
         ))
@@ -504,7 +511,7 @@ def notify_application_decision(applicant, *, approved):
         title = Msg("Your account application was declined")
         body = MsgSeq(Msg("Your account application was declined"))
         if decider_label:
-            body.add(Msg(" by %(name)s", name=decider_label))
+            body.add(Msg("by %(name)s", name=decider_label), sep=" ")
         body.add(".")
         reason = (applicant.application_decline_reason or "").strip()
         if reason:
@@ -643,7 +650,7 @@ def notify_franchise_application_decision(application, *, approved):
         title = Msg("Your %(level)s request was approved", level=level_label)
         body = MsgSeq(Msg("Your %(level)s request was approved", level=level_label))
         if decider_label:
-            body.add(Msg(" by %(name)s", name=decider_label))
+            body.add(Msg("by %(name)s", name=decider_label), sep=" ")
         body.add(Msg(
             ". The franchise is now pending contract and payment — the Super "
             "Admin will activate it once those are complete."
@@ -653,7 +660,7 @@ def notify_franchise_application_decision(application, *, approved):
         title = Msg("Your %(level)s request was rejected", level=level_label)
         body = MsgSeq(Msg("Your %(level)s request was rejected", level=level_label))
         if decider_label:
-            body.add(Msg(" by %(name)s", name=decider_label))
+            body.add(Msg("by %(name)s", name=decider_label), sep=" ")
         body.add(".")
         reason = (application.board_note or "").strip()
         if reason:
@@ -740,7 +747,7 @@ def notify_coordinator_request_decision(coord_request, *, approved):
         title = Msg("Your Coordinator role has been approved")
         body = MsgSeq(Msg("Your request to become a Coordinator was approved"))
         if decider_label:
-            body.add(Msg(" by %(name)s", name=decider_label))
+            body.add(Msg("by %(name)s", name=decider_label), sep=" ")
         body.add(Msg(
             ". Sign out and back in to see the Coordinator features in your sidebar."
         ))
@@ -749,7 +756,7 @@ def notify_coordinator_request_decision(coord_request, *, approved):
         title = Msg("Your Coordinator request was declined")
         body = MsgSeq(Msg("Your request to become a Coordinator was declined"))
         if decider_label:
-            body.add(Msg(" by %(name)s", name=decider_label))
+            body.add(Msg("by %(name)s", name=decider_label), sep=" ")
         body.add(".")
         reason = (coord_request.decline_reason or "").strip()
         if reason:

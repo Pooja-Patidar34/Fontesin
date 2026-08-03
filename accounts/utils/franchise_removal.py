@@ -76,8 +76,11 @@ def _reset_owner_role(owner):
     """
     if owner is None:
         return False
-    still_holds = Tenant.objects.filter(
-        owner_user=owner, franchise_level__isnull=False
+    # Account-wide on purpose: the role is a property of the person, so it may
+    # only be reset once they hold no franchise under ANY of their companies.
+    from accounts.utils.franchise_access import all_owned_franchise_nodes
+    still_holds = all_owned_franchise_nodes(
+        owner
     ).exists()  # ActiveManager already excludes the rows just soft-deleted
     if still_holds:
         return False
