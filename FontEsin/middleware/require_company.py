@@ -47,6 +47,8 @@ class RequireCompanyForBusinessUserMiddleware:
         "career",
         "contact",
         "set_language",
+        # JS translation catalog (/jsi18n/) — outside the /i18n/ prefix below.
+        "javascript-catalog",
     )
 
     _ALLOWED_PREFIXES = (

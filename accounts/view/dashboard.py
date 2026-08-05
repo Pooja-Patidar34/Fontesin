@@ -186,6 +186,18 @@ def dashboard(request):
                 revenue_data.append(float(total))
             context["revenue_labels_json"] = json.dumps(revenue_labels)
             context["revenue_data_json"] = json.dumps(revenue_data)
+            # Currency for the axis labels. The totals above sum Invoice.amount
+            # without FX conversion, so a symbol is only honest when every paid
+            # invoice shares one currency; otherwise fall back to the platform
+            # default rather than stamping one currency's symbol on a mixed sum.
+            _currencies = set(
+                Invoice.objects.filter(status="paid")
+                .values_list("currency", flat=True)
+                .distinct()
+            )
+            context["revenue_currency"] = (
+                _currencies.pop() if len(_currencies) == 1 else "USD"
+            )
         except Exception as e:
             logger.error("Dashboard: revenue trend failed: %s", e)
 

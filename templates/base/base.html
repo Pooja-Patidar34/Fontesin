@@ -536,7 +536,7 @@
            title="{% trans "Notifications" context "nav" %}">
           <i class="far fa-bell"></i>
           {% if unread_message_count %}
-          <span class="topbar-bell__badge" aria-label="{% blocktrans with count=unread_message_count %}{{ count }} unread notifications{% endblocktrans %}">{% if unread_message_count > 9 %}9+{% else %}{{ unread_message_count }}{% endif %}</span>
+          <span class="topbar-bell__badge" aria-label="{% blocktrans count count=unread_message_count %}{{ count }} unread notification{% plural %}{{ count }} unread notifications{% endblocktrans %}">{% if unread_message_count > 9 %}9+{% else %}{{ unread_message_count }}{% endif %}</span>
           {% endif %}
         </a>
         <div class="dropdown-menu dropdown-menu-right topbar-bell__menu">
@@ -772,7 +772,7 @@
                 <i class="right fas fa-angle-left"></i>
               </p>
               {% if pending_child_franchise_request_count %}
-              <span class="sidebar-notif-badge" aria-label="{% blocktrans with count=pending_child_franchise_request_count %}{{ count }} pending sub-franchise requests{% endblocktrans %}">
+              <span class="sidebar-notif-badge" aria-label="{% blocktrans count count=pending_child_franchise_request_count %}{{ count }} pending sub-franchise request{% plural %}{{ count }} pending sub-franchise requests{% endblocktrans %}">
                 {% if pending_child_franchise_request_count > 9 %}9+{% else %}{{ pending_child_franchise_request_count }}{% endif %}
               </span>
               {% endif %}
@@ -797,7 +797,7 @@
                   <i class="fas fa-inbox nav-icon"></i>
                   <p style="flex:1;">{% trans "Sub-Franchise Requests" context "sidebar" %}</p>
                   {% if pending_child_franchise_request_count %}
-                  <span class="sidebar-notif-badge" aria-label="{% blocktrans with count=pending_child_franchise_request_count %}{{ count }} pending sub-franchise requests{% endblocktrans %}">
+                  <span class="sidebar-notif-badge" aria-label="{% blocktrans count count=pending_child_franchise_request_count %}{{ count }} pending sub-franchise request{% plural %}{{ count }} pending sub-franchise requests{% endblocktrans %}">
                     {% if pending_child_franchise_request_count > 9 %}9+{% else %}{{ pending_child_franchise_request_count }}{% endif %}
                   </span>
                   {% endif %}
@@ -1033,7 +1033,7 @@
                 <i class="right fas fa-angle-left"></i>
               </p>
               {% if pending_requests_total %}
-              <span class="sidebar-notif-badge" aria-label="{% blocktrans with count=pending_requests_total %}{{ count }} pending requests{% endblocktrans %}">
+              <span class="sidebar-notif-badge" aria-label="{% blocktrans count count=pending_requests_total %}{{ count }} pending request{% plural %}{{ count }} pending requests{% endblocktrans %}">
                 {% if pending_requests_total > 9 %}9+{% else %}{{ pending_requests_total }}{% endif %}
               </span>
               {% endif %}
@@ -1046,7 +1046,7 @@
                   <i class="fas fa-user-shield nav-icon"></i>
                   <p style="flex:1;">{% trans "Coordinator Upgrade Requests" context "sidebar" %}</p>
                   {% if pending_coordinator_request_count %}
-                  <span class="sidebar-notif-badge" aria-label="{% blocktrans with count=pending_coordinator_request_count %}{{ count }} pending coordinator requests{% endblocktrans %}">
+                  <span class="sidebar-notif-badge" aria-label="{% blocktrans count count=pending_coordinator_request_count %}{{ count }} pending coordinator request{% plural %}{{ count }} pending coordinator requests{% endblocktrans %}">
                     {% if pending_coordinator_request_count > 9 %}9+{% else %}{{ pending_coordinator_request_count }}{% endif %}
                   </span>
                   {% endif %}
@@ -1059,7 +1059,7 @@
                   <i class="fas fa-id-card nav-icon"></i>
                   <p style="flex:1;">{% trans "Registration Applications" context "sidebar" %}</p>
                   {% if pending_application_count %}
-                  <span class="sidebar-notif-badge" aria-label="{% blocktrans with count=pending_application_count %}{{ count }} pending applications{% endblocktrans %}">
+                  <span class="sidebar-notif-badge" aria-label="{% blocktrans count count=pending_application_count %}{{ count }} pending application{% plural %}{{ count }} pending applications{% endblocktrans %}">
                     {% if pending_application_count > 9 %}9+{% else %}{{ pending_application_count }}{% endif %}
                   </span>
                   {% endif %}
@@ -1072,7 +1072,7 @@
                   <i class="fas fa-sitemap nav-icon"></i>
                   <p style="flex:1;">{% trans "Franchise Requests" context "sidebar" %}</p>
                   {% if pending_franchise_application_count %}
-                  <span class="sidebar-notif-badge" aria-label="{% blocktrans with count=pending_franchise_application_count %}{{ count }} pending franchise requests{% endblocktrans %}">
+                  <span class="sidebar-notif-badge" aria-label="{% blocktrans count count=pending_franchise_application_count %}{{ count }} pending franchise request{% plural %}{{ count }} pending franchise requests{% endblocktrans %}">
                     {% if pending_franchise_application_count > 9 %}9+{% else %}{{ pending_franchise_application_count }}{% endif %}
                   </span>
                   {% endif %}
@@ -1092,7 +1092,7 @@
               <i class="nav-icon fas fa-envelope"></i>
               <p style="flex:1;">{% trans "Messages" context "sidebar" %}</p>
               {% if unread_contact_message_count %}
-              <span class="sidebar-notif-badge" aria-label="{% blocktrans with count=unread_contact_message_count %}{{ count }} unread messages{% endblocktrans %}">
+              <span class="sidebar-notif-badge" aria-label="{% blocktrans count count=unread_contact_message_count %}{{ count }} unread message{% plural %}{{ count }} unread messages{% endblocktrans %}">
                 {% if unread_contact_message_count > 9 %}9+{% else %}{{ unread_contact_message_count }}{% endif %}
               </span>
               {% endif %}
@@ -1184,7 +1184,7 @@
               <i class="nav-icon fas fa-file-invoice-dollar"></i>
               <p style="flex:1;">{% trans "Invoices" context "sidebar" %}</p>
               {% if pending_invoice_count %}
-              <span class="sidebar-notif-badge" aria-label="{% blocktrans with count=pending_invoice_count %}{{ count }} invoices awaiting approval{% endblocktrans %}">
+              <span class="sidebar-notif-badge" aria-label="{% blocktrans count count=pending_invoice_count %}{{ count }} invoice awaiting approval{% plural %}{{ count }} invoices awaiting approval{% endblocktrans %}">
                 {% if pending_invoice_count > 9 %}9+{% else %}{{ pending_invoice_count }}{% endif %}
               </span>
               {% endif %}
@@ -1217,7 +1217,7 @@
               <i class="nav-icon fas fa-coins"></i>
               <p style="flex:1;">{% if request.user.is_superuser %}{% trans "Commissions" context "sidebar" %}{% else %}{% trans "My Commissions" context "sidebar" %}{% endif %}</p>
               {% if new_commission_count %}
-              <span class="sidebar-notif-badge" aria-label="{% blocktrans with count=new_commission_count %}{{ count }} commission requests pending{% endblocktrans %}">
+              <span class="sidebar-notif-badge" aria-label="{% blocktrans count count=new_commission_count %}{{ count }} commission request pending{% plural %}{{ count }} commission requests pending{% endblocktrans %}">
                 {% if new_commission_count > 9 %}9+{% else %}{{ new_commission_count }}{% endif %}
               </span>
               {% endif %}
@@ -1252,7 +1252,7 @@
               <i class="nav-icon fas fa-handshake"></i>
               <p style="flex:1;">{% trans "Partnerships" context "sidebar" %}</p>
               {% if pending_partnership_count %}
-              <span class="sidebar-notif-badge" aria-label="{% blocktrans with count=pending_partnership_count %}{{ count }} pending partnership requests{% endblocktrans %}">
+              <span class="sidebar-notif-badge" aria-label="{% blocktrans count count=pending_partnership_count %}{{ count }} pending partnership request{% plural %}{{ count }} pending partnership requests{% endblocktrans %}">
                 {% if pending_partnership_count > 9 %}9+{% else %}{{ pending_partnership_count }}{% endif %}
               </span>
               {% endif %}
@@ -1272,7 +1272,7 @@
               <i class="nav-icon fas fa-user-plus"></i>
               <p style="flex:1;">{% trans "Join Requests" context "sidebar" %}</p>
               {% if pending_join_request_count %}
-              <span class="sidebar-notif-badge" aria-label="{% blocktrans with count=pending_join_request_count %}{{ count }} pending join requests{% endblocktrans %}">
+              <span class="sidebar-notif-badge" aria-label="{% blocktrans count count=pending_join_request_count %}{{ count }} pending join request{% plural %}{{ count }} pending join requests{% endblocktrans %}">
                 {% if pending_join_request_count > 9 %}9+{% else %}{{ pending_join_request_count }}{% endif %}
               </span>
               {% endif %}
@@ -1288,7 +1288,7 @@
               <i class="nav-icon fas fa-bell"></i>
               <p style="flex:1;">{% trans "Notifications" context "sidebar" %}</p>
               {% if unread_message_count %}
-              <span class="sidebar-notif-badge" aria-label="{% blocktrans with count=unread_message_count %}{{ count }} unread notifications{% endblocktrans %}">
+              <span class="sidebar-notif-badge" aria-label="{% blocktrans count count=unread_message_count %}{{ count }} unread notification{% plural %}{{ count }} unread notifications{% endblocktrans %}">
                 {% if unread_message_count > 9 %}9+{% else %}{{ unread_message_count }}{% endif %}
               </span>
               {% endif %}
@@ -1609,7 +1609,18 @@
       textEl.innerHTML = opts.text || '';
 
       okBtn.className = 'confirm-modal-box__btn ' + (btnStyleMap[kind] || btnStyleMap.danger);
-      okBtn.innerHTML = (opts.okIcon ? '<i class="fas ' + opts.okIcon + '"></i> ' : '') + (opts.okLabel || confirmDefaults.okLabel);
+      // Button built through the DOM: the label is a text node (every caller
+      // passes a plain translated string), and the icon is only honoured when it
+      // looks like a Font Awesome glyph — so neither can carry markup into the
+      // page the way string-concatenated innerHTML could.
+      okBtn.textContent = '';
+      if (opts.okIcon && /^fa-[a-z0-9-]+$/.test(opts.okIcon)) {
+        var okIconEl = document.createElement('i');
+        okIconEl.className = 'fas ' + opts.okIcon;
+        okBtn.appendChild(okIconEl);
+        okBtn.appendChild(document.createTextNode(' '));
+      }
+      okBtn.appendChild(document.createTextNode(opts.okLabel || confirmDefaults.okLabel));
 
       pendingAction = opts.onConfirm || null;
       overlay.classList.add('active');

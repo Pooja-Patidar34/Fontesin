@@ -556,8 +556,10 @@
     failedUpdatePlan: '{% filter escapejs %}{% trans "Failed to update plan status." context "billing" %}{% endfilter %}',
     networkError: '{% filter escapejs %}{% trans "Network error. Please try again." context "common" %}{% endfilter %}',
     deactivatePlanTitle: '{% filter escapejs %}{% trans "Deactivate Plan?" context "billing" %}{% endfilter %}',
-    deactivatePlanBefore: '{% filter escapejs %}{% trans "Are you sure you want to deactivate" context "billing" %}{% endfilter %}',
-    deactivatePlanAfter: '{% filter escapejs %}{% trans "? Users will no longer be able to see or subscribe to this plan." context "billing" %}{% endfilter %}',
+    {% comment %} One sentence, not three fragments: a translator needs to place
+       the plan name and the punctuation themselves. "__PLAN__" is a sentinel the
+       JS swaps for the (bolded) plan name. {% endcomment %}
+    deactivatePlanText: '{% filter escapejs %}{% blocktrans trimmed with name="__PLAN__" context "billing" %}Are you sure you want to deactivate {{ name }}? Users will no longer be able to see or subscribe to this plan.{% endblocktrans %}{% endfilter %}',
     thisPlan: '{% filter escapejs %}{% trans "this plan" context "billing" %}{% endfilter %}',
   };
   var g = (typeof gettext === "function") ? gettext : function (s) { return s; };
@@ -654,7 +656,7 @@
         appConfirm({
           kind: 'danger',
           title: BILLING_I18N.deactivatePlanTitle,
-          text: BILLING_I18N.deactivatePlanBefore + ' <strong>' + planName + '</strong>' + BILLING_I18N.deactivatePlanAfter,
+          text: BILLING_I18N.deactivatePlanText.replace('__PLAN__', '<strong>' + planName + '</strong>'),
           okLabel: BILLING_I18N.deactivate,
           okIcon: 'fa-ban',
           onConfirm: function () { performToggle(btn); },

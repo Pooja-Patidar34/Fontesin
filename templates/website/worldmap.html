@@ -352,32 +352,6 @@
 {% comment %} The interactive world-map script ships with the shared partial included
    above (templates/website/_world_map.html), so both pages stay identical. {% endcomment %}
 <script src="{% static 'adminlte/js/main.js' %}"></script>
-<script>
-(function () {
-  window.PWA_I18N = {
-    notificationBody: '{% filter escapejs %}{% trans "You have a new notification" context "website" %}{% endfilter %}',
-    open: '{% filter escapejs %}{% trans "Open" context "website" %}{% endfilter %}',
-    dismiss: '{% filter escapejs %}{% trans "Dismiss" context "website" %}{% endfilter %}',
-  };
-})();
-</script>
-<script>
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", function() {
-      navigator.serviceWorker.register("{% static 'adminlte/js/sw.js' %}")
-        .then(function(reg) {
-          function sendStrings() {
-            var sw = reg.active || navigator.serviceWorker.controller;
-            if (sw && window.PWA_I18N) {
-              sw.postMessage({ type: "PWA_STRINGS", strings: window.PWA_I18N });
-            }
-          }
-          sendStrings();
-          navigator.serviceWorker.addEventListener("controllerchange", sendStrings);
-        })
-        .catch(function(err) { console.warn("[PWA] SW registration failed:", err); });
-    });
-  }
-</script>
+{% include "partials/_pwa_register.html" %}
 </body>
 </html>

@@ -69,6 +69,8 @@ class RequireIdentityVerificationMiddleware:
         "career",
         "contact",
         "set_language",
+        # JS translation catalog (/jsi18n/) — no prefix covers it.
+        "javascript-catalog",
     )
 
     # Prefixes always allowed: static/media assets keep loading, the admin

@@ -28,8 +28,18 @@
         {% if subscription %}
         <div style="font-size:.75rem; color:#64748b;">
           {% trans "Started" context "billing" %} {{ subscription.start_date|date:"M d, Y" }}
+          {% if subscription.end_date %}
           &middot;
+          {% comment %} A term that hasn't run out yet "expires"; only a past
+             end_date has "ended". Labelling a future date "Ended" reads to a
+             paying user as though their plan had already lapsed. {% endcomment %}
+          {% now "Y-m-d" as today_iso %}
+          {% if subscription.end_date|date:"Y-m-d" >= today_iso %}
+          {% trans "Expires" context "billing" %} {{ subscription.end_date|date:"M d, Y" }}
+          {% else %}
           {% trans "Ended" context "billing" %} {{ subscription.end_date|date:"M d, Y" }}
+          {% endif %}
+          {% endif %}
           &middot;
           {% trans "Status" context "billing" %}:
           <span style="color:#15803d; font-weight:600;">{{ subscription|localized_subscription_status_filter }}</span>

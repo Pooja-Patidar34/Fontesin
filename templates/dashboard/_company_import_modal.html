@@ -97,72 +97,7 @@ Three panes: upload form -> progress bar -> result summary.
   </div>
 </div>
 
-<script>
-(function () {
-  window.COMPANY_I18N = {
-    selectState: '{% filter escapejs %}{% trans "Select State" context "companies" %}{% endfilter %}',
-    addCompany: '{% filter escapejs %}{% trans "Add Company" context "companies" %}{% endfilter %}',
-    createCompany: '{% filter escapejs %}{% trans "Create Company" context "companies" %}{% endfilter %}',
-    requestCertification: '{% filter escapejs %}{% trans "Request Certification" context "companies" %}{% endfilter %}',
-    companyDetails: '{% filter escapejs %}{% trans "Company Details" context "companies" %}{% endfilter %}',
-    editCompany: '{% filter escapejs %}{% trans "Edit Company" context "companies" %}{% endfilter %}',
-    save: '{% filter escapejs %}{% trans "Save" context "common" %}{% endfilter %}',
-    certifiedBy: '{% filter escapejs %}{% trans "Certified by" context "companies" %}{% endfilter %}',
-    on: '{% filter escapejs %}{% trans "on" context "common" %}{% endfilter %}',
-    basicInfo: '{% filter escapejs %}{% trans "Basic Info" context "companies" %}{% endfilter %}',
-    address: '{% filter escapejs %}{% trans "Address" context "companies" %}{% endfilter %}',
-    contact: '{% filter escapejs %}{% trans "Contact" context "companies" %}{% endfilter %}',
-    certifyingConsultant: '{% filter escapejs %}{% trans "Certifying Consultant" context "companies" %}{% endfilter %}',
-    status: '{% filter escapejs %}{% trans "Status" context "companies" %}{% endfilter %}',
-    legalForm: '{% filter escapejs %}{% trans "Legal Form" context "companies" %}{% endfilter %}',
-    registrationNo: '{% filter escapejs %}{% trans "Registration No." context "companies" %}{% endfilter %}',
-    yearOfEstablishment: '{% filter escapejs %}{% trans "Year of Establishment" context "companies" %}{% endfilter %}',
-    numberOfEmployees: '{% filter escapejs %}{% trans "Number of Employees" context "companies" %}{% endfilter %}',
-    naceCode: '{% filter escapejs %}{% trans "NACE Code" context "companies" %}{% endfilter %}',
-    naicsCode: '{% filter escapejs %}{% trans "NAICS Code" context "companies" %}{% endfilter %}',
-    keywords: '{% filter escapejs %}{% trans "Keywords" context "companies" %}{% endfilter %}',
-    houseNumber: '{% filter escapejs %}{% trans "House Number" context "companies" %}{% endfilter %}',
-    district: '{% filter escapejs %}{% trans "District" context "companies" %}{% endfilter %}',
-    region: '{% filter escapejs %}{% trans "Region" context "companies" %}{% endfilter %}',
-    cityState: '{% filter escapejs %}{% trans "City / State" context "companies" %}{% endfilter %}',
-    postalCode: '{% filter escapejs %}{% trans "Postal Code" context "companies" %}{% endfilter %}',
-    contactPerson: '{% filter escapejs %}{% trans "Contact Person" context "companies" %}{% endfilter %}',
-    contactEmail: '{% filter escapejs %}{% trans "Contact Email" context "companies" %}{% endfilter %}',
-    phone: '{% filter escapejs %}{% trans "Phone" context "companies" %}{% endfilter %}',
-    website: '{% filter escapejs %}{% trans "Website" context "companies" %}{% endfilter %}',
-    certification: '{% filter escapejs %}{% trans "Certification" context "companies" %}{% endfilter %}',
-    active: '{% filter escapejs %}{% trans "Active" context "companies" %}{% endfilter %}',
-    yes: '{% filter escapejs %}{% trans "Yes" context "common" %}{% endfilter %}',
-    no: '{% filter escapejs %}{% trans "No" context "common" %}{% endfilter %}',
-    any: '{% filter escapejs %}{% trans "Any" context "common" %}{% endfilter %}',
-    noPresetCountry: '{% filter escapejs %}{% trans "No preset for this country — showing all legal forms." context "companies" %}{% endfilter %}',
-    pickCountryNarrow: '{% filter escapejs %}{% trans "Pick a country to narrow the list, or filter globally." context "companies" %}{% endfilter %}',
-    noMatchesFor: '{% filter escapejs %}{% trans "No matches for" context "companies" %}{% endfilter %}',
-    startTyping: '{% filter escapejs %}{% trans "Start typing." context "companies" %}{% endfilter %}',
-    certSubmitted: '{% filter escapejs %}{% trans COMPANY_I18N.certSubmitted context "companies" %}{% endfilter %}',
-    couldNotSave: '{% filter escapejs %}{% trans COMPANY_I18N.couldNotSave context "companies" %}{% endfilter %}',
-    networkError: '{% filter escapejs %}{% trans "Network error. Please try again." context "common" %}{% endfilter %}',
-    companyLogo: '{% filter escapejs %}{% trans "Company" context "companies" %}{% endfilter %}',
-    uploadImport: '{% filter escapejs %}{% trans "Upload & Import" context "companies.import" %}{% endfilter %}',
-    uploading: '{% filter escapejs %}{% trans "Uploading…" context "companies.import" %}{% endfilter %}',
-    chooseTenant: '{% filter escapejs %}{% trans "Please choose a target tenant." context "companies.import" %}{% endfilter %}',
-    chooseCsv: '{% filter escapejs %}{% trans "Please choose a CSV file." context "companies.import" %}{% endfilter %}',
-    mustBeCsv: '{% filter escapejs %}{% trans "File must be a .csv" context "companies.import" %}{% endfilter %}',
-    uploadFailed: '{% filter escapejs %}{% trans "Upload failed" context "companies.import" %}{% endfilter %}',
-    importComplete: '{% filter escapejs %}{% trans "Import complete." context "companies.import" %}{% endfilter %}',
-    inserted: '{% filter escapejs %}{% trans "Inserted:" context "companies.import" %}{% endfilter %}',
-    skippedDuplicates: '{% filter escapejs %}{% trans "Skipped (duplicates):" context "companies.import" %}{% endfilter %}',
-    failed: '{% filter escapejs %}{% trans "Failed:" context "companies.import" %}{% endfilter %}',
-    importFailed: '{% filter escapejs %}{% trans "Import failed." context "companies.import" %}{% endfilter %}',
-    noDetails: '{% filter escapejs %}{% trans "(no details)" context "companies.import" %}{% endfilter %}',
-    noResults: '{% filter escapejs %}{% trans "No results" context "companies" %}{% endfilter %}',
-  };
-  var g = (typeof gettext === "function") ? gettext : function (s) { return s; };
-  Object.keys(window.COMPANY_I18N).forEach(function (k) {
-    window.COMPANY_I18N[k] = g(window.COMPANY_I18N[k]);
-  });
-})();
-</script>
+{% include "dashboard/_company_i18n.html" %}
 
 <script>
 (function () {
@@ -299,12 +234,22 @@ Three panes: upload form -> progress bar -> result summary.
         ' &nbsp; ' + COMPANY_I18N.failed + ' <strong>' + (j.failed_rows || 0).toLocaleString() + '</strong>' +
         '</div>';
     } else {
-      summary.innerHTML =
-        '<div class="alert alert-danger">' +
-        '<strong>' + COMPANY_I18N.importFailed + '</strong> ' +
-        '<br><pre class="small mt-2 mb-0">' +
-        (j.error_message ? j.error_message.replace(/</g, "&lt;") : COMPANY_I18N.noDetails) +
-        '</pre></div>';
+      // Built through the DOM: error_message can echo content from the uploaded
+      // CSV, and the hand-rolled "<" replace left &, > and quotes untouched.
+      // textContent renders every character literally, whatever it contains.
+      const box = document.createElement('div');
+      box.className = 'alert alert-danger';
+      const heading = document.createElement('strong');
+      heading.textContent = COMPANY_I18N.importFailed;
+      box.appendChild(heading);
+      box.appendChild(document.createTextNode(' '));
+      box.appendChild(document.createElement('br'));
+      const pre = document.createElement('pre');
+      pre.className = 'small mt-2 mb-0';
+      pre.textContent = j.error_message || COMPANY_I18N.noDetails;
+      box.appendChild(pre);
+      summary.textContent = '';
+      summary.appendChild(box);
     }
 
     const link = $("#import-errors-link");

@@ -66,7 +66,8 @@
             <td><strong>{{ s.plan.name }}</strong></td>
             <td class="small">{% if s.company %}{{ s.company.name }}{% else %}—{% endif %}</td>
             <td class="small">{% if s.user %}{{ s.user.first_name }} {{ s.user.last_name }}<div class="text-muted">{{ s.user.email }}</div>{% else %}—{% endif %}</td>
-            <td class="small">{{ s.plan.currency }} {{ s.plan.price }}</td>
+            {% comment %} Invoiced amount when one was raised, else the plan's current price. {% endcomment %}
+            <td class="small">{{ s.sale_currency|default_if_none:s.plan.currency }} {{ s.sale_amount|default_if_none:s.plan.price|floatformat:2 }}</td>
             <td class="small">{{ s.get_billing_period_display }}</td>
             <td class="small">{{ s.created_at|date:"M j, Y" }}</td>
             <td><span class="pill pill-{{ s.status }}">{{ s.get_status_display }}</span></td>

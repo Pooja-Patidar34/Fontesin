@@ -476,7 +476,7 @@ msgstr "%(label)s doit contenir 120 caractères ou moins."
 #, python-format
 msgid ""
 "%(label)s may only contain letters, digits, spaces and the symbols , . - / "
-"#. Other special characters (such as ! @ $ %% ^ * {{ }} [ ] < >) are not "
+"#. Other special characters (such as ! @ $ %% ^ * { } [ ] < >) are not "
 "allowed."
 msgstr ""
 "%(label)s ne peut contenir que des lettres, des chiffres, des espaces et les "
@@ -5129,11 +5129,11 @@ msgstr "Marquer la commission comme payée ?"
 #, python-format
 msgctxt "billing"
 msgid ""
-"This records the disbursement of <strong>%(amount)s %(currency)s</strong> to "
-"<strong>%(email)s</strong>. This action cannot be undone."
+"This records the disbursement of %(amount)s %(currency)s to "
+"%(email)s. This action cannot be undone."
 msgstr ""
-"Ceci enregistre le décaissement de <strong>%(amount)s %(currency)s</strong> "
-"à <strong>%(email)s</strong>. Cette action ne peut pas être annulée."
+"Ceci enregistre le décaissement de %(amount)s %(currency)s "
+"à %(email)s. Cette action ne peut pas être annulée."
 
 #: .\templates\dashboard\_commissions_panel.html:96
 #: .\templates\dashboard\_commissions_panel.html:100
@@ -8484,10 +8484,10 @@ msgstr "Remarques :"
 #, python-format
 msgctxt "franchise"
 msgid ""
-"This territory is already held by <strong>%(name)s</strong>. Only one "
+"This territory is already held by %(name)s. Only one "
 "franchise is allowed per territory — reject this request."
 msgstr ""
-"Ce territoire est déjà détenu par <strong>%(name)s</strong>. Une seule "
+"Ce territoire est déjà détenu par %(name)s. Une seule "
 "franchise est autorisée par territoire — rejetez cette demande."
 
 #: .\templates\dashboard\franchise_applications.html:138
@@ -17171,3 +17171,37 @@ msgstr "Votre annonce a été suspendue"
 #, python-format
 msgid "%(title)s was suspended. Reason: %(reason)s"
 msgstr "%(title)s a été suspendue. Motif : %(reason)s"
+
+#: .\templates\dashboard\subscriptions.html:559
+#, python-format
+msgctxt "billing"
+msgid "Are you sure you want to deactivate %(name)s? Users will no longer be able to see or subscribe to this plan."
+msgstr "Etes-vous sûr de vouloir désactiver %(name)s ? Les utilisateurs ne pourront plus voir ni s'abonner à ce forfait."
+
+#: .\templates\profile\profile.html:559
+#, python-format
+msgctxt "profile"
+msgid "No companies match “%(query)s”."
+msgstr "Aucune entreprise ne correspond à “%(query)s”."
+
+#: .\templates\website\_world_map.html:28
+#, python-format
+msgctxt "website"
+msgid "Planned – Year %(year)s"
+msgstr "Prévu – Année %(year)s"
+
+#: .\templates\website\upgrade_required.html:95
+#, python-format
+msgctxt "website"
+msgid "This feature is not available on your current plan. Upgrade to %(plan)s or higher to unlock this feature."
+msgstr "Cette fonctionnalité n'est pas disponible sur votre forfait actuel. Passez à %(plan)s ou supérieur pour débloquer cette fonctionnalité."
+
+#: .\templates\website\upgrade_required.html:97
+msgctxt "website"
+msgid "This feature is not available on your current plan. Upgrade to a higher plan to unlock this feature."
+msgstr "Cette fonctionnalité n'est pas disponible sur votre forfait actuel. Passez à un forfait supérieur pour débloquer cette fonctionnalité."
+
+#: .\templates\profile\_plan_card.html:37
+msgctxt "billing"
+msgid "Expires"
+msgstr "Expire"

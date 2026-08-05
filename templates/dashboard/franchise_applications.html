@@ -118,13 +118,20 @@
                 <div class="cr-motivation" style="background:#fff5f5; border-color:#fbdada; color:#9f1239;">
                   <i class="fas fa-exclamation-triangle mr-1"></i>
                   {% blocktrans trimmed with name=a.conflict.name context "franchise" %}
-                  This territory is already held by <strong>{{ name }}</strong>. Only one franchise is allowed per territory — reject this request.
+                  This territory is already held by {{ name }}. Only one franchise is allowed per territory — reject this request.
                   {% endblocktrans %}
                 </div>
                 {% endif %}
               </td>
               <td class="text-right pr-4" style="vertical-align: top;">
-                <form method="post" action="{% url 'franchise-application-action' a.id %}" class="d-inline m-0">
+                <form method="post" action="{% url 'franchise-application-action' a.id %}" class="d-inline m-0"
+                      data-confirm
+                      data-confirm-tone="primary"
+                      data-confirm-icon="fa-check"
+                      data-confirm-title="{% trans "Approve this franchise request?" context "franchise" %}"
+                      data-confirm-body="{% trans "This creates the franchise, pending contract & payment." context "franchise" %}"
+                      data-confirm-ok="{% trans "Approve" context "workflows" %}"
+                      data-confirm-name="{{ a.applicant_user.email }}">
                   {% csrf_token %}
                   <input type="hidden" name="decision" value="approve">
                   <button type="submit" class="btn btn-sm btn-success">
@@ -210,7 +217,7 @@
                 <div class="cr-motivation" style="background:#fff5f5; border-color:#fbdada; color:#9f1239;">
                   <i class="fas fa-exclamation-triangle mr-1"></i>
                   {% blocktrans trimmed with name=a.conflict.name context "franchise" %}
-                  This territory is already held by <strong>{{ name }}</strong>. Only one franchise is allowed per territory — reject this request.
+                  This territory is already held by {{ name }}. Only one franchise is allowed per territory — reject this request.
                   {% endblocktrans %}
                 </div>
                 {% endif %}
@@ -376,7 +383,7 @@
               </td>
               <td class="text-right pr-4">
                 {% if a.created_franchise %}
-                  {% if a.created_franchise.franchise_status == "ACTIVE" %}
+                  {% if a.created_franchise.is_franchise_active %}
                   <form method="post" action="{% url 'franchise-suspend' a.created_franchise.id %}" class="d-inline m-0"
                         data-confirm
                         data-confirm-tone="warning"
@@ -391,7 +398,7 @@
                       <i class="fas fa-pause mr-1"></i> {% trans "Suspend" context "franchise" %}
                     </button>
                   </form>
-                  {% elif a.created_franchise.franchise_status == "SUSPENDED" %}
+                  {% elif a.created_franchise.is_franchise_suspended %}
                   <span class="pill pill-rejected mr-1">{% trans "Suspended" context "franchise" %}</span>
                   <form method="post" action="{% url 'franchise-suspend' a.created_franchise.id %}" class="d-inline m-0">
                     {% csrf_token %}

@@ -157,7 +157,7 @@
       <h3>
         <i class="fas fa-bell mr-1" style="color:#2b7de9;"></i>
         {% trans "Notifications" context "dashboard" %}
-        {% if unread_count %}<span class="msg-unread-pill">{% blocktrans trimmed with count=unread_count context "dashboard" %}{{ count }} unread{% endblocktrans %}</span>{% endif %}
+        {% if unread_count %}<span class="msg-unread-pill">{% blocktrans trimmed count count=unread_count context "dashboard" %}{{ count }} unread{% plural %}{{ count }} unread{% endblocktrans %}</span>{% endif %}
       </h3>
       <div class="msg-header__sub">{% trans "Notifications for your account land here." context "dashboard" %}</div>
     </div>

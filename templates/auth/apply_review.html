@@ -400,8 +400,8 @@
 
 <script>
 var locale = '{{ LANGUAGE_CODE }}';
-var atLabel = '{% trans "at" context "auth.apply_review" %}';
-var byLabel = '{% trans "By" context "auth.apply_review" %}';
+var atLabel = "{% filter escapejs %}{% trans "at" context "auth.apply_review" %}{% endfilter %}";
+var byLabel = "{% filter escapejs %}{% trans "By" context "auth.apply_review" %}{% endfilter %}";
 
 // Set submission date with time
 var now = new Date();

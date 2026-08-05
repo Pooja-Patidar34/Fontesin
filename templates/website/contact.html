@@ -117,7 +117,7 @@ United States{% endblocktrans %}
             src="{% static 'adminlte/images/office_hq.jpg' %}"
             alt="{% trans 'One World Trade Center – FONTESIN Headquarters, New York' context 'website' %}"
             style="width:100%;height:100%;object-fit:cover;display:block;"
-            data-fallback-text="{% filter escapejs %}{% trans 'FONTESIN HQ · One World Trade Center, NYC' context 'website' %}{% endfilter %}"
+            data-fallback-text="{% trans 'FONTESIN HQ · One World Trade Center, NYC' context 'website' %}"
             onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,var(--primary-dark),var(--primary-mid))';this.parentElement.innerHTML='<div style=\'display:flex;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,.5);font-family:Montserrat,sans-serif;font-size:.9rem;\'>'+this.dataset.fallbackText+'</div>'"
           />
           <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.65));padding:16px;color:#fff;font-family:'Montserrat',sans-serif;font-size:.8rem;font-weight:600;">
@@ -144,29 +144,29 @@ United States{% endblocktrans %}
           {% csrf_token %}
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">{% trans "First Name" context "website" %} *</label>
-              <input type="text" name="first_name" class="form-control" placeholder="{% trans 'John' context 'website' %}" required/>
+              <label class="form-label" for="contact-first-name">{% trans "First Name" context "website" %} *</label>
+              <input type="text" name="first_name" id="contact-first-name" class="form-control" placeholder="{% trans 'John' context 'website' %}" required/>
             </div>
             <div class="form-group">
-              <label class="form-label">{% trans "Last Name" context "website" %} *</label>
-              <input type="text" name="last_name" class="form-control" placeholder="{% trans 'Smith' context 'website' %}" required/>
+              <label class="form-label" for="contact-last-name">{% trans "Last Name" context "website" %} *</label>
+              <input type="text" name="last_name" id="contact-last-name" class="form-control" placeholder="{% trans 'Smith' context 'website' %}" required/>
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label">{% trans "Email Address" context "website" %} *</label>
-            <input type="email" name="email" class="form-control" placeholder="{% trans 'john@company.com' context 'website' %}" required maxlength="254" pattern="^[a-zA-Z0-9._+\-]+@[a-zA-Z0-9\-]+(\.[a-zA-Z0-9\-]+)*\.[a-zA-Z]{2,10}$" title="{% trans 'Please enter a valid email address (e.g., you@company.com)' context 'website' %}" oninput="this.value=this.value.replace(/[^a-zA-Z0-9@._+\-]/g,'')"/>
+            <label class="form-label" for="contact-email">{% trans "Email Address" context "website" %} *</label>
+            <input type="email" name="email" id="contact-email" class="form-control" placeholder="{% trans 'john@company.com' context 'website' %}" required maxlength="254" pattern="^[a-zA-Z0-9._+\-]+@[a-zA-Z0-9\-]+(\.[a-zA-Z0-9\-]+)*\.[a-zA-Z]{2,10}$" title="{% trans 'Please enter a valid email address (e.g., you@company.com)' context 'website' %}" oninput="this.value=this.value.replace(/[^a-zA-Z0-9@._+\-]/g,'')"/>
           </div>
           <div class="form-group">
-            <label class="form-label">{% trans "Phone Number" context "website" %}</label>
-            <input type="tel" name="phone" class="form-control" placeholder="{% trans '+1 212 555 0100' context 'website' %}"/>
+            <label class="form-label" for="contact-phone">{% trans "Phone Number" context "website" %}</label>
+            <input type="tel" name="phone" id="contact-phone" class="form-control" placeholder="{% trans '+1 212 555 0100' context 'website' %}"/>
           </div>
           <div class="form-group">
-            <label class="form-label">{% trans "Company Name" context "website" %}</label>
-            <input type="text" name="company_name" class="form-control" placeholder="{% trans 'Your Company Ltd.' context 'website' %}"/>
+            <label class="form-label" for="contact-company-name">{% trans "Company Name" context "website" %}</label>
+            <input type="text" name="company_name" id="contact-company-name" class="form-control" placeholder="{% trans 'Your Company Ltd.' context 'website' %}"/>
           </div>
           <div class="form-group">
-            <label class="form-label">{% trans "Subject" context "common" %} *</label>
-            <select name="subject" class="form-control" required>
+            <label class="form-label" for="contact-subject">{% trans "Subject" context "common" %} *</label>
+            <select name="subject" id="contact-subject" class="form-control" required>
               <option value="">{% trans "Select a topic..." context "website" %}</option>
               <option>{% trans "Franchise Inquiry" context "website" %}</option>
               <option>{% trans "Partnership Request" context "website" %}</option>
@@ -178,8 +178,8 @@ United States{% endblocktrans %}
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">{% trans "Message" context "website" %} *</label>
-            <textarea name="message" class="form-control" rows="5" placeholder="{% trans 'Tell us about your inquiry, project, or how we can help...' context 'website' %}" required></textarea>
+            <label class="form-label" for="contact-message">{% trans "Message" context "website" %} *</label>
+            <textarea name="message" id="contact-message" class="form-control" rows="5" placeholder="{% trans 'Tell us about your inquiry, project, or how we can help...' context 'website' %}" required></textarea>
           </div>
           <div class="checkbox-group">
             <input type="checkbox" id="privacy" name="privacy" value="yes" required/>
@@ -287,7 +287,6 @@ United States{% endblocktrans %}
 
 <script>
 (function () {
-  var g = function (s) { return (typeof gettext === 'function') ? gettext(s) : s; };
   window.WEBSITE_I18N = {
     firstNameRequired: '{% filter escapejs %}{% trans "Please enter your first name." context "website" %}{% endfilter %}',
     lastNameRequired: '{% filter escapejs %}{% trans "Please enter your last name." context "website" %}{% endfilter %}',
@@ -297,9 +296,9 @@ United States{% endblocktrans %}
     emailInvalid: '{% filter escapejs %}{% trans "Please enter a valid email address." context "website" %}{% endfilter %}',
     privacyRequired: '{% filter escapejs %}{% trans "Please agree to the Privacy Policy before sending." context "website" %}{% endfilter %}',
   };
-  Object.keys(window.WEBSITE_I18N).forEach(function (k) {
-    window.WEBSITE_I18N[k] = g(window.WEBSITE_I18N[k]);
-  });
+  // No client-side gettext pass: the trans tags above already rendered every
+  // value in the active locale, so re-translating would look an
+  // already-translated string up against English msgids.
 })();
 </script>
 <style>
@@ -385,33 +384,7 @@ United States{% endblocktrans %}
   })();
 </script>
 <script src="{% static 'adminlte/js/main.js' %}"></script>
-  <script>
-(function () {
-  window.PWA_I18N = {
-    notificationBody: '{% filter escapejs %}{% trans "You have a new notification" context "website" %}{% endfilter %}',
-    open: '{% filter escapejs %}{% trans "Open" context "website" %}{% endfilter %}',
-    dismiss: '{% filter escapejs %}{% trans "Dismiss" context "website" %}{% endfilter %}',
-  };
-})();
-</script>
-<script>
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", function() {
-      navigator.serviceWorker.register("{% static 'adminlte/js/sw.js' %}")
-        .then(function(reg) {
-          function sendStrings() {
-            var sw = reg.active || navigator.serviceWorker.controller;
-            if (sw && window.PWA_I18N) {
-              sw.postMessage({ type: "PWA_STRINGS", strings: window.PWA_I18N });
-            }
-          }
-          sendStrings();
-          navigator.serviceWorker.addEventListener("controllerchange", sendStrings);
-        })
-        .catch(function(err) { console.warn("[PWA] SW registration failed:", err); });
-    });
-  }
-</script>
+  {% include "partials/_pwa_register.html" %}
   <script src="{% static 'adminlte/js/no_emoji.js' %}"></script>
 </body>
 </html>

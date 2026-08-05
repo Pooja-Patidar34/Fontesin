@@ -1,5 +1,6 @@
 import json
 import random
+import uuid
 from datetime import timedelta
 
 from dateutil.relativedelta import relativedelta
@@ -12,6 +13,19 @@ from django.utils.translation import gettext as _
 
 from billing.plan_i18n import attach_plan_display_fields, localized_plan_name
 from billing.models import CommercialPlan, Subscription, Invoice, ConsultantCommission
+
+
+def _company_uuid(raw):
+    """Parse a client-supplied company id, returning None when it isn't a UUID.
+
+    Company.id is a UUIDField, so passing a hand-edited value like ?company=abc
+    straight into a queryset raises ValidationError from the field's to_python
+    and 500s the page. Callers already treat "no company" as a normal outcome,
+    so a malformed id folds into that same path."""
+    try:
+        return uuid.UUID((raw or "").strip())
+    except (ValueError, AttributeError, TypeError):
+        return None
 
 
 def home(request):
@@ -103,7 +117,7 @@ def membership(request):
     selected_company = None
     if request.user.is_authenticated and not request.user.is_superuser:
         from accounts.models import Company
-        _cid = request.GET.get("company")
+        _cid = _company_uuid(request.GET.get("company"))
         if _cid:
             selected_company = Company.objects.filter(
                 id=_cid, owner_user=request.user
@@ -193,7 +207,9 @@ def select_plan(request):
     from accounts.models import Company
     from billing.utils import PLAN_TIERS, ensure_free_subscription
 
-    company_id = request.POST.get("company_id") or request.GET.get("company")
+    company_id = _company_uuid(
+        request.POST.get("company_id") or request.GET.get("company")
+    )
     company = (
         Company.objects.filter(id=company_id, owner_user=user).first()
         if company_id else None

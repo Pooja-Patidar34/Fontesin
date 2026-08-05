@@ -178,6 +178,11 @@ class Tenant(models.Model):
         return self.franchise_status == FranchiseUnitStatus.ACTIVE
 
     @property
+    def is_franchise_suspended(self):
+        """Suspended: historical data stays readable, active rights are gone."""
+        return self.franchise_status == FranchiseUnitStatus.SUSPENDED
+
+    @property
     def territory_key(self):
         """Normalised (country, region, city, local_area) tuple used for
         territory comparison and exclusivity."""
@@ -900,6 +905,16 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+    @property
+    def display_name(self):
+        """Human label for this user: full name when we have one, else email.
+
+        Built as a whole rather than falling back per-field — defaulting only
+        last_name renders "Ada ada@example.com" for a user with no surname, and
+        a leading space before the email when both names are blank.
+        """
+        return f"{self.first_name} {self.last_name}".strip() or self.email
 
     def persist_preferred_language(self, language):
         """Write preferred_language directly to the database."""

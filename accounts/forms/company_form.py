@@ -563,7 +563,7 @@ class CompanyForm(forms.ModelForm):
         if not ADDRESS_LINE_RE.match(value):
             raise forms.ValidationError(
                 _("%(label)s may only contain letters, digits, spaces and the symbols , . - / #. "
-                  "Other special characters (such as ! @ $ %% ^ * {{ }} [ ] < >) are not allowed.")
+                  "Other special characters (such as ! @ $ %% ^ * { } [ ] < >) are not allowed.")
                 % {"label": label}
             )
         return value

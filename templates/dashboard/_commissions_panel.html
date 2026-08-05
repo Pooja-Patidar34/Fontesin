@@ -92,7 +92,7 @@ the whole dashboard layout.
                           onclick="appConfirm({
                             kind: 'success',
                             title: '{% filter escapejs %}{% trans "Mark Commission as Paid?" context "billing" %}{% endfilter %}',
-                            text: '{% filter escapejs %}{% blocktrans trimmed with amount=c.commission_amount|floatformat:2 currency=c.currency email=c.consultant.email context "billing" %}This records the disbursement of <strong>{{ amount }} {{ currency }}</strong> to <strong>{{ email }}</strong>. This action cannot be undone.{% endblocktrans %}{% endfilter %}',
+                            text: '{% filter escapejs %}{% blocktrans trimmed with amount=c.commission_amount|floatformat:2 currency=c.currency email=c.consultant.email context "billing" %}This records the disbursement of {{ amount }} {{ currency }} to {{ email }}. This action cannot be undone.{% endblocktrans %}{% endfilter %}',
                             okLabel: '{% filter escapejs %}{% trans "Mark as Paid" context "billing" %}{% endfilter %}',
                             okIcon: 'fa-check',
                             onConfirm: function(){ document.getElementById('commission-paid-form-{{ c.id }}').submit(); }

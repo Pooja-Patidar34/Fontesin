@@ -36,6 +36,9 @@ class ActiveCompanyMiddleware:
         "logout",
         "login",
         "set_language",
+        # /jsi18n/ sits outside the /i18n/ prefix below — without this the JS
+        # translation catalog is redirected to the picker on every gated page.
+        "javascript-catalog",
     )
     _ALLOWED_PREFIXES = (
         "/static/",

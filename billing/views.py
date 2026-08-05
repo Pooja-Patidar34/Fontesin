@@ -8,6 +8,7 @@ from decimal import Decimal
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.db import IntegrityError, transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.utils import timezone
@@ -199,55 +200,61 @@ def payment_approve(request, subscription_id):
     # non-deterministic plan tier. Legacy rows without a company fall back to
     # the old per-user supersede. Using "cancelled" because the existing
     # STATUS_CHOICES has no "superseded"/"expired" — closest fit.
-    supersede_qs = Subscription.objects.filter(status="active").exclude(pk=sub.pk)
-    if sub.company_id:
-        supersede_qs = supersede_qs.filter(company_id=sub.company_id)
-    else:
-        supersede_qs = supersede_qs.filter(user=sub.user, company__isnull=True)
-    supersede_qs.update(status="cancelled", end_date=now, updated_at=now)
+    # Supersede + activate is one unit of work: the old subscription is already
+    # cancelled by the time this row is saved, so a failure in between (a DB
+    # error, or maybe_create_commission_for_subscription raising) would leave
+    # the company with NO active plan. Same guarantee select_plan gives its
+    # downgrade-to-Free path.
+    with transaction.atomic():
+        supersede_qs = Subscription.objects.filter(status="active").exclude(pk=sub.pk)
+        if sub.company_id:
+            supersede_qs = supersede_qs.filter(company_id=sub.company_id)
+        else:
+            supersede_qs = supersede_qs.filter(user=sub.user, company__isnull=True)
+        supersede_qs.update(status="cancelled", end_date=now, updated_at=now)
 
-    # Recompute end_date from the approval moment so the user gets the full
-    # paid period starting NOW, not from when they originally submitted.
-    # Previously select_plan set end_date at submission time (start + 1y for
-    # yearly / +1m for monthly), so any days the request sat in the admin
-    # queue silently shortened the subscription — a yearly Pro approved 11
-    # days late ended ~11 months later, not 12. Driving end_date off the
-    # billing_period at approval time fixes that drift.
-    #
-    # We read the period off `sub.billing_period` (a per-subscription
-    # snapshot taken at purchase time), not off `sub.plan.billing_period` —
-    # that way, if the admin edits the plan template between submission and
-    # approval (yearly → monthly), the user still gets the period they
-    # actually bought.
-    from dateutil.relativedelta import relativedelta
-    sub.status = "active"
-    sub.start_date = now
-    if sub.billing_period == "monthly":
-        sub.end_date = now + relativedelta(months=1)
-    else:
-        sub.end_date = now + relativedelta(years=1)
-    sub.save(update_fields=["status", "start_date", "end_date", "updated_at"])
+        # Recompute end_date from the approval moment so the user gets the full
+        # paid period starting NOW, not from when they originally submitted.
+        # Previously select_plan set end_date at submission time (start + 1y for
+        # yearly / +1m for monthly), so any days the request sat in the admin
+        # queue silently shortened the subscription — a yearly Pro approved 11
+        # days late ended ~11 months later, not 12. Driving end_date off the
+        # billing_period at approval time fixes that drift.
+        #
+        # We read the period off `sub.billing_period` (a per-subscription
+        # snapshot taken at purchase time), not off `sub.plan.billing_period` —
+        # that way, if the admin edits the plan template between submission and
+        # approval (yearly → monthly), the user still gets the period they
+        # actually bought.
+        from dateutil.relativedelta import relativedelta
+        sub.status = "active"
+        sub.start_date = now
+        if sub.billing_period == "monthly":
+            sub.end_date = now + relativedelta(months=1)
+        else:
+            sub.end_date = now + relativedelta(years=1)
+        sub.save(update_fields=["status", "start_date", "end_date", "updated_at"])
 
-    # Sync User.subscription_plan to the newly-active plan. select_plan
-    # intentionally defers this write for paid upgrades; this is the
-    # promotion point.
-    user = sub.user
-    new_plan_code = (sub.plan.code or "").lower() if sub.plan_id else ""
-    if new_plan_code and user.subscription_plan != new_plan_code:
-        user.subscription_plan = new_plan_code
-        user.save(update_fields=["subscription_plan"])
+        # Sync User.subscription_plan to the newly-active plan. select_plan
+        # intentionally defers this write for paid upgrades; this is the
+        # promotion point.
+        user = sub.user
+        new_plan_code = (sub.plan.code or "").lower() if sub.plan_id else ""
+        if new_plan_code and user.subscription_plan != new_plan_code:
+            user.subscription_plan = new_plan_code
+            user.save(update_fields=["subscription_plan"])
 
-    # Mark the related invoice as paid
-    Invoice.objects.filter(subscription=sub, status="pending").update(
-        status="paid", paid_at=now
-    )
+        # Mark the related invoice as paid
+        Invoice.objects.filter(subscription=sub, status="pending").update(
+            status="paid", paid_at=now
+        )
 
-    # Consultant commission: 10% to the consultant whose company the business
-    # user is currently linked to as their primary. Skipped for the Free plan
-    # (no real revenue), for users with no primary_company, and for companies
-    # whose `consultant` FK is unset. The unique (consultant, subscription)
-    # constraint makes this idempotent — re-approval can never double-pay.
-    maybe_create_commission_for_subscription(sub, now)
+        # Consultant commission: 10% to the consultant whose company the business
+        # user is currently linked to as their primary. Skipped for the Free plan
+        # (no real revenue), for users with no primary_company, and for companies
+        # whose `consultant` FK is unset. The unique (consultant, subscription)
+        # constraint makes this idempotent — re-approval can never double-pay.
+        maybe_create_commission_for_subscription(sub, now)
 
     messages.success(request, _("Subscription for %(email)s has been approved.") % {"email": sub.user.email})
     return _safe_next_or_default(request, "payments")
@@ -1003,64 +1010,69 @@ def payment_edit(request, subscription_id):
             sub.user.subscription_plan = plan.code
             sub.user.save(update_fields=["subscription_plan"])
 
-    if status and status in _SUBSCRIPTION_STATUS_CODES:
-        old_status = sub.status
-        sub.status = status
-        # If changing to active, supersede any OTHER active subscription for
-        # this user first, then mark the invoice paid. The DB enforces
-        # unique_active_subscription_per_user, so without superseding (e.g. the
-        # Free plan they're currently on, or a previously-approved sub) flipping
-        # this row to "active" raises an IntegrityError — exactly what happened
-        # approving a cancelled subscription. Mirrors payment_approve.
-        if status == "active" and old_status != "active":
-            now = timezone.now()
-            # Scope the supersede to the subscription's COMPANY — plans are
-            # company-scoped (unique_active_subscription_per_company), so
-            # cancelling every active sub for the user would wrongly kill the
-            # plans on their other companies. Legacy rows without a company fall
-            # back to the old per-user supersede.
-            supersede_qs = Subscription.objects.filter(status="active").exclude(pk=sub.pk)
-            if sub.company_id:
-                supersede_qs = supersede_qs.filter(company_id=sub.company_id)
-            else:
-                supersede_qs = supersede_qs.filter(user=sub.user, company__isnull=True)
-            supersede_qs.update(status="cancelled", end_date=now, updated_at=now)
-            Invoice.objects.filter(subscription=sub, status="pending").update(
-                status="paid", paid_at=now
+    # Status flip, supersede, invoice/commission realignment and the sub.save()
+    # are one unit of work: the previous plan is cancelled before this row is
+    # written, so a failure in between would leave the company with no active
+    # plan. Mirrors payment_approve.
+    with transaction.atomic():
+        if status and status in _SUBSCRIPTION_STATUS_CODES:
+            old_status = sub.status
+            sub.status = status
+            # If changing to active, supersede any OTHER active subscription for
+            # this user first, then mark the invoice paid. The DB enforces
+            # unique_active_subscription_per_user, so without superseding (e.g. the
+            # Free plan they're currently on, or a previously-approved sub) flipping
+            # this row to "active" raises an IntegrityError — exactly what happened
+            # approving a cancelled subscription. Mirrors payment_approve.
+            if status == "active" and old_status != "active":
+                now = timezone.now()
+                # Scope the supersede to the subscription's COMPANY — plans are
+                # company-scoped (unique_active_subscription_per_company), so
+                # cancelling every active sub for the user would wrongly kill the
+                # plans on their other companies. Legacy rows without a company fall
+                # back to the old per-user supersede.
+                supersede_qs = Subscription.objects.filter(status="active").exclude(pk=sub.pk)
+                if sub.company_id:
+                    supersede_qs = supersede_qs.filter(company_id=sub.company_id)
+                else:
+                    supersede_qs = supersede_qs.filter(user=sub.user, company__isnull=True)
+                supersede_qs.update(status="cancelled", end_date=now, updated_at=now)
+                Invoice.objects.filter(subscription=sub, status="pending").update(
+                    status="paid", paid_at=now
+                )
+                # Sync the user's current plan to the now-active plan.
+                if sub.user and sub.plan_id:
+                    new_code = (sub.plan.code or "").lower()
+                    if new_code and sub.user.subscription_plan != new_code:
+                        sub.user.subscription_plan = new_code
+                        sub.user.save(update_fields=["subscription_plan"])
+
+        if new_end_dt is not None:
+            sub.end_date = new_end_dt
+
+        sub.save()
+
+        # If the plan changed, realign the unpaid invoice and any PENDING commission
+        # to the NEW plan's price. Without this, downgrading (e.g. Global -> Basic)
+        # leaves the commission at the old plan's rate, because the commission amount
+        # was copied from the original invoice and is never recomputed otherwise.
+        # Paid invoices/commissions are left untouched as historical records.
+        if plan_changed:
+            new_price = sub.plan.price
+            new_currency = (getattr(sub.plan, "currency", None) or "USD").upper()
+            Invoice.objects.filter(subscription=sub).exclude(status="paid").update(
+                amount=new_price, currency=new_currency
             )
-            # Sync the user's current plan to the now-active plan.
-            if sub.user and sub.plan_id:
-                new_code = (sub.plan.code or "").lower()
-                if new_code and sub.user.subscription_plan != new_code:
-                    sub.user.subscription_plan = new_code
-                    sub.user.save(update_fields=["subscription_plan"])
-
-    if new_end_dt is not None:
-        sub.end_date = new_end_dt
-
-    sub.save()
-
-    # If the plan changed, realign the unpaid invoice and any PENDING commission
-    # to the NEW plan's price. Without this, downgrading (e.g. Global -> Basic)
-    # leaves the commission at the old plan's rate, because the commission amount
-    # was copied from the original invoice and is never recomputed otherwise.
-    # Paid invoices/commissions are left untouched as historical records.
-    if plan_changed:
-        new_price = sub.plan.price
-        new_currency = (getattr(sub.plan, "currency", None) or "USD").upper()
-        Invoice.objects.filter(subscription=sub).exclude(status="paid").update(
-            amount=new_price, currency=new_currency
-        )
-        for comm in ConsultantCommission.objects.filter(subscription=sub, status="pending"):
-            comm.subscription_amount = new_price
-            comm.currency = new_currency
-            comm.commission_amount = (
-                new_price * comm.rate_percent / Decimal("100")
-            ).quantize(Decimal("0.01"))
-            comm.save(update_fields=[
-                "subscription_amount", "currency",
-                "commission_amount", "updated_at",
-            ])
+            for comm in ConsultantCommission.objects.filter(subscription=sub, status="pending"):
+                comm.subscription_amount = new_price
+                comm.currency = new_currency
+                comm.commission_amount = (
+                    new_price * comm.rate_percent / Decimal("100")
+                ).quantize(Decimal("0.01"))
+                comm.save(update_fields=[
+                    "subscription_amount", "currency",
+                    "commission_amount", "updated_at",
+                ])
 
     messages.success(request, _("Subscription for %(email)s updated successfully.") % {"email": sub.user.email})
     return _safe_next_or_default(request, "payments")
@@ -1187,39 +1199,58 @@ def _move_subscribers_to_free(deactivated_plan):
         if user is None:
             continue
 
-        # Cancel the now-invalid paid sub. This frees the per-company active
-        # constraint slot so we can insert the Free replacement on the next
-        # line. Plans are company-scoped, so the Free replacement is created
-        # for the subscription's COMPANY (not just the user).
-        sub.status = "cancelled"
-        sub.end_date = now
-        sub.save(update_fields=["status", "end_date", "updated_at"])
+        # One atomic block PER SUBSCRIBER, not per batch. The cancel frees the
+        # unique-active constraint slot that the Free insert then claims, so the
+        # two must commit together: without this, a failing insert (a genuine
+        # race on unique_active_subscription_per_company) would leave that
+        # subscriber cancelled with no plan at all. Catching per iteration also
+        # keeps one bad row from aborting the batch and skipping everyone after
+        # it — the remaining subscribers still get moved.
+        try:
+            with transaction.atomic():
+                # Cancel the now-invalid paid sub. This frees the per-company
+                # active constraint slot so we can insert the Free replacement
+                # on the next line. Plans are company-scoped, so the Free
+                # replacement is created for the subscription's COMPANY (not
+                # just the user).
+                sub.status = "cancelled"
+                sub.end_date = now
+                sub.save(update_fields=["status", "end_date", "updated_at"])
 
-        # Idempotent guard: skip the Free insert if this company (or the user,
-        # for legacy company-less subs) already has an active sub.
-        active_filter = (
-            {"company_id": sub.company_id}
-            if sub.company_id
-            else {"user": user, "company__isnull": True}
-        )
-        has_active = Subscription.objects.filter(
-            status__in=["active", "trial"], **active_filter
-        ).exists()
-        if not has_active:
-            from dateutil.relativedelta import relativedelta
-            Subscription.objects.create(
-                user=user,
-                company_id=sub.company_id,
-                plan=free_plan,
-                billing_period=free_plan.billing_period,
-                status="active",
-                start_date=now,
-                end_date=now + relativedelta(years=1),
+                # Idempotent guard: skip the Free insert if this company (or the
+                # user, for legacy company-less subs) already has an active sub.
+                active_filter = (
+                    {"company_id": sub.company_id}
+                    if sub.company_id
+                    else {"user": user, "company__isnull": True}
+                )
+                has_active = Subscription.objects.filter(
+                    status__in=["active", "trial"], **active_filter
+                ).exists()
+                if not has_active:
+                    from dateutil.relativedelta import relativedelta
+                    Subscription.objects.create(
+                        user=user,
+                        company_id=sub.company_id,
+                        plan=free_plan,
+                        billing_period=free_plan.billing_period,
+                        status="active",
+                        start_date=now,
+                        end_date=now + relativedelta(years=1),
+                    )
+
+                if user.subscription_plan != "free":
+                    user.subscription_plan = "free"
+                    user.save(update_fields=["subscription_plan"])
+        except IntegrityError:
+            # This subscriber keeps their original paid row (the cancel rolled
+            # back), so they're no worse off than before the toggle. Logged so
+            # the admin can be told the count moved is short.
+            logger.exception(
+                "plan_toggle: could not move subscription %s (user %s) to Free",
+                sub.pk, getattr(user, "pk", None),
             )
-
-        if user.subscription_plan != "free":
-            user.subscription_plan = "free"
-            user.save(update_fields=["subscription_plan"])
+            continue
 
         moved += 1
     return moved
@@ -1291,10 +1322,10 @@ def plan_edit(request, plan_id):
         messages.success(request, _("Plan '%(name)s' updated successfully.") % {"name": plan.name})
 
     except (ValueError, TypeError) as e:
-        logger.error("Invalid data editing plan %s: %s", plan_id, e)
+        logger.exception("Invalid data editing plan %s: %s", plan_id, e)
         messages.error(request, _("Invalid data provided. Please check your input."))
     except Exception as e:
-        logger.error("Error editing plan %s: %s", plan_id, e)
+        logger.exception("Error editing plan %s: %s", plan_id, e)
         messages.error(request, _("Failed to update plan."))
 
     return redirect("subscriptions")

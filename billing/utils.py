@@ -48,8 +48,9 @@ def resolve_active_company(user):
     # 3. Multiple owned and nothing selected → primary_company if owned.
     if len(owned) > 1:
         primary = getattr(user, "primary_company", None)
-        if primary and any(c.id == primary.id for c in
-                           Company.objects.filter(owner_user=user, id=primary.id)):
+        if primary and Company.objects.filter(
+            owner_user=user, id=primary.id
+        ).exists():
             return primary
         return owned[0]
     # 4. No owned company.
@@ -210,10 +211,13 @@ def get_pending_subscription(user, company=None):
     return base.filter(user=user, company__isnull=True).order_by("-created_at").first()
 
 
-def get_user_plan(user, subscription=None):
-    """Get the user's current CommercialPlan or None."""
+def get_user_plan(user, subscription=None, company=None):
+    """Get the user's current CommercialPlan or None.
+
+    Pass `company` when the caller has already resolved the acting company, so
+    the lookup below doesn't resolve it a second time."""
     if subscription is None:
-        subscription = get_active_subscription(user)
+        subscription = get_active_subscription(user, company=company)
     return subscription.plan if subscription else None
 
 

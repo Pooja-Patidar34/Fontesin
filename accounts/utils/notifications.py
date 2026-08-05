@@ -28,7 +28,10 @@ from FontEsin.i18n import user_language
 logger = logging.getLogger("technical")
 
 
-def scope_notifications_qs(qs, user):
+_UNRESOLVED = object()
+
+
+def scope_notifications_qs(qs, user, active_company=_UNRESOLVED):
     """Restrict a Notification queryset to what `user` should see given the
     company they're currently acting as.
 
@@ -49,8 +52,13 @@ def scope_notifications_qs(qs, user):
     if role_code != "business_user":
         return qs
 
-    from billing.utils import resolve_active_company
-    active_company = resolve_active_company(user)
+    # Callers that already resolved the acting company (e.g. the context
+    # processor, which needs it several times per request) pass it in; the
+    # sentinel keeps "caller passed None" distinguishable from "not passed",
+    # so an explicit None doesn't trigger a redundant resolve.
+    if active_company is _UNRESOLVED:
+        from billing.utils import resolve_active_company
+        active_company = resolve_active_company(user)
     if active_company is None:
         return qs
     return qs.filter(Q(related_company__isnull=True) | Q(related_company=active_company))

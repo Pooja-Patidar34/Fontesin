@@ -548,13 +548,12 @@
 
 <script>
 (function () {
-  var g = function (s) { return (typeof gettext === 'function') ? gettext(s) : s; };
   window.WEBSITE_I18N = {
     copiedPrefix: '{% filter escapejs %}{% trans "Copied:" context "website" %}{% endfilter %}',
   };
-  Object.keys(window.WEBSITE_I18N).forEach(function (k) {
-    window.WEBSITE_I18N[k] = g(window.WEBSITE_I18N[k]);
-  });
+  // No client-side gettext pass: the trans tags above already rendered every
+  // value in the active locale, so re-translating would look an
+  // already-translated string up against English msgids.
 })();
 </script>
 <script>

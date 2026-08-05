@@ -318,10 +318,14 @@ def profile_view(request):
                 preferred_language_raw = preferred_language_raw.strip()
                 if preferred_language_raw and preferred_language_raw not in SupportedLocale.ALL:
                     return _fail(_("Please select a valid language."))
+                # A blank value means "not submitted", not "reset to English" —
+                # a select rendered without a selection, or a partial AJAX
+                # payload that still carries the key, must leave the stored
+                # preference alone. Same fallback as the key-absent branch below.
                 preferred_language = (
                     normalize_locale(preferred_language_raw)
                     if preferred_language_raw
-                    else SupportedLocale.EN
+                    else (user.preferred_language or SupportedLocale.EN)
                 )
             else:
                 preferred_language = user.preferred_language or SupportedLocale.EN
@@ -864,7 +868,13 @@ def profile_view(request):
         "entity_types": CompanyEntityTypeChoices.CHOICES,
         "employee_count_ranges": EmployeeCountRangeChoices.CHOICES,
         "countries": CountryChoices.CHOICES,
-        "language_choices": [(code, LANGUAGE_DISPLAY_NAMES[code]) for code, _ in SupportedLocale.CHOICES],
+        # `label`, not `_`: the throwaway name would shadow the module's gettext
+        # alias, and it doubles as the fallback when a locale is added to
+        # SupportedLocale before LANGUAGE_DISPLAY_NAMES catches up.
+        "language_choices": [
+            (code, LANGUAGE_DISPLAY_NAMES.get(code, label))
+            for code, label in SupportedLocale.CHOICES
+        ],
         "preferred_language": user.preferred_language or SupportedLocale.EN,
         "preferred_language_display": LANGUAGE_DISPLAY_NAMES.get(
             user.preferred_language or SupportedLocale.EN,

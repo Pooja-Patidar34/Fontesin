@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.exceptions import PermissionDenied
@@ -23,6 +25,8 @@ from accounts.view.saved_filter import (
     _plan_code_for_business_user,
 )
 from billing.utils import PLAN_REGIONS, _region_for_country, get_user_geographic_scope
+
+logger = logging.getLogger("technical")
 
 
 def _coordinator_region_code(user):
@@ -578,7 +582,14 @@ def company_list(request):
                     from billing.utils import ensure_free_subscription
                     ensure_free_subscription(company, user=request.user)
                 except Exception:
-                    pass
+                    # Still non-fatal — the company exists and the user must not
+                    # lose it over a billing hiccup — but a company left with no
+                    # subscription resolves to mode="none" in
+                    # get_user_geographic_scope, which blocks the whole
+                    # directory. Never let that happen without a trace.
+                    logger.exception(
+                        "ensure_free_subscription failed for company %s", company.pk
+                    )
 
             if emit_cert_notification:
                 try:

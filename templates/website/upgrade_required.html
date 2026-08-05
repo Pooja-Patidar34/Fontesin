@@ -87,14 +87,15 @@
     <div class="feature-name">{{ feature|cut:"_" }}</div>
     {% endif %}
 
+    {% comment %} One complete sentence per branch rather than fragments joined by
+       the conditional: the plan name has to inflect with the preposition in some
+       languages, which a standalone "a higher plan" fragment can't do. {% endcomment %}
     <p>
-      {% blocktrans context "website" %}This feature is not available on your current plan. Upgrade to{% endblocktrans %}
       {% if required_plan %}
-        <strong>{{ required_plan|upper }}</strong> {% trans "or higher" context "website" %}
+        {% blocktrans trimmed with plan=required_plan|upper context "website" %}This feature is not available on your current plan. Upgrade to {{ plan }} or higher to unlock this feature.{% endblocktrans %}
       {% else %}
-        {% trans "a higher plan" context "website" %}
+        {% blocktrans trimmed context "website" %}This feature is not available on your current plan. Upgrade to a higher plan to unlock this feature.{% endblocktrans %}
       {% endif %}
-      {% trans "to unlock this feature." context "website" %}
     </p>
 
     <div class="current-plan">

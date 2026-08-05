@@ -59,6 +59,8 @@ class RequireApplicationApprovalMiddleware:
         "career",
         "contact",
         "set_language",
+        # JS translation catalog (/jsi18n/) — no prefix covers it.
+        "javascript-catalog",
     )
 
     _ALLOWED_PREFIXES = (

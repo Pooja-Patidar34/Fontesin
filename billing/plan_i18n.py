@@ -93,37 +93,34 @@ def _canonical(code: str) -> dict:
     return PLAN_CANONICAL.get((code or "").lower(), {})
 
 
-def localized_plan_name(plan) -> str:
+def _localized_plan_field(plan, field: str) -> str:
+    """Translate one canonical plan field, falling back to the stored value.
+
+    The three public helpers below differ only in which field they read, so the
+    lookup lives here once — otherwise a fix to one (say, the non-canonical
+    fallback) silently leaves the other two behind.
+
+    A canonical plan's text is translated under a per-plan context; a plan whose
+    code isn't in PLAN_CANONICAL keeps whatever the DB holds, untranslated."""
     code = (getattr(plan, "code", None) or "").lower()
-    canonical = _canonical(code)
-    msgid = canonical.get("name") or getattr(plan, "name", "") or ""
+    msgid = _canonical(code).get(field) or getattr(plan, field, "") or ""
     if not msgid:
         return ""
     if code in PLAN_CANONICAL:
         return pgettext(_plan_context(code), msgid)
     return msgid
+
+
+def localized_plan_name(plan) -> str:
+    return _localized_plan_field(plan, "name")
 
 
 def localized_plan_tagline(plan) -> str:
-    code = (getattr(plan, "code", None) or "").lower()
-    canonical = _canonical(code)
-    msgid = canonical.get("tagline") or getattr(plan, "tagline", "") or ""
-    if not msgid:
-        return ""
-    if code in PLAN_CANONICAL:
-        return pgettext(_plan_context(code), msgid)
-    return msgid
+    return _localized_plan_field(plan, "tagline")
 
 
 def localized_plan_best_for(plan) -> str:
-    code = (getattr(plan, "code", None) or "").lower()
-    canonical = _canonical(code)
-    msgid = canonical.get("best_for") or getattr(plan, "best_for", "") or ""
-    if not msgid:
-        return ""
-    if code in PLAN_CANONICAL:
-        return pgettext(_plan_context(code), msgid)
-    return msgid
+    return _localized_plan_field(plan, "best_for")
 
 
 def _feature_entry(raw):

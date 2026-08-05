@@ -22,7 +22,10 @@
   window.WEBSITE_MAP_I18N = {
     mapLoading: '{% filter escapejs %}{% trans "Map loading..." context "website" %}{% endfilter %}',
     active: '{% filter escapejs %}{% trans "Active" context "website" %}{% endfilter %}',
-    plannedYear: '{% filter escapejs %}{% trans "Planned – Year" context "website" %}{% endfilter %}',
+    {% comment %} Placeholder, not a fragment glued to the year in JS: languages
+       differ on where the year goes and how the phrase inflects around it.
+       "__YEAR__" is swapped client-side. {% endcomment %}
+    plannedYear: '{% filter escapejs %}{% blocktrans trimmed with year="__YEAR__" context "website" %}Planned – Year {{ year }}{% endblocktrans %}{% endfilter %}',
     clickDetails: '{% filter escapejs %}{% trans "Click for details →" context "website" %}{% endfilter %}',
     unitedStates: '{% filter escapejs %}{% trans "United States" context "website" %}{% endfilter %}',
     germany: '{% filter escapejs %}{% trans "Germany" context "website" %}{% endfilter %}',
@@ -128,7 +131,7 @@ function initMap() {
         if (tooltip) {
           const statusLabel = info.status === 'active'
             ? '● ' + window.WEBSITE_MAP_I18N.active
-            : '◌ ' + window.WEBSITE_MAP_I18N.plannedYear + ' ' + info.year;
+            : '◌ ' + window.WEBSITE_MAP_I18N.plannedYear.replace('__YEAR__', info.year);
           const statusColor = info.status === 'active' ? '#253D51' : '#5F8FAA';
           tooltip.innerHTML = `
             <div class="map-tooltip__name">${info.name}</div>

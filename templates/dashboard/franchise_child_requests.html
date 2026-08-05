@@ -14,6 +14,8 @@
   .cr-pane.active { display: block; }
   .empty-state { text-align: center; color: #94a3b8; padding: 2.5rem 1rem; }
   .empty-state .fa-2x { margin-bottom: .5rem; }
+  .cr-pager { display: flex; justify-content: flex-end; align-items: center; gap: 8px; padding: 12px 16px; border-top: 1px solid #f1f5f9; }
+  .cr-pager__btn { border: 1px solid #dbe3ec; border-radius: 8px; padding: 5px 12px; font-size: .8rem; font-weight: 600; color: #334155; text-decoration: none; background: #fff; }
   .cr-info-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 18px; font-size: .8rem; color: #475569; margin-top: 6px; }
   .cr-info-grid div { min-width: 0; overflow-wrap: anywhere; }
   .cr-info-grid div span { color: #94a3b8; margin-right: 5px; }
@@ -46,15 +48,28 @@
     </div>
   </div>
 
+  {% comment %} Only an ACTIVE node is a parent reviewer, so without one every
+     queue below is empty by construction — say why instead of showing four
+     empty tabs that look like "no one has asked yet". {% endcomment %}
+  {% if not is_reviewer %}
+  <div class="empty-state">
+    <i class="fas fa-store-slash fa-2x"></i>
+    <p class="mb-0">{% trans "You have no active franchise, so no sub-franchise requests are routed to you." context "franchise" %}</p>
+    <p class="small mb-0">{% trans "Once one of your franchises is active, requests to open a franchise inside its territory appear here." context "franchise" %}</p>
+  </div>
+  {% else %}
+
   <div class="cr-tabs">
     <button type="button" class="cr-tab active" data-pane="pending">
       {% trans "Pending" context "workflows" %}{% if pending %}<span class="badge badge-warning">{{ pending|length }}</span>{% endif %}
     </button>
+    {% comment %} Approved / Rejected are Page objects — count the whole list, not
+       just the rows on the current page. {% endcomment %}
     <button type="button" class="cr-tab" data-pane="approved">
-      {% trans "Approved" context "workflows" %}{% if approved %}<span class="badge badge-secondary">{{ approved|length }}</span>{% endif %}
+      {% trans "Approved" context "workflows" %}{% if approved.paginator.count %}<span class="badge badge-secondary">{{ approved.paginator.count }}</span>{% endif %}
     </button>
     <button type="button" class="cr-tab" data-pane="rejected">
-      {% trans "Rejected" context "workflows" %}{% if rejected %}<span class="badge badge-secondary">{{ rejected|length }}</span>{% endif %}
+      {% trans "Rejected" context "workflows" %}{% if rejected.paginator.count %}<span class="badge badge-secondary">{{ rejected.paginator.count }}</span>{% endif %}
     </button>
     {% comment %} Sub-franchises below you asking to hand their territory back —
        your call, the same way their request to open it was. {% endcomment %}
@@ -101,7 +116,7 @@
                 <div class="cr-motivation" style="background:#fff5f5; border-color:#fbdada; color:#9f1239;">
                   <i class="fas fa-exclamation-triangle mr-1"></i>
                   {% blocktrans trimmed with name=a.conflict.name context "franchise" %}
-                  This territory is already held by <strong>{{ name }}</strong>. Only one franchise is allowed per territory — reject this request.
+                  This territory is already held by {{ name }}. Only one franchise is allowed per territory — reject this request.
                   {% endblocktrans %}
                 </div>
                 {% endif %}
@@ -189,6 +204,7 @@
       </div>
       {% endif %}
     </div>
+    {% include "dashboard/_cr_pager.html" with page=approved param="approved_page" tab="approved" %}
   </div>
 
   <!-- REJECTED -->
@@ -225,12 +241,14 @@
       </div>
       {% endif %}
     </div>
+    {% include "dashboard/_cr_pager.html" with page=rejected param="rejected_page" tab="rejected" %}
   </div>
 
   <!-- REMOVAL REQUESTS -->
   <div class="cr-pane" id="pane-removals">
     {% include "dashboard/_franchise_removal_panel.html" %}
   </div>
+  {% endif %}
 
 </div>
 

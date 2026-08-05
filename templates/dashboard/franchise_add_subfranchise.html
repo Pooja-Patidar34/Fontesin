@@ -40,7 +40,7 @@
       {% csrf_token %}
       <div class="fr-grid">
         <div>
-          <label class="fr-label">{% trans "Parent franchise" context "franchise" %} <span class="req">*</span></label>
+          <label class="fr-label" for="sf-parent">{% trans "Parent franchise" context "franchise" %} <span class="req">*</span></label>
           <select name="parent_node_id" id="sf-parent" class="fr-control" required>
             {% for n in active_nodes %}
             <option value="{{ n.id }}"{% if form_data.parent_node_id == n.id|stringformat:'s' %} selected{% endif %}>{{ n.get_franchise_level_display }} — {{ n.name }}</option>
@@ -48,69 +48,74 @@
           </select>
         </div>
         <div>
-          <label class="fr-label">{% trans "Sub-franchise level" context "franchise" %} <span class="req">*</span></label>
+          <label class="fr-label" for="sf-level">{% trans "Sub-franchise level" context "franchise" %} <span class="req">*</span></label>
           <select name="requested_level" id="sf-level" class="fr-control" required></select>
         </div>
 
         <div class="full"><div class="fr-sub">{% trans "Territory (inside the parent's territory)" context "franchise" %}</div></div>
         <div>
-          <label class="fr-label">{% trans "Country" context "franchise" %}</label>
+          <label class="fr-label" for="sf-country">{% trans "Country" context "franchise" %}</label>
           <input type="text" id="sf-country" class="fr-control" readonly
                  title="{% trans "Inherited from the parent franchise" context "franchise" %}">
         </div>
         <div>
-          <label class="fr-label">{% trans "State / Region" context "franchise" %} <span class="req" id="sf-region-req" style="display:none;">*</span></label>
+          {% comment %}
+            Two controls share this label, so `for` can only name one of them:
+            both carry aria-labelledby back to the label id instead, which keeps
+            an accessible name on whichever one is currently shown.
+          {% endcomment %}
+          <label class="fr-label" id="sf-region-label" for="sf-region-text">{% trans "State / Region" context "franchise" %} <span class="req" id="sf-region-req" style="display:none;">*</span></label>
           {# Dropdown when the (inherited) country has known subdivisions; free-text fallback otherwise. Only the active one is enabled, so only it submits. #}
-          <select name="requested_region" id="sf-region-select" class="fr-control" style="display:none;" disabled></select>
-          <input type="text" name="requested_region" id="sf-region-text" class="fr-control"
+          <select name="requested_region" id="sf-region-select" class="fr-control" style="display:none;" aria-labelledby="sf-region-label" disabled></select>
+          <input type="text" name="requested_region" id="sf-region-text" class="fr-control" aria-labelledby="sf-region-label"
                  placeholder="{% trans "e.g. California" context "franchise" %}" value="{{ form_data.requested_region|default:'' }}">
         </div>
         <div id="sf-city-wrap">
-          <label class="fr-label">{% trans "City / District" context "franchise" %} <span class="req" id="sf-city-req" style="display:none;">*</span></label>
+          <label class="fr-label" for="sf-city">{% trans "City / District" context "franchise" %} <span class="req" id="sf-city-req" style="display:none;">*</span></label>
           <input type="text" name="requested_city" id="sf-city" class="fr-control"
                  placeholder="{% trans "e.g. San Diego" context "franchise" %}" value="{{ form_data.requested_city|default:'' }}">
         </div>
         <div id="sf-local-wrap">
-          <label class="fr-label">{% trans "Micro area (optional)" context "franchise" %}</label>
+          <label class="fr-label" for="sf-local">{% trans "Micro area (optional)" context "franchise" %}</label>
           <input type="text" name="requested_local_area" id="sf-local" class="fr-control"
                  placeholder="{% trans "Neighbourhood / district" context "franchise" %}" value="{{ form_data.requested_local_area|default:'' }}">
         </div>
 
         <div class="full"><div class="fr-sub">{% trans "Franchisee" context "franchise" %}</div></div>
         <div>
-          <label class="fr-label">{% trans "Legal name / Company name" context "franchise" %} <span class="req">*</span></label>
-          <input type="text" name="legal_name" class="fr-control" required
+          <label class="fr-label" for="sf-legal-name">{% trans "Legal name / Company name" context "franchise" %} <span class="req">*</span></label>
+          <input type="text" name="legal_name" id="sf-legal-name" class="fr-control" required
                  placeholder="{% trans "e.g. Acme Retail LLC" context "franchise" %}" value="{{ form_data.legal_name|default:'' }}">
         </div>
         <div>
-          <label class="fr-label">{% trans "Contact person" context "franchise" %} <span class="req">*</span></label>
-          <input type="text" name="contact_person" class="fr-control" required
+          <label class="fr-label" for="sf-contact-person">{% trans "Contact person" context "franchise" %} <span class="req">*</span></label>
+          <input type="text" name="contact_person" id="sf-contact-person" class="fr-control" required
                  placeholder="{% trans "Full name" context "franchise" %}" value="{{ form_data.contact_person|default:'' }}">
         </div>
         <div>
-          <label class="fr-label">{% trans "Email" context "franchise" %} <span class="req">*</span></label>
-          <input type="email" name="owner_email" class="fr-control" required
+          <label class="fr-label" for="sf-owner-email">{% trans "Email" context "franchise" %} <span class="req">*</span></label>
+          <input type="email" name="owner_email" id="sf-owner-email" class="fr-control" required
                  placeholder="{% trans "owner@example.com" context "franchise" %}" value="{{ form_data.owner_email|default:'' }}">
           <div class="text-muted small mt-1">{% trans "The person who will hold this sub-franchise. They must already have an account." context "franchise" %}</div>
         </div>
         <div>
-          <label class="fr-label">{% trans "Phone" context "franchise" %}</label>
-          <input type="text" name="contact_phone" class="fr-control"
+          <label class="fr-label" for="sf-contact-phone">{% trans "Phone" context "franchise" %}</label>
+          <input type="text" name="contact_phone" id="sf-contact-phone" class="fr-control"
                  placeholder="{% trans "+1 555 010 0000" context "franchise" %}" value="{{ form_data.contact_phone|default:'' }}">
         </div>
 
         <div class="full"><div class="fr-sub">{% trans "Status" context "workflows" %}</div></div>
         <div>
-          <label class="fr-label">{% trans "Contract status" context "franchise" %}</label>
-          <select name="contract_status" class="fr-control">
+          <label class="fr-label" for="sf-contract-status">{% trans "Contract status" context "franchise" %}</label>
+          <select name="contract_status" id="sf-contract-status" class="fr-control">
             {% for value, label in contract_choices %}
             <option value="{{ value }}"{% if form_data.contract_status == value %} selected{% endif %}>{{ label }}</option>
             {% endfor %}
           </select>
         </div>
         <div>
-          <label class="fr-label">{% trans "Payment status" context "franchise" %}</label>
-          <select name="fee_status" class="fr-control">
+          <label class="fr-label" for="sf-fee-status">{% trans "Payment status" context "franchise" %}</label>
+          <select name="fee_status" id="sf-fee-status" class="fr-control">
             {% for value, label in fee_choices %}
             <option value="{{ value }}"{% if form_data.fee_status == value %} selected{% endif %}>{{ label }}</option>
             {% endfor %}
@@ -118,8 +123,8 @@
         </div>
 
         <div class="full">
-          <label class="fr-label">{% trans "Notes (optional)" context "franchise" %}</label>
-          <textarea name="application_note" class="fr-control" rows="2"
+          <label class="fr-label" for="sf-note">{% trans "Notes (optional)" context "franchise" %}</label>
+          <textarea name="application_note" id="sf-note" class="fr-control" rows="2"
                     placeholder="{% trans "Anything the Platform Admin should know." context "franchise" %}">{{ form_data.application_note|default:'' }}</textarea>
         </div>
       </div>
@@ -147,11 +152,13 @@
 </div>
 
 {% if has_active_node %}
+{{ node_options|json_script:"sf-node-options" }}
 {{ country_states|json_script:"sf-country-states" }}
 {{ form_data|json_script:"sf-form-data" }}
 <script>
   (function () {
-    var options = {{ node_options_json|safe }};
+    var optionsNode = document.getElementById("sf-node-options");
+    var options = optionsNode ? JSON.parse(optionsNode.textContent) : [];
     var byId = {};
     options.forEach(function (o) { byId[o.id] = o; });
 
@@ -212,7 +219,11 @@
       var useSelect = opts.length > 0;
       if (useSelect) {
         var prev = regionSelect.value || initialRegion;
-        regionSelect.innerHTML = '<option value="">' + "{% trans 'Select State / Region' context 'franchise' %}" + '</option>';
+        regionSelect.textContent = "";  // drop the previous country's options
+        var placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = "{% trans 'Select State / Region' context 'franchise' %}";
+        regionSelect.appendChild(placeholder);
         opts.forEach(function (s) {
           var o = document.createElement("option");
           o.value = s; o.textContent = s;

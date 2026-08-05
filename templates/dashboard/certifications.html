@@ -288,7 +288,7 @@
                     </button>
                     <a href="{% url 'companies' %}?open_edit={{ c.id }}&from=certifications"
                        class="dropdown-item"
-                       title="{% filter escapejs %}{% trans 'Edit company details, then come back to approve' context 'dashboard' %}{% endfilter %}">
+                       title="{% trans 'Edit company details, then come back to approve' context 'dashboard' %}">
                       <i class="fas fa-edit mr-2 text-warning"></i> {% trans "Edit" context "common" %}
                     </a>
                     <div class="dropdown-divider"></div>
@@ -330,7 +330,7 @@
               <th>{% trans "Owner" context "dashboard" %}</th>
               <th>{% trans "City / Municipality" context "companies" %}</th>
               <th>{% trans "Certified" context "dashboard" %}</th>
-              <th>Status</th>
+              <th>{% trans "Status" context "workflows" %}</th>
               <th class="text-center">{% trans "Action" context "common" %}</th>
             </tr>
           </thead>

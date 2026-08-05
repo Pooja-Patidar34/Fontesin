@@ -160,7 +160,9 @@
 
 <script>
 (function () {
-  var g = function (s) { return (typeof gettext === 'function') ? gettext(s) : s; };
+  // The trans tags below already render every value in the active locale, so no
+  // client-side gettext pass is needed (it would look up an already-translated
+  // string against English msgids and find nothing).
   window.DASHBOARD_I18N = window.DASHBOARD_I18N || {};
   Object.assign(window.DASHBOARD_I18N, {
     monthNames: [
@@ -201,14 +203,6 @@
     metExpected: '{% filter escapejs %}{% trans "Met expected" context "dashboard" %}{% endfilter %}',
     noSubsInRange: '{% filter escapejs %}{% trans "No subscriptions sold in this range." context "dashboard" %}{% endfilter %}',
     toDateCantBeEarlier: '{% filter escapejs %}{% trans "The 'To' date can't be earlier than the 'From' date." context "dashboard" %}{% endfilter %}',
-  });
-  ['monthNames'].forEach(function (k) {
-    window.DASHBOARD_I18N[k] = window.DASHBOARD_I18N[k].map(g);
-  });
-  Object.keys(window.DASHBOARD_I18N).forEach(function (k) {
-    if (k !== 'monthNames' && typeof window.DASHBOARD_I18N[k] === 'string') {
-      window.DASHBOARD_I18N[k] = g(window.DASHBOARD_I18N[k]);
-    }
   });
 })();
 </script>

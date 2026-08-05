@@ -53,6 +53,12 @@ attributes (all optional except data-confirm):
     if (!overlay || overlay.dataset.bound === "1") return;  // include-once guard
     overlay.dataset.bound = "1";
 
+    // Fallbacks for forms that omit data-confirm-title / data-confirm-ok. Same
+    // msgids (and contexts) as the confirm defaults in base.html, so they reuse
+    // the existing translations rather than adding untranslated strings.
+    var DEFAULT_TITLE = "{% filter escapejs %}{% trans "Are you sure?" context "modal" %}{% endfilter %}";
+    var DEFAULT_OK = "{% filter escapejs %}{% trans "Confirm" context "common" %}{% endfilter %}";
+
     var ico    = document.getElementById("cmIco");
     var title  = document.getElementById("cmTitle");
     var name   = document.getElementById("cmName");
@@ -74,8 +80,14 @@ attributes (all optional except data-confirm):
 
       var tone = form.dataset.confirmTone || "primary";
       ico.className = "cm-ico " + tone;
-      ico.innerHTML = '<i class="fas ' + (form.dataset.confirmIcon || "fa-question") + '"></i>';
-      title.textContent = form.dataset.confirmTitle || "Are you sure?";
+      // Built through the DOM rather than concatenated into innerHTML: the glyph
+      // name lands in a class attribute set via the property, so it can never be
+      // parsed as markup even if this ever carries less-trusted content.
+      var iconEl = document.createElement("i");
+      iconEl.className = "fas " + (form.dataset.confirmIcon || "fa-question");
+      ico.textContent = "";  // drop the previous icon
+      ico.appendChild(iconEl);
+      title.textContent = form.dataset.confirmTitle || DEFAULT_TITLE;
       text.textContent  = form.dataset.confirmBody || "";
       if (form.dataset.confirmName) {
         name.textContent = form.dataset.confirmName;
@@ -83,7 +95,7 @@ attributes (all optional except data-confirm):
       } else {
         name.style.display = "none";
       }
-      okBtn.textContent = form.dataset.confirmOk || "Confirm";
+      okBtn.textContent = form.dataset.confirmOk || DEFAULT_OK;
       okBtn.className = "btn " + (tone === "warning" ? "btn-warning" : tone === "danger" ? "btn-danger" : "btn-primary");
 
       overlay.classList.add("show");

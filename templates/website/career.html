@@ -323,15 +323,14 @@
 
 <script>
 (function () {
-  var g = function (s) { return (typeof gettext === 'function') ? gettext(s) : s; };
   window.WEBSITE_I18N = {
     requirements: '{% filter escapejs %}{% trans "Requirements" context "website" %}{% endfilter %}',
     niceToHave: '{% filter escapejs %}{% trans "Nice to Have" context "website" %}{% endfilter %}',
     applyForPosition: '{% filter escapejs %}{% trans "Apply for This Position" context "website" %}{% endfilter %}',
   };
-  Object.keys(window.WEBSITE_I18N).forEach(function (k) {
-    window.WEBSITE_I18N[k] = g(window.WEBSITE_I18N[k]);
-  });
+  // No client-side gettext pass: the trans tags above already rendered every
+  // value in the active locale, so re-translating would look an
+  // already-translated string up against English msgids.
 })();
 </script>
 <script>
@@ -436,32 +435,6 @@ document.getElementById('job-modal').addEventListener('click', function(e) {
 });
 </script>
 <script src="{% static 'adminlte/js/main.js' %}"></script>
-<script>
-(function () {
-  window.PWA_I18N = {
-    notificationBody: '{% filter escapejs %}{% trans "You have a new notification" context "website" %}{% endfilter %}',
-    open: '{% filter escapejs %}{% trans "Open" context "website" %}{% endfilter %}',
-    dismiss: '{% filter escapejs %}{% trans "Dismiss" context "website" %}{% endfilter %}',
-  };
-})();
-</script>
-<script>
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", function() {
-      navigator.serviceWorker.register("{% static 'adminlte/js/sw.js' %}")
-        .then(function(reg) {
-          function sendStrings() {
-            var sw = reg.active || navigator.serviceWorker.controller;
-            if (sw && window.PWA_I18N) {
-              sw.postMessage({ type: "PWA_STRINGS", strings: window.PWA_I18N });
-            }
-          }
-          sendStrings();
-          navigator.serviceWorker.addEventListener("controllerchange", sendStrings);
-        })
-        .catch(function(err) { console.warn("[PWA] SW registration failed:", err); });
-    });
-  }
-</script>
+{% include "partials/_pwa_register.html" %}
 </body>
 </html>

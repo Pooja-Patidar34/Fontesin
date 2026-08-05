@@ -384,6 +384,7 @@
   </div>
 </div>
 
+{{ taken_territories|json_script:"fr-taken-territories" }}
 {{ country_states|json_script:"fr-country-states" }}
 {{ form_data|json_script:"fr-form-data" }}
 <script>
@@ -512,8 +513,9 @@
     if (!form && levelEl) form = levelEl.closest("form");
     if (!form || !levelEl) return;
 
-    var TAKEN = {{ taken_territories_json|safe }};
-    var MSG_TPL = "{% trans "This %(scope)s already has an active %(level)s (%(name)s), so it can't be granted twice." %}";
+    var takenNode = document.getElementById("fr-taken-territories");
+    var TAKEN = takenNode ? JSON.parse(takenNode.textContent) : [];
+    var MSG_TPL = "{% filter escapejs %}{% trans "This %(scope)s already has an active %(level)s (%(name)s), so it can't be granted twice." %}{% endfilter %}";
 
     var banner = document.getElementById("fr-conflict");
     var bannerMsg = document.getElementById("fr-conflict-msg");

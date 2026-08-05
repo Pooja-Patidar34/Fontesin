@@ -12,7 +12,6 @@ Mirrors the coordinator-request / application-review flows so the queue, the
 badges, and the notifications all behave the same way.
 """
 
-import json
 import logging
 import uuid
 
@@ -21,7 +20,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import IntegrityError, transaction
-from django.db.models import Q
+from django.db.models import OuterRef, Q, Subquery
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -454,13 +453,25 @@ def resolve_parent_node(level, country, region, city, local_area):
     if level == FranchiseLevel.MASTER:
         return None
     req_rank = FranchiseLevel.RANK.get(level, 0)
+    # Narrow in SQL rather than loading every active node and rejecting most of
+    # them in Python: a parent must sit ABOVE the requested level, and its
+    # territory can only contain the request's when the country matches — or
+    # when the node names no country at all, which `is_territory_within` treats
+    # as "no constraint", i.e. it covers everything.
+    shallower_levels = [
+        lvl for lvl, rank in FranchiseLevel.RANK.items() if rank < req_rank
+    ]
+    if not shallower_levels:
+        return None
     probe = Tenant(
         territory_country=country, territory_region=region,
         territory_city=city, territory_local_area=local_area,
     )
     best = None
     for candidate in Tenant.objects.filter(
-        franchise_level__isnull=False, franchise_status=FranchiseUnitStatus.ACTIVE
+        Q(territory_country__iexact=(country or "").strip()) | Q(territory_country=""),
+        franchise_level__in=shallower_levels,
+        franchise_status=FranchiseUnitStatus.ACTIVE,
     ):
         cand_rank = FranchiseLevel.RANK.get(candidate.franchise_level, 0)
         if cand_rank >= req_rank:
@@ -652,13 +663,15 @@ def franchise_request_view(request):
             "removal_history": removal_history,
             "level_choices": FranchiseLevel.CHOICES,
             "country_choices": CountryChoices.CHOICES,
-            "taken_territories_json": json.dumps(taken_territories),
+            # Passed as a list, not a pre-dumped string: the template renders it
+            # through json_script, which escapes the applicant-supplied node
+            # names and free-text regions/cities it carries.
+            "taken_territories": taken_territories,
             # Country -> subdivisions for the State/Region dropdown (falls back
             # to free text for countries not in the map).
             "country_states": COUNTRY_STATES,
             # Repopulate the form after a validation-error redirect.
             "form_data": form_data,
-            "form_data_json": json.dumps(form_data),
         },
     )
 
@@ -1053,12 +1066,15 @@ def franchise_child_requests(request):
     # to reject the duplicate (spec §11.1).
     for app in pending:
         app.conflict = _application_conflict(app)
-    approved = base.filter(
+    # Paginated rather than sliced: a [:50] cut silently drops older history with
+    # nothing in the UI to say so. Each tab pages independently via its own query
+    # param, the same way the Platform Admin queue does.
+    approved = _paginate_named(request, base.filter(
         application_status=FranchiseApplicationStatus.APPROVED
-    ).order_by("-approved_at")[:50]
-    rejected = base.filter(
+    ).order_by("-approved_at"), "approved_page")
+    rejected = _paginate_named(request, base.filter(
         application_status=FranchiseApplicationStatus.REJECTED
-    ).order_by("-rejected_at")[:50]
+    ).order_by("-rejected_at"), "rejected_page")
 
     # Holders below this one asking to give up their franchise land in the same
     # queue — the direct parent is the authority for both directions.
@@ -1925,7 +1941,10 @@ def franchise_add_subfranchise(request):
     return render(request, "dashboard/franchise_add_subfranchise.html", {
         "active_menu": "franchise-add-subfranchise",
         "active_nodes": active_nodes,
-        "node_options_json": json.dumps(node_options),
+        # Passed as a list, not a pre-dumped string: the template renders it
+        # through json_script, which escapes the territory text a holder typed
+        # (a "</script>" in a city name would otherwise close the script tag).
+        "node_options": node_options,
         "has_active_node": bool(active_nodes),
         "micro_only": micro_only,
         "suspended": suspended,
@@ -2169,15 +2188,25 @@ def franchise_sales(request):
     if not franchise_manager_required(request.user):
         raise PermissionDenied()
 
-    from billing.models import Subscription
+    from billing.models import Invoice, Subscription
 
     consultant_ids = subtree_consultant_ids(request.user)
+    # The amount actually charged is recorded on the invoice, not the plan — an
+    # admin editing a plan's price later must not retroactively rewrite what
+    # past sales say they sold for. Annotated (not walked per row) so the whole
+    # page still costs one query; rows with no invoice fall back to the plan
+    # price in the template, which is the best figure available for them.
+    _invoice = Invoice.objects.filter(subscription=OuterRef("pk")).order_by("-created_at")
     subs = (
         Subscription.objects.filter(
             Q(company__certified_by_id__in=consultant_ids)
             | Q(company__consultant_id__in=consultant_ids),
         )
         .select_related("plan", "company", "user")
+        .annotate(
+            sale_amount=Subquery(_invoice.values("amount")[:1]),
+            sale_currency=Subquery(_invoice.values("currency")[:1]),
+        )
         .order_by("-created_at")
     )
     status = (request.GET.get("status") or "").strip()

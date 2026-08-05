@@ -1111,8 +1111,6 @@
     companiesCertified: '{% filter escapejs %}{% trans "companies certified" context "dashboard" %}{% endfilter %}',
     clickDayCertified: '{% filter escapejs %}{% trans "Click a day to see how many companies you certified that day." context "dashboard" %}{% endfilter %}',
     noSubsThisMonth: '{% filter escapejs %}{% trans "No subscriptions sold in this month yet." context "dashboard" %}{% endfilter %}',
-    revenueTickPrefix: '{% filter escapejs %}{% trans "$" context "dashboard" %}{% endfilter %}',
-    revenueTickThousand: '{% filter escapejs %}{% trans "k" context "dashboard" %}{% endfilter %}',
     userHealth: '{% filter escapejs %}{% trans "User Health" context "dashboard" %}{% endfilter %}',
     companyHealth: '{% filter escapejs %}{% trans "Company Health" context "dashboard" %}{% endfilter %}',
     userActivityStable: '{% filter escapejs %}{% trans "User activity is stable." context "dashboard" %}{% endfilter %}',
@@ -1226,6 +1224,23 @@ document.addEventListener("DOMContentLoaded", function () {
   /* ---- Revenue Line Chart ---- */
   var revLabels = {{ revenue_labels_json|safe }};
   var revData = {{ revenue_data_json|safe }};
+  // Locale-aware axis labels. Built once (Intl.NumberFormat construction is the
+  // expensive part) and reused for every tick. Falls back to the old
+  // symbol-then-number shape only if Intl is missing.
+  var revenueTick = (function () {
+    var locale = "{{ LANGUAGE_CODE|default:'en' }}";
+    var currency = "{{ revenue_currency|default:'USD' }}";
+    try {
+      var fmt = new Intl.NumberFormat(locale, {
+        style: "currency",
+        currency: currency,
+        notation: "compact"
+      });
+      return function (v) { return fmt.format(v); };
+    } catch (e) {
+      return function (v) { return currency + " " + v; };
+    }
+  })();
   if (document.getElementById("revenueChart")) {
     new Chart(document.getElementById("revenueChart").getContext("2d"), {
       type: "line",
@@ -1251,11 +1266,10 @@ document.addEventListener("DOMContentLoaded", function () {
           y: {
             beginAtZero: true,
             ticks: {
-              callback: function(v) {
-                var prefix = window.DASHBOARD_I18N.revenueTickPrefix || "$";
-                var k = window.DASHBOARD_I18N.revenueTickThousand || "k";
-                return prefix + (v >= 1000 ? (v/1000) + k : v);
-              },
+              // Intl handles both things a translated "$" + "k" pair can't:
+              // where the locale puts the currency symbol, and how it
+              // abbreviates thousands (en "$2K", de "2456 $", fr "2,5 k $").
+              callback: revenueTick,
               font: { size: 11 }
             },
             grid: { color: "#f1f5f9" }

@@ -277,8 +277,9 @@
     loading: '{% filter escapejs %}{% trans "Loading…" context "common" %}{% endfilter %}',
     loadError: '{% filter escapejs %}{% trans "Could not load company details." context "companies" %}{% endfilter %}',
   };
-  var g = (typeof gettext === "function") ? gettext : function (s) { return s; };
-  Object.keys(I18N).forEach(function (k) { I18N[k] = g(I18N[k]); });
+  // No client-side gettext pass: the tags above already rendered every value in
+  // the active locale, so re-translating would look an already-translated string
+  // up against English msgids.
 
   var overlay = document.getElementById("myc-drawer-overlay");
   var drawer  = document.getElementById("myc-drawer");

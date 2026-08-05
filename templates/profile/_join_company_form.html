@@ -17,8 +17,12 @@
     <label>{% trans "Select a Company" context "profile" %}</label>
     <input type="text" class="form-control" id="join-company-search"
            placeholder="{% trans "Click to choose a company..." context "profile" %}" autocomplete="off" readonly>
+    {% comment %} One sentence, trailing period included, with the section name as
+       a placeholder — a translator needs to place it and the punctuation. The
+       label stays its own msgid because base.html reuses it. {% endcomment %}
+    {% trans "My Companies" context "companies" as my_companies_label %}
     <small class="text-muted">
-      {% trans "Your request is sent to the company owner. Once they approve it, the company appears in your" context "profile" %} <strong>{% trans "My Companies" context "companies" %}</strong>.
+      {% blocktrans trimmed with section=my_companies_label context "profile" %}Your request is sent to the company owner. Once they approve it, the company appears in your {{ section }}.{% endblocktrans %}
     </small>
 
     <div id="join-company-results"

@@ -114,9 +114,15 @@ class Subscription(models.Model):
     # WHO pays (the company's owner). Nullable to keep legacy/global rows and
     # a brief pre-company window valid; the unique-active constraint below is
     # scoped to non-null companies.
+    # PROTECT, not CASCADE: a subscription (and the invoices hanging off it) is
+    # financial history that must outlive the company row. Company is built for
+    # soft deletion (`is_deleted`, see accounts.view.company.company_delete), so
+    # a hard delete only ever arrives from the shell / admin / a future cleanup
+    # job — exactly the cases where silently dropping the billing trail is worst.
+    # Matches ConsultantCommission.company and the `plan` FK below.
     company = models.ForeignKey(
         "accounts.Company",
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="subscriptions",
         null=True,
         blank=True,

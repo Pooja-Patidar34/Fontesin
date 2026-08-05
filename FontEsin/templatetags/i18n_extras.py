@@ -18,10 +18,11 @@ LANGUAGE_DISPLAY_NAMES = {
 
 def _active_language(request):
     """Resolve the language code shown in the header switcher."""
-    user = getattr(request, "user", None)
-    if getattr(user, "is_authenticated", False):
-        return user.effective_preferred_language
-    return normalize_locale(get_language()) or SupportedLocale.EN
+    # The locale the request is actually rendering in — UserLocaleMiddleware
+    # already resolved it (?lang= wins over the profile preference), so reading
+    # effective_preferred_language here would show the profile language while
+    # the page around it renders in the one from ?lang=.
+    return normalize_locale(getattr(request, "LANGUAGE_CODE", None) or get_language())
 
 
 @register.inclusion_tag("partials/_language_switcher.html", takes_context=True)

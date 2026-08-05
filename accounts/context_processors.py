@@ -50,6 +50,18 @@ def admin_context(request):
     can_add_subfranchise = False
 
     if request.user.is_authenticated:
+        # Resolve the acting company ONCE. Four helpers below each resolved it
+        # independently (plan lookup, notification scoping, pending upgrade, the
+        # switcher block), and resolve_active_company costs 1-2 queries whenever
+        # ActiveCompanyMiddleware hasn't cached it on the user — i.e. every path
+        # the middleware skips. Kept in its own local because the exported
+        # `active_company` stays role-gated below.
+        from billing.utils import resolve_active_company
+        acting_company = (
+            getattr(request, "active_company", None)
+            or resolve_active_company(request.user)
+        )
+
         if not request.user.is_superuser:
             try:
                 user_role = UserRole.objects.select_related("role").get(user=request.user)
@@ -68,7 +80,7 @@ def admin_context(request):
         if request.user.is_superuser:
             plan_features_json = json.dumps({"__superuser__": True})
         else:
-            plan = get_user_plan(request.user)
+            plan = get_user_plan(request.user, company=acting_company)
             comparison = (plan.comparison if plan and plan.comparison else {}) or {}
             features = {k: bool(v) for k, v in comparison.items()}
             plan_features_json = json.dumps(features)
@@ -184,8 +196,7 @@ def admin_context(request):
                 # companies are excluded: the certification belongs to the
                 # company's creator, so the banner is gated to owner_user ==
                 # request.user.
-                from billing.utils import resolve_active_company
-                active_company = resolve_active_company(request.user)
+                active_company = acting_company
                 if (
                     active_company
                     and active_company.owner_user_id == request.user.id
@@ -270,12 +281,14 @@ def admin_context(request):
             unread_message_count = scope_notifications_qs(
                 Notification.objects.filter(recipient=request.user, is_read=False),
                 request.user,
+                active_company=acting_company,
             ).count()
             # A short recent-notifications list powers the top-right bell dropdown.
             recent_notifications = list(
                 scope_notifications_qs(
                     Notification.objects.filter(recipient=request.user),
                     request.user,
+                    active_company=acting_company,
                 ).order_by("-created_at")[:8]
             )
         except Exception:
@@ -304,7 +317,9 @@ def admin_context(request):
             # not gate this session. get_pending_subscription resolves the
             # active company (falling back to a legacy user-level pending sub).
             from billing.utils import get_pending_subscription
-            has_pending_paid_upgrade = get_pending_subscription(request.user) is not None
+            has_pending_paid_upgrade = get_pending_subscription(
+                request.user, company=acting_company
+            ) is not None
         except Exception:
             logger.exception(
                 "has_pending_paid_upgrade lookup failed for user %s",
@@ -340,12 +355,10 @@ def admin_context(request):
                 ).count()
                 can_switch_company = owned_company_count > 1
                 try:
-                    from billing.utils import resolve_active_company, get_active_subscription
-                    # ActiveCompanyMiddleware already resolved and cached the
-                    # active company on the request; reuse it to avoid re-running
-                    # the resolver (2 extra queries) on every page load. Fall
-                    # back to resolving directly for non-request contexts.
-                    active_company = getattr(request, "active_company", None) or resolve_active_company(request.user)
+                    from billing.utils import get_active_subscription
+                    # Resolved once at the top of this block (middleware cache
+                    # first, direct resolve as the non-request fallback).
+                    active_company = acting_company
                     if active_company:
                         active_company_name = active_company.name
                         active_company_certified = (

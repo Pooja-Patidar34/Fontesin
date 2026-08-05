@@ -81,11 +81,11 @@
   {% if page_obj.has_other_pages %}
   <div class="fr-toolbar" style="border-top:1px solid #f1f5f9; border-bottom:0; justify-content:flex-end; gap:8px;">
     {% if page_obj.has_previous %}
-    <a class="fr-btn" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}">{% trans "Previous" context "common" %}</a>
+    <a class="fr-btn" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}">{% trans "Previous" context "common" %}</a>
     {% endif %}
     <span class="count-chip" style="margin:0;">{% blocktrans with num=page_obj.number total=page_obj.paginator.num_pages %}Page {{ num }} of {{ total }}{% endblocktrans %}</span>
     {% if page_obj.has_next %}
-    <a class="fr-btn" href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}">{% trans "Next" context "common" %}</a>
+    <a class="fr-btn" href="?page={{ page_obj.next_page_number }}{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}">{% trans "Next" context "common" %}</a>
     {% endif %}
   </div>
   {% endif %}

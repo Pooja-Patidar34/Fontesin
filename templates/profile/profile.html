@@ -552,8 +552,11 @@
     {% comment %} Typographic quotes on purpose: makemessages' templatize()
        truncates a {% trans %} literal at an escaped \" , which produced a
        broken msgid that no catalog could ever match. {% endcomment %}
-    noCompaniesMatchPrefix: '{% filter escapejs %}{% trans "No companies match “" context "profile" %}{% endfilter %}',
-    noCompaniesMatchSuffix: '{% filter escapejs %}{% trans "”." context "profile" %}{% endfilter %}',
+    {% comment %} One sentence with a placeholder, not a prefix/suffix pair: the
+       quoting convention and word order around the query differ by language
+       (and "”." alone is untranslatable). "__QUERY__" is swapped client-side for
+       the escaped query. {% endcomment %}
+    noCompaniesMatch: '{% filter escapejs %}{% blocktrans trimmed with query="__QUERY__" context "profile" %}No companies match “{{ query }}”.{% endblocktrans %}{% endfilter %}',
     noCompaniesAvailable: '{% filter escapejs %}{% trans "No companies available yet." context "profile" %}{% endfilter %}',
     failedLoadCompanies: '{% filter escapejs %}{% trans "Failed to load companies. Please try again." context "profile" %}{% endfilter %}',
     profileUpdatedSuccess: '{% filter escapejs %}{% trans "Profile updated successfully." context "profile" %}{% endfilter %}',
@@ -614,7 +617,7 @@
     if (!items.length) {
       resultsBox.innerHTML =
         '<div style="padding:18px; text-align:center; color:#64748b; font-size:.85rem;">' +
-        (query ? PROFILE_I18N.noCompaniesMatchPrefix + escapeHtml(query) + PROFILE_I18N.noCompaniesMatchSuffix : PROFILE_I18N.noCompaniesAvailable) +
+        (query ? PROFILE_I18N.noCompaniesMatch.replace('__QUERY__', escapeHtml(query)) : PROFILE_I18N.noCompaniesAvailable) +
         '</div>';
       return;
     }
