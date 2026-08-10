@@ -41,10 +41,27 @@
           <div class="ps-tags">{% for k in listing.keywords %}<span class="ps-tag">{{ k }}</span>{% endfor %}</div>
           {% endif %}
           {% if listing.video_url or listing.certification_text or listing.certification_image %}
+          {% comment %}
+          Video / Certificate open in a new tab, so they render as buttons with
+          an external-link glyph. As plain muted text alongside the certificate
+          caption they read as a label, not something to click.
+          {% endcomment %}
           <div class="ps-extra">
-            {% if listing.video_url %}<a href="{{ listing.video_url }}" target="_blank" rel="noopener"><i class="fas fa-video mr-1"></i>{% trans "Video" %}</a>{% endif %}
-            {% if listing.certification_image %}<a href="{{ listing.certification_image.url }}" target="_blank" rel="noopener"><i class="fas fa-award mr-1"></i>{% trans "Certificate" %}</a>{% endif %}
-            {% if listing.certification_text %}<span><i class="fas fa-certificate mr-1"></i>{{ listing.certification_text|truncatechars:80 }}</span>{% endif %}
+            {% if listing.video_url %}
+            <a class="ps-extra__link" href="{{ listing.video_url }}" target="_blank" rel="noopener">
+              <i class="fas fa-play-circle"></i>{% trans "Watch video" %}
+              <i class="fas fa-external-link-alt ps-extra__out"></i>
+            </a>
+            {% endif %}
+            {% if listing.certification_image %}
+            <a class="ps-extra__link" href="{{ listing.certification_image.url }}" target="_blank" rel="noopener">
+              <i class="fas fa-award"></i>{% trans "Certificate" %}
+              <i class="fas fa-external-link-alt ps-extra__out"></i>
+            </a>
+            {% endif %}
+            {% if listing.certification_text %}
+            <span class="ps-extra__note"><i class="fas fa-certificate mr-1"></i>{{ listing.certification_text|truncatechars:80 }}</span>
+            {% endif %}
           </div>
           {% endif %}
         </div>
@@ -94,7 +111,7 @@
         {% if listing.listing_type == 'offer' %}
           {% if listing.price_without_vat %}<dt>{% trans "Price (excl. VAT)" %}</dt><dd class="ps-price">{{ listing.price_without_vat }} <small>{{ listing.currency }}</small></dd>{% endif %}
           {% if listing.minimum_quantity_or_scope %}<dt>{% trans "Min. qty / scope" %}</dt><dd>{{ listing.minimum_quantity_or_scope }}</dd>{% endif %}
-          {% if listing.unit %}<dt>{% trans "Unit" %}</dt><dd>{{ listing.unit }}</dd>{% endif %}
+          {% if listing.unit %}<dt>{% trans "Unit" %}</dt><dd>{{ listing.unit_display }}</dd>{% endif %}
         {% endif %}
         <dt>{% trans "Location" %}</dt><dd><i class="fas fa-map-marker-alt text-muted mr-1"></i>{{ location_display|default:"—" }}</dd>
         <dt>{% trans "Visibility" %}</dt><dd>{{ listing.get_visibility_scope_display|capfirst }}</dd>

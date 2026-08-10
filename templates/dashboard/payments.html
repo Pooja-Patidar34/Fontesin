@@ -25,14 +25,20 @@
   /* 8 columns must sum to 100% under table-layout: fixed — the Company /
      Consultant column was added without a width, which collapsed it to ~0
      and made its text wrap one character per line. */
-  .payments-table .col-user      { width: 17%; }
-  .payments-table .col-company   { width: 17%; }
-  .payments-table .col-ref       { width: 13%; }
+  {% comment %}
+  Payment Ref is widened at the expense of User / Company / Actions: the
+  reference is what a payment actually gets verified against, so it has to be
+  readable in full rather than truncated to "FONTESIN-GLOBAL…". Still sums to
+  100% for table-layout: fixed.
+  {% endcomment %}
+  .payments-table .col-user      { width: 15%; }
+  .payments-table .col-company   { width: 16%; }
+  .payments-table .col-ref       { width: 21%; }
   .payments-table .col-plan      { width: 9%; }
   .payments-table .col-amount    { width: 11%; white-space: nowrap; }
-  .payments-table .col-status    { width: 10%; text-align: center; white-space: nowrap; }
+  .payments-table .col-status    { width: 9%; text-align: center; white-space: nowrap; }
   .payments-table .col-requested { width: 10%; white-space: nowrap; }
-  .payments-table .col-actions   { width: 13%; }
+  .payments-table .col-actions   { width: 9%; }
   .payments-table .user-cell strong {
     display: block;
     font-size: .88rem;
@@ -49,11 +55,31 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .payments-table .email-cell,
-  .payments-table .ref-cell {
+  .payments-table .email-cell {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+  {% comment %}
+  The reference wraps rather than truncating — a partly shown reference is
+  useless for reconciling a payment. Breaking on the hyphens keeps it readable
+  over two lines instead of splitting mid-token.
+  {% endcomment %}
+  .payments-table .ref-cell {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: normal;
+    line-height: 1.25;
+  }
+  .payments-table .ref-cell code {
+    font-size: .76rem;
+    color: #b83280;
+    background: #fdf2f8;
+    border: 1px solid #fbe3ef;
+    border-radius: 5px;
+    padding: .12rem .35rem;
+    /* Selectable as one unit, so a double-click grabs the whole reference. */
+    user-select: all;
   }
   .payments-table .company-cell strong {
     display: block;

@@ -26,7 +26,7 @@ DEMO = [
         description="Bulk stainless-steel pipes, DIN-certified, ready for export across the EU.",
         keywords=["steel", "pipes", "export"],
         price_without_vat="1250.00", currency="EUR",
-        minimum_quantity_or_scope="500", unit="meters",
+        minimum_quantity_or_scope="500", unit="metre",
     ),
     dict(
         key="Demo Service Offer",

@@ -1,10 +1,42 @@
 {% extends "base/base.html" %}
-{% load i18n %}
+{% load i18n static %}
 {% block title %}{% trans "Companies" context "companies" %}{% endblock %}
 
 {% block content %}
 
 <style>
+  /* ── Tenant searchable-select ──
+     These rules MUST stay ahead of the markup they style. They used to sit in
+     a <style> right after the tenant <form> further down; while the HTML was
+     still parsing the panel had no `display:none` yet, so the entire tenant
+     list painted down the page before collapsing into the dropdown. Invisible
+     on a fast response, very visible on a slow one. */
+  .searchable-select { position: relative; }
+  .searchable-select__toggle {
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%; text-align: left; cursor: pointer; background: #fff;
+  }
+  .searchable-select__label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .searchable-select__caret { color: #6c757d; margin-left: 8px; font-size: 10px; }
+  .searchable-select__panel {
+    display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: #fff; border: 1px solid #ced4da; border-radius: 6px;
+    box-shadow: 0 6px 24px rgba(0,0,0,.12);
+    z-index: 1050; padding: 8px;
+  }
+  .searchable-select.open .searchable-select__panel { display: block; }
+  .searchable-select__search { margin-bottom: 6px; }
+  .searchable-select__options { max-height: 240px; overflow-y: auto; }
+  .searchable-select__option {
+    padding: 7px 10px; border-radius: 4px; cursor: pointer; font-size: 13px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .searchable-select__option:hover,
+  .searchable-select__option.is-active { background: #f0f5f8; }
+  .searchable-select__option.is-selected { background: #e7f1ff; color: #0b5ed7; font-weight: 600; }
+  .searchable-select__option.is-hidden { display: none; }
+  .searchable-select__empty { padding: 10px; font-size: 12px; color: #6c757d; text-align: center; }
+
   .view-mode {
     pointer-events: none;
     background-color: #f8f9fa;
@@ -45,10 +77,18 @@
     .filter-actions { margin-top: .75rem; }
   }
 
-  /* Company modal */
-  #companyModal .modal-dialog {
+  /* Company modal. Both dialog rules are scoped away from the drawer state —
+     an id selector would otherwise outrank the shared `.modal.view-drawer`
+     rules and un-pin the panel from the right edge. */
+  #companyModal:not(.view-drawer) .modal-dialog {
     margin: 1.5rem auto !important;
   }
+
+  /* View mode opens as a right-hand drawer; Add / Edit stay a centred dialog
+     (they're a wide two-column form). The drawer itself is the shared
+     `view-drawer` variant in base/_form_theme.html — the JS just toggles that
+     class on the modal root. Only the dialog width for the non-drawer case is
+     page-specific. */
   #companyModal .modal-body {
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch;
@@ -129,17 +169,19 @@
      apply the red error styling after a submit attempt (Bootstrap's
      was-validated pattern). Fixes optional fields like FAX showing red
      on partial input that hasn't yet matched their length pattern. */
-  #companyModal #company-form input:invalid,
-  #companyModal #company-form select:invalid,
-  #companyModal #company-form textarea:invalid {
+  /* :not(:focus) so this doesn't also cancel the focus ring on a field that
+     simply hasn't been filled in yet. */
+  #companyModal #company-form input:invalid:not(:focus),
+  #companyModal #company-form select:invalid:not(:focus),
+  #companyModal #company-form textarea:invalid:not(:focus) {
     box-shadow: none;
-    border-color: #ced4da;
+    border-color: #e2e8f0;
   }
   #companyModal #company-form.was-validated input:invalid,
   #companyModal #company-form.was-validated select:invalid,
   #companyModal #company-form.was-validated textarea:invalid {
     border-color: #dc3545;
-    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, .16);
     /* Red cross icon on the right edge of invalid fields. Replaces the
        built-in browser-quirky placement so it stays consistent. */
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23dc3545'%3E%3Cpath d='M3 3 9 9 M9 3 3 9' stroke-width='1.6'/%3E%3C/svg%3E");
@@ -152,13 +194,13 @@
   /* Suppress Bootstrap's green-check styling. We treat "no error" as the
      baseline — green ticks on empty optional fields were misleading users
      into thinking the field was valid when it was simply unfilled. */
-  #companyModal #company-form .form-control:valid,
-  #companyModal #company-form .form-control.is-valid,
-  #companyModal #company-form.was-validated .form-control:valid {
+  #companyModal #company-form .form-control:valid:not(:focus),
+  #companyModal #company-form .form-control.is-valid:not(:focus),
+  #companyModal #company-form.was-validated .form-control:valid:not(:focus) {
     background-image: none !important;
-    border-color: #ced4da !important;
+    border-color: #e2e8f0 !important;
     box-shadow: none !important;
-    padding-right: 0.75rem !important;
+    padding-right: 0.7rem !important;
   }
   #companyModal #company-form .valid-feedback,
   #companyModal #company-form .valid-tooltip { display: none !important; }
@@ -168,7 +210,7 @@
      validation look identical. */
   #companyModal #company-form .form-control.is-invalid {
     border-color: #dc3545;
-    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, .16);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23dc3545'%3E%3Cpath d='M3 3 9 9 M9 3 3 9' stroke-width='1.6'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 0.6rem center;
@@ -193,6 +235,132 @@
   #companyModal .pill-certified { background:#dcfce7; color:#166534; }
   #companyModal .pill-rejected  { background:#fee2e2; color:#991b1b; }
   #companyModal .pill-uncertified { background:#e5e7eb; color:#4b5563; }
+
+  /* ══ Modern skin for the Add / Edit form ══
+     Presentation only — no markup or JS changes. Bootstrap 4's stock modal
+     (square 1px greys, wide gutters, default file input) is what made this
+     read as dated and oversized. Narrower dialog, softer surface, tighter
+     rhythm. The read-only View drawer keeps its own width rules above. */
+  #companyModal:not(.view-drawer) .modal-dialog {
+    max-width: 720px;
+  }
+  #companyModal .modal-content {
+    border: 0;
+    border-radius: 14px;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, .22);
+  }
+  #companyModal .modal-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #eef2f7;
+    align-items: center;
+  }
+  #companyModal .modal-title {
+    font-size: 1.05rem;
+    color: #1B2E3F;
+    letter-spacing: -.01em;
+  }
+  /* Bootstrap's `.close` is a bare × with no hit target; give it one. */
+  #companyModal .modal-header .close {
+    width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+    opacity: .55;
+    transition: background .15s ease, opacity .15s ease;
+  }
+  #companyModal .modal-header .close:hover { background: #f1f5f9; opacity: 1; }
+
+  #companyModal .modal-body { padding: 1.1rem 1.35rem !important; }
+  #companyModal .form-group { margin-bottom: .7rem; }
+  #companyModal label {
+    font-size: .76rem;
+    font-weight: 600;
+    color: #64748b;
+    letter-spacing: .01em;
+    margin-bottom: .3rem;
+  }
+  #companyModal .form-control,
+  #companyModal select,
+  #companyModal textarea {
+    height: auto;
+    min-height: 38px;
+    padding: .45rem .7rem;
+    font-size: .86rem;
+    color: #1B2E3F;
+    background-color: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 9px;
+    box-shadow: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  #companyModal textarea.form-control { min-height: 76px; }
+  #companyModal .form-control::placeholder { color: #a9b6c6; }
+  #companyModal .form-control:focus,
+  #companyModal select:focus {
+    border-color: #1B7BE4;
+    box-shadow: 0 0 0 3px rgba(27, 123, 228, .14);
+  }
+  /* Read-only fields (View mode, or contact fields locked to their owner). */
+  #companyModal .view-mode,
+  #companyModal .form-control[readonly] {
+    background-color: #f6f8fb !important;
+    color: #55657a;
+  }
+
+  #companyModal .section-title {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    font-size: .68rem;
+    letter-spacing: .09em;
+    color: #94a3b8;
+    margin: 1.15rem 0 .6rem;
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+  /* Hairline that fills the row after the label, instead of a full-width rule
+     under it — lighter, and it reads as a divider rather than a heading box. */
+  #companyModal .section-title::after {
+    content: "";
+    flex: 1 1 auto;
+    height: 1px;
+    background: #eef2f7;
+  }
+
+  /* The stock file input is the most dated control on the form. */
+  #companyModal input[type="file"] {
+    padding: .3rem;
+    font-size: .8rem;
+    color: #64748b;
+    cursor: pointer;
+  }
+  #companyModal input[type="file"]::file-selector-button {
+    margin-right: .7rem;
+    padding: .38rem .85rem;
+    font-size: .78rem;
+    font-weight: 600;
+    color: #1B7BE4;
+    background: #eaf3fd;
+    border: 0;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background .15s ease;
+  }
+  #companyModal input[type="file"]::file-selector-button:hover { background: #d8e9fb; }
+
+  #companyModal .modal-footer {
+    padding: .8rem 1.35rem;
+    background: #f8fafc;
+    border-top: 1px solid #eef2f7;
+    border-radius: 0 0 14px 14px;
+  }
+  #companyModal .modal-footer .btn {
+    padding: .45rem 1.15rem;
+    font-size: .85rem;
+    font-weight: 600;
+    border-radius: 9px;
+  }
+  #companyModal .form-text,
+  #companyModal .text-muted { font-size: .74rem; }
 
   /* NACE / NAICS picker — search input + dropdown + clear button. */
   .industry-picker { position: relative; }
@@ -271,12 +439,19 @@
         {% if request.user.is_superuser or request.user.role.code|lower == "coordinator" %}
         <form method="get" class="mb-0" id="companySearchForm">
           <div class="input-group input-group-sm" style="width:260px;">
-            <input type="text" name="q" value="{{ search_q|default:'' }}"
+            <input type="text" name="q" id="company-search-input" value="{{ search_q|default:'' }}"
                    class="form-control" placeholder="{% trans "Search companies…" context "companies" %}" autocomplete="off">
             {# Preserve the selected tenant when searching. #}
             <input type="hidden" name="tenant" value="{{ selected_tenant_id|default:'' }}">
             <div class="input-group-append">
-              <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i></button>
+              {% comment %}
+              Disabled until there's something to search for — see the script
+              below. Rendered disabled when the box starts empty so it never
+              flashes enabled before the JS runs.
+              {% endcomment %}
+              <button type="submit" class="btn btn-primary" id="company-search-btn"
+                      {% if not search_q %}disabled{% endif %}
+                      title="{% trans "Enter a search term" context "companies" %}"><i class="fas fa-search"></i></button>
               {% if search_q %}
               <a href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}{% endif %}"
                  class="btn btn-outline-secondary" title="{% trans "Clear search" context "common" %}">&times;</a>
@@ -284,6 +459,23 @@
             </div>
           </div>
         </form>
+        <script>
+          // Keep the search button disabled until there's a non-blank term.
+          // Submitting an empty box just reloaded the same unfiltered list, and
+          // a box of spaces searched for nothing.
+          (function () {
+            var input = document.getElementById("company-search-input");
+            var btn = document.getElementById("company-search-btn");
+            if (!input || !btn) return;
+            function sync() { btn.disabled = input.value.trim() === ""; }
+            input.addEventListener("input", sync);
+            // Enter on an empty box would otherwise submit past the button.
+            input.form.addEventListener("submit", function (e) {
+              if (input.value.trim() === "") e.preventDefault();
+            });
+            sync();
+          })();
+        </script>
         {% endif %}
 
         {% if request.user.is_superuser %}
@@ -311,33 +503,8 @@
           </div>
         </form>
 
-        <style>
-          .searchable-select { position: relative; }
-          .searchable-select__toggle {
-            display: flex; align-items: center; justify-content: space-between;
-            width: 100%; text-align: left; cursor: pointer; background: #fff;
-          }
-          .searchable-select__label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-          .searchable-select__caret { color: #6c757d; margin-left: 8px; font-size: 10px; }
-          .searchable-select__panel {
-            display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
-            background: #fff; border: 1px solid #ced4da; border-radius: 6px;
-            box-shadow: 0 6px 24px rgba(0,0,0,.12);
-            z-index: 1050; padding: 8px;
-          }
-          .searchable-select.open .searchable-select__panel { display: block; }
-          .searchable-select__search { margin-bottom: 6px; }
-          .searchable-select__options { max-height: 240px; overflow-y: auto; }
-          .searchable-select__option {
-            padding: 7px 10px; border-radius: 4px; cursor: pointer; font-size: 13px;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-          }
-          .searchable-select__option:hover,
-          .searchable-select__option.is-active { background: #f0f5f8; }
-          .searchable-select__option.is-selected { background: #e7f1ff; color: #0b5ed7; font-weight: 600; }
-          .searchable-select__option.is-hidden { display: none; }
-          .searchable-select__empty { padding: 10px; font-size: 12px; color: #6c757d; text-align: center; }
-        </style>
+        {# Styles for this control live in the <style> at the top of the #}
+        {# template — they have to be parsed before the markup below. #}
         <script>
         (function() {
           function initSearchableSelect(root) {
@@ -492,13 +659,30 @@
           <div class="fb-ac-results"></div>
         </div>
 
-        <!-- Company type / legal form (dropdown — swapped by country) -->
-        <div class="col-md-4 col-sm-6 mb-2">
-          <label class="small">{% trans "Company Type (Legal Form)" context "companies" %}</label>
-          <select name="entity_type" id="flt-entity-type" class="form-control form-control-sm">
-            <option value="">{% trans "Any" context "common" %}</option>
-            <!-- options injected client-side based on selected country -->
-          </select>
+        {% comment %}
+        Company type / legal form — options are swapped by country client-side.
+        This is a custom dropdown rather than a native <select> on purpose: the
+        list runs to ~16 entries and the native popup is drawn by the OS, so it
+        escaped the page and painted over the browser chrome. The panel below is
+        an in-page element with its own max-height + scroll, so it stays inside
+        the UI. The hidden input keeps the form payload identical to the old
+        <select> (name="entity_type").
+        {% endcomment %}
+        <div class="col-md-4 col-sm-6 mb-2 fb-sel" id="flt-entity-type-wrap">
+          <label class="small" id="flt-entity-type-label-el">{% trans "Company Type (Legal Form)" context "companies" %}</label>
+          <input type="hidden" name="entity_type" id="flt-entity-type"
+                 value="{{ applied_filters.entity_type|default:'' }}">
+          {# Anchor wraps only the toggle so the panel is positioned off the #}
+          {# control itself, not off the column (which also holds the hint). #}
+          <div class="fb-sel-anchor">
+            <button type="button" class="form-control form-control-sm fb-sel-toggle"
+                    id="flt-entity-type-toggle" aria-haspopup="listbox" aria-expanded="false"
+                    aria-labelledby="flt-entity-type-label-el flt-entity-type-text">
+              <span id="flt-entity-type-text">{% trans "Any" context "common" %}</span>
+              <i class="fas fa-chevron-down fb-sel-caret"></i>
+            </button>
+            <div class="fb-sel-menu" id="flt-entity-type-menu" role="listbox" tabindex="-1"></div>
+          </div>
           <small class="text-muted" id="flt-entity-type-hint" style="font-size:.72rem;">{% trans "Pick a country to see legal forms." context "companies" %}</small>
         </div>
 
@@ -555,6 +739,13 @@
     </form>
   </div>
 
+  {% comment %}
+  Must come BEFORE the filter-bar script below: that script reads COMPANY_I18N
+  at load time to build the legal-form options. The later include (further down
+  the page, next to the modals) is a no-op thanks to the guard inside.
+  {% endcomment %}
+  {% include "dashboard/_company_i18n.html" %}
+
   {{ filter_legal_forms_by_country|json_script:"flt-legal-forms" }}
   {{ applied_filters.entity_type|default:""|json_script:"flt-applied-entity-type" }}
 
@@ -573,6 +764,30 @@
     }
     .fb-ac-result:hover, .fb-ac-result.is-focused { background: #f0f5f8; }
     .fb-ac-empty { padding: 10px 12px; font-size: .8rem; color: #64748b; }
+
+    /* In-page dropdown for the legal-form filter (see markup comment). */
+    .fb-sel-anchor { position: relative; }
+    .fb-sel-toggle {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px; text-align: left; cursor: pointer; background: #fff;
+    }
+    .fb-sel-caret { display: inline-block; font-size: .7rem; color: #64748b; flex-shrink: 0; }
+    .fb-sel.open .fb-sel-caret { transform: rotate(180deg); }
+    .fb-sel-menu {
+      position: absolute; top: calc(100% + 2px); left: 0; right: 0;
+      z-index: 30; background: #fff; border: 1px solid #e8eef3;
+      border-radius: 6px; box-shadow: 0 6px 18px rgba(15,23,42,.10);
+      max-height: 240px; overflow-y: auto; display: none;
+    }
+    .fb-sel.open .fb-sel-menu { display: block; }
+    .fb-sel-menu.is-above { top: auto; bottom: calc(100% + 2px); }
+    .fb-sel-option {
+      display: block; width: 100%; padding: 7px 12px; text-align: left;
+      background: #fff; border: none; border-bottom: 1px solid #f0f5f8;
+      font-size: .82rem; color: #1B2E3F; cursor: pointer;
+    }
+    .fb-sel-option:hover { background: #f0f5f8; }
+    .fb-sel-option.is-selected { background: #e7f1ff; color: #0b5ed7; font-weight: 600; }
   </style>
 
   <script>
@@ -582,7 +797,11 @@
     };
     var legalFormsByCountry = JSON.parse(document.getElementById('flt-legal-forms').textContent);
     var countrySel = document.getElementById('flt-country');
-    var entitySel = document.getElementById('flt-entity-type');
+    var entityInput = document.getElementById('flt-entity-type');   // hidden, submitted
+    var entityWrap = document.getElementById('flt-entity-type-wrap');
+    var entityToggle = document.getElementById('flt-entity-type-toggle');
+    var entityText = document.getElementById('flt-entity-type-text');
+    var entityMenu = document.getElementById('flt-entity-type-menu');
     var entityHint = document.getElementById('flt-entity-type-hint');
 
     // Deduped union of every country's legal forms — used when no country
@@ -603,6 +822,31 @@
       return out;
     })();
 
+    function closeEntityMenu() {
+      entityWrap.classList.remove('open');
+      entityMenu.classList.remove('is-above');
+      entityToggle.setAttribute('aria-expanded', 'false');
+    }
+
+    function openEntityMenu() {
+      entityWrap.classList.add('open');
+      entityToggle.setAttribute('aria-expanded', 'true');
+      // Drop upwards when there isn't room below, so the panel never spills
+      // past the viewport — the whole reason this isn't a native <select>.
+      var below = window.innerHeight - entityToggle.getBoundingClientRect().bottom;
+      entityMenu.classList.toggle('is-above', below < entityMenu.offsetHeight + 12);
+      var sel = entityMenu.querySelector('.fb-sel-option.is-selected');
+      if (sel) entityMenu.scrollTop = Math.max(0, sel.offsetTop - 60);
+    }
+
+    function selectEntity(value, label) {
+      entityInput.value = value;
+      entityText.textContent = label;
+      Array.prototype.forEach.call(entityMenu.children, function (el) {
+        el.classList.toggle('is-selected', el.getAttribute('data-value') === value);
+      });
+    }
+
     function rebuildEntityOptions() {
       var country = countrySel.value;
       var forms = (country && legalFormsByCountry[country]) || [];
@@ -613,20 +857,36 @@
         forms = ALL_LEGAL_FORMS;
         usingFallback = true;
       }
-      var currentValue = APPLIED.entity_type || entitySel.value || '';
-      // Wipe and rebuild — only "Any" survives.
-      entitySel.innerHTML = '<option value="">' + COMPANY_I18N.any + '</option>';
-      forms.forEach(function (pair) {
-        var opt = document.createElement('option');
-        opt.value = pair[0];
+      var currentValue = APPLIED.entity_type || entityInput.value || '';
+      // Wipe and rebuild — "Any" is always the first row.
+      entityMenu.innerHTML = '';
+      var options = [['', COMPANY_I18N.any]].concat(forms);
+      var matchedLabel = COMPANY_I18N.any;
+      options.forEach(function (pair) {
+        var opt = document.createElement('button');
+        opt.type = 'button';
+        opt.className = 'fb-sel-option';
+        opt.setAttribute('role', 'option');
+        opt.setAttribute('data-value', pair[0]);
         opt.textContent = pair[1];
-        if (pair[0] === currentValue) opt.selected = true;
-        entitySel.appendChild(opt);
+        if (pair[0] === currentValue) {
+          opt.classList.add('is-selected');
+          matchedLabel = pair[1];
+        }
+        opt.addEventListener('click', function () {
+          selectEntity(pair[0], pair[1]);
+          closeEntityMenu();
+          entityToggle.focus();
+        });
+        entityMenu.appendChild(opt);
       });
+      // The previously chosen form may not exist under the new country — fall
+      // back to "Any" rather than submitting a value the list no longer offers.
+      var stillValid = options.some(function (p) { return p[0] === currentValue; });
+      selectEntity(stillValid ? currentValue : '', stillValid ? matchedLabel : COMPANY_I18N.any);
       // Consume the initial value once so re-selecting country doesn't keep
       // forcing it back.
       APPLIED.entity_type = '';
-      entitySel.disabled = false;
       if (usingFallback) {
         entityHint.textContent = country
           ? COMPANY_I18N.noPresetCountry
@@ -635,6 +895,20 @@
         entityHint.textContent = '';
       }
     }
+
+    entityToggle.addEventListener('click', function () {
+      if (entityWrap.classList.contains('open')) closeEntityMenu(); else openEntityMenu();
+    });
+    entityToggle.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeEntityMenu();
+      if (e.key === 'ArrowDown' && !entityWrap.classList.contains('open')) {
+        e.preventDefault();
+        openEntityMenu();
+      }
+    });
+    document.addEventListener('click', function (e) {
+      if (!entityWrap.contains(e.target)) closeEntityMenu();
+    });
     countrySel.addEventListener('change', rebuildEntityOptions);
     rebuildEntityOptions();
 
@@ -847,7 +1121,19 @@
             </div>
             <div class="form-group col-md-6">
               <label>{% trans "State" context "companies" %}</label>
+              {% comment %}
+                Two controls, one field name. Countries with a subdivision list
+                (accounts.constants.COUNTRY_STATES) use the validated dropdown;
+                the rest — most of the 196 — get a free-text box, because a
+                state is required and an empty dropdown would make those
+                countries impossible to file a company in. Exactly one is
+                enabled at a time; a disabled control is not submitted.
+              {% endcomment %}
               {{ form.state }}
+              <input type="text" name="state" id="id_state_text" class="form-control"
+                     style="display:none;" disabled maxlength="60"
+                     placeholder="{% trans 'e.g. Bavaria' context 'companies' %}"
+                     autocomplete="address-level1"/>
             </div>
           </div>
 
@@ -1097,6 +1383,7 @@
 {% endcomment %}
 {{ country_states|json_script:"company-country-states" }}
 
+<script src="{% static 'adminlte/js/country_state_field.js' %}"></script>
 <script>
 // Country / State dependent dropdown wiring for the company modal. State
 // options are blank on first render; whenever the country changes (either
@@ -1104,32 +1391,18 @@
 // we rebuild the State <select> from COUNTRY_STATES[country].
 document.addEventListener("DOMContentLoaded", function () {
   const dataNode = document.getElementById("company-country-states");
-  const countryStates = dataNode ? JSON.parse(dataNode.textContent) : {};
-  const countrySel = document.getElementById("id_country");
-  const stateSel = document.getElementById("id_state");
-  if (!countrySel || !stateSel) return;
-
-  function rebuildStateOptions(countryCode, preserveValue) {
-    const options = (countryCode && countryStates[countryCode]) || [];
-    const currentValue = preserveValue != null ? preserveValue : stateSel.value;
-    if (!options.length) {
-      stateSel.innerHTML = '<option value="">' + COMPANY_I18N.selectState + '</option>';
-      stateSel.disabled = true;
-      return;
-    }
-    let html = '<option value="">' + COMPANY_I18N.selectState + '</option>';
-    options.forEach(function (name) {
-      const sel = name === currentValue ? " selected" : "";
-      html += '<option value="' + name + '"' + sel + '>' + name + '</option>';
-    });
-    stateSel.innerHTML = html;
-    stateSel.disabled = false;
-  }
-
-  rebuildStateOptions(countrySel.value);
-  countrySel.addEventListener("change", function () {
-    rebuildStateOptions(countrySel.value, "");
+  // Countries with a subdivision list get the dropdown; the rest get the
+  // free-text box beside it (State is required, so an empty dropdown would
+  // make those countries impossible to file a company in). The shared helper
+  // owns that swap and wires the country's change event.
+  const stateField = initCountryStateField({
+    countryEl: document.getElementById("id_country"),
+    selectEl: document.getElementById("id_state"),
+    textEl: document.getElementById("id_state_text"),
+    states: dataNode ? JSON.parse(dataNode.textContent) : {},
+    placeholder: COMPANY_I18N.selectState,
   });
+  if (stateField) stateField.rebuild();
 });
 </script>
 
@@ -1190,6 +1463,8 @@ document.addEventListener("DOMContentLoaded", function () {
       var addEditBody = document.getElementById("company-edit-body");
       if (addViewBody) addViewBody.style.display = "none";
       if (addEditBody) addEditBody.style.display = "block";
+      // Drop the drawer layout a prior View action may have left behind.
+      document.getElementById("companyModal")?.classList.remove("view-drawer");
       // Add mode uses the single create button — hide the edit-only
       // "Request Certification" button.
       var addReqCert = document.getElementById("request-cert-btn");
@@ -1350,7 +1625,15 @@ document.addEventListener("DOMContentLoaded", function () {
       // state dropdown is rebuilt for the loaded country.
       countryField.dispatchEvent(new Event("change"));
     }
-    if (stateField) stateField.value = c.state || "";
+    // The change above rebuilt the state control — assign to whichever one is
+    // live (dropdown for countries with a subdivision list, text box for the
+    // rest), or an edited company in a free-text country would open blank.
+    const stateTextField = document.getElementById("id_state_text");
+    if (stateField && !stateField.disabled) {
+      stateField.value = c.state || "";
+    } else if (stateTextField) {
+      stateTextField.value = c.state || "";
+    }
 
     document.getElementById("id_phone").value = c.phone || "";
     document.getElementById("id_phone_secondary").value = c.phone_secondary || "";
@@ -1470,6 +1753,9 @@ document.addEventListener("DOMContentLoaded", function () {
     // editable form (Edit action).
     var viewBody = document.getElementById("company-view-body");
     var editBody = document.getElementById("company-edit-body");
+    var modalEl = document.getElementById("companyModal");
+    // View slides in from the right; the editable form stays a centred dialog.
+    if (modalEl) modalEl.classList.toggle("view-drawer", mode === "view");
     if (mode === "view") {
       if (viewBody) { viewBody.innerHTML = renderCompanyView(c, enrichment); viewBody.style.display = "block"; }
       if (editBody) editBody.style.display = "none";

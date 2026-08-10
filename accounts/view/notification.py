@@ -75,6 +75,46 @@ def message_mark_read(request, notification_id):
 
 @login_required
 @require_POST
+def messages_mark_read_bulk(request):
+    """Mark a specific set of notifications read and report the new unread count.
+
+    Backs the top-right bell: opening the dropdown marks read exactly the
+    notifications it displayed, so the badge reflects what the user has
+    actually seen. Deliberately not "mark all" — the dropdown shows only the
+    8 most recent, and clearing unread items that were never on screen would
+    hide them for good.
+    """
+    import uuid as _uuid
+
+    from accounts.utils.notifications import scope_notifications_qs
+
+    # Drop anything that isn't a well-formed UUID before it reaches the ORM:
+    # `id__in=["nope"]` raises ValidationError rather than matching nothing.
+    ids = []
+    for raw in request.POST.getlist("ids[]") or request.POST.getlist("ids"):
+        try:
+            ids.append(_uuid.UUID(str(raw)))
+        except (ValueError, AttributeError, TypeError):
+            continue
+
+    updated = 0
+    if ids:
+        updated = scope_notifications_qs(
+            Notification.objects.filter(
+                recipient=request.user, id__in=ids, is_read=False
+            ),
+            request.user,
+        ).update(is_read=True, read_at=timezone.now())
+
+    unread = scope_notifications_qs(
+        Notification.objects.filter(recipient=request.user, is_read=False),
+        request.user,
+    ).count()
+    return JsonResponse({"ok": True, "updated": updated, "unread": unread})
+
+
+@login_required
+@require_POST
 def messages_mark_all_read(request):
     from accounts.utils.notifications import scope_notifications_qs
 
@@ -112,15 +152,20 @@ def message_delete(request, notification_id):
 
 @login_required
 def message_open(request, notification_id):
-    """Mark the notification as read, then redirect to its `link_url`.
+    """Delete the notification, then redirect to its `link_url`.
 
-    Wired to the inbox "Open" link so clicking through to the target page
-    also clears the unread badge. Without this, the badge stayed stuck
-    because the raw `link_url` href bypassed any read-tracking. GET-only
-    on purpose — this is a navigation action, not a state-change form.
-    Falls back to the inbox if the notification has no link, or if the
-    link points off-host (defense against open-redirects via crafted
-    notification payloads).
+    Opening a notification consumes it: the user has seen what it was telling
+    them, so the row is removed from the inbox rather than lingering as a read
+    entry. It previously only flipped `is_read`, which cleared the bell badge
+    but left the inbox filling up indefinitely.
+
+    Falls back to the inbox if the notification has no link, or if the link
+    points off-host (defense against open-redirects via crafted notification
+    payloads) — in both cases it is still consumed.
+
+    GET-only, matching the plain link in the inbox. Worth knowing: that means
+    anything issuing a GET on this URL destroys the notification, so it must
+    not be exposed anywhere a link prefetcher or crawler could reach it.
     """
     from accounts.utils.notifications import scope_notifications_qs
 
@@ -130,11 +175,9 @@ def message_open(request, notification_id):
             request.user,
         )
     )
-    if not note.is_read:
-        note.is_read = True
-        note.read_at = timezone.now()
-        note.save(update_fields=["is_read", "read_at"])
+    # Read the destination before deleting — `note` is unusable afterwards.
     target = note.link_url or ""
+    note.delete()
     if target and url_has_allowed_host_and_scheme(
         target, allowed_hosts={request.get_host()}, require_https=request.is_secure()
     ):

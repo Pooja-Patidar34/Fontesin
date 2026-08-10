@@ -5,17 +5,35 @@
 {% block content %}
 {% include "listings/_ps_styles.html" %}
 
-<div class="content-header d-flex justify-content-between align-items-center">
-  <h1 class="m-0"><i class="fas fa-store text-primary mr-2"></i>{% trans "Browse Offers & Demands" %}</h1>
-  <span class="text-nowrap">
-    <a href="{% url 'listings_web:add' %}?type=offer" class="btn btn-sm btn-primary"><i class="fas fa-plus mr-1"></i>{% trans "Add Offer" %}</a>
-    <a href="{% url 'listings_web:add' %}?type=demand" class="btn btn-sm btn-outline-primary"><i class="fas fa-plus mr-1"></i>{% trans "Add Demand" %}</a>
-  </span>
-</div>
+<section class="content pt-3"><div class="container-fluid">
 
-<section class="content"><div class="container-fluid">
+  {# Same heading treatment as My Offers / My Demands / All Listings. #}
+  <div class="ps-pagehead">
+    <div class="ps-pagehead__title">
+      <span class="ps-pagehead__icon"><i class="fas fa-store"></i></span>
+      <h1>{% trans "Browse Offers & Demands" %}</h1>
+      <span class="ps-count" id="lb-count">
+        {% blocktrans count counter=page_obj.paginator.count %}{{ counter }} listing{% plural %}{{ counter }} listings{% endblocktrans %}
+      </span>
+    </div>
+    <div class="text-nowrap">
+      <a href="{% url 'listings_web:add' %}?type=offer" class="ps-btn-gradient">
+        <i class="fas fa-bullhorn mr-1"></i>{% trans "Add Offer" %}
+      </a>
+      <a href="{% url 'listings_web:add' %}?type=demand" class="ps-btn-ghost ps-btn-ghost--demand ml-1">
+        <i class="fas fa-search mr-1"></i>{% trans "Add Demand" %}
+      </a>
+    </div>
+  </div>
 
-  <form method="get" class="ps-toolbar" id="lb-filter-form" action="{% url 'listings_web:browse' %}">
+
+  {% comment %}
+  data-no-loader: this form is submitted over AJAX and never navigates, so the
+  global page-loading overlay must stay out of it — the results block dims
+  itself while fetching, which is the right-sized feedback here.
+  {% endcomment %}
+  <form method="get" class="ps-toolbar" id="lb-filter-form" data-no-loader
+        action="{% url 'listings_web:browse' %}">
     <select name="listing_type" class="form-control" style="flex:1 1 140px; min-width:120px; width:auto;">
       <option value="">{% trans "All types" %}</option>
       {% for val, label in listing_type_choices %}
@@ -48,8 +66,17 @@
       <i class="fas fa-search" style="position:absolute; left:.7rem; top:50%; transform:translateY(-50%); color:#98a2b3;"></i>
       <input type="text" name="keyword" class="form-control pl-4 mx-1" placeholder="{% trans 'Search title, description or keywords' %}" value="{{ filters.keyword }}">
     </div>
-    <button class="btn btn-primary" style="flex:0 0 auto;"><i class="fas fa-filter mr-1"></i>{% trans "Filter" %}</button>
-    <a href="{% url 'listings_web:browse' %}" id="lb-clear" class="btn btn-link text-muted"
+    {% comment %}
+    Inert until at least one filter is set — submitting an empty bar just
+    re-fetched the same unfiltered list. Rendered disabled server-side so it
+    never flashes enabled before the script below runs.
+    {% endcomment %}
+    <button class="ps-btn-filter" id="lb-filter-btn"
+            title="{% trans "Choose a filter first" %}"
+            {% if not filters.listing_type and not filters.category_type and not filters.nace_isic_code and not filters.country and not filters.keyword %}disabled{% endif %}>
+      <i class="fas fa-filter mr-1"></i>{% trans "Filter" %}
+    </button>
+    <a href="{% url 'listings_web:browse' %}" id="lb-clear" class="ps-btn-ghost"
        style="flex:0 0 auto;{% if not filters.listing_type and not filters.category_type and not filters.nace_isic_code and not filters.country and not filters.keyword %} display:none;{% endif %}">{% trans "Clear" %}</a>
   </form>
 
@@ -69,7 +96,42 @@
   if (!form || !box || !window.fetch) return;  // no JS/fetch: plain GET still works
 
   var FIELDS = ["listing_type", "category_type", "nace_isic_code", "country", "keyword"];
+  var filterBtn = document.getElementById("lb-filter-btn");
   var busy = false;
+
+  // Any filter set? Drives both the Filter button's enabled state and the
+  // Clear link's visibility.
+  function hasFilters() {
+    return FIELDS.some(function (name) {
+      var el = form.elements[name];
+      return !!(el && el.value && el.value.trim());
+    });
+  }
+
+  function syncFilterBtn() {
+    if (filterBtn) filterBtn.disabled = !hasFilters();
+  }
+  // `input` covers the text boxes, `change` the selects.
+  form.addEventListener("change", function (e) {
+    syncFilterBtn();
+    // Same idea for a select returned to its "All …" option.
+    var el = e.target;
+    if (el && el.tagName === "SELECT" && el.value === "" && location.search) load(null, true);
+  });
+
+  // Emptying a text box refreshes straight away instead of leaving the old
+  // (possibly empty) result set on screen with no way back but Clear. Only
+  // fires when something was actually filtered, and only on the way to empty —
+  // typing still waits for Filter.
+  var emptyTimer = null;
+  form.addEventListener("input", function (e) {
+    syncFilterBtn();
+    var el = e.target;
+    if (!el || el.tagName !== "INPUT" || el.value.trim() !== "") return;
+    if (!location.search) return;              // nothing applied to undo
+    clearTimeout(emptyTimer);
+    emptyTimer = setTimeout(function () { load(null, true); }, 250);
+  });
 
   function query(page) {
     var p = new URLSearchParams();
@@ -101,6 +163,11 @@
       })
       .then(function (html) {
         box.innerHTML = html;
+        // The count pill lives in the page header, outside the swapped
+        // fragment — the fragment carries the new label for it to read.
+        var src = box.querySelector("#lb-count-src");
+        var pill = document.getElementById("lb-count");
+        if (src && pill) pill.textContent = src.getAttribute("data-label");
         // Keep the URL shareable/bookmarkable and the Back button meaningful.
         if (push !== false && window.history && history.pushState) {
           history.pushState({ lb: qs }, "", qs ? "?" + qs : location.pathname);
@@ -113,7 +180,12 @@
       .then(function () { busy = false; box.style.opacity = ""; });
   }
 
-  form.addEventListener("submit", function (e) { e.preventDefault(); load(null, true); });
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    // Enter in a text box submits past the disabled button, so re-check here.
+    if (!hasFilters()) return;
+    load(null, true);
+  });
 
   clear.addEventListener("click", function (e) {
     e.preventDefault();
@@ -121,6 +193,7 @@
     var naceBox = document.getElementById("lb-nace-search");
     if (naceBox) naceBox.value = "";       // hidden code + visible label clear together
     load(null, true);
+    syncFilterBtn();
   });
 
   // Pagination lives inside the swapped fragment, so delegate. Its hrefs carry
@@ -150,7 +223,10 @@
       naceBox.value = c ? (window.__lbNaceLabels[c] || c) : "";
     }
     load(p.get("page"), false);
+    syncFilterBtn();
   });
+
+  syncFilterBtn();   // in case the browser restored field values on reload
 })();
 
 /* Searchable NACE / ISIC picker for the filter bar — same widget and endpoint
@@ -197,7 +273,10 @@
         search.value = label;
         window.__lbNaceLabels[row.code] = label;
         hide();
-        if (form) form.dispatchEvent(new Event("submit", { cancelable: true }));
+        // bubbles:true matters — a real submit bubbles, and document-level
+        // listeners (the global page loader) rely on seeing it to know the
+        // navigation was cancelled.
+        if (form) form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
       });
       results.appendChild(item);
     });

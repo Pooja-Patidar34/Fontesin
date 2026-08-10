@@ -29,6 +29,8 @@ from accounts.models import (
     Permission,
     CompanyJoinRequest,
 )
+from accounts.constants import continent_for_country
+from accounts.utils.country_matching import resolve_country_code
 from accounts.utils.permissions import has_permission, get_effective_permissions
 from accounts.utils.ip import get_client_ip
 from accounts.forms.certificate_form import RoleForm, PermissionForm
@@ -846,6 +848,13 @@ def user_edit(request, user_id):
                 "postal_code", user.postal_code
             )
             user.country = country_val
+            # The continent is picked at sign-up but always derived from the
+            # country (validated as a pair there). This form has no continent
+            # field, so re-derive it rather than leave the old one behind when
+            # an admin moves the user to another country. The field is free
+            # text here, so resolve "United States" / "USA" to an ISO code
+            # first; an unresolvable country leaves no continent to store.
+            user.continent = continent_for_country(resolve_country_code(country_val))
 
             # -------------------------------
             # Company (tenant-scoped)

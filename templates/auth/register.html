@@ -241,13 +241,26 @@
             <input type="email" name="email" id="reg-email" class="form-control" placeholder="john@company.com" required maxlength="254" pattern="^[a-zA-Z0-9._+\-]+@[a-zA-Z0-9\-]+(\.[a-zA-Z0-9\-]+)*\.[a-zA-Z]{2,10}$" title="{% trans 'Please enter a valid email address (e.g., you@company.com)' context 'auth.common' %}" oninput="this.value=this.value.replace(/[^a-zA-Z0-9@._+\-]/g,'')"/>
           </div>
 
+          {% comment %}
+            Continent sits one step above Country and filters it: picking Asia
+            leaves only the supported Asian markets in the Country dropdown, so
+            the pair stored on the account can never disagree
+            (accounts.constants.CONTINENT_COUNTRIES).
+          {% endcomment %}
           <div class="form-group">
-            <label class="form-label">{% trans "Country" context "auth.register" %} *</label>
-            <select name="country" id="reg-country" class="form-control" onchange="updatePhoneCode()">
-              <option value="">{% trans "Select your country..." context "auth.register" %}</option>
-              {% for code, label in country_choices %}
+            <label class="form-label">{% trans "Continent" context "auth.register" %} *</label>
+            <select name="continent" id="reg-continent" class="form-control" onchange="rebuildRegCountries('')">
+              <option value="">{% trans "Select your continent..." context "auth.register" %}</option>
+              {% for code, label in continent_choices %}
               <option value="{{ code }}">{{ label }}</option>
               {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">{% trans "Country" context "auth.register" %} *</label>
+            <select name="country" id="reg-country" class="form-control" disabled onchange="updatePhoneCode()">
+              <option value="">{% trans "Select a continent first..." context "auth.register" %}</option>
             </select>
           </div>
 
@@ -262,9 +275,20 @@
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">{% trans "State / Region" context "auth.register" %} *</label>
+              {% comment %}
+                Two controls, one field name: countries with a subdivision list
+                (accounts.constants.COUNTRY_STATES) get the validated dropdown,
+                the rest get a free-text box. Exactly one is ever enabled —
+                a disabled control is not submitted, so the POST always carries
+                a single state_region.
+              {% endcomment %}
               <select name="state_region" id="reg-state" class="form-control" disabled>
                 <option value="">{% trans "Select a country first..." context "auth.register" %}</option>
               </select>
+              <input type="text" name="state_region" id="reg-state-text" class="form-control"
+                     style="display:none;" disabled maxlength="150"
+                     placeholder="{% trans 'Bavaria' context 'auth.register' %}"
+                     oninput="this.value=this.value.replace(/\s+/g,' ').replace(/^ /,'')"/>
             </div>
             <div class="form-group">
               <label class="form-label">{% trans "City / Town" context "auth.register" %} *</label>
@@ -492,6 +516,16 @@
 {% comment %} Country → state map, indexed client-side when a country is picked. {% endcomment %}
 {{ country_states|json_script:"reg-country-states" }}
 
+{% comment %}
+  Continent → country codes, and the translated country labels, so the Country
+  dropdown can be rebuilt for whichever continent the user picks.
+{% endcomment %}
+{{ continent_countries|json_script:"reg-continent-countries" }}
+{{ country_choices|json_script:"reg-country-choices" }}
+
+{% comment %} Dial code + digit rules per country, for the phone field. {% endcomment %}
+{{ country_phone|json_script:"reg-country-phone" }}
+
 <script src="{% url 'javascript-catalog' %}"></script>
 <script src="{% static 'adminlte/js/main.js' %}"></script>
 <script src="{% static 'adminlte/js/no_emoji.js' %}"></script>
@@ -532,28 +566,25 @@
     }
   };
 
-  // Country code mapping and phone rules
-  var COUNTRY_PHONE = {
-    US: { code: '+1',  min: 10, max: 10, name: 'United States',       format: '(XXX) XXX-XXXX' },
-    CA: { code: '+1',  min: 10, max: 10, name: 'Canada',              format: '(XXX) XXX-XXXX' },
-    GB: { code: '+44', min: 10, max: 10, name: 'United Kingdom',      format: 'XXXX XXX XXXX' },
-    DE: { code: '+49', min: 10, max: 11, name: 'Germany',             format: 'XXX XXXXXXXX' },
-    FR: { code: '+33', min: 9,  max: 9,  name: 'France',              format: 'X XX XX XX XX' },
-    NL: { code: '+31', min: 9,  max: 9,  name: 'Netherlands',         format: 'XX XXX XXXX' },
-    PL: { code: '+48', min: 9,  max: 9,  name: 'Poland',              format: 'XXX XXX XXX' },
-    AT: { code: '+43', min: 10, max: 11, name: 'Austria',             format: 'XXX XXXXXXX' },
-    CH: { code: '+41', min: 9,  max: 9,  name: 'Switzerland',         format: 'XX XXX XX XX' },
-    SE: { code: '+46', min: 9,  max: 10, name: 'Sweden',              format: 'XX XXX XXXX' },
-    CZ: { code: '+420',min: 9,  max: 9,  name: 'Czech Republic',      format: 'XXX XXX XXX' },
-    AE: { code: '+971',min: 9,  max: 9,  name: 'United Arab Emirates', format: 'XX XXX XXXX' },
-    SG: { code: '+65', min: 8,  max: 8,  name: 'Singapore',           format: 'XXXX XXXX' },
-    AU: { code: '+61', min: 9,  max: 9,  name: 'Australia',           format: 'XXX XXX XXX' },
-    JP: { code: '+81', min: 10, max: 10, name: 'Japan',               format: 'XX XXXX XXXX' },
-    BR: { code: '+55', min: 10, max: 11, name: 'Brazil',              format: 'XX XXXXX XXXX' },
-    IN: { code: '+91', min: 10, max: 10, name: 'India',               format: 'XXXXX XXXXX' },
-    MX: { code: '+52', min: 10, max: 10, name: 'Mexico',              format: 'XX XXXX XXXX' },
-    KR: { code: '+82', min: 10, max: 11, name: 'South Korea',         format: 'XX XXXX XXXX' }
-  };
+  // Dial code + digit rules for every country, straight from
+  // accounts.constants (country_phone_map) — the same table the server
+  // validates against, so the two can't drift. Countries with no pinned rule
+  // carry the permissive default (7-15 digits) and an empty format hint.
+  var COUNTRY_PHONE = (function() {
+    var node = document.getElementById('reg-country-phone');
+    var raw = node ? JSON.parse(node.textContent) : {};
+    var out = {};
+    Object.keys(raw).forEach(function(cc) {
+      out[cc] = {
+        code: raw[cc].dial,
+        min: raw[cc].min,
+        max: raw[cc].max,
+        name: raw[cc].name,
+        format: raw[cc].format
+      };
+    });
+    return out;
+  })();
 
   var PHONE_RULES = {};
   for (var k in COUNTRY_PHONE) {
@@ -570,22 +601,101 @@
 
   var SELECT_STATE_LABEL = "{% filter escapejs %}{% trans 'Select your state / region...' context 'auth.register' %}{% endfilter %}";
   var PICK_COUNTRY_LABEL = "{% filter escapejs %}{% trans 'Select a country first...' context 'auth.register' %}{% endfilter %}";
+  var SELECT_COUNTRY_LABEL = "{% filter escapejs %}{% trans 'Select your country...' context 'auth.register' %}{% endfilter %}";
+  var PICK_CONTINENT_LABEL = "{% filter escapejs %}{% trans 'Select a continent first...' context 'auth.register' %}{% endfilter %}";
 
-  // Repopulate the State dropdown for the chosen country. Called on every
+  // Continent → country codes, and code → translated country name. Same source
+  // as the server-side validation (accounts.constants.CONTINENT_COUNTRIES), so
+  // whatever this dropdown offers is exactly what the POST will accept.
+  var REG_CONTINENT_COUNTRIES = (function() {
+    var node = document.getElementById('reg-continent-countries');
+    return node ? JSON.parse(node.textContent) : {};
+  })();
+
+  var REG_COUNTRY_LABELS = (function() {
+    var node = document.getElementById('reg-country-choices');
+    var pairs = node ? JSON.parse(node.textContent) : [];
+    var map = {};
+    for (var i = 0; i < pairs.length; i++) map[pairs[i][0]] = pairs[i][1];
+    return map;
+  })();
+
+  // Repopulate the Country dropdown for the chosen continent. Countries are
+  // listed in the continent's order from the server map, then alphabetically by
+  // their translated label so the list reads naturally in every language.
+  window.rebuildRegCountries = function(preserveValue) {
+    var continentSel = document.getElementById('reg-continent');
+    var countrySel = document.getElementById('reg-country');
+    if (!continentSel || !countrySel) return;
+
+    var codes = (REG_CONTINENT_COUNTRIES[continentSel.value] || []).slice();
+    var current = preserveValue != null ? preserveValue : countrySel.value;
+
+    if (!codes.length) {
+      countrySel.innerHTML = '<option value="">' + PICK_CONTINENT_LABEL + '</option>';
+      countrySel.disabled = true;
+      updatePhoneCode();
+      return;
+    }
+
+    codes.sort(function(a, b) {
+      return (REG_COUNTRY_LABELS[a] || a).localeCompare(REG_COUNTRY_LABELS[b] || b);
+    });
+
+    countrySel.innerHTML = '';
+    var placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = SELECT_COUNTRY_LABEL;
+    countrySel.appendChild(placeholder);
+
+    for (var i = 0; i < codes.length; i++) {
+      var opt = document.createElement('option');
+      opt.value = codes[i];
+      opt.textContent = REG_COUNTRY_LABELS[codes[i]] || codes[i];
+      if (codes[i] === current) opt.selected = true;
+      countrySel.appendChild(opt);
+    }
+    countrySel.disabled = false;
+
+    // The country drives the phone rules and the State list, and it may have
+    // just been cleared by the continent change — resync both.
+    updatePhoneCode();
+  };
+
+  // Repopulate the State control for the chosen country. Called on every
   // country change and once at load, so a browser-restored country (soft
   // refresh, back button) still gets its states without a manual re-pick.
+  //
+  // Only a minority of the 196 countries have a subdivision list on file. For
+  // the rest we swap the dropdown for a free-text box rather than block
+  // sign-up: the state anchors Basic-plan scope, and a typed name still
+  // matches Company.state, which is free text too.
   window.rebuildRegStates = function(preserveValue) {
     var stateSel = document.getElementById('reg-state');
+    var stateText = document.getElementById('reg-state-text');
     var countrySel = document.getElementById('reg-country');
     if (!stateSel || !countrySel) return;
 
     var options = REG_COUNTRY_STATES[countrySel.value] || [];
-    var current = preserveValue != null ? preserveValue : stateSel.value;
+    var current = preserveValue != null ? preserveValue : activeStateValue();
 
+    // Only one control may be enabled — both carry name="state_region", and a
+    // disabled field is not submitted.
     if (!options.length) {
       stateSel.innerHTML = '<option value="">' + PICK_COUNTRY_LABEL + '</option>';
       stateSel.disabled = true;
+      stateSel.style.display = 'none';
+      if (stateText) {
+        stateText.disabled = !countrySel.value;
+        stateText.style.display = '';
+        stateText.value = current || '';
+      }
       return;
+    }
+
+    if (stateText) {
+      stateText.disabled = true;
+      stateText.style.display = 'none';
     }
 
     var html = '<option value="">' + SELECT_STATE_LABEL + '</option>';
@@ -596,7 +706,21 @@
     }
     stateSel.innerHTML = html;
     stateSel.disabled = false;
+    stateSel.style.display = '';
   };
+
+  // Whichever of the two state controls is currently live.
+  function activeStateEl() {
+    var stateSel = document.getElementById('reg-state');
+    var stateText = document.getElementById('reg-state-text');
+    if (stateSel && !stateSel.disabled) return stateSel;
+    return stateText;
+  }
+
+  function activeStateValue() {
+    var el = activeStateEl();
+    return el ? el.value : '';
+  }
 
   window.updatePhoneCode = function() {
     // Country drives both the phone rules and the State list; the select's
@@ -611,7 +735,12 @@
     if (info) {
       phoneCodeEl.value = info.code;
       phoneCodeHidden.value = info.code;
-      hint.textContent = FORMAT_PREFIX + ' ' + info.format + ' (' + info.min + (info.min !== info.max ? '-' + info.max : '') + ' digits)';
+      // Most countries have no pinned format, only a digit range — showing an
+      // empty "Format:" would read as a broken hint, so drop that half.
+      var digits = info.min + (info.min !== info.max ? '-' + info.max : '') + ' digits';
+      hint.textContent = info.format
+        ? FORMAT_PREFIX + ' ' + info.format + ' (' + digits + ')'
+        : digits.charAt(0).toUpperCase() + digits.slice(1);
     } else {
       phoneCodeEl.value = '';
       phoneCodeHidden.value = '';
@@ -653,8 +782,11 @@
       const lname = document.getElementById('reg-lname');
       const email = document.getElementById('reg-email');
       const phone = document.getElementById('reg-phone');
+      const continent = document.getElementById('reg-continent');
       const country = document.getElementById('reg-country');
-      const state = document.getElementById('reg-state');
+      // Dropdown for countries with a subdivision list, free-text box for the
+      // rest — validate whichever one is live.
+      const state = activeStateEl();
       const city = document.getElementById('reg-city');
       const pass  = document.getElementById('reg-pass');
       const pass2 = document.getElementById('reg-pass2');
@@ -668,7 +800,7 @@
       city.value = city.value.trim();
 
       // Required fields check
-      const requiredFields = [fname, lname, email, country, state, city, phone, pass, pass2];
+      const requiredFields = [fname, lname, email, continent, country, state, city, phone, pass, pass2];
 
       for (let field of requiredFields) {
         if (!field.value) {
@@ -705,6 +837,13 @@
         return;
       }
 
+      // Continent validation
+      if (!continent.value) {
+        showToast(gettext("Please select your continent."), "error");
+        continent.focus();
+        return;
+      }
+
       // Country validation
       if (!country.value) {
         showToast(gettext("Please select your country."), "error");
@@ -714,8 +853,19 @@
 
       // State / city validation. Both anchor the plan discovery scope, so an
       // empty town would leave a Free business user with nothing to browse.
-      if (!state.value) {
+      if (!state || !state.value.trim()) {
         showToast(gettext("Please select your state / region."), "error");
+        if (state) state.focus();
+        return;
+      }
+      state.value = state.value.trim();
+
+      // Typed states (countries with no subdivision list) get the same shape
+      // check the server applies; picked ones are already canonical.
+      const stateRegex = /^[A-Za-zÀ-ÖØ-öø-ÿ0-9\s'.\-]{2,150}$/;
+      if (state.tagName === 'INPUT'
+          && (emojiRegex.test(state.value) || !stateRegex.test(state.value))) {
+        showToast(gettext("Enter a valid state / region name."), "error");
         state.focus();
         return;
       }
@@ -893,9 +1043,10 @@
   // is checked at page load (covers browser-retained state on soft refresh).
   toggleOthersOption();
 
-  // Same reason: a browser-restored country selection never fires `change`, so
-  // seed the State dropdown from whatever the country box holds at load.
-  rebuildRegStates();
+  // Same reason: a browser-restored continent / country selection never fires
+  // `change`, so rebuild the Country dropdown (and, through it, the State list
+  // and phone rules) from whatever the boxes hold at load.
+  rebuildRegCountries();
 </script>
 
 </body>

@@ -83,6 +83,14 @@ technical_logger = logging.getLogger("technical")
 #         },
 #     )
 
+# Newest franchise first. The list was alphabetical by name, which buried a
+# just-created franchise on whatever page its initial happened to fall on —
+# "Zenith" landed on page 4 and looked like the creation had failed. `name` is
+# the tiebreaker so rows sharing a timestamp keep a stable order across pages
+# (an unordered tail makes the paginator repeat or skip rows).
+_LIST_ORDER = ("-created_at", "name")
+
+
 @login_required
 def tenant_list(request):
 
@@ -213,12 +221,12 @@ def tenant_list(request):
                 ),
                 distinct=True,
             ),
-        ).order_by("name")
+        ).order_by(*_LIST_ORDER)
     else:
         qs = qs.annotate(
             company_count=Count("companies", distinct=True),
             user_count=Count("users", distinct=True),
-        ).order_by("name")
+        ).order_by(*_LIST_ORDER)
 
     paginator = Paginator(qs, 10)
     page_number = request.GET.get("page", 1)

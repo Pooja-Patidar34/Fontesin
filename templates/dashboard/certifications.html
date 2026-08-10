@@ -31,6 +31,29 @@
 
   .cert-pane { display: none; }
   .cert-pane.active { display: block; }
+  .cert-pager {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: .6rem;
+    padding: .75rem 1rem; border-top: 1px solid #eef2f7; background: #fbfcfe;
+  }
+  .cert-pager__info { font-size: .8rem; color: #64748b; }
+  .cert-pager__links { display: flex; align-items: center; gap: .3rem; }
+  .cert-pager__btn {
+    min-width: 32px; height: 32px; padding: 0 .5rem;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid #e2e8f0; border-radius: 8px; background: #fff;
+    font-size: .82rem; font-weight: 600; color: #475467; text-decoration: none;
+  }
+  .cert-pager__btn:hover { background: #f1f5f9; color: #1B2E3F; text-decoration: none; }
+  .cert-pager__btn.is-current { background: #1B7BE4; border-color: #1B7BE4; color: #fff; }
+  .cert-pager__btn.is-disabled { opacity: .4; pointer-events: none; }
+
+  /* Certificate number — selectable as one unit for quoting/verification. */
+  .cert-no {
+    font-size: .78rem; color: #b83280; background: #fdf2f8;
+    border: 1px solid #fbe3ef; border-radius: 5px; padding: .12rem .4rem;
+    user-select: all; white-space: nowrap;
+  }
 
   .empty-state { text-align: center; color: #94a3b8; padding: 2.5rem 1rem; }
   .empty-state .fa-2x { margin-bottom: .5rem; }
@@ -152,7 +175,7 @@
         <div style="flex:1;">
           <h6>{{ c.name }}</h6>
           <div class="meta">
-            {% blocktrans trimmed with date=c.created_at|date:"M j, Y" context "dashboard" %}Submitted {{ date }}{% endblocktrans %} &middot;
+            {% blocktrans trimmed with date=c.submitted_at|default:c.created_at|date:"M j, Y" context "dashboard" %}Submitted {{ date }}{% endblocktrans %} &middot;
             {% if c.consultant %}
               {% trans "Assigned to consultant" context "dashboard" %} {{ c.consultant.first_name }} {{ c.consultant.last_name }}
             {% else %}
@@ -216,23 +239,37 @@
     </div>
   {% else %}
 
+  {% comment %}
+  Badges show the TOTAL row count, not the current page's length — `pending`
+  and friends are Page objects now, so `|length` would read "10" on every full
+  page.
+  {% endcomment %}
   <div class="cert-tabs">
-    <button type="button" class="cert-tab active" data-pane="pending">
+    <button type="button" class="cert-tab {% if active_tab == 'pending' %}active{% endif %}" data-pane="pending">
       Pending
-      {% if pending %}<span class="badge badge-warning">{{ pending|length }}</span>{% endif %}
+      {% if pending_total %}<span class="badge badge-warning">{{ pending_total }}</span>{% endif %}
     </button>
-    <button type="button" class="cert-tab" data-pane="certified">
+    <button type="button" class="cert-tab {% if active_tab == 'certified' %}active{% endif %}" data-pane="certified">
       {% trans "My Certified Companies" context "dashboard" %}
-      {% if certified %}<span class="badge badge-success">{{ certified|length }}</span>{% endif %}
+      {% if certified_total %}<span class="badge badge-success">{{ certified_total }}</span>{% endif %}
     </button>
-    <button type="button" class="cert-tab" data-pane="rejected">
+    <button type="button" class="cert-tab {% if active_tab == 'rejected' %}active{% endif %}" data-pane="rejected">
       Declined
-      {% if rejected %}<span class="badge badge-secondary">{{ rejected|length }}</span>{% endif %}
+      {% if rejected_total %}<span class="badge badge-secondary">{{ rejected_total }}</span>{% endif %}
+    </button>
+    {% comment %}
+    Certificates — the documents themselves, keyed by certificate number, as
+    opposed to the "My Certified Companies" tab which is about managing those
+    companies (view / activate / deactivate).
+    {% endcomment %}
+    <button type="button" class="cert-tab {% if active_tab == 'certificates' %}active{% endif %}" data-pane="certificates">
+      {% trans "Certificates" context "dashboard" %}
+      {% if certified_total %}<span class="badge badge-info">{{ certified_total }}</span>{% endif %}
     </button>
   </div>
 
   {# ============ PENDING ============ #}
-  <div class="cert-pane active" id="pane-pending">
+  <div class="cert-pane {% if active_tab == 'pending' %}active{% endif %}" id="pane-pending">
     <div class="card-body p-0">
       {% if pending %}
       <div class="table-responsive">
@@ -257,14 +294,17 @@
                 {% if c.owner_user %}
                 <strong>{{ c.owner_user.first_name }} {{ c.owner_user.last_name }}</strong>
                 <div class="small text-muted">{{ c.owner_user.email }}</div>
-                {% else %}
+{% else %}
                 <span class="text-muted">—</span>
                 {% endif %}
               </td>
               <td class="small">
                 {{ c.city|default:"—" }}{% if c.country %}, {{ c.country }}{% endif %}
               </td>
-              <td class="small text-muted">{{ c.created_at|date:"M j, Y H:i" }}</td>
+              {% comment %} submitted_at is the CURRENT request's timestamp
+                   (annotated in certification_list), so a resubmission shows
+                   its own date instead of the company's creation date. {% endcomment %}
+              <td class="small text-muted">{{ c.submitted_at|default:c.created_at|date:"M j, Y H:i" }}</td>
               <td class="text-center">
                 <div class="btn-group">
                 <form method="post" action="{% url 'certification-action' c.id %}"
@@ -308,6 +348,7 @@
           </tbody>
         </table>
       </div>
+      {% include "dashboard/_cert_pagination.html" with page_obj=pending param="pp" tab="pending" %}
       {% else %}
       <div class="empty-state">
         <i class="fas fa-inbox fa-2x"></i>
@@ -319,7 +360,7 @@
   </div>
 
   {# ============ CERTIFIED ============ #}
-  <div class="cert-pane" id="pane-certified">
+  <div class="cert-pane {% if active_tab == 'certified' %}active{% endif %}" id="pane-certified">
     <div class="card-body p-0">
       {% if certified %}
       <div class="table-responsive">
@@ -345,7 +386,7 @@
                 {% if c.owner_user %}
                 <strong>{{ c.owner_user.first_name }} {{ c.owner_user.last_name }}</strong>
                 <div class="small text-muted">{{ c.owner_user.email }}</div>
-                {% else %}
+{% else %}
                 <span class="text-muted">—</span>
                 {% endif %}
               </td>
@@ -364,15 +405,20 @@
                         data-url="{% url 'company-detail' c.id %}">
                   <i class="fas fa-eye mr-1"></i> {% trans "View" context "common" %}
                 </button>
+                {% comment %} Same guard as the Company Database list: toggling
+                active state asks for confirmation first (shared appConfirm
+                dialog), rather than firing on a single click. {% endcomment %}
                 <form method="post" action="{% url 'company-toggle' c.id %}"
-                      class="d-inline m-0 ml-1">
+                      class="d-inline m-0 ml-1" id="cert-toggle-form-{{ c.id }}">
                   {% csrf_token %}
                   {% if c.is_active %}
-                  <button type="submit" class="btn btn-sm btn-outline-warning">
+                  <button type="button" class="btn btn-sm btn-outline-warning"
+                          onclick="appConfirm({kind:'warning', title:'{% filter escapejs %}{% trans "Deactivate company?" context "companies" %}{% endfilter %}', text:'{% filter escapejs %}{% blocktrans with company=c.name %}{{ company }} will be marked inactive and hidden from the public company directory. You can reactivate it at any time.{% endblocktrans %}{% endfilter %}', okLabel:'{% filter escapejs %}{% trans "Deactivate" context "dashboard" %}{% endfilter %}', okIcon:'fa-toggle-off', onConfirm:function(){document.getElementById('cert-toggle-form-{{ c.id }}').submit();}});">
                     <i class="fas fa-toggle-off mr-1"></i> {% trans "Deactivate" context "dashboard" %}
                   </button>
                   {% else %}
-                  <button type="submit" class="btn btn-sm btn-outline-success">
+                  <button type="button" class="btn btn-sm btn-outline-success"
+                          onclick="appConfirm({kind:'success', title:'{% filter escapejs %}{% trans "Activate company?" context "companies" %}{% endfilter %}', text:'{% filter escapejs %}{% blocktrans with company=c.name %}{{ company }} will be marked active and visible in the public company directory again.{% endblocktrans %}{% endfilter %}', okLabel:'{% filter escapejs %}{% trans "Activate" context "dashboard" %}{% endfilter %}', okIcon:'fa-toggle-on', onConfirm:function(){document.getElementById('cert-toggle-form-{{ c.id }}').submit();}});">
                     <i class="fas fa-toggle-on mr-1"></i> {% trans "Activate" context "dashboard" %}
                   </button>
                   {% endif %}
@@ -383,6 +429,7 @@
           </tbody>
         </table>
       </div>
+      {% include "dashboard/_cert_pagination.html" with page_obj=certified param="pc" tab="certified" %}
       {% else %}
       <div class="empty-state">
         <i class="fas fa-award fa-2x"></i>
@@ -393,7 +440,7 @@
   </div>
 
   {# ============ REJECTED ============ #}
-  <div class="cert-pane" id="pane-rejected">
+  <div class="cert-pane {% if active_tab == 'rejected' %}active{% endif %}" id="pane-rejected">
     <div class="card-body p-0">
       {% if rejected %}
       <div class="table-responsive">
@@ -414,7 +461,7 @@
               <td>
                 {% if c.owner_user %}
                 {{ c.owner_user.email }}
-                {% else %}
+{% else %}
                 <span class="text-muted">—</span>
                 {% endif %}
               </td>
@@ -432,10 +479,62 @@
           </tbody>
         </table>
       </div>
+      {% include "dashboard/_cert_pagination.html" with page_obj=rejected param="pr" tab="rejected" %}
       {% else %}
       <div class="empty-state">
         <i class="fas fa-ban fa-2x"></i>
         <p class="mb-0">{% trans "No declined requests." context "dashboard" %}</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ============ CERTIFICATES ============ #}
+  <div class="cert-pane {% if active_tab == 'certificates' %}active{% endif %}" id="pane-certificates">
+    <div class="card-body p-0">
+      {% if certificates %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th>{% trans "Certificate No." context "dashboard" %}</th>
+              <th>{% trans "Company" context "dashboard" %}</th>
+              <th>{% trans "Issued" context "dashboard" %}</th>
+              <th>{% trans "Certified by" context "companies" %}</th>
+              <th class="text-center">{% trans "Action" context "common" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in certificates %}
+            <tr>
+              <td><code class="cert-no">{{ c.certificate_number }}</code></td>
+              <td>
+                <strong>{{ c.name }}</strong>
+                <div class="small text-muted">
+                  {{ c.city|default:"" }}{% if c.city and c.country %}, {% endif %}{{ c.country|default:"" }}
+                </div>
+              </td>
+              <td class="small text-muted">{{ c.certified_at|date:"M j, Y"|default:"—" }}</td>
+              <td class="small">
+                {% if c.certified_by %}
+                  {{ c.certified_by.first_name }} {{ c.certified_by.last_name|default:c.certified_by.email }}
+{% else %}<span class="text-muted">—</span>{% endif %}
+              </td>
+              <td class="text-center">
+                <a href="{% url 'company-certificate' c.id %}" class="btn btn-sm btn-outline-primary">
+                  <i class="fas fa-certificate mr-1"></i> {% trans "View certificate" context "dashboard" %}
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% include "dashboard/_cert_pagination.html" with page_obj=certificates param="pcert" tab="certificates" %}
+      {% else %}
+      <div class="empty-state">
+        <i class="fas fa-certificate fa-2x"></i>
+        <p class="mb-0">{% trans "No certificates issued yet." context "dashboard" %}</p>
       </div>
       {% endif %}
     </div>
@@ -516,8 +615,11 @@ document.addEventListener("DOMContentLoaded", function () {
   // ---- AJAX approve / decline ----
   var csrfToken = document.querySelector("[name=csrfmiddlewaretoken]")?.value || "";
 
-  document.querySelectorAll(".cert-form").forEach(function (form) {
-    form.addEventListener("submit", function (e) {
+  // Delegated: rows can be replaced by the AJAX pager below, and a handler
+  // bound to the old element would go with it.
+  document.addEventListener("submit", function (e) {
+    var form = e.target.closest && e.target.closest(".cert-form");
+    if (form) {
       e.preventDefault();
       var btns = form.querySelectorAll("button");
       btns.forEach(function (b) { b.disabled = true; });
@@ -551,7 +653,7 @@ document.addEventListener("DOMContentLoaded", function () {
           if (typeof showToast === "function") showToast(i18n.networkError, "error");
           btns.forEach(function (b) { b.disabled = false; });
         });
-    });
+    }
   });
 
   // ---- View drawer ----
@@ -583,8 +685,9 @@ document.addEventListener("DOMContentLoaded", function () {
     return "<dt>" + esc(label) + "</dt><dd>" + esc(value) + "</dd>";
   }
 
-  document.querySelectorAll(".view-cert-btn").forEach(function (btn) {
-    btn.addEventListener("click", function () {
+  document.addEventListener("click", function (ev) {
+    var btn = ev.target.closest && ev.target.closest(".view-cert-btn");
+    if (btn) {
       fetch(btn.dataset.url, { credentials: "same-origin" })
         .then(function (r) { return r.json(); })
         .then(function (data) {
@@ -631,7 +734,70 @@ document.addEventListener("DOMContentLoaded", function () {
         .catch(function () {
           if (typeof showToast === "function") showToast(i18n.couldNotLoadCompany, "error");
         });
-    });
+    }
+  });
+
+  // ---- Pagination without a page reload ----
+  // A pager link is fetched, and only the affected pane's contents are
+  // swapped in. The whole page is requested rather than a dedicated partial:
+  // it costs one render server-side but needs no fragment endpoint, and the
+  // pane markup stays in one place. Scroll position, the open tab and any
+  // other pane's page all survive.
+  document.addEventListener("click", function (e) {
+    var link = e.target.closest && e.target.closest(".cert-pager__btn");
+    if (!link || !link.getAttribute("href")) return;
+    var pane = link.closest(".cert-pane");
+    if (!pane) return;
+    e.preventDefault();
+    loadPage(link.getAttribute("href"), pane.id, true);
+  });
+
+  var paging = false;
+  function loadPage(url, paneId, push) {
+    if (paging) return;
+    paging = true;
+    var pane = document.getElementById(paneId);
+    pane.style.opacity = ".45";
+    fetch(url, {
+      credentials: "same-origin",
+      headers: { "X-Requested-With": "XMLHttpRequest" },
+    })
+      .then(function (r) {
+        // A redirect means the session expired — don't paint the login page
+        // into the table.
+        if (r.redirected) { location.href = r.url; throw new Error("redirected"); }
+        if (!r.ok) throw new Error(r.status);
+        return r.text();
+      })
+      .then(function (html) {
+        var doc = new DOMParser().parseFromString(html, "text/html");
+        var fresh = doc.getElementById(paneId);
+        if (!fresh) throw new Error("pane missing");
+        pane.innerHTML = fresh.innerHTML;
+        // Tab badges can move when a row is approved in another window.
+        doc.querySelectorAll(".cert-tab").forEach(function (t, i) {
+          var mine = document.querySelectorAll(".cert-tab")[i];
+          if (mine) mine.innerHTML = t.innerHTML;
+        });
+        if (push !== false && window.history && history.pushState) {
+          history.pushState({ certPane: paneId }, "", url);
+        }
+      })
+      .catch(function (err) {
+        if (err && err.message !== "redirected") location.href = url;  // fall back
+      })
+      .then(function () {
+        paging = false;
+        pane.style.opacity = "";
+      });
+  }
+
+  // Back/forward through paged states.
+  window.addEventListener("popstate", function (ev) {
+    var paneId = (ev.state && ev.state.certPane) || null;
+    if (paneId && document.getElementById(paneId)) {
+      loadPage(location.href, paneId, false);
+    }
   });
 });
 </script>

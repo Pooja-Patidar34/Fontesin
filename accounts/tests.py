@@ -990,6 +990,37 @@ class FranchiseRemovalRequestTests(BaseIAMTestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "Regional Bayern")
 
+    def test_request_removal_is_a_button_not_a_text_link(self):
+        """The action used to borrow the "show more levels" toggle — borderless
+        blue text — so holders read it as a caption instead of a control."""
+        self.client.login(email="regional@test.com", password="test123")
+        body = self.client.get(reverse("franchise-request")).content.decode()
+
+        self.assertIn('class="fr-remove__btn"', body)
+        self.assertIn("Request Removal", body)
+        # the reviewer moved to its own line, so the button label stays short
+        self.assertIn('class="fr-remove__note"', body)
+        self.assertNotIn("Request removal — approved by", body)
+
+    def test_approve_removal_uses_the_in_app_confirm(self):
+        """Approving must not fall back to the browser's native confirm() — it
+        can't be styled, shows the bare server address, and can't name the
+        franchise being ended."""
+        self._request_removal("regional@test.com", self.regional)
+        self.client.login(email="national@test.com", password="test123")
+        body = self.client.get(reverse("franchise-child-requests")).content.decode()
+
+        # the native handler is what must be gone — "confirm(" on its own also
+        # appears in the script's own comment explaining why
+        self.assertNotIn("return confirm(", body)
+        self.assertNotIn('onclick="return confirm', body)
+        self.assertIn("data-removal-approve", body)
+        self.assertIn("appConfirm(", body)
+        # the modal names the franchise, which the native popup could not
+        self.assertIn('data-franchise-name="Regional Bayern"', body)
+        # the button no longer submits on its own, so the script owns the flow
+        self.assertIn('type="button" name="decision" value="approve"', body)
+
     def test_holder_is_notified_of_the_decision(self):
         from accounts.models import FranchiseRemovalRequest, Notification
         self._request_removal("regional@test.com", self.regional)
@@ -2258,6 +2289,7 @@ class RegisterViewTests(TestCase):
             "last_name": "Doe",
             "email": "john@example.com",
             "phone": "1234567890",
+            "continent": "north_america",
             "country": "US",
             "state_region": "Colorado",
             "city": "Arvada",
@@ -2274,6 +2306,7 @@ class RegisterViewTests(TestCase):
             "last_name": "Doe",
             "email": "john@example.com",
             "phone": "1234567890",
+            "continent": "north_america",
             "country": "US",
             "state_region": "Colorado",
             "city": "Arvada",
@@ -2294,6 +2327,7 @@ class RegisterViewTests(TestCase):
             "last_name": "Doe",
             "email": "existing@example.com",
             "phone": "1234567890",
+            "continent": "north_america",
             "country": "US",
             "state_region": "Colorado",
             "city": "Arvada",
@@ -2310,6 +2344,7 @@ class RegisterViewTests(TestCase):
             "last_name": "Doe",
             "email": "john@example.com",
             "phone": "1234567890",
+            "continent": "north_america",
             "country": "US",
             "state_region": "Colorado",
             "city": "Arvada",
@@ -2327,6 +2362,7 @@ class RegisterViewTests(TestCase):
             "last_name": "Doe",
             "email": "john@example.com",
             "phone": "1234567890",
+            "continent": "north_america",
             "country": "US",
             "state_region": "Colorado",
             "city": "Arvada",
@@ -2344,6 +2380,7 @@ class RegisterViewTests(TestCase):
             "last_name": "Doe",
             "email": "not-an-email",
             "phone": "1234567890",
+            "continent": "north_america",
             "country": "US",
             "state_region": "Colorado",
             "city": "Arvada",
@@ -3485,6 +3522,41 @@ class VeriffWebhookTests(BaseIAMTestCase):
 # Tenant View Deep Coverage (POST create/update, search, business user)
 # ═══════════════════════════════════════════════════════════════════════
 
+class TenantListOrderingTests(BaseBillingTestCase):
+    """The Franchises list leads with the newest franchise.
+
+    It used to sort alphabetically, so a just-created franchise landed on
+    whatever page its initial fell on — with 200 rows across 20 pages, creating
+    one and being sent back to page 1 looked exactly like the creation failing.
+    """
+
+    def _page_one_names(self):
+        self.client.login(email="admin@test.com", password="admin123")
+        response = self.client.get(reverse("tenants"))
+        self.assertEqual(response.status_code, 200)
+        return [t.name for t in response.context["page_obj"].object_list]
+
+    def test_newest_franchise_leads_the_list(self):
+        # Names chosen so alphabetical order is the REVERSE of creation order:
+        # under the old sort "Alpha" led and "Zulu" was last.
+        for name in ("Zulu Franchise", "Mike Franchise", "Alpha Franchise"):
+            Tenant.objects.create(name=name)
+
+        names = self._page_one_names()
+        self.assertEqual(names[0], "Alpha Franchise")
+        self.assertEqual(names[1], "Mike Franchise")
+        self.assertEqual(names[2], "Zulu Franchise")
+
+    def test_a_new_franchise_is_on_page_one_even_past_the_page_size(self):
+        """The reported case: enough franchises to paginate, and the new one
+        still shows without hunting through pages."""
+        for i in range(15):
+            Tenant.objects.create(name=f"Bulk Franchise {i:02d}")
+        newest = Tenant.objects.create(name="Zzz Newest Franchise")
+
+        self.assertIn(newest.name, self._page_one_names())
+
+
 class TenantListDeepTests(BaseBillingTestCase):
 
     def test_superadmin_creates_tenant(self):
@@ -3639,7 +3711,7 @@ class RegisterGeographicFieldsTests(TestCase):
     """State / city are collected at sign-up, not only on the Add Company form.
 
     They anchor plan-based discovery scope (billing.utils
-    .get_user_geographic_scope): Free sees its own town, Basic its country. The
+    .get_user_geographic_scope): Free sees its own town, Basic its state. The
     active company wins once one exists, but a business user is put on the Free
     floor at sign-up and does not have a company yet — without a town on the
     account that user has nothing to discover at all.
@@ -3656,6 +3728,7 @@ class RegisterGeographicFieldsTests(TestCase):
             "last_name": "Smith",
             "email": "bu.arvada@example.com",
             "phone": "2125550100",
+            "continent": "north_america",
             "country": "US",
             "state_region": "Colorado",
             "city": "Arvada",
@@ -3673,6 +3746,45 @@ class RegisterGeographicFieldsTests(TestCase):
         self.assertEqual(user.city, "Arvada")
         self.assertEqual(user.state_region, "Colorado")
         self.assertEqual(user.country, "US")
+        self.assertEqual(user.continent, "north_america")
+
+    def test_missing_continent_blocks_registration(self):
+        response = self.client.post(self.url, self._payload(continent=""))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(User.objects.filter(email="bu.arvada@example.com").exists())
+
+    def test_unknown_continent_is_rejected(self):
+        response = self.client.post(self.url, self._payload(continent="atlantis"))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(User.objects.filter(email="bu.arvada@example.com").exists())
+
+    def test_registration_in_a_country_with_no_state_list(self):
+        """Most of the 196 countries have no subdivision list on file, so the
+        form gives them a free-text state box. The typed value must be accepted
+        and stored — otherwise those countries can't sign up at all."""
+        response = self.client.post(self.url, self._payload(
+            continent="africa", country="NG", state_region="Lagos", city="Ikeja",
+        ))
+        self.assertEqual(response.status_code, 302)
+        user = User.objects.get(email="bu.arvada@example.com")
+        self.assertEqual(user.country, "NG")
+        self.assertEqual(user.continent, "africa")
+        self.assertEqual(user.state_region, "Lagos")
+
+    def test_junk_free_text_state_is_rejected(self):
+        """The free-text box is not a hole: it still has to look like a place."""
+        response = self.client.post(self.url, self._payload(
+            continent="africa", country="NG", state_region="@@@", city="Ikeja",
+        ))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(User.objects.filter(email="bu.arvada@example.com").exists())
+
+    def test_country_from_another_continent_is_rejected(self):
+        # The Country dropdown is continent-filtered client-side, so a
+        # mismatched pair only arrives via a stale form or a direct POST.
+        response = self.client.post(self.url, self._payload(continent="asia"))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(User.objects.filter(email="bu.arvada@example.com").exists())
 
     def test_missing_city_blocks_registration(self):
         response = self.client.post(self.url, self._payload(city="   "))
@@ -3718,6 +3830,7 @@ class RegisterNameValidationTests(TestCase):
             "last_name": "Doe",
             "email": "j@example.com",
             "phone": "1234567890",
+            "continent": "north_america",
             "country": "US",
             "state_region": "Colorado",
             "city": "Arvada",
@@ -3734,6 +3847,7 @@ class RegisterNameValidationTests(TestCase):
             "last_name": "Doe456",
             "email": "j@example.com",
             "phone": "1234567890",
+            "continent": "north_america",
             "country": "US",
             "state_region": "Colorado",
             "city": "Arvada",
@@ -8127,13 +8241,14 @@ class NotificationViewTests(BaseIAMTestCase):
         )
         self.assertEqual(resp.status_code, 404)
 
-    def test_open_marks_read_and_redirects_to_safe_link(self):
+    def test_open_consumes_notification_and_redirects_to_safe_link(self):
         self.client.login(email="user@test.com", password="test123")
         resp = self.client.get(reverse("message-open", args=[self.note.id]))
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(resp.url, "/dashboard/")
-        self.note.refresh_from_db()
-        self.assertTrue(self.note.is_read)
+        # Opening consumes the notification — it leaves the inbox entirely
+        # rather than staying on as a read entry.
+        self.assertFalse(Notification.objects.filter(id=self.note.id).exists())
 
     def test_open_offhost_link_falls_back_to_inbox(self):
         evil = Notification.objects.create(
@@ -8146,6 +8261,8 @@ class NotificationViewTests(BaseIAMTestCase):
         resp = self.client.get(reverse("message-open", args=[evil.id]))
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(resp.url, reverse("messages"))
+        # Still consumed, even though the link was rejected.
+        self.assertFalse(Notification.objects.filter(id=evil.id).exists())
 
     def test_open_no_link_falls_back_to_inbox(self):
         nolink = Notification.objects.create(
@@ -8155,6 +8272,12 @@ class NotificationViewTests(BaseIAMTestCase):
         resp = self.client.get(reverse("message-open", args=[nolink.id]))
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(resp.url, reverse("messages"))
+        self.assertFalse(Notification.objects.filter(id=nolink.id).exists())
+
+    def test_open_foreign_notification_is_not_deleted(self):
+        self.client.login(email="user@test.com", password="test123")
+        self.client.get(reverse("message-open", args=[self.foreign.id]))
+        self.assertTrue(Notification.objects.filter(id=self.foreign.id).exists())
 
     def test_open_foreign_404(self):
         self.client.login(email="user@test.com", password="test123")
@@ -9004,9 +9127,8 @@ class SubscriptionLookupTests(BaseBillingTestCase):
 
 
 class GeographicScopeTests(BaseBillingTestCase):
-    """Each plan widens the reach by one geographic step: free = own town,
-    basic = own state (US) or own country (elsewhere), pro = continent,
-    global = worldwide."""
+    """Each plan widens the reach: free = own town, basic = own state (own
+    country when no state is on file), pro = own continent, global = worldwide."""
 
     def setUp(self):
         super().setUp()
@@ -9040,10 +9162,10 @@ class GeographicScopeTests(BaseBillingTestCase):
         scope = utils.get_user_geographic_scope(self.user)
         self.assertEqual(scope["countries"], [])
 
-    def test_basic_scope_is_the_users_state_in_the_us(self):
-        """Basic reaches one STATE in a state-level country: the spec's ladder
-        for a BU in Arvada is Arvada -> Colorado -> North America -> world, so
-        the USA as a whole is never a scope level."""
+    def test_basic_scope_is_the_users_state(self):
+        """Basic reaches one STATE: the ladder for a BU in Arvada is Arvada ->
+        Colorado -> North America -> world, so the USA as a whole is never a
+        scope level."""
         self._create_subscription(self.user, self.plan_basic)
         scope = utils.get_user_geographic_scope(self.user)
         self.assertEqual(scope["mode"], "state")
@@ -9052,19 +9174,24 @@ class GeographicScopeTests(BaseBillingTestCase):
         # subdivision in another country.
         self.assertEqual(scope["countries"], ["US"])
 
-    def test_basic_scope_is_the_whole_country_outside_state_level_countries(self):
-        """A European Basic user gets their whole country (Germany, Poland),
-        which is the equivalent step there -- those ARE the "states in Europe"
-        the spec refers to."""
+    def test_basic_scope_is_the_users_state_in_every_country(self):
+        """Basic is state-based everywhere, not only in the US: a BU who signed
+        up in India / Madhya Pradesh gets Madhya Pradesh, not all of India."""
         self._create_subscription(self.user, self.plan_basic)
-        for country in ("PL", "DE"):
+        for country, state in (
+            ("IN", "Madhya Pradesh"),
+            ("DE", "Bavaria"),
+            ("PL", "Mazovia"),
+            ("FR", "Grand Est"),
+        ):
             with self.subTest(country=country):
                 self.user.country = country
+                self.user.state_region = state
                 self.user.save()
                 scope = utils.get_user_geographic_scope(self.user)
-                self.assertEqual(scope["mode"], "country")
+                self.assertEqual(scope["mode"], "state")
+                self.assertEqual(scope["state"], state)
                 self.assertEqual(scope["countries"], [country])
-                self.assertIsNone(scope["state"])
 
     def test_basic_scope_falls_back_to_country_without_a_state(self):
         """A missing state is a data gap, not a reason to hide the directory
@@ -9076,28 +9203,51 @@ class GeographicScopeTests(BaseBillingTestCase):
         self.assertEqual(scope["mode"], "country")
         self.assertEqual(scope["countries"], ["US"])
 
-    def test_pro_scope_is_region(self):
-        self._create_subscription(self.user, self.plan_pro)
-        scope = utils.get_user_geographic_scope(self.user)
-        self.assertEqual(scope["mode"], "region")
-        self.assertIn("US", scope["countries"])
-        self.assertIn("CA", scope["countries"])
+    def test_pro_scope_is_the_users_continent(self):
+        """Pro is the CONTINENT step: a BU who signed up in India gets every
+        company on their continent, not only the Indian ones."""
+        from accounts.constants import CONTINENT_COUNTRIES
 
-    def test_pro_scope_is_the_whole_continent(self):
-        """Pro reaches the user's CONTINENT — a European sees all of Europe, an
-        Emirati all of Asia (the UAE is not its own commercial island)."""
         self._create_subscription(self.user, self.plan_pro)
-        for country, expected in (
-            ("PL", {"DE", "CZ", "GB", "FR", "NL", "PL", "AT", "CH", "SE"}),
-            ("AE", {"AE", "IN", "JP", "KR", "SG"}),
-            ("AU", {"AU"}),
-            ("BR", {"BR"}),
+        for country, continent in (
+            ("US", "north_america"),
+            ("DE", "europe"),
+            ("IN", "asia"),
+            ("AE", "asia"),
         ):
             with self.subTest(country=country):
                 self.user.country = country
                 self.user.save()
                 scope = utils.get_user_geographic_scope(self.user)
-                self.assertEqual(set(scope["countries"]), expected)
+                self.assertEqual(scope["mode"], "continent")
+                self.assertEqual(
+                    sorted(scope["countries"]),
+                    sorted(CONTINENT_COUNTRIES[continent]),
+                )
+                # The user's own country is inside the continent they reach.
+                self.assertIn(country, scope["countries"])
+                self.assertIsNone(scope["state"])
+
+    def test_pro_falls_back_to_the_stored_continent(self):
+        """Company.country is free text, so an anchor we can't resolve to an ISO
+        code would otherwise empty the scope. The continent picked at sign-up
+        covers that gap."""
+        self.user.country = "Atlantis"
+        self.user.continent = "asia"
+        self.user.save()
+        self._create_subscription(self.user, self.plan_pro)
+        scope = utils.get_user_geographic_scope(self.user)
+        self.assertEqual(scope["mode"], "continent")
+        self.assertIn("IN", scope["countries"])
+
+    def test_pro_ignores_the_state_the_lower_tier_uses(self):
+        """Pro widens past Basic: the state on file must not still pin it."""
+        self.user.state_region = "Colorado"
+        self.user.save()
+        self._create_subscription(self.user, self.plan_pro)
+        scope = utils.get_user_geographic_scope(self.user)
+        self.assertEqual(scope["mode"], "continent")
+        self.assertIsNone(scope["state"])
 
     def test_no_plan_scope_none(self):
         scope = utils.get_user_geographic_scope(self.user)
@@ -9109,9 +9259,37 @@ class GeographicScopeTests(BaseBillingTestCase):
         self.assertIsNone(utils._region_for_country(""))
         self.assertIsNone(utils._region_for_country("ZZ"))
 
+    def test_every_country_has_a_subdivision_list_except_the_stateless(self):
+        """The ISO 3166-2 data (accounts/data/country_subdivisions.py) covers
+        every country that has subdivisions at all, so the free-text State box
+        is now a fallback rather than the norm outside the operating markets."""
+        from accounts.constants import COUNTRY_CODES, COUNTRY_STATES
+
+        missing = sorted(set(COUNTRY_CODES) - set(COUNTRY_STATES))
+        # Vatican City genuinely has no subdivisions in ISO 3166-2.
+        self.assertEqual(missing, ["VA"])
+
+    def test_curated_markets_keep_their_english_spellings(self):
+        """The generated ISO lists use local spellings ("Bayern"). The operating
+        markets must keep the English ones already stored in Company.state, or
+        every stored value stops validating and Basic-plan scope empties out."""
+        from accounts.constants import CURATED_COUNTRY_STATES, COUNTRY_STATES
+
+        for code, names in CURATED_COUNTRY_STATES.items():
+            with self.subTest(country=code):
+                self.assertEqual(COUNTRY_STATES[code], names)
+        self.assertIn("Bavaria", COUNTRY_STATES["DE"])
+        self.assertNotIn("Bayern", COUNTRY_STATES["DE"])
+
+    def test_generated_lists_cover_a_non_operating_market(self):
+        from accounts.constants import COUNTRY_STATES
+
+        self.assertIn("Lagos", COUNTRY_STATES["NG"])
+
     def test_every_supported_country_sits_on_a_continent(self):
-        """A country missing from PLAN_REGIONS would give its Pro users an
-        empty scope — they'd see nothing, silently."""
+        """PLAN_REGIONS is the canonical country->continent grouping and Pro's
+        actual reach, so a country missing from it would silently drop out of
+        every Pro user's Company Database."""
         from accounts.constants import COUNTRY_CODES
         mapped = {c for codes in utils.PLAN_REGIONS.values() for c in codes}
         self.assertEqual(mapped, set(COUNTRY_CODES))
@@ -9176,8 +9354,30 @@ class FilterCompaniesByScopeTests(BaseBillingTestCase):
         self.assertNotIn("Austin Co", names)
         self.assertNotIn("DE Co", names)
 
-    def test_basic_plan_filters_to_the_country_outside_state_level_countries(self):
+    def test_basic_plan_filters_to_the_users_state_outside_the_us(self):
+        """The reported case: a BU who signed up in India / Madhya Pradesh must
+        see Madhya Pradesh companies only — not every company in India."""
+        Company.objects.create(
+            tenant=self.tenant, name="Indore Co", country="India",
+            city="Indore", state="Madhya Pradesh", is_active=True,
+        )
+        Company.objects.create(
+            tenant=self.tenant, name="Mumbai Co", country="India",
+            city="Mumbai", state="Maharashtra", is_active=True,
+        )
+        self.user.country = "IN"
+        self.user.state_region = "Madhya Pradesh"
+        self.user.save()
+        self._create_subscription(self.user, self.plan_basic)
+        qs = utils.filter_companies_by_plan_scope(Company.objects.all(), self.user)
+        names = set(qs.values_list("name", flat=True))
+        self.assertEqual(names, {"Indore Co"})
+
+    def test_basic_plan_falls_back_to_the_country_without_a_state(self):
+        """No state on file is a data gap, not a tier — widen to the country
+        rather than empty the directory the user is paying for."""
         self.user.country = "Germany"
+        self.user.state_region = ""
         self.user.save()
         self._create_subscription(self.user, self.plan_basic)
         qs = utils.filter_companies_by_plan_scope(Company.objects.all(), self.user)
@@ -9191,11 +9391,11 @@ class BusinessUserDiscoveryScopeByPlanTests(BaseBillingTestCase):
 
         Free   -> Arvada          (names only)
         Basic  -> Colorado        (full details)
-        Pro    -> North America   (US + CA + MX)
+        Pro    -> North America   (US + Canada + Mexico)
         Global -> worldwide
 
-    Note the USA as a whole is never a level: a state-level Basic country steps
-    straight from its state to its continent."""
+    In every market: a Berlin BU steps Berlin -> Berlin state -> Europe ->
+    world."""
 
     def setUp(self):
         super().setUp()
@@ -9226,7 +9426,10 @@ class BusinessUserDiscoveryScopeByPlanTests(BaseBillingTestCase):
         self.home_town = _company("Arvada Co", "US", "Arvada", "Colorado")
         self.same_state = _company("Denver Co", "US", "Denver", "Colorado")
         self.same_country = _company("Austin Co", "US", "Austin", "Texas")
+        # Both other North American countries, so Pro's reach is proved to be
+        # the whole continent rather than "the US plus one neighbour".
         self.same_continent = _company("Toronto Co", "Canada", "Toronto", "Ontario")
+        self.same_continent_mx = _company("Monterrey Co", "MX", "Monterrey", "Nuevo León")
         self.other_continent = _company("Berlin Co", "Germany", "Berlin", "Berlin")
 
     def _visible_names(self, plan):
@@ -9241,7 +9444,7 @@ class BusinessUserDiscoveryScopeByPlanTests(BaseBillingTestCase):
             return set()
         fixtures = [
             self.home_town, self.same_state, self.same_country,
-            self.same_continent, self.other_continent,
+            self.same_continent, self.same_continent_mx, self.other_continent,
         ]
         return set(
             Company.objects.filter(scope_q)
@@ -9258,24 +9461,74 @@ class BusinessUserDiscoveryScopeByPlanTests(BaseBillingTestCase):
             self._visible_names(self.plan_basic), {"Arvada Co", "Denver Co"},
         )
 
-    def test_basic_in_a_country_scoped_country_sees_that_country(self):
-        """A Berlin BU on Basic sees all of Germany: outside the state-level
-        countries the equivalent step is the country itself."""
+    def test_basic_outside_the_us_still_sees_only_its_own_state(self):
+        """Basic is state-based in every market: a Berlin BU sees Berlin, not
+        every company in Germany."""
+        munich = Company.objects.create(
+            tenant=self.tenant, name="Munich Co", country="Germany",
+            city="Munich", state="Bavaria", is_active=True,
+        )
         self.bu.country = "Germany"
         self.bu.city = "Berlin"
-        self.bu.save(update_fields=["country", "city"])
-        self.assertEqual(self._visible_names(self.plan_basic), {"Berlin Co"})
+        self.bu.state_region = "Berlin"
+        self.bu.save(update_fields=["country", "city", "state_region"])
+
+        Subscription.objects.filter(user=self.bu).delete()
+        self._create_subscription(self.bu, self.plan_basic)
+        from accounts.view.company import business_user_plan_scope_q
+        names = set(
+            Company.objects.filter(business_user_plan_scope_q(self.bu))
+            .filter(id__in=[self.other_continent.id, munich.id])
+            .values_list("name", flat=True)
+        )
+        self.assertEqual(names, {"Berlin Co"})
+
+    def test_basic_sees_the_state_picked_at_signup(self):
+        """The worked example from the spec: a BU who picked Madhya Pradesh at
+        sign-up sees every company in Madhya Pradesh — the whole state, not just
+        their own town, and not the rest of India."""
+        indore = Company.objects.create(
+            tenant=self.tenant, name="Indore Co", country="IN",
+            city="Indore", state="Madhya Pradesh", is_active=True,
+        )
+        bhopal = Company.objects.create(
+            tenant=self.tenant, name="Bhopal Co", country="IN",
+            city="Bhopal", state="Madhya Pradesh", is_active=True,
+        )
+        mumbai = Company.objects.create(
+            tenant=self.tenant, name="Mumbai Co", country="IN",
+            city="Mumbai", state="Maharashtra", is_active=True,
+        )
+        self.bu.country = "IN"
+        self.bu.continent = "asia"
+        self.bu.city = "Indore"
+        self.bu.state_region = "Madhya Pradesh"
+        self.bu.save(update_fields=["country", "continent", "city", "state_region"])
+
+        Subscription.objects.filter(user=self.bu).delete()
+        self._create_subscription(self.bu, self.plan_basic)
+        from accounts.view.company import business_user_plan_scope_q
+        names = set(
+            Company.objects.filter(business_user_plan_scope_q(self.bu))
+            .filter(id__in=[indore.id, bhopal.id, mumbai.id])
+            .values_list("name", flat=True)
+        )
+        # Both Madhya Pradesh towns, neither Maharashtra.
+        self.assertEqual(names, {"Indore Co", "Bhopal Co"})
 
     def test_pro_sees_the_whole_continent(self):
+        """Pro is the continent step: every US state, plus Canada AND Mexico —
+        but not Germany, which is on another continent."""
         self.assertEqual(
             self._visible_names(self.plan_pro),
-            {"Arvada Co", "Denver Co", "Austin Co", "Toronto Co"},
+            {"Arvada Co", "Denver Co", "Austin Co", "Toronto Co", "Monterrey Co"},
         )
 
     def test_global_sees_everything(self):
         self.assertEqual(
             self._visible_names(self.plan_global),
-            {"Arvada Co", "Denver Co", "Austin Co", "Toronto Co", "Berlin Co"},
+            {"Arvada Co", "Denver Co", "Austin Co", "Toronto Co", "Monterrey Co",
+             "Berlin Co"},
         )
 
     def test_free_user_with_no_town_gets_no_discovery_scope(self):
@@ -11747,6 +12000,71 @@ class CompanyListGapTests(BaseBillingTestCase):
         self.assertFalse(owned.is_active)
         self.assertIsNone(owned.consultant)
 
+    def test_resubmission_stamps_a_fresh_submitted_date(self):
+        """The reported bug: the consultant queue's "Submitted" column showed
+        the company's creation date, which never moves, so a resubmitted
+        request still looked weeks old and sank to the bottom of the queue."""
+        from datetime import timedelta
+        from django.utils import timezone
+
+        bu_role = Role.objects.create(
+            name="business_user", code="business_user", tier_level=1
+        )
+        bu_role.permissions.add(self.manage, self.view)
+        bu = User.objects.create_user(
+            email="buresubdate@test.com", password="test123",
+            tenant=self.tenant, role=bu_role, is_active=True,
+        )
+        self._create_subscription(bu, self.plan_basic)
+
+        long_ago = timezone.now() - timedelta(days=30)
+        owned = Company.objects.create(
+            tenant=self.tenant, name="Stale Date Co", owner_user=bu,
+            registration_id="REG-STALE", classification="it_services",
+            city="San Francisco", state="California", country="US",
+            certification_status="rejected",
+        )
+        # auto_now_add ignores an assigned value, so age the row afterwards.
+        Company.all_objects.filter(pk=owned.pk).update(
+            created_at=long_ago, certification_requested_at=long_ago,
+        )
+
+        self.client.login(email="buresubdate@test.com", password="test123")
+        before = timezone.now()
+        self.client.post(
+            reverse("companies"),
+            self._valid_payload(
+                company_id=str(owned.id),
+                name="Stale Date Co",
+                registration_id="REG-STALE",
+                request_certification="1",
+            ),
+        )
+
+        owned.refresh_from_db()
+        self.assertGreaterEqual(owned.certification_requested_at, before)
+        # The company row itself is untouched — only the request moved.
+        self.assertLess(owned.created_at, before)
+
+    def test_first_submission_stamps_the_request_date(self):
+        bu_role = Role.objects.create(
+            name="business_user", code="business_user", tier_level=1
+        )
+        bu_role.permissions.add(self.manage, self.view)
+        bu = User.objects.create_user(
+            email="bufirstreq@test.com", password="test123",
+            tenant=self.tenant, role=bu_role, is_active=True,
+        )
+        self._create_subscription(bu, self.plan_basic)
+        self.client.login(email="bufirstreq@test.com", password="test123")
+        self.client.post(
+            reverse("companies"),
+            self._valid_payload(name="Fresh Req Co", registration_id="REG-FRESH"),
+        )
+        co = Company.all_objects.get(name="Fresh Req Co")
+        self.assertEqual(co.certification_status, "pending")
+        self.assertIsNotNone(co.certification_requested_at)
+
 
 class MyCompaniesGapTests(BaseBillingTestCase):
 
@@ -11964,6 +12282,7 @@ class RegisterPhoneValidationGapTests(BaseIAMTestCase):
             "last_name": "Doe",
             "email": "phonefail@example.com",
             "phone": "12345",
+            "continent": "north_america",
             "country": "US",
             "state_region": "Colorado",
             "city": "Arvada",
@@ -11983,6 +12302,7 @@ class RegisterPhoneValidationGapTests(BaseIAMTestCase):
             "last_name": "Sultant",
             "email": "newconsult@example.com",
             "phone": "1234567890",
+            "continent": "north_america",
             "country": "US",
             "state_region": "Colorado",
             "city": "Arvada",
@@ -12002,6 +12322,7 @@ class RegisterPhoneValidationGapTests(BaseIAMTestCase):
             "last_name": "User",
             "email": "newbiz@example.com",
             "phone": "1234567890",
+            "continent": "north_america",
             "country": "US",
             "state_region": "Colorado",
             "city": "Arvada",

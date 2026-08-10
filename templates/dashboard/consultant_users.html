@@ -114,14 +114,17 @@
                   <a class="dropdown-item" href="{% url 'users' %}?open_edit={{ u.id }}&from={{ request.get_full_path|urlencode }}">
                     <i class="fas fa-edit mr-2 text-warning"></i> {% trans "Edit" context "common" %}
                   </a>
+                  {# Confirms first, same as the Users tab. #}
                   {% if u.is_active %}
                   <a class="dropdown-item text-danger"
-                     href="{% url 'user-toggle' u.id %}?next={{ request.get_full_path|urlencode }}">
+                     href="{% url 'user-toggle' u.id %}?next={{ request.get_full_path|urlencode }}"
+                     onclick="event.preventDefault(); appConfirm({kind:'warning', title:'{% filter escapejs %}{% trans "Deactivate user?" context "users" %}{% endfilter %}', text:'{% filter escapejs %}{% blocktrans trimmed with email=u.email context "users" %}<strong>{{ email }}</strong> will no longer be able to sign in. You can reactivate them at any time.{% endblocktrans %}{% endfilter %}', okLabel:'{% filter escapejs %}{% trans "Deactivate" context "users" %}{% endfilter %}', okIcon:'fa-user-slash', onConfirm:function(){ window.location.href = '{% url 'user-toggle' u.id %}?next={{ request.get_full_path|urlencode }}'; }});">
                     <i class="fas fa-user-slash mr-2"></i> {% trans "Deactivate" context "users" %}
                   </a>
                   {% else %}
                   <a class="dropdown-item text-success"
-                     href="{% url 'user-toggle' u.id %}?next={{ request.get_full_path|urlencode }}">
+                     href="{% url 'user-toggle' u.id %}?next={{ request.get_full_path|urlencode }}"
+                     onclick="event.preventDefault(); appConfirm({kind:'success', title:'{% filter escapejs %}{% trans "Activate user?" context "users" %}{% endfilter %}', text:'{% filter escapejs %}{% blocktrans trimmed with email=u.email context "users" %}<strong>{{ email }}</strong> will be able to sign in again.{% endblocktrans %}{% endfilter %}', okLabel:'{% filter escapejs %}{% trans "Activate" context "users" %}{% endfilter %}', okIcon:'fa-user-check', onConfirm:function(){ window.location.href = '{% url 'user-toggle' u.id %}?next={{ request.get_full_path|urlencode }}'; }});">
                     <i class="fas fa-user-check mr-2"></i> {% trans "Activate" context "users" %}
                   </a>
                   {% endif %}

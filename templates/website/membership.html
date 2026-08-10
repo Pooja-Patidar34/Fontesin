@@ -336,7 +336,7 @@
     <div class="plan-card{% if plan.is_popular %} popular{% endif %}" id="card-{{ plan.code }}" onclick="selectPlan('{{ plan.code }}')">
 
       {% if plan.badge_text %}
-        <div class="plan-badge{% if plan.badge_style == 'save' %} plan-badge--save{% endif %}">{{ plan.badge_text }}</div>
+        <div class="plan-badge{% if plan.badge_style == 'save' %} plan-badge--save{% endif %}">{{ plan.display_badge|default:plan.badge_text }}</div>
       {% endif %}
 
       <div class="plan-icon">{{ plan.icon }}</div>
@@ -349,7 +349,10 @@
           <span style="font-size:1rem;color:#9CA3AF;text-decoration:line-through;font-weight:500;">${{ plan.original_price|floatformat:0 }}</span>
           <span class="plan-price__currency">$</span><span class="plan-price__amount">{{ plan.price|floatformat:0|default:"0" }}</span>
           {% if plan.discount_percent %}
-          <span style="background:#16a34a;color:#fff;font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:20px;letter-spacing:.5px;vertical-align:middle;">{{ plan.discount_percent }}% {% trans "OFF" context "website" %}</span>
+          <span style="background:#16a34a;color:#fff;font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:20px;letter-spacing:.5px;vertical-align:middle;">{% comment %}One phrase, not "%" + a bare "OFF": on its own that msgid is
+             ambiguous and was translated as the opposite of ON — the badge
+             read "25% AUS" / "25% APAGADO" / "25% DÉSACTIVÉ", i.e. "25%
+             switched off".{% endcomment %}{% blocktrans trimmed with pct=plan.discount_percent context "website" %}{{ pct }}% OFF{% endblocktrans %}</span>
           {% endif %}
         </div>
         {% else %}
@@ -454,7 +457,9 @@
           <tr>
             <td>{% if forloop.last %}<strong>{{ row.label }}</strong>{% else %}{{ row.label }}{% endif %}</td>
             {% for plan in plans %}
-            {% with val=plan.comparison %}
+            {% comment %} display_comparison routes the free-text cells through the
+                 catalog; plan.comparison is raw English JSON. {% endcomment %}
+            {% with val=plan.display_comparison %}
               {% if row.key == "profile_visibility" %}
                 <td{% if plan.is_popular %} class="highlight"{% endif %}>{{ val.profile_visibility }}</td>
               {% elif row.key == "geographic_scope" %}

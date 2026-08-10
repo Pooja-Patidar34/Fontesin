@@ -1,0 +1,25 @@
+{% load i18n %}
+{% comment %}
+Activate / Deactivate entry for the company Action dropdown.
+
+Both the owner-override branch and the general branch of _company_row.html
+render this, so the confirmation wording stays in one place. Toggling is a
+state change that used to fire on a single click with no way back short of
+clicking again, so it now routes through the shared appConfirm() dialog (same
+one the Delete action uses) and only navigates once the user confirms.
+
+Expects `company` in the context.
+{% endcomment %}
+{% if company.is_active %}
+<a class="dropdown-item text-warning"
+   href="{% url 'company-toggle' company.id %}"
+   onclick="event.preventDefault(); appConfirm({kind:'warning', title:'{% filter escapejs %}{% trans "Deactivate company?" context "companies" %}{% endfilter %}', text:'{% filter escapejs %}{% blocktrans with company=company.name %}{{ company }} will be marked inactive and hidden from the public company directory. You can reactivate it at any time.{% endblocktrans %}{% endfilter %}', okLabel:'{% filter escapejs %}{% trans "Deactivate" context "companies" %}{% endfilter %}', okIcon:'fa-ban', onConfirm:function(){ window.location.href = '{% url 'company-toggle' company.id %}'; }});">
+  <i class="fas fa-ban mr-2"></i> {% trans "Deactivate" context "companies" %}
+</a>
+{% else %}
+<a class="dropdown-item text-success"
+   href="{% url 'company-toggle' company.id %}"
+   onclick="event.preventDefault(); appConfirm({kind:'success', title:'{% filter escapejs %}{% trans "Activate company?" context "companies" %}{% endfilter %}', text:'{% filter escapejs %}{% blocktrans with company=company.name %}{{ company }} will be marked active and visible in the public company directory again.{% endblocktrans %}{% endfilter %}', okLabel:'{% filter escapejs %}{% trans "Activate" context "companies" %}{% endfilter %}', okIcon:'fa-check', onConfirm:function(){ window.location.href = '{% url 'company-toggle' company.id %}'; }});">
+  <i class="fas fa-check mr-2"></i> {% trans "Activate" context "companies" %}
+</a>
+{% endif %}

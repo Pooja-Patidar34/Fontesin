@@ -478,10 +478,68 @@
       color: #fff !important;
       font-weight: 600;
     }
+
+    /* ── Global loading overlay ──
+       Shown while a page is still loading or while a navigation is in flight.
+       It is revealed on a delay (see the script at the bottom of <body>), so a
+       fast page never flashes it — it only appears when the UI is genuinely
+       taking time. */
+    #app-loader {
+      position: fixed;
+      inset: 0;
+      z-index: 4000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 14px;
+      background: rgba(240, 244, 248, .72);
+      backdrop-filter: blur(2px);
+    }
+    #app-loader.is-visible { display: flex; }
+    #app-loader .app-loader__spinner {
+      width: 44px;
+      height: 44px;
+      border: 4px solid #d6e2ee;
+      border-top-color: #1B7BE4;
+      border-radius: 50%;
+      animation: app-loader-spin .7s linear infinite;
+    }
+    #app-loader .app-loader__text {
+      font-size: .85rem;
+      font-weight: 600;
+      color: #1B2E3F;
+      letter-spacing: .02em;
+    }
+    @keyframes app-loader-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+      #app-loader .app-loader__spinner { animation-duration: 2s; }
+    }
   </style>
+
+  {% comment %}
+  Shared form skin (inputs, selects, file pickers, modal chrome). Last in
+  <head> so it overrides AdminLTE/Bootstrap, but still ahead of any page-level
+  <style> inside {% templatetag openblock %} block content {% templatetag closeblock %} — those keep winning on ties.
+  {% endcomment %}
+  {% include "base/_form_theme.html" %}
 </head>
 
 <body class="hold-transition sidebar-mini">
+
+<div id="app-loader" role="status" aria-live="polite" aria-hidden="true">
+  <div class="app-loader__spinner"></div>
+  <div class="app-loader__text">{% trans "Loading…" context "common" %}</div>
+</div>
+<script>
+  // Start the initial-load timer as early as possible — before the rest of the
+  // page parses — so a slow render is covered. window.load cancels it.
+  window.__appLoaderTimer = setTimeout(function () {
+    var el = document.getElementById("app-loader");
+    if (el) { el.classList.add("is-visible"); el.setAttribute("aria-hidden", "false"); }
+  }, 400);
+</script>
+
 <div class="wrapper">
 
   <!-- HEADER -->
@@ -546,18 +604,26 @@
           </div>
           <div class="topbar-bell__list">
             {% for n in recent_notifications %}
-            <a href="{% if n.link_url %}{{ n.link_url }}{% else %}{% url 'messages' %}{% endif %}" class="topbar-bell__item {% if not n.is_read %}is-unread{% endif %}">
+            <a href="{% if n.link_url %}{{ n.link_url }}{% else %}{% url 'messages' %}{% endif %}"
+               data-note-id="{{ n.id }}"
+               class="topbar-bell__item {% if not n.is_read %}is-unread{% endif %}">
               <div class="topbar-bell__title">{{ n.display_title }}</div>
               {% if n.body %}<div class="topbar-bell__body">{{ n.body|truncatechars:90 }}</div>{% endif %}
               <div class="topbar-bell__time">{{ n.created_at|timesince }} {% trans "ago" context "nav" %}</div>
             </a>
             {% empty %}
-            <div class="topbar-bell__empty">{% trans "No notifications yet." context "nav" %}</div>
+            {# Unread-only list, so "empty" means caught up, not "never had any". #}
+            <div class="topbar-bell__empty">{% trans "You're all caught up." context "nav" %}</div>
             {% endfor %}
           </div>
           <a href="{% url 'messages' %}" class="topbar-bell__foot">{% trans "View all notifications" context "nav" %}</a>
         </div>
       </li>
+      {% comment %}
+      Standalone CSRF token for the bell's mark-read POST. Not every page has a
+      form to borrow one from, and the badge shouldn't depend on that.
+      {% endcomment %}
+      <form id="bell-csrf" style="display:none;">{% csrf_token %}</form>
 
       <li class="nav-item dropdown">
         <a href="#" class="header-user" style="text-decoration:none;" data-toggle="dropdown">
@@ -1376,13 +1442,20 @@
               {% trans "It is now visible in the public company directory." context "banner" %}
             </div>
           </div>
+          <button type="button" id="bu-cert-banner-close" aria-label="{% trans 'Dismiss' context 'banner' %}"
+            style="background:transparent; border:0; color:#065f46; opacity:.7; cursor:pointer; padding:4px 6px; line-height:1; font-size:1rem; flex-shrink:0;">
+            <i class="fas fa-times"></i>
+          </button>
         </div>
         <script>
           (function () {
             var el = document.getElementById("bu-cert-banner");
             if (!el) return;
-            setTimeout(function () { el.style.opacity = "0"; }, 5000);
-            setTimeout(function () { el.style.display = "none"; }, 5400);
+            var hide = function () { el.style.display = "none"; };
+            var fade = function () { el.style.opacity = "0"; setTimeout(hide, 400); };
+            var btn = document.getElementById("bu-cert-banner-close");
+            if (btn) btn.addEventListener("click", fade);
+            setTimeout(fade, 5000);
           })();
         </script>
         {% elif bu_certification_status == "rejected" %}
@@ -1402,16 +1475,26 @@
               {% trans "You can update your company details and resubmit from your profile." context "banner" %}
             </div>
           </div>
+          <button type="button" id="bu-rejected-banner-close" aria-label="{% trans 'Dismiss' context 'banner' %}"
+            style="background:transparent; border:0; color:#991b1b; opacity:.7; cursor:pointer; padding:4px 6px; line-height:1; font-size:1rem; flex-shrink:0;">
+            <i class="fas fa-times"></i>
+          </button>
         </div>
         <script>
           // Auto-dismiss the "declined" banner after a few seconds so it isn't
           // shown permanently (mirrors the "certified" banner above). The full
           // status is still available on My Companies / the company view.
+          // The close button lets the user dismiss it right away.
           (function () {
             var el = document.getElementById("bu-rejected-banner");
             if (!el) return;
-            setTimeout(function () { el.style.opacity = "0"; }, 8000);
-            setTimeout(function () { el.style.display = "none"; }, 8400);
+            var fade = function () {
+              el.style.opacity = "0";
+              setTimeout(function () { el.style.display = "none"; }, 400);
+            };
+            var btn = document.getElementById("bu-rejected-banner-close");
+            if (btn) btn.addEventListener("click", fade);
+            setTimeout(fade, 8000);
           })();
         </script>
         {% endif %}
@@ -1730,5 +1813,147 @@
   </div>
 </div>
 {% endif %}
+
+<script>
+  // Global loading overlay. Two jobs:
+  //   1. Initial load — the timer started at the top of <body> reveals the
+  //      overlay if the page hasn't finished loading within 400ms.
+  //   2. Navigation — clicking an internal link or submitting a form leaves the
+  //      current page on screen until the server responds, which reads as a
+  //      frozen UI on slow pages. Re-arm the overlay for those too.
+  (function () {
+    var el = document.getElementById("app-loader");
+    if (!el) return;
+    var timer = window.__appLoaderTimer || null;
+    var safety = null;
+
+    function show(delay) {
+      hide();
+      timer = setTimeout(function () {
+        el.classList.add("is-visible");
+        el.setAttribute("aria-hidden", "false");
+        // Some links never navigate away — a file download served with
+        // Content-Disposition, for one. Don't strand the user behind a
+        // permanent overlay in that case.
+        safety = setTimeout(hide, 20000);
+      }, delay);
+    }
+    function hide() {
+      if (timer) { clearTimeout(timer); timer = null; }
+      if (safety) { clearTimeout(safety); safety = null; }
+      el.classList.remove("is-visible");
+      el.setAttribute("aria-hidden", "true");
+    }
+
+    window.addEventListener("load", hide);
+    // Back/forward out of the bfcache restores the old DOM with the overlay
+    // still up — clear it.
+    window.addEventListener("pageshow", hide);
+
+    document.addEventListener("click", function (e) {
+      var a = e.target.closest ? e.target.closest("a") : null;
+      if (!a || e.defaultPrevented) return;
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      var href = a.getAttribute("href") || "";
+      // Skip anything that doesn't actually navigate this tab.
+      if (!href || href.charAt(0) === "#" || a.target === "_blank" ||
+          a.hasAttribute("download") || /^(javascript|mailto|tel):/i.test(href)) return;
+      if (a.hasAttribute("data-toggle") || a.hasAttribute("data-bs-toggle")) return;
+      if (a.host && a.host !== window.location.host) return;
+      show(400);
+    }, true);
+
+    document.addEventListener("submit", function (e) {
+      var form = e.target;
+      if (e.defaultPrevented || !form || form.hasAttribute("data-no-loader")) return;
+      show(400);
+    }, true);
+
+    // A handler further down may cancel the click / submit and go over AJAX
+    // instead; that fires no navigation, so drop the overlay again.
+    document.addEventListener("submit", function (e) {
+      if (e.defaultPrevented) hide();
+    });
+    document.addEventListener("click", function (e) {
+      if (e.defaultPrevented) hide();
+    });
+
+    // Belt and braces for the two bubble listeners above. They never run for a
+    // synthetic event dispatched without `bubbles: true` (capture still fires,
+    // so the overlay would go up and never come down until the 20s cap). Re-check
+    // once the current handlers have run, whatever phase they were in.
+    function cancelIfPrevented(e) {
+      setTimeout(function () { if (e.defaultPrevented) hide(); }, 0);
+    }
+    document.addEventListener("submit", cancelIfPrevented, true);
+    document.addEventListener("click", cancelIfPrevented, true);
+
+    // Expose for pages that do their own long-running work.
+    window.appLoader = { show: function () { show(0); }, hide: hide };
+  })();
+</script>
+
+<script>
+  // Opening the bell marks read exactly the notifications it showed, then
+  // updates the badge from the count the server returns. Only what was on
+  // screen is cleared — the dropdown holds the 8 most recent, so a mark-all
+  // would silently bury unread items the user never saw.
+  //
+  // Lives at the end of <body> so jQuery/Bootstrap are loaded and the
+  // shown.bs.dropdown event is available.
+  (function () {
+    var bell = document.querySelector(".topbar-bell");
+    var menu = document.querySelector(".topbar-bell__menu");
+    if (!bell || !menu || !window.fetch) return;
+    var pending = false;
+
+    function applyCount(unread) {
+      var badge = bell.querySelector(".topbar-bell__badge");
+      if (badge) {
+        if (unread > 0) badge.textContent = unread > 9 ? "9+" : String(unread);
+        else badge.remove();
+      }
+      var head = menu.querySelector(".topbar-bell__count");
+      if (head && unread <= 0) head.remove();
+    }
+
+    function markSeen() {
+      if (pending) return;
+      var items = menu.querySelectorAll(".topbar-bell__item.is-unread[data-note-id]");
+      if (!items.length) return;
+      var token = document.querySelector("#bell-csrf [name=csrfmiddlewaretoken]");
+      if (!token) return;
+      var body = new FormData();
+      Array.prototype.forEach.call(items, function (el) {
+        body.append("ids[]", el.getAttribute("data-note-id"));
+      });
+      body.append("csrfmiddlewaretoken", token.value);
+      pending = true;
+      fetch("{% url 'messages-mark-read-bulk' %}", {
+        method: "POST",
+        body: body,
+        credentials: "same-origin",
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+      })
+        .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+        .then(function (d) {
+          Array.prototype.forEach.call(items, function (el) {
+            el.classList.remove("is-unread");
+          });
+          applyCount(d.unread);
+        })
+        .catch(function () { /* leave the badge as-is until the next page load */ })
+        .then(function () { pending = false; });
+    }
+
+    // Bootstrap 4 fires dropdown events on the .dropdown parent, not the toggle.
+    var dd = bell.closest(".dropdown") || bell.parentNode;
+    if (window.jQuery && dd) {
+      jQuery(dd).on("shown.bs.dropdown", markSeen);
+    } else {
+      bell.addEventListener("click", function () { setTimeout(markSeen, 0); });
+    }
+  })();
+</script>
 </body>
 </html>

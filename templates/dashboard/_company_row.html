@@ -91,17 +91,7 @@
 
         <div class="dropdown-divider"></div>
 
-        {% if company.is_active %}
-        <a class="dropdown-item text-warning"
-           href="{% url 'company-toggle' company.id %}">
-          <i class="fas fa-ban mr-2"></i> {% trans "Deactivate" context "companies" %}
-        </a>
-        {% else %}
-        <a class="dropdown-item text-success"
-           href="{% url 'company-toggle' company.id %}">
-          <i class="fas fa-check mr-2"></i> {% trans "Activate" context "companies" %}
-        </a>
-        {% endif %}
+        {% include "dashboard/_company_toggle_action.html" %}
 
         <div class="dropdown-divider"></div>
 
@@ -221,17 +211,7 @@
       <div class="dropdown-divider"></div>
 
       {% if can_manage %}
-        {% if company.is_active %}
-          <a class="dropdown-item text-warning"
-            href="{% url 'company-toggle' company.id %}">
-            <i class="fas fa-ban mr-2"></i> {% trans "Deactivate" context "companies" %}
-          </a>
-        {% else %}
-          <a class="dropdown-item text-success"
-            href="{% url 'company-toggle' company.id %}">
-            <i class="fas fa-check mr-2"></i> {% trans "Activate" context "companies" %}
-          </a>
-        {% endif %}
+        {% include "dashboard/_company_toggle_action.html" %}
       {% endif %}
 
       {# Delete — also hidden for consultants (CRU only, no D) #}

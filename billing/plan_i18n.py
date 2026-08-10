@@ -9,23 +9,35 @@ from django.utils.translation import pgettext
 
 PLAN_CODES = ("free", "basic", "pro", "global")
 
-# Canonical English copy keyed by plan code (source: 0005_reseed_plans_mvp).
+# Canonical English copy keyed by plan code.
+#
+# These strings are the msgids: the display layer translates THESE and ignores
+# whatever the CommercialPlan row holds, so they have to describe the reach the
+# code actually enforces in billing.utils.get_user_geographic_scope. The ladder
+# is one geographic step per tier —
+#
+#     Free   → your TOWN, company names only
+#     Basic  → your STATE (your whole country when no state is on file)
+#     Pro    → your CONTINENT, every supported country on it
+#     Global → worldwide
+#
+# — and it superseded the original 0005 seed copy ("domicile country",
+# "one selected region"), which described a country/region model the product no
+# longer has. Migrations 0015 / 0016 / 0018 / 0020 realigned the database rows;
+# this table is the same copy, and the two must be changed together.
 PLAN_CANONICAL = {
     "free": {
         "name": "Free Plan",
-        "tagline": "Get started in your domicile country",
+        "tagline": "Explore companies in your town",
         "best_for": (
-            "Companies exploring the platform within their domicile country "
-            "before committing to a paid plan."
+            "Companies exploring the platform within their own town — "
+            "names only, no details. Upgrade for full visibility."
         ),
         "features": [
-            {"text": "1 country only (domicile by default)", "included": True},
+            {"text": "Your own town only", "included": True},
+            {"text": "Company names only — no further details", "included": True},
             {"text": "Account registration & login", "included": True},
             {"text": "Company profile creation", "included": True},
-            {
-                "text": "Basic public listing (name, industry, country/region/city)",
-                "included": True,
-            },
             {"text": "Edit own company profile", "included": True},
             {"text": "Company certification", "included": False},
             {"text": "Partnerships", "included": False},
@@ -35,15 +47,15 @@ PLAN_CANONICAL = {
     },
     "basic": {
         "name": "Basic Plan",
-        "tagline": "Full access in one selected country",
+        "tagline": "Full access in your state",
         "best_for": (
-            "Companies operating in a single national market who need full "
-            "visibility and services."
+            "Companies operating in a single state or region who need full "
+            "visibility and services across it."
         ),
         "features": [
             {"text": "Everything in FREE", "included": True},
+            {"text": "Your whole state or region", "included": True},
             {"text": "Full company profile visibility", "included": True},
-            {"text": "Access to one selected country / local market", "included": True},
             {"text": "Company certification", "included": True},
             {"text": "Partnerships", "included": True},
             {"text": "Messaging", "included": True},
@@ -53,17 +65,17 @@ PLAN_CANONICAL = {
     },
     "pro": {
         "name": "Pro Plan",
-        "tagline": "Full access across one selected region",
+        "tagline": "Full access across your continent",
         "best_for": (
-            "Companies operating across a regional market "
-            "(e.g. Europe, North America, Asia)."
+            "Companies operating across their continent who need full "
+            "visibility and services beyond their own country."
         ),
         "features": [
             {"text": "Everything in BASIC", "included": True},
-            {"text": "Access to one selected region", "included": True},
+            {"text": "Your whole continent, every country on it", "included": True},
             {"text": "Europe / North America / South America", "included": True},
-            {"text": "Asia / Middle East / Australia & Oceania", "included": True},
-            {"text": "Visible & searchable within regional scope", "included": True},
+            {"text": "Africa / Asia / Australia & Oceania", "included": True},
+            {"text": "Visible & searchable across the continent", "included": True},
         ],
     },
     "global": {
@@ -75,7 +87,7 @@ PLAN_CANONICAL = {
         ),
         "features": [
             {"text": "Everything in PRO", "included": True},
-            {"text": "Global visibility", "included": True},
+            {"text": "Every country, worldwide", "included": True},
             {
                 "text": "Searchable across all available countries / regions",
                 "included": True,
@@ -83,6 +95,36 @@ PLAN_CANONICAL = {
         ],
     },
 }
+
+
+# Comparison-table cell values. The table renders CommercialPlan.comparison,
+# a free-text JSON blob, so its strings need a translation route of their own —
+# they are not part of any plan's tagline/feature copy. Values not listed here
+# fall through untranslated rather than being dropped.
+# Marketing badges shown above a plan card, seeded by 0003 / 0005 as an emoji
+# followed by the phrase. Only the words are translated.
+BADGE_MSGIDS = ("Most Popular", "Best Value")
+
+_BADGE_PREFIXES = {"⭐": "Most Popular", "\U0001f30d": "Best Value"}
+_BADGE_PHRASES = frozenset(BADGE_MSGIDS)
+
+
+COMPARISON_VALUE_MSGIDS = (
+    "Limited",
+    "Full",
+    "Your town",
+    "Your state",
+    "Your continent",
+    "Worldwide",
+    "All countries / regions",
+    # Values the older seeds wrote; kept so a database that has not run the
+    # realignment migration still renders in the viewer's language.
+    "Domicile country",
+    "Selected country",
+    "Selected region",
+    "1 country",
+    "1 region",
+)
 
 
 def _plan_context(code: str) -> str:
@@ -148,12 +190,55 @@ def localized_plan_features(plan) -> list[dict]:
     return out
 
 
+def localized_plan_badge(plan) -> str:
+    """Translate the marketing badge above a plan card.
+
+    ``badge_text`` is a free-text DB column seeded with an emoji + phrase
+    ("⭐ Most Popular"). The emoji is split off and re-attached around the
+    translation so the catalog holds words, not pictograms — and so a badge a
+    deployment typed by hand still renders, untranslated, instead of vanishing.
+    """
+    raw = (getattr(plan, "badge_text", None) or "").strip()
+    if not raw:
+        return ""
+    for emoji, phrase in _BADGE_PREFIXES.items():
+        if raw == f"{emoji} {phrase}":
+            return f"{emoji} {pgettext('billing.plan.badge', phrase)}"
+    if raw in _BADGE_PHRASES:
+        return pgettext("billing.plan.badge", raw)
+    return raw
+
+
+def localized_plan_comparison(plan) -> dict:
+    """Comparison-table values with their text cells translated.
+
+    Booleans pass through untouched — the template renders them as a tick or a
+    cross, which needs no language. Only the free-text cells go through the
+    catalog, and an unrecognised one is returned as-is so a hand-edited plan
+    row still displays instead of blanking the column."""
+    raw = getattr(plan, "comparison", None) or {}
+    if not isinstance(raw, dict):
+        return {}
+    out = {}
+    for key, value in raw.items():
+        if isinstance(value, str) and value in _COMPARISON_VALUES:
+            out[key] = pgettext("billing.plan.comparison", value)
+        else:
+            out[key] = value
+    return out
+
+
+_COMPARISON_VALUES = frozenset(COMPARISON_VALUE_MSGIDS)
+
+
 def attach_plan_display_fields(plan) -> None:
     """Mutate a CommercialPlan instance with display_* attributes."""
     plan.display_name = localized_plan_name(plan)
     plan.display_tagline = localized_plan_tagline(plan)
     plan.display_best_for = localized_plan_best_for(plan)
     plan.display_features = localized_plan_features(plan)
+    plan.display_comparison = localized_plan_comparison(plan)
+    plan.display_badge = localized_plan_badge(plan)
 
 
 _SUBSCRIPTION_STATUS_MSGIDS = {
@@ -189,6 +274,10 @@ def _plan_gettext_catalog():  # pragma: no cover
         pgettext(ctx, data["best_for"])
         for feature in data["features"]:
             pgettext(ctx, feature["text"])
+    for value in COMPARISON_VALUE_MSGIDS:
+        pgettext("billing.plan.comparison", value)
+    for badge in BADGE_MSGIDS:
+        pgettext("billing.plan.badge", badge)
 
 
 def pending_upgrade_access_note(current_plan_name: str) -> str:

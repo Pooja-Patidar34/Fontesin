@@ -260,6 +260,38 @@ class ListingsAPITestCase(TestCase):
         rx.refresh_from_db()
         self.assertEqual(rx.status, "replied")
 
+    def test_web_my_offers_reaction_chip_carries_one_count(self):
+        """The chip shows the total once; unread is the accent state, not a
+        second number sitting next to it."""
+        from django.test import Client
+        from django.urls import reverse
+        from listings.models import ListingReaction
+
+        lid = _json(self.create_listing())["data"]["id"]
+        web = Client()
+        web.force_login(self.other)
+        web.post(reverse("listings_web:react", args=[lid]), {"message": "Hi"}, SERVER_NAME="localhost")
+
+        web.force_login(self.owner)
+        r = web.get(reverse("listings_web:my-offers"), SERVER_NAME="localhost")
+        # match the markup, not the class name — the stylesheet is inlined on the
+        # page, so a bare class-name search hits the CSS rule too.
+        chip = 'class="ps-react ps-react--new"'
+        dot = '<span class="ps-react__dot"'
+        body = r.content.decode()
+        self.assertIn(chip, body)
+        self.assertIn(dot, body)
+        self.assertNotIn('<span class="ps-react__new">', body)  # the old badge is gone
+
+        # read it, and the chip drops back to the quiet state
+        rx = ListingReaction.objects.get(listing_id=lid)
+        rx.status = ListingReaction.READ
+        rx.save(update_fields=["status"])
+        body = web.get(reverse("listings_web:my-offers"), SERVER_NAME="localhost").content.decode()
+        self.assertIn('class="ps-react"', body)
+        self.assertNotIn(chip, body)
+        self.assertNotIn(dot, body)
+
     def test_web_reaction_without_primary_company_is_attributed_to_owned_company(self):
         """A reaction is company-to-company, but plenty of accounts have no
         `primary_company` set — that null used to hit the NOT NULL constraint on
@@ -407,6 +439,216 @@ class ListingsAPITestCase(TestCase):
                              dict(base, **bad), SERVER_NAME="localhost")
                 self.assertEqual(r.status_code, 200)
                 self.assertIn(selected, r.content.decode())
+
+    def test_web_add_keeps_uploaded_image_on_validation_error(self):
+        """A rejected submit must keep the picked image, and the retry must save
+        it without the user choosing the file a second time."""
+        from django.test import Client
+        from django.urls import reverse
+        from django.core.files.storage import default_storage
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        web = Client()
+        web.force_login(self.owner)
+        url = reverse("listings_web:add") + "?type=offer&module=products_services"
+        base = dict(
+            listing_type="offer", module_id="products_services", category_type="product",
+            owner_company=str(self.company.id), nace_code=str(self.nace.id),
+            description="High grade steel pipes in bulk supply.",
+            keywords="steel", visibility_scope="public", action="publish",
+            country="IN", region="Punjab", city="Mohali",
+        )
+        # 1st submit: image picked, but the title is too short -> redisplay.
+        r = web.post(url, dict(base, title="ab",
+                               product_image=SimpleUploadedFile("p.png", b"\x89PNG\r\n",
+                                                                content_type="image/png"),
+                               certification_image=SimpleUploadedFile("c.png", b"\x89PNG\r\n",
+                                                                      content_type="image/png")),
+                     SERVER_NAME="localhost")
+        self.assertEqual(r.status_code, 200)
+        values = r.context["values"]
+        stashed = values["product_image_stashed"]
+        cert_stashed = values["certification_image_stashed"]
+        self.assertTrue(default_storage.exists(stashed))
+        # the thumbnail proves to the user that the file is still attached
+        self.assertContains(r, default_storage.url(stashed))
+
+        # 2nd submit: still invalid and no file re-picked -> the stash carries over.
+        r = web.post(url, dict(base, title="ab", product_image_stashed=stashed,
+                               certification_image_stashed=cert_stashed),
+                     SERVER_NAME="localhost")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.context["values"]["product_image_stashed"], stashed)
+
+        # 3rd submit: fixed, no file re-picked -> the stashed images are stored.
+        r = web.post(url, dict(base, title="Steel Pipes", product_image_stashed=stashed,
+                               certification_image_stashed=cert_stashed),
+                     SERVER_NAME="localhost")
+        self.assertEqual(r.status_code, 302)
+        listing = Listing.objects.get(title="Steel Pipes")
+        self.assertTrue(bool(listing.product_image))
+        self.assertTrue(bool(listing.certification_image))
+        self.assertEqual(listing.product_image.read(), b"\x89PNG\r\n")
+        # the listing owns its own copy, so the stash entry is released
+        self.assertFalse(default_storage.exists(stashed))
+
+    def test_web_add_rejects_forged_stash_reference(self):
+        """The stash reference is user input: a crafted path must be ignored."""
+        from django.test import Client
+        from django.urls import reverse
+
+        web = Client()
+        web.force_login(self.owner)
+        r = web.post(
+            reverse("listings_web:add") + "?type=offer&module=products_services",
+            dict(listing_type="offer", module_id="products_services", category_type="product",
+                 owner_company=str(self.company.id), nace_code=str(self.nace.id),
+                 title="Steel Pipes Forged", description="High grade steel pipes in bulk supply.",
+                 keywords="steel", visibility_scope="public", action="publish",
+                 product_image_stashed="listing_tmp/../../manage.py"),
+            SERVER_NAME="localhost")
+        self.assertEqual(r.status_code, 302)
+        self.assertFalse(bool(Listing.objects.get(title="Steel Pipes Forged").product_image))
+
+    def test_unit_must_come_from_the_list_and_match_the_category(self):
+        """Free text is out, and a unit only counts for its own category."""
+        resp = self.create_listing(category_type="service", unit="Per Hour, roughly")
+        self.assertEqual(resp.status_code, 400)
+
+        # a service priced per pallet is a data-entry slip, not a valid offer
+        resp = self.create_listing(category_type="service", unit="pallet")
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn("unit", _json(resp).get("errors", _json(resp)))
+
+        resp = self.create_listing(category_type="product", unit="consultation")
+        self.assertEqual(resp.status_code, 400)
+
+        # the matching pairs go through
+        for category, unit in (("service", "hour"), ("service", "project"), ("product", "piece")):
+            with self.subTest(category=category, unit=unit):
+                resp = self.create_listing(category_type=category, unit=unit,
+                                           title=f"Offer {category} {unit}")
+                self.assertEqual(resp.status_code, 201)
+                self.assertEqual(_json(resp)["data"]["unit"], unit)
+
+    def test_web_service_offer_form_lists_service_units(self):
+        """The Add Offer form ships both unit sets, so picking Service offers
+        Per Hour / Per Project instead of a free-text box."""
+        from django.test import Client
+        from django.urls import reverse
+
+        web = Client()
+        web.force_login(self.owner)
+        r = web.get(reverse("listings_web:add") + "?type=offer&module=products_services",
+                    SERVER_NAME="localhost")
+        body = r.content.decode()
+        self.assertNotIn('<input type="text" name="unit"', body)
+        self.assertIn('<select name="unit"', body)
+        self.assertIn('data-unit-group="service"', body)
+        for label in ("Per Hour", "Per Project", "Per Consultation"):
+            self.assertIn(label, body)
+
+    def test_web_keywords_survive_repeated_rejected_submits(self):
+        """Keywords come back as the line the user typed. They used to redisplay
+        as the parsed list, so each retry re-parsed "['a', 'b']" and buried the
+        keywords under another layer of brackets and quotes."""
+        from django.test import Client
+        from django.urls import reverse
+
+        web = Client()
+        web.force_login(self.owner)
+        url = reverse("listings_web:add") + "?type=offer&module=products_services"
+        typed = "software development, IT consulting, web development"
+        # invalid NACE, everything else fine - exactly the reported flow
+        data = dict(
+            listing_type="offer", module_id="products_services", category_type="product",
+            owner_company=str(self.company.id), nace_code="",
+            title="IT Services", description="Custom software and IT consulting services.",
+            keywords=typed, visibility_scope="public", action="publish",
+        )
+        for attempt in range(1, 4):
+            with self.subTest(attempt=attempt):
+                r = web.post(url, data, SERVER_NAME="localhost")
+                self.assertEqual(r.status_code, 200)
+                self.assertIn("nace_code", r.context["errors"])
+                self.assertEqual(r.context["values"]["keywords"], typed)
+                body = r.content.decode()
+                self.assertIn('name="keywords" class="form-control" value="%s"' % typed, body)
+                for junk in ("[", "]", "&#x27;", "&quot;", "\\"):
+                    self.assertNotIn(junk, body.split('name="keywords"')[1].split(">")[0])
+                # the next attempt resubmits whatever the field now holds
+                data["keywords"] = r.context["values"]["keywords"]
+
+        # once the NACE code is valid the keywords save as typed, not mangled
+        data["nace_code"] = str(self.nace.id)
+        self.assertEqual(web.post(url, data, SERVER_NAME="localhost").status_code, 302)
+        self.assertEqual(
+            Listing.objects.get(title="IT Services").keywords,
+            ["software development", "IT consulting", "web development"],
+        )
+
+    def test_web_service_offer_hides_product_image_field(self):
+        """Product Image applies to a Product Offer only, so a Service form must
+        not show it — and the redisplay must not bring it back."""
+        from django.test import Client
+        from django.urls import reverse
+
+        web = Client()
+        web.force_login(self.owner)
+        url = reverse("listings_web:add") + "?type=offer&module=products_services"
+
+        # the fresh form defaults to Product, so the field is there
+        body = web.get(url, SERVER_NAME="localhost").content.decode()
+        self.assertIn('id="product_image_group">', body)
+
+        # a rejected Service submit redraws with it already hidden, so it never
+        # flashes into view while the page settles
+        body = web.post(url, dict(
+            listing_type="offer", module_id="products_services", category_type="service",
+            owner_company=str(self.company.id), nace_code=str(self.nace.id),
+            title="ab", description="On-site welding and inspection service.",
+            keywords="welding", visibility_scope="public", action="publish",
+        ), SERVER_NAME="localhost").content.decode()
+        self.assertIn('id="product_image_group" hidden>', body)
+
+    def test_web_service_offer_ignores_a_product_image_that_slips_through(self):
+        """Hiding is a UI courtesy; a Service offer must store no product image
+        even when one is posted anyway."""
+        from django.test import Client
+        from django.urls import reverse
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        web = Client()
+        web.force_login(self.owner)
+        r = web.post(
+            reverse("listings_web:add") + "?type=offer&module=products_services",
+            dict(listing_type="offer", module_id="products_services", category_type="service",
+                 owner_company=str(self.company.id), nace_code=str(self.nace.id),
+                 title="Welding Service Only", description="On-site welding and inspection service.",
+                 keywords="welding", visibility_scope="public", action="publish", unit="hour",
+                 product_image=SimpleUploadedFile("p.png", b"\x89PNG\r\n", content_type="image/png")),
+            SERVER_NAME="localhost")
+        self.assertEqual(r.status_code, 302)
+        self.assertFalse(bool(Listing.objects.get(title="Welding Service Only").product_image))
+
+    def test_web_service_offer_rejects_product_unit(self):
+        """The page-level swap is convenience; the server is what enforces it."""
+        from django.test import Client
+        from django.urls import reverse
+
+        web = Client()
+        web.force_login(self.owner)
+        r = web.post(
+            reverse("listings_web:add") + "?type=offer&module=products_services",
+            dict(listing_type="offer", module_id="products_services", category_type="service",
+                 owner_company=str(self.company.id), nace_code=str(self.nace.id),
+                 title="Welding Service", description="On-site welding and inspection service.",
+                 keywords="welding", visibility_scope="public", action="publish",
+                 price_without_vat="80", currency="EUR", unit="pallet"),
+            SERVER_NAME="localhost")
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("unit", r.context["errors"])
+        self.assertFalse(Listing.objects.filter(title="Welding Service").exists())
 
     def test_web_add_preselects_acting_company(self):
         """The fresh form opens on the company the session is acting as."""

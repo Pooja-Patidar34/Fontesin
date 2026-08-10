@@ -24,7 +24,7 @@ from accounts.view.saved_filter import (
     _is_basic_or_pro_business_user,
     _plan_code_for_business_user,
 )
-from billing.utils import PLAN_REGIONS, _region_for_country, get_user_geographic_scope
+from billing.utils import get_user_geographic_scope
 
 logger = logging.getLogger("technical")
 
@@ -112,9 +112,12 @@ def business_user_plan_scope_q(user):
     geographic step wider than the last:
 
         free   → the user's own TOWN, names only (no View/Connect)
-        basic  → the user's own STATE in a state-level country (US: Colorado),
-                 otherwise their whole country (Germany, Poland, …)
-        pro    → the user's whole continent (North America = US/CA/MX, …)
+        basic  → the user's own STATE, in any country (Colorado, Madhya
+                 Pradesh, Grand Est …); their whole country only as a fallback
+                 when no state is on file
+        pro    → the user's whole CONTINENT: every company in every supported
+                 country on it (Asia → the UAE, India, Japan, South Korea and
+                 Singapore lists all appear in one Company Database)
         global → worldwide
 
     A Free user gets a genuine local directory rather than a window onto the
@@ -143,10 +146,11 @@ def business_user_plan_scope_q(user):
     if mode == "none":
         return None
 
-    # mode == "city", "state", "country" or "region": match every code in the
-    # allowed set. For "city"/"state" that set is the town's/state's country,
-    # pinned below — both are required, so a user with a town but no country
-    # resolves to an empty set here and keeps their linkage-only view.
+    # mode == "city", "state", "country" or "continent": match every code in
+    # the allowed set — one code for the narrower tiers, the continent's whole
+    # country list for Pro. For "city"/"state" that set is the town's/state's
+    # country, pinned below — both are required, so a user with a town but no
+    # country resolves to an empty set here and keeps their linkage-only view.
     countries = [c for c in (scope.get("countries") or []) if c]
     if not countries:
         return None
@@ -249,8 +253,8 @@ def business_user_visible_companies(user):
 
     # Discovery scope by plan (see business_user_plan_scope_q):
     #   free   → the user's own town, names only
-    #   basic  → the user's country
-    #   pro    → the user's continent
+    #   basic  → the user's own state (their country only when no state is set)
+    #   pro    → the user's whole country
     #   global → worldwide
     # Read-only restrictions for free plan (View / Connect / Edit) are still
     # applied by the templates via is_free_plan.
@@ -489,8 +493,10 @@ def company_list(request):
                 company.certified_by = request.user
                 company.certified_at = timezone.now()
             elif not company_id and creator_role_code != "consultant":
+                from django.utils import timezone
                 company.certification_status = "pending"
                 company.is_active = False
+                company.certification_requested_at = timezone.now()
                 emit_cert_notification = True
             elif (
                 company_id
@@ -509,11 +515,16 @@ def company_list(request):
                 # unclaimed pending request (clearing any prior consultant claim)
                 # so every active consultant is (re)notified. Already-certified
                 # companies are excluded — there's nothing to request.
+                from django.utils import timezone
                 company.certification_status = "pending"
                 company.is_active = False
                 company.consultant = None
                 company.certified_by = None
                 company.certified_at = None
+                # A resubmission is a NEW request, so it carries a new
+                # timestamp — the queue sorts and displays by this, and leaving
+                # the original date would keep the row looking stale.
+                company.certification_requested_at = timezone.now()
                 emit_cert_notification = True
                 resubmitted_for_certification = True
 
@@ -755,8 +766,8 @@ def company_list(request):
             # Business-user discovery scope, by plan (see
             # business_user_plan_scope_q):
             #   free   → the user's own town, names only (read-only)
-            #   basic  → the user's country
-            #   pro    → the user's continent (e.g. North America)
+            #   basic  → the user's own state (country only when no state is set)
+            #   pro    → the user's whole country (e.g. all of Germany)
             #   global → all active companies worldwide
             # The "no details" / read-only restriction for free plan is applied
             # by the row templates via is_free_plan, not here.

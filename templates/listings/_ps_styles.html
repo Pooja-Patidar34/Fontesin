@@ -8,9 +8,12 @@ Included once per listings page. Light + AdminLTE dark-mode aware.
     --ps-offer: #2563eb;
     --ps-offer-soft: #e0edff;
     --ps-offer-ink: #1d4ed8;
-    --ps-demand: #d97706;
-    --ps-demand-soft: #fdeccf;
-    --ps-demand-ink: #b45309;
+    /* Demand accent: violet. It has to read as clearly "not an Offer" next to
+       the blue above, without the amber it used to be — that sat too close to
+       the warning / pending colors used elsewhere in the dashboard. */
+    --ps-demand: #7c3aed;
+    --ps-demand-soft: #f1e9fe;
+    --ps-demand-ink: #6d28d9;
     --ps-surface: #ffffff;
     --ps-border: #eceef2;
     --ps-muted: #667085;
@@ -103,7 +106,7 @@ Included once per listings page. Light + AdminLTE dark-mode aware.
   .ps-card:hover::before { width: 6px; }
   .ps-card:hover::after { opacity: 1; }
   .ps-card--offer  { --accent: #2563eb; --accent-2: #0ea5e9; --accent-soft: #e0edff; --accent-shadow: rgba(37, 99, 235, .30); }
-  .ps-card--demand { --accent: #d97706; --accent-2: #f59e0b; --accent-soft: #fdeccf; --accent-shadow: rgba(217, 119, 6, .28); }
+  .ps-card--demand { --accent: #7c3aed; --accent-2: #a855f7; --accent-soft: #f1e9fe; --accent-shadow: rgba(124, 58, 237, .28); }
   /* Full-bleed product image header (cancels card padding) */
   .ps-card__media {
     margin: -.85rem -.95rem .7rem -1.15rem; height: 128px; position: relative; overflow: hidden;
@@ -118,12 +121,29 @@ Included once per listings page. Light + AdminLTE dark-mode aware.
   .ps-card__desc { font-size: .85rem; color: var(--ps-muted); margin: 0 0 .7rem; flex-grow: 1; }
   .ps-card__meta { font-size: .8rem; color: var(--ps-muted); display: flex; flex-wrap: wrap; gap: .15rem .9rem; margin-bottom: .6rem; }
   .ps-card__meta i { width: 14px; text-align: center; margin-right: .2rem; opacity: .7; }
+  /* Browse cards carry no description, so the meta block takes the slack and
+     keeps every card's footer on the same line. */
+  .ps-card__meta--fill { flex-grow: 1; align-content: flex-start; }
   .ps-card__foot {
     display: flex; align-items: center; justify-content: space-between;
     border-top: 1px solid var(--ps-border); padding-top: .65rem; margin-top: auto;
   }
   .ps-price { font-weight: 700; color: var(--ps-ink); font-size: .95rem; }
   .ps-price small { font-weight: 500; color: var(--ps-muted); }
+  /* "View" reads as a link with an arrow that slides on hover, rather than an
+     outline button competing with the card's own hover state. */
+  .ps-card__view {
+    display: inline-flex; align-items: center; gap: .35rem;
+    font-size: .82rem; font-weight: 650;
+    color: var(--accent, var(--ps-offer)); white-space: nowrap;
+  }
+  .ps-card__view i { font-size: .72rem; transition: transform .18s ease; }
+  .ps-card__view:hover { color: var(--accent, var(--ps-offer)); text-decoration: none; }
+  .ps-card:hover .ps-card__view i { transform: translateX(3px); }
+  /* Tinted placeholder when a listing has no image — the flat grey block read
+     as a broken image. */
+  .ps-card--offer  .ps-card__ph { background: linear-gradient(135deg, #eef4ff, #dbe8fb); color: #9db8dd; }
+  .ps-card--demand .ps-card__ph { background: linear-gradient(135deg, #f5efff, #e9ddfb); color: #b49ad8; }
 
   /* ---- Pills / chips / tags ---- */
   .ps-pill {
@@ -177,8 +197,26 @@ Included once per listings page. Light + AdminLTE dark-mode aware.
   }
   .ps-detail-text { flex: 1 1 240px; min-width: 210px; }
   .ps-detail-text p { color: #344054; font-size: .92rem; margin-bottom: .6rem; white-space: pre-line; }
-  .ps-extra { display: flex; flex-wrap: wrap; gap: .35rem 1.2rem; font-size: .85rem; margin-top: .3rem; }
-  .ps-extra a, .ps-extra span { color: var(--ps-muted); }
+  .ps-extra { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .6rem; font-size: .85rem; margin-top: .6rem; }
+  /* Actual links get button affordances — bordered, accent-coloured, with an
+     external-link glyph — so they don't read as another line of muted text
+     next to the certificate caption. */
+  .ps-extra__link {
+    display: inline-flex; align-items: center; gap: .4rem;
+    font-size: .82rem; font-weight: 600;
+    color: var(--ps-offer-ink); background: var(--ps-offer-soft);
+    border: 1px solid #cfe0ff; border-radius: .55rem;
+    padding: .34rem .8rem; text-decoration: none;
+    transition: background .15s ease, border-color .15s ease, transform .15s ease;
+  }
+  .ps-extra__link:hover {
+    background: #d3e6ff; border-color: #a9caf8;
+    color: var(--ps-offer-ink); text-decoration: none; transform: translateY(-1px);
+  }
+  .ps-extra__out { font-size: .62rem; opacity: .65; }
+  /* Non-interactive caption keeps the quiet treatment. */
+  .ps-extra__note { color: var(--ps-muted); }
+  body.dark-mode .ps-extra__link { background: #2c3b55; border-color: #3b4759; color: #bcd8fb; }
   /* ---- "I am interested" card ---- */
   .ps-interest {
     border: 1px solid #cfe0ff;
@@ -200,13 +238,48 @@ Included once per listings page. Light + AdminLTE dark-mode aware.
     transition: border-color .15s ease, box-shadow .15s ease;
   }
   .ps-interest textarea:focus { border-color: #2563eb; box-shadow: 0 0 0 .18rem rgba(37, 99, 235, .15); }
+  /* .ps-btn-gradient and .ps-btn-ghost are used side by side as a
+     primary/secondary pair, so their box metrics have to match exactly. Both
+     declare the same display, padding, font-size, line-height and a 1px
+     border — the gradient's is transparent, which keeps it from rendering 2px
+     shorter than the bordered ghost next to it. */
+  .ps-btn-gradient,
+  .ps-btn-ghost {
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid transparent; border-radius: .6rem;
+    padding: .5rem 1.2rem; font-size: .88rem; font-weight: 600;
+    line-height: 1.4; vertical-align: middle; white-space: nowrap;
+  }
   .ps-btn-gradient {
-    border: 0; color: #fff; font-weight: 600; border-radius: .6rem; padding: .55rem 1.25rem;
+    color: #fff;
     background: linear-gradient(135deg, #2563eb, #0ea5e9);
     box-shadow: 0 10px 20px -8px rgba(37, 99, 235, .55);
     transition: filter .2s ease, transform .2s ease, box-shadow .2s ease;
   }
   .ps-btn-gradient:hover { filter: brightness(1.07); color: #fff; text-decoration: none; transform: translateY(-1px); box-shadow: 0 14px 26px -8px rgba(37, 99, 235, .55); }
+  /* Quiet counterpart to .ps-btn-gradient (secondary "Add" / "Cancel"). */
+  .ps-btn-ghost {
+    background: var(--ps-surface); border-color: #dfe4ec; color: #475467;
+  }
+  .ps-btn-ghost:hover { background: #f2f4f8; color: #344054; text-decoration: none; }
+  /* "Add Demand" sits next to the blue "Add Offer" primary. Violet keeps it
+     secondary in weight while matching the demand accent it opens. */
+  .ps-btn-ghost--demand {
+    border-color: #ddd0f7; color: var(--ps-demand-ink); background: var(--ps-demand-soft);
+  }
+  .ps-btn-ghost--demand:hover { background: #e7d9fc; color: var(--ps-demand-ink); }
+  /* Filter-bar submit. min-height matches the toolbar's inputs (the shared
+     form theme gives .form-control a 38px floor) so the row lines up. */
+  .ps-btn-filter {
+    flex: 0 0 auto; border: 1px solid transparent; color: #fff; font-weight: 600;
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 38px; line-height: 1.4;
+    border-radius: .6rem; padding: .5rem 1.35rem; font-size: .87rem;
+    background: linear-gradient(135deg, #2563eb, #0ea5e9);
+    box-shadow: 0 9px 18px -9px rgba(37, 99, 235, .55);
+    transition: filter .15s ease, transform .15s ease;
+  }
+  .ps-btn-filter:hover { filter: brightness(1.06); transform: translateY(-1px); color: #fff; }
 
   body.dark-mode .ps-detail-media img { background: #333e51; }
   body.dark-mode .ps-interest { border-color: #3b4759; background: linear-gradient(135deg, #26344a 0%, var(--ps-surface) 62%); }
@@ -214,6 +287,127 @@ Included once per listings page. Light + AdminLTE dark-mode aware.
   .ps-dl dt { font-size: .72rem; text-transform: uppercase; letter-spacing: .03em; color: var(--ps-muted); font-weight: 600; margin-top: .7rem; }
   .ps-dl dt:first-child { margin-top: 0; }
   .ps-dl dd { font-size: .9rem; color: var(--ps-ink); margin: .1rem 0 0; }
+
+  /* ---- Page heading with an inline count ----
+     The count reads as part of the title rather than as a stray line of grey
+     text under it. */
+  .ps-pagehead {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: .75rem; margin-bottom: 1rem;
+  }
+  .ps-pagehead__title { display: flex; align-items: center; gap: .7rem; flex-wrap: wrap; }
+  .ps-pagehead h1 {
+    font-size: 1.45rem; font-weight: 700; margin: 0;
+    color: var(--ps-ink); letter-spacing: -.015em;
+  }
+  /* Gradient icon chip so the page title carries the same identity as the
+     module hero and the listing form header, instead of being bare text. */
+  .ps-pagehead__icon {
+    width: 40px; height: 40px; border-radius: 12px; flex: 0 0 auto;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 1.02rem; color: #fff;
+    background: linear-gradient(135deg, #4338ca, #2563eb 55%, #0ea5e9);
+    box-shadow: 0 8px 18px -8px rgba(37, 99, 235, .65);
+  }
+  .ps-pagehead__icon--demand {
+    background: linear-gradient(135deg, #5b21b6, #7c3aed 55%, #a855f7);
+    box-shadow: 0 8px 18px -8px rgba(124, 58, 237, .65);
+  }
+  .ps-pagehead__icon--neutral {
+    background: linear-gradient(135deg, #334155, #475569 55%, #64748b);
+    box-shadow: 0 8px 18px -8px rgba(51, 65, 85, .6);
+  }
+  .ps-count {
+    display: inline-flex; align-items: center; gap: .35rem;
+    font-size: .72rem; font-weight: 700; letter-spacing: .02em;
+    color: var(--ps-offer-ink); background: var(--ps-offer-soft);
+    border-radius: 999px; padding: .18rem .65rem; white-space: nowrap;
+  }
+  .ps-count--demand { color: var(--ps-demand-ink); background: var(--ps-demand-soft); }
+  body.dark-mode .ps-count { background: #33415a; color: #cdd6e6; }
+
+  /* ---- Data table (My Offers / My Demands / All Listings) ----
+     Shared so the management tables match the card grid rather than falling
+     back to stock Bootstrap striping. */
+  .ps-table { width: 100%; margin: 0; }
+  .ps-table thead th {
+    font-size: .68rem; text-transform: uppercase; letter-spacing: .07em;
+    font-weight: 700; color: var(--ps-muted);
+    border: 0; border-bottom: 1px solid var(--ps-border);
+    padding: .7rem .85rem; white-space: nowrap;
+  }
+  .ps-table tbody td {
+    border: 0; border-bottom: 1px solid var(--ps-border);
+    padding: .75rem .85rem; vertical-align: middle;
+    font-size: .87rem; color: var(--ps-ink);
+  }
+  .ps-table tbody tr:last-child td { border-bottom: 0; }
+  .ps-table tbody tr { transition: background .15s ease; }
+  .ps-table tbody tr:hover { background: #f8fafc; }
+  .ps-table .ps-t-title { font-weight: 600; color: var(--ps-ink); }
+  .ps-table .ps-t-title:hover { color: var(--ps-offer); text-decoration: none; }
+  .ps-table .ps-t-date { font-size: .82rem; color: var(--ps-muted); white-space: nowrap; }
+  .ps-table .ps-t-muted { color: var(--ps-muted); }
+  body.dark-mode .ps-table tbody tr:hover { background: #333e51; }
+
+  /* Status pill — dot + label, colour-coded by state. */
+  .ps-status {
+    display: inline-flex; align-items: center; gap: .35rem;
+    font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+    padding: .22rem .6rem; border-radius: 999px; white-space: nowrap;
+  }
+  .ps-status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .ps-status--active    { background: #dcfce7; color: #15803d; }
+  .ps-status--draft     { background: #eef1f6; color: #64748b; }
+  .ps-status--inactive  { background: #fef3c7; color: #92400e; }
+  .ps-status--suspended { background: #fee2e2; color: #b91c1c; }
+
+  /* Reaction count — one chip carrying a single number. Unread is a state of
+     that chip (accent + dot), not a second badge competing with the count. */
+  .ps-react {
+    display: inline-flex; align-items: center; gap: .4rem;
+    font-size: .8rem; font-weight: 600; color: #475467;
+    background: #f2f4f7; border-radius: 999px; padding: .25rem .7rem;
+    text-decoration: none; white-space: nowrap;
+    transition: background .15s ease, color .15s ease;
+  }
+  .ps-react:hover { background: #e6eaf1; color: var(--ps-ink); text-decoration: none; }
+  .ps-react--new { background: #fee4e2; color: #b42318; }
+  .ps-react--new:hover { background: #fecdca; color: #912018; }
+  /* Dot, not colour alone, is what marks "unread" — colour is not readable for
+     everyone, and the count itself stays the only number in the chip. */
+  .ps-react__dot {
+    width: 6px; height: 6px; border-radius: 50%; background: #e5484d; flex: 0 0 auto;
+  }
+
+  /* Icon-only row actions, so the Actions column stops dominating the table. */
+  .ps-actions { display: flex; align-items: center; justify-content: flex-end; gap: .35rem; }
+  .ps-actions form { display: inline; margin: 0; }
+  .ps-act {
+    width: 30px; height: 30px; padding: 0; flex: 0 0 auto;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid var(--ps-border); background: var(--ps-surface); border-radius: 8px;
+    color: #667085; font-size: .78rem; cursor: pointer;
+    transition: background .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .ps-act:hover { text-decoration: none; }
+  .ps-act--edit:hover    { background: #eaf2ff; border-color: #bcd8fb; color: #1d4ed8; }
+  .ps-act--off:hover     { background: #fff7e6; border-color: #fcd9a0; color: #b45309; }
+  .ps-act--on:hover      { background: #e9faf0; border-color: #a7e8c4; color: #15803d; }
+  .ps-act--neutral:hover { background: #f1f5f9; border-color: #cbd5e1; color: #334155; }
+  .ps-act--danger:hover  { background: #fef2f2; border-color: #fca5a5; color: #b91c1c; }
+
+  /* Stack the table into label/value rows on phones instead of scrolling it.
+     `:not(.collapse)` matters: a plain `tr { display: block }` outranks
+     Bootstrap's `.collapse { display: none }`, which would leave All Listings'
+     suspension-reason rows permanently open on mobile. */
+  @media (max-width: 767.98px) {
+    .ps-table thead { display: none; }
+    .ps-table tbody tr:not(.collapse):not(.collapsing) {
+      display: block; border-bottom: 1px solid var(--ps-border); padding: .5rem 0;
+    }
+    .ps-table tbody td { display: flex; justify-content: space-between; gap: 1rem; border: 0; padding: .45rem .85rem; }
+  }
 
   /* ---- AdminLTE dark mode ---- */
   body.dark-mode {

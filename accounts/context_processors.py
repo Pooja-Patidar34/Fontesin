@@ -283,10 +283,14 @@ def admin_context(request):
                 request.user,
                 active_company=acting_company,
             ).count()
-            # A short recent-notifications list powers the top-right bell dropdown.
+            # The bell dropdown lists UNREAD notifications only. It used to show
+            # the 8 most recent regardless of read state, so notifications the
+            # user had already opened kept reappearing under a bell whose badge
+            # said zero. The full history stays one click away in the inbox
+            # ("View all notifications").
             recent_notifications = list(
                 scope_notifications_qs(
-                    Notification.objects.filter(recipient=request.user),
+                    Notification.objects.filter(recipient=request.user, is_read=False),
                     request.user,
                     active_company=acting_company,
                 ).order_by("-created_at")[:8]

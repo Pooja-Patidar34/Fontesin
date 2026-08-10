@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.postgres.indexes import GinIndex
+from django.utils.translation import gettext_lazy as _
 from accounts.models import Company,Tenant,User,NaceCode
 from accounts.common.active_manager import ActiveManager
 import uuid
@@ -49,6 +50,50 @@ class Listing(models.Model):
                  ("GBP","GBP"),
                  ("CZK","CZK"),
           )
+
+          # A unit only makes sense against its category: goods are priced by
+          # quantity, services by time or engagement. The two sets are kept apart
+          # so the form can offer just the relevant one and the serializer can
+          # reject a service unit on a product (and the reverse).
+          PRODUCT_UNIT_CHOICES=(
+                 ("piece", _("Per Piece")),
+                 ("kilogram", _("Per Kilogram")),
+                 ("tonne", _("Per Tonne")),
+                 ("litre", _("Per Litre")),
+                 ("metre", _("Per Metre")),
+                 ("square_metre", _("Per Square Metre")),
+                 ("box", _("Per Box")),
+                 ("pallet", _("Per Pallet")),
+                 ("container", _("Per Container")),
+          )
+
+          SERVICE_UNIT_CHOICES=(
+                 ("hour", _("Per Hour")),
+                 ("day", _("Per Day")),
+                 ("month", _("Per Month")),
+                 ("project", _("Per Project")),
+                 ("consultation", _("Per Consultation")),
+                 ("milestone", _("Per Milestone")),
+                 ("user_licence", _("Per User / Licence")),
+          )
+
+          UNIT_CHOICES = PRODUCT_UNIT_CHOICES + SERVICE_UNIT_CHOICES
+
+          @property
+          def unit_display(self):
+                 """Readable label for the stored unit code. Values written before
+                 the field became a picker are shown as they are, so an old
+                 listing still reads sensibly instead of going blank."""
+                 return dict(self.UNIT_CHOICES).get(self.unit, self.unit or "")
+
+          @classmethod
+          def unit_choices_for(cls, category_type):
+                 """Units valid for a category. Anything that is not an explicit
+                 Service falls back to the product set, matching the model default
+                 of a Product listing."""
+                 if category_type == cls.SERVICE:
+                        return cls.SERVICE_UNIT_CHOICES
+                 return cls.PRODUCT_UNIT_CHOICES
           id=models.UUIDField(primary_key=True,default=uuid.uuid4 ,editable=False)
           listing_type=models.CharField(max_length=20,choices=LISTING_TYPE_CHOICES,db_index=True,)
           tenant=models.ForeignKey(Tenant,on_delete=models.PROTECT,related_name="listings")

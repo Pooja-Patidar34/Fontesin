@@ -202,7 +202,13 @@
             {% endif %}
             {% if note.link_url %}
               <span>·</span>
-              <a href="{% url 'message-open' note.id %}">{% trans "Open" context "common" %}</a>
+              {% comment %}
+              Opening consumes the notification (see message_open), so keep
+              this out of reach of link prefetchers: rel="nofollow" plus an
+              explicit opt-out of Chrome/Safari speculative prefetching.
+              {% endcomment %}
+              <a href="{% url 'message-open' note.id %}" rel="nofollow noreferrer"
+                 data-no-prefetch>{% trans "Open" context "common" %}</a>
             {% endif %}
           </div>
         </div>

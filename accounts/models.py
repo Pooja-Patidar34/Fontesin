@@ -10,6 +10,7 @@ from accounts.constants import (
     CompanyEntityTypeChoices,
     ConsultantAssignmentStatus,
     ConsultantType,
+    ContinentChoices,
     ContractStatus,
     CountryChoices,
     EmployeeCountRangeChoices,
@@ -606,6 +607,13 @@ class Company(models.Model):
 
     certified_at = models.DateTimeField(null=True,blank=True)
 
+    # When the CURRENT certification request was submitted — refreshed on every
+    # resubmission, not just the first. The consultant queue's "Submitted"
+    # column used to show Company.created_at, which never moves, so a company
+    # that was declined and resubmitted after fixing its details still looked
+    # weeks old and sat at the bottom of the queue.
+    certification_requested_at = models.DateTimeField(null=True, blank=True)
+
     # ---- Status ----
     is_active = models.BooleanField(default=True)
     is_deleted = models.BooleanField(default=False)
@@ -652,6 +660,22 @@ class Company(models.Model):
 
     def __str__(self):
         return self.name
+
+    @property
+    def certificate_number(self):
+        """Human-quotable reference for this company's certificate.
+
+        Derived rather than stored: it's a deterministic function of the id and
+        the certification year, so it needs no column, no migration and no
+        sequence — and re-rendering the certificate always produces the same
+        number. Returns "" for a company that isn't certified, so templates can
+        gate on it.
+        """
+        if self.certification_status != "certified":
+            return ""
+        year = (self.certified_at or self.created_at)
+        year = year.year if year else "----"
+        return "FTS-{}-{}".format(year, self.id.hex[:8].upper())
 
 
 class CompanyEnrichment(models.Model):
@@ -810,6 +834,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     state_region = models.CharField(max_length=150, null=True, blank=True)
     postal_code = models.CharField(max_length=20, null=True, blank=True)
     country = models.CharField(max_length=100, choices=CountryChoices.CHOICES, null=True, blank=True)
+    # Picked at sign-up, one step above the country: the Country dropdown is
+    # filtered by it, so the pair is always consistent
+    # (accounts.constants.CONTINENT_COUNTRIES). Kept in sync whenever the
+    # country changes (registration, profile edit) rather than trusted on its
+    # own — the country stays the authority.
+    continent = models.CharField(
+        max_length=32, choices=ContinentChoices.CHOICES, null=True, blank=True
+    )
 
     owner = models.ForeignKey("self",null=True,blank=True,related_name="commercial_children",on_delete=models.SET_NULL)
 

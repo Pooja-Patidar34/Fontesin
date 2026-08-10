@@ -3,66 +3,182 @@
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-<div class="content-header d-flex justify-content-between align-items-center">
-  <h1 class="m-0">{{ title }}</h1>
-  <div class="text-nowrap">
-  {% if combined %}
-    <a href="{% url 'listings_web:add' %}?type=offer" class="btn btn-primary btn-sm">{% trans "Add Offer" %}</a>
-    <a href="{% url 'listings_web:add' %}?type=demand" class="btn btn-outline-primary btn-sm">{% trans "Add Demand" %}</a>
-  {% else %}
-    <a href="{% url 'listings_web:add' %}?type={{ listing_type }}" class="btn btn-primary btn-sm">
-      {% if listing_type == 'offer' %}{% trans "Add Offer" %}{% else %}{% trans "Add Demand" %}{% endif %}
-    </a>
-  {% endif %}
-  </div>
-</div>
+{% include "listings/_ps_styles.html" %}
+{% comment %}
+My Offers / My Demands. This page was the one listings screen still on the
+plain AdminLTE card + table, so it looked unrelated to Browse and the listing
+form. It now uses the shared `ps-` language: panel surface, segmented tabs,
+pills and chips, and the per-type accent (blue = offer, violet = demand).
+{% endcomment %}
+<style>
+  .ml-head {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: .75rem; margin-bottom: 1rem;
+  }
+  .ml-head h1 { font-size: 1.45rem; font-weight: 700; margin: 0; color: var(--ps-ink); }
+  .ml-head__sub { font-size: .83rem; color: var(--ps-muted); margin: .15rem 0 0; }
 
-<section class="content"><div class="container-fluid">
-{% if combined %}
-<ul class="nav nav-pills mb-3">
-  <li class="nav-item"><a class="nav-link {% if not current_type %}active{% endif %}" href="{% url 'listings_web:my-listings' %}">{% trans "All" %}</a></li>
-  <li class="nav-item"><a class="nav-link {% if current_type == 'offer' %}active{% endif %}" href="{% url 'listings_web:my-listings' %}?type=offer">{% trans "Offers" %}</a></li>
-  <li class="nav-item"><a class="nav-link {% if current_type == 'demand' %}active{% endif %}" href="{% url 'listings_web:my-listings' %}?type=demand">{% trans "Demands" %}</a></li>
-</ul>
-{% endif %}
-<div class="card"><div class="card-body table-responsive">
-<table class="table table-hover">
-  <thead><tr>
-    <th>{% trans "Title" %}</th>{% if combined %}<th>{% trans "Type" %}</th>{% endif %}<th>{% trans "Category" %}</th><th>{% trans "Company" %}</th>
-    <th>{% trans "Status" %}</th><th>{% trans "Reactions" %}</th><th>{% trans "Created" %}</th><th>{% trans "Actions" %}</th>
-  </tr></thead>
-  <tbody>
-  {% for l in page_obj %}
-    <tr>
-      <td><a href="{% url 'listings_web:detail' l.id %}">{{ l.title }}</a></td>
-      {% if combined %}<td>{{ l.get_listing_type_display|capfirst }}</td>{% endif %}
-      <td>{{ l.get_category_type_display|capfirst }}</td>
-      <td>{{ l.owner_company.name }}</td>
-      <td><span class="badge badge-{% if l.status == 'active' %}success{% elif l.status == 'suspended' %}danger{% elif l.status == 'draft' %}secondary{% else %}warning{% endif %}">{{ l.get_status_display|capfirst }}</span></td>
-      <td>
-        <a href="{% url 'listings_web:listing-reactions' l.id %}" class="btn btn-sm btn-outline-info">
-          {% trans "Reactions" %} ({{ l.reaction_count }})
-          {% if l.new_reaction_count %}<span class="badge badge-danger">{{ l.new_reaction_count }} {% trans "new" %}</span>{% endif %}
-        </a>
-      </td>
-      <td>{{ l.created_at|date:"Y-m-d" }}</td>
-      <td class="text-nowrap">
-        <a href="{% url 'listings_web:edit' l.id %}" class="btn btn-sm btn-outline-primary">{% trans "Edit" %}</a>
-        {% if l.status == 'active' %}
-          <form method="post" action="{% url 'listings_web:deactivate' l.id %}" class="d-inline">{% csrf_token %}
-            <button class="btn btn-sm btn-outline-warning">{% trans "Deactivate" %}</button></form>
-        {% elif l.status == 'inactive' or l.status == 'draft' %}
-          <form method="post" action="{% url 'listings_web:activate' l.id %}" class="d-inline">{% csrf_token %}
-            <button class="btn btn-sm btn-outline-success">{% trans "Activate" %}</button></form>
-        {% endif %}
-      </td>
-    </tr>
-  {% empty %}
-    <tr><td colspan="{% if combined %}8{% else %}7{% endif %}" class="text-center text-muted">{% trans "No listings yet." %}</td></tr>
-  {% endfor %}
-  </tbody>
-</table>
-{% include "listings/_pagination.html" %}
-</div></div>
+  /* Secondary "Add" action. .ps-btn-gradient is the blue (offer) primary; this
+     is its quiet counterpart, and --demand recolours the primary for the
+     Demands side so the button matches the form it opens. */
+  .ml-btn-ghost {
+    display: inline-flex; align-items: center;
+    background: #fff; border: 1px solid #dfe4ec; color: #475467;
+    font-weight: 600; border-radius: .6rem; padding: .55rem 1.2rem;
+  }
+  .ml-btn-ghost:hover { background: #f2f4f8; color: #344054; text-decoration: none; }
+  .ps-btn-gradient.ml-demand {
+    background: linear-gradient(135deg, #5b21b6, #a855f7);
+    box-shadow: 0 10px 20px -8px rgba(124, 58, 237, .55);
+  }
+
+  {% comment %} Table, status pills, reaction chip and row actions all come
+  from _ps_styles.html (.ps-table / .ps-status / .ps-react / .ps-act) — shared
+  with All Listings so the two management tables stay identical. {% endcomment %}
+</style>
+
+<section class="content pt-3"><div class="container-fluid">
+
+  <div class="ps-pagehead">
+    <div class="ps-pagehead__title">
+      {% comment %} Icon chip is typed: bullhorn / blue for offers, magnifier /
+      violet for demands, layers / slate on the combined view. {% endcomment %}
+      <span class="ps-pagehead__icon{% if listing_type == 'demand' %} ps-pagehead__icon--demand{% elif not listing_type %} ps-pagehead__icon--neutral{% endif %}">
+        <i class="fas {% if listing_type == 'demand' %}fa-search{% elif listing_type == 'offer' %}fa-bullhorn{% else %}fa-layer-group{% endif %}"></i>
+      </span>
+      <h1>{{ title }}</h1>
+      <span class="ps-count{% if listing_type == 'demand' %} ps-count--demand{% endif %}">
+        {% blocktrans count counter=page_obj.paginator.count %}{{ counter }} listing{% plural %}{{ counter }} listings{% endblocktrans %}
+      </span>
+    </div>
+    <div class="text-nowrap">
+    {% if combined %}
+      <a href="{% url 'listings_web:add' %}?type=offer" class="ps-btn-gradient">
+        <i class="fas fa-bullhorn mr-1"></i>{% trans "Add Offer" %}
+      </a>
+      <a href="{% url 'listings_web:add' %}?type=demand" class="ps-btn-ghost ps-btn-ghost--demand ml-1">
+        <i class="fas fa-search mr-1"></i>{% trans "Add Demand" %}
+      </a>
+    {% else %}
+      <a href="{% url 'listings_web:add' %}?type={{ listing_type }}"
+         class="ps-btn-gradient{% if listing_type != 'offer' %} ml-demand{% endif %}">
+        {% if listing_type == 'offer' %}<i class="fas fa-bullhorn mr-1"></i>{% trans "Add Offer" %}
+        {% else %}<i class="fas fa-search mr-1"></i>{% trans "Add Demand" %}{% endif %}
+      </a>
+    {% endif %}
+    </div>
+  </div>
+
+  {% if combined %}
+  {# Segmented control — same one Browse uses, instead of nav-pills. #}
+  <div class="ps-seg mb-3">
+    <a class="{% if not current_type %}active{% endif %}" href="{% url 'listings_web:my-listings' %}">{% trans "All" %}</a>
+    <a class="{% if current_type == 'offer' %}active{% endif %}" href="{% url 'listings_web:my-listings' %}?type=offer">{% trans "Offers" %}</a>
+    <a class="{% if current_type == 'demand' %}active{% endif %}" href="{% url 'listings_web:my-listings' %}?type=demand">{% trans "Demands" %}</a>
+  </div>
+  {% endif %}
+
+  <div class="ps-panel">
+    <div class="table-responsive">
+      <table class="ps-table">
+        <thead>
+          <tr>
+            <th>{% trans "Title" %}</th>
+            {% if combined %}<th>{% trans "Type" %}</th>{% endif %}
+            <th>{% trans "Category" %}</th>
+            <th>{% trans "Company" %}</th>
+            <th>{% trans "Status" %}</th>
+            <th>{% trans "Reactions" %}</th>
+            <th>{% trans "Created" %}</th>
+            <th class="text-right">{% trans "Actions" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for l in page_obj %}
+          <tr>
+            <td>
+              <a class="ps-t-title" href="{% url 'listings_web:detail' l.id %}">{{ l.title }}</a>
+            </td>
+            {% if combined %}
+            <td>
+              <span class="ps-pill {% if l.listing_type == 'offer' %}ps-pill--offer{% else %}ps-pill--demand{% endif %}">
+                {{ l.get_listing_type_display|capfirst }}
+              </span>
+            </td>
+            {% endif %}
+            <td><span class="ps-chip">{{ l.get_category_type_display|capfirst }}</span></td>
+            <td class="text-muted">{{ l.owner_company.name }}</td>
+            <td>
+              {% comment %} Status drives the pill colour; anything unrecognised
+              falls back to the neutral "inactive" amber. {% endcomment %}
+              <span class="ps-status ps-status--{% if l.status == 'active' %}active{% elif l.status == 'suspended' %}suspended{% elif l.status == 'draft' %}draft{% else %}inactive{% endif %}">
+                {{ l.get_status_display|capfirst }}
+              </span>
+            </td>
+            <td>
+              {% comment %} One number in the chip: the total. Unread shows as the
+              accent + dot, with the exact count in the tooltip, so the cell stays
+              scannable instead of carrying two competing figures. {% endcomment %}
+              <a href="{% url 'listings_web:listing-reactions' l.id %}"
+                 class="ps-react{% if l.new_reaction_count %} ps-react--new{% endif %}"
+                 title="{% if l.new_reaction_count %}{% blocktrans trimmed count counter=l.new_reaction_count %}{{ counter }} new reaction{% plural %}{{ counter }} new reactions{% endblocktrans %}{% else %}{% trans "Reactions" %}{% endif %}">
+                {% if l.new_reaction_count %}<span class="ps-react__dot" aria-hidden="true"></span>{% endif %}
+                <i class="far fa-comment-dots" aria-hidden="true"></i>{{ l.reaction_count }}
+                {% if l.new_reaction_count %}
+                <span class="sr-only">{% blocktrans trimmed count counter=l.new_reaction_count %}{{ counter }} new{% plural %}{{ counter }} new{% endblocktrans %}</span>
+                {% endif %}
+              </a>
+            </td>
+            <td class="ps-t-date">{{ l.created_at|date:"Y-m-d" }}</td>
+            <td>
+              <div class="ps-actions">
+                <a href="{% url 'listings_web:edit' l.id %}" class="ps-act ps-act--edit"
+                   title="{% trans "Edit" %}" aria-label="{% trans "Edit" %}">
+                  <i class="fas fa-pen"></i>
+                </a>
+                {% comment %} Activate / deactivate confirms first, matching the
+                company and user toggles elsewhere in the panel. {% endcomment %}
+                {% if l.status == 'active' %}
+                  <form method="post" action="{% url 'listings_web:deactivate' l.id %}" id="ml-off-{{ l.id }}">{% csrf_token %}
+                    <button type="button" class="ps-act ps-act--off"
+                            title="{% trans "Deactivate" %}" aria-label="{% trans "Deactivate" %}"
+                            onclick="appConfirm({kind:'warning', title:'{% filter escapejs %}{% trans "Deactivate listing?" %}{% endfilter %}', text:'{% filter escapejs %}{% blocktrans trimmed with name=l.title %}<strong>{{ name }}</strong> will be hidden from Browse. You can reactivate it at any time.{% endblocktrans %}{% endfilter %}', okLabel:'{% filter escapejs %}{% trans "Deactivate" %}{% endfilter %}', okIcon:'fa-eye-slash', onConfirm:function(){document.getElementById('ml-off-{{ l.id }}').submit();}});">
+                      <i class="fas fa-eye-slash"></i>
+                    </button>
+                  </form>
+                {% elif l.status == 'inactive' or l.status == 'draft' %}
+                  <form method="post" action="{% url 'listings_web:activate' l.id %}" id="ml-on-{{ l.id }}">{% csrf_token %}
+                    <button type="button" class="ps-act ps-act--on"
+                            title="{% trans "Activate" %}" aria-label="{% trans "Activate" %}"
+                            onclick="appConfirm({kind:'success', title:'{% filter escapejs %}{% trans "Activate listing?" %}{% endfilter %}', text:'{% filter escapejs %}{% blocktrans trimmed with name=l.title %}<strong>{{ name }}</strong> will be published and visible in Browse.{% endblocktrans %}{% endfilter %}', okLabel:'{% filter escapejs %}{% trans "Activate" %}{% endfilter %}', okIcon:'fa-eye', onConfirm:function(){document.getElementById('ml-on-{{ l.id }}').submit();}});">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                  </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="{% if combined %}8{% else %}7{% endif %}">
+              <div class="ps-empty">
+                <div><i class="far fa-folder-open"></i></div>
+                <p class="mb-2">{% trans "No listings yet." %}</p>
+                <a href="{% url 'listings_web:add' %}?type={% if listing_type %}{{ listing_type }}{% else %}offer{% endif %}"
+                   class="ps-btn-gradient{% if listing_type == 'demand' %} ml-demand{% endif %}">
+                  {% if listing_type == 'demand' %}{% trans "Add Demand" %}{% else %}{% trans "Add Offer" %}{% endif %}
+                </a>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="px-3 pb-2">{% include "listings/_pagination.html" %}</div>
+    {% endif %}
+  </div>
+
 </div></section>
 {% endblock %}

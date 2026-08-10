@@ -15,6 +15,7 @@ from accounts.constants import (
     SupportedLocale,
     COUNTRY_CODES,
     COUNTRY_STATES,
+    continent_for_country,
 )
 import datetime
 from FontEsin.middleware.locale import apply_language_cookie, normalize_locale
@@ -342,6 +343,11 @@ def profile_view(request):
             user.last_name = last_name
             user.phone = phone or None
             user.country = country or None
+            # The continent is picked at sign-up but derived from the country
+            # (they are validated as a pair there). There is no continent picker
+            # on this form, so re-derive it here — otherwise moving from Germany
+            # to Japan would leave the account on "europe".
+            user.continent = continent_for_country(country)
             # Clearing the country invalidates any state under it, so drop the
             # state too rather than leave an orphan that outlives its country.
             user.state_region = (state_region or None) if country else None
@@ -349,7 +355,7 @@ def profile_view(request):
             language_changed = preferred_language != old_language
             user.persist_preferred_language(preferred_language)
             user.save(update_fields=[
-                "first_name", "last_name", "phone", "country",
+                "first_name", "last_name", "phone", "country", "continent",
                 "state_region", "city", "updated_at",
             ])
 
@@ -774,6 +780,10 @@ def profile_view(request):
             consultant=user if creator_role == "consultant" else None,
             certified_by=user if self_certifies else None,
             certified_at=timezone.now() if self_certifies else None,
+            # Stamps the consultant queue's "Submitted" column. Only a real
+            # request gets one — a self-certified company never enters the
+            # queue.
+            certification_requested_at=None if self_certifies else timezone.now(),
         )
 
         # Only non-self-certifying creators trigger the broadcast. The request

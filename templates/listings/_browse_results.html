@@ -3,6 +3,12 @@
 Results-only fragment: rendered inside browse.html on a full load, and on its
 own for the AJAX filter so applying a filter never reloads the whole page.
 {% endcomment %}
+
+{% comment %} The count pill sits in the page header, outside this fragment.
+Carry its new label here so the AJAX swap can update it. {% endcomment %}
+<span id="lb-count-src" hidden
+      data-label="{% blocktrans count counter=page_obj.paginator.count %}{{ counter }} listing{% plural %}{{ counter }} listings{% endblocktrans %}"></span>
+
 {% if page_obj %}
 <div class="ps-grid">
   {% for l in page_obj %}
@@ -24,13 +30,24 @@ own for the AJAX filter so applying a filter never reloads the whole page.
 
       <h3 class="ps-card__title"><a href="{% url 'listings_web:detail' l.id %}">{{ l.title|truncatechars:48 }}</a></h3>
 
+      {% comment %} The card identifies the listing — type, category, title and
+      who posted it. Description, location and the rest of the detail stay on
+      the detail page, which is what View is for. {% endcomment %}
+      <div class="ps-card__meta ps-card__meta--fill">
+        <span title="{{ l.owner_company.name }}">
+          <i class="fas fa-building"></i>{{ l.owner_company.name|truncatechars:28 }}
+        </span>
+      </div>
+
       <div class="ps-card__foot">
         {% if l.listing_type == 'offer' and l.price_without_vat %}
           <span class="ps-price">{{ l.price_without_vat }} <small>{{ l.currency }}</small></span>
         {% else %}
           <span></span>
         {% endif %}
-        <a href="{% url 'listings_web:detail' l.id %}" class="btn btn-sm btn-outline-primary">{% trans "View" %} <i class="fas fa-arrow-right ml-1"></i></a>
+        <a href="{% url 'listings_web:detail' l.id %}" class="ps-card__view">
+          {% trans "View" %} <i class="fas fa-arrow-right"></i>
+        </a>
       </div>
     </div>
   {% endfor %}

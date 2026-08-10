@@ -1,0 +1,47 @@
+{% load i18n %}
+{% comment %}
+Pagination for one Certifications tab.
+
+Expects:
+  page_obj — a Django Page
+  param    — the query-string key for THIS tab's page number (pp/pc/pr/pcert)
+  tab      — the tab to reopen after the reload (pending/certified/…)
+
+Links carry only `tab` and this tab's page number: switching pages on one tab
+resets the others to page 1, which is predictable and keeps the URLs short.
+Renders nothing when everything fits on one page.
+{% endcomment %}
+{% if page_obj.paginator.num_pages > 1 %}
+<div class="cert-pager">
+  <div class="cert-pager__info">
+    {% blocktrans trimmed with start=page_obj.start_index end=page_obj.end_index total=page_obj.paginator.count context "dashboard" %}
+    Showing {{ start }}–{{ end }} of {{ total }}
+    {% endblocktrans %}
+  </div>
+  <nav class="cert-pager__links">
+    {% if page_obj.has_previous %}
+      <a href="?tab={{ tab }}&amp;{{ param }}={{ page_obj.previous_page_number }}" class="cert-pager__btn">
+        <i class="fas fa-chevron-left"></i>
+      </a>
+    {% else %}
+      <span class="cert-pager__btn is-disabled"><i class="fas fa-chevron-left"></i></span>
+    {% endif %}
+
+    {% for num in page_obj.paginator.page_range %}
+      {% if num == page_obj.number %}
+        <span class="cert-pager__btn is-current">{{ num }}</span>
+      {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+        <a href="?tab={{ tab }}&amp;{{ param }}={{ num }}" class="cert-pager__btn">{{ num }}</a>
+      {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+      <a href="?tab={{ tab }}&amp;{{ param }}={{ page_obj.next_page_number }}" class="cert-pager__btn">
+        <i class="fas fa-chevron-right"></i>
+      </a>
+    {% else %}
+      <span class="cert-pager__btn is-disabled"><i class="fas fa-chevron-right"></i></span>
+    {% endif %}
+  </nav>
+</div>
+{% endif %}

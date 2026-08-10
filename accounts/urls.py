@@ -30,7 +30,7 @@ from .view.saved_filter import (
 )
 from .view.partnership import partnership_list, partnership_action, partnership_cancel
 from .view.join_request import join_requests_list, join_request_action, join_request_cancel, company_leave, company_join
-from .view.certification import certification_list, certification_action
+from .view.certification import certification_list, certification_action, certificate_view
 from .view.application_review import (
     application_pending,
     applications_list,
@@ -68,6 +68,7 @@ from .view.notification import (
     messages_list,
     message_mark_read,
     messages_mark_all_read,
+    messages_mark_read_bulk,
     message_delete,
     message_open,
 )
@@ -134,6 +135,7 @@ urlpatterns = [
     # Certifications (consultants only)
     path("certifications/", certification_list, name="certifications"),
     path("certifications/<uuid:company_id>/action/", certification_action, name="certification-action"),
+    path("certifications/<uuid:company_id>/certificate/", certificate_view, name="company-certificate"),
 
     # Coordinator role requests (BU submit / Super Admin review)
     path("coordinator-requests/", coordinator_requests_list, name="coordinator-requests"),
@@ -176,6 +178,9 @@ urlpatterns = [
     # Messages / notifications (every account type)
     path("messages/", messages_list, name="messages"),
     path("messages/mark-all-read/", messages_mark_all_read, name="messages-mark-all-read"),
+    # Literal path, so it must stay ahead of nothing in particular — the <uuid>
+    # patterns below can't match "mark-read" — but keep it grouped here.
+    path("messages/mark-read/", messages_mark_read_bulk, name="messages-mark-read-bulk"),
     path("messages/<uuid:notification_id>/read/", message_mark_read, name="message-mark-read"),
     path("messages/<uuid:notification_id>/open/", message_open, name="message-open"),
     path("messages/<uuid:notification_id>/delete/", message_delete, name="message-delete"),

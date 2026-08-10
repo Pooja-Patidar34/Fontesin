@@ -81,6 +81,25 @@ def scope_to_active_company(qs, user):
     return qs.filter(Q(owner_company=company) | Q(owner_company__isnull=True))
 
 
+def scope_applications_to_active_company(qs, user):
+    """The `scope_to_active_company` rule, applied to franchise APPLICATIONS.
+
+    A request is bought for one company and stamped with it (`applicant_company`),
+    exactly like the node it becomes — so it belongs to that company's context. A
+    request made while acting as company A must not sit in My Requests while
+    acting as company B, any more than the resulting franchise does.
+
+    Requests with no company stay visible in every context, for the same reason
+    the node rule keeps company-less nodes visible: consultants and coordinators
+    have no company at all, and pre-Jul-2026 requests were never attributed to
+    one, so hiding them everywhere would strand their applicant.
+    """
+    company = scoping_company(user)
+    if company is None:
+        return qs
+    return qs.filter(Q(applicant_company=company) | Q(applicant_company__isnull=True))
+
+
 def owned_franchise_nodes(user, statuses=None):
     """Queryset of franchise nodes (Tenant rows) owned by `user` **through the
     company they are currently acting as** (see `scope_to_active_company`).

@@ -132,8 +132,14 @@ class ListingWriteSerializer(serializers.ModelSerializer):
         return value
 
     def validate_unit(self, value):
-        if value and not str(value).strip().isdigit():
-            raise serializers.ValidationError(_("Unit must contain digits only."))
+        """The unit is a code from a fixed list, not free text.
+
+        Which list applies depends on the category, so that check lives in
+        ``validate()`` where both fields are in hand; here we only reject a value
+        that is no unit at all.
+        """
+        if value and str(value).strip() not in dict(Listing.UNIT_CHOICES):
+            raise serializers.ValidationError(_("Select a unit from the list."))
         return value
 
     def validate_minimum_quantity_or_scope(self, value):
@@ -161,6 +167,16 @@ class ListingWriteSerializer(serializers.ModelSerializer):
         # price -> currency
         if data.get("price_without_vat") is not None and not data.get("currency"):
             errors["currency"] = _("Currency is required when price is filled.")
+
+        # unit -> category: a Service cannot be priced per pallet, nor a Product
+        # per consultation.
+        unit = (data.get("unit") or "").strip()
+        if unit and unit not in dict(Listing.unit_choices_for(category_type)):
+            errors["unit"] = (
+                _("Choose a service unit, such as Per Hour or Per Project.")
+                if category_type == Listing.SERVICE
+                else _("Choose a product unit, such as Per Piece or Per Kilogram.")
+            )
 
         # product image only for Product Offer
         if data.get("product_image_id"):

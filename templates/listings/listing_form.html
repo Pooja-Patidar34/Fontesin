@@ -1,85 +1,170 @@
 {% extends "base/base.html" %}
-{% load i18n %}
+{% load i18n static %}
 {% block title %}{% if listing %}{% trans "Edit Listing" %}{% elif is_offer %}{% trans "Add Offer" %}{% else %}{% trans "Add Demand" %}{% endif %}{% endblock %}
 
 {% block content %}
 {% include "listings/_ps_styles.html" %}
 <style>
-  /* Clean, light, professional listing form. Accent tint varies by type. */
-  .lf-wrap { max-width: 920px; margin: 0 auto; }
+  /* Listing form. One card: gradient header band + body, accent varies by type
+     (blue = offer, violet = demand) so it reads as part of the same module as
+     the .ps-hero / .ps-card surfaces. */
+  .lf-wrap {
+    /* Narrower than the old 920px: at full width the three top fields stretched
+       into oversized boxes with a lot of dead space, which is what made the
+       form look unfinished. */
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  .lf-card {
+    background: var(--ps-surface);
+    border: 1px solid var(--ps-border);
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 18px 44px -22px rgba(16, 24, 40, .35), 0 2px 8px rgba(16, 24, 40, .04);
+  }
 
   .lf-header {
     display: flex; align-items: center; gap: 1rem;
-    padding: 1.15rem 1.35rem; border-radius: .85rem .85rem 0 0;
-    background: var(--lf-tint); border: 1px solid var(--ps-border); border-bottom: 0;
+    padding: 1.25rem 1.5rem;
+    background: var(--lf-grad);
+    color: #fff;
+    position: relative;
+    overflow: hidden;
   }
+  /* Same soft light-bloom the module hero uses. */
+  .lf-header::after {
+    content: ""; position: absolute; right: -50px; top: -70px;
+    width: 190px; height: 190px; border-radius: 50%;
+    background: rgba(255, 255, 255, .12);
+  }
+  .lf-header > * { position: relative; z-index: 1; }
   .lf-header__icon {
-    width: 52px; height: 52px; border-radius: 14px; flex: 0 0 auto;
-    display: inline-flex; align-items: center; justify-content: center; font-size: 1.35rem;
-    background: #fff; color: var(--lf-accent); box-shadow: 0 4px 12px rgba(16, 24, 40, .09);
+    width: 48px; height: 48px; border-radius: 14px; flex: 0 0 auto;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 1.25rem;
+    background: rgba(255, 255, 255, .18); color: #fff;
+    backdrop-filter: blur(2px);
   }
-  .lf-header__title { font-size: 1.25rem; font-weight: 700; margin: 0; color: var(--ps-ink); }
-  .lf-header__sub { font-size: .83rem; color: var(--ps-muted); margin: .1rem 0 0; }
+  .lf-header__title { font-size: 1.2rem; font-weight: 700; margin: 0; color: #fff; letter-spacing: -.01em; }
+  .lf-header__sub { font-size: .82rem; color: rgba(255, 255, 255, .85); margin: .15rem 0 0; }
 
-  .lf-body {
-    background: var(--ps-surface); border: 1px solid var(--ps-border); border-radius: 0 0 .85rem .85rem;
-    padding: 1.45rem 1.45rem .5rem; box-shadow: 0 6px 22px rgba(16, 24, 40, .05);
-  }
+  .lf-body { padding: 1.4rem 1.5rem 0; }
 
-  .lf-section { margin-bottom: 1.5rem; }
+  .lf-section { margin-bottom: 1.35rem; }
   .lf-section__title {
-    display: flex; align-items: center; gap: .5rem;
-    font-size: .74rem; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; color: var(--ps-muted);
-    margin-bottom: .85rem; padding-bottom: .5rem; border-bottom: 1px solid var(--ps-border);
+    display: flex; align-items: center; gap: .55rem;
+    font-size: .7rem; text-transform: uppercase; letter-spacing: .07em; font-weight: 700;
+    color: var(--ps-muted);
+    margin-bottom: .9rem; padding-bottom: 0; border-bottom: 0;
   }
-  .lf-section__title i { color: var(--lf-accent); font-size: .82rem; }
+  /* Icon sits in an accent chip; a hairline fills the rest of the row instead
+     of a full-width rule under the label. */
+  .lf-section__title i {
+    width: 24px; height: 24px; border-radius: 7px; flex: 0 0 auto;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--lf-tint); color: var(--lf-accent); font-size: .72rem;
+  }
+  .lf-section__title::after {
+    content: ""; flex: 1 1 auto; height: 1px; background: var(--ps-border);
+  }
 
-  .lf-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0 1.15rem; }
+  .lf-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0 1rem; }
   .lf-grid .full { grid-column: 1 / -1; }
-  .lf-grid .form-group { margin-bottom: .95rem; }
-  .lf-grid label { font-size: .82rem; font-weight: 600; color: #3a4453; margin-bottom: .3rem; }
-  .lf-req { color: #d0654f; font-weight: 700; }
-
-  .lf-body .form-control, .lf-body .form-control-file { border-radius: .55rem; }
-  .lf-body .form-control {
-    border-color: #d9dee7; font-size: .9rem; padding: .45rem .7rem; height: auto;
-    transition: border-color .15s ease, box-shadow .15s ease;
+  .lf-grid .form-group { margin-bottom: .85rem; }
+  .lf-grid label {
+    font-size: .76rem; font-weight: 600; color: #5b6675;
+    letter-spacing: .01em; margin-bottom: .32rem;
   }
-  .lf-body .form-control:focus { border-color: var(--lf-accent); box-shadow: 0 0 0 .18rem var(--lf-ring); }
-  .lf-body textarea.form-control { min-height: 70px; }
-  .lf-help { font-size: .76rem; color: var(--ps-muted); font-weight: 400; }
+  .lf-req { color: #e5484d; font-weight: 700; }
+
+  .lf-body .form-control, .lf-body .form-control-file { border-radius: .6rem; }
+  .lf-body .form-control {
+    border: 1px solid #e1e6ee; background: #fbfcfe;
+    font-size: .87rem; padding: .5rem .75rem; height: auto; min-height: 40px;
+    color: var(--ps-ink);
+    transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+  }
+  .lf-body .form-control::placeholder { color: #a6b0c0; }
+  .lf-body .form-control:focus {
+    background: #fff;
+    border-color: var(--lf-accent);
+    box-shadow: 0 0 0 3px var(--lf-ring);
+  }
+  /* Native select arrows differ per browser and look dated; one consistent
+     chevron instead. */
+  .lf-body select.form-control {
+    appearance: none; -webkit-appearance: none; -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23667085' stroke-width='1.6'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right .7rem center;
+    background-size: .8rem;
+    padding-right: 2rem;
+  }
+  .lf-body textarea.form-control { min-height: 74px; }
+  .lf-help { font-size: .74rem; color: var(--ps-muted); font-weight: 400; }
+
+  .lf-body input[type="file"] { font-size: .8rem; color: var(--ps-muted); cursor: pointer; padding: .25rem 0; }
+  .lf-body input[type="file"]::file-selector-button {
+    margin-right: .7rem; padding: .4rem .9rem;
+    font-size: .78rem; font-weight: 600;
+    color: var(--lf-accent); background: var(--lf-tint);
+    border: 0; border-radius: .5rem; cursor: pointer;
+    transition: filter .15s ease;
+  }
+  .lf-body input[type="file"]::file-selector-button:hover { filter: brightness(.96); }
 
   /* Existing / newly-picked image preview above each file input. */
   .lf-thumb { display: flex; align-items: center; gap: .6rem; margin-bottom: .45rem; }
   .lf-thumb img {
-    width: 64px; height: 64px; object-fit: cover; flex: 0 0 auto;
-    border-radius: .5rem; border: 1px solid var(--ps-border); background: #fff;
+    width: 60px; height: 60px; object-fit: cover; flex: 0 0 auto;
+    border-radius: .55rem; border: 1px solid var(--ps-border); background: #fff;
   }
 
+  /* Full-bleed sticky action bar: negative margins cancel .lf-body padding so
+     the tinted band spans the card edge to edge. */
   .lf-actions {
-    position: sticky; bottom: 0;
+    position: sticky; bottom: 0; z-index: 2;
     display: flex; align-items: center; gap: .6rem; flex-wrap: wrap;
-    padding: .9rem 0; margin-top: .3rem; border-top: 1px solid var(--ps-border);
-    background: var(--ps-surface);
+    margin: .4rem -1.5rem 0;
+    padding: .85rem 1.5rem;
+    border-top: 1px solid var(--ps-border);
+    background: #f9fafc;
   }
   .lf-btn-primary {
-    background: #2563eb; border: 0; color: #fff; font-weight: 600; border-radius: .55rem; padding: .55rem 1.5rem;
-    box-shadow: 0 8px 18px -7px rgba(37, 99, 235, .5); transition: filter .15s ease, transform .15s ease;
+    background: var(--lf-grad); border: 0; color: #fff; font-weight: 600;
+    border-radius: .6rem; padding: .55rem 1.5rem;
+    box-shadow: 0 10px 20px -9px var(--lf-shadow);
+    transition: filter .15s ease, transform .15s ease, box-shadow .15s ease;
   }
-  .lf-btn-primary:hover { filter: brightness(1.06); color: #fff; transform: translateY(-1px); }
+  .lf-btn-primary:hover {
+    filter: brightness(1.06); color: #fff; transform: translateY(-1px);
+    box-shadow: 0 14px 24px -9px var(--lf-shadow);
+  }
   .lf-btn-ghost {
-    background: #fff; border: 1px solid #d9dee7; color: #475467; font-weight: 600; border-radius: .55rem; padding: .55rem 1.2rem;
+    background: #fff; border: 1px solid #dfe4ec; color: #475467; font-weight: 600;
+    border-radius: .6rem; padding: .55rem 1.2rem;
   }
-  .lf-btn-ghost:hover { background: #f7f8fb; color: #344054; text-decoration: none; }
+  .lf-btn-ghost:hover { background: #f2f4f8; color: #344054; text-decoration: none; }
 
-  body.dark-mode .lf-header__icon { background: #2b3648; }
+  /* NACE picker results — match the input's radius / shadow language. */
+  #lf-nace-results { border-radius: .6rem; overflow: hidden; }
+  #lf-nace-results .list-group-item { font-size: .83rem; border-left: 0; border-right: 0; }
+
+  @media (max-width: 575.98px) {
+    .lf-header { padding: 1rem 1.1rem; }
+    .lf-body { padding: 1.1rem 1.1rem 0; }
+    .lf-actions { margin: .4rem -1.1rem 0; padding: .8rem 1.1rem; }
+  }
+
   body.dark-mode .lf-body .form-control { background: #222c3c; color: #e9edf5; border-color: #3b4759; }
+  body.dark-mode .lf-body .form-control:focus { background: #26313f; }
+  body.dark-mode .lf-actions { background: #26314a; }
   body.dark-mode .lf-btn-ghost { background: #2b3648; border-color: #3b4759; color: #cdd6e6; }
 </style>
 
 <section class="content pt-3"><div class="container-fluid">
-<div class="lf-wrap" style="{% if is_offer %}--lf-accent:#2563eb;--lf-tint:#f4f8ff;--lf-ring:rgba(37,99,235,.14){% else %}--lf-accent:#b9770f;--lf-tint:#fbf6ee;--lf-ring:rgba(185,119,15,.14){% endif %}">
+<div class="lf-wrap" style="{% if is_offer %}--lf-accent:#2563eb;--lf-tint:#eaf2ff;--lf-ring:rgba(37,99,235,.16);--lf-grad:linear-gradient(135deg,#4338ca 0%,#2563eb 55%,#0ea5e9 100%);--lf-shadow:rgba(37,99,235,.55){% else %}--lf-accent:#6d28d9;--lf-tint:#f1e9fe;--lf-ring:rgba(124,58,237,.16);--lf-grad:linear-gradient(135deg,#5b21b6 0%,#7c3aed 55%,#a855f7 100%);--lf-shadow:rgba(124,58,237,.55){% endif %}">
 
+  <div class="lf-card">
   <!-- Header -->
   <div class="lf-header">
     <span class="lf-header__icon">
@@ -110,7 +195,7 @@
       <div class="lf-grid">
         <div class="form-group">
           <label>{% trans "Category Type" %} <span class="lf-req">*</span></label>
-          <select name="category_type" class="form-control">
+          <select name="category_type" id="category_type" class="form-control">
             {% for val, label in category_choices %}
               <option value="{{ val }}" {% if values.category_type == val %}selected{% endif %}>{{ label|capfirst }}</option>
             {% endfor %}
@@ -195,7 +280,24 @@
         </div>
         <div class="form-group">
           <label>{% trans "Unit" %}</label>
-          <input type="text" name="unit" class="form-control" inputmode="numeric" pattern="[0-9]*" value="{{ values.unit|default:'' }}">
+          {% comment %}
+          Both sets are rendered and the category picker hides the one that does
+          not apply, so a Service offer is priced Per Hour / Per Project rather
+          than by free text. The server rejects a mismatched pair either way.
+          {% endcomment %}
+          <select name="unit" id="unit" class="form-control">
+            <option value="">{% trans "Select unit" %}</option>
+            <optgroup label="{% trans 'Product' %}" data-unit-group="product">
+              {% for val, label in product_unit_choices %}
+                <option value="{{ val }}" {% if values.unit == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </optgroup>
+            <optgroup label="{% trans 'Service' %}" data-unit-group="service">
+              {% for val, label in service_unit_choices %}
+                <option value="{{ val }}" {% if values.unit == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </optgroup>
+          </select>
           {% if errors.unit %}<small class="text-danger">{{ errors.unit.0 }}</small>{% endif %}
         </div>
         <div class="form-group">
@@ -208,22 +310,41 @@
           <input type="url" name="video_url" class="form-control" value="{{ values.video_url|default:'' }}">
           {% if errors.video_url %}<small class="text-danger">{{ errors.video_url.0 }}</small>{% endif %}
         </div>
-        <div class="form-group">
+        {% comment %}
+        Product Image belongs to a Product Offer only — the serializer refuses it
+        on a Service either way, so showing it there only invites a rejected
+        submit. Rendered hidden when the form already opens on Service, and the
+        category picker takes it from there.
+        {% endcomment %}
+        <div class="form-group" id="product_image_group"{% if values.category_type == 'service' %} hidden{% endif %}>
           <label>{% trans "Product Image" %} <span class="lf-help">({% trans "Product Offer only" %})</span></label>
-          <div class="lf-thumb{% if not listing.product_image %} d-none{% endif %}" id="product_image_thumb">
-            <img data-thumb-img {% if listing.product_image %}src="{{ listing.product_image.url }}"{% endif %} alt="{% trans 'Product image' %}">
-            <span class="lf-help" data-thumb-hint>{% trans "Current image — leave the field empty to keep it." %}</span>
+          {% comment %}
+          A file input cannot be refilled by the browser, so after a rejected
+          submit the picked image lives on the server and comes back as this
+          thumbnail plus the hidden reference below.
+          {% endcomment %}
+          <div class="lf-thumb{% if not values.product_image_stashed_url and not listing.product_image %} d-none{% endif %}" id="product_image_thumb">
+            <img data-thumb-img {% if values.product_image_stashed_url %}src="{{ values.product_image_stashed_url }}"{% elif listing.product_image %}src="{{ listing.product_image.url }}"{% endif %} alt="{% trans 'Product image' %}">
+            <span class="lf-help" data-thumb-hint>
+              {% if values.product_image_stashed_url %}{% trans "Image you picked — still attached, no need to choose it again." %}
+              {% else %}{% trans "Current image — leave the field empty to keep it." %}{% endif %}
+            </span>
           </div>
+          <input type="hidden" name="product_image_stashed" value="{{ values.product_image_stashed|default:'' }}">
           <input type="file" name="product_image" class="form-control-file" accept="image/png,image/jpeg,image/webp"
                  data-image-input data-thumb="product_image_thumb">
           {% if errors.product_image_id %}<small class="text-danger">{{ errors.product_image_id.0 }}</small>{% endif %}
         </div>
         <div class="form-group">
           <label>{% trans "Certification Image" %}</label>
-          <div class="lf-thumb{% if not listing.certification_image %} d-none{% endif %}" id="certification_image_thumb">
-            <img data-thumb-img {% if listing.certification_image %}src="{{ listing.certification_image.url }}"{% endif %} alt="{% trans 'Certification image' %}">
-            <span class="lf-help" data-thumb-hint>{% trans "Current image — leave the field empty to keep it." %}</span>
+          <div class="lf-thumb{% if not values.certification_image_stashed_url and not listing.certification_image %} d-none{% endif %}" id="certification_image_thumb">
+            <img data-thumb-img {% if values.certification_image_stashed_url %}src="{{ values.certification_image_stashed_url }}"{% elif listing.certification_image %}src="{{ listing.certification_image.url }}"{% endif %} alt="{% trans 'Certification image' %}">
+            <span class="lf-help" data-thumb-hint>
+              {% if values.certification_image_stashed_url %}{% trans "Image you picked — still attached, no need to choose it again." %}
+              {% else %}{% trans "Current image — leave the field empty to keep it." %}{% endif %}
+            </span>
           </div>
+          <input type="hidden" name="certification_image_stashed" value="{{ values.certification_image_stashed|default:'' }}">
           <input type="file" name="certification_image" class="form-control-file" accept="image/png,image/jpeg,image/webp"
                  data-image-input data-thumb="certification_image_thumb">
         </div>
@@ -283,9 +404,18 @@
         </div>
         <div class="form-group">
           <label>{% trans "Region" %}</label>
+          {% comment %}
+            Dropdown for countries with a subdivision list, free-text box for
+            the rest — see static/adminlte/js/country_state_field.js. Both carry
+            name="region"; only one is ever enabled, so the POST is unambiguous.
+          {% endcomment %}
           <select name="region" id="listing_region" class="form-control" data-current="{{ values.region|default:'' }}">
             <option value="">{% trans "Select region" %}</option>
           </select>
+          <input type="text" name="region" id="listing_region_text" class="form-control"
+                 style="display:none;" disabled maxlength="120"
+                 value="{{ values.region|default:'' }}"
+                 placeholder="{% trans "e.g. Lagos" %}"/>
         </div>
         <div class="form-group">
           <label>{% trans "City" %}</label>
@@ -302,12 +432,60 @@
         <button type="submit" name="action" value="publish" class="lf-btn-primary"><i class="fas fa-paper-plane mr-1"></i>{% trans "Publish" %}</button>
         <button type="submit" name="action" value="draft" class="lf-btn-ghost"><i class="far fa-save mr-1"></i>{% trans "Save Draft" %}</button>
       {% endif %}
-      <a href="{% url 'listings_web:browse' %}" class="btn btn-link text-muted">{% trans "Cancel" %}</a>
+      <a href="{% url 'listings_web:browse' %}" class="btn btn-link text-muted ml-auto">{% trans "Cancel" %}</a>
     </div>
   </form>
   </div>
+  </div>
 </div>
 </div></section>
+
+<script>
+/* Category drives what the Offer Details section offers: the unit list, and
+   whether Product Image applies at all. */
+(function () {
+  var category = document.getElementById("category_type");
+  if (!category) return;
+  var unit = document.getElementById("unit");
+  var productImage = document.getElementById("product_image_group");
+
+  /* A Service offer is priced Per Hour / Per Project, a Product one Per Piece /
+     Per Kilogram. Hiding is not enough on its own — a hidden option can still be
+     the submitted one — so the group is also disabled and a now-invalid
+     selection falls back to the placeholder. */
+  function syncUnits(isService) {
+    if (!unit) return;
+    var wanted = isService ? "service" : "product";
+    unit.querySelectorAll("[data-unit-group]").forEach(function (group) {
+      var applies = group.dataset.unitGroup === wanted;
+      group.hidden = !applies;
+      group.disabled = !applies;
+    });
+    var picked = unit.selectedOptions[0];
+    if (picked && picked.parentElement.disabled) unit.value = "";
+  }
+
+  /* Switching to Service also drops anything already picked, so a file chosen
+     while the form said Product cannot ride along invisibly and get refused. */
+  function syncProductImage(isService) {
+    if (!productImage) return;
+    productImage.hidden = isService;
+    if (!isService) return;
+    productImage.querySelectorAll("input").forEach(function (input) { input.value = ""; });
+    var thumb = productImage.querySelector(".lf-thumb");
+    if (thumb) thumb.classList.add("d-none");
+  }
+
+  function sync() {
+    var isService = category.value === "service";
+    syncUnits(isService);
+    syncProductImage(isService);
+  }
+
+  category.addEventListener("change", sync);
+  sync();
+})();
+</script>
 
 <script>
 /* Image previews: keep the stored image visible while editing (picking a new
@@ -399,6 +577,7 @@
 
 {% comment %} Country → region (subdivision) map, indexed client-side on country change. {% endcomment %}
 {{ country_states|json_script:"listing-country-states" }}
+<script src="{% static 'adminlte/js/country_state_field.js' %}"></script>
 <script>
 /* Cascading Country → Region dropdown + Certification Text char counter. */
 (function () {
@@ -408,28 +587,17 @@
   var regionSel = document.getElementById("listing_region");
 
   if (countrySel && regionSel) {
-    function rebuildRegions(code, preserve) {
-      var states = (code && countryStates[code]) || [];
-      var current = preserve != null ? preserve : (regionSel.getAttribute("data-current") || "");
-      var placeholder = regionSel.options[0] ? regionSel.options[0].outerHTML
-                        : '<option value="">—</option>';
-      if (!states.length) {
-        regionSel.innerHTML = placeholder;
-        regionSel.disabled = true;
-        return;
-      }
-      var html = placeholder;
-      states.forEach(function (s) {
-        var sel = s === current ? " selected" : "";
-        html += '<option value="' + s + '"' + sel + '>' + s + '</option>';
-      });
-      regionSel.innerHTML = html;
-      regionSel.disabled = false;
-    }
-    rebuildRegions(countrySel.value);
-    countrySel.addEventListener("change", function () {
-      rebuildRegions(countrySel.value, "");
+    // Dropdown where the country has a subdivision list, free-text box for the
+    // rest — most of the 196 countries have no list, and an empty dropdown
+    // would leave those listings with no way to record a region at all.
+    var regionField = initCountryStateField({
+      countryEl: countrySel,
+      selectEl: regionSel,
+      textEl: document.getElementById("listing_region_text"),
+      states: countryStates,
+      placeholder: regionSel.options[0] ? regionSel.options[0].text : "—",
     });
+    if (regionField) regionField.rebuild(regionSel.getAttribute("data-current") || "");
   }
 
   var certText = document.getElementById("certification_text");

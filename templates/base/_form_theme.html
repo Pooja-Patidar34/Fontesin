@@ -1,0 +1,270 @@
+{% comment %}
+Shared form skin for the dashboard.
+
+Bootstrap 4's stock controls (square 1px greys, 34px selects with the browser's
+native arrow, bare modal chrome) are what made every form on the panel look
+dated. This restyles them once, centrally, so individual templates don't each
+carry their own patch.
+
+Deliberately narrow in what it targets:
+  * only inside `.content-wrapper` and `.modal` — the sidebar, topbar and
+    login/public pages are untouched;
+  * only form controls, modal chrome, and buttons inside a modal footer —
+    tables, cards, badges and global `.btn` styling are left alone.
+
+Included from <head> in base.html, so any page-level <style> (which renders
+inside {% block content %}, i.e. later) still wins on equal specificity.
+{% endcomment %}
+<style>
+  :root {
+    --ff-border: #e1e6ee;
+    --ff-border-strong: #cfd6e2;
+    --ff-field-bg: #fbfcfe;
+    --ff-ink: #1B2E3F;
+    --ff-muted: #64748b;
+    --ff-accent: #1B7BE4;
+    --ff-ring: rgba(27, 123, 228, .14);
+    --ff-radius: 9px;
+  }
+
+  /* ── Labels ── */
+  .content-wrapper label,
+  .modal label {
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--ff-muted);
+    margin-bottom: .3rem;
+  }
+  .content-wrapper .form-text,
+  .modal .form-text { font-size: .75rem; color: var(--ff-muted); }
+
+  /* ── Text inputs, selects, textareas ── */
+  .content-wrapper .form-control,
+  .modal .form-control,
+  .content-wrapper select.form-control,
+  .modal select.form-control {
+    min-height: 38px;
+    height: auto;
+    padding: .45rem .7rem;
+    font-size: .86rem;
+    color: var(--ff-ink);
+    background-color: var(--ff-field-bg);
+    border: 1px solid var(--ff-border);
+    border-radius: var(--ff-radius);
+    box-shadow: none;
+    transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+  }
+  .content-wrapper .form-control::placeholder,
+  .modal .form-control::placeholder { color: #a9b6c6; }
+  .content-wrapper .form-control:hover,
+  .modal .form-control:hover { border-color: var(--ff-border-strong); }
+  .content-wrapper .form-control:focus,
+  .modal .form-control:focus {
+    background-color: #fff;
+    border-color: var(--ff-accent);
+    box-shadow: 0 0 0 3px var(--ff-ring);
+  }
+  .content-wrapper .form-control:disabled,
+  .content-wrapper .form-control[readonly],
+  .modal .form-control:disabled,
+  .modal .form-control[readonly] {
+    background-color: #f1f4f9;
+    color: #7a8798;
+  }
+  .content-wrapper textarea.form-control,
+  .modal textarea.form-control { min-height: 76px; }
+  .content-wrapper .form-control-sm,
+  .modal .form-control-sm {
+    min-height: 32px;
+    padding: .3rem .6rem;
+    font-size: .82rem;
+    border-radius: 7px;
+  }
+
+  /* One consistent chevron — the native select arrow renders differently in
+     every browser and is the most dated-looking control on a form. Skipped for
+     multi-selects and size>1, where the arrow isn't drawn anyway. */
+  .content-wrapper select.form-control:not([multiple]):not([size]),
+  .modal select.form-control:not([multiple]):not([size]) {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23667085' stroke-width='1.6'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right .7rem center;
+    background-size: .8rem;
+    padding-right: 2rem;
+  }
+
+  /* ── File inputs ── */
+  .content-wrapper input[type="file"],
+  .modal input[type="file"] {
+    font-size: .8rem;
+    color: var(--ff-muted);
+    cursor: pointer;
+  }
+  .content-wrapper input[type="file"]::file-selector-button,
+  .modal input[type="file"]::file-selector-button {
+    margin-right: .7rem;
+    padding: .38rem .85rem;
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--ff-accent);
+    background: #eaf3fd;
+    border: 0;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background .15s ease;
+  }
+  .content-wrapper input[type="file"]::file-selector-button:hover,
+  .modal input[type="file"]::file-selector-button:hover { background: #d8e9fb; }
+
+  /* ── Input groups: keep the seam between field and addon square ── */
+  .content-wrapper .input-group > .form-control:not(:last-child),
+  .modal .input-group > .form-control:not(:last-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+  .content-wrapper .input-group > .form-control:not(:first-child),
+  .modal .input-group > .form-control:not(:first-child) {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+  .content-wrapper .input-group-append .btn,
+  .modal .input-group-append .btn {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-top-right-radius: var(--ff-radius);
+    border-bottom-right-radius: var(--ff-radius);
+  }
+  .content-wrapper .input-group-prepend .btn,
+  .modal .input-group-prepend .btn {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-top-left-radius: var(--ff-radius);
+    border-bottom-left-radius: var(--ff-radius);
+  }
+
+  /* ── Validation ──
+     Bootstrap's green tick on every valid field reads as noise; only errors
+     are worth calling out. */
+  .content-wrapper .form-control.is-valid,
+  .content-wrapper .was-validated .form-control:valid,
+  .modal .form-control.is-valid,
+  .modal .was-validated .form-control:valid {
+    background-image: none;
+    border-color: var(--ff-border);
+    box-shadow: none;
+  }
+  .content-wrapper .valid-feedback,
+  .modal .valid-feedback { display: none !important; }
+  .content-wrapper .form-control.is-invalid,
+  .modal .form-control.is-invalid { border-color: #dc3545; }
+  .content-wrapper .form-control.is-invalid:focus,
+  .modal .form-control.is-invalid:focus {
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, .16);
+  }
+  .content-wrapper .invalid-feedback,
+  .modal .invalid-feedback { font-size: .78rem; }
+
+  /* ── Modal chrome ── */
+  .modal-content {
+    border: 0;
+    border-radius: 14px;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, .22);
+  }
+  .modal-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #eef2f7;
+    align-items: center;
+  }
+  .modal-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--ff-ink);
+    letter-spacing: -.01em;
+  }
+  /* Bootstrap's `.close` is a bare × with no hit target. */
+  .modal-header .close {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    opacity: .55;
+    transition: background .15s ease, opacity .15s ease;
+  }
+  .modal-header .close:hover { background: #f1f5f9; opacity: 1; }
+  .modal-body { padding: 1.1rem 1.35rem; }
+  .modal-footer {
+    padding: .8rem 1.35rem;
+    background: #f8fafc;
+    border-top: 1px solid #eef2f7;
+    border-radius: 0 0 14px 14px;
+  }
+  .modal-footer .btn {
+    padding: .45rem 1.15rem;
+    font-size: .85rem;
+    font-weight: 600;
+    border-radius: 9px;
+  }
+
+  /* ── Right-hand drawer variant ──
+     Add `view-drawer` to a `.modal` and it slides in from the right edge as a
+     full-height panel instead of a centred dialog. Read-only detail views read
+     better this way — they're a list of label/value rows, not a form. Works on
+     a static class (User Details) or one toggled at open time (the company
+     modal, which is a drawer for View and a dialog for Add / Edit). */
+  .modal.view-drawer { padding-right: 0 !important; }  /* kill BS scrollbar pad */
+  .modal.view-drawer .modal-dialog {
+    margin: 0 0 0 auto !important;
+    width: min(560px, 96vw);
+    max-width: min(560px, 96vw);
+    height: 100%;
+    min-height: 100%;
+    max-height: 100%;
+    align-items: stretch;
+  }
+  /* Beats Bootstrap's own `.modal.fade .modal-dialog`, which slides down from
+     the top. */
+  .modal.fade.view-drawer .modal-dialog {
+    transform: translateX(100%);
+    transition: transform .28s ease-out;
+  }
+  .modal.view-drawer.show .modal-dialog { transform: none; }
+  .modal.view-drawer .modal-content {
+    height: 100%;
+    /* .modal-dialog-scrollable caps this at calc(100vh - 1rem), which would
+       leave a strip of backdrop under the panel. */
+    max-height: 100%;
+    border: 0;
+    border-radius: 0;
+    box-shadow: -12px 0 32px rgba(15, 23, 42, .18);
+  }
+  .modal.view-drawer .modal-content > .modal-body,
+  .modal.view-drawer .modal-content > form > .modal-body { overflow-y: auto; }
+  @media (prefers-reduced-motion: reduce) {
+    .modal.fade.view-drawer .modal-dialog { transition: none; }
+  }
+
+  /* ── Checkboxes / radios ── */
+  .content-wrapper .form-check-label,
+  .modal .form-check-label {
+    font-size: .85rem;
+    font-weight: 500;
+    color: var(--ff-ink);
+  }
+  .content-wrapper .custom-control-input:focus ~ .custom-control-label::before,
+  .modal .custom-control-input:focus ~ .custom-control-label::before {
+    box-shadow: 0 0 0 3px var(--ff-ring);
+  }
+
+  body.dark-mode .content-wrapper .form-control,
+  body.dark-mode .modal .form-control {
+    background-color: #222c3c;
+    color: #e9edf5;
+    border-color: #3b4759;
+  }
+  body.dark-mode .modal-footer { background: #26313f; border-top-color: #3b4759; }
+</style>

@@ -4,6 +4,67 @@
 {% block content %}
 
 <style>
+/* ── Edit User modal ──
+   620px instead of modal-lg's 800px: the fields are short (name, phone, a
+   postal code), so the extra width only produced oversized boxes. Paired
+   two-up inside that width they still have room, and the form gets about half
+   as tall. */
+#userEditModal .modal-dialog { max-width: 620px; }
+#userEditModal .modal-body { padding-top: .85rem; }
+/* Group heading: icon chip + label + hairline filling the rest of the row. */
+#userEditModal .eu-section {
+  display: flex; align-items: center; gap: .55rem;
+  font-size: .68rem; text-transform: uppercase; letter-spacing: .08em;
+  font-weight: 700; color: #94a3b8;
+  margin: 1.1rem 0 .7rem;
+}
+#userEditModal .eu-section:first-child { margin-top: 0; }
+#userEditModal .eu-section i {
+  width: 22px; height: 22px; border-radius: 6px; flex: 0 0 auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: #eaf3fd; color: #1B7BE4; font-size: .68rem;
+}
+#userEditModal .eu-section::after {
+  content: ""; flex: 1 1 auto; height: 1px; background: #eef2f7;
+}
+#userEditModal .form-group { margin-bottom: .7rem; }
+/* Helper lines sit under short paired fields — keep them from adding a full
+   line of height to the row. */
+#userEditModal .form-text { margin-top: .2rem; line-height: 1.3; }
+
+/* ── Searchable-select (tenant / role filters) ──
+   Must be parsed BEFORE the markup it styles. These rules used to sit in a
+   <style> below the filter form, so while the HTML was still parsing the
+   panel had no `display:none` yet and the whole option list painted down the
+   page before collapsing into the dropdown — unnoticeable on a fast response,
+   very visible on a slow one. */
+.searchable-select { position: relative; }
+.searchable-select__toggle {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; text-align: left; cursor: pointer;
+  background: #fff;
+}
+.searchable-select__label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.searchable-select__caret { color: #6c757d; margin-left: 8px; font-size: 10px; }
+.searchable-select__panel {
+  display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  background: #fff; border: 1px solid #ced4da; border-radius: 6px;
+  box-shadow: 0 6px 24px rgba(0,0,0,.12);
+  z-index: 1050; padding: 8px;
+}
+.searchable-select.open .searchable-select__panel { display: block; }
+.searchable-select__search { margin-bottom: 6px; }
+.searchable-select__options { max-height: 240px; overflow-y: auto; }
+.searchable-select__option {
+  padding: 7px 10px; border-radius: 4px; cursor: pointer; font-size: 13px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.searchable-select__option:hover,
+.searchable-select__option.is-active { background: #f0f5f8; }
+.searchable-select__option.is-selected { background: #e7f1ff; color: #0b5ed7; font-weight: 600; }
+.searchable-select__option.is-hidden { display: none; }
+.searchable-select__empty { padding: 10px; font-size: 12px; color: #6c757d; text-align: center; }
+
 .table td, .table th { vertical-align: middle !important; }
 .table thead th {
     font-size: 12px;
@@ -159,34 +220,8 @@
     </form>
   </div>
 
-  <style>
-    .searchable-select { position: relative; }
-    .searchable-select__toggle {
-      display: flex; align-items: center; justify-content: space-between;
-      width: 100%; text-align: left; cursor: pointer;
-      background: #fff;
-    }
-    .searchable-select__label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .searchable-select__caret { color: #6c757d; margin-left: 8px; font-size: 10px; }
-    .searchable-select__panel {
-      display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
-      background: #fff; border: 1px solid #ced4da; border-radius: 6px;
-      box-shadow: 0 6px 24px rgba(0,0,0,.12);
-      z-index: 1050; padding: 8px;
-    }
-    .searchable-select.open .searchable-select__panel { display: block; }
-    .searchable-select__search { margin-bottom: 6px; }
-    .searchable-select__options { max-height: 240px; overflow-y: auto; }
-    .searchable-select__option {
-      padding: 7px 10px; border-radius: 4px; cursor: pointer; font-size: 13px;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .searchable-select__option:hover,
-    .searchable-select__option.is-active { background: #f0f5f8; }
-    .searchable-select__option.is-selected { background: #e7f1ff; color: #0b5ed7; font-weight: 600; }
-    .searchable-select__option.is-hidden { display: none; }
-    .searchable-select__empty { padding: 10px; font-size: 12px; color: #6c757d; text-align: center; }
-  </style>
+  {# Styles for this control live in the <style> at the top of the template — #}
+  {# they have to be parsed before the markup above. #}
 
   <script>
   (function() {
@@ -393,7 +428,8 @@
   </div>
 </div>
 <!-- VIEW MODAL --->
-<div class="modal fade" id="userDetailModal" tabindex="-1">
+{# Read-only view → right-hand drawer (`view-drawer`, defined in _form_theme). #}
+<div class="modal fade view-drawer" id="userDetailModal" tabindex="-1">
   <div class="modal-dialog modal-md modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
@@ -445,8 +481,17 @@
   </div>
 </div>
 <!-- EDIT MODAL -->
+{% comment %}
+Edit User. Every field is unchanged (same ids, same validation attributes —
+the save JS looks them up by id); only the layout differs. It used to be a
+modal-lg with 16 stacked full-width rows, so the fields were far wider than
+their content needed and the form ran well past the fold. Now: a narrower
+620px dialog, fields paired two-up, and grouped under headings so the run is
+scannable. `modal-dialog-scrollable` keeps Save/Cancel pinned while the body
+scrolls.
+{% endcomment %}
 <div class="modal fade" id="userEditModal" tabindex="-1">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
 
       <div class="modal-header">
@@ -458,37 +503,59 @@
 
       <div class="modal-body">
 
-        <!-- Franchise (read-only) -->
-        <div class="form-group">
-          <label>{% trans "Franchise" context "users" %}</label>
-          <input type="text" class="form-control" id="eu-tenant" readonly>
+        <!-- Identity -->
+        <div class="eu-section"><i class="fas fa-id-card"></i>{% trans "Identity" context "users" %}</div>
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label>{% trans "Full Name" context "users" %} *</label>
+            <input type="text" class="form-control" id="eu-name" required>
+          </div>
+          <div class="form-group col-md-6">
+            <label>{% trans "Franchise" context "users" %}</label>
+            <input type="text" class="form-control" id="eu-tenant" readonly>
+          </div>
         </div>
 
-        <!-- Full Name (kept for backward compatibility) -->
-        <div class="form-group">
-          <label>{% trans "Full Name" context "users" %} *</label>
-          <input type="text" class="form-control" id="eu-name" required>
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label>{% trans "Phone" context "users" %} *</label>
+            <input type="tel" class="form-control" id="eu-phone" required
+                   minlength="7" maxlength="20"
+                   pattern="^\+?[\d\s\-\(\)]{7,20}$"
+                   title="{% trans "7–15 digits. May include leading + and spaces, hyphens, or parentheses." context "users" %}"
+                   oninput="this.value=this.value.replace(/[^\d+\s\-()]/g,'').replace(/(?!^)\+/g,'').slice(0,20)">
+            <small class="form-text text-muted">{% trans "7–15 digits. Optional leading +." context "users" %}</small>
+          </div>
+          <div class="form-group col-md-6">
+            <label>{% trans "Status" context "users" %} *</label>
+            <select class="form-control" id="eu-active" required>
+              <option value="true">{% trans "Active" context "common" %}</option>
+              <option value="false">{% trans "Inactive" context "common" %}</option>
+            </select>
+          </div>
         </div>
 
-        <!-- Contact -->
-        <div class="form-group">
-          <label>{% trans "Phone" context "users" %} *</label>
-          <input type="tel" class="form-control" id="eu-phone" required
-                 minlength="7" maxlength="20"
-                 pattern="^\+?[\d\s\-\(\)]{7,20}$"
-                 title="{% trans "7–15 digits. May include leading + and spaces, hyphens, or parentheses." context "users" %}"
-                 oninput="this.value=this.value.replace(/[^\d+\s\-()]/g,'').replace(/(?!^)\+/g,'').slice(0,20)">
-          <small class="form-text text-muted">{% trans "7–15 digits. Optional leading +." context "users" %}</small>
+        <!-- Access -->
+        <div class="eu-section"><i class="fas fa-user-shield"></i>{% trans "Access" context "users" %}</div>
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label>{% trans "Company" context "users" %} *</label>
+            <select class="form-control" id="eu-company" required></select>
+          </div>
+          <div class="form-group col-md-6">
+            <label>{% trans "Role" context "users" %} *</label>
+            <select class="form-control" id="eu-role" required></select>
+          </div>
         </div>
 
         <!-- Personal -->
+        <div class="eu-section"><i class="fas fa-user"></i>{% trans "Personal" context "users" %}</div>
         <div class="form-row">
           <div class="form-group col-md-6">
             <label>{% trans "Date of Birth" context "users" %}</label>
             <input type="date" class="form-control" id="eu-dob">
             <small class="form-text text-muted">{% trans "Age must be between 13 and 120." context "users" %}</small>
           </div>
-
           <div class="form-group col-md-6">
             <label>{% trans "Gender" context "users" %}</label>
             <select class="form-control" id="eu-gender">
@@ -501,55 +568,45 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label>{% trans "Ethnicity" context "users" %}</label>
-          <select class="form-control" id="eu-ethnicity">
-            <option value="">{% trans "-- Select Ethnicity --" context "users" %}</option>
-            <option value="asian">{% trans "Asian" context "users" %}</option>
-            <option value="black">{% trans "Black / African descent" context "users" %}</option>
-            <option value="hispanic">{% trans "Hispanic / Latino" context "users" %}</option>
-            <option value="white">{% trans "White" context "users" %}</option>
-            <option value="mixed">{% trans "Mixed" context "users" %}</option>
-            <option value="other">{% trans "Other" context "users" %}</option>
-            <option value="prefer_not_to_say">{% trans "Prefer not to say" context "users" %}</option>
-          </select>
-        </div>
-
-        <!-- Profile -->
-        <div class="form-group">
-          <label>{% trans "Preferred Language" context "users" %}</label>
-          <select class="form-control" id="eu-language">
-            <option value="">{% trans "-- Select Language --" context "users" %}</option>
-            <option value="en">{% trans "English" context "users" %}</option>
-            <option value="es">{% trans "Spanish" context "users" %}</option>
-            <option value="fr">{% trans "French" context "users" %}</option>
-            <option value="de">{% trans "German" context "users" %}</option>
-            <option value="ar">{% trans "Arabic" context "users" %}</option>
-            <option value="hi">{% trans "Hindi" context "users" %}</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>{% trans "Bio" context "users" %}</label>
-          <textarea class="form-control" id="eu-bio" rows="2" minlength="10" maxlength="500"></textarea>
-          <small class="form-text text-muted">{% trans "Optional. If provided, 10–500 characters." context "users" %}</small>
-        </div>
-
-        <div class="form-group">
-          <label>{% trans "Notes" context "users" %}</label>
-          <textarea class="form-control" id="eu-notes" rows="2" minlength="5" maxlength="1000"></textarea>
-          <small class="form-text text-muted">{% trans "Optional. If provided, 5–1000 characters." context "users" %}</small>
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label>{% trans "Ethnicity" context "users" %}</label>
+            <select class="form-control" id="eu-ethnicity">
+              <option value="">{% trans "-- Select Ethnicity --" context "users" %}</option>
+              <option value="asian">{% trans "Asian" context "users" %}</option>
+              <option value="black">{% trans "Black / African descent" context "users" %}</option>
+              <option value="hispanic">{% trans "Hispanic / Latino" context "users" %}</option>
+              <option value="white">{% trans "White" context "users" %}</option>
+              <option value="mixed">{% trans "Mixed" context "users" %}</option>
+              <option value="other">{% trans "Other" context "users" %}</option>
+              <option value="prefer_not_to_say">{% trans "Prefer not to say" context "users" %}</option>
+            </select>
+          </div>
+          <div class="form-group col-md-6">
+            <label>{% trans "Preferred Language" context "users" %}</label>
+            <select class="form-control" id="eu-language">
+              <option value="">{% trans "-- Select Language --" context "users" %}</option>
+              <option value="en">{% trans "English" context "users" %}</option>
+              <option value="es">{% trans "Spanish" context "users" %}</option>
+              <option value="fr">{% trans "French" context "users" %}</option>
+              <option value="de">{% trans "German" context "users" %}</option>
+              <option value="ar">{% trans "Arabic" context "users" %}</option>
+              <option value="hi">{% trans "Hindi" context "users" %}</option>
+            </select>
+          </div>
         </div>
 
         <!-- Address -->
-        <div class="form-group">
-          <label>{% trans "Address Line 1" context "users" %}</label>
-          <input type="text" class="form-control" id="eu-address1">
-        </div>
-
-        <div class="form-group">
-          <label>{% trans "Address Line 2" context "users" %}</label>
-          <input type="text" class="form-control" id="eu-address2">
+        <div class="eu-section"><i class="fas fa-map-marker-alt"></i>{% trans "Address" context "users" %}</div>
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label>{% trans "Address Line 1" context "users" %}</label>
+            <input type="text" class="form-control" id="eu-address1">
+          </div>
+          <div class="form-group col-md-6">
+            <label>{% trans "Address Line 2" context "users" %}</label>
+            <input type="text" class="form-control" id="eu-address2">
+          </div>
         </div>
 
         <div class="form-row">
@@ -585,25 +642,18 @@
           </select>
         </div>
 
-        <!-- Status -->
+        <!-- About -->
+        <div class="eu-section"><i class="fas fa-align-left"></i>{% trans "About" context "users" %}</div>
         <div class="form-group">
-          <label>{% trans "Status" context "users" %} *</label>
-          <select class="form-control" id="eu-active" required>
-            <option value="true">{% trans "Active" context "common" %}</option>
-            <option value="false">{% trans "Inactive" context "common" %}</option>
-          </select>
+          <label>{% trans "Bio" context "users" %}</label>
+          <textarea class="form-control" id="eu-bio" rows="2" minlength="10" maxlength="500"></textarea>
+          <small class="form-text text-muted">{% trans "Optional. If provided, 10–500 characters." context "users" %}</small>
         </div>
 
-        <!-- Company -->
         <div class="form-group">
-          <label>{% trans "Company" context "users" %} *</label>
-          <select class="form-control" id="eu-company" required></select>
-        </div>
-
-        <!-- Role -->
-        <div class="form-group">
-          <label>{% trans "Role" context "users" %} *</label>
-          <select class="form-control" id="eu-role" required></select>
+          <label>{% trans "Notes" context "users" %}</label>
+          <textarea class="form-control" id="eu-notes" rows="2" minlength="5" maxlength="1000"></textarea>
+          <small class="form-text text-muted">{% trans "Optional. If provided, 5–1000 characters." context "users" %}</small>
         </div>
 
       </div>

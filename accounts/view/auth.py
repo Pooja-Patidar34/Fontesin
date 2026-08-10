@@ -19,10 +19,15 @@ from django.utils.translation import gettext as _
 from accounts.models import Tenant, Company, Role, UserCompany, User, DueDiligence
 from django.db import IntegrityError
 from accounts.constants import (
+    CONTINENT_CHOICES_WITH_COUNTRIES,
+    CONTINENT_COUNTRIES,
+    continent_for_country,
+    country_phone_map,
     CountryChoices,
     COUNTRY_ENGLISH_NAMES,
     COUNTRY_STATES,
     LanguageChoices,
+    phone_rule_for_country,
     SupportedLocale,
 )
 from FontEsin.middleware.locale import normalize_locale, LANGUAGE_SESSION_KEY
@@ -221,6 +226,11 @@ def register_view(request):
         "companies": companies,
         "country_choices": CountryChoices.CHOICES,
         "country_states": COUNTRY_STATES,
+        "continent_choices": CONTINENT_CHOICES_WITH_COUNTRIES,
+        "continent_countries": CONTINENT_COUNTRIES,
+        # Dial code + digit rules for all 196 countries, so the form no longer
+        # carries its own hand-maintained copy for a handful of markets.
+        "country_phone": country_phone_map(),
         "language_choices": LanguageChoices.CHOICES,
     }
 
@@ -230,6 +240,7 @@ def register_view(request):
         last_name = request.POST.get("last_name", "").strip()
         email = request.POST.get("email", "").strip()
         phone = request.POST.get("phone", "").strip()
+        continent = request.POST.get("continent", "").strip()
         country = request.POST.get("country", "").strip()
         state_region = request.POST.get("state_region", "").strip()
         city = " ".join(request.POST.get("city", "").split())
@@ -245,6 +256,7 @@ def register_view(request):
             _("Last name"): last_name,
             _("Email"): email,
             _("Phone"): phone,
+            _("Continent"): continent,
             _("Country"): country,
             _("State / Region"): state_region,
             _("City / Town"): city,
@@ -297,16 +309,10 @@ def register_view(request):
             )
             return render(request, "auth/register.html", ctx)
 
-        # phone validation per country
-        PHONE_RULES = {
-            "US": (10, 10), "CA": (10, 10), "GB": (10, 10),
-            "DE": (10, 11), "FR": (9, 9), "NL": (9, 9),
-            "PL": (9, 9), "AT": (10, 11), "CH": (9, 9),
-            "SE": (9, 10), "CZ": (9, 9), "AE": (9, 9),
-            "SG": (8, 8), "AU": (9, 9), "JP": (10, 10),
-            "BR": (10, 11), "IN": (10, 10), "MX": (10, 10),
-            "KR": (10, 11),
-        }
+        # Phone validation per country. The rules live in accounts.constants so
+        # the form's JS check and this one can never disagree; countries with no
+        # pinned rule get the permissive DEFAULT_PHONE_RULE rather than a
+        # guessed length that would lock real users out of sign-up.
         # strip country code prefix if present
         phone_digits = re.sub(r"[^\d]", "", phone.lstrip("+"))
         # if phone starts with country code, strip it
@@ -319,12 +325,27 @@ def register_view(request):
             if len(parts) == 2:
                 phone_digits = re.sub(r"[^\d]", "", parts[1])
 
-        min_len, max_len = PHONE_RULES.get(country, (7, 15))
+        min_len, max_len, _fmt = phone_rule_for_country(country)
         if not phone_digits.isdigit() or len(phone_digits) < min_len or len(phone_digits) > max_len:
             messages.error(
                 request,
                 _("Phone number must be %(min)d-%(max)d digits for the selected country.")
                 % {"min": min_len, "max": max_len},
+            )
+            return render(request, "auth/register.html", ctx)
+
+        # The Country dropdown is filtered client-side by the chosen continent,
+        # so a country that doesn't sit on it only arrives via a stale form or a
+        # direct POST. The country is the authority (it drives plan scope and
+        # phone rules), so reject the mismatch rather than silently trust either
+        # half.
+        if continent not in CONTINENT_COUNTRIES:
+            messages.error(request, _("Please select a valid continent."))
+            return render(request, "auth/register.html", ctx)
+        if continent_for_country(country) != continent:
+            messages.error(
+                request,
+                _("Please select a country that belongs to the chosen continent."),
             )
             return render(request, "auth/register.html", ctx)
 
@@ -340,6 +361,16 @@ def register_view(request):
                 _("Please select a valid state / region for the chosen country."),
             )
             return render(request, "auth/register.html", ctx)
+        # Countries with no subdivision list on file (most of the 196) get a
+        # free-text box instead of a dropdown, so this is the only check their
+        # value gets: shape it like a place name rather than accept anything.
+        if not valid_states:
+            if not re.match(r"^[A-Za-zÀ-ÖØ-öø-ÿ0-9\s'.\-]{2,150}$", state_region):
+                messages.error(
+                    request,
+                    _("Enter a valid state / region name."),
+                )
+                return render(request, "auth/register.html", ctx)
 
         if len(password) < 8:
             messages.error(request, _("Password must be at least 8 characters."))
@@ -391,6 +422,9 @@ def register_view(request):
                 role=role,
                 phone=phone,
                 country=country,
+                # Stored as the user picked it; validated above to match the
+                # country, so the two can never disagree.
+                continent=continent,
                 # Home market for plan-based discovery scope
                 # (billing.utils.get_user_geographic_scope): the active company
                 # takes precedence once one exists, and these are the fallback

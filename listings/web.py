@@ -8,10 +8,14 @@ audit). The DRF API under /api/listings/ remains available for AJAX.
 """
 
 import os
+import re
 import uuid
+from datetime import timedelta
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.files import File
+from django.core.files.storage import default_storage
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Count, Q
 from django.shortcuts import render, redirect, get_object_or_404
@@ -152,20 +156,117 @@ def _shorten_upload_name(uploaded):
     return uploaded
 
 
+# Images picked before a rejected submit are held here between the failed POST
+# and the redisplay: a browser cannot refill a file input, so without a
+# server-side copy the user has to pick every image again on each error.
+_STASH_DIR = "listing_tmp"
+_STASH_FIELDS = ("product_image", "certification_image")
+_STASH_BASENAME_RE = re.compile(r"[0-9a-f]{32}(\.[a-z0-9]{1,9})?\Z")
+_STASH_MAX_AGE = timedelta(hours=24)
+
+
+def _prune_stash():
+    """Drop stash files older than a day - a submit abandoned on the error page
+    leaves its copy behind, and nothing else ever collects them."""
+    try:
+        _dirs, files = default_storage.listdir(_STASH_DIR)
+    except (FileNotFoundError, OSError, NotImplementedError):
+        return
+    cutoff = timezone.now() - _STASH_MAX_AGE
+    for name in files:
+        path = f"{_STASH_DIR}/{name}"
+        try:
+            if default_storage.get_modified_time(path) < cutoff:
+                default_storage.delete(path)
+        except (OSError, ValueError, NotImplementedError):
+            continue
+
+
+def _stash_upload(uploaded):
+    """Copy a just-uploaded image into the stash and return its storage name."""
+    ext = os.path.splitext(uploaded.name)[1].lower()[:10]
+    if not re.fullmatch(r"\.[a-z0-9]{1,9}", ext or ""):
+        ext = ""
+    _prune_stash()
+    return default_storage.save(f"{_STASH_DIR}/{uuid.uuid4().hex}{ext}", uploaded)
+
+
+def _stash_name(raw):
+    """Validate a stash reference that came back from the form.
+
+    The value round-trips through a hidden field, so it is user input: only our
+    own uuid names directly inside the stash directory are accepted, which keeps
+    a crafted value from reaching an arbitrary file.
+    """
+    name = (raw or "").strip()
+    prefix = f"{_STASH_DIR}/"
+    if not name.startswith(prefix):
+        return ""
+    basename = name[len(prefix):]
+    if not _STASH_BASENAME_RE.fullmatch(basename):
+        return ""
+    return name if default_storage.exists(name) else ""
+
+
+def _carry_uploads(request, values):
+    """Preserve picked images across a validation redisplay.
+
+    A new upload replaces whatever the previous failed submit stashed; with no
+    new upload the earlier stash is carried forward, so the image survives any
+    number of error rounds.
+    """
+    for field in _STASH_FIELDS:
+        previous = _stash_name(request.POST.get(f"{field}_stashed"))
+        uploaded = request.FILES.get(field)
+        if uploaded:
+            if previous:
+                default_storage.delete(previous)
+            values[f"{field}_stashed"] = _stash_upload(uploaded)
+        else:
+            values[f"{field}_stashed"] = previous
+    return values
+
+
+def _resolve_image(request, field):
+    """The image to store: the file picked on this submit, else the one stashed
+    by an earlier submit that failed validation."""
+    uploaded = request.FILES.get(field)
+    if uploaded:
+        return _shorten_upload_name(uploaded)
+    name = _stash_name(request.POST.get(f"{field}_stashed"))
+    if not name:
+        return None
+    return File(default_storage.open(name), name=os.path.basename(name))
+
+
+def _discard_stash(request):
+    for field in _STASH_FIELDS:
+        name = _stash_name(request.POST.get(f"{field}_stashed"))
+        if name:
+            default_storage.delete(name)
+
+
 def _apply_images(request, listing):
     """Attach uploaded images. Product image only for a Product Offer."""
-    fields = []
+    fields, opened = [], []
     if listing.listing_type == Listing.OFFER:
-        img = request.FILES.get("product_image")
+        img = _resolve_image(request, "product_image")
         if img and listing.category_type == Listing.PRODUCT:
-            listing.product_image = _shorten_upload_name(img)
+            listing.product_image = img
             fields.append("product_image")
-        cert = request.FILES.get("certification_image")
+            opened.append(img)
+        cert = _resolve_image(request, "certification_image")
         if cert:
-            listing.certification_image = _shorten_upload_name(cert)
+            listing.certification_image = cert
             fields.append("certification_image")
+            opened.append(cert)
     if fields:
         listing.save(update_fields=fields)
+    # The listing now owns its own copy, so the stash entry is done - including
+    # a product image dropped because the category ended up Service.
+    for handle in opened:
+        handle.close()
+    _discard_stash(request)
 
 
 def _location_display(listing):
@@ -187,6 +288,13 @@ def _form_context(user, listing_type, module_id="products_services", values=None
     module = next((m for m in module_registry.MODULE_REGISTRY if m["id"] == module_id), None)
     values = values or {}
     errors = errors or {}
+    # The Keywords input is one comma-separated line, but the payload carries the
+    # parsed list. Rendering the list writes "['steel', 'pipes']" into the field,
+    # and the next submit parses THAT back - so every rejected attempt piled on
+    # another layer of brackets and quotes. Join it back into the line here, once,
+    # for every caller.
+    if isinstance(values.get("keywords"), (list, tuple)):
+        values["keywords"] = ", ".join(str(k) for k in values["keywords"])
     # Enrich each module-specific field with its posted name / current value /
     # error so the template needs no dynamic dict lookup.
     module_fields = []
@@ -207,6 +315,12 @@ def _form_context(user, listing_type, module_id="products_services", values=None
         if obj:
             nace_display = f"{obj.code} — {obj.title}"
 
+    # A stashed image is shown back as the thumbnail, so the redisplay proves the
+    # file is still attached even though the file input itself reads empty.
+    for field in _STASH_FIELDS:
+        stashed = values.get(f"{field}_stashed")
+        values[f"{field}_stashed_url"] = default_storage.url(stashed) if stashed else ""
+
     return {
         "listing_type": listing_type,
         "is_offer": listing_type == Listing.OFFER,
@@ -214,6 +328,10 @@ def _form_context(user, listing_type, module_id="products_services", values=None
         "nace_display": nace_display,
         "category_choices": Listing.CATEGORY_CHOICES,
         "currency_choices": Listing.CURRENCY_CHOICES,
+        # Both unit sets go to the page and the category picker swaps between
+        # them, so switching Product <-> Service needs no round trip.
+        "product_unit_choices": Listing.PRODUCT_UNIT_CHOICES,
+        "service_unit_choices": Listing.SERVICE_UNIT_CHOICES,
         "visibility_choices": Listing.VISIBILITY_CHOICES,
         "module_id": module_id,
         "module_name": module["name"] if module else "Products & Services",
@@ -322,13 +440,15 @@ def add_listing(request):
             errors = {**serializer.errors, **module_errors}
             messages.error(request, _("Please correct the errors below."))
             return render(request, "listings/listing_form.html",
-                          _form_context(user, listing_type, module_id, payload, errors))
+                          _form_context(user, listing_type, module_id,
+                                        _carry_uploads(request, payload), errors))
 
         company = serializer.validated_data["owner_company"]
         if not services.company_belongs_to_user(company, user):
             messages.error(request, _("You can only create listings for a company you own."))
             return render(request, "listings/listing_form.html",
-                          _form_context(user, listing_type, module_id, payload,
+                          _form_context(user, listing_type, module_id,
+                                        _carry_uploads(request, payload),
                                         {"owner_company": [_("Not your company.")]}))
 
         target_status = Listing.ACTIVE if request.POST.get("action") == "publish" else Listing.DRAFT
@@ -373,7 +493,8 @@ def edit_listing(request, listing_id):
         if not serializer.is_valid() or module_errors:
             errors = {**serializer.errors, **module_errors}
             messages.error(request, _("Please correct the errors below."))
-            ctx = _form_context(user, listing.listing_type, listing.module_id, payload, errors)
+            ctx = _form_context(user, listing.listing_type, listing.module_id,
+                                _carry_uploads(request, payload), errors)
             ctx["listing"] = listing
             return render(request, "listings/listing_form.html", ctx)
 

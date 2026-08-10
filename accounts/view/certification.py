@@ -15,6 +15,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Q
+from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -25,6 +26,23 @@ from django.utils.translation import gettext as _
 from accounts.models import AuditLog, Company
 from accounts.utils.ip import get_client_ip
 from accounts.utils.permissions import can_certify_companies, is_suspended_micro_owner
+
+
+#: Rows per tab on the Certifications page.
+CERT_PAGE_SIZE = 10
+
+
+def _cert_page(request, qs, param):
+    """Paginate one Certifications tab.
+
+    Each tab carries its own ?page param so paging one doesn't reset the
+    others. `get_page` is deliberate: it clamps junk / out-of-range values to a
+    valid page instead of raising, which matters because these numbers come
+    straight off the query string.
+    """
+    from django.core.paginator import Paginator
+
+    return Paginator(qs, CERT_PAGE_SIZE).get_page(request.GET.get(param))
 
 
 def _suspended_page(request, feature):
@@ -79,9 +97,16 @@ def certification_list(request):
             else Company.objects.none()
         )
 
-        pending = owned.filter(
-            certification_status="pending"
-        ).select_related("consultant", "certified_by").order_by("-created_at")
+        # Same annotation as the reviewer queue below, so the BU's own card
+        # shows the date of the request they actually just sent.
+        pending = (
+            owned.filter(certification_status="pending")
+            .select_related("consultant", "certified_by")
+            .annotate(
+                submitted_at=Coalesce("certification_requested_at", "created_at")
+            )
+            .order_by("-submitted_at")
+        )
         certified = owned.filter(
             certification_status="certified"
         ).select_related("certified_by").order_by("-certified_at")
@@ -118,7 +143,18 @@ def certification_list(request):
         # A consultant can't certify their own company, so never show one they
         # own in their pending queue.
         ).exclude(owner_user=request.user)
-    pending = pending_qs.select_related("tenant", "owner_user").order_by("-created_at")
+    # Newest REQUEST first, not newest company: a resubmission is a fresh
+    # request and belongs at the top of the queue, however old the company row
+    # is. Coalesce covers rows that predate certification_requested_at and were
+    # not pending when the backfill ran (0062), so they still sort sensibly
+    # instead of collapsing to the bottom on a NULL.
+    pending = (
+        pending_qs.select_related("tenant", "owner_user")
+        .annotate(
+            submitted_at=Coalesce("certification_requested_at", "created_at")
+        )
+        .order_by("-submitted_at")
+    )
 
     # Superusers oversee everything, so they see every certified / rejected
     # company (mirroring the pending tab). Consultants only see the ones they
@@ -135,15 +171,34 @@ def certification_list(request):
         rejected_qs = rejected_qs.filter(consultant=request.user)
     rejected = rejected_qs.select_related("tenant", "owner_user").order_by("-updated_at")
 
+    # The tab badges must show the TOTAL, not the current page's length, so the
+    # counts are taken before paginating.
+    pending_total = pending.count()
+    certified_total = certified.count()
+    rejected_total = rejected.count()
+
+    # `tab` survives a page click so the user lands back on the list they were
+    # paging, rather than being bounced to Pending.
+    active_tab = request.GET.get("tab") or "pending"
+    if active_tab not in ("pending", "certified", "rejected", "certificates"):
+        active_tab = "pending"
+
     return render(
         request,
         "dashboard/certifications.html",
         {
             "active_menu": "certifications",
             "view_mode": "consultant",
-            "pending": pending,
-            "certified": certified,
-            "rejected": rejected,
+            "pending": _cert_page(request, pending, "pp"),
+            "certified": _cert_page(request, certified, "pc"),
+            "rejected": _cert_page(request, rejected, "pr"),
+            # Same rows as `certified`, paged independently — the Certificates
+            # tab is a separate list the user scrolls on its own.
+            "certificates": _cert_page(request, certified, "pcert"),
+            "pending_total": pending_total,
+            "certified_total": certified_total,
+            "rejected_total": rejected_total,
+            "active_tab": active_tab,
         },
     )
 
@@ -282,6 +337,41 @@ def certification_action(request, company_id):
 
     messages.success(request, success_msg)
     return redirect(reverse("certifications"))
+
+
+@login_required
+def certificate_view(request, company_id):
+    """Printable certificate for a certified company.
+
+    Reachable from the Certificates tab and from the company owner's own
+    Certifications page. Visible to the superuser, the consultant who issued
+    it, and the company's owner — a certificate is the owner's document, so
+    locking it to the issuer alone would be wrong.
+
+    A company that isn't certified has no certificate to show; that's a 404
+    rather than an empty page, so the URL can't be used to probe which
+    companies exist in a pending state.
+    """
+    company = get_object_or_404(
+        Company.objects.select_related("certified_by", "owner_user", "tenant"),
+        id=company_id,
+        certification_status="certified",
+    )
+
+    user = request.user
+    allowed = (
+        user.is_superuser
+        or company.certified_by_id == user.id
+        or company.owner_user_id == user.id
+    )
+    if not allowed:
+        raise PermissionDenied
+
+    return render(
+        request,
+        "dashboard/certificate.html",
+        {"company": company, "active_menu": "certifications"},
+    )
 
 
 def pending_certification_count(user):

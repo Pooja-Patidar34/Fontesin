@@ -39,8 +39,12 @@
               <input type="text" name="decision_note" class="form-control form-control-sm mb-2"
                      maxlength="200"
                      placeholder="{% trans "Note for the holder (optional)" context "franchise" %}">
-              <button type="submit" name="decision" value="approve" class="btn btn-sm btn-danger"
-                      onclick="return confirm('{% filter escapejs %}{% trans "Approving ends this franchise and every sub-franchise beneath it. Continue?" context "franchise" %}{% endfilter %}')">
+              {% comment %}
+              type="button": the confirm runs first and the script submits the
+              form afterwards, carrying this button's own decision=approve.
+              {% endcomment %}
+              <button type="button" name="decision" value="approve" class="btn btn-sm btn-danger"
+                      data-removal-approve data-franchise-name="{{ r.node.name }}">
                 <i class="fas fa-check mr-1"></i>{% trans "Approve removal" context "franchise" %}
               </button>
               <button type="submit" name="decision" value="reject" class="btn btn-sm btn-outline-secondary">
@@ -85,3 +89,53 @@
   </div>
   {% endif %}
 </div>
+
+<script>
+/* Approving a removal goes through the app's own confirm modal, like every other
+   destructive action in the panel. The browser's confirm() cannot be styled, puts
+   the bare server address in its header, and has no room to name WHICH franchise
+   is being ended — on a table of several requests that is the one thing the
+   reviewer needs to see. */
+(function () {
+  // The panel is included on more than one review page, and a page could hold
+  // more than one copy — delegate once so the handler covers them all.
+  if (window.__franchiseRemovalConfirmBound) return;
+  window.__franchiseRemovalConfirmBound = true;
+
+  var message = "{% filter escapejs %}{% blocktrans with name="__NAME__" context "franchise" %}Approving ends {{ name }} and every sub-franchise beneath it. This cannot be undone.{% endblocktrans %}{% endfilter %}";
+
+  document.addEventListener("click", function (event) {
+    var button = event.target.closest("[data-removal-approve]");
+    if (!button || typeof appConfirm !== "function") return;
+    // The name is applicant-supplied, so it goes through textContent before it
+    // reaches the modal's innerHTML.
+    var safe = document.createElement("div");
+    safe.textContent = button.dataset.franchiseName || "";
+    appConfirm({
+      kind: "danger",
+      title: "{% filter escapejs %}{% trans "Approve removal?" context "franchise" %}{% endfilter %}",
+      text: message.replace("__NAME__", "<strong>" + safe.innerHTML + "</strong>"),
+      okLabel: "{% filter escapejs %}{% trans "Approve removal" context "franchise" %}{% endfilter %}",
+      okIcon: "fa-check",
+      onConfirm: function () {
+        var form = button.form;
+        if (!form) return;
+        // requestSubmit keeps the clicked button as the submitter, so the POST
+        // still carries decision=approve. form.submit() drops the submitter
+        // entirely, so the older path has to send the value by hand — without it
+        // the view would see no decision and silently do nothing.
+        if (form.requestSubmit) {
+          form.requestSubmit(button);
+          return;
+        }
+        var carried = document.createElement("input");
+        carried.type = "hidden";
+        carried.name = button.name;
+        carried.value = button.value;
+        form.appendChild(carried);
+        form.submit();
+      }
+    });
+  });
+})();
+</script>

@@ -42,3 +42,9 @@ yarl==1.20.0
 zope.interface==7.2
 zopfli==0.2.3.post1
 zstandard==0.23.0
+
+# Generation-time only: `python manage.py generate_country_subdivisions` reads
+# the ISO 3166-2 dataset from here and writes the committed
+# accounts/data/country_subdivisions.py. Nothing at runtime imports it, so it
+# can be skipped in a production install.
+pycountry==26.2.16

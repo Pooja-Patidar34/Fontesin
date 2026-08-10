@@ -51,6 +51,7 @@ from accounts.utils.franchise_access import (
     franchise_manager_required,
     is_franchise_holder,
     owned_franchise_nodes,
+    scope_applications_to_active_company,
 )
 
 
@@ -566,10 +567,14 @@ def franchise_request_view(request):
     # no bearing on eligibility, and on activation the holder is granted the
     # franchise role like any other applicant.
 
-    applications = (
+    # My Requests belongs to the company being acted as, not to the person: a
+    # request bought for company A must not show up while acting as company B,
+    # just as the franchise it becomes does not (`_owned_nodes_qs` below).
+    applications = scope_applications_to_active_company(
         FranchiseApplication.objects.filter(applicant_user=request.user)
         .select_related("parent_franchise", "created_franchise", "approved_by", "rejected_by")
-        .order_by("-created_at")
+        .order_by("-created_at"),
+        request.user,
     )
     owned = list(
         _owned_nodes_qs(request.user)

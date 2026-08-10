@@ -4,6 +4,7 @@ from collections import defaultdict
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import render
+from django.utils.translation import pgettext_lazy
 
 from accounts.models import User
 
@@ -24,27 +25,37 @@ def region_jp(request):
     return render(request, 'regions/region-jp.html')
 
 
+# Roll-out status badges. Lazy so the module-level table below stays a plain
+# dict while the label still resolves in the viewer's language at render time —
+# these are shown on the world map and on every "coming soon" country page.
+STATUS_ACTIVE_Y1 = pgettext_lazy("website", "Active · Year 1")
+STATUS_PLANNED_Y2 = pgettext_lazy("website", "Planned · Year 2")
+STATUS_PLANNED_Y3 = pgettext_lazy("website", "Planned · Year 3")
+STATUS_PLANNED_Y4 = pgettext_lazy("website", "Planned · Year 4")
+STATUS_COMING_SOON = pgettext_lazy("website", "Coming soon")
+
+
 # Country profiles that don't have full per-country templates yet land on
 # the same "Coming soon" page, which carries enough info (name, flag,
 # planned roll-out year) to set expectations.
 COMING_SOON_REGIONS = {
     # Active markets (Year 1) shown on the world map without a full template yet.
-    "gb": {"name": "United Kingdom", "flag": "🇬🇧", "status": "Active · Year 1", "status_class": "status-badge--active"},
-    "fr": {"name": "France",         "flag": "🇫🇷", "status": "Active · Year 1", "status_class": "status-badge--active"},
-    "nl": {"name": "Netherlands",    "flag": "🇳🇱", "status": "Active · Year 1", "status_class": "status-badge--active"},
-    "pl": {"name": "Poland",         "flag": "🇵🇱", "status": "Active · Year 1", "status_class": "status-badge--active"},
-    "at": {"name": "Austria",        "flag": "🇦🇹", "status": "Active · Year 1", "status_class": "status-badge--active"},
-    "ch": {"name": "Switzerland",    "flag": "🇨🇭", "status": "Active · Year 1", "status_class": "status-badge--active"},
-    "se": {"name": "Sweden",         "flag": "🇸🇪", "status": "Active · Year 1", "status_class": "status-badge--active"},
+    "gb": {"name": "United Kingdom", "flag": "🇬🇧", "status": STATUS_ACTIVE_Y1, "status_class": "status-badge--active"},
+    "fr": {"name": "France",         "flag": "🇫🇷", "status": STATUS_ACTIVE_Y1, "status_class": "status-badge--active"},
+    "nl": {"name": "Netherlands",    "flag": "🇳🇱", "status": STATUS_ACTIVE_Y1, "status_class": "status-badge--active"},
+    "pl": {"name": "Poland",         "flag": "🇵🇱", "status": STATUS_ACTIVE_Y1, "status_class": "status-badge--active"},
+    "at": {"name": "Austria",        "flag": "🇦🇹", "status": STATUS_ACTIVE_Y1, "status_class": "status-badge--active"},
+    "ch": {"name": "Switzerland",    "flag": "🇨🇭", "status": STATUS_ACTIVE_Y1, "status_class": "status-badge--active"},
+    "se": {"name": "Sweden",         "flag": "🇸🇪", "status": STATUS_ACTIVE_Y1, "status_class": "status-badge--active"},
     # Planned expansion markets.
-    "sg": {"name": "Singapore",      "flag": "🇸🇬", "status": "Planned · Year 2", "status_class": "status-badge--planned"},
-    "ca": {"name": "Canada",         "flag": "🇨🇦", "status": "Planned · Year 2", "status_class": "status-badge--planned"},
-    "au": {"name": "Australia",      "flag": "🇦🇺", "status": "Planned · Year 2", "status_class": "status-badge--planned"},
-    "br": {"name": "Brazil",         "flag": "🇧🇷", "status": "Planned · Year 3", "status_class": "status-badge--planned"},
-    "in": {"name": "India",          "flag": "🇮🇳", "status": "Planned · Year 3", "status_class": "status-badge--planned"},
-    "mx": {"name": "Mexico",         "flag": "🇲🇽", "status": "Planned · Year 3", "status_class": "status-badge--planned"},
-    "kr": {"name": "South Korea",    "flag": "🇰🇷", "status": "Planned · Year 3", "status_class": "status-badge--planned"},
-    "za": {"name": "South Africa",   "flag": "🇿🇦", "status": "Planned · Year 4", "status_class": "status-badge--planned"},
+    "sg": {"name": "Singapore",      "flag": "🇸🇬", "status": STATUS_PLANNED_Y2, "status_class": "status-badge--planned"},
+    "ca": {"name": "Canada",         "flag": "🇨🇦", "status": STATUS_PLANNED_Y2, "status_class": "status-badge--planned"},
+    "au": {"name": "Australia",      "flag": "🇦🇺", "status": STATUS_PLANNED_Y2, "status_class": "status-badge--planned"},
+    "br": {"name": "Brazil",         "flag": "🇧🇷", "status": STATUS_PLANNED_Y3, "status_class": "status-badge--planned"},
+    "in": {"name": "India",          "flag": "🇮🇳", "status": STATUS_PLANNED_Y3, "status_class": "status-badge--planned"},
+    "mx": {"name": "Mexico",         "flag": "🇲🇽", "status": STATUS_PLANNED_Y3, "status_class": "status-badge--planned"},
+    "kr": {"name": "South Korea",    "flag": "🇰🇷", "status": STATUS_PLANNED_Y3, "status_class": "status-badge--planned"},
+    "za": {"name": "South Africa",   "flag": "🇿🇦", "status": STATUS_PLANNED_Y4, "status_class": "status-badge--planned"},
 }
 
 
@@ -59,50 +70,50 @@ REGION_PROFILES = {
     # ---- Active markets (Year 1) ----
     "gb": {"name": "United Kingdom", "flag": "🇬🇧", "capital": "London",   "area": "Europe",
            "language": "English", "currency": "GBP – Pound Sterling",
-           "status": "Active · Year 1", "status_class": "status-badge--active"},
+           "status": STATUS_ACTIVE_Y1, "status_class": "status-badge--active"},
     "fr": {"name": "France", "flag": "🇫🇷", "capital": "Paris", "area": "Europe",
            "language": "French", "currency": "EUR – Euro",
-           "status": "Active · Year 1", "status_class": "status-badge--active"},
+           "status": STATUS_ACTIVE_Y1, "status_class": "status-badge--active"},
     "nl": {"name": "Netherlands", "flag": "🇳🇱", "capital": "Amsterdam", "area": "Europe",
            "language": "Dutch", "currency": "EUR – Euro",
-           "status": "Active · Year 1", "status_class": "status-badge--active"},
+           "status": STATUS_ACTIVE_Y1, "status_class": "status-badge--active"},
     "pl": {"name": "Poland", "flag": "🇵🇱", "capital": "Warsaw", "area": "Europe",
            "language": "Polish", "currency": "PLN – Polish Złoty",
-           "status": "Active · Year 1", "status_class": "status-badge--active"},
+           "status": STATUS_ACTIVE_Y1, "status_class": "status-badge--active"},
     "at": {"name": "Austria", "flag": "🇦🇹", "capital": "Vienna", "area": "Europe",
            "language": "German", "currency": "EUR – Euro",
-           "status": "Active · Year 1", "status_class": "status-badge--active"},
+           "status": STATUS_ACTIVE_Y1, "status_class": "status-badge--active"},
     "ch": {"name": "Switzerland", "flag": "🇨🇭", "capital": "Bern", "area": "Europe",
            "language": "German, French, Italian, Romansh", "currency": "CHF – Swiss Franc",
-           "status": "Active · Year 1", "status_class": "status-badge--active"},
+           "status": STATUS_ACTIVE_Y1, "status_class": "status-badge--active"},
     "se": {"name": "Sweden", "flag": "🇸🇪", "capital": "Stockholm", "area": "Europe",
            "language": "Swedish", "currency": "SEK – Swedish Krona",
-           "status": "Active · Year 1", "status_class": "status-badge--active"},
+           "status": STATUS_ACTIVE_Y1, "status_class": "status-badge--active"},
     # ---- Planned expansion markets ----
     "sg": {"name": "Singapore", "flag": "🇸🇬", "capital": "Singapore", "area": "Asia",
            "language": "English, Malay, Mandarin, Tamil", "currency": "SGD – Singapore Dollar",
-           "status": "Planned · Year 2", "status_class": "status-badge--planned"},
+           "status": STATUS_PLANNED_Y2, "status_class": "status-badge--planned"},
     "ca": {"name": "Canada", "flag": "🇨🇦", "capital": "Ottawa", "area": "North America",
            "language": "English, French", "currency": "CAD – Canadian Dollar",
-           "status": "Planned · Year 2", "status_class": "status-badge--planned"},
+           "status": STATUS_PLANNED_Y2, "status_class": "status-badge--planned"},
     "au": {"name": "Australia", "flag": "🇦🇺", "capital": "Canberra", "area": "Oceania",
            "language": "English", "currency": "AUD – Australian Dollar",
-           "status": "Planned · Year 2", "status_class": "status-badge--planned"},
+           "status": STATUS_PLANNED_Y2, "status_class": "status-badge--planned"},
     "br": {"name": "Brazil", "flag": "🇧🇷", "capital": "Brasília", "area": "South America",
            "language": "Portuguese", "currency": "BRL – Brazilian Real",
-           "status": "Planned · Year 3", "status_class": "status-badge--planned"},
+           "status": STATUS_PLANNED_Y3, "status_class": "status-badge--planned"},
     "in": {"name": "India", "flag": "🇮🇳", "capital": "New Delhi", "area": "Asia",
            "language": "Hindi, English", "currency": "INR – Indian Rupee",
-           "status": "Planned · Year 3", "status_class": "status-badge--planned"},
+           "status": STATUS_PLANNED_Y3, "status_class": "status-badge--planned"},
     "mx": {"name": "Mexico", "flag": "🇲🇽", "capital": "Mexico City", "area": "North America",
            "language": "Spanish", "currency": "MXN – Mexican Peso",
-           "status": "Planned · Year 3", "status_class": "status-badge--planned"},
+           "status": STATUS_PLANNED_Y3, "status_class": "status-badge--planned"},
     "kr": {"name": "South Korea", "flag": "🇰🇷", "capital": "Seoul", "area": "Asia",
            "language": "Korean", "currency": "KRW – South Korean Won",
-           "status": "Planned · Year 3", "status_class": "status-badge--planned"},
+           "status": STATUS_PLANNED_Y3, "status_class": "status-badge--planned"},
     "za": {"name": "South Africa", "flag": "🇿🇦", "capital": "Pretoria", "area": "Africa",
            "language": "English, Afrikaans, Zulu (11 official)", "currency": "ZAR – South African Rand",
-           "status": "Planned · Year 4", "status_class": "status-badge--planned"},
+           "status": STATUS_PLANNED_Y4, "status_class": "status-badge--planned"},
 }
 
 
@@ -141,7 +152,7 @@ def region_coming_soon(request, code):
         info = {
             "name": label or (code or "").upper(),
             "flag": "🌐",
-            "status": "Coming soon",
+            "status": STATUS_COMING_SOON,
             "status_class": "status-badge--planned",
         }
     return render(request, "regions/coming_soon.html", {

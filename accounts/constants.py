@@ -81,47 +81,279 @@ class EmployeeCountRangeChoices:
     ]
 
 
-class CountryChoices:
-    US = "US"
-    DE = "DE"
-    CZ = "CZ"
-    GB = "GB"
-    FR = "FR"
-    NL = "NL"
-    PL = "PL"
-    AT = "AT"
-    CH = "CH"
-    SE = "SE"
-    AE = "AE"
-    SG = "SG"
-    CA = "CA"
-    AU = "AU"
-    JP = "JP"
-    BR = "BR"
-    IN = "IN"
-    MX = "MX"
-    KR = "KR"
+class ContinentChoices:
+    """
+    Continents a user can sit on. Keys match billing.utils.PLAN_REGIONS (which
+    reads its map from CONTINENT_COUNTRIES below), so the continent stored on an
+    account is the same token the geographic-scope code speaks — and the Pro
+    plan's reach is exactly the country list of the continent picked at sign-up.
+    """
+    EUROPE = "europe"
+    NORTH_AMERICA = "north_america"
+    SOUTH_AMERICA = "south_america"
+    AFRICA = "africa"
+    ASIA = "asia"
+    AUSTRALIA_OCEANIA = "australia_oceania"
 
     CHOICES = [
-        (US, _("United States")),
-        (DE, _("Germany")),
-        (CZ, _("Czech Republic")),
-        (GB, _("United Kingdom")),
-        (FR, _("France")),
-        (NL, _("Netherlands")),
-        (PL, _("Poland")),
-        (AT, _("Austria")),
-        (CH, _("Switzerland")),
-        (SE, _("Sweden")),
-        (AE, _("United Arab Emirates")),
-        (SG, _("Singapore")),
-        (CA, _("Canada")),
-        (AU, _("Australia")),
-        (JP, _("Japan")),
-        (BR, _("Brazil")),
-        (IN, _("India")),
-        (MX, _("Mexico")),
-        (KR, _("South Korea")),
+        (EUROPE, _("Europe")),
+        (NORTH_AMERICA, _("North America")),
+        (SOUTH_AMERICA, _("South America")),
+        (AFRICA, _("Africa")),
+        (ASIA, _("Asia")),
+        (AUSTRALIA_OCEANIA, _("Australia / Oceania")),
+    ]
+
+
+# --------------------------- THE COUNTRY TABLE ---------------------------
+# Every country the platform knows, grouped by the continent it belongs to:
+# (ISO-3166-1 alpha-2 code, canonical ENGLISH name, international dial code).
+#
+# This is the single source of truth. Country dropdowns, the continent
+# grouping, plan geographic scope, phone prefixes and flags are all derived
+# from it below — nothing anywhere else may keep its own country list.
+#
+# 196 sovereign states: Africa 54, Asia 48, Europe 44, North America 24
+# (23 sovereign + Greenland), South America 12, Australia / Oceania 14.
+#
+# The names are the CANONICAL ENGLISH spellings. Company.country is free text
+# and may hold either the code or one of these names, so
+# accounts.utils.country_matching matches against them directly — a translated
+# label must never be stored or compared. Display translation happens once, in
+# CountryChoices.CHOICES.
+COUNTRIES_BY_CONTINENT = {
+    ContinentChoices.AFRICA: (
+        ("DZ", "Algeria", "+213"),
+        ("AO", "Angola", "+244"),
+        ("BJ", "Benin", "+229"),
+        ("BW", "Botswana", "+267"),
+        ("BF", "Burkina Faso", "+226"),
+        ("BI", "Burundi", "+257"),
+        ("CV", "Cabo Verde", "+238"),
+        ("CM", "Cameroon", "+237"),
+        ("CF", "Central African Republic", "+236"),
+        ("TD", "Chad", "+235"),
+        ("KM", "Comoros", "+269"),
+        ("CG", "Republic of the Congo", "+242"),
+        ("CD", "Democratic Republic of the Congo", "+243"),
+        ("CI", "Ivory Coast", "+225"),
+        ("DJ", "Djibouti", "+253"),
+        ("EG", "Egypt", "+20"),
+        ("GQ", "Equatorial Guinea", "+240"),
+        ("ER", "Eritrea", "+291"),
+        ("SZ", "Eswatini", "+268"),
+        ("ET", "Ethiopia", "+251"),
+        ("GA", "Gabon", "+241"),
+        ("GM", "Gambia", "+220"),
+        ("GH", "Ghana", "+233"),
+        ("GN", "Guinea", "+224"),
+        ("GW", "Guinea-Bissau", "+245"),
+        ("KE", "Kenya", "+254"),
+        ("LS", "Lesotho", "+266"),
+        ("LR", "Liberia", "+231"),
+        ("LY", "Libya", "+218"),
+        ("MG", "Madagascar", "+261"),
+        ("MW", "Malawi", "+265"),
+        ("ML", "Mali", "+223"),
+        ("MR", "Mauritania", "+222"),
+        ("MU", "Mauritius", "+230"),
+        ("MA", "Morocco", "+212"),
+        ("MZ", "Mozambique", "+258"),
+        ("NA", "Namibia", "+264"),
+        ("NE", "Niger", "+227"),
+        ("NG", "Nigeria", "+234"),
+        ("RW", "Rwanda", "+250"),
+        ("ST", "Sao Tome and Principe", "+239"),
+        ("SN", "Senegal", "+221"),
+        ("SC", "Seychelles", "+248"),
+        ("SL", "Sierra Leone", "+232"),
+        ("SO", "Somalia", "+252"),
+        ("ZA", "South Africa", "+27"),
+        ("SS", "South Sudan", "+211"),
+        ("SD", "Sudan", "+249"),
+        ("TZ", "Tanzania", "+255"),
+        ("TG", "Togo", "+228"),
+        ("TN", "Tunisia", "+216"),
+        ("UG", "Uganda", "+256"),
+        ("ZM", "Zambia", "+260"),
+        ("ZW", "Zimbabwe", "+263"),
+    ),
+    ContinentChoices.ASIA: (
+        ("AF", "Afghanistan", "+93"),
+        ("AM", "Armenia", "+374"),
+        ("AZ", "Azerbaijan", "+994"),
+        ("BH", "Bahrain", "+973"),
+        ("BD", "Bangladesh", "+880"),
+        ("BT", "Bhutan", "+975"),
+        ("BN", "Brunei", "+673"),
+        ("KH", "Cambodia", "+855"),
+        ("CN", "China", "+86"),
+        ("CY", "Cyprus", "+357"),
+        ("GE", "Georgia", "+995"),
+        ("IN", "India", "+91"),
+        ("ID", "Indonesia", "+62"),
+        ("IR", "Iran", "+98"),
+        ("IQ", "Iraq", "+964"),
+        ("IL", "Israel", "+972"),
+        ("JP", "Japan", "+81"),
+        ("JO", "Jordan", "+962"),
+        ("KZ", "Kazakhstan", "+7"),
+        ("KW", "Kuwait", "+965"),
+        ("KG", "Kyrgyzstan", "+996"),
+        ("LA", "Laos", "+856"),
+        ("LB", "Lebanon", "+961"),
+        ("MY", "Malaysia", "+60"),
+        ("MV", "Maldives", "+960"),
+        ("MN", "Mongolia", "+976"),
+        ("MM", "Myanmar", "+95"),
+        ("NP", "Nepal", "+977"),
+        ("KP", "North Korea", "+850"),
+        ("OM", "Oman", "+968"),
+        ("PK", "Pakistan", "+92"),
+        ("PS", "Palestine", "+970"),
+        ("PH", "Philippines", "+63"),
+        ("QA", "Qatar", "+974"),
+        ("SA", "Saudi Arabia", "+966"),
+        ("SG", "Singapore", "+65"),
+        ("KR", "South Korea", "+82"),
+        ("LK", "Sri Lanka", "+94"),
+        ("SY", "Syria", "+963"),
+        ("TJ", "Tajikistan", "+992"),
+        ("TH", "Thailand", "+66"),
+        ("TL", "Timor-Leste", "+670"),
+        ("TR", "Turkey", "+90"),
+        ("TM", "Turkmenistan", "+993"),
+        ("AE", "United Arab Emirates", "+971"),
+        ("UZ", "Uzbekistan", "+998"),
+        ("VN", "Vietnam", "+84"),
+        ("YE", "Yemen", "+967"),
+    ),
+    ContinentChoices.EUROPE: (
+        ("AL", "Albania", "+355"),
+        ("AD", "Andorra", "+376"),
+        ("AT", "Austria", "+43"),
+        ("BY", "Belarus", "+375"),
+        ("BE", "Belgium", "+32"),
+        ("BA", "Bosnia and Herzegovina", "+387"),
+        ("BG", "Bulgaria", "+359"),
+        ("HR", "Croatia", "+385"),
+        ("CZ", "Czech Republic", "+420"),
+        ("DK", "Denmark", "+45"),
+        ("EE", "Estonia", "+372"),
+        ("FI", "Finland", "+358"),
+        ("FR", "France", "+33"),
+        ("DE", "Germany", "+49"),
+        ("GR", "Greece", "+30"),
+        ("HU", "Hungary", "+36"),
+        ("IS", "Iceland", "+354"),
+        ("IE", "Ireland", "+353"),
+        ("IT", "Italy", "+39"),
+        ("LV", "Latvia", "+371"),
+        ("LI", "Liechtenstein", "+423"),
+        ("LT", "Lithuania", "+370"),
+        ("LU", "Luxembourg", "+352"),
+        ("MT", "Malta", "+356"),
+        ("MD", "Moldova", "+373"),
+        ("MC", "Monaco", "+377"),
+        ("ME", "Montenegro", "+382"),
+        ("NL", "Netherlands", "+31"),
+        ("MK", "North Macedonia", "+389"),
+        ("NO", "Norway", "+47"),
+        ("PL", "Poland", "+48"),
+        ("PT", "Portugal", "+351"),
+        ("RO", "Romania", "+40"),
+        ("RU", "Russia", "+7"),
+        ("SM", "San Marino", "+378"),
+        ("RS", "Serbia", "+381"),
+        ("SK", "Slovakia", "+421"),
+        ("SI", "Slovenia", "+386"),
+        ("ES", "Spain", "+34"),
+        ("SE", "Sweden", "+46"),
+        ("CH", "Switzerland", "+41"),
+        ("UA", "Ukraine", "+380"),
+        ("GB", "United Kingdom", "+44"),
+        ("VA", "Vatican City", "+379"),
+    ),
+    ContinentChoices.NORTH_AMERICA: (
+        ("AG", "Antigua and Barbuda", "+1268"),
+        ("BS", "Bahamas", "+1242"),
+        ("BB", "Barbados", "+1246"),
+        ("BZ", "Belize", "+501"),
+        ("CA", "Canada", "+1"),
+        ("CR", "Costa Rica", "+506"),
+        ("CU", "Cuba", "+53"),
+        ("DM", "Dominica", "+1767"),
+        ("DO", "Dominican Republic", "+1809"),
+        ("SV", "El Salvador", "+503"),
+        ("GL", "Greenland", "+299"),
+        ("GD", "Grenada", "+1473"),
+        ("GT", "Guatemala", "+502"),
+        ("HT", "Haiti", "+509"),
+        ("HN", "Honduras", "+504"),
+        ("JM", "Jamaica", "+1876"),
+        ("MX", "Mexico", "+52"),
+        ("NI", "Nicaragua", "+505"),
+        ("PA", "Panama", "+507"),
+        ("KN", "Saint Kitts and Nevis", "+1869"),
+        ("LC", "Saint Lucia", "+1758"),
+        ("VC", "Saint Vincent and the Grenadines", "+1784"),
+        ("TT", "Trinidad and Tobago", "+1868"),
+        ("US", "United States", "+1"),
+    ),
+    ContinentChoices.SOUTH_AMERICA: (
+        ("AR", "Argentina", "+54"),
+        ("BO", "Bolivia", "+591"),
+        ("BR", "Brazil", "+55"),
+        ("CL", "Chile", "+56"),
+        ("CO", "Colombia", "+57"),
+        ("EC", "Ecuador", "+593"),
+        ("GY", "Guyana", "+592"),
+        ("PY", "Paraguay", "+595"),
+        ("PE", "Peru", "+51"),
+        ("SR", "Suriname", "+597"),
+        ("UY", "Uruguay", "+598"),
+        ("VE", "Venezuela", "+58"),
+    ),
+    ContinentChoices.AUSTRALIA_OCEANIA: (
+        ("AU", "Australia", "+61"),
+        ("FJ", "Fiji", "+679"),
+        ("KI", "Kiribati", "+686"),
+        ("MH", "Marshall Islands", "+692"),
+        ("FM", "Micronesia", "+691"),
+        ("NR", "Nauru", "+674"),
+        ("NZ", "New Zealand", "+64"),
+        ("PW", "Palau", "+680"),
+        ("PG", "Papua New Guinea", "+675"),
+        ("WS", "Samoa", "+685"),
+        ("SB", "Solomon Islands", "+677"),
+        ("TO", "Tonga", "+676"),
+        ("TV", "Tuvalu", "+688"),
+        ("VU", "Vanuatu", "+678"),
+    ),
+}
+
+
+# Flattened view of the table: (code, English name, continent, dial code).
+COUNTRIES = tuple(
+    (code, name, continent, dial)
+    for continent, rows in COUNTRIES_BY_CONTINENT.items()
+    for code, name, dial in rows
+)
+
+
+class CountryChoices:
+    """Country choices for model fields and dropdowns, built from COUNTRIES.
+
+    Labels are lazily translated, so they follow the active UI locale. NEVER
+    compare or store a label — resolve to an ISO code via
+    accounts.utils.country_matching.resolve_country_code first.
+    """
+
+    # Alphabetical by English name: dropdowns render in this order, and the
+    # sign-up form re-sorts by translated label within the picked continent.
+    CHOICES = [
+        (code, _(name))
+        for code, name, _continent, _dial in sorted(COUNTRIES, key=lambda row: row[1])
     ]
 
     # Countries pinned to the top of search/dropdown UIs. These are the
@@ -133,27 +365,7 @@ class CountryChoices:
 # Canonical English country names for ORM filters and legacy free-text matching.
 # Company.country stores ISO codes and/or these English spellings — never
 # translated UI labels. Display strings live in CountryChoices.CHOICES.
-COUNTRY_ENGLISH_NAMES = {
-    "US": "United States",
-    "DE": "Germany",
-    "CZ": "Czech Republic",
-    "GB": "United Kingdom",
-    "FR": "France",
-    "NL": "Netherlands",
-    "PL": "Poland",
-    "AT": "Austria",
-    "CH": "Switzerland",
-    "SE": "Sweden",
-    "AE": "United Arab Emirates",
-    "SG": "Singapore",
-    "CA": "Canada",
-    "AU": "Australia",
-    "JP": "Japan",
-    "BR": "Brazil",
-    "IN": "India",
-    "MX": "Mexico",
-    "KR": "South Korea",
-}
+COUNTRY_ENGLISH_NAMES = {code: name for code, name, _c, _d in COUNTRIES}
 
 COUNTRY_ENGLISH_NAME_TO_CODE = {
     name.lower(): code for code, name in COUNTRY_ENGLISH_NAMES.items()
@@ -162,26 +374,128 @@ COUNTRY_ENGLISH_NAME_TO_CODE = {
 # ISO codes valid for ORM validation — never build this from translated CHOICES.
 COUNTRY_CODES = frozenset(COUNTRY_ENGLISH_NAMES.keys())
 
-# Fail at import time if the two country lists drift apart. COUNTRY_CODES is
-# what ORM validation and resolve_country_code() trust, so a country added to
-# CountryChoices.CHOICES but not here would be selectable in the UI yet
-# rejected as invalid on save (and vice versa).
-assert COUNTRY_CODES == {code for code, _label in CountryChoices.CHOICES}, (
-    "COUNTRY_ENGLISH_NAMES and CountryChoices.CHOICES have drifted: "
-    f"only in CHOICES={sorted({c for c, _l in CountryChoices.CHOICES} - COUNTRY_CODES)}, "
-    f"only in COUNTRY_ENGLISH_NAMES={sorted(COUNTRY_CODES - {c for c, _l in CountryChoices.CHOICES})}. "
-    "Add the country to both."
+# International dial code per country, e.g. "IN" -> "+91". Drives the phone
+# prefix box on the sign-up form.
+COUNTRY_DIAL_CODES = {code: dial for code, _n, _c, dial in COUNTRIES}
+
+# Continent -> the country codes on it, in table order. This is also the Pro
+# plan's reach (billing.utils.PLAN_REGIONS reads it): a Pro user who signed up
+# in Asia sees the companies of every Asian country in this list.
+CONTINENT_COUNTRIES = {
+    continent: [code for code, _n, _d in rows]
+    for continent, rows in COUNTRIES_BY_CONTINENT.items()
+}
+
+# Reverse index: ISO country code -> continent key.
+COUNTRY_CONTINENT = {code: continent for code, _n, continent, _d in COUNTRIES}
+
+CONTINENT_CODES = frozenset(CONTINENT_COUNTRIES.keys())
+
+# What the sign-up dropdown renders: continents that actually have a country
+# behind them (all of them today — the guard is here so an emptied continent is
+# never offered as a dead end).
+CONTINENT_CHOICES_WITH_COUNTRIES = [
+    (code, label)
+    for code, label in ContinentChoices.CHOICES
+    if CONTINENT_COUNTRIES.get(code)
+]
+
+# A country can only sit on one continent. The table is keyed BY continent, so
+# a duplicated row is the one mistake the structure cannot catch on its own —
+# and it would silently give two continents overlapping Pro scopes.
+_COUNTRY_CODE_LIST = [code for code, _n, _c, _d in COUNTRIES]
+assert len(_COUNTRY_CODE_LIST) == len(COUNTRY_CODES), (
+    "A country appears twice in COUNTRIES_BY_CONTINENT: "
+    + str(sorted({c for c in _COUNTRY_CODE_LIST if _COUNTRY_CODE_LIST.count(c) > 1}))
+)
+
+assert set(CONTINENT_COUNTRIES) == {c for c, _label in ContinentChoices.CHOICES}, (
+    "COUNTRIES_BY_CONTINENT and ContinentChoices.CHOICES have drifted."
 )
 
 
-# ISO-3166-1 alpha-2 → emoji flag (regional indicator pairs). The browser
-# renders these via the OS font; no image assets to ship.
-COUNTRY_FLAGS = {
-    "US": "🇺🇸", "GB": "🇬🇧", "DE": "🇩🇪", "CZ": "🇨🇿", "FR": "🇫🇷",
-    "NL": "🇳🇱", "PL": "🇵🇱", "AT": "🇦🇹", "CH": "🇨🇭", "SE": "🇸🇪",
-    "AE": "🇦🇪", "SG": "🇸🇬", "CA": "🇨🇦", "AU": "🇦🇺", "JP": "🇯🇵",
-    "BR": "🇧🇷", "IN": "🇮🇳", "MX": "🇲🇽", "KR": "🇰🇷",
+def continent_for_country(country_code):
+    """Return the continent key for an ISO alpha-2 country code, or None."""
+    if not country_code:
+        return None
+    return COUNTRY_CONTINENT.get(country_code.strip().upper())
+
+
+def flag_for_country(country_code):
+    """ISO-3166-1 alpha-2 -> emoji flag, from the regional-indicator pair.
+
+    Derived rather than hand-listed: every row in the table gets a flag for
+    free, and a country can never be added without one. The browser renders it
+    with the OS font — no image assets to ship."""
+    code = (country_code or "").strip().upper()
+    if len(code) != 2 or not code.isalpha():
+        return ""
+    return "".join(chr(0x1F1E6 + ord(ch) - ord("A")) for ch in code)
+
+
+COUNTRY_FLAGS = {code: flag_for_country(code) for code in COUNTRY_ENGLISH_NAMES}
+
+
+# National (subscriber) phone-number length per country, plus the format hint
+# shown under the sign-up phone field: code -> (min digits, max digits, hint).
+# Digits are counted AFTER the dial code is stripped.
+#
+# Only the markets we actively operate in are pinned to an exact length. Every
+# other country falls back to DEFAULT_PHONE_RULE, which accepts anything in the
+# ITU-plausible range — a wrong-but-strict rule locks real users out of sign-up,
+# while a loose one only lets a typo through to a field the user can correct.
+# Add a row here as a market becomes operational.
+COUNTRY_PHONE_RULES = {
+    "US": (10, 10, "(XXX) XXX-XXXX"),
+    "CA": (10, 10, "(XXX) XXX-XXXX"),
+    "GB": (10, 10, "XXXX XXX XXXX"),
+    "DE": (10, 11, "XXX XXXXXXXX"),
+    "FR": (9, 9, "X XX XX XX XX"),
+    "NL": (9, 9, "XX XXX XXXX"),
+    "PL": (9, 9, "XXX XXX XXX"),
+    "AT": (10, 11, "XXX XXXXXXX"),
+    "CH": (9, 9, "XX XXX XX XX"),
+    "SE": (9, 10, "XX XXX XXXX"),
+    "CZ": (9, 9, "XXX XXX XXX"),
+    "AE": (9, 9, "XX XXX XXXX"),
+    "SG": (8, 8, "XXXX XXXX"),
+    "AU": (9, 9, "XXX XXX XXX"),
+    "JP": (10, 10, "XX XXXX XXXX"),
+    "BR": (10, 11, "XX XXXXX XXXX"),
+    "IN": (10, 10, "XXXXX XXXXX"),
+    "MX": (10, 10, "XX XXXX XXXX"),
+    "KR": (10, 11, "XX XXXX XXXX"),
 }
+
+DEFAULT_PHONE_RULE = (7, 15, "")
+
+
+def phone_rule_for_country(country_code):
+    """(min digits, max digits, format hint) for a country, with a safe default."""
+    return COUNTRY_PHONE_RULES.get(
+        (country_code or "").strip().upper(), DEFAULT_PHONE_RULE
+    )
+
+
+def country_phone_map():
+    """Per-country phone data for the sign-up form's JS.
+
+    code -> {"dial", "min", "max", "name", "format"}. Built for all 196
+    countries so the prefix box and the digit-count check work the moment a
+    country is picked, whatever continent it sits on. `name` is the canonical
+    English name — it is only used inside an error message the caller
+    translates, never for matching."""
+    out = {}
+    for code, name, _continent, dial in COUNTRIES:
+        min_len, max_len, fmt = phone_rule_for_country(code)
+        out[code] = {
+            "dial": dial,
+            "min": min_len,
+            "max": max_len,
+            "name": name,
+            "format": fmt,
+        }
+    return out
 
 
 # Legal-form (entity type) options per country. The Company filter UI swaps
@@ -213,13 +527,17 @@ LEGAL_FORMS_BY_COUNTRY = {
 }
 
 
-# Primary administrative subdivisions per country (states / provinces /
-# regions / prefectures / emirates / cantons). Keyed by ISO-3166-1 alpha-2
-# matching CountryChoices, so a country dropdown change can index into this
-# directly client-side. Names are stored as the canonical English form;
-# server-side validation only checks set membership against this map for
-# the selected country code.
-COUNTRY_STATES = {
+# Hand-curated subdivisions for the operating markets, in the canonical ENGLISH
+# form ("Bavaria", not "Bayern"). These are the spellings already stored in
+# Company.state and User.state_region, so they must keep winning over the
+# generated ISO data below — swapping them for the ISO/local spelling would
+# invalidate every stored value and quietly shrink each Basic-plan user's
+# directory to nothing.
+#
+# Keyed by ISO-3166-1 alpha-2 matching CountryChoices, so a country dropdown
+# change can index into this directly client-side. Server-side validation only
+# checks set membership for the selected country code.
+CURATED_COUNTRY_STATES = {
     "US": [
         "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
         "Connecticut", "Delaware", "District of Columbia", "Florida", "Georgia",
@@ -342,16 +660,47 @@ COUNTRY_STATES = {
 }
 
 
-# National subscriber-number length bounds per country (excluding country dialing code).
-# Used to validate phone/fax input against the selected country.
+# Every country's subdivisions: the generated ISO 3166-2 lists, with the curated
+# markets layered on top.
+#
+# The generated half is a committed file produced by
+# `python manage.py generate_country_subdivisions` (which needs the
+# generation-only `pycountry` dependency); the app itself imports nothing extra.
+# Its names are the ISO spellings, usually the local ones — that is fine for the
+# countries it serves, because nothing was ever stored for them, so the ISO
+# spelling becomes the canonical one on first use. Where a curated list exists
+# it wins outright: see CURATED_COUNTRY_STATES above for why.
+#
+# A handful of countries (city-states and microstates) have no ISO subdivisions
+# at all and no curated list; they keep the free-text State box, which is the
+# honest answer for a country that genuinely has no states.
+from accounts.data.country_subdivisions import (  # noqa: E402  (data, not a cycle)
+    COUNTRY_SUBDIVISIONS as _ISO_COUNTRY_SUBDIVISIONS,
+)
+
+COUNTRY_STATES = {
+    **{
+        code: names
+        for code, names in _ISO_COUNTRY_SUBDIVISIONS.items()
+        if code in COUNTRY_CODES
+    },
+    **CURATED_COUNTRY_STATES,
+}
+
+
+# National subscriber-number length bounds per country (excluding country
+# dialing code), used to validate phone/fax input against the selected country.
+#
+# Derived from COUNTRY_PHONE_RULES rather than kept as a second list: the two
+# held the same 19 markets and would have drifted the first time one was
+# edited. Callers that also want the format hint should use
+# phone_rule_for_country(), which additionally supplies DEFAULT_PHONE_RULE for
+# countries with no pinned entry — this map deliberately stays sparse, because
+# company_form.py treats a missing key as "unknown country, apply the generic
+# 5-15 digit bound".
 PHONE_RULES = {
-    "US": (10, 10), "CA": (10, 10), "GB": (10, 10),
-    "DE": (10, 11), "FR": (9, 9),   "NL": (9, 9),
-    "PL": (9, 9),   "AT": (10, 11), "CH": (9, 9),
-    "SE": (9, 10),  "CZ": (9, 9),   "AE": (9, 9),
-    "SG": (8, 8),   "AU": (9, 9),   "JP": (10, 10),
-    "BR": (10, 11), "IN": (10, 10), "MX": (10, 10),
-    "KR": (10, 11),
+    code: (min_len, max_len)
+    for code, (min_len, max_len, _hint) in COUNTRY_PHONE_RULES.items()
 }
 
 

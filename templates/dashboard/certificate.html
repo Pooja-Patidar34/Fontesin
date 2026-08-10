@@ -1,0 +1,145 @@
+{% extends "base/base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Certificate" context "dashboard" %} — {{ company.name }}{% endblock %}
+{% block breadcrumb %}<a href="{% url 'certifications' %}">{% trans "Certifications" context "nav" %}</a> <span>/ {% trans "Certificate" context "dashboard" %}</span>{% endblock %}
+
+{% block content %}
+{% comment %}
+Printable certificate for a certified company. Everything it shows is derived
+from the company row (name, owner, location, certified_by, certified_at) plus
+the `certificate_number` property — there is no separate certificate record to
+keep in sync.
+{% endcomment %}
+<style>
+  .cert-actions { display: flex; gap: .6rem; justify-content: flex-end; margin-bottom: 1rem; }
+  .cert-btn {
+    display: inline-flex; align-items: center; gap: .4rem;
+    border: 1px solid #dfe4ec; background: #fff; color: #475467;
+    font-weight: 600; font-size: .85rem; border-radius: .6rem; padding: .5rem 1.1rem;
+  }
+  .cert-btn:hover { background: #f2f4f8; color: #344054; text-decoration: none; }
+  .cert-btn--primary {
+    border-color: transparent; color: #fff;
+    background: linear-gradient(135deg, #1B7BE4, #0ea5e9);
+    box-shadow: 0 10px 20px -8px rgba(27, 123, 228, .55);
+  }
+  .cert-btn--primary:hover { filter: brightness(1.06); color: #fff; }
+
+  .cert-sheet {
+    max-width: 820px; margin: 0 auto; background: #fff; position: relative;
+    border: 1px solid #e6ebf2; border-radius: 14px; overflow: hidden;
+    box-shadow: 0 18px 44px -22px rgba(16, 24, 40, .35);
+  }
+  /* Inner rule, the way a printed certificate carries a border inside a border. */
+  .cert-inner {
+    margin: 14px; padding: 2.6rem 2.8rem 2.2rem;
+    border: 2px solid #e3edfa; border-radius: 8px; text-align: center;
+  }
+  .cert-crest {
+    width: 62px; height: 62px; border-radius: 18px; margin: 0 auto 1rem;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #1B2E3F, #1B7BE4); color: #fff; font-size: 1.5rem;
+  }
+  .cert-brand { font-size: 1.05rem; font-weight: 800; letter-spacing: .22em; color: #1B2E3F; }
+  .cert-kicker {
+    font-size: .72rem; text-transform: uppercase; letter-spacing: .22em;
+    color: #94a3b8; font-weight: 700; margin: .5rem 0 1.6rem;
+  }
+  .cert-lead { font-size: .88rem; color: #64748b; margin-bottom: .35rem; }
+  .cert-name {
+    font-size: 2rem; font-weight: 800; color: #1B2E3F;
+    line-height: 1.2; margin: 0 0 .35rem; letter-spacing: -.02em;
+  }
+  .cert-sub { font-size: .9rem; color: #64748b; margin-bottom: 1.6rem; }
+  .cert-body { font-size: .92rem; color: #475467; line-height: 1.6; max-width: 54ch; margin: 0 auto 2rem; }
+
+  .cert-meta {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 1.2rem 2.6rem;
+    border-top: 1px solid #eef2f7; padding-top: 1.4rem; margin-top: .5rem;
+  }
+  .cert-meta__item { min-width: 150px; }
+  .cert-meta__label {
+    font-size: .66rem; text-transform: uppercase; letter-spacing: .1em;
+    color: #94a3b8; font-weight: 700; margin-bottom: .2rem;
+  }
+  .cert-meta__value { font-size: .88rem; font-weight: 600; color: #1B2E3F; }
+  .cert-meta__value code {
+    font-size: .82rem; color: #b83280; background: #fdf2f8;
+    border: 1px solid #fbe3ef; border-radius: 5px; padding: .1rem .35rem;
+    user-select: all;
+  }
+
+  /* Print: drop the app chrome and the action bar, keep only the sheet. */
+  @media print {
+    .main-header, .main-sidebar, .content-header, .cert-actions,
+    #app-loader, .main-footer { display: none !important; }
+    .content-wrapper { margin: 0 !important; background: #fff !important; }
+    .cert-sheet { border: 0; box-shadow: none; max-width: none; }
+    body { background: #fff !important; }
+  }
+</style>
+
+<section class="content pt-3"><div class="container-fluid">
+
+  <div class="cert-actions">
+    <a href="{% url 'certifications' %}" class="cert-btn">
+      <i class="fas fa-arrow-left"></i>{% trans "Back" context "common" %}
+    </a>
+    {% comment %} Print rather than a generated PDF: the browser's print dialog
+    already offers "Save as PDF", and it needs no server-side renderer. {% endcomment %}
+    <button type="button" class="cert-btn cert-btn--primary" onclick="window.print();">
+      <i class="fas fa-print"></i>{% trans "Print / Save as PDF" context "dashboard" %}
+    </button>
+  </div>
+
+  <div class="cert-sheet">
+    <div class="cert-inner">
+      <div class="cert-crest"><i class="fas fa-certificate"></i></div>
+      <div class="cert-brand">FONTESIN</div>
+      <div class="cert-kicker">{% trans "Certificate of Certification" context "dashboard" %}</div>
+
+      <p class="cert-lead">{% trans "This is to certify that" context "dashboard" %}</p>
+      <h1 class="cert-name">{{ company.name }}</h1>
+      <p class="cert-sub">
+        {% if company.city or company.country %}
+          {{ company.city|default:"" }}{% if company.city and company.country %}, {% endif %}{{ company.country|default:"" }}
+        {% endif %}
+        {% if company.registration_id %}
+          &middot; {% trans "Reg. No." context "companies" %} {{ company.registration_id }}
+        {% endif %}
+      </p>
+
+      <p class="cert-body">
+        {% blocktrans trimmed context "dashboard" %}
+        has been reviewed and certified on the FONTESIN platform, and is listed
+        in the public company directory as a verified business.
+        {% endblocktrans %}
+      </p>
+
+      <div class="cert-meta">
+        <div class="cert-meta__item">
+          <div class="cert-meta__label">{% trans "Certificate No." context "dashboard" %}</div>
+          <div class="cert-meta__value"><code>{{ company.certificate_number }}</code></div>
+        </div>
+        <div class="cert-meta__item">
+          <div class="cert-meta__label">{% trans "Issued" context "dashboard" %}</div>
+          <div class="cert-meta__value">{{ company.certified_at|date:"M j, Y"|default:"—" }}</div>
+        </div>
+        <div class="cert-meta__item">
+          <div class="cert-meta__label">{% trans "Certified by" context "companies" %}</div>
+          <div class="cert-meta__value">
+            {% if company.certified_by %}
+              {{ company.certified_by.first_name }} {{ company.certified_by.last_name|default:company.certified_by.email }}
+            {% else %}—{% endif %}
+          </div>
+        </div>
+        <div class="cert-meta__item">
+          <div class="cert-meta__label">{% trans "Franchise" context "companies" %}</div>
+          <div class="cert-meta__value">{{ company.tenant.name|default:"—" }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div></section>
+{% endblock %}

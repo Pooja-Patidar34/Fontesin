@@ -1,5 +1,5 @@
 {% extends "base/base.html" %}
-{% load i18n %}
+{% load i18n static %}
 {% load i18n_extras %}
 
 {% block title %}{% trans "Profile" context "profile" %} - FONTESIN{% endblock %}
@@ -439,11 +439,20 @@
             <div class="col-md-6">
               <div class="form-group">
                 <label>{% trans "State" context "companies" %} <span class="text-danger">*</span></label>
+                {% comment %}
+                  Dropdown for countries with a subdivision list, free-text box
+                  for the rest — see static/adminlte/js/country_state_field.js.
+                  Both carry name="state"; only one is ever enabled.
+                {% endcomment %}
                 <select name="state" id="cc-state" class="form-control"
                         data-initial="{{ create_company_form.state|default:'' }}"
-                        autocomplete="address-level1" required disabled>
+                        autocomplete="address-level1" disabled>
                   <option value="">{% trans "Select State" context "companies" %}</option>
                 </select>
+                <input type="text" name="state" id="cc-state-text" class="form-control"
+                       style="display:none;" disabled maxlength="60"
+                       autocomplete="address-level1"
+                       placeholder="{% trans 'e.g. Bavaria' context 'companies' %}"/>
               </div>
             </div>
             <div class="col-md-6">
@@ -783,10 +792,20 @@
           <div class="form-row">
             <div class="form-group col-md-6">
               <label>{% trans "State / Region" context "profile" %}</label>
+              {% comment %}
+                Dropdown where we have a subdivision list, free-text box for the
+                rest — otherwise a user in one of the ~177 countries without one
+                could never record a state, and their Basic-plan scope would
+                silently stay country-wide.
+              {% endcomment %}
               <select name="state_region" id="edit-profile-state" class="form-control"
                       data-initial="{{ request.user.state_region|default:'' }}">
                 <option value="">{% trans "— Select state / region —" context "profile" %}</option>
               </select>
+              <input type="text" name="state_region" id="edit-profile-state-text"
+                     class="form-control" style="display:none;" disabled maxlength="150"
+                     value="{{ request.user.state_region|default:'' }}"
+                     placeholder="{% trans 'Bavaria' context 'profile' %}"/>
             </div>
             <div class="form-group col-md-6">
               <label>{% trans "City / Town" context "profile" %}</label>
@@ -822,6 +841,11 @@
 {% comment %} Country → state map for the Edit Profile modal's State dropdown. {% endcomment %}
 {{ country_states|json_script:"profile-country-states" }}
 
+{% comment %}
+  Shared dropdown/free-text swap for the State field — used by both the Edit
+  Profile modal and the Create Company form further down this page.
+{% endcomment %}
+<script src="{% static 'adminlte/js/country_state_field.js' %}"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   const form = document.getElementById("edit-profile-form");
@@ -839,27 +863,31 @@ document.addEventListener("DOMContentLoaded", function () {
   })();
   const countrySel = document.getElementById("edit-profile-country");
   const stateSel = document.getElementById("edit-profile-state");
+  const statePlaceholder = stateSel && stateSel.options.length ? stateSel.options[0].text : "";
+
+  // Dropdown where the country has a subdivision list, free-text box for the
+  // rest — the shared helper owns that swap (both controls are name=
+  // "state_region" and only one is ever enabled).
+  const profileStateField = initCountryStateField({
+    countryEl: countrySel,
+    selectEl: stateSel,
+    textEl: document.getElementById("edit-profile-state-text"),
+    states: PROFILE_STATES,
+    placeholder: statePlaceholder,
+    emptyPlaceholder: statePlaceholder,
+  });
 
   function rebuildProfileStates(preserveValue) {
-    if (!countrySel || !stateSel) return;
-    const placeholder = stateSel.options.length ? stateSel.options[0].text : "";
-    const options = PROFILE_STATES[countrySel.value] || [];
-    const current = preserveValue != null ? preserveValue : stateSel.value;
-
-    let html = '<option value="">' + placeholder + "</option>";
-    for (let i = 0; i < options.length; i++) {
-      const name = options[i];
-      html += '<option value="' + name + '"' + (name === current ? " selected" : "") + ">" + name + "</option>";
-    }
-    stateSel.innerHTML = html;
-    stateSel.disabled = options.length === 0;
+    if (profileStateField) profileStateField.rebuild(preserveValue);
   }
 
   // Seed from the saved value, then follow the country box. Changing country
-  // clears the state rather than carrying a stale one across borders.
+  // clears the state rather than carrying a stale one across borders (the
+  // helper wires the country's change event itself, so this only adds the
+  // save-button sync).
   if (stateSel) rebuildProfileStates(stateSel.dataset.initial || "");
   if (countrySel) {
-    countrySel.addEventListener("change", function () { rebuildProfileStates(""); syncSaveBtn(); });
+    countrySel.addEventListener("change", function () { syncSaveBtn(); });
   }
 
   // Snapshot the values rendered into the form so we can detect changes.
@@ -872,9 +900,14 @@ document.addEventListener("DOMContentLoaded", function () {
   let lastSubmitted = null;
   let inFlight = false;
 
+  // State / region is TWO controls sharing one name (dropdown + free-text box),
+  // and only the live one is enabled. Skipping disabled elements keeps the
+  // dirty check reading a single value per field name — otherwise the parked
+  // control's empty value would overwrite the live one and the Save button
+  // would sit permanently enabled.
   function currentValues() {
     const v = {};
-    fields.forEach(function (el) { v[el.name] = el.value; });
+    fields.forEach(function (el) { if (!el.disabled) v[el.name] = el.value; });
     return v;
   }
   function snapshot() {
@@ -883,12 +916,14 @@ document.addEventListener("DOMContentLoaded", function () {
   function valuesEqual(a, b) {
     if (!a || !b) return false;
     for (const el of fields) {
+      if (el.disabled) continue;
       if (a[el.name] !== b[el.name]) return false;
     }
     return true;
   }
   function isDirty() {
     for (const el of fields) {
+      if (el.disabled) continue;
       if (el.value !== initial[el.name]) return true;
     }
     return false;
@@ -915,7 +950,7 @@ document.addEventListener("DOMContentLoaded", function () {
   $('#editProfileModal').on('shown.bs.modal', function () {
     // If the user closed without saving, reset the inputs to the snapshot.
     fields.forEach(function (el) {
-      if (initial[el.name] !== undefined) el.value = initial[el.name];
+      if (!el.disabled && initial[el.name] !== undefined) el.value = initial[el.name];
     });
     // The country box was just restored, but the State options may still be
     // the ones built for a country the user picked and then abandoned —
@@ -1016,28 +1051,19 @@ document.addEventListener("DOMContentLoaded", function () {
   const states = dataNode ? JSON.parse(dataNode.textContent) : {};
   const initialState = stateSel.dataset.initial || "";
 
-  function renderStates(countryCode, selected) {
-    const options = (countryCode && states[countryCode]) || [];
-    if (!options.length) {
-      stateSel.innerHTML = '<option value="">{% trans "Select State" context "companies" %}</option>';
-      stateSel.disabled = true;
-      return;
-    }
-    let html = '<option value="">{% trans "Select State" context "companies" %}</option>';
-    options.forEach(function (name) {
-      const isSel = name === selected ? " selected" : "";
-      html += '<option value="' + name + '"' + isSel + '>' + name + '</option>';
-    });
-    stateSel.innerHTML = html;
-    stateSel.disabled = false;
-  }
+  // Countries with a subdivision list get the dropdown; the rest get the
+  // free-text box beside it. State is required here, so an empty dropdown
+  // would make those countries impossible to file a company in.
+  const stateField = initCountryStateField({
+    countryEl: countrySel,
+    selectEl: stateSel,
+    textEl: document.getElementById("cc-state-text"),
+    states: states,
+    placeholder: "{% filter escapejs %}{% trans 'Select State' context 'companies' %}{% endfilter %}",
+  });
 
   // Repopulate on first load (covers both empty and pre-filled redirects).
-  renderStates(countrySel.value, initialState);
-
-  countrySel.addEventListener("change", function () {
-    renderStates(countrySel.value, "");
-  });
+  if (stateField) stateField.rebuild(initialState);
 });
 </script>
 
