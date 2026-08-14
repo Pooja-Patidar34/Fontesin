@@ -206,10 +206,13 @@
           </div>
         </div>
 
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-          <label style="display:flex;align-items:center;gap:8px;font-size:.85rem;color:var(--text-secondary);cursor:pointer;">
-            <input type="checkbox" name="remember_me" style="accent-color:var(--primary);"/> {% trans "Remember me" context "auth.login" %}
-          </label>
+        {% comment %}
+          A "Remember me" checkbox used to sit at the left of this row. Nothing
+          server-side ever read the field, so it was removed rather than left as
+          a control that silently does nothing. The row now only carries the
+          forgot-password link, hence flex-end.
+        {% endcomment %}
+        <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:20px;">
           <a href="{% url 'forgot-password' %}" style="font-size:.85rem;color:var(--primary);font-weight:600;">{% trans "Forgot password?" context "auth.login" %}</a>
         </div>
 

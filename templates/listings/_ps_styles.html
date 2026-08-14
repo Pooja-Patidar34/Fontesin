@@ -35,6 +35,9 @@ Included once per listings page. Light + AdminLTE dark-mode aware.
     position: absolute; right: -40px; top: -60px;
     width: 220px; height: 220px; border-radius: 50%;
     background: rgba(255, 255, 255, .10);
+    /* Purely decorative, and it sits exactly over the top-right action buttons.
+       Without this it eats their clicks. */
+    pointer-events: none;
   }
   .ps-hero__icon {
     width: 58px; height: 58px; border-radius: 14px;
@@ -44,8 +47,23 @@ Included once per listings page. Light + AdminLTE dark-mode aware.
   }
   .ps-hero h1 { font-size: 1.6rem; font-weight: 700; margin: 0; color: #fff !important; }
   .ps-hero p { margin: .25rem 0 0; color: rgba(255, 255, 255, .88); max-width: 60ch; }
-  .ps-hero .btn-light { font-weight: 600; }
-  .ps-hero .btn-outline-light { font-weight: 600; }
+  /* The transparent 1px border keeps this the same height as the bordered
+     "Add Demand" button beside it. */
+  .ps-hero .btn-light { font-weight: 600; border: 1px solid transparent; }
+  /* The theme's `.btn { border: none }` loads after Bootstrap and wipes the
+     border-style that .btn-outline-light relies on, leaving "Add Demand"
+     looking like plain text next to the solid "Add Offer". Restore the outline
+     here (and a faint fill) so it reads as a button on the gradient. */
+  .ps-hero .btn-outline-light {
+    font-weight: 600;
+    border: 1px solid rgba(255, 255, 255, .75);
+    background: rgba(255, 255, 255, .12);
+    color: #fff;
+  }
+  .ps-hero .btn-outline-light:hover,
+  .ps-hero .btn-outline-light:focus {
+    background: #fff; border-color: #fff; color: #1d4ed8;
+  }
 
   /* ---- Stat tiles ---- */
   .ps-stat {

@@ -562,6 +562,7 @@ def notify_franchise_application_submitted(application):
     MASTER → the Platform Admin(s). Sub-franchise → the DIRECT PARENT franchise
     holder (the operational reviewer) AND the Platform Admin(s), each linked to
     the queue they act in."""
+    from accounts.constants import FranchiseLevel
     from accounts.models import User
 
     applicant = application.applicant_user
@@ -572,6 +573,10 @@ def notify_franchise_application_submitted(application):
     title = Msg("New %(level)s request", level=level_label)
 
     last = None
+    # Everyone already told, so nobody is notified twice when the same person
+    # owns several nodes in the chain, and the applicant never notifies themself.
+    notified = {applicant.id} if applicant else set()
+
     # Direct parent (operational reviewer) for a sub-franchise.
     if parent is not None and parent.owner_user_id:
         body = MsgSeq(Msg(
@@ -580,14 +585,42 @@ def notify_franchise_application_submitted(application):
         ))
         if territory:
             body.line(Msg("Territory: %(territory)s.", territory=territory))
-        last = notify(
-            recipient=parent.owner_user,
-            sender=applicant,
-            kind=Notification.KIND_FRANCHISE_REQUEST,
-            title=title,
-            body=body,
-            link_url=_reverse("franchise-child-requests"),
-        )
+        if parent.owner_user_id not in notified:
+            notified.add(parent.owner_user_id)
+            last = notify(
+                recipient=parent.owner_user,
+                sender=applicant,
+                kind=Notification.KIND_FRANCHISE_REQUEST,
+                title=title,
+                body=body,
+                link_url=_reverse("franchise-child-requests"),
+            )
+
+    # Everyone further up the tree, to the Master. They don't review the request
+    # — the direct parent does — but a Master is entitled to know what is being
+    # requested inside its territory, which it previously never heard about when
+    # the request landed on a Regional or National beneath it.
+    if parent is not None:
+        for ancestor in parent.get_ancestors():
+            if not ancestor.owner_user_id or ancestor.owner_user_id in notified:
+                continue
+            notified.add(ancestor.owner_user_id)
+            anc_body = MsgSeq(Msg(
+                "%(name)s has requested a %(level)s under %(parent)s, inside your "
+                "franchise %(ancestor)s. %(parent)s reviews it — this is for your information.",
+                name=applicant_label, level=level_label,
+                parent=parent.name, ancestor=ancestor.name,
+            ))
+            if territory:
+                anc_body.line(Msg("Territory: %(territory)s.", territory=territory))
+            last = notify(
+                recipient=ancestor.owner_user,
+                sender=applicant,
+                kind=Notification.KIND_FRANCHISE_REQUEST,
+                title=title,
+                body=anc_body,
+                link_url=_reverse("franchise-tree"),
+            )
 
     # Platform Admin(s) — always notified (§4.2 notification target).
     if parent is not None:
@@ -595,6 +628,14 @@ def notify_franchise_application_submitted(application):
             "%(name)s requested a %(level)s under %(parent)s. %(parent)s reviews it; "
             "you'll activate it after approval.",
             name=applicant_label, level=level_label, parent=parent.name,
+        ))
+    elif application.requested_level != FranchiseLevel.MASTER:
+        # A sub-franchise for a territory nothing covers yet: there is no parent
+        # to review it, so it sits with the Admin until the higher tier exists.
+        su_body = MsgSeq(Msg(
+            "%(name)s has requested a %(level)s in a territory no franchise covers yet. "
+            "Set up the higher-level franchise it belongs under, then approve it.",
+            name=applicant_label, level=level_label,
         ))
     else:
         su_body = MsgSeq(Msg(
@@ -606,6 +647,9 @@ def notify_franchise_application_submitted(application):
 
     su_link = _reverse("franchise-applications")
     for su in User.objects.filter(is_superuser=True, is_active=True):
+        if su.id in notified:
+            continue
+        notified.add(su.id)
         last = notify(
             recipient=su,
             sender=applicant,
@@ -702,6 +746,47 @@ def notify_franchise_activated(node):
         ),
         link_url=_reverse("franchise-request"),
     )
+
+
+def notify_franchise_fee_paid(node):
+    """Tell the people who act next that a franchise fee has been recorded paid.
+
+    The holder of the node's DIRECT PARENT activates it from their queue, so
+    they are the one who needs prompting; the node's own holder is told their
+    payment landed. Returns the last notification sent."""
+    last = None
+    parent = getattr(node, "parent", None)
+    level_label = _level_label(node.franchise_level)
+
+    if parent is not None and parent.owner_user_id:
+        last = notify(
+            recipient=parent.owner_user,
+            kind=Notification.KIND_FRANCHISE_REQUEST,
+            title=Msg("%(level)s ready to activate", level=level_label),
+            body=Msg(
+                "The franchise fee for %(name)s has been marked as paid by the Platform "
+                "Admin. You can activate it now — it will then appear in your franchise tree.",
+                name=node.name,
+            ),
+            link_url=_reverse("franchise-child-requests"),
+        )
+
+    owner = getattr(node, "owner_user", None)
+    if owner is not None and owner.id != getattr(parent, "owner_user_id", None):
+        last = notify(
+            recipient=owner,
+            kind=Notification.KIND_FRANCHISE_REQUEST,
+            title=Msg("Franchise fee received"),
+            body=Msg(
+                "Your payment for %(name)s has been recorded. It goes live once "
+                "%(activator)s activates it.",
+                name=node.name,
+                # A nested Msg keeps the fallback wording translatable too.
+                activator=(parent.name if parent is not None else Msg("the Platform Admin")),
+            ),
+            link_url=_reverse("franchise-request"),
+        )
+    return last
 
 
 def notify_franchise_removed(node, *, removed_by=None, reason="", cascaded=False):

@@ -316,6 +316,27 @@
               </td>
               <td class="small text-muted">{{ a.approved_at|date:"M j, Y H:i" }}</td>
               <td class="text-right pr-4">
+                {% comment %}
+                  Payment step, for a sub-franchise whose parent brings it live:
+                  recording the fee here hands the Activate button to that
+                  parent's queue. Activating directly still works and folds the
+                  fee in, which is how a Master (no parent) goes live.
+                {% endcomment %}
+                {% if a.created_franchise.parent_id and a.created_franchise.franchise_fee_status != "PAID" %}
+                <form method="post" action="{% url 'franchise-mark-fee-paid' a.created_franchise.id %}" class="d-inline m-0"
+                      data-confirm
+                      data-confirm-tone="primary"
+                      data-confirm-icon="fa-euro-sign"
+                      data-confirm-title="{% trans "Mark franchise fee as paid?" context "franchise" %}"
+                      data-confirm-body="{% trans "Records the fee as received. The parent franchise can then activate this sub-franchise." context "franchise" %}"
+                      data-confirm-ok="{% trans "Mark as paid" context "franchise" %}"
+                      data-confirm-name="{{ a.created_franchise.name }}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-euro-sign mr-1"></i> {% trans "Mark fee paid" context "franchise" %}
+                  </button>
+                </form>
+                {% endif %}
                 <form method="post" action="{% url 'franchise-activate' a.created_franchise.id %}" class="d-inline m-0"
                       data-confirm
                       data-confirm-tone="primary"

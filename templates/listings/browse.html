@@ -17,23 +17,44 @@
       </span>
     </div>
     <div class="text-nowrap">
-      <a href="{% url 'listings_web:add' %}?type=offer" class="ps-btn-gradient">
+      {% comment %}
+        Inside a module, a new listing belongs to that module — the create form
+        reads the same ?module= parameter the module landing page passes.
+      {% endcomment %}
+      <a href="{% url 'listings_web:add' %}?type=offer{% if module %}&amp;module={{ module.slug }}{% endif %}" class="ps-btn-gradient">
         <i class="fas fa-bullhorn mr-1"></i>{% trans "Add Offer" %}
       </a>
-      <a href="{% url 'listings_web:add' %}?type=demand" class="ps-btn-ghost ps-btn-ghost--demand ml-1">
+      <a href="{% url 'listings_web:add' %}?type=demand{% if module %}&amp;module={{ module.slug }}{% endif %}" class="ps-btn-ghost ps-btn-ghost--demand ml-1">
         <i class="fas fa-search mr-1"></i>{% trans "Add Demand" %}
       </a>
     </div>
   </div>
 
+  {% if module %}
+  {% comment %}
+    Says which module the results are scoped to, and offers the way out. Without
+    it a module-filtered list is indistinguishable from an empty platform.
+  {% endcomment %}
+  <div class="ps-chip mb-3" style="display:inline-flex; align-items:center; gap:.5rem;">
+    <i class="{{ module.icon }}"></i>
+    <span>{% blocktrans with name=module.name %}Showing {{ name }} listings only{% endblocktrans %}</span>
+    <a href="{% url 'listings_web:browse' %}" class="ml-1" style="font-weight:600;">{% trans "Show all modules" %}</a>
+  </div>
+  {% endif %}
+
 
   {% comment %}
-  data-no-loader: this form is submitted over AJAX and never navigates, so the
-  global page-loading overlay must stay out of it — the results block dims
-  itself while fetching, which is the right-sized feedback here.
+  Submitted over AJAX — it never navigates. The results block dims itself while
+  fetching, which is the right-sized feedback here.
   {% endcomment %}
-  <form method="get" class="ps-toolbar" id="lb-filter-form" data-no-loader
+  <form method="get" class="ps-toolbar" id="lb-filter-form"
         action="{% url 'listings_web:browse' %}">
+    {% comment %}
+      Module scope travels with every re-filter (and with a no-JS GET submit).
+      It is context, not a filter: it doesn't enable the Filter button and
+      Clear doesn't drop it — clearing filters keeps you in the module.
+    {% endcomment %}
+    {% if module %}<input type="hidden" name="module" value="{{ module.slug }}">{% endif %}
     <select name="listing_type" class="form-control" style="flex:1 1 140px; min-width:120px; width:auto;">
       <option value="">{% trans "All types" %}</option>
       {% for val, label in listing_type_choices %}
@@ -76,7 +97,7 @@
             {% if not filters.listing_type and not filters.category_type and not filters.nace_isic_code and not filters.country and not filters.keyword %}disabled{% endif %}>
       <i class="fas fa-filter mr-1"></i>{% trans "Filter" %}
     </button>
-    <a href="{% url 'listings_web:browse' %}" id="lb-clear" class="ps-btn-ghost"
+    <a href="{% url 'listings_web:browse' %}{% if module %}?module={{ module.slug }}{% endif %}" id="lb-clear" class="ps-btn-ghost"
        style="flex:0 0 auto;{% if not filters.listing_type and not filters.category_type and not filters.nace_isic_code and not filters.country and not filters.keyword %} display:none;{% endif %}">{% trans "Clear" %}</a>
   </form>
 
@@ -133,8 +154,15 @@
     emptyTimer = setTimeout(function () { load(null, true); }, 250);
   });
 
+  // Module scope rides along on every request but is NOT one of FIELDS: it
+  // doesn't count as "a filter is set", so it neither enables the Filter button
+  // nor keeps the Clear link on screen once the real filters are emptied.
+  var moduleEl = form.elements["module"];
+
   function query(page) {
     var p = new URLSearchParams();
+    var mod = moduleEl && moduleEl.value ? moduleEl.value.trim() : "";
+    if (mod) p.set("module", mod);
     FIELDS.forEach(function (name) {
       var el = form.elements[name];
       var v = el && el.value ? el.value.trim() : "";
@@ -172,7 +200,10 @@
         if (push !== false && window.history && history.pushState) {
           history.pushState({ lb: qs }, "", qs ? "?" + qs : location.pathname);
         }
-        clear.style.display = qs.replace(/(^|&)page=[^&]*/, "") ? "" : "none";
+        // Driven by the real filters only — with a module in the query string
+        // the old "is the query string non-empty" test was always true, which
+        // left Clear showing on an unfiltered module list.
+        clear.style.display = hasFilters() ? "" : "none";
       })
       .catch(function (err) {                 // fall back to a normal reload
         if (err && err.message !== "redirected") form.submit();

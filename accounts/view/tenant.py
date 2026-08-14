@@ -375,7 +375,12 @@ def tenant_detail_ajax(request, tenant_id):
         if str(tenant_id) != str(request.user.tenant_id) and tenant_id not in allowed:
             raise PermissionDenied()
 
-    tenant = get_object_or_404(Tenant, id=tenant_id)
+    tenant = get_object_or_404(
+        Tenant.objects.select_related(
+            "owner_user", "owner_company", "parent", "approved_by", "created_by"
+        ),
+        id=tenant_id,
+    )
 
     return JsonResponse({
         "id": str(tenant.id),
@@ -383,7 +388,70 @@ def tenant_detail_ajax(request, tenant_id):
         "slug": tenant.slug,
         "is_active": tenant.is_active,
         "created_at": tenant.created_at.strftime("%Y-%m-%d %H:%M"),
+        # Read-only rows for the View modal. The keys above stay exactly as they
+        # were — Edit still binds id/name/is_active to the form — while "View"
+        # used to show only those three and told the user next to nothing about
+        # the franchise or who holds it.
+        "details": _tenant_detail_rows(tenant),
     })
+
+
+def _fmt_dt(value):
+    """Local-time 'YYYY-MM-DD HH:MM', or empty when the timestamp is unset."""
+    if not value:
+        return ""
+    return timezone.localtime(value).strftime("%Y-%m-%d %H:%M")
+
+
+def _tenant_detail_rows(tenant):
+    """
+    Label/value rows shown in the read-only Franchise Details modal.
+
+    Labels are translated here rather than in JS so they follow the request
+    language like the rest of the page. Blank values are dropped by the caller's
+    template code, so a plain (non-franchise) partition simply shows fewer rows
+    instead of a column of dashes.
+    """
+    owner = tenant.owner_user
+    territory = " / ".join(
+        part for part in (
+            tenant.territory_country,
+            tenant.territory_region,
+            tenant.territory_city,
+            tenant.territory_local_area,
+        ) if part
+    )
+
+    rows = [
+        (_("Owner"), owner.display_name if owner else ""),
+        (_("Owner email"), owner.email if owner else ""),
+        (_("Owner company"), tenant.owner_company.name if tenant.owner_company else ""),
+        (_("Franchise level"), tenant.get_franchise_level_display() or ""),
+        (_("Parent franchise"), tenant.parent.name if tenant.parent else ""),
+        (_("Franchise status"), tenant.get_franchise_status_display() or ""),
+        (_("Fee status"), tenant.get_franchise_fee_status_display() or ""),
+        (_("Contract status"), tenant.get_contract_status_display() or ""),
+        (_("Territory"), territory),
+        # Exclusivity only means something on a franchise node, so it stays out
+        # of the list for a plain partition.
+        (_("Exclusive territory"),
+         "" if not tenant.franchise_level else (_("Yes") if tenant.is_exclusive else _("No"))),
+        (_("Sub-franchises"), str(tenant.children.count()) if tenant.franchise_level else ""),
+        (_("Users"), str(tenant.users.count())),
+        (_("Companies"), str(tenant.companies.count())),
+        (_("Domain"), tenant.domain or ""),
+        (_("Slug"), tenant.slug),
+        (_("Approved by"), tenant.approved_by.display_name if tenant.approved_by else ""),
+        (_("Approved on"), _fmt_dt(tenant.approved_at)),
+        (_("Activated on"), _fmt_dt(tenant.activated_at)),
+        (_("Suspended on"), _fmt_dt(tenant.suspended_at)),
+        (_("Terminated on"), _fmt_dt(tenant.terminated_at)),
+        (_("Created by"), tenant.created_by.display_name if tenant.created_by else ""),
+        (_("Created on"), _fmt_dt(tenant.created_at)),
+        (_("Last updated"), _fmt_dt(tenant.updated_at)),
+    ]
+
+    return [{"label": label, "value": value} for label, value in rows if value]
 
 
 @login_required

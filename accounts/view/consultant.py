@@ -17,13 +17,27 @@ def _coordinator_or_superuser(user):
 
 
 def _can_view_staff(user):
-    """Coordinator, franchise partner, or superuser may view staff directories."""
+    """Coordinator, franchise partner, or superuser may view staff directories.
+
+    Franchise partners are recognised by OWNERSHIP, not by role code. Buying a
+    franchise is additive and leaves the account's role alone (see
+    accounts.utils.franchise_access), so the holders in practice are
+    ``business_user`` accounts that own an activated node. The sidebar already
+    gates the Network menu on that ownership (`is_active_franchise_owner`);
+    this check still only accepted the legacy ``FRANCHISE`` role code, so every
+    holder saw the menu and got a 403 on all four pages behind it. The role
+    code stays accepted for accounts that still carry it.
+    """
     if not user.is_authenticated:
         return False
     if user.is_superuser:
         return True
     role_code = (user.role.code or "").upper() if user.role else ""
-    return role_code in {"COORDINATOR", "FRANCHISE"}
+    if role_code in {"COORDINATOR", "FRANCHISE"}:
+        return True
+
+    from accounts.utils.franchise_access import is_franchise_holder
+    return is_franchise_holder(user)
 
 
 def _scoped_tenant_qs(qs, user):

@@ -203,7 +203,7 @@
             <label class="fr-label">{% trans "City" context "franchise" %} <span class="req" id="fr-city-star" style="display:none;">*</span></label>
             <input type="text" name="requested_city" id="fr-city-input" class="fr-control" placeholder="{% trans "e.g. San Francisco" context "franchise" %}" value="{{ form_data.requested_city|default:'' }}">
           </div>
-          <div>
+          <div id="fr-local-wrap">
             <label class="fr-label">{% trans "Local area" context "franchise" %}</label>
             <input type="text" name="requested_local_area" class="fr-control" placeholder="{% trans "Optional" context "franchise" %}" value="{{ form_data.requested_local_area|default:'' }}">
           </div>
@@ -411,6 +411,8 @@
     if (!level) return;
     var regionWrap = document.getElementById("fr-region-wrap");
     var cityRow = document.getElementById("fr-citylocal-row");
+    var localWrap = document.getElementById("fr-local-wrap");
+    var localInput = localWrap ? localWrap.querySelector("input") : null;
     var note = document.getElementById("fr-master-note");
     var regionSelect = document.getElementById("fr-region-select");
     var regionInput = document.getElementById("fr-region-input");
@@ -484,21 +486,23 @@
       // A Master covers the whole country — hide the narrower territory fields
       // and clear them so nothing accidentally narrows the master's territory.
       if (regionWrap) regionWrap.style.display = isMaster ? "none" : "";
-      // City / local area apply ONLY to a Micro (a Regional covers a whole
-      // region/state, a National a whole country/state). Show them for Micro
-      // only; for other levels canonical_territory strips anything typed here,
-      // so leaving the fields visible just misleads the applicant/reviewer.
-      if (cityRow) cityRow.style.display = isMicro ? "" : "none";
+      // City: a Micro must name one (it IS the territory); a Regional may name
+      // one to say where in the state it is based. The Regional's city is
+      // recorded on the request for the reviewer — the territory itself stays
+      // the whole state, so it doesn't narrow what the franchise occupies.
+      // Local area is Micro-only (it subdivides the Micro's city).
+      var wantsCity = isMicro || level.value === "REGIONAL";
+      if (cityRow) cityRow.style.display = wantsCity ? "" : "none";
+      if (localWrap) localWrap.style.display = isMicro ? "" : "none";
       if (note) note.style.display = isMaster ? "" : "none";
       if (isMaster) {
         regionSelect && (regionSelect.value = "");
         regionInput && (regionInput.value = "");
       }
-      // Clear city/local whenever they don't apply, so a value typed under Micro
-      // doesn't linger (and get silently dropped) after switching to a wider level.
-      if (!isMicro) {
-        cityRow && cityRow.querySelectorAll("input").forEach(function (i) { i.value = ""; });
-      }
+      // Clear whatever no longer applies, so a value typed under one level
+      // doesn't linger (and get silently dropped) after switching to another.
+      if (!wantsCity && cityInput) cityInput.value = "";
+      if (!isMicro && localInput) localInput.value = "";
       mark(cityInput, cityStar, !isMaster && req.city);
       // Region field is usable for any non-Master level once a level is chosen;
       // it's only *required* for Regional/Micro (National keeps it optional).

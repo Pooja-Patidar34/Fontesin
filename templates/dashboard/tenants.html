@@ -87,6 +87,17 @@
             </label>
           </div>
 
+          {% comment %}
+            Read-only detail rows (owner, hierarchy, territory, lifecycle
+            dates). Filled from the tenant-detail endpoint's "details" list and
+            only shown in View mode — Add/Edit keep the plain name + active
+            form they always had.
+          {% endcomment %}
+          <div id="tenant-details" style="display:none; margin-top:1rem;">
+            <hr class="mt-0">
+            <dl class="row mb-0" id="tenant-details-list"></dl>
+          </div>
+
         </div>
 
         <div class="modal-footer">
@@ -147,6 +158,44 @@
       if (saveBtn) {
           saveBtn.style.display = state ? "none" : "inline-block";
       }
+
+      // The detail rows belong to View only; Add/Edit clear them so a stale
+      // franchise's data can't linger behind the next modal.
+      if (!state) {
+          renderTenantDetails([]);
+      }
+  }
+
+  // Renders the endpoint's [{label, value}] rows. textContent (not innerHTML)
+  // because franchise/owner names are user-supplied.
+  function renderTenantDetails(rows) {
+      const wrap = document.getElementById("tenant-details");
+      const list = document.getElementById("tenant-details-list");
+      if (!wrap || !list) return;
+
+      list.textContent = "";
+
+      if (!rows || !rows.length) {
+          wrap.style.display = "none";
+          return;
+      }
+
+      rows.forEach(function (row) {
+          const dt = document.createElement("dt");
+          dt.className = "col-sm-4 text-muted font-weight-normal";
+          dt.textContent = row.label;
+
+          const dd = document.createElement("dd");
+          dd.className = "col-sm-8";
+          dd.style.wordBreak = "break-word";
+          dd.style.fontWeight = "500";
+          dd.textContent = row.value;
+
+          list.appendChild(dt);
+          list.appendChild(dd);
+      });
+
+      wrap.style.display = "block";
   }
 
   document.addEventListener("DOMContentLoaded", function () {
@@ -183,6 +232,8 @@
 
         document.querySelector(".modal-title").innerText = viewBtn ? "{% filter escapejs %}{% trans "Franchise Details" context "dashboard" %}{% endfilter %}" : "{% filter escapejs %}{% trans "Edit Franchise" context "dashboard" %}{% endfilter %}";
         setReadonly(!!viewBtn);
+        // After setReadonly, which clears the rows for Edit mode.
+        renderTenantDetails(viewBtn ? data.details : []);
         modal.modal('show');
       });
   });

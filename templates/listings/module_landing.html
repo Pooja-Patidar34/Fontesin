@@ -57,7 +57,7 @@
     <!-- Explore tiles -->
     <div class="row">
       <div class="col-md-4 mb-3">
-        <a href="{% url 'listings_web:browse' %}?listing_type=offer" class="ps-card ps-card--offer text-decoration-none">
+        <a href="{% url 'listings_web:browse' %}?module={{ module.slug }}&amp;listing_type=offer" class="ps-card ps-card--offer text-decoration-none">
           <div><span class="ps-pill ps-pill--offer"><i class="fas fa-bullhorn"></i>{% trans "Offers" %}</span></div>
           <div class="ps-card__title">{% trans "Browse Offers" %}</div>
           <p class="ps-card__desc">{% trans "Products and services available from providers." %}</p>
@@ -66,7 +66,7 @@
         </a>
       </div>
       <div class="col-md-4 mb-3">
-        <a href="{% url 'listings_web:browse' %}?listing_type=demand" class="ps-card ps-card--demand text-decoration-none">
+        <a href="{% url 'listings_web:browse' %}?module={{ module.slug }}&amp;listing_type=demand" class="ps-card ps-card--demand text-decoration-none">
           <div><span class="ps-pill ps-pill--demand"><i class="fas fa-search"></i>{% trans "Demands" %}</span></div>
           <div class="ps-card__title">{% trans "Browse Demands" %}</div>
           <p class="ps-card__desc">{% trans "What buyers are actively looking for." %}</p>
@@ -75,10 +75,10 @@
         </a>
       </div>
       <div class="col-md-4 mb-3">
-        <a href="{% url 'listings_web:browse' %}" class="ps-card text-decoration-none" style="--accent:#12805c;">
+        <a href="{% url 'listings_web:browse' %}?module={{ module.slug }}" class="ps-card text-decoration-none" style="--accent:#12805c;">
           <div><span class="ps-chip"><i class="fas fa-layer-group mr-1"></i>{% trans "All" %}</span></div>
           <div class="ps-card__title">{% trans "Browse Everything" %}</div>
-          <p class="ps-card__desc">{% trans "Search all active offers and demands in one place." %}</p>
+          <p class="ps-card__desc">{% trans "Search this module's active offers and demands in one place." %}</p>
           <div class="ps-card__foot"><span></span>
             <span class="btn btn-sm btn-outline-secondary">{% trans "Explore" %} <i class="fas fa-arrow-right ml-1"></i></span></div>
         </a>

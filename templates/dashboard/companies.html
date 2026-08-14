@@ -1120,20 +1120,16 @@
               {{ form.country }}
             </div>
             <div class="form-group col-md-6">
-              <label>{% trans "State" context "companies" %}</label>
+              <label>{% trans "State" context "companies" %} <span class="text-danger">*</span></label>
               {% comment %}
-                Two controls, one field name. Countries with a subdivision list
-                (accounts.constants.COUNTRY_STATES) use the validated dropdown;
-                the rest — most of the 196 — get a free-text box, because a
-                state is required and an empty dropdown would make those
-                countries impossible to file a company in. Exactly one is
-                enabled at a time; a disabled control is not submitted.
+                Plain text box. This was a country-dependent dropdown paired
+                with a hidden free-text twin, which left the field unusable
+                whenever the dropdown came up empty — and it is required, so
+                the company (and its certification request) could not be
+                submitted at all. The server still canonicalises the spelling
+                against COUNTRY_STATES when it recognises the value.
               {% endcomment %}
               {{ form.state }}
-              <input type="text" name="state" id="id_state_text" class="form-control"
-                     style="display:none;" disabled maxlength="60"
-                     placeholder="{% trans 'e.g. Bavaria' context 'companies' %}"
-                     autocomplete="address-level1"/>
             </div>
           </div>
 
@@ -1377,35 +1373,6 @@
 
 <!-- ================= JS (UNCHANGED LOGIC, ONLY ADDITIONS) ================= -->
 
-{% comment %}
-  Country → state map, indexed client-side when the user picks a country
-  in the Add / Edit Company modal.
-{% endcomment %}
-{{ country_states|json_script:"company-country-states" }}
-
-<script src="{% static 'adminlte/js/country_state_field.js' %}"></script>
-<script>
-// Country / State dependent dropdown wiring for the company modal. State
-// options are blank on first render; whenever the country changes (either
-// by user input or via the populateCompanyModal trigger for Edit/View),
-// we rebuild the State <select> from COUNTRY_STATES[country].
-document.addEventListener("DOMContentLoaded", function () {
-  const dataNode = document.getElementById("company-country-states");
-  // Countries with a subdivision list get the dropdown; the rest get the
-  // free-text box beside it (State is required, so an empty dropdown would
-  // make those countries impossible to file a company in). The shared helper
-  // owns that swap and wires the country's change event.
-  const stateField = initCountryStateField({
-    countryEl: document.getElementById("id_country"),
-    selectEl: document.getElementById("id_state"),
-    textEl: document.getElementById("id_state_text"),
-    states: dataNode ? JSON.parse(dataNode.textContent) : {},
-    placeholder: COMPANY_I18N.selectState,
-  });
-  if (stateField) stateField.rebuild();
-});
-</script>
-
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -1614,26 +1581,16 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("id_city").value = c.city || "";
     document.getElementById("id_postal_code").value = c.postal_code || "";
 
-    // Country / State are dependent dropdowns — set country first so the
-    // change-listener can populate the matching state options before we
-    // try to assign the saved state value.
+    // Country still fires 'change' for the phone-format hint and the legal-form
+    // list. State is a single text box, so its value is just assigned.
     const countryField = document.getElementById("id_country");
     const stateField = document.getElementById("id_state");
     if (countryField) {
       countryField.value = c.country || "";
-      // Direct .value= doesn't fire 'change'; trigger it manually so the
-      // state dropdown is rebuilt for the loaded country.
+      // Direct .value= doesn't fire 'change'; trigger it manually.
       countryField.dispatchEvent(new Event("change"));
     }
-    // The change above rebuilt the state control — assign to whichever one is
-    // live (dropdown for countries with a subdivision list, text box for the
-    // rest), or an edited company in a free-text country would open blank.
-    const stateTextField = document.getElementById("id_state_text");
-    if (stateField && !stateField.disabled) {
-      stateField.value = c.state || "";
-    } else if (stateTextField) {
-      stateTextField.value = c.state || "";
-    }
+    if (stateField) stateField.value = c.state || "";
 
     document.getElementById("id_phone").value = c.phone || "";
     document.getElementById("id_phone_secondary").value = c.phone_secondary || "";

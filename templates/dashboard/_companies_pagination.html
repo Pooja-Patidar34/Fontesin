@@ -1,12 +1,21 @@
 {% load i18n %}
+{% comment %}
+  Page links keep the WHOLE current query string and swap only `page`.
+
+  They used to rebuild it by hand from `tenant` and `q` alone, which silently
+  dropped every filter-bar field (name, country, state, city, legal form, field
+  of activity, industry code, keywords) — so paging past page 1 of a filtered
+  list came back unfiltered. {% templatetag openblock %} querystring {% templatetag closeblock %}
+  (Django 5.1+) rewrites request.GET instead of reconstructing it, so any filter
+  added later is carried along without touching this file.
+{% endcomment %}
 {% if companies.paginator.num_pages > 1 %}
 <div class="card-footer">
   <ul class="pagination pagination-sm justify-content-end mb-0">
 
     {% if companies.has_previous %}
       <li class="page-item">
-        <a class="page-link"
-           href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}{% if search_q %}q={{ search_q|urlencode }}&{% endif %}page={{ companies.previous_page_number }}">
+        <a class="page-link" href="{% querystring page=companies.previous_page_number %}">
           {% trans "Previous" context "common" %}
         </a>
       </li>
@@ -18,10 +27,7 @@
 
     {% if companies.number > 3 %}
       <li class="page-item">
-        <a class="page-link"
-           href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}{% if search_q %}q={{ search_q|urlencode }}&{% endif %}page=1">
-          1
-        </a>
+        <a class="page-link" href="{% querystring page=1 %}">1</a>
       </li>
 
       {% if companies.number > 4 %}
@@ -39,10 +45,7 @@
           </li>
         {% else %}
           <li class="page-item">
-            <a class="page-link"
-               href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}{% if search_q %}q={{ search_q|urlencode }}&{% endif %}page={{ num }}">
-              {{ num }}
-            </a>
+            <a class="page-link" href="{% querystring page=num %}">{{ num }}</a>
           </li>
         {% endif %}
       {% endif %}
@@ -56,8 +59,7 @@
       {% endif %}
 
       <li class="page-item">
-        <a class="page-link"
-           href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}{% if search_q %}q={{ search_q|urlencode }}&{% endif %}page={{ companies.paginator.num_pages }}">
+        <a class="page-link" href="{% querystring page=companies.paginator.num_pages %}">
           {{ companies.paginator.num_pages }}
         </a>
       </li>
@@ -65,8 +67,7 @@
 
     {% if companies.has_next %}
       <li class="page-item">
-        <a class="page-link"
-           href="?{% if selected_tenant_id %}tenant={{ selected_tenant_id }}&{% endif %}{% if search_q %}q={{ search_q|urlencode }}&{% endif %}page={{ companies.next_page_number }}">
+        <a class="page-link" href="{% querystring page=companies.next_page_number %}">
           {% trans "Next" context "common" %}
         </a>
       </li>

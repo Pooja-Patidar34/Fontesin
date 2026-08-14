@@ -660,6 +660,23 @@ def browse_listings(request):
         qs = qs.filter(tenant=user.tenant)
 
     f = request.GET
+    # Module scope (Section 19.4): arriving from a professional module's landing
+    # page keeps you inside that module. Without this the module tiles dropped
+    # you into the unfiltered list, so Investments could report 0 listings and
+    # then show every Products & Services offer on the platform.
+    module = None
+    if f.get("module"):
+        module_id = _resolve_module_id(f["module"], default=None)
+        # Same access rule as the module landing page (Section 19.6) — a module
+        # you can't open isn't one you can browse by URL either.
+        if module_id and not module_registry.user_can_access_id(user, module_id):
+            messages.error(request, _("You do not have access to this module."))
+            return redirect("modules:dashboard")
+        if module_id:
+            module = module_registry.get_module_by_id(module_id)
+            qs = qs.filter(module_id=module_id)
+        # An unknown module is ignored rather than 404'd: the rest of the filter
+        # bar still works, and the banner below simply doesn't render.
     if f.get("listing_type") in (Listing.OFFER, Listing.DEMAND):
         qs = qs.filter(listing_type=f["listing_type"])
     if f.get("category_type") in (Listing.PRODUCT, Listing.SERVICE):
@@ -687,6 +704,9 @@ def browse_listings(request):
         "country_selected": services.country_code(f.get("country", "")),
         "nace_display": nace_display,
         "active_menu": "listings-browse",
+        # Drives the "you are inside <module>" banner and keeps the module on
+        # the filter-bar / Add-listing links so it survives a re-filter.
+        "module": module,
     }
     # The filter bar fetches ?partial=1 and swaps just the results block, so the
     # page never reloads. Without JS the same URL renders the full page.

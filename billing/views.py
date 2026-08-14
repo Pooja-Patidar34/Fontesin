@@ -290,12 +290,33 @@ def commission_list(request):
     # different business users, so sum is meaningless without a currency split.
     totals_by_currency = {}
     pending_by_currency = {}
+    paid_by_currency = {}
     admin_totals_by_currency = {}
     for row in qs:
         totals_by_currency[row.currency] = totals_by_currency.get(row.currency, Decimal("0")) + row.commission_amount
         admin_totals_by_currency[row.currency] = admin_totals_by_currency.get(row.currency, Decimal("0")) + row.admin_share
         if row.status == "pending":
             pending_by_currency[row.currency] = pending_by_currency.get(row.currency, Decimal("0")) + row.commission_amount
+        # Settled earnings, shown on its own badge. The green badge used to
+        # carry `totals_by_currency` (every row, pending included), which read
+        # as "already paid" next to the pending badge and overstated it.
+        # Deliberately not "total minus pending": cancelled rows belong to
+        # neither bucket, so paid is summed from the paid rows themselves.
+        elif row.status == "paid":
+            paid_by_currency[row.currency] = paid_by_currency.get(row.currency, Decimal("0")) + row.commission_amount
+
+    # One row per currency for the consultant's badge strip, so a currency that
+    # is entirely paid (or entirely pending) still renders all three badges
+    # instead of dropping the empty one.
+    summary_by_currency = [
+        {
+            "currency": currency,
+            "paid": paid_by_currency.get(currency, Decimal("0")),
+            "pending": pending_by_currency.get(currency, Decimal("0")),
+            "total": total,
+        }
+        for currency, total in totals_by_currency.items()
+    ]
 
     paginator = Paginator(qs, 20)
     page_number = request.GET.get("page", 1)
@@ -311,6 +332,8 @@ def commission_list(request):
         "active_menu": "commissions",
         "totals_by_currency": totals_by_currency,
         "pending_by_currency": pending_by_currency,
+        "paid_by_currency": paid_by_currency,
+        "summary_by_currency": summary_by_currency,
         "admin_totals_by_currency": admin_totals_by_currency,
         "viewing_as_admin": request.user.is_superuser,
     }

@@ -47,6 +47,7 @@ from .view.franchise import (
     franchise_applications_list,
     franchise_application_action,
     franchise_activate,
+    franchise_mark_fee_paid,
     franchise_child_requests,
     franchise_child_action,
     franchise_tree,
@@ -148,6 +149,9 @@ urlpatterns = [
     path("franchise-applications/", franchise_applications_list, name="franchise-applications"),
     path("franchise-applications/<uuid:application_id>/action/", franchise_application_action, name="franchise-application-action"),
     path("franchises/<uuid:tenant_id>/activate/", franchise_activate, name="franchise-activate"),
+    # Payment step, split from activation: the Admin records the fee, the direct
+    # parent then activates the sub-franchise from its own queue.
+    path("franchises/<uuid:tenant_id>/mark-fee-paid/", franchise_mark_fee_paid, name="franchise-mark-fee-paid"),
     # Direct-parent (Master/National/Regional) review of sub-franchise requests
     path("franchise-sub-requests/", franchise_child_requests, name="franchise-child-requests"),
     path("franchise-sub-requests/<uuid:application_id>/action/", franchise_child_action, name="franchise-child-action"),

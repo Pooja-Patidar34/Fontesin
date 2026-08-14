@@ -317,7 +317,8 @@ PLAN_TIERS = {
 #
 # `africa` is deliberately present but empty — no African country is a supported
 # market yet (accounts.constants.CountryChoices). It exists so adding one is a
-# single-line change here, and the assert below makes forgetting impossible.
+# single-line change here, and the assert below makes forgetting 
+# impossible.
 #
 # The map itself now lives in accounts.constants.CONTINENT_COUNTRIES — the same
 # grouping the sign-up form uses to filter its Country dropdown and to fill

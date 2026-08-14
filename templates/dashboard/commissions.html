@@ -56,23 +56,44 @@
       </h3>
 
       <div class="d-flex flex-wrap" style="gap:.5rem;">
-        {% for currency, amount in totals_by_currency.items %}
-          <span class="badge" style="background:#dcfce7; color:#15803d; font-weight:600; font-size:.78rem; padding:6px 14px; border-radius:100px;">
-            {% blocktrans trimmed with currency=currency amount=amount|floatformat:2 context "billing" %}Consultant {{ currency }}: {{ amount }}{% endblocktrans %}
-          </span>
-        {% endfor %}
         {% if viewing_as_admin %}
+          {% comment %}
+            Admin badge strip is unchanged: consultant share, admin share and
+            pending across every consultant on the platform.
+          {% endcomment %}
+          {% for currency, amount in totals_by_currency.items %}
+            <span class="badge" style="background:#dcfce7; color:#15803d; font-weight:600; font-size:.78rem; padding:6px 14px; border-radius:100px;">
+              {% blocktrans trimmed with currency=currency amount=amount|floatformat:2 context "billing" %}Consultant {{ currency }}: {{ amount }}{% endblocktrans %}
+            </span>
+          {% endfor %}
           {% for currency, amount in admin_totals_by_currency.items %}
             <span class="badge" style="background:#dbeafe; color:#1d4ed8; font-weight:600; font-size:.78rem; padding:6px 14px; border-radius:100px;">
               {% blocktrans trimmed with currency=currency amount=amount|floatformat:2 context "billing" %}Admin {{ currency }}: {{ amount }}{% endblocktrans %}
             </span>
           {% endfor %}
+          {% for currency, amount in pending_by_currency.items %}
+            <span class="badge" style="background:#fef3c7; color:#92400e; font-weight:600; font-size:.78rem; padding:6px 14px; border-radius:100px;">
+              {% blocktrans trimmed with currency=currency amount=amount|floatformat:2 context "billing" %}Pending {{ currency }}: {{ amount }}{% endblocktrans %}
+            </span>
+          {% endfor %}
+        {% else %}
+          {% comment %}
+            Consultant strip reads paid → pending → total. Green used to carry
+            the all-rows total, which sat next to "Pending" and so read as
+            money already received.
+          {% endcomment %}
+          {% for row in summary_by_currency %}
+            <span class="badge" style="background:#dcfce7; color:#15803d; font-weight:600; font-size:.78rem; padding:6px 14px; border-radius:100px;">
+              {% blocktrans trimmed with currency=row.currency amount=row.paid|floatformat:2 context "billing" %}Paid {{ currency }}: {{ amount }}{% endblocktrans %}
+            </span>
+            <span class="badge" style="background:#fef3c7; color:#92400e; font-weight:600; font-size:.78rem; padding:6px 14px; border-radius:100px;">
+              {% blocktrans trimmed with currency=row.currency amount=row.pending|floatformat:2 context "billing" %}Pending {{ currency }}: {{ amount }}{% endblocktrans %}
+            </span>
+            <span class="badge" style="background:#dbeafe; color:#1d4ed8; font-weight:600; font-size:.78rem; padding:6px 14px; border-radius:100px;">
+              {% blocktrans trimmed with currency=row.currency amount=row.total|floatformat:2 context "billing" %}Total {{ currency }}: {{ amount }}{% endblocktrans %}
+            </span>
+          {% endfor %}
         {% endif %}
-        {% for currency, amount in pending_by_currency.items %}
-          <span class="badge" style="background:#fef3c7; color:#92400e; font-weight:600; font-size:.78rem; padding:6px 14px; border-radius:100px;">
-            {% blocktrans trimmed with currency=currency amount=amount|floatformat:2 context "billing" %}Pending {{ currency }}: {{ amount }}{% endblocktrans %}
-          </span>
-        {% endfor %}
       </div>
     </div>
   </div>

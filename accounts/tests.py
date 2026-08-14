@@ -5499,13 +5499,29 @@ class CompanyFormTests(BaseIAMTestCase):
         self.assertFalse(form.is_valid())
         self.assertIn("state", form.errors)
 
-    def test_clean_invalid_state_for_country(self):
+    def test_clean_unlisted_state_is_accepted_as_typed(self):
+        """State is typed, not picked, so an unrecognised value is allowed.
+
+        It used to be rejected against COUNTRY_STATES, which made every country
+        with a missing or incomplete subdivision list impossible to file a
+        company in — the field was required and the dropdown that fed it could
+        render empty, so neither picking nor typing was possible.
+        """
         form = CompanyForm(
             data=self._form_data(state="Atlantis"),
             user=self.user,
         )
-        self.assertFalse(form.is_valid())
-        self.assertIn("state", form.errors)
+        self.assertTrue(form.is_valid(), form.errors.as_json())
+        self.assertEqual(form.cleaned_data["state"], "Atlantis")
+
+    def test_clean_known_state_is_canonicalised(self):
+        """A recognised state keeps the official spelling, whatever was typed."""
+        form = CompanyForm(
+            data=self._form_data(state="  texas "),
+            user=self.user,
+        )
+        self.assertTrue(form.is_valid(), form.errors.as_json())
+        self.assertEqual(form.cleaned_data["state"], "Texas")
 
     def test_clean_state_without_country(self):
         # country blank but state set → country error. country is required so

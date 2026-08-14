@@ -31,6 +31,24 @@ REGISTRATION_ID_RE = re.compile(r"^(?=.*[A-Za-z0-9])[A-Za-z0-9\-/._]{2,100}$")
 # Canonical English names → ISO codes (never translated CountryChoices labels).
 COUNTRY_NAME_TO_CODE = COUNTRY_ENGLISH_NAME_TO_CODE
 
+
+def _canonical_state(country, state):
+    """The official spelling of `state` within `country`, or None.
+
+    State is typed rather than picked, so "bavaria", "BAVARIA" and "Bavaria "
+    all mean the same subdivision. When the country has a COUNTRY_STATES list
+    and the typed value matches an entry ignoring case and surrounding space,
+    return that entry so the stored value is consistent with rows created while
+    the field was still a dropdown. Returns None when there's no list for the
+    country or nothing matches — the caller then keeps what the user typed.
+    """
+    options = COUNTRY_STATES.get((country or "").strip().upper()) or []
+    typed = " ".join((state or "").split()).casefold()
+    for option in options:
+        if option.casefold() == typed:
+            return option
+    return None
+
 # Strict website URL:
 #   - http/https only
 #   - domain with TLD (2+ letters)
@@ -223,9 +241,18 @@ class CompanyForm(forms.ModelForm):
                 "title": "City must be 2-60 letters (letters, spaces, hyphens, apostrophes and periods only). Numbers and special characters are not allowed.",
                 "autocomplete": "address-level2",
             }),
-            "state": forms.Select(attrs={
+            # Free text, not a dropdown. The dropdown was populated client-side
+            # from COUNTRY_STATES and rendered empty whenever that list was
+            # missing (or the script that fills it failed to load), leaving a
+            # REQUIRED field the user could neither pick nor type in — which
+            # blocked company creation and, with it, the certification request.
+            # A text box can always be completed; clean() below still snaps the
+            # value to the canonical spelling when the country has a known list.
+            "state": forms.TextInput(attrs={
                 "class": "form-control",
                 "id": "id_state",
+                "maxlength": "100",
+                "placeholder": "e.g. Bavaria",
                 "autocomplete": "address-level1",
             }),
             "postal_code": forms.TextInput(attrs={
@@ -521,18 +548,24 @@ class CompanyForm(forms.ModelForm):
         country = (cleaned.get("country") or "").strip()
         state = (cleaned.get("state") or "").strip()
 
-        # Country/state pairing — the State dropdown is populated client-side
-        # from COUNTRY_STATES[country], so any value outside that list is a
-        # tampered request or stale data, not a typo.
+        # Country/state pairing. State is typed, not picked, so an unrecognised
+        # value is a place we simply don't have on file — not a tampered
+        # request. Rejecting those made countries with no (or an incomplete)
+        # COUNTRY_STATES list impossible to file a company in. Instead, when the
+        # country HAS a list and the typed value matches an entry apart from
+        # case or spacing, snap it to the canonical spelling so the data stays
+        # consistent; anything else is accepted as typed.
         if country:
-            valid_states = COUNTRY_STATES.get(country, [])
             if not state:
-                self.add_error("state", forms.ValidationError(_("State is required.")))
-            elif valid_states and state not in valid_states:
-                self.add_error(
-                    "state",
-                    forms.ValidationError(_("Please select a valid state for the chosen country.")),
-                )
+                # Only when Django's own "required" error hasn't already fired,
+                # or the modal shows the same complaint twice.
+                if "state" not in self.errors:
+                    self.add_error("state", forms.ValidationError(_("State is required.")))
+            else:
+                canonical = _canonical_state(country, state)
+                if canonical and canonical != state:
+                    cleaned["state"] = canonical
+                    self.cleaned_data["state"] = canonical
         elif state:
             self.add_error("country", forms.ValidationError(_("Country is required.")))
 

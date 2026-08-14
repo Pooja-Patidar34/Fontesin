@@ -413,13 +413,26 @@ def territory_conflict(level, country, region, city, local_area, exclude_node_id
 
 def _application_conflict(application):
     """The existing franchise (if any) that already holds the territory+level an
-    application is requesting."""
-    return territory_conflict(
+    application is requesting.
+
+    Canonicalised first: a Regional request may carry an informational city
+    (the applicant's base of operations), which is not part of the territory.
+    Comparing it raw would look for a node whose territory_city matches and
+    find nothing, letting a second Regional into a state that is already
+    taken."""
+    country, region, city, local_area = canonical_territory(
         application.requested_level,
         application.requested_country,
         application.requested_region,
         application.requested_city,
         application.requested_local_area,
+    )
+    return territory_conflict(
+        application.requested_level,
+        country,
+        region,
+        city,
+        local_area,
         exclude_node_id=application.created_franchise_id,
     )
 
@@ -505,11 +518,19 @@ def _create_node_from_application(application, parent, reviewer, now,
     level_label = dict(FranchiseLevel.CHOICES).get(
         application.requested_level, application.requested_level
     )
-    # A Master covers the whole country — never a region/city (spec §3.1).
-    is_master = application.requested_level == FranchiseLevel.MASTER
-    t_region = "" if is_master else application.requested_region
-    t_city = "" if is_master else application.requested_city
-    t_local = "" if is_master else application.requested_local_area
+    # The node's territory is the canonical one for its level: a Master covers
+    # the whole country (never a region/city, spec §3.1) and a Regional covers
+    # its whole state — so a Regional's informational city stays on the
+    # application and is not written into the node's territory, where it would
+    # silently narrow what the franchise occupies and change who conflicts with
+    # whom.
+    _, t_region, t_city, t_local = canonical_territory(
+        application.requested_level,
+        application.requested_country,
+        application.requested_region,
+        application.requested_city,
+        application.requested_local_area,
+    )
     territory = _territory_label(
         application.requested_country, t_region, t_city, t_local,
     )
@@ -722,6 +743,14 @@ def franchise_request_submit(request):
     # + city). This makes a Master correctly contain every sub-franchise beneath
     # it and stops a stray deeper field from slipping a duplicate past the
     # one-per-territory check below.
+    # A Regional may name the city it operates out of. That city is recorded on
+    # the request for the reviewer, but it does NOT narrow the territory: a
+    # Regional still occupies its whole state, so exclusivity keeps comparing
+    # country + region only (canonical_territory strips city below Micro).
+    # Kept in its own variable so the informational value can never reach the
+    # identity checks below.
+    typed_city = city if level == FranchiseLevel.REGIONAL else ""
+
     country, region, city, local_area = canonical_territory(
         level, country, region, city, local_area
     )
@@ -759,15 +788,20 @@ def franchise_request_submit(request):
     # A holder may buy franchises in several territories, so several requests can
     # be in flight at once — but not two for the SAME level + territory, which
     # would queue a request that can only be rejected.
-    if FranchiseApplication.objects.filter(
-        applicant_user=request.user,
-        application_status__in=FranchiseApplicationStatus.OPEN,
-        requested_level=level,
-        requested_country=country,
-        requested_region=region,
-        requested_city=city,
-        requested_local_area=local_area,
-    ).exists():
+    # Compared on the canonical territory, so a Regional that names a city is
+    # still a duplicate of an open Regional request for the same state — the
+    # informational city must not make it look like a different territory.
+    open_dupe = {
+        "applicant_user": request.user,
+        "application_status__in": FranchiseApplicationStatus.OPEN,
+        "requested_level": level,
+        "requested_country": country,
+        "requested_region": region,
+    }
+    if level == FranchiseLevel.MICRO:
+        open_dupe["requested_city"] = city
+        open_dupe["requested_local_area"] = local_area
+    if FranchiseApplication.objects.filter(**open_dupe).exists():
         messages.info(
             request,
             _("You already have a request under review for this territory. Please wait for the decision."),
@@ -778,13 +812,14 @@ def franchise_request_submit(request):
     # a sub-franchise request routes to its DIRECT parent franchise (the deepest
     # active ancestor covering the territory), which is the operational reviewer.
     parent = resolve_parent_node(level, country, region, city, local_area)
-    if level != FranchiseLevel.MASTER and parent is None:
-        messages.error(
-            request,
-            _("No active parent franchise covers this territory yet. A higher-level "
-              "franchise must be active before you can request a sub-franchise here."),
-        )
-        return redirect("franchise-request")
+    # A sub-franchise request for a territory no active franchise covers yet used
+    # to be refused outright — the applicant got a dead end and NOBODY was told
+    # there was demand for that territory. It's now accepted as a parentless
+    # request, which routes to the Platform Admin's Pending queue exactly like a
+    # Master request does. Approval still requires a parent (Tenant.clean, spec
+    # §10.2): the Admin sets up the chain first, and the approve path re-resolves
+    # the parent at that point.
+    unrouted = level != FranchiseLevel.MASTER and parent is None
 
     # You can't become your own franchisee: a territory that falls under a node
     # this user already holds is added from their own Franchises section as a
@@ -803,7 +838,10 @@ def franchise_request_submit(request):
         requested_level=level,
         requested_country=country,
         requested_region=region,
-        requested_city=city,
+        # `city` is canonical (blank for a Regional); `typed_city` carries the
+        # Regional applicant's informational city. They are the same value for
+        # a Micro, where the city IS the territory.
+        requested_city=city or typed_city,
         requested_local_area=local_area,
         parent_franchise=parent,
         application_note=note,
@@ -833,6 +871,16 @@ def franchise_request_submit(request):
         messages.success(
             request,
             _("Your request has been submitted to %(parent)s for review.") % {"parent": parent.name},
+        )
+    elif unrouted:
+        # Say plainly that there's no franchise above this territory yet, so the
+        # applicant understands why it goes to the Platform Admin and that it may
+        # wait until the higher tier exists.
+        messages.success(
+            request,
+            _("No franchise covers this territory yet, so your request has gone to the "
+              "Platform Admin. They'll set up the higher-level franchise it belongs "
+              "under before approving it."),
         )
     else:
         messages.success(
@@ -1009,6 +1057,33 @@ def franchise_application_action(request, application_id):
 
     # --- Approve: create the node in PENDING_CONTRACT under its routed parent
     # (None for a Master → top of tree). ---
+    # A sub-franchise request submitted for an uncovered territory carries no
+    # parent. By the time the Admin approves it the higher tier may exist, so
+    # resolve it now rather than failing on the model's "must have a parent"
+    # rule with a message that doesn't say what to do about it.
+    if parent is None and application.requested_level != FranchiseLevel.MASTER:
+        parent = resolve_parent_node(
+            application.requested_level,
+            application.requested_country,
+            application.requested_region,
+            application.requested_city,
+            application.requested_local_area,
+        )
+        if parent is None:
+            messages.error(
+                request,
+                _("No active franchise covers this territory yet, so there's nothing to "
+                  "attach %(level)s to. Create and activate the higher-level franchise "
+                  "first, then approve this request.")
+                % {"level": dict(FranchiseLevel.CHOICES).get(
+                    application.requested_level, application.requested_level)},
+            )
+            return redirect("franchise-applications")
+        # Record the parent we just resolved so the queue and the audit trail
+        # show where it landed.
+        application.parent_franchise = parent
+        application.save(update_fields=["parent_franchise", "updated_at"])
+
     try:
         node = _create_node_from_application(application, parent=parent, reviewer=request.user, now=now)
     except ValidationError as exc:
@@ -1207,22 +1282,47 @@ def franchise_activate(request, tenant_id):
     reach ACTIVE and grant the holder full franchise rights. The Micro
     exclusivity + parent-active + territory checks run one more time, and the DB
     constraint is the final backstop against a race."""
-    if not request.user.is_superuser:
-        raise PermissionDenied()
-
     node = get_object_or_404(
         Tenant.objects.filter(franchise_level__isnull=False),
         id=tenant_id,
     )
+
+    # Who may activate: the Platform Admin (any node), or the holder of this
+    # node's DIRECT PARENT once the Admin has recorded the fee as paid. The
+    # parent activating its own sub-franchise is the operational half of the
+    # payment flow — the Admin confirms the money, the parent brings the unit
+    # live in its tree. `_reviewer_parent_ids` is the same "nodes you own and
+    # that are ACTIVE" set that decides whose requests you review.
+    is_admin = request.user.is_superuser
+    is_parent_holder = bool(node.parent_id) and node.parent_id in _reviewer_parent_ids(request.user)
+    if not is_admin and not is_parent_holder:
+        raise PermissionDenied()
+
+    # Where each actor came from, so neither is bounced into the other's queue.
+    back = "franchise-applications" if is_admin else "franchise-child-requests"
+
     if node.franchise_status == FranchiseUnitStatus.ACTIVE:
         messages.info(request, _("That franchise is already active."))
-        return redirect("franchise-applications")
+        return redirect(back)
+
+    # A parent holder activates only what has been paid for; recording payment
+    # stays the Admin's call (franchise_mark_fee_paid).
+    if not is_admin and node.franchise_fee_status != FranchiseFeeStatus.PAID:
+        messages.error(
+            request,
+            _("%(name)s can't be activated yet — the Platform Admin has to confirm the "
+              "franchise fee first. You'll be notified when it's marked as paid.")
+            % {"name": node.name},
+        )
+        return redirect(back)
 
     now = timezone.now()
-    # Fold contract signature + fee payment into activation for the MVP; the
-    # fields stay separate so a future UI can split the steps.
+    # The Admin's activation still folds contract signature + fee payment in (the
+    # MVP shortcut); a parent holder only signs off the contract, because the fee
+    # was already confirmed above and is not theirs to record.
     node.contract_status = ContractStatus.SIGNED
-    node.franchise_fee_status = FranchiseFeeStatus.PAID
+    if is_admin:
+        node.franchise_fee_status = FranchiseFeeStatus.PAID
     node.franchise_status = FranchiseUnitStatus.ACTIVE
     node.activated_at = now
     if node.approved_by is None:
@@ -1232,7 +1332,7 @@ def franchise_activate(request, tenant_id):
         node.clean()  # re-check exclusivity/parent now that status is ACTIVE
     except ValidationError as exc:
         messages.error(request, " ".join(exc.messages))
-        return redirect("franchise-applications")
+        return redirect(back)
 
     try:
         node.save(update_fields=[
@@ -1245,7 +1345,7 @@ def franchise_activate(request, tenant_id):
             request,
             _("Could not activate: an active Micro-Franchise already exists in this territory."),
         )
-        return redirect("franchise-applications")
+        return redirect(back)
 
     # Owning a franchise is ADDITIVE — the holder's role is left exactly as it
     # was. Activation used to overwrite it with the `franchise` role, which
@@ -1301,6 +1401,60 @@ def franchise_activate(request, tenant_id):
         pass
 
     messages.success(request, _("%(name)s is now active.") % {"name": node.name})
+    return redirect(back)
+
+
+@login_required
+@require_POST
+@transaction.atomic
+def franchise_mark_fee_paid(request, tenant_id):
+    """Platform Admin records the franchise fee as PAID (spec §5, payment step).
+
+    Split out of activation so the money and the go-live are separate events:
+    the Admin confirms payment here, and the holder of the node's direct parent
+    then activates it in their own queue. The Admin can still do both in one
+    click via franchise_activate, which keeps the existing Master flow intact."""
+    if not request.user.is_superuser:
+        raise PermissionDenied()
+
+    node = get_object_or_404(
+        Tenant.objects.filter(franchise_level__isnull=False),
+        id=tenant_id,
+    )
+    if node.franchise_status == FranchiseUnitStatus.ACTIVE:
+        messages.info(request, _("That franchise is already active."))
+        return redirect("franchise-applications")
+    if node.franchise_fee_status == FranchiseFeeStatus.PAID:
+        messages.info(
+            request,
+            _("The fee for %(name)s is already marked as paid.") % {"name": node.name},
+        )
+        return redirect("franchise-applications")
+
+    node.franchise_fee_status = FranchiseFeeStatus.PAID
+    node.save(update_fields=["franchise_fee_status", "updated_at"])
+
+    _audit(request, node, "franchise.fee_paid", level=node.franchise_level,
+           status=node.franchise_status, payment_status=node.franchise_fee_status)
+
+    try:
+        from accounts.utils.notifications import notify_franchise_fee_paid
+        notify_franchise_fee_paid(node)
+    except Exception:
+        logger.exception("Failed to send fee-paid notification for node %s", node.id)
+
+    if node.parent_id:
+        messages.success(
+            request,
+            _("Recorded the fee for %(name)s as paid. %(parent)s can now activate it.")
+            % {"name": node.name, "parent": node.parent.name},
+        )
+    else:
+        messages.success(
+            request,
+            _("Recorded the fee for %(name)s as paid. You can activate it now.")
+            % {"name": node.name},
+        )
     return redirect("franchise-applications")
 
 

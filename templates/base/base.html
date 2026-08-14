@@ -478,43 +478,6 @@
       color: #fff !important;
       font-weight: 600;
     }
-
-    /* ── Global loading overlay ──
-       Shown while a page is still loading or while a navigation is in flight.
-       It is revealed on a delay (see the script at the bottom of <body>), so a
-       fast page never flashes it — it only appears when the UI is genuinely
-       taking time. */
-    #app-loader {
-      position: fixed;
-      inset: 0;
-      z-index: 4000;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      gap: 14px;
-      background: rgba(240, 244, 248, .72);
-      backdrop-filter: blur(2px);
-    }
-    #app-loader.is-visible { display: flex; }
-    #app-loader .app-loader__spinner {
-      width: 44px;
-      height: 44px;
-      border: 4px solid #d6e2ee;
-      border-top-color: #1B7BE4;
-      border-radius: 50%;
-      animation: app-loader-spin .7s linear infinite;
-    }
-    #app-loader .app-loader__text {
-      font-size: .85rem;
-      font-weight: 600;
-      color: #1B2E3F;
-      letter-spacing: .02em;
-    }
-    @keyframes app-loader-spin { to { transform: rotate(360deg); } }
-    @media (prefers-reduced-motion: reduce) {
-      #app-loader .app-loader__spinner { animation-duration: 2s; }
-    }
   </style>
 
   {% comment %}
@@ -526,19 +489,6 @@
 </head>
 
 <body class="hold-transition sidebar-mini">
-
-<div id="app-loader" role="status" aria-live="polite" aria-hidden="true">
-  <div class="app-loader__spinner"></div>
-  <div class="app-loader__text">{% trans "Loading…" context "common" %}</div>
-</div>
-<script>
-  // Start the initial-load timer as early as possible — before the rest of the
-  // page parses — so a slow render is covered. window.load cancels it.
-  window.__appLoaderTimer = setTimeout(function () {
-    var el = document.getElementById("app-loader");
-    if (el) { el.classList.add("is-visible"); el.setAttribute("aria-hidden", "false"); }
-  }, 400);
-</script>
 
 <div class="wrapper">
 
@@ -1813,85 +1763,6 @@
   </div>
 </div>
 {% endif %}
-
-<script>
-  // Global loading overlay. Two jobs:
-  //   1. Initial load — the timer started at the top of <body> reveals the
-  //      overlay if the page hasn't finished loading within 400ms.
-  //   2. Navigation — clicking an internal link or submitting a form leaves the
-  //      current page on screen until the server responds, which reads as a
-  //      frozen UI on slow pages. Re-arm the overlay for those too.
-  (function () {
-    var el = document.getElementById("app-loader");
-    if (!el) return;
-    var timer = window.__appLoaderTimer || null;
-    var safety = null;
-
-    function show(delay) {
-      hide();
-      timer = setTimeout(function () {
-        el.classList.add("is-visible");
-        el.setAttribute("aria-hidden", "false");
-        // Some links never navigate away — a file download served with
-        // Content-Disposition, for one. Don't strand the user behind a
-        // permanent overlay in that case.
-        safety = setTimeout(hide, 20000);
-      }, delay);
-    }
-    function hide() {
-      if (timer) { clearTimeout(timer); timer = null; }
-      if (safety) { clearTimeout(safety); safety = null; }
-      el.classList.remove("is-visible");
-      el.setAttribute("aria-hidden", "true");
-    }
-
-    window.addEventListener("load", hide);
-    // Back/forward out of the bfcache restores the old DOM with the overlay
-    // still up — clear it.
-    window.addEventListener("pageshow", hide);
-
-    document.addEventListener("click", function (e) {
-      var a = e.target.closest ? e.target.closest("a") : null;
-      if (!a || e.defaultPrevented) return;
-      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-      var href = a.getAttribute("href") || "";
-      // Skip anything that doesn't actually navigate this tab.
-      if (!href || href.charAt(0) === "#" || a.target === "_blank" ||
-          a.hasAttribute("download") || /^(javascript|mailto|tel):/i.test(href)) return;
-      if (a.hasAttribute("data-toggle") || a.hasAttribute("data-bs-toggle")) return;
-      if (a.host && a.host !== window.location.host) return;
-      show(400);
-    }, true);
-
-    document.addEventListener("submit", function (e) {
-      var form = e.target;
-      if (e.defaultPrevented || !form || form.hasAttribute("data-no-loader")) return;
-      show(400);
-    }, true);
-
-    // A handler further down may cancel the click / submit and go over AJAX
-    // instead; that fires no navigation, so drop the overlay again.
-    document.addEventListener("submit", function (e) {
-      if (e.defaultPrevented) hide();
-    });
-    document.addEventListener("click", function (e) {
-      if (e.defaultPrevented) hide();
-    });
-
-    // Belt and braces for the two bubble listeners above. They never run for a
-    // synthetic event dispatched without `bubbles: true` (capture still fires,
-    // so the overlay would go up and never come down until the 20s cap). Re-check
-    // once the current handlers have run, whatever phase they were in.
-    function cancelIfPrevented(e) {
-      setTimeout(function () { if (e.defaultPrevented) hide(); }, 0);
-    }
-    document.addEventListener("submit", cancelIfPrevented, true);
-    document.addEventListener("click", cancelIfPrevented, true);
-
-    // Expose for pages that do their own long-running work.
-    window.appLoader = { show: function () { show(0); }, hide: hide };
-  })();
-</script>
 
 <script>
   // Opening the bell marks read exactly the notifications it showed, then
