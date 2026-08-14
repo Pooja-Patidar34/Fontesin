@@ -32,6 +32,16 @@ REGISTRATION_ID_RE = re.compile(r"^(?=.*[A-Za-z0-9])[A-Za-z0-9\-/._]{2,100}$")
 COUNTRY_NAME_TO_CODE = COUNTRY_ENGLISH_NAME_TO_CODE
 
 
+def _state_choices(country):
+    """(value, label) pairs for the State dropdown of `country`.
+
+    Empty (just the prompt) for a country with no subdivision list — the
+    template's free-text twin covers those.
+    """
+    options = COUNTRY_STATES.get((country or "").strip().upper()) or []
+    return [("", _("Select State"))] + [(name, name) for name in options]
+
+
 def _canonical_state(country, state):
     """The official spelling of `state` within `country`, or None.
 
@@ -241,18 +251,17 @@ class CompanyForm(forms.ModelForm):
                 "title": "City must be 2-60 letters (letters, spaces, hyphens, apostrophes and periods only). Numbers and special characters are not allowed.",
                 "autocomplete": "address-level2",
             }),
-            # Free text, not a dropdown. The dropdown was populated client-side
-            # from COUNTRY_STATES and rendered empty whenever that list was
-            # missing (or the script that fills it failed to load), leaving a
-            # REQUIRED field the user could neither pick nor type in — which
-            # blocked company creation and, with it, the certification request.
-            # A text box can always be completed; clean() below still snaps the
-            # value to the canonical spelling when the country has a known list.
-            "state": forms.TextInput(attrs={
+            # Dropdown of the country's subdivisions. The options are rendered
+            # SERVER-SIDE for whatever country the form already knows (see
+            # __init__), so Edit and a re-rendered invalid form show the right
+            # list without waiting on JavaScript; the script only has to rebuild
+            # it when the user changes country. The free-text twin beside it in
+            # the template covers countries with no list on file, and takes over
+            # if the script fails to load — otherwise this REQUIRED field can
+            # render as an empty, unusable box and block company creation.
+            "state": forms.Select(attrs={
                 "class": "form-control",
                 "id": "id_state",
-                "maxlength": "100",
-                "placeholder": "e.g. Bavaria",
                 "autocomplete": "address-level1",
             }),
             "postal_code": forms.TextInput(attrs={
@@ -401,6 +410,18 @@ class CompanyForm(forms.ModelForm):
         # still leave them empty.
         for required_field in ("city", "state", "country", "classification"):
             self.fields[required_field].required = True
+
+        # Fill the State dropdown server-side for the country this form already
+        # knows — the posted one on a bound form, otherwise the saved company's.
+        # Rendering the options here means Edit and a re-rendered invalid form
+        # show the correct list immediately; the client script only has to
+        # rebuild it when the user picks a DIFFERENT country. It also means a
+        # missing/blocked script degrades to "the list you already had" instead
+        # of an empty required control.
+        self.fields["state"].widget.choices = _state_choices(
+            (self.data.get("country") if self.is_bound else None)
+            or getattr(self.instance, "country", "")
+        )
 
         # Drop the implicit "---------" blank option from classification so
         # the dropdown can't be submitted unselected.

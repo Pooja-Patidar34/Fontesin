@@ -8,7 +8,7 @@
   source of truth for company creation/validation. On success the host page
   is reloaded so the new row renders in that page's own row format.
 
-  Required context: form, is_business_user, can_manage,
+  Required context: form, country_states, is_business_user, can_manage,
   and (optional) tenants / selected_tenant_id for the superuser tenant
   picker. Trigger by giving any element id="add-company-btn".
 {% endcomment %}
@@ -180,10 +180,14 @@
             <div class="form-group col-md-6">
               <label>{% trans "State" context "companies" %} <span class="text-danger">*</span></label>
               {% comment %}
-                Plain text box — see the note in dashboard/companies.html. The
-                dropdown could render empty and then blocked a required field.
+                Dropdown + free-text twin, one field name — see the note in
+                dashboard/companies.html. Only one is ever enabled.
               {% endcomment %}
               {{ form.state }}
+              <input type="text" name="state" id="id_state_text" class="form-control"
+                     style="display:none;" disabled maxlength="100"
+                     placeholder="{% trans 'e.g. Bavaria' context 'companies' %}"
+                     autocomplete="address-level1"/>
             </div>
           </div>
 
@@ -351,7 +355,42 @@
   </div>
 </div>
 
+{% comment %} Country → state map, indexed client-side when a country is picked. {% endcomment %}
+{{ country_states|json_script:"company-country-states" }}
+
 {% include "dashboard/_company_i18n.html" %}
+
+<script src="{% static 'adminlte/js/country_state_field.js' %}"></script>
+<script>
+// --- Country / State dependent field (same wiring as the Company DB page) ---
+document.addEventListener("DOMContentLoaded", function () {
+  var stateSelect = document.getElementById("id_state");
+  var stateText = document.getElementById("id_state_text");
+
+  // No helper (e.g. a deploy without collectstatic) → free-text box, so the
+  // required field is never left unusable.
+  if (typeof initCountryStateField !== "function") {
+    if (stateSelect && stateText) {
+      stateSelect.disabled = true;
+      stateSelect.style.display = "none";
+      stateText.disabled = false;
+      stateText.style.display = "";
+    }
+    return;
+  }
+
+  const dataNode = document.getElementById("company-country-states");
+  const stateField = initCountryStateField({
+    countryEl: document.getElementById("id_country"),
+    selectEl: stateSelect,
+    textEl: stateText,
+    states: dataNode ? JSON.parse(dataNode.textContent) : {},
+    placeholder: COMPANY_I18N.selectState,
+  });
+  // Seed from whatever the country box already holds (edit / re-rendered form).
+  if (stateField) stateField.rebuild();
+});
+</script>
 
 <script>
 // --- Add Company modal: open + AJAX create ---
