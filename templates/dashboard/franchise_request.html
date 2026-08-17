@@ -141,25 +141,25 @@
         </div>
       </div>
 
-      {% if is_franchise_holder %}
-      <div class="fr-banner fr-banner--success">
-        <i class="fas fa-check-circle"></i>
-        <div>
-          {% blocktrans trimmed context "franchise" %}
-          You're a franchise partner. You can buy further franchises in any territory that is
-          still available — your current franchises are listed on the right. Territories inside
-          a franchise you already hold are added from your <strong>Franchises</strong> section
-          as sub-franchises instead.
-          {% endblocktrans %}
+      {% comment %} One franchise per company. The company being acted as either
+         still has its slot free — form — or has spent it on a franchise it holds
+         or a request under review, in which case the form is replaced by what is
+         holding the slot. Buying a second franchise means switching companies,
+         so say that where the form used to be. {% endcomment %}
+      {% if can_request_franchise %}
+        {% if is_franchise_holder %}
+        <div class="fr-banner fr-banner--success">
+          <i class="fas fa-check-circle"></i>
+          <div>
+            {% blocktrans trimmed context "franchise" %}
+            You're a franchise partner. Each of your companies can hold one franchise, so you can
+            buy another for a company that doesn't have one yet. Territories inside a franchise you
+            already hold are added from your <strong>Franchises</strong> section as sub-franchises
+            instead.
+            {% endblocktrans %}
+          </div>
         </div>
-      </div>
-      {% endif %}
-      {% if has_open_application %}
-      <div class="fr-banner fr-banner--warn">
-        <i class="fas fa-hourglass-half"></i>
-        <div>{% trans "You have a franchise request under review. You'll be notified of the decision — you can still request another territory below." context "franchise" %}</div>
-      </div>
-      {% endif %}
+        {% endif %}
       <form method="post" action="{% url 'franchise-request-submit' %}" class="fr-body">
         {% csrf_token %}
         {% if owned_companies %}
@@ -230,6 +230,59 @@
           <i class="fas fa-paper-plane"></i> {% trans "Request for approval" context "franchise" %}
         </button>
       </form>
+
+      {% elif slot_node %}
+      <div class="fr-body">
+        <div class="fr-banner fr-banner--success" style="margin:0;">
+          <i class="fas fa-check-circle"></i>
+          <div>
+            {% if slot_company %}
+              {% blocktrans trimmed with company=slot_company.name name=slot_node.name context "franchise" %}
+              <strong>{{ company }}</strong> holds the franchise {{ name }}. Each company can hold one
+              franchise, so there is nothing to request here.
+              {% endblocktrans %}
+            {% else %}
+              {% blocktrans trimmed with name=slot_node.name context "franchise" %}
+              You hold the franchise {{ name }}, so there is nothing to request here.
+              {% endblocktrans %}
+            {% endif %}
+            <div style="margin-top:8px;">
+              {% if has_other_free_company %}
+                {% trans "To buy another franchise, switch to one of your companies that doesn't hold one yet." context "franchise" %}
+              {% else %}
+                {% trans "Territories inside a franchise you already hold are added from your Franchises section as sub-franchises." context "franchise" %}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {% else %}
+      <div class="fr-body">
+        <div class="fr-banner fr-banner--warn" style="margin:0;">
+          <i class="fas fa-hourglass-half"></i>
+          <div>
+            {% if slot_company %}
+              {% blocktrans trimmed with company=slot_company.name context "franchise" %}
+              <strong>{{ company }}</strong> has a franchise request under review. You'll be notified of
+              the decision — if it's declined, you can request another territory for this company.
+              {% endblocktrans %}
+            {% else %}
+              {% trans "You have a franchise request under review. You'll be notified of the decision — if it's declined, you can request another territory." context "franchise" %}
+            {% endif %}
+            <div class="fr-item__sub" style="margin-top:8px;">
+              {{ slot_application.get_requested_level_display }} ·
+              {{ slot_application.requested_country }}{% if slot_application.requested_region %} · {{ slot_application.requested_region }}{% endif %}{% if slot_application.requested_city %} · {{ slot_application.requested_city }}{% endif %}
+            </div>
+            {% if has_other_free_company %}
+            <div style="margin-top:8px;">
+              {% trans "To buy a franchise for another of your companies, switch to it first." context "franchise" %}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
     </div>
 
       {% comment %} My Requests — placed in the left column so it's visible without
@@ -428,6 +481,8 @@
 </div>
 
 {{ taken_territories|json_script:"fr-taken-territories" }}
+{{ parent_coverage|json_script:"fr-parent-coverage" }}
+{{ level_ranks|json_script:"fr-level-ranks" }}
 {{ country_states|json_script:"fr-country-states" }}
 {{ form_data|json_script:"fr-form-data" }}
 <script>
@@ -564,6 +619,14 @@
     var TAKEN = takenNode ? JSON.parse(takenNode.textContent) : [];
     var MSG_TPL = "{% filter escapejs %}{% trans "This %(scope)s already has an active %(level)s (%(name)s), so it can't be granted twice." %}{% endfilter %}";
 
+    // Active franchises a sub-franchise could sit under, and the tier depths the
+    // containment rule compares. Mirrors resolve_parent_node() on the server.
+    var coverNode = document.getElementById("fr-parent-coverage");
+    var COVERAGE = coverNode ? JSON.parse(coverNode.textContent) : [];
+    var ranksNode = document.getElementById("fr-level-ranks");
+    var RANKS = ranksNode ? JSON.parse(ranksNode.textContent) : {};
+    var NO_COVER_TPL = "{% filter escapejs %}{% trans "No active franchise covers this territory yet, so a %(level)s has nothing to sit under. A Master Franchise for this country has to exist and be active first — request that instead, or wait until one is in place." %}{% endfilter %}";
+
     var banner = document.getElementById("fr-conflict");
     var bannerMsg = document.getElementById("fr-conflict-msg");
 
@@ -600,11 +663,44 @@
       return null;
     }
 
+    // A sub-franchise needs an ACTIVE node above it whose territory contains the
+    // requested one. Same rule as resolve_parent_node(): the candidate must sit
+    // strictly higher in the tree, and every territory field it names must match
+    // — a field it leaves blank places no constraint at that depth.
+    function lacksParent() {
+      var lvl = (val("requested_level") || "").trim().toUpperCase();
+      var country = (val("requested_country") || "").trim().toUpperCase();
+      if (!lvl || !country || lvl === "MASTER") return false;
+      var rank = RANKS[lvl] || 0;
+      var region = norm(val("requested_region"));
+      var city = norm(val("requested_city"));
+      var local = norm(val("requested_local_area"));
+      for (var i = 0; i < COVERAGE.length; i++) {
+        var c = COVERAGE[i];
+        if ((c.rank || 0) >= rank) continue;
+        if (c.country && c.country !== country) continue;
+        if (c.region && c.region !== region) continue;
+        if (c.city && c.city !== city) continue;
+        if (c.local_area && c.local_area !== local) continue;
+        return false;
+      }
+      return true;
+    }
+
+    function levelLabel() {
+      var opt = levelEl.options[levelEl.selectedIndex];
+      return opt ? opt.text : "";
+    }
+
     function showConflict(t) {
       bannerMsg.textContent = MSG_TPL
         .replace("%(scope)s", t.scope)
         .replace("%(level)s", t.level_label)
         .replace("%(name)s", t.name);
+      banner.style.display = "flex";
+    }
+    function showNoCover() {
+      bannerMsg.textContent = NO_COVER_TPL.replace("%(level)s", levelLabel());
       banner.style.display = "flex";
     }
     function hideConflict() { banner.style.display = "none"; }
@@ -614,6 +710,14 @@
       if (t) {
         e.preventDefault();
         showConflict(t);
+        banner.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+      // Only worth saying once the territory is filled in enough to judge — the
+      // level's own required-field markers handle the rest.
+      if (lacksParent()) {
+        e.preventDefault();
+        showNoCover();
         banner.scrollIntoView({ behavior: "smooth", block: "center" });
       }
     });

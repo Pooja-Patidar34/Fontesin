@@ -48,10 +48,13 @@ from accounts.models import (
     User,
 )
 from accounts.utils.franchise_access import (
+    company_franchise_node,
+    company_open_application,
     franchise_manager_required,
     is_franchise_holder,
     owned_franchise_nodes,
     scope_applications_to_active_company,
+    scoping_company,
 )
 
 
@@ -646,12 +649,6 @@ def franchise_request_view(request):
         application_status__in=FranchiseApplicationStatus.OPEN
     ).exists()
 
-    # Holding a franchise no longer closes this form. A holder may buy further
-    # franchises anywhere in the world that is still available — one per
-    # company they own, in different countries — so the form stays open and the
-    # holder simply sees their existing franchises alongside it. The only
-    # territories they can't buy here are the ones under their OWN node; those
-    # are added as sub-franchise proposals (guarded in the submit view).
     is_franchise_holder = bool(owned)
 
     # The company a new franchise would be bought for. A Business User picks
@@ -662,6 +659,31 @@ def franchise_request_view(request):
         Company.objects.filter(owner_user=request.user).order_by("name")
     )
     active_company = resolve_active_company(request.user)
+
+    # ONE franchise per company. The buying company's slot is taken from the
+    # moment its request is approved (and while one is still under review), so
+    # the form disappears for that company — the holder switches to another of
+    # their companies to buy a second franchise. A rejected or cancelled request
+    # leaves the slot free, which is what brings the form back.
+    #
+    # Gated on `scoping_company`, not on `resolve_active_company`: the latter
+    # GUESSES a company for a multi-company owner who hasn't picked one, and a
+    # guess must never be the reason a capability disappears. When the company is
+    # genuinely unknown the form stays up and the guard in
+    # franchise_request_submit — which knows the exact company being bought for —
+    # is the authority.
+    gate_company = scoping_company(request.user)
+    slot_node = company_franchise_node(gate_company)
+    slot_application = None if slot_node else company_open_application(gate_company)
+    can_request_franchise = not (slot_node or slot_application)
+
+    # Only companies with a free slot can be bought for, so a blocked company is
+    # not offered in the picker — otherwise the form would let the holder aim a
+    # request at a company the server is about to refuse.
+    eligible_companies = [
+        c for c in owned_companies
+        if company_franchise_node(c) is None and company_open_application(c) is None
+    ]
 
     # Territories already held (active or in-flight) at each level, so the form
     # can warn the applicant the moment they pick a taken territory — without a
@@ -689,6 +711,28 @@ def franchise_request_view(request):
             "name": n.name,
         })
 
+    # Active franchises that can act as a PARENT, so the form can tell the
+    # applicant a sub-franchise has nothing to sit under before they submit — the
+    # counterpart of `taken_territories` above, and the same division of labour:
+    # the guard in franchise_request_submit is the authority, this is the earlier,
+    # kinder version of the same "no". Territories are normalised for
+    # case-insensitive comparison in the browser; a blank field means "no
+    # constraint at this depth", i.e. the node covers everything below it.
+    parent_coverage = [
+        {
+            "level": n.franchise_level,
+            "rank": FranchiseLevel.RANK.get(n.franchise_level, 0),
+            "country": (n.territory_country or "").strip().upper(),
+            "region": (n.territory_region or "").strip().lower(),
+            "city": (n.territory_city or "").strip().lower(),
+            "local_area": (n.territory_local_area or "").strip().lower(),
+        }
+        for n in Tenant.objects.filter(
+            franchise_level__isnull=False,
+            franchise_status=FranchiseUnitStatus.ACTIVE,
+        )
+    ]
+
     # Values from a rejected submit (if any), popped so they only pre-fill once.
     form_data = request.session.pop("franchise_request_form", None) or {}
 
@@ -701,8 +745,16 @@ def franchise_request_view(request):
             "owned_franchises": owned,
             "has_open_application": has_open,
             "is_franchise_holder": is_franchise_holder,
-            "owned_companies": owned_companies,
+            # The picker offers only companies whose franchise slot is free.
+            "owned_companies": eligible_companies,
             "active_company": active_company,
+            # One-per-company gate: what is holding this company's slot, if
+            # anything, so the page can explain the missing form.
+            "can_request_franchise": can_request_franchise,
+            "slot_company": gate_company,
+            "slot_node": slot_node,
+            "slot_application": slot_application,
+            "has_other_free_company": bool(eligible_companies),
             "removal_history": removal_history,
             "level_choices": FranchiseLevel.CHOICES,
             "country_choices": CountryChoices.CHOICES,
@@ -710,6 +762,10 @@ def franchise_request_view(request):
             # through json_script, which escapes the applicant-supplied node
             # names and free-text regions/cities it carries.
             "taken_territories": taken_territories,
+            # Active nodes a sub-franchise could attach to, + the depth ranks the
+            # containment rule needs (a parent must sit strictly above the child).
+            "parent_coverage": parent_coverage,
+            "level_ranks": FranchiseLevel.RANK,
             # Country -> subdivisions for the State/Region dropdown (falls back
             # to free text for countries not in the map).
             "country_states": COUNTRY_STATES,
@@ -739,6 +795,29 @@ def franchise_request_submit(request):
             "requested_city", "requested_local_area", "application_note",
         )
     }
+
+    # ONE franchise per company, checked before anything about the territory:
+    # whatever was typed, this company cannot buy a second one. The page hides
+    # the form and drops the company from the picker, so reaching here means a
+    # stale page or a hand-made POST.
+    buying_company = _requesting_company(request)
+    held = company_franchise_node(buying_company)
+    if held is not None:
+        messages.error(
+            request,
+            _("%(company)s already holds the franchise %(name)s. Each company can hold "
+              "one franchise — switch to another of your companies to buy a second one.")
+            % {"company": buying_company.name, "name": held.name},
+        )
+        return redirect("franchise-request")
+    in_flight = company_open_application(buying_company)
+    if in_flight is not None:
+        messages.info(
+            request,
+            _("%(company)s already has a franchise request under review. You'll be "
+              "notified of the decision.") % {"company": buying_company.name},
+        )
+        return redirect("franchise-request")
 
     level = (request.POST.get("requested_level") or "").strip().upper()
     if level not in dict(FranchiseLevel.CHOICES):
@@ -829,14 +908,26 @@ def franchise_request_submit(request):
     # a sub-franchise request routes to its DIRECT parent franchise (the deepest
     # active ancestor covering the territory), which is the operational reviewer.
     parent = resolve_parent_node(level, country, region, city, local_area)
-    # A sub-franchise request for a territory no active franchise covers yet used
-    # to be refused outright — the applicant got a dead end and NOBODY was told
-    # there was demand for that territory. It's now accepted as a parentless
-    # request, which routes to the Platform Admin's Pending queue exactly like a
-    # Master request does. Approval still requires a parent (Tenant.clean, spec
-    # §10.2): the Admin sets up the chain first, and the approve path re-resolves
-    # the parent at that point.
-    unrouted = level != FranchiseLevel.MASTER and parent is None
+    # A sub-franchise has to sit UNDER something. Requests for a territory no
+    # active franchise covers were accepted for a while as a demand signal, but
+    # they cannot be approved — the tree has nothing to attach them to — so they
+    # only piled up in the Admin's Pending queue, unapprovable and unexplained
+    # to the applicant who was waiting on them. Refused at the door instead, with
+    # the alternative that IS available: buy the Master for the country and build
+    # the chain downwards (product decision, Aug 2026).
+    if level != FranchiseLevel.MASTER and parent is None:
+        messages.error(
+            request,
+            _("No active franchise covers this territory yet, so a %(level)s has nothing "
+              "to sit under. A %(master)s for %(country)s has to exist and be active "
+              "first — you can request that instead, or wait until one is in place.")
+            % {
+                "level": dict(FranchiseLevel.CHOICES).get(level, level),
+                "master": dict(FranchiseLevel.CHOICES)[FranchiseLevel.MASTER],
+                "country": dict(CountryChoices.CHOICES).get(country, country),
+            },
+        )
+        return redirect("franchise-request")
 
     # You can't become your own franchisee: a territory that falls under a node
     # this user already holds is added from their own Franchises section as a
@@ -851,7 +942,9 @@ def franchise_request_submit(request):
 
     application = FranchiseApplication.objects.create(
         applicant_user=request.user,
-        applicant_company=_requesting_company(request),
+        # The same company the one-per-company guard above cleared, so the row is
+        # stamped with exactly what was checked.
+        applicant_company=buying_company,
         requested_level=level,
         requested_country=country,
         requested_region=region,
@@ -889,17 +982,8 @@ def franchise_request_submit(request):
             request,
             _("Your request has been submitted to %(parent)s for review.") % {"parent": parent.name},
         )
-    elif unrouted:
-        # Say plainly that there's no franchise above this territory yet, so the
-        # applicant understands why it goes to the Platform Admin and that it may
-        # wait until the higher tier exists.
-        messages.success(
-            request,
-            _("No franchise covers this territory yet, so your request has gone to the "
-              "Platform Admin. They'll set up the higher-level franchise it belongs "
-              "under before approving it."),
-        )
     else:
+        # A Master — the only level with no parent — goes straight to the Admin.
         messages.success(
             request,
             _("Your franchise request has been submitted. The Platform Admin will review it shortly."),

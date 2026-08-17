@@ -136,6 +136,53 @@ def all_owned_franchise_nodes(user, statuses=None):
     return qs
 
 
+def company_franchise_node(company):
+    """The franchise a company already holds, or None.
+
+    One franchise per company (product rule, Aug 2026): a Business User with
+    companies A, B and C buys a franchise FOR one of them, and that company's
+    slot is then taken — the request form disappears for it while the other two
+    keep theirs. Any state counts, including a node that is approved but not yet
+    activated: the slot is spoken for from approval onwards.
+
+    Soft-deleted nodes are excluded by ``Tenant.objects`` (ActiveManager), so a
+    franchise that was removed — by the admin or through an approved removal
+    request — releases the slot and the company may buy again.
+    """
+    if company is None:
+        return None
+    from accounts.models import Tenant
+
+    return (
+        Tenant.objects.filter(owner_company=company, franchise_level__isnull=False)
+        .order_by("created_at")
+        .first()
+    )
+
+
+def company_open_application(company):
+    """A company's franchise request that is still awaiting a decision, or None.
+
+    Counted against the same one-per-company slot as an owned node: two requests
+    in flight for one company could both be approved, leaving it holding two.
+    A REJECTED or CANCELLED request is not open, which is what lets the form come
+    back for that company after a rejection.
+    """
+    if company is None:
+        return None
+    from accounts.constants import FranchiseApplicationStatus
+    from accounts.models import FranchiseApplication
+
+    return (
+        FranchiseApplication.objects.filter(
+            applicant_company=company,
+            application_status__in=FranchiseApplicationStatus.OPEN,
+        )
+        .order_by("created_at")
+        .first()
+    )
+
+
 def owns_any_franchise(user):
     """True when the user holds a franchise node in ANY state, including one
     that is still awaiting activation. Used by the request flow to decide
