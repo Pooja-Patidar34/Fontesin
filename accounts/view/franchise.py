@@ -610,11 +610,28 @@ def franchise_request_view(request):
             requested_by=request.user, status=FranchiseRemovalRequest.PENDING,
         )
     }
+    # A franchise gets ONE removal attempt: withdrawing or being declined does
+    # not hand the holder a fresh form, it spends the attempt (product decision,
+    # Aug 2026 — re-requesting let a holder re-queue a request the reviewer had
+    # already answered). Node-scoped, not user-scoped, so it matches the guard in
+    # franchise_removal_request: whoever asked, the node has had its turn.
+    spent_removals = {}
+    for r in (
+        FranchiseRemovalRequest.objects
+        .filter(node__in=owned)
+        .exclude(status=FranchiseRemovalRequest.PENDING)
+        .select_related("reviewer_franchise")
+        .order_by("node_id", "-created_at")
+    ):
+        spent_removals.setdefault(r.node_id, r)
+
     for n in owned:
         n.parent_chain = parent_chain_basic(n)
         # Giving up a franchise needs the granting authority's approval, so each
-        # card shows either the request action or the decision it's waiting on.
+        # card shows either the request action, the decision it's waiting on, or
+        # the answered attempt that closes the door on a second one.
         n.open_removal = open_removals.get(n.id)
+        n.spent_removal = None if n.open_removal else spent_removals.get(n.id)
         reviewer_node = _removal_reviewer_node(n)
         n.removal_reviewer_name = reviewer_node.name if reviewer_node else ""
 
@@ -1635,14 +1652,27 @@ def franchise_removal_request(request, tenant_id):
         messages.error(request, _("You can only give up a franchise you hold."))
         return redirect("franchise-request")
 
-    if FranchiseRemovalRequest.objects.filter(
-        node=node, status=FranchiseRemovalRequest.PENDING
-    ).exists():
-        messages.info(
-            request,
-            _("A removal request for %(name)s is already awaiting a decision.")
-            % {"name": node.name},
-        )
+    # One attempt per node, whatever became of it. A pending request is simply
+    # waiting; a withdrawn or declined one has already been answered and does not
+    # entitle the holder to open a second — reopening that door is the Platform
+    # Admin's call, not the holder's.
+    previous = (
+        FranchiseRemovalRequest.objects.filter(node=node).order_by("-created_at").first()
+    )
+    if previous is not None:
+        if previous.status == FranchiseRemovalRequest.PENDING:
+            messages.info(
+                request,
+                _("A removal request for %(name)s is already awaiting a decision.")
+                % {"name": node.name},
+            )
+        else:
+            messages.error(
+                request,
+                _("A removal request for %(name)s has already been made and closed. "
+                  "Contact the Platform Admin if you still want to give it up.")
+                % {"name": node.name},
+            )
         return redirect("franchise-request")
 
     reviewer_node = _removal_reviewer_node(node)

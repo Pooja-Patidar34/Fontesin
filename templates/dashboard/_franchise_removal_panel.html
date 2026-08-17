@@ -40,10 +40,12 @@
                      maxlength="200"
                      placeholder="{% trans "Note for the holder (optional)" context "franchise" %}">
               {% comment %}
-              type="button": the confirm runs first and the script submits the
-              form afterwards, carrying this button's own decision=approve.
+              A real submit button: the script cancels this first click, runs the
+              confirm, then re-submits the form with this button as the submitter
+              so the POST carries decision=approve. It has to be type="submit" —
+              requestSubmit() rejects any other kind of submitter.
               {% endcomment %}
-              <button type="button" name="decision" value="approve" class="btn btn-sm btn-danger"
+              <button type="submit" name="decision" value="approve" class="btn btn-sm btn-danger"
                       data-removal-approve data-franchise-name="{{ r.node.name }}">
                 <i class="fas fa-check mr-1"></i>{% trans "Approve removal" context "franchise" %}
               </button>
@@ -107,6 +109,10 @@
   document.addEventListener("click", function (event) {
     var button = event.target.closest("[data-removal-approve]");
     if (!button || typeof appConfirm !== "function") return;
+    // Already confirmed — this is the re-submit, let it through untouched.
+    if (button.dataset.removalConfirmed === "1") return;
+    // Hold the submission until the reviewer confirms.
+    event.preventDefault();
     // The name is applicant-supplied, so it goes through textContent before it
     // reaches the modal's innerHTML.
     var safe = document.createElement("div");
@@ -120,6 +126,7 @@
       onConfirm: function () {
         var form = button.form;
         if (!form) return;
+        button.dataset.removalConfirmed = "1";
         // requestSubmit keeps the clicked button as the submitter, so the POST
         // still carries decision=approve. form.submit() drops the submitter
         // entirely, so the older path has to send the value by hand — without it

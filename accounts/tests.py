@@ -983,6 +983,55 @@ class FranchiseRemovalRequestTests(BaseIAMTestCase):
             FranchiseRemovalRequest.objects.filter(node=self.regional).count(), 1,
         )
 
+    def test_withdrawing_spends_the_attempt(self):
+        """A franchise gets ONE removal request. Withdrawing takes it off the
+        reviewer's desk but does not hand the holder a fresh form — otherwise a
+        holder could withdraw and re-send indefinitely."""
+        from accounts.models import FranchiseRemovalRequest
+        self._request_removal("regional@test.com", self.regional)
+        removal = FranchiseRemovalRequest.objects.get(node=self.regional)
+        self.client.login(email="regional@test.com", password="test123")
+        self.client.post(reverse("franchise-removal-cancel", args=[removal.id]))
+        self.client.logout()
+
+        self._request_removal("regional@test.com", self.regional)
+        self.assertEqual(
+            FranchiseRemovalRequest.objects.filter(node=self.regional).count(), 1,
+        )
+        self.assertEqual(
+            FranchiseRemovalRequest.objects.get(node=self.regional).status,
+            FranchiseRemovalRequest.CANCELLED,
+        )
+
+    def test_declined_request_cannot_be_re_sent(self):
+        from accounts.models import FranchiseRemovalRequest
+        self._request_removal("regional@test.com", self.regional)
+        removal = FranchiseRemovalRequest.objects.get(node=self.regional)
+        self.client.login(email="national@test.com", password="test123")
+        self.client.post(reverse("franchise-removal-action", args=[removal.id]),
+                         {"decision": "reject"})
+        self.client.logout()
+
+        self._request_removal("regional@test.com", self.regional)
+        self.assertEqual(
+            FranchiseRemovalRequest.objects.filter(node=self.regional).count(), 1,
+        )
+
+    def test_spent_attempt_replaces_the_form_on_the_card(self):
+        """The card must say the attempt is used up — a silently missing action
+        reads as a broken page."""
+        from accounts.models import FranchiseRemovalRequest
+        self._request_removal("regional@test.com", self.regional)
+        removal = FranchiseRemovalRequest.objects.get(node=self.regional)
+        self.client.login(email="regional@test.com", password="test123")
+        self.client.post(reverse("franchise-removal-cancel", args=[removal.id]))
+
+        body = self.client.get(reverse("franchise-request")).content.decode()
+        self.assertIn("You withdrew your removal request", body)
+        self.assertNotIn(
+            reverse("franchise-removal-request", args=[self.regional.id]), body,
+        )
+
     def test_reviewer_sees_the_request_in_their_queue(self):
         self._request_removal("regional@test.com", self.regional)
         self.client.login(email="national@test.com", password="test123")
@@ -1018,8 +1067,11 @@ class FranchiseRemovalRequestTests(BaseIAMTestCase):
         self.assertIn("appConfirm(", body)
         # the modal names the franchise, which the native popup could not
         self.assertIn('data-franchise-name="Regional Bayern"', body)
-        # the button no longer submits on its own, so the script owns the flow
-        self.assertIn('type="button" name="decision" value="approve"', body)
+        # It has to stay a real submit button: the script holds the click back
+        # until the modal is confirmed and then re-submits through
+        # requestSubmit(button), which rejects any submitter that isn't
+        # type="submit" — with type="button" the approval silently never POSTs.
+        self.assertIn('type="submit" name="decision" value="approve"', body)
 
     def test_holder_is_notified_of_the_decision(self):
         from accounts.models import FranchiseRemovalRequest, Notification

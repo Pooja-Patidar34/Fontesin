@@ -341,6 +341,31 @@
                 </form>
               </div>
             </div>
+            {% comment %} A franchise gets one removal attempt. Once it has been
+               withdrawn or declined the form does not come back — say which it
+               was and where to go next, so the missing action never reads as a
+               broken card. {% endcomment %}
+            {% elif f.spent_removal %}
+            <div class="fr-banner fr-banner--warn" style="margin:12px 0 0; padding:10px 12px;">
+              <i class="fas fa-lock"></i>
+              <div>
+                {% if f.spent_removal.status == "CANCELLED" %}
+                  {% trans "You withdrew your removal request for this franchise." context "franchise" %}
+                {% elif f.spent_removal.reviewer_franchise %}
+                  {% blocktrans trimmed with reviewer=f.spent_removal.reviewer_franchise.name context "franchise" %}
+                  Your removal request was declined by {{ reviewer }}.
+                  {% endblocktrans %}
+                {% else %}
+                  {% trans "Your removal request was declined by the Platform Admin." context "franchise" %}
+                {% endif %}
+                {% trans "Contact the Platform Admin if you still want to give up this franchise." context "franchise" %}
+                {% if f.spent_removal.decision_note %}
+                <div class="fr-reason" style="margin-top:6px;">
+                  <strong>{% trans "Note:" context "franchise" %}</strong> {{ f.spent_removal.decision_note }}
+                </div>
+                {% endif %}
+              </div>
+            </div>
             {% else %}
             <form method="post" action="{% url 'franchise-removal-request' f.id %}" class="fr-remove" style="margin-top:12px;">
               {% csrf_token %}
