@@ -67,6 +67,11 @@ def audit_logs(request):
     context = {
         "logs": page_obj,
         "page_obj": page_obj,
+        # Windowed page numbers, so 100+ pages render as 1 ... 97 98 [99] 100
+        # instead of one link per page (which overflows the card footer).
+        "page_range": paginator.get_elided_page_range(
+            page_obj.number, on_each_side=2, on_ends=1
+        ),
         "active_menu": "audit",
     }
 

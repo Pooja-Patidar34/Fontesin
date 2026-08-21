@@ -1160,9 +1160,15 @@
           {% endif %}
           {% endcomment %}
 
-          {# Audit Logs — hidden on free plan; also hidden for business users on basic and pro plans #}
-          {% if not is_free_plan %}
-          {% if not is_basic_or_pro_business_user %}
+          {% comment %}
+          Audit Logs is for administrative roles only. Gate on the role itself
+          (`is_business_user`, which is plan-independent) rather than on plan
+          flags: the old `not is_basic_or_pro_business_user` test only covered
+          the basic / pro / global plans, so a business user whose plan didn't
+          resolve to one of those codes still saw the tab. Free plan stays
+          hidden for every other role as before.
+          {% endcomment %}
+          {% if not is_free_plan and not is_business_user %}
           <li class="nav-item">
             <a href="{% url 'audit-logs' %}"
                class="nav-link {% if active_menu == 'audit' %}active{% endif %}">
@@ -1170,7 +1176,6 @@
               <p>{% trans "Audit Logs" context "sidebar" %}</p>
             </a>
           </li>
-          {% endif %}
           {% endif %}
 
           {% if request.user.role.code|lower != "business_user" %}

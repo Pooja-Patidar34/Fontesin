@@ -53,7 +53,7 @@
 
 {% if page_obj.paginator.num_pages > 1 %}
 <div class="card-footer clearfix">
-  <ul class="pagination pagination-sm m-0 float-right">
+  <ul class="pagination pagination-sm m-0 float-right flex-wrap">
 
     {% if page_obj.has_previous %}
     <li class="page-item">
@@ -68,8 +68,12 @@
     </li>
     {% endif %}
 
-    {% for num in page_obj.paginator.page_range %}
-      {% if page_obj.number == num %}
+    {% for num in page_range %}
+      {% if num == page_obj.paginator.ELLIPSIS %}
+        <li class="page-item disabled">
+          <span class="page-link">{{ num }}</span>
+        </li>
+      {% elif page_obj.number == num %}
         <li class="page-item active">
           <span class="page-link">{{ num }}</span>
         </li>
