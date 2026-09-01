@@ -172,7 +172,8 @@
               <th>{% trans "Applicant" context "franchise" %}</th>
               <th>{% trans "Franchise" context "franchise" %}</th>
               <th>{% trans "Status" context "workflows" %}</th>
-              <th class="text-right pr-4">{% trans "Action" context "common" %}</th>
+              {% comment %} Read-only now — activation is the Platform Admin's. {% endcomment %}
+              <th class="text-right pr-4">{% trans "Go-live" context "franchise" %}</th>
             </tr>
           </thead>
           <tbody>
@@ -194,28 +195,19 @@
                 {% else %}<span class="pill pill-approved">{% trans "Approved" context "workflows" %}</span>{% endif %}
               </td>
               {% comment %}
-                Go-live sits with the parent: once the Platform Admin records the
-                fee as paid, the holder activates the sub-franchise here and it
-                shows up in the franchise tree. Before payment the button is
-                replaced by a note saying what is being waited on, so the row
-                never looks broken.
+                Go-live is the Platform Admin's, not the parent's. The Admin
+                receives the franchise fee from the incoming holder, marks it
+                paid and activates the unit — only then does it join this tree.
+                The parent used to get an Activate button here once the fee was
+                recorded; that put half the money flow in their hands, so this
+                column is now a read-only progress note.
               {% endcomment %}
               <td class="text-right pr-4">
                 {% if a.created_franchise and a.created_franchise.franchise_status != "ACTIVE" %}
                   {% if a.created_franchise.franchise_fee_status == "PAID" %}
-                  <form method="post" action="{% url 'franchise-activate' a.created_franchise.id %}" class="d-inline m-0"
-                        data-confirm
-                        data-confirm-tone="primary"
-                        data-confirm-icon="fa-bolt"
-                        data-confirm-title="{% trans "Activate sub-franchise?" context "franchise" %}"
-                        data-confirm-body="{% trans "The fee is paid. Activating grants the holder full active rights and adds it to your franchise tree." context "franchise" %}"
-                        data-confirm-ok="{% trans "Activate" context "franchise" %}"
-                        data-confirm-name="{{ a.created_franchise.name }}">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-sm btn-primary">
-                      <i class="fas fa-bolt mr-1"></i> {% trans "Activate" context "franchise" %}
-                    </button>
-                  </form>
+                  <span class="small text-muted">
+                    <i class="fas fa-hourglass-half mr-1"></i>{% trans "Fee paid — awaiting Platform Admin activation" context "franchise" %}
+                  </span>
                   {% else %}
                   <span class="small text-muted">
                     <i class="fas fa-hourglass-half mr-1"></i>{% trans "Awaiting fee confirmation" context "franchise" %}

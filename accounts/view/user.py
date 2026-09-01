@@ -330,6 +330,28 @@ def user_list(request):
             )
             own_company_ids = {cid for cid in own_company_ids if cid}
 
+            # "My Company Users" is scoped to the company the account is
+            # ACTING AS, not to every company it belongs to. Owning company A
+            # and company B means two separate lists: logged in as A you see
+            # A's members, and B's only after switching to B.
+            #
+            # `request.active_company` is the switcher's selection
+            # (ActiveCompanyMiddleware); `scoping_company` is the same "certain
+            # answer only" resolver the franchise gates use — it returns the
+            # sole company of a one-company owner and None when a multi-company
+            # owner has made no choice, rather than guessing one.
+            #
+            # The `in own_company_ids` guard means this can only ever NARROW
+            # the list: an acting company outside the membership set leaves the
+            # scope untouched instead of granting access to it. When no company
+            # can be resolved (a user who only JOINED companies and owns none)
+            # the original all-memberships behaviour stands.
+            from accounts.utils.franchise_access import scoping_company
+
+            acting_company = getattr(request, "active_company", None) or scoping_company(request.user)
+            if acting_company is not None and acting_company.id in own_company_ids:
+                own_company_ids = {acting_company.id}
+
             def _members_of(company_ids):
                 """Users who are MEMBERS of the given companies: their primary
                 company is one of them, OR they joined one via an approved join

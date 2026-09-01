@@ -500,8 +500,7 @@ def resolve_parent_node(level, country, region, city, local_area):
 
 
 def _create_node_from_application(application, parent, reviewer, now,
-                                  *, node_name=None, contract_status=None,
-                                  fee_status=None):
+                                  *, node_name=None):
     """Create the franchise node for an approved application (PENDING_CONTRACT).
 
     Shared by the Platform Admin (Master applications) and the direct-parent
@@ -510,10 +509,12 @@ def _create_node_from_application(application, parent, reviewer, now,
     can surface a friendly message. Returns the saved node.
 
     The Add Sub-Franchise flow (spec §8.1) passes `node_name` (the proposed
-    legal / company name) and the initial `contract_status` / `fee_status` the
-    holder recorded; the other flows omit them and get the defaults (a derived
-    name, PENDING contract, UNPAID fee). The node is always PENDING_CONTRACT
-    regardless — only the Platform Admin's activation flips it to ACTIVE (§5)."""
+    legal / company name); the other flows omit it and get a derived name.
+
+    Contract and fee status are NOT parameters: a new node is always PENDING /
+    UNPAID / PENDING_CONTRACT, and only the Platform Admin moves it from there
+    (franchise_mark_fee_paid, franchise_activate — §5). Neither a proposing
+    parent nor an operational reviewer may seed either value."""
     applicant = application.applicant_user
     applicant_label = (
         f"{applicant.first_name} {applicant.last_name}".strip() or applicant.email
@@ -542,8 +543,8 @@ def _create_node_from_application(application, parent, reviewer, now,
         name=_unique_node_name(base_name),
         franchise_level=application.requested_level,
         franchise_status=FranchiseUnitStatus.PENDING_CONTRACT,
-        contract_status=contract_status or ContractStatus.PENDING,
-        franchise_fee_status=fee_status or FranchiseFeeStatus.UNPAID,
+        contract_status=ContractStatus.PENDING,
+        franchise_fee_status=FranchiseFeeStatus.UNPAID,
         is_exclusive=(application.requested_level == FranchiseLevel.MICRO),
         parent=parent,
         owner_user=applicant,
@@ -1388,42 +1389,28 @@ def franchise_activate(request, tenant_id):
         id=tenant_id,
     )
 
-    # Who may activate: the Platform Admin (any node), or the holder of this
-    # node's DIRECT PARENT once the Admin has recorded the fee as paid. The
-    # parent activating its own sub-franchise is the operational half of the
-    # payment flow — the Admin confirms the money, the parent brings the unit
-    # live in its tree. `_reviewer_parent_ids` is the same "nodes you own and
-    # that are ACTIVE" set that decides whose requests you review.
-    is_admin = request.user.is_superuser
-    is_parent_holder = bool(node.parent_id) and node.parent_id in _reviewer_parent_ids(request.user)
-    if not is_admin and not is_parent_holder:
+    # Who may activate: the Platform Admin, and nobody else. Whether a
+    # sub-franchise is paid for and whether it goes live are one decision and it
+    # is the Admin's alone — they receive the fee from the incoming holder, mark
+    # it paid and activate, at which point the unit joins its parent's tree. A
+    # parent holder used to be able to activate its own child once the fee was
+    # recorded; that made the go-live half of the money flow theirs, so it is
+    # gone. Proposing a sub-franchise (franchise_subfranchise_submit) and
+    # reviewing incoming requests are still the parent's.
+    if not request.user.is_superuser:
         raise PermissionDenied()
 
-    # Where each actor came from, so neither is bounced into the other's queue.
-    back = "franchise-applications" if is_admin else "franchise-child-requests"
+    back = "franchise-applications"
 
     if node.franchise_status == FranchiseUnitStatus.ACTIVE:
         messages.info(request, _("That franchise is already active."))
         return redirect(back)
 
-    # A parent holder activates only what has been paid for; recording payment
-    # stays the Admin's call (franchise_mark_fee_paid).
-    if not is_admin and node.franchise_fee_status != FranchiseFeeStatus.PAID:
-        messages.error(
-            request,
-            _("%(name)s can't be activated yet — the Platform Admin has to confirm the "
-              "franchise fee first. You'll be notified when it's marked as paid.")
-            % {"name": node.name},
-        )
-        return redirect(back)
-
     now = timezone.now()
-    # The Admin's activation still folds contract signature + fee payment in (the
-    # MVP shortcut); a parent holder only signs off the contract, because the fee
-    # was already confirmed above and is not theirs to record.
+    # Activation folds contract signature + fee payment in (the MVP shortcut):
+    # the Admin only reaches this point once the money has actually arrived.
     node.contract_status = ContractStatus.SIGNED
-    if is_admin:
-        node.franchise_fee_status = FranchiseFeeStatus.PAID
+    node.franchise_fee_status = FranchiseFeeStatus.PAID
     node.franchise_status = FranchiseUnitStatus.ACTIVE
     node.activated_at = now
     if node.approved_by is None:
@@ -1511,10 +1498,10 @@ def franchise_activate(request, tenant_id):
 def franchise_mark_fee_paid(request, tenant_id):
     """Platform Admin records the franchise fee as PAID (spec §5, payment step).
 
-    Split out of activation so the money and the go-live are separate events:
-    the Admin confirms payment here, and the holder of the node's direct parent
-    then activates it in their own queue. The Admin can still do both in one
-    click via franchise_activate, which keeps the existing Master flow intact."""
+    Split out of activation so the money and the go-live can be recorded as
+    separate events, but BOTH are the Admin's: recording payment here, and
+    activating via franchise_activate (which also marks the fee paid, so the
+    Admin can still do both in one click). A parent holder does neither."""
     if not request.user.is_superuser:
         raise PermissionDenied()
 
@@ -2221,8 +2208,8 @@ def franchise_add_subfranchise(request):
         "has_active_node": bool(active_nodes),
         "micro_only": micro_only,
         "suspended": suspended,
-        "contract_choices": ContractStatus.CHOICES,
-        "fee_choices": FranchiseFeeStatus.CHOICES,
+        # No contract/fee choices: those statuses belong to the Platform Admin,
+        # not to the proposing holder (see franchise_subfranchise_submit).
         # Country -> subdivisions for the State/Region dropdown (falls back to
         # free text for countries not in the map).
         "country_states": COUNTRY_STATES,
@@ -2248,7 +2235,7 @@ def franchise_subfranchise_submit(request):
             "parent_node_id", "requested_level", "requested_region",
             "requested_city", "requested_local_area", "legal_name",
             "contact_person", "owner_email", "contact_phone",
-            "contract_status", "fee_status", "application_note",
+            "application_note",
         )
     }
 
@@ -2349,16 +2336,13 @@ def franchise_subfranchise_submit(request):
         messages.error(request, _("Please enter the contact person for the sub-franchise."))
         return redirect("franchise-add-subfranchise")
 
-    # Initial contract / payment status the holder recorded (spec §8.1). The node
-    # is still created PENDING_CONTRACT — only the Platform Admin's activation
-    # flips it to ACTIVE (§5) — but these let the holder note that a contract is
-    # already signed or the fee already paid.
-    contract_status = (request.POST.get("contract_status") or "").strip().upper()
-    if contract_status not in dict(ContractStatus.CHOICES):
-        contract_status = ContractStatus.PENDING
-    fee_status = (request.POST.get("fee_status") or "").strip().upper()
-    if fee_status not in dict(FranchiseFeeStatus.CHOICES):
-        fee_status = FranchiseFeeStatus.UNPAID
+    # Contract and payment status are NOT read from this request. A holder only
+    # proposes the sub-franchise; whether it is under contract and whether the
+    # fee has been received is the Platform Admin's decision alone — the Admin
+    # marks it paid and activates it once the money arrives, and only then does
+    # it join the parent's franchise tree. `_create_node_from_application`
+    # therefore gets neither kwarg and applies its PENDING / UNPAID defaults,
+    # so a forged POST cannot pre-set either one.
 
     note = (request.POST.get("application_note") or "").strip()
     now = timezone.now()
@@ -2382,8 +2366,7 @@ def franchise_subfranchise_submit(request):
             )
             node = _create_node_from_application(
                 application, parent=parent, reviewer=request.user, now=now,
-                node_name=legal_name, contract_status=contract_status,
-                fee_status=fee_status,
+                node_name=legal_name,
             )
     except ValidationError as exc:
         messages.error(request, " ".join(exc.messages))

@@ -58,6 +58,21 @@
     background: rgba(255, 255, 255, .9); color: #7a5b12; font-size: .68rem; font-weight: 700;
     text-transform: uppercase; letter-spacing: .03em; padding: .18rem .5rem; border-radius: 999px;
   }
+
+  /* Plan-locked module: greyed cover + upgrade CTA instead of "Open Module". */
+  .ps-mod2--locked .ps-mod2__cover { filter: grayscale(1); opacity: .75; }
+  .ps-mod2--locked .ps-mod2__icon { color: var(--ps-muted); }
+  .ps-mod2__lock {
+    position: absolute; top: .8rem; right: .8rem; z-index: 3;
+    background: rgba(255, 255, 255, .92); color: #7a5b12; font-size: .68rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .03em; padding: .18rem .5rem; border-radius: 999px;
+  }
+  .ps-mod2__upgrade {
+    border: 0; color: #fff; font-weight: 600; border-radius: .65rem; padding: .64rem 1rem;
+    width: 100%; display: block; background: linear-gradient(135deg, #f97316, #fb9a4b);
+    box-shadow: 0 10px 20px -8px rgba(249, 115, 22, .45);
+  }
+  .ps-mod2__upgrade:hover { color: #fff; text-decoration: none; filter: brightness(1.06); }
 </style>
 
 <div class="content-header"><h1 class="m-0"><i class="fas fa-th-large text-primary mr-2"></i>{% trans "Professional Modules" %}</h1></div>
@@ -66,15 +81,26 @@
   <div class="row">
     {% for m in modules %}
     <div class="col-lg-4 col-md-6 mb-4">
-      <div class="ps-mod2" style="{% if m.slug == 'investments' %}--m1:#1f9d74;--m2:#3cbb92;--mshadow:rgba(31,157,116,.30){% elif m.slug == 'education' %}--m1:#7a5bd6;--m2:#9d7ceb;--mshadow:rgba(122,91,214,.30){% else %}--m1:#3d6fd6;--m2:#5a97ea;--mshadow:rgba(61,111,214,.30){% endif %}">
-        {% if m.status != 'live' %}<span class="ps-mod2__soon">{% trans "Coming soon" %}</span>{% endif %}
+      <div class="ps-mod2{% if m.locked %} ps-mod2--locked{% endif %}" style="{% if m.slug == 'investments' %}--m1:#1f9d74;--m2:#3cbb92;--mshadow:rgba(31,157,116,.30){% elif m.slug == 'education' %}--m1:#7a5bd6;--m2:#9d7ceb;--mshadow:rgba(122,91,214,.30){% else %}--m1:#3d6fd6;--m2:#5a97ea;--mshadow:rgba(61,111,214,.30){% endif %}">
+        {% comment %}
+          A plan-locked module (Free plan) keeps its card so the user can see
+          what upgrading buys, but the "Open Module" action becomes an upgrade
+          CTA — the views refuse the module anyway.
+        {% endcomment %}
+        {% if m.locked %}
+          <span class="ps-mod2__lock"><i class="fas fa-lock mr-1"></i>{% trans "Paid plans" %}</span>
+        {% elif m.status != 'live' %}
+          <span class="ps-mod2__soon">{% trans "Coming soon" %}</span>
+        {% endif %}
         <div class="ps-mod2__cover">
           <span class="ps-mod2__icon"><i class="{{ m.icon }}"></i></span>
         </div>
         <div class="ps-mod2__body">
           <h4 class="ps-mod2__title">{{ m.name }}</h4>
           <p class="ps-mod2__desc">{{ m.description }}</p>
-          {% if m.status == 'live' %}
+          {% if m.locked %}
+            <a href="{% url 'membership' %}" class="ps-mod2__upgrade">{% trans "Upgrade to unlock" %} <i class="fas fa-arrow-right ml-1"></i></a>
+          {% elif m.status == 'live' %}
             <a href="{% url 'modules:landing' m.slug %}" class="ps-mod2__btn">{% trans "Open Module" %} <i class="fas fa-arrow-right ml-1"></i></a>
           {% else %}
             <a href="{% url 'modules:landing' m.slug %}" class="ps-mod2__ghost">{% trans "Preview" %}</a>

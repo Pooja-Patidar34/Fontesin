@@ -18,6 +18,7 @@ def admin_context(request):
     is_pro_business_user = False
     is_global_business_user = False
     is_paid_business_user = False
+    sidebar_modules = []
     pending_partnership_count = 0
     pending_join_request_count = 0
     owns_any_company = False
@@ -74,6 +75,29 @@ def admin_context(request):
             sidebar_company_count = Company.objects.count()
         elif hasattr(request.user, 'tenant') and request.user.tenant:
             sidebar_company_count = Company.objects.filter(tenant=request.user.tenant).count()
+
+        # Professional modules for the consolidated sidebar tree. The registry
+        # is the single source of truth for which modules exist, who may see
+        # them (role) and which need a paid plan, so the menu is generated from
+        # it — a module added to MODULE_REGISTRY later appears here with no
+        # template change. `locked` marks a module the user's ROLE allows but
+        # their PLAN does not: it renders as an upgrade link instead of an
+        # expandable sub-tree, because every screen underneath would refuse it.
+        from listings.module_registry import (
+            module_locked_for_user as _module_locked_for_user,
+            visible_modules as _visible_modules,
+        )
+        sidebar_modules = [
+            {
+                "id": m["id"],
+                "name": m["name"],
+                "slug": m["slug"],
+                "icon": m["icon"],
+                "status": m["status"],
+                "locked": _module_locked_for_user(request.user, m),
+            }
+            for m in _visible_modules(request.user)
+        ]
 
         # Plan-feature flags for sidebar gating (superusers get everything).
         from billing.utils import get_user_plan
@@ -407,6 +431,10 @@ def admin_context(request):
         "is_pro_business_user": is_pro_business_user,
         "is_global_business_user": is_global_business_user,
         "is_paid_business_user": is_paid_business_user,
+        # Professional modules the sidebar tree renders, each flagged `locked`
+        # when the user's role allows it but their plan does not.
+        # See listings.module_registry.
+        "sidebar_modules": sidebar_modules,
         # Back-compat alias for existing template gates that haven't been swapped over.
         "is_basic_or_pro_business_user": is_paid_business_user,
         # True for any BU regardless of plan (free / basic / pro / global).

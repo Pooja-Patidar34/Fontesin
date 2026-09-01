@@ -144,8 +144,16 @@ class ListingCollectionAPIView(APILocaleMixin, APIView):
 
         module_id = serializer.validated_data.get("module_id")
         if not module_registry.user_can_access_id(user, module_id):
+            # Professional modules are paid-only; a Free-plan Business User is
+            # told to upgrade rather than given the generic role refusal.
+            module = module_registry.get_module_by_id(module_id)
+            if module and module_registry.module_locked_for_user(user, module):
+                message = _("Professional modules are available on paid plans only. "
+                            "Upgrade your plan to unlock this module.")
+            else:
+                message = _("You do not have access to this module.")
             return Response(
-                {"status": False, "message": _("You do not have access to this module.")},
+                {"status": False, "message": message},
                 status=status.HTTP_403_FORBIDDEN,
             )
 

@@ -335,6 +335,10 @@ def _form_context(user, listing_type, module_id="products_services", values=None
         "visibility_choices": Listing.VISIBILITY_CHOICES,
         "module_id": module_id,
         "module_name": module["name"] if module else "Products & Services",
+        # The registry entry itself, so the sidebar keeps this module's sub-tree
+        # open on a validation redraw and on Edit, where there is no ?module=
+        # in the query string to read it from.
+        "module": module,
         "module_fields": module_fields,
         # Location dropdowns: (code, English name) pairs, sorted by name, plus
         # the country → subdivisions map indexed client-side when a country is
@@ -369,11 +373,31 @@ def _paginate(request, qs, per_page=10):
 # ---------------------------------------------------------------------------
 # Module Registry - dashboard + landing (cookbook Section 19)
 # ---------------------------------------------------------------------------
+def _no_module_access_message(user, module):
+    """The right refusal for a module the user can't open.
+
+    A Business User on the Free plan is not forbidden, just not subscribed —
+    tell them to upgrade instead of showing the generic role refusal.
+    """
+    if module and module_registry.module_locked_for_user(user, module):
+        return _("Professional modules are available on paid plans only. "
+                 "Upgrade your plan to unlock this module.")
+    return _("You do not have access to this module.")
+
+
 @login_required
 def modules_dashboard(request):
-    """Icon-card dashboard of all enabled professional modules (Section 19.4)."""
+    """Icon-card dashboard of all enabled professional modules (Section 19.4).
+
+    Plan-locked modules stay on the grid but render as a locked card with an
+    upgrade CTA, so a Free user sees what a paid plan unlocks.
+    """
+    modules = [
+        dict(m, locked=module_registry.module_locked_for_user(request.user, m))
+        for m in module_registry.visible_modules(request.user)
+    ]
     return render(request, "listings/modules_dashboard.html", {
-        "modules": module_registry.visible_modules(request.user),
+        "modules": modules,
         "active_menu": "modules",
     })
 
@@ -387,7 +411,7 @@ def module_landing(request, slug):
         messages.error(request, _("Module not found."))
         return redirect("modules:dashboard")
     if not module_registry.user_can_access(request.user, module):
-        messages.error(request, _("You do not have access to this module."))
+        messages.error(request, _no_module_access_message(request.user, module))
         return redirect("modules:dashboard")
 
     stats = {}
@@ -423,14 +447,16 @@ def add_listing(request):
         listing_type = Listing.OFFER
     module_id = _resolve_module_id(request.GET.get("module"))
     if module_id is None or not module_registry.user_can_access_id(user, module_id):
-        messages.error(request, _("You do not have access to this module."))
+        messages.error(request, _no_module_access_message(
+            user, module_registry.get_module_by_id(module_id)))
         return redirect("modules:dashboard")
 
     if request.method == "POST":
         listing_type = request.POST.get("listing_type", listing_type)
         module_id = _resolve_module_id(request.POST.get("module_id"))
         if module_id is None or not module_registry.user_can_access_id(user, module_id):
-            messages.error(request, _("You do not have access to this module."))
+            messages.error(request, _no_module_access_message(
+                user, module_registry.get_module_by_id(module_id)))
             return redirect("modules:dashboard")
         payload = _build_payload(request, listing_type, module_id)
         _md, module_errors = _collect_module_data(request, module_id)
@@ -483,7 +509,8 @@ def edit_listing(request, listing_id):
         return redirect("listings_web:detail", listing_id=listing.id)
 
     if not services.is_admin(user) and not module_registry.user_can_access_id(user, listing.module_id):
-        messages.error(request, _("You do not have access to this module."))
+        messages.error(request, _no_module_access_message(
+            user, module_registry.get_module_by_id(listing.module_id)))
         return redirect("modules:dashboard")
 
     if request.method == "POST":
@@ -525,15 +552,42 @@ def edit_listing(request, listing_id):
 # ---------------------------------------------------------------------------
 # Business User - my listings + reactions
 # ---------------------------------------------------------------------------
+def _own_listings_module(request):
+    """Resolve the optional `?module=` scope for the "my listings" screens.
+
+    The sidebar now nests these screens under a professional module, so each
+    link carries the module it belongs to. Returns the module dict, or None
+    when no (or an unknown) module was given — in which case the screen keeps
+    its original, unscoped behaviour.
+
+    Unlike `browse_listings`, an inaccessible module is *ignored* rather than
+    refused: these screens only ever show the caller's OWN listings, so there
+    is nothing to leak, and a Business User who drops to the Free plan must
+    still be able to manage what they already published.
+    """
+    raw = request.GET.get("module")
+    if not raw:
+        return None
+    module_id = _resolve_module_id(raw, default=None)
+    return module_registry.get_module_by_id(module_id) if module_id else None
+
+
+def _scope_own_listings(qs, module):
+    return qs.filter(module_id=module["id"]) if module else qs
+
+
 @login_required
 def my_listings(request):
     """Combined My Listings - offers + demands together (cookbook Section 19.5).
 
-    Optional ?type=offer|demand narrows the same screen without leaving it.
+    Optional ?type=offer|demand narrows the same screen without leaving it,
+    and ?module=<slug> narrows it to one professional module.
     """
+    module = _own_listings_module(request)
     qs = _with_reaction_counts(
-        Listing.objects.filter(owner_user=request.user)
-        .select_related("owner_company").order_by("-created_at")
+        _scope_own_listings(
+            Listing.objects.filter(owner_user=request.user), module
+        ).select_related("owner_company").order_by("-created_at")
     )
     current_type = request.GET.get("type", "")
     if current_type in (Listing.OFFER, Listing.DEMAND):
@@ -541,28 +595,39 @@ def my_listings(request):
     return render(request, "listings/my_listings.html", {
         "page_obj": _paginate(request, qs), "combined": True, "current_type": current_type,
         "title": _("My Listings"), "active_menu": "listings-my-listings",
+        "module": module,
     })
 
 
 @login_required
 def my_offers(request):
+    module = _own_listings_module(request)
     qs = _with_reaction_counts(
-        Listing.objects.filter(owner_user=request.user, listing_type=Listing.OFFER).select_related("owner_company")
+        _scope_own_listings(
+            Listing.objects.filter(owner_user=request.user, listing_type=Listing.OFFER),
+            module,
+        ).select_related("owner_company")
     )
     return render(request, "listings/my_listings.html", {
         "page_obj": _paginate(request, qs), "listing_type": Listing.OFFER, "title": _("My Offers"),
         "active_menu": "listings-my-offers",
+        "module": module,
     })
 
 
 @login_required
 def my_demands(request):
+    module = _own_listings_module(request)
     qs = _with_reaction_counts(
-        Listing.objects.filter(owner_user=request.user, listing_type=Listing.DEMAND).select_related("owner_company")
+        _scope_own_listings(
+            Listing.objects.filter(owner_user=request.user, listing_type=Listing.DEMAND),
+            module,
+        ).select_related("owner_company")
     )
     return render(request, "listings/my_listings.html", {
         "page_obj": _paginate(request, qs), "listing_type": Listing.DEMAND, "title": _("My Demands"),
         "active_menu": "listings-my-demands",
+        "module": module,
     })
 
 
@@ -670,7 +735,8 @@ def browse_listings(request):
         # Same access rule as the module landing page (Section 19.6) — a module
         # you can't open isn't one you can browse by URL either.
         if module_id and not module_registry.user_can_access_id(user, module_id):
-            messages.error(request, _("You do not have access to this module."))
+            messages.error(request, _no_module_access_message(
+                user, module_registry.get_module_by_id(module_id)))
             return redirect("modules:dashboard")
         if module_id:
             module = module_registry.get_module_by_id(module_id)
@@ -801,6 +867,16 @@ def admin_listings(request):
 
     qs = Listing.objects.select_related("owner_company", "owner_user").order_by("-created_at")
     f = request.GET
+    # ?module=<slug> narrows the grid to one professional module, so the sidebar
+    # can hang an "All Listings" entry under each module instead of offering a
+    # single undifferentiated list. Omitted (or unknown) = every module, which
+    # is what this screen has always shown.
+    module = None
+    if f.get("module"):
+        module_id = _resolve_module_id(f["module"], default=None)
+        if module_id:
+            module = module_registry.get_module_by_id(module_id)
+            qs = qs.filter(module_id=module_id)
     if f.get("status") in dict(Listing.STATUS_CHOICES):
         qs = qs.filter(status=f["status"])
     if f.get("listing_type") in (Listing.OFFER, Listing.DEMAND):
@@ -814,6 +890,7 @@ def admin_listings(request):
         "status_choices": Listing.STATUS_CHOICES,
         "listing_type_choices": Listing.LISTING_TYPE_CHOICES,
         "active_menu": "listings-admin",
+        "module": module,
     })
 
 

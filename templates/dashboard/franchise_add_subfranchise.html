@@ -104,22 +104,23 @@
                  placeholder="{% trans "+1 555 010 0000" context "franchise" %}" value="{{ form_data.contact_phone|default:'' }}">
         </div>
 
-        <div class="full"><div class="fr-sub">{% trans "Status" context "workflows" %}</div></div>
-        <div>
-          <label class="fr-label" for="sf-contract-status">{% trans "Contract status" context "franchise" %}</label>
-          <select name="contract_status" id="sf-contract-status" class="fr-control">
-            {% for value, label in contract_choices %}
-            <option value="{{ value }}"{% if form_data.contract_status == value %} selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div>
-          <label class="fr-label" for="sf-fee-status">{% trans "Payment status" context "franchise" %}</label>
-          <select name="fee_status" id="sf-fee-status" class="fr-control">
-            {% for value, label in fee_choices %}
-            <option value="{{ value }}"{% if form_data.fee_status == value %} selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-          </select>
+        {% comment %}
+          Contract status and Payment status used to be editable here. They are
+          the Platform Admin's decision alone: a holder proposes the
+          sub-franchise, the Admin collects the fee and then marks it paid and
+          activates it. The two selects are gone and the submit handler no
+          longer reads them — every proposal is created Pending / Unpaid.
+        {% endcomment %}
+        <div class="full">
+          <div class="alert alert-info mb-0" style="font-size:.86rem;">
+            <i class="fas fa-info-circle mr-1"></i>
+            {% blocktrans context "franchise" trimmed %}
+              This sends a request to the Platform Admin. Contract and payment
+              status are set by the Platform Admin only — once the fee is
+              received they mark it paid and activate the sub-franchise, and it
+              then appears in your franchise tree.
+            {% endblocktrans %}
+          </div>
         </div>
 
         <div class="full">

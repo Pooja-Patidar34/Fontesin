@@ -1,6 +1,6 @@
 {% extends "base/base.html" %}
 {% load i18n %}
-{% block title %}{% trans "Payments" context "billing" %}{% endblock %}
+{% block title %}{% trans "Business User Plan Requests" context "billing" %}{% endblock %}
 
 {% block content %}
 <style>
@@ -31,14 +31,22 @@
   readable in full rather than truncated to "FONTESIN-GLOBAL…". Still sums to
   100% for table-layout: fixed.
   {% endcomment %}
-  .payments-table .col-user      { width: 15%; }
-  .payments-table .col-company   { width: 16%; }
-  .payments-table .col-ref       { width: 21%; }
+  .payments-table .col-user      { width: 14%; }
+  .payments-table .col-company   { width: 14%; }
+  .payments-table .col-ref       { width: 20%; }
   .payments-table .col-plan      { width: 9%; }
-  .payments-table .col-amount    { width: 11%; white-space: nowrap; }
+  .payments-table .col-amount    { width: 10%; white-space: nowrap; }
   .payments-table .col-status    { width: 9%; text-align: center; white-space: nowrap; }
   .payments-table .col-requested { width: 10%; white-space: nowrap; }
-  .payments-table .col-actions   { width: 9%; }
+  {% comment %}
+    A pending row carries three buttons (approve / reject / edit). At the old
+    9% the cell was narrower than they are, and under table-layout: fixed that
+    clipped the last one instead of wrapping — the edit button ran off the end
+    of the row. 14% plus a px floor keeps all three on one line at any table
+    width; the 5% comes off the reference column, which still fits a full
+    FONTESIN-GLOBAL-0000000000 without truncating.
+  {% endcomment %}
+  .payments-table .col-actions   { width: 14%; min-width: 118px; white-space: nowrap; }
   .payments-table .user-cell strong {
     display: block;
     font-size: .88rem;
@@ -107,17 +115,58 @@
     font-size: .78rem;
     word-break: break-all;
   }
-  .payments-table .btn-sm {
-    padding: 4px 8px;
-    font-size: .75rem;
+  {% comment %}
+    Uniform square icon buttons so approve / reject / edit line up on the same
+    baseline and occupy the same footprint. The edit button was an outline
+    variant next to two filled ones, which read as unstyled at this size, so it
+    gets a visible border and the same dimensions.
+  {% endcomment %}
+  .payments-table .col-actions .btn {
+    padding: 0;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    line-height: 26px;
+    text-align: center;
+    font-size: .72rem;
+    border-radius: 6px;
+    border-width: 1px;
+    border-style: solid;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
+  .payments-table .col-actions .btn > i { line-height: 1; }
+  {% comment %}
+    The edit button is an outline variant sitting next to two filled ones. Left
+    at Bootstrap's default it reads as a bare icon rather than a button, so it
+    gets an explicit white ground and a grey border with the same footprint as
+    approve / reject.
+  {% endcomment %}
+  .payments-table .col-actions .btn-outline-primary {
+    background: #fff;
+    border-color: #ced4da;
+    color: #2f6fd0;
+  }
+  .payments-table .col-actions .btn-outline-primary:hover {
+    background: #f1f6fd;
+    border-color: #2f6fd0;
+    color: #1d4ea0;
+  }
+  .payments-table .col-actions > div { justify-content: flex-start; }
 </style>
 
 <div class="card" style="border-radius:14px; border:1px solid #e8eef3; box-shadow:0 2px 12px rgba(0,0,0,.06);">
 
   <div class="card-header d-flex justify-content-between align-items-center">
+    {% comment %}
+      Named to match its sidebar entry (User Overview > Requests > Business
+      User Plan Requests). The route and view are still `payments` — only the
+      heading changed, so nothing else needs touching.
+    {% endcomment %}
     <h3 class="card-title font-weight-bold mb-0">
-      <i class="fas fa-money-bill-wave mr-2"></i> {% trans "Payments" context "billing" %}
+      <i class="fas fa-money-check-alt mr-2"></i> {% trans "Business User Plan Requests" context "billing" %}
       {% if pending_count %}
         <span class="badge badge-warning ml-2">{{ pending_count }} {% trans "pending" context "billing" %}</span>
       {% endif %}

@@ -56,7 +56,34 @@ class ListingsAPITestCase(TestCase):
         self.other.primary_company = self.other_company
         self.other.save(update_fields=["primary_company"])
 
+        # Professional modules are paid-only (listings.module_registry), so an
+        # account that publishes into one must sit on a paid plan. These tests
+        # are about listing CRUD, not about the plan gate, so both owners get a
+        # Basic subscription on their company; the gate itself is covered
+        # separately. Without this every module call 403s on the Free floor.
+        self._give_paid_plan(self.owner, self.company)
+        self._give_paid_plan(self.other, self.other_company)
+
         self.nace = NaceCode.objects.create(code="25.11", title="Metal structures", level=4)
+
+    @staticmethod
+    def _give_paid_plan(user, company):
+        """Mirror billing.utils.ensure_free_subscription's row shape, on Basic:
+        start_date / end_date are NOT NULL, so they have to be set here too."""
+        from dateutil.relativedelta import relativedelta
+        from django.utils import timezone
+        from billing.models import CommercialPlan, Subscription
+
+        plan, _ = CommercialPlan.objects.get_or_create(
+            code="basic",
+            defaults={"name": "Basic Plan", "price": 150, "billing_period": "yearly"},
+        )
+        now = timezone.now()
+        Subscription.objects.create(
+            user=user, company=company, plan=plan,
+            billing_period=plan.billing_period, status="active",
+            start_date=now, end_date=now + relativedelta(years=1),
+        )
 
     # ---- helpers ----
     def call(self, view, method, user, listing_id=None, data=None):

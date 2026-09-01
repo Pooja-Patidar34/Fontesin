@@ -59,6 +59,151 @@ def _scope_consultants_to_coordinator_region(qs, viewer, target_role):
     return qs
 
 
+def _scope_consultants_to_franchise_subtree(qs, viewer, target_role):
+    """A franchise holder sees only the consultants inside their OWN subtree.
+
+    Downward visibility (spec §7.1): the consultants assigned to the node(s)
+    the holder owns, plus those assigned to every descendant node — and nothing
+    from a parent or a parallel branch (§7.3). So a Master sees its own roster
+    plus every sub-franchise's; a Micro sees only its own; and no holder ever
+    sees the consultants their parent franchise assigned. Before this, a holder
+    got every consultant in the tenant, i.e. effectively the whole platform.
+
+    `subtree_consultant_ids` is the same node→consultant bridge the franchise
+    reporting screens already use, so one definition of "under me" serves both.
+
+    Deliberately unchanged for the other two audiences:
+      • superuser — global visibility (§7.4), and they must also see
+        consultants who are not assigned anywhere yet.
+      • coordinator — oversees consultants platform-wide; that is what
+        `_scope_consultants_to_coordinator_region` documents.
+    """
+    if target_role.upper() != "CONSULTANT":
+        return qs
+    if getattr(viewer, "is_superuser", False):
+        return qs
+    role_code = (viewer.role.code or "").upper() if viewer.role else ""
+    if role_code == "COORDINATOR":
+        return qs
+
+    from accounts.utils.franchise_access import is_franchise_holder
+    if not is_franchise_holder(viewer):
+        # Not a holder and not staff — `_can_view_staff` already refused them,
+        # so leave the queryset alone rather than inventing a third rule here.
+        return qs
+
+    # Imported inside the function: accounts.view.franchise pulls in a large
+    # slice of the franchise stack, and importing it at module scope would make
+    # these two view modules import each other.
+    from accounts.view.franchise import subtree_consultant_ids
+    return qs.filter(id__in=subtree_consultant_ids(viewer))
+
+
+def _scope_coordinators_to_franchise_territory(qs, viewer, target_role):
+    """A franchise holder sees only the coordinators inside their OWN territory.
+
+    "Same region as the franchise": a Master holding the USA sees every
+    coordinator in the USA; a Regional holding US / California sees only the
+    California ones; a Micro only its own city. Applies at every level — the
+    tab is gated on owning an activated node, not on which level it is.
+
+    Containment follows `Tenant.is_territory_within`: a level the node leaves
+    blank is simply not constrained, so a country-level node matches any region
+    or city inside that country. A coordinator whose own territory is BROADER
+    than the node's (say a country-wide coordinator seen from a Regional node)
+    does not match — we can't place them in that specific region, and the
+    narrower reading is the safe one for a visibility rule.
+
+    A holder whose nodes carry no territory at all sees nothing rather than
+    everything: failing closed is the right default for a scoping rule.
+
+    Deliberately unchanged for the other two audiences:
+      • superuser — global visibility (§7.4).
+      • coordinator — the platform-wide staff directory they already had.
+    """
+    if target_role.upper() != "COORDINATOR":
+        return qs
+    if getattr(viewer, "is_superuser", False):
+        return qs
+    role_code = (viewer.role.code or "").upper() if viewer.role else ""
+    if role_code == "COORDINATOR":
+        return qs
+
+    from accounts.utils.franchise_access import (
+        LIVE_STATUSES, is_franchise_holder, owned_franchise_nodes,
+    )
+    if not is_franchise_holder(viewer):
+        return qs
+
+    # LIVE_STATUSES (active + suspended) is the same set `is_franchise_holder`
+    # gates on, so a suspended holder keeps the read-only view they already have.
+    nodes = [
+        n for n in owned_franchise_nodes(viewer, LIVE_STATUSES)
+        if (n.territory_country or "").strip()
+    ]
+    if not nodes:
+        return qs.none()
+
+    territory_q = Q()
+    for n in nodes:
+        node_q = Q(territory_country__iexact=(n.territory_country or "").strip())
+        if (n.territory_region or "").strip():
+            node_q &= Q(territory_region__iexact=n.territory_region.strip())
+        if (n.territory_city or "").strip():
+            node_q &= Q(territory_city__iexact=n.territory_city.strip())
+        territory_q |= node_q
+    return qs.filter(territory_q)
+
+
+def _franchise_links_for(users):
+    """{user_id: {"assigned": [...], "owns": [...]}} for the given users.
+
+    Feeds the "Franchise" block in the consultant detail modal so a holder can
+    see which franchise a consultant is assigned to and which (if any) they own
+    themselves — a Micro-Franchise owner is also a consultant (spec §9.1.2), so
+    both lists can be non-empty for the same person.
+
+    Built once per page (10 rows) with two queries rather than per row.
+    """
+    from accounts.models import ConsultantAssignment, Tenant
+    from accounts.constants import ConsultantAssignmentStatus, FranchiseLevel
+
+    user_ids = [u.id for u in users]
+    links = {uid: {"assigned": [], "owns": []} for uid in user_ids}
+    if not user_ids:
+        return links
+
+    level_labels = dict(FranchiseLevel.CHOICES)
+
+    def _label(node):
+        level = str(level_labels.get(node.franchise_level, node.franchise_level or ""))
+        territory = ", ".join(
+            p for p in (node.territory_city, node.territory_region, node.territory_country) if p
+        )
+        return f"{node.name} — {level}" + (f" ({territory})" if territory else "")
+
+    assignments = (
+        ConsultantAssignment.objects
+        .filter(consultant_user_id__in=user_ids, status=ConsultantAssignmentStatus.ACTIVE)
+        .select_related("franchise_node")
+        .order_by("franchise_node__name")
+    )
+    for a in assignments:
+        if a.franchise_node_id and a.consultant_user_id in links:
+            links[a.consultant_user_id]["assigned"].append(_label(a.franchise_node))
+
+    owned = (
+        Tenant.objects
+        .filter(owner_user_id__in=user_ids, franchise_level__isnull=False)
+        .order_by("name")
+    )
+    for node in owned:
+        if node.owner_user_id in links:
+            links[node.owner_user_id]["owns"].append(_label(node))
+
+    return links
+
+
 def _render_companies_by_role(request, role_code, *, page_title, owner_label, active_submenu):
     """Every company a user of the given role is associated with.
 
@@ -282,6 +427,8 @@ def _render_users_by_role(request, role_code, *, page_title, entity_label, activ
     )
     qs = _scoped_tenant_qs(qs, request.user)
     qs = _scope_consultants_to_coordinator_region(qs, request.user, role_code)
+    qs = _scope_consultants_to_franchise_subtree(qs, request.user, role_code)
+    qs = _scope_coordinators_to_franchise_territory(qs, request.user, role_code)
 
     # Search by name / email / company so admins can quickly find a user.
     # Match each whitespace-separated token against any of the fields (AND
@@ -307,9 +454,21 @@ def _render_users_by_role(request, role_code, *, page_title, entity_label, activ
     except (PageNotAnInteger, EmptyPage):
         page_obj = paginator.page(1)
 
+    # Which franchise each listed user is assigned to / owns, for the detail
+    # modal. Resolved for the current page only, so the two extra queries do
+    # not grow with the directory.
+    franchise_links = _franchise_links_for(page_obj)
+
+    def _row(u):
+        row = _serialize_user(u)
+        link = franchise_links.get(u.id) or {}
+        row["franchise_assigned"] = link.get("assigned") or []
+        row["franchise_owned"] = link.get("owns") or []
+        return row
+
     context = {
         "users": page_obj,
-        "users_json": [_serialize_user(u) for u in page_obj],
+        "users_json": [_row(u) for u in page_obj],
         "page_obj": page_obj,
         "active_menu": "network",
         "active_submenu": active_submenu,

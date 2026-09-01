@@ -214,6 +214,19 @@
           <tr><th>{% trans "Sub-Role" context "users" %}</th><td id="cu-sub-role"></td></tr>
         </table>
 
+        {% comment %}
+          Franchise — where this person sits in the franchise tree. "Assigned to"
+          lists the node(s) they consult for; "Owns" lists any franchise they
+          hold themselves (a Micro-Franchise owner is also a consultant, so both
+          can be filled in for one person). Populated from franchise_assigned /
+          franchise_owned on each serialized row.
+        {% endcomment %}
+        <h6 class="text-primary font-weight-bold mt-3 mb-2">{% trans "Franchise" context "users" %}</h6>
+        <table class="table table-sm table-borderless mb-3">
+          <tr><th style="width: 34%;">{% trans "Assigned to" context "users" %}</th><td id="cu-franchise-assigned"></td></tr>
+          <tr><th>{% trans "Owns" context "users" %}</th><td id="cu-franchise-owned"></td></tr>
+        </table>
+
         <h6 class="text-primary font-weight-bold mt-3 mb-2">{% trans "Personal" context "users" %}</h6>
         <table class="table table-sm table-borderless mb-3">
           <tr><th style="width: 34%;">{% trans "Date of Birth" context "users" %}</th><td id="cu-dob"></td></tr>
@@ -357,6 +370,25 @@
       setHtml("cu-status", statusBadge);
       setText("cu-app-status", row.application_status);
       setText("cu-sub-role", row.consultant_sub_role);
+
+      // Franchise — one <div> per node so several assignments stay readable.
+      // textContent per line, so a franchise name can never inject markup.
+      function setList(id, items) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = "";
+        if (!items || !items.length) {
+          el.textContent = I18N.dash || "-";
+          return;
+        }
+        items.forEach(function (text) {
+          const line = document.createElement("div");
+          line.textContent = text;
+          el.appendChild(line);
+        });
+      }
+      setList("cu-franchise-assigned", row.franchise_assigned);
+      setList("cu-franchise-owned", row.franchise_owned);
 
       // Personal
       setText("cu-dob", row.birth_date);
