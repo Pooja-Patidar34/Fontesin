@@ -5,6 +5,7 @@ from django.db.models import Q
 from django.shortcuts import render
 
 from accounts.models import User
+from accounts.utils.country_matching import country_match_q
 
 
 def _coordinator_or_superuser(user):
@@ -40,15 +41,32 @@ def _can_view_staff(user):
     return is_franchise_holder(user)
 
 
-def _scoped_tenant_qs(qs, user):
+def _scoped_tenant_qs(qs, user, target_role=None):
     """Tenant scoping for non-superusers. Coordinators see every tenant —
     they oversee consultants across the platform — so the tenant filter is
-    dropped for them. Everyone else stays pinned to their own tenant."""
+    dropped for them. Everyone else stays pinned to their own tenant.
+
+    Dropped for a franchise holder listing COORDINATORS too. A franchise is a
+    GEOGRAPHY, not a tenant: the holder's node says "the USA", and the right
+    scope for that is the territory filter below, which answers exactly the
+    question the tab asks. Pinning to the holder's own tenant on top of it
+    silently subtracts every coordinator who registered in a different tenant —
+    in practice all of them, since a holder and a coordinator have no reason to
+    share one — so the tab came up empty at every level, Master included
+    (bug report, Sep 2026). The territory filter fails closed on its own (a
+    holder with no territory sees nobody), so nothing is left unscoped here.
+    """
     if user.is_superuser:
         return qs
     role_code = (user.role.code or "").upper() if user.role else ""
     if role_code == "COORDINATOR":
         return qs
+
+    if (target_role or "").upper() == "COORDINATOR":
+        from accounts.utils.franchise_access import is_franchise_holder
+        if is_franchise_holder(user):
+            return qs
+
     return qs.filter(tenant=user.tenant)
 
 
@@ -99,20 +117,74 @@ def _scope_consultants_to_franchise_subtree(qs, viewer, target_role):
     return qs.filter(id__in=subtree_consultant_ids(viewer))
 
 
+def _coordinator_country_q(code):
+    """Match coordinators whose managed COUNTRY is `code` (an ISO alpha-2).
+
+    Mirrors the priority chain `_coordinator_region_code` (accounts/view/
+    company.py) uses to decide which region a coordinator actually manages, so
+    this tab and the coordinator's own Company Database agree on where a
+    coordinator sits:
+
+      1. territory_country — the explicit ISO code, when an admin assigned one.
+      2. target_region     — the country picked on the application form, stored
+                             as a canonical English name (matched together with
+                             the ISO code and known aliases via country_match_q).
+      3. country           — the coordinator's own country, last resort.
+
+    Each level is only consulted when the ones above it are blank, which is why
+    the fallbacks carry the "…is blank" guards: a coordinator explicitly
+    assigned to Germany must not also match Spain because they happen to live
+    there.
+    """
+    no_territory = Q(territory_country__isnull=True) | Q(territory_country="")
+    no_target = Q(target_region__isnull=True) | Q(target_region="")
+
+    q = Q(territory_country__iexact=code)
+    q |= no_territory & country_match_q(code, field="target_region")
+    q |= no_territory & no_target & country_match_q(code, field="country")
+    return q
+
+
+def _coordinator_sub_level_q(value, territory_field, profile_field):
+    """Match coordinators against one sub-country level (region or city).
+
+    The coordinator's value for that level is `territory_<level>` when an admin
+    assigned one, else the matching profile field (`state_region` / `city`).
+    Registration requires a country, a state/region AND a city from every user
+    (accounts/view/auth.py:register — they are in `required_fields`), so a
+    coordinator always carries the profile pair even though the coordinator
+    application form itself only asks for a country.
+
+    The match is exact: a Regional over Madhya Pradesh lists the Madhya Pradesh
+    coordinators and a Micro over Bhopal the Bhopal ones. A coordinator with no
+    value at this level cannot be placed in that state or city and so does not
+    appear — the tab answers "who is IN this territory", not "whose territory
+    contains it".
+    """
+    territory_blank = Q(**{f"{territory_field}__isnull": True}) | Q(**{territory_field: ""})
+
+    return (
+        Q(**{f"{territory_field}__iexact": value})
+        | (territory_blank & Q(**{f"{profile_field}__iexact": value}))
+    )
+
+
 def _scope_coordinators_to_franchise_territory(qs, viewer, target_role):
     """A franchise holder sees only the coordinators inside their OWN territory.
 
-    "Same region as the franchise": a Master holding the USA sees every
-    coordinator in the USA; a Regional holding US / California sees only the
-    California ones; a Micro only its own city. Applies at every level — the
-    tab is gated on owning an activated node, not on which level it is.
+    "Same region as the franchise", level by level:
 
-    Containment follows `Tenant.is_territory_within`: a level the node leaves
-    blank is simply not constrained, so a country-level node matches any region
-    or city inside that country. A coordinator whose own territory is BROADER
-    than the node's (say a country-wide coordinator seen from a Regional node)
-    does not match — we can't place them in that specific region, and the
-    narrower reading is the safe one for a visibility rule.
+      Master   IN                  → every coordinator in India
+      National IN                  → every coordinator in India
+      Regional IN / Madhya Pradesh → the Madhya Pradesh coordinators
+      Micro    IN / MP / Bhopal    → the Bhopal coordinators
+
+    So each level narrows to exactly the territory the node holds. A level the
+    NODE leaves blank is not constrained (a Master and a region-less National
+    both name only a country, and match the whole of it); a level the node DOES
+    name must be matched, so a coordinator whose own region is unknown or
+    different is not listed. `_coordinator_sub_level_q` resolves the
+    coordinator's side of that comparison.
 
     A holder whose nodes carry no territory at all sees nothing rather than
     everything: failing closed is the right default for a scoping rule.
@@ -146,11 +218,15 @@ def _scope_coordinators_to_franchise_territory(qs, viewer, target_role):
 
     territory_q = Q()
     for n in nodes:
-        node_q = Q(territory_country__iexact=(n.territory_country or "").strip())
+        node_q = _coordinator_country_q((n.territory_country or "").strip().upper())
         if (n.territory_region or "").strip():
-            node_q &= Q(territory_region__iexact=n.territory_region.strip())
+            node_q &= _coordinator_sub_level_q(
+                n.territory_region.strip(), "territory_region", "state_region",
+            )
         if (n.territory_city or "").strip():
-            node_q &= Q(territory_city__iexact=n.territory_city.strip())
+            node_q &= _coordinator_sub_level_q(
+                n.territory_city.strip(), "territory_city", "city",
+            )
         territory_q |= node_q
     return qs.filter(territory_q)
 
@@ -328,18 +404,13 @@ def consultant_companies(request):
     )
 
 
-@login_required
-def coordinator_companies(request):
-    """Companies associated with coordinator users, scoped to the tenant."""
-    if not _can_view_staff(request.user):
-        raise PermissionDenied()
-    return _render_companies_by_role(
-        request,
-        "COORDINATOR",
-        page_title="Coordinators' Companies",
-        owner_label="Coordinators",
-        active_submenu="coordinator-companies",
-    )
+# `coordinator_companies` (Network → Coordinators Companies) was removed in
+# Sep 2026: a coordinator oversees a TERRITORY, not a portfolio of companies, so
+# the grid only ever showed the company they happened to register with. The
+# Coordinators tab (`coordinator_users`) is the coordinator view that answers a
+# real question, and it is territory-scoped per franchise level. Its route is
+# gone too, so the page is unreachable rather than merely unlinked.
+# `_render_companies_by_role` stays — `consultant_companies` still uses it.
 
 
 def _serialize_user(u):
@@ -425,7 +496,7 @@ def _render_users_by_role(request, role_code, *, page_title, entity_label, activ
         .select_related("role", "primary_company", "tenant")
         .filter(role__code__iexact=role_code, is_deleted=False)
     )
-    qs = _scoped_tenant_qs(qs, request.user)
+    qs = _scoped_tenant_qs(qs, request.user, role_code)
     qs = _scope_consultants_to_coordinator_region(qs, request.user, role_code)
     qs = _scope_consultants_to_franchise_subtree(qs, request.user, role_code)
     qs = _scope_coordinators_to_franchise_territory(qs, request.user, role_code)

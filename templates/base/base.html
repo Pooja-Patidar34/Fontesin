@@ -1071,13 +1071,14 @@
               {% comment %} Admin-only additions (spec F). "Business Users
                  Companies" points at the Companies Database — the only existing
                  all-companies grid; the certified-by / filter extensions F asks
-                 for are not built. {% endcomment %}
+                 for are not built.
+
+                 "Coordinators Companies" was dropped (Sep 2026): a coordinator
+                 oversees a territory rather than owning companies, so the grid
+                 listed whatever company they had happened to register with and
+                 answered no real question. The page and its route went with it.
+                 {% endcomment %}
               {% if sb_admin %}
-              <li class="nav-item">
-                <a href="{% url 'coordinator-companies' %}" class="nav-link {% if active_submenu == 'coordinator-companies' %}active{% endif %}">
-                  <i class="fas fa-city nav-icon"></i><p>{% trans "Coordinators Companies" context "sidebar" %}</p>
-                </a>
-              </li>
               <li class="nav-item">
                 <a href="{% url 'business-users' %}" class="nav-link {% if active_menu == 'business-users' %}active{% endif %}">
                   <i class="fas fa-user nav-icon"></i><p>{% trans "Business Users" context "sidebar" %}</p>

@@ -15,7 +15,7 @@ from .view.audit import audit_logs,audit_log_detail_ajax
 from .view.tenant import tenant_list,toggle_tenant,tenant_detail_ajax,tenant_delete
 from .view.website import home, about, worldmap, career, contact, membership, select_plan, invoice_detail
 from .view.regions import region_us, region_de, region_cz, region_ae, region_jp, regions_map_view, region_coming_soon, region_detail
-from .view.consultant import consultant_companies, consultant_users, coordinator_users, coordinator_companies, business_users
+from .view.consultant import consultant_companies, consultant_users, coordinator_users, business_users
 from .view.veriff import CreateVeriffSessionAPIView, VeriffStatusAPIView
 from .view.webhook import veriff_webhook
 from billing.views import invoice_list, plan_history, payment_list, payment_approve, payment_reject, payment_edit, payment_detail_ajax, subscription_list, plan_edit, plan_toggle, commission_list, commission_mark_paid, commission_invoice_detail_ajax, commission_invoice_export
@@ -262,7 +262,7 @@ urlpatterns = [
     path('consultants/users/', consultant_users, name='consultant-users'),
     path('coordinators/users/', coordinator_users, name='coordinator-users'),
     path('users/business/', business_users, name='business-users'),
-    path('coordinators/companies/', coordinator_companies, name='coordinator-companies'),
+    # 'coordinators/companies/' removed Sep 2026 — see accounts/view/consultant.py.
 
     #region specific pages
     path('region/us/', region_us, name='region_us'),

@@ -6399,13 +6399,15 @@ def _make_role(name, code, tier_level=1):
 # ════════════════════════════════════════════════════════════════════════
 
 class StaffDirectoryTests(BaseIAMTestCase):
-    """consultant_companies / coordinator_companies / consultant_users /
-    coordinator_users / business_users — gated by _can_view_staff (coordinator,
-    franchise, superuser) except business_users (consultant or superuser)."""
+    """consultant_companies / consultant_users / coordinator_users /
+    business_users — gated by _can_view_staff (coordinator, franchise,
+    superuser) except business_users (consultant or superuser).
+
+    coordinator_companies was removed in Sep 2026 (see accounts/view/
+    consultant.py), so there is no longer a route to gate."""
 
     DIRECTORY_NAMES = [
         "consultant-companies",
-        "coordinator-companies",
         "consultant-users",
         "coordinator-users",
     ]
