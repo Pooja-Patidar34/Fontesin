@@ -99,6 +99,14 @@ def coordinator_requests_list(request):
         .order_by("-decided_at")[:50]
     )
 
+    # Every route to the coordinator role lands here, not just the upgrade one:
+    # someone who REGISTERS as a coordinator submits a registration application
+    # instead of a CoordinatorRequest, and used to sit in a separate "Staff
+    # Applications" list. Two different doors into one role meant an admin had
+    # to know which to check (Sep 2026).
+    from accounts.view.application_review import staff_applications
+    signups = staff_applications(["coordinator"])
+
     return render(
         request,
         "dashboard/coordinator_requests.html",
@@ -107,6 +115,12 @@ def coordinator_requests_list(request):
             "pending": pending,
             "approved": approved,
             "declined": declined,
+            # Registration applications, kept in their own context keys because
+            # they are User rows reviewed through `application-action`, not
+            # CoordinatorRequest rows reviewed through `coordinator-request-action`.
+            "signup_pending": signups["pending"],
+            "signup_approved": signups["approved"],
+            "signup_declined": signups["declined"],
         },
     )
 

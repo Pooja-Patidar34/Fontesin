@@ -782,7 +782,7 @@
                    class="nav-link {% if active_menu == 'certifications' %}active{% endif %}"
                    style="display: flex; align-items: center;">
                   <i class="fas fa-certificate nav-icon"></i>
-                  <p style="flex:1;">{% trans "Certification" context "sidebar" %}</p>
+                  <p style="flex:1;">{% trans "Certifications" context "sidebar" %}</p>
                   {% if pending_certification_count %}
                   <span class="badge badge-warning right">{{ pending_certification_count }}</span>
                   {% endif %}
@@ -877,8 +877,8 @@
           </li>
 
           {% elif sb_admin %}
-          <li class="nav-item has-treeview {% if active_menu == 'tenants' or active_menu == 'franchise-tree' %}menu-open{% endif %}">
-            <a href="#" class="nav-link {% if active_menu == 'tenants' or active_menu == 'franchise-tree' %}active{% endif %}">
+          <li class="nav-item has-treeview {% if active_menu == 'tenants' or active_menu == 'franchise-tree' or active_menu == 'franchise-admin-add' %}menu-open{% endif %}">
+            <a href="#" class="nav-link {% if active_menu == 'tenants' or active_menu == 'franchise-tree' or active_menu == 'franchise-admin-add' %}active{% endif %}">
               <i class="nav-icon fas fa-sitemap"></i>
               <p>{% trans "Franchise management" context "sidebar" %}<i class="right fas fa-angle-left"></i></p>
             </a>
@@ -894,13 +894,16 @@
                 </a>
               </li>
               {% comment %}
-                "Add Franchise" — the Admin creating a franchise outright with no
-                approval step — has no view yet, so no entry is rendered. It is
-                deliberately NOT pointed at Add Sub-Franchise: that is the
-                holder's PROPOSAL flow and produces a PENDING_CONTRACT node
-                awaiting this same Admin, which is the opposite of what F asks
-                for. See the hand-off notes.
+                "Add Franchise" — the Admin creates a franchise outright, with no
+                approval step: it is created AND activated in one submit. Distinct
+                from the holder's Add Sub-Franchise, which only proposes and
+                leaves a PENDING_CONTRACT node awaiting this same Admin.
               {% endcomment %}
+              <li class="nav-item">
+                <a href="{% url 'franchise-admin-add' %}" class="nav-link {% if active_menu == 'franchise-admin-add' %}active{% endif %}">
+                  <i class="fas fa-plus nav-icon"></i><p>{% trans "Add Franchise" context "sidebar" %}</p>
+                </a>
+              </li>
             </ul>
           </li>
 
@@ -963,11 +966,22 @@
               <p>{% trans "Professional Modules" context "sidebar" %}<i class="right fas fa-angle-left"></i></p>
             </a>
             <ul class="nav nav-treeview">
+              {% comment %}
+                "All Modules" is hidden for the Platform Admin: it is not in the
+                Professional Modules spec, which lists only the per-module rows
+                (Products & Services / Investments / Education → All Listings).
+                Kept for every other role because this is the ONLY sidebar route
+                to the modules overview — removing it outright would strand that
+                page behind a direct URL. The Admin reaches each module's
+                moderation grid through its own All Listings row below.
+              {% endcomment %}
+              {% if not sb_admin %}
               <li class="nav-item">
                 <a href="{% url 'modules:dashboard' %}" class="nav-link {% if active_menu == 'modules' %}active{% endif %}">
                   <i class="far fa-circle nav-icon"></i><p>{% trans "All Modules" context "sidebar" %}</p>
                 </a>
               </li>
+              {% endif %}
 
               {% for m in sidebar_modules %}
               {% if m.locked %}
@@ -1143,9 +1157,9 @@
 
           {% comment %} ══ REQUESTS + PLAN MANAGEMENT (Platform Admin) ══ {% endcomment %}
           {% if sb_admin %}
-          <li class="nav-item has-treeview {% if active_menu == 'coordinator-requests' or active_menu == 'applications' or active_menu == 'franchise-applications' or active_menu == 'payments' or active_menu == 'commissions' %}menu-open{% endif %}">
+          <li class="nav-item has-treeview {% if active_menu == 'coordinator-requests' or active_menu == 'consultant-requests' or active_menu == 'applications' or active_menu == 'franchise-applications' or active_menu == 'payments' or active_menu == 'commissions' %}menu-open{% endif %}">
             <a href="#"
-               class="nav-link {% if active_menu == 'coordinator-requests' or active_menu == 'applications' or active_menu == 'franchise-applications' or active_menu == 'payments' or active_menu == 'commissions' %}active{% endif %}"
+               class="nav-link {% if active_menu == 'coordinator-requests' or active_menu == 'consultant-requests' or active_menu == 'applications' or active_menu == 'franchise-applications' or active_menu == 'payments' or active_menu == 'commissions' %}active{% endif %}"
                style="display: flex; align-items: center;">
               <i class="nav-icon fas fa-inbox"></i>
               <p style="flex:1;">{% trans "Requests" context "sidebar" %}<i class="right fas fa-angle-left"></i></p>
@@ -1186,6 +1200,17 @@
                 </a>
               </li>
               <li class="nav-item">
+                <a href="{% url 'consultant-requests' %}"
+                   class="nav-link {% if active_menu == 'consultant-requests' %}active{% endif %}"
+                   style="display: flex; align-items: center;">
+                  <i class="fas fa-user-tie nav-icon"></i>
+                  <p style="flex:1;">{% trans "Consultant Requests" context "sidebar" %}</p>
+                  {% if pending_consultant_request_count %}
+                  <span class="sidebar-notif-badge">{% if pending_consultant_request_count > 9 %}9+{% else %}{{ pending_consultant_request_count }}{% endif %}</span>
+                  {% endif %}
+                </a>
+              </li>
+              <li class="nav-item">
                 <a href="{% url 'franchise-applications' %}"
                    class="nav-link {% if active_menu == 'franchise-applications' %}active{% endif %}"
                    style="display: flex; align-items: center;">
@@ -1207,20 +1232,33 @@
                   {% endif %}
                 </a>
               </li>
-              {% comment %} Staff applications (consultant / coordinator sign-ups)
-                 are not named in the new structure but have nowhere else to go —
-                 dropping the entry would strand the queue. {% endcomment %}
+              {% comment %}
+                "Staff Applications" was the catch-all queue for registration
+                applications. Each role now has its own tab — consultants and
+                coordinators above, and a franchise account is never
+                self-created at all (register.html: "Franchise Partner is
+                intentionally NOT a self-select role", spec §16 #1) — so there
+                is normally nothing left for it to show and it is not rendered.
+
+                It is NOT deleted, only hidden while empty: this is still the
+                only link to the "applications" URL, and that queue remains the
+                fallback for any gated role without a tab of its own
+                (application_review.DEFAULT_QUEUE). Anyone left in it is held
+                out of the app by RequireApplicationApprovalMiddleware, so the
+                row reappears the moment there is someone to decide on rather
+                than stranding them behind a direct URL.
+              {% endcomment %}
+              {% if pending_application_count %}
               <li class="nav-item">
                 <a href="{% url 'applications' %}"
                    class="nav-link {% if active_menu == 'applications' %}active{% endif %}"
                    style="display: flex; align-items: center;">
                   <i class="fas fa-user-plus nav-icon"></i>
                   <p style="flex:1;">{% trans "Staff Applications" context "sidebar" %}</p>
-                  {% if pending_application_count %}
                   <span class="sidebar-notif-badge">{% if pending_application_count > 9 %}9+{% else %}{{ pending_application_count }}{% endif %}</span>
-                  {% endif %}
                 </a>
               </li>
+              {% endif %}
             </ul>
           </li>
 

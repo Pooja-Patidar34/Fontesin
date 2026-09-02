@@ -79,7 +79,7 @@
     </h3>
     <h5 class="small text-muted mb-0">
       {% blocktrans trimmed context "workflows" %}
-      Existing <strong>Business Users</strong> requesting to be upgraded to Coordinator. (New Coordinator/Franchise sign-ups appear under <em>Registration Applications</em>.) Approve to grant the role, decline to reject the request.
+      Every request to become a Coordinator, whichever way it arrived: existing <strong>Business Users</strong> asking to be upgraded, and people who <strong>registered</strong> as a Coordinator and are waiting to be let in. Approve to grant access, decline to reject.
       {% endblocktrans %}
     </h5>
   </div>
@@ -101,6 +101,31 @@
       {% trans "Declined" context "workflows" %}
       {% if declined %}
       <span class="badge badge-secondary">{{ declined|length }}</span>
+      {% endif %}
+    </button>
+    {% comment %}
+      New sign-ups are a separate set of tabs rather than merged into the three
+      above: they are User rows decided through `application-action`, while the
+      rows above are CoordinatorRequest rows decided through
+      `coordinator-request-action`. One table cannot carry both without the
+      action buttons silently posting to the wrong endpoint.
+    {% endcomment %}
+    <button type="button" class="cr-tab" data-pane="signup-pending">
+      {% trans "New sign-ups" context "workflows" %}
+      {% if signup_pending %}
+      <span class="badge badge-warning">{{ signup_pending|length }}</span>
+      {% endif %}
+    </button>
+    <button type="button" class="cr-tab" data-pane="signup-approved">
+      {% trans "Sign-ups approved" context "workflows" %}
+      {% if signup_approved %}
+      <span class="badge badge-secondary">{{ signup_approved|length }}</span>
+      {% endif %}
+    </button>
+    <button type="button" class="cr-tab" data-pane="signup-declined">
+      {% trans "Sign-ups declined" context "workflows" %}
+      {% if signup_declined %}
+      <span class="badge badge-secondary">{{ signup_declined|length }}</span>
       {% endif %}
     </button>
   </div>
@@ -267,6 +292,8 @@
       {% endif %}
     </div>
   </div>
+
+  {% include "dashboard/_staff_signup_panes.html" with pane_prefix="signup-" %}
 
 </div>
 

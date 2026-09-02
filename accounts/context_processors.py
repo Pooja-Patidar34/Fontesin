@@ -27,6 +27,7 @@ def admin_context(request):
     new_commission_count = 0
     pending_coordinator_request_count = 0
     pending_application_count = 0
+    pending_consultant_request_count = 0
     pending_franchise_application_count = 0
     pending_child_franchise_request_count = 0
     has_pending_coordinator_request = False
@@ -268,15 +269,38 @@ def admin_context(request):
         except Exception:
             pass
 
-        # Pending coordinator / franchise account applications — Super Admin
-        # sidebar badge for the Applications queue.
+        # Pending registration applications, counted per queue. Each badge must
+        # count exactly the roles its own page lists, or the sidebar reports work
+        # that isn't there — or worse, stays silent about work that is. The role
+        # split is imported rather than restated: an earlier hardcoded copy here
+        # left out consultants entirely, so a waiting consultant produced no
+        # badge at all while sitting locked out of the app (Sep 2026).
         if request.user.is_superuser:
             try:
                 from django.db.models import Q as _Q
-                pending_application_count = User.objects.filter(
-                    _Q(role__code__iexact="coordinator") | _Q(role__code__iexact="franchise"),
-                    application_status="submitted",
-                ).count()
+                from accounts.view.application_review import QUEUE_BY_ROLE
+                from FontEsin.middleware.require_application_approval import (
+                    GATED_ROLE_CODES,
+                )
+
+                def _submitted(role_codes):
+                    if not role_codes:
+                        return 0
+                    role_q = _Q()
+                    for code in role_codes:
+                        role_q |= _Q(role__code__iexact=code)
+                    return User.objects.filter(
+                        role_q, application_status="submitted",
+                    ).count()
+
+                # Coordinator sign-ups now sit in the Coordinator Requests queue
+                # alongside the upgrade requests, so they join that badge.
+                pending_coordinator_request_count += _submitted(["coordinator"])
+                pending_consultant_request_count = _submitted(["consultant"])
+                # Whatever has no queue of its own stays on the general list.
+                pending_application_count = _submitted([
+                    c for c in GATED_ROLE_CODES if c not in QUEUE_BY_ROLE
+                ])
             except Exception:
                 pending_application_count = 0
 
@@ -465,6 +489,7 @@ def admin_context(request):
         # Sub-Franchise" (a Micro can't have children, spec §8.2).
         "can_add_subfranchise": can_add_subfranchise,
         "pending_coordinator_request_count": pending_coordinator_request_count,
+        "pending_consultant_request_count": pending_consultant_request_count,
         "pending_application_count": pending_application_count,
         "pending_franchise_application_count": pending_franchise_application_count,
         "pending_child_franchise_request_count": pending_child_franchise_request_count,
@@ -475,6 +500,7 @@ def admin_context(request):
         # New queues (franchise / partner / etc.) just add themselves here.
         "pending_requests_total": (
             pending_coordinator_request_count
+            + pending_consultant_request_count
             + pending_application_count
             + pending_franchise_application_count
         ),

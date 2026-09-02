@@ -105,6 +105,19 @@
         </div>
 
         {% comment %}
+          Which of the owner's companies receives the franchise. Filled in by the
+          lookup below once a valid email is entered, because a user who owns
+          several companies must be pinned to one: the choice is stamped on the
+          application and becomes the node's owner_company. Hidden (and disabled,
+          so it doesn't submit) until the lookup has something to show.
+        {% endcomment %}
+        <div class="full" id="sf-company-wrap" style="display:none;">
+          <label class="fr-label" for="sf-owner-company">{% trans "Company holding this sub-franchise" context "franchise" %} <span class="req">*</span></label>
+          <select name="owner_company" id="sf-owner-company" class="fr-control" style="display:none;" disabled></select>
+          <div class="text-muted small mt-1" id="sf-company-hint"></div>
+        </div>
+
+        {% comment %}
           Contract status and Payment status used to be editable here. They are
           the Platform Admin's decision alone: a holder proposes the
           sub-franchise, the Admin collects the fee and then marks it paid and
@@ -265,9 +278,100 @@
       renderRegion(!!lvl, needsRegion);
     }
 
+    // ---- Owner's companies -------------------------------------------------
+    // A user may own several companies, and only ONE can hold this
+    // sub-franchise (it becomes the node's owner_company). Look them up from the
+    // email and make the holder pick when there is a real choice. The submit
+    // view repeats every check — this is only here so the choice is made before
+    // the round trip, never the thing that enforces it.
+    var emailInput = document.getElementById("sf-owner-email");
+    var companyWrap = document.getElementById("sf-company-wrap");
+    var companySelect = document.getElementById("sf-owner-company");
+    var companyHint = document.getElementById("sf-company-hint");
+    var LOOKUP_URL = "{% url 'franchise-subfranchise-owner-lookup' %}";
+    var initialCompany = (INITIAL && INITIAL.owner_company) || "";
+    var lookupSeq = 0;
+
+    // No company to choose from: hide the select (disabled, so it submits
+    // nothing) and show `msg` if there is something worth explaining.
+    function noCompanyChoice(msg) {
+      companySelect.textContent = "";
+      companySelect.disabled = true;
+      companySelect.required = false;
+      companySelect.style.display = "none";
+      companyHint.textContent = msg || "";
+      companyWrap.style.display = msg ? "" : "none";
+    }
+
+    function renderCompanies(list) {
+      var eligible = list.filter(function (c) { return c.eligible; });
+      if (!list.length) {
+        noCompanyChoice("{% trans 'This user owns no company, so the sub-franchise will be held by them personally.' context 'franchise' %}");
+        return;
+      }
+      if (!eligible.length) {
+        noCompanyChoice("{% trans 'Every company this user owns already holds a franchise or has one under review. Each company can hold only one.' context 'franchise' %}");
+        return;
+      }
+      companySelect.textContent = "";
+      // Placeholder only when there is an actual choice to make — with a single
+      // eligible company it is preselected and the holder has nothing to decide.
+      if (eligible.length > 1) {
+        var ph = document.createElement("option");
+        ph.value = "";
+        ph.textContent = "{% trans 'Select a company…' context 'franchise' %}";
+        companySelect.appendChild(ph);
+      }
+      // Ineligible companies stay listed but disabled, with the reason: the
+      // parent holder doesn't know the owner's other franchises, so a silently
+      // missing company would just look like a bug.
+      list.forEach(function (c) {
+        var o = document.createElement("option");
+        o.value = c.id;
+        o.textContent = c.eligible ? c.name : c.name + " — " + c.reason;
+        o.disabled = !c.eligible;
+        if (c.eligible && (c.id === initialCompany || eligible.length === 1)) o.selected = true;
+        companySelect.appendChild(o);
+      });
+      initialCompany = "";  // one-shot: only pre-select on the first build
+      companySelect.style.display = "";
+      companySelect.disabled = false;
+      companySelect.required = true;
+      companyWrap.style.display = "";
+      companyHint.textContent = eligible.length > 1
+        ? "{% trans 'This user owns several companies — choose the one that will hold this sub-franchise.' context 'franchise' %}"
+        : "";
+    }
+
+    function lookupOwner() {
+      var email = (emailInput.value || "").trim();
+      if (!email || emailInput.validity.typeMismatch) { noCompanyChoice(""); return; }
+      var seq = ++lookupSeq;
+      fetch(LOOKUP_URL + "?email=" + encodeURIComponent(email), {
+        credentials: "same-origin",
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+      })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          if (seq !== lookupSeq) return;  // a newer lookup has already answered
+          if (!data || !data.found) { noCompanyChoice(""); return; }
+          renderCompanies(data.companies || []);
+        })
+        .catch(function () {
+          // Offline or a failed lookup: leave the picker out and let the submit
+          // view ask for the company instead of blocking the form on JS.
+          if (seq === lookupSeq) noCompanyChoice("");
+        });
+    }
+
+    // `change` covers typing then leaving the field; the initial call
+    // repopulates the picker after a validation-error redirect.
+    emailInput.addEventListener("change", lookupOwner);
+
     parent.addEventListener("change", refreshLevels);
     level.addEventListener("change", refreshRequired);
     refreshLevels();
+    if (emailInput.value) lookupOwner();
   })();
 </script>
 {% endif %}

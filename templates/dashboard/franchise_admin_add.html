@@ -1,0 +1,289 @@
+{% extends "base/base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Add Franchise" context "franchise" %}{% endblock %}
+
+{% block content %}
+
+<style>
+  .card.fr-shell { border: 1px solid #e8edf3; border-radius: 14px; box-shadow: 0 1px 3px rgba(15,23,42,.05); overflow: hidden; }
+  .fr-head { display: flex; gap: 14px; align-items: flex-start; padding: 20px 22px; border-bottom: 1px solid #f1f5f9; }
+  .fr-ico { width: 42px; height: 42px; border-radius: 11px; display: grid; place-items: center; font-size: 1.02rem; flex: 0 0 auto; background: #e7f7ee; color: #12a150; }
+  .fr-head__t { font-size: 1.06rem; font-weight: 700; color: #0f1e2e; margin: 0; }
+  .fr-head__s { font-size: .82rem; color: #64748b; margin: 5px 0 0; max-width: 660px; }
+  .fr-body { padding: 18px 22px; }
+  .fr-label { display:block; font-size:.78rem; font-weight:600; color:#334155; margin-bottom:6px; }
+  .fr-control { width:100%; border:1px solid #dbe3ec; border-radius:9px; padding:9px 12px; font-size:.86rem; }
+  .fr-control:focus { outline:none; border-color:#4da3ff; box-shadow:0 0 0 3px rgba(77,163,255,.15); }
+  .fr-btn { border:0; border-radius:9px; padding:10px 18px; background:linear-gradient(180deg,#24405a,#16293b); color:#fff; font-weight:600; font-size:.86rem; cursor:pointer; }
+  .fr-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .fr-grid .full { grid-column:1 / -1; }
+  .fr-sub { font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#94a3b8; border-bottom:1px solid #eef2f7; padding-bottom:6px; margin-top:4px; }
+  @media (max-width:640px){ .fr-grid{ grid-template-columns:1fr; } }
+  .req { color:#e11d48; }
+</style>
+
+<div class="card fr-shell">
+  <div class="fr-head">
+    <div class="fr-ico"><i class="fas fa-plus"></i></div>
+    <div>
+      <h3 class="fr-head__t">{% trans "Add Franchise" context "franchise" %}</h3>
+      <p class="fr-head__s">{% trans "Create a franchise directly and activate it in one step — no request and no approval round-trip. Use this to grant a franchise you have already agreed outside the system." context "franchise" %}</p>
+    </div>
+  </div>
+
+  <div class="fr-body">
+    <div class="alert alert-warning" style="font-size:.84rem;">
+      <i class="fas fa-exclamation-triangle mr-1"></i>
+      {% blocktrans context "franchise" trimmed %}
+        The franchise goes live immediately, with its contract marked signed and
+        its fee marked paid. Territory rules still apply: one franchise per
+        territory and level, and a sub-franchise must sit under an active
+        franchise that covers it.
+      {% endblocktrans %}
+    </div>
+
+    <form method="post" action="{% url 'franchise-admin-add-submit' %}">
+      {% csrf_token %}
+      <div class="fr-grid">
+        <div class="full"><div class="fr-sub">{% trans "Franchise" context "franchise" %}</div></div>
+        <div>
+          <label class="fr-label" for="af-level">{% trans "Franchise level" context "franchise" %} <span class="req">*</span></label>
+          <select name="requested_level" id="af-level" class="fr-control" required>
+            <option value="">{% trans "Select a level…" context "franchise" %}</option>
+            {% for value, label in level_choices %}
+            <option value="{{ value }}"{% if form_data.requested_level == value %} selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="fr-label" for="af-country">{% trans "Country" context "franchise" %} <span class="req">*</span></label>
+          <select name="requested_country" id="af-country" class="fr-control" required>
+            <option value="">{% trans "Select a country…" context "franchise" %}</option>
+            {% for value, label in country_choices %}
+            <option value="{{ value }}"{% if form_data.requested_country == value %} selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          {% comment %}
+            Two controls share this label, so `for` can only name one of them:
+            both carry aria-labelledby back to the label id instead, which keeps
+            an accessible name on whichever one is currently shown.
+          {% endcomment %}
+          <label class="fr-label" id="af-region-label" for="af-region-text">{% trans "State / Region" context "franchise" %} <span class="req" id="af-region-req" style="display:none;">*</span></label>
+          {# Dropdown when the chosen country has known subdivisions; free text otherwise. Only the active one is enabled, so only it submits. #}
+          <select name="requested_region" id="af-region-select" class="fr-control" style="display:none;" aria-labelledby="af-region-label" disabled></select>
+          <input type="text" name="requested_region" id="af-region-text" class="fr-control" aria-labelledby="af-region-label"
+                 placeholder="{% trans "e.g. California" context "franchise" %}" value="{{ form_data.requested_region|default:'' }}">
+        </div>
+        <div id="af-city-wrap">
+          <label class="fr-label" for="af-city">{% trans "City / District" context "franchise" %} <span class="req" id="af-city-req" style="display:none;">*</span></label>
+          <input type="text" name="requested_city" id="af-city" class="fr-control"
+                 placeholder="{% trans "e.g. San Diego" context "franchise" %}" value="{{ form_data.requested_city|default:'' }}">
+        </div>
+        <div id="af-local-wrap">
+          <label class="fr-label" for="af-local">{% trans "Micro area (optional)" context "franchise" %}</label>
+          <input type="text" name="requested_local_area" id="af-local" class="fr-control"
+                 placeholder="{% trans "Neighbourhood / district" context "franchise" %}" value="{{ form_data.requested_local_area|default:'' }}">
+        </div>
+
+        <div class="full"><div class="fr-sub">{% trans "Franchisee" context "franchise" %}</div></div>
+        <div>
+          <label class="fr-label" for="af-legal-name">{% trans "Legal name / Company name" context "franchise" %} <span class="req">*</span></label>
+          <input type="text" name="legal_name" id="af-legal-name" class="fr-control" required
+                 placeholder="{% trans "e.g. Acme Retail LLC" context "franchise" %}" value="{{ form_data.legal_name|default:'' }}">
+        </div>
+        <div>
+          <label class="fr-label" for="af-contact-person">{% trans "Contact person" context "franchise" %}</label>
+          <input type="text" name="contact_person" id="af-contact-person" class="fr-control"
+                 placeholder="{% trans "Full name" context "franchise" %}" value="{{ form_data.contact_person|default:'' }}">
+        </div>
+        <div>
+          <label class="fr-label" for="af-owner-email">{% trans "Owner email" context "franchise" %} <span class="req">*</span></label>
+          <input type="email" name="owner_email" id="af-owner-email" class="fr-control" required
+                 placeholder="{% trans "owner@example.com" context "franchise" %}" value="{{ form_data.owner_email|default:'' }}">
+          <div class="text-muted small mt-1">{% trans "The person who will hold this franchise. They must already have an account." context "franchise" %}</div>
+        </div>
+        <div>
+          <label class="fr-label" for="af-contact-phone">{% trans "Phone" context "franchise" %}</label>
+          <input type="text" name="contact_phone" id="af-contact-phone" class="fr-control"
+                 placeholder="{% trans "+1 555 010 0000" context "franchise" %}" value="{{ form_data.contact_phone|default:'' }}">
+        </div>
+
+        {% comment %}
+          Which of the owner's companies holds it — filled in by the lookup below
+          once a valid email is entered. Same picker and same endpoint as the
+          holder's Add Sub-Franchise form.
+        {% endcomment %}
+        <div class="full" id="af-company-wrap" style="display:none;">
+          <label class="fr-label" for="af-owner-company">{% trans "Company holding this franchise" context "franchise" %} <span class="req">*</span></label>
+          <select name="owner_company" id="af-owner-company" class="fr-control" style="display:none;" disabled></select>
+          <div class="text-muted small mt-1" id="af-company-hint"></div>
+        </div>
+
+        <div class="full">
+          <label class="fr-label" for="af-note">{% trans "Notes (optional)" context "franchise" %}</label>
+          <textarea name="application_note" id="af-note" class="fr-control" rows="2"
+                    placeholder="{% trans "Why this franchise was granted directly." context "franchise" %}">{{ form_data.application_note|default:'' }}</textarea>
+        </div>
+      </div>
+      <div class="mt-3">
+        <button type="submit" class="fr-btn"><i class="fas fa-plus mr-1"></i>{% trans "Create & activate franchise" context "franchise" %}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{{ country_states|json_script:"af-country-states" }}
+{{ form_data|json_script:"af-form-data" }}
+<script>
+  (function () {
+    var level = document.getElementById("af-level");
+    var country = document.getElementById("af-country");
+    var regionSelect = document.getElementById("af-region-select");
+    var regionText = document.getElementById("af-region-text");
+    var city = document.getElementById("af-city");
+    var local = document.getElementById("af-local");
+    var cityWrap = document.getElementById("af-city-wrap");
+    var localWrap = document.getElementById("af-local-wrap");
+    var regionReq = document.getElementById("af-region-req");
+    var cityReq = document.getElementById("af-city-req");
+
+    var statesNode = document.getElementById("af-country-states");
+    var COUNTRY_STATES = statesNode ? JSON.parse(statesNode.textContent) : {};
+    var initNode = document.getElementById("af-form-data");
+    var INITIAL = initNode ? JSON.parse(initNode.textContent) : {};
+    var initialRegion = (INITIAL && INITIAL.requested_region) || "";
+
+    // `enabled` = the field can be used at all; `needsRegion` = it is required.
+    // Disabled fields aren't submitted, so only the active + enabled control
+    // reaches the server.
+    function renderRegion(enabled, needsRegion) {
+      var cc = (country.value || "").toUpperCase();
+      var opts = (cc && COUNTRY_STATES[cc]) || [];
+      var useSelect = opts.length > 0;
+      if (useSelect) {
+        var prev = regionSelect.value || initialRegion;
+        regionSelect.textContent = "";  // drop the previous country's options
+        var placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = "{% trans 'Select State / Region' context 'franchise' %}";
+        regionSelect.appendChild(placeholder);
+        opts.forEach(function (s) {
+          var o = document.createElement("option");
+          o.value = s; o.textContent = s;
+          if (s === prev) o.selected = true;
+          regionSelect.appendChild(o);
+        });
+      }
+      initialRegion = "";  // one-shot: only pre-select on the first build
+      regionSelect.style.display = useSelect ? "" : "none";
+      regionText.style.display = useSelect ? "none" : "";
+      regionSelect.disabled = !(useSelect && enabled);
+      regionText.disabled = !(!useSelect && enabled);
+      regionSelect.required = useSelect && needsRegion;
+      regionText.required = !useSelect && needsRegion;
+    }
+
+    function refreshRequired() {
+      var lvl = level.value;
+      var needsRegion = lvl === "REGIONAL" || lvl === "MICRO";
+      var needsCity = lvl === "MICRO";
+      regionReq.style.display = needsRegion ? "" : "none";
+      cityReq.style.display = needsCity ? "" : "none";
+      city.required = needsCity;
+      // City / Micro-area apply ONLY to a Micro; hide AND clear them for other
+      // levels so nothing is entered that canonical_territory would strip.
+      cityWrap.style.display = needsCity ? "" : "none";
+      localWrap.style.display = needsCity ? "" : "none";
+      city.disabled = !needsCity;
+      local.disabled = !needsCity;
+      if (!needsCity) { city.value = ""; local.value = ""; }
+      // A Master covers a whole country and names no region.
+      renderRegion(!!lvl && lvl !== "MASTER", needsRegion);
+    }
+
+    // ---- Owner's companies (same endpoint as Add Sub-Franchise) -----------
+    var emailInput = document.getElementById("af-owner-email");
+    var companyWrap = document.getElementById("af-company-wrap");
+    var companySelect = document.getElementById("af-owner-company");
+    var companyHint = document.getElementById("af-company-hint");
+    var LOOKUP_URL = "{% url 'franchise-subfranchise-owner-lookup' %}";
+    var initialCompany = (INITIAL && INITIAL.owner_company) || "";
+    var lookupSeq = 0;
+
+    function noCompanyChoice(msg) {
+      companySelect.textContent = "";
+      companySelect.disabled = true;
+      companySelect.required = false;
+      companySelect.style.display = "none";
+      companyHint.textContent = msg || "";
+      companyWrap.style.display = msg ? "" : "none";
+    }
+
+    function renderCompanies(list) {
+      var eligible = list.filter(function (c) { return c.eligible; });
+      if (!list.length) {
+        noCompanyChoice("{% trans 'This user owns no company, so the franchise will be held by them personally.' context 'franchise' %}");
+        return;
+      }
+      if (!eligible.length) {
+        noCompanyChoice("{% trans 'Every company this user owns already holds a franchise or has one under review. Each company can hold only one.' context 'franchise' %}");
+        return;
+      }
+      companySelect.textContent = "";
+      if (eligible.length > 1) {
+        var ph = document.createElement("option");
+        ph.value = "";
+        ph.textContent = "{% trans 'Select a company…' context 'franchise' %}";
+        companySelect.appendChild(ph);
+      }
+      list.forEach(function (c) {
+        var o = document.createElement("option");
+        o.value = c.id;
+        o.textContent = c.eligible ? c.name : c.name + " — " + c.reason;
+        o.disabled = !c.eligible;
+        if (c.eligible && (c.id === initialCompany || eligible.length === 1)) o.selected = true;
+        companySelect.appendChild(o);
+      });
+      initialCompany = "";
+      companySelect.style.display = "";
+      companySelect.disabled = false;
+      companySelect.required = true;
+      companyWrap.style.display = "";
+      companyHint.textContent = eligible.length > 1
+        ? "{% trans 'This user owns several companies — choose the one that will hold this franchise.' context 'franchise' %}"
+        : "";
+    }
+
+    function lookupOwner() {
+      var email = (emailInput.value || "").trim();
+      if (!email || emailInput.validity.typeMismatch) { noCompanyChoice(""); return; }
+      var seq = ++lookupSeq;
+      fetch(LOOKUP_URL + "?email=" + encodeURIComponent(email), {
+        credentials: "same-origin",
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+      })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          if (seq !== lookupSeq) return;  // a newer lookup has already answered
+          if (!data || !data.found) { noCompanyChoice(""); return; }
+          renderCompanies(data.companies || []);
+        })
+        .catch(function () {
+          // Leave the picker out and let the submit view ask for the company
+          // rather than blocking the form on a failed lookup.
+          if (seq === lookupSeq) noCompanyChoice("");
+        });
+    }
+
+    level.addEventListener("change", refreshRequired);
+    country.addEventListener("change", refreshRequired);
+    emailInput.addEventListener("change", lookupOwner);
+    refreshRequired();
+    if (emailInput.value) lookupOwner();
+  })();
+</script>
+
+{% endblock %}

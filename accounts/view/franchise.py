@@ -21,7 +21,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import IntegrityError, transaction
 from django.db.models import OuterRef, Q, Subquery
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -1407,6 +1407,28 @@ def franchise_activate(request, tenant_id):
         return redirect(back)
 
     now = timezone.now()
+    error = _activate_node_now(request, node, now)
+    if error:
+        messages.error(request, error)
+        return redirect(back)
+
+    messages.success(request, _("%(name)s is now active.") % {"name": node.name})
+    return redirect(back)
+
+
+def _activate_node_now(request, node, now):
+    """Take an existing node to ACTIVE and apply everything activation carries.
+
+    Split out of `franchise_activate` so the Admin's "Add Franchise" flow
+    (`franchise_admin_add_submit`), which creates a franchise outright with no
+    approval step, goes live through the SAME code rather than a second
+    definition of what "active" means: contract signed, fee paid, exclusivity
+    re-checked, the holder let past the staff-application gate, a Micro owner
+    recorded on its own roster, plus the audit entry and the notification.
+
+    `node` must already be saved. Returns an error message when activation has
+    to be refused, or "" on success.
+    """
     # Activation folds contract signature + fee payment in (the MVP shortcut):
     # the Admin only reaches this point once the money has actually arrived.
     node.contract_status = ContractStatus.SIGNED
@@ -1419,8 +1441,7 @@ def franchise_activate(request, tenant_id):
     try:
         node.clean()  # re-check exclusivity/parent now that status is ACTIVE
     except ValidationError as exc:
-        messages.error(request, " ".join(exc.messages))
-        return redirect(back)
+        return " ".join(exc.messages)
 
     try:
         node.save(update_fields=[
@@ -1429,11 +1450,7 @@ def franchise_activate(request, tenant_id):
         ])
     except IntegrityError:
         # Lost the exclusivity race — another Micro in this territory activated.
-        messages.error(
-            request,
-            _("Could not activate: an active Micro-Franchise already exists in this territory."),
-        )
-        return redirect(back)
+        return _("Could not activate: an active Micro-Franchise already exists in this territory.")
 
     # Owning a franchise is ADDITIVE — the holder's role is left exactly as it
     # was. Activation used to overwrite it with the `franchise` role, which
@@ -1488,8 +1505,7 @@ def franchise_activate(request, tenant_id):
     except Exception:
         pass
 
-    messages.success(request, _("%(name)s is now active.") % {"name": node.name})
-    return redirect(back)
+    return ""
 
 
 @login_required
@@ -1544,6 +1560,201 @@ def franchise_mark_fee_paid(request, tenant_id):
             % {"name": node.name},
         )
     return redirect("franchise-applications")
+
+
+# ---------------------------------------------------------------------------
+# Add Franchise — the Platform Admin creates a franchise outright, no approval
+# ---------------------------------------------------------------------------
+
+@login_required
+def franchise_admin_add(request):
+    """Form for the Platform Admin to create any franchise directly.
+
+    Every other route to a franchise node is a REQUEST that someone else has to
+    approve: an outside applicant's goes to this same Admin, and a holder's
+    sub-franchise proposal produces a PENDING_CONTRACT node awaiting this same
+    Admin. The Admin had no way to simply create one — the last approver in the
+    chain was still waiting on an approval step of their own.
+
+    This is that missing route: pick the owner, the level and the territory, and
+    the franchise is created and activated in one step. It is deliberately
+    superuser-only; it grants a live franchise with no second pair of eyes.
+    """
+    if not request.user.is_superuser:
+        raise PermissionDenied()
+
+    return render(request, "dashboard/franchise_admin_add.html", {
+        "active_menu": "franchise-admin-add",
+        "level_choices": FranchiseLevel.CHOICES,
+        "country_choices": CountryChoices.CHOICES,
+        "country_states": COUNTRY_STATES,
+        # Repopulate after a validation-error redirect (popped so it only
+        # pre-fills once), mirroring the other two franchise forms.
+        "form_data": request.session.pop("admin_add_franchise_form", None) or {},
+    })
+
+
+@login_required
+@require_POST
+@transaction.atomic
+def franchise_admin_add_submit(request):
+    """Create + activate a franchise on the Admin's say-so (see
+    `franchise_admin_add`).
+
+    "No approval" means no review STEP — not fewer integrity rules. The
+    territory canon, the one-per-territory+level rule, the owner-overlap rule
+    and the tree-containment rule all still run: they are what keep the
+    franchise map consistent, and the DB constraints would refuse the row
+    anyway. What is skipped is the FranchiseApplication review round-trip.
+    """
+    if not request.user.is_superuser:
+        raise PermissionDenied()
+
+    request.session["admin_add_franchise_form"] = {
+        k: (request.POST.get(k) or "") for k in (
+            "requested_level", "requested_country", "requested_region",
+            "requested_city", "requested_local_area", "legal_name",
+            "contact_person", "owner_email", "owner_company", "contact_phone",
+            "application_note",
+        )
+    }
+
+    level = (request.POST.get("requested_level") or "").strip().upper()
+    if level not in dict(FranchiseLevel.CHOICES):
+        messages.error(request, _("Please choose a valid franchise level."))
+        return redirect("franchise-admin-add")
+
+    country = (request.POST.get("requested_country") or "").strip().upper()[:2]
+    if not country:
+        messages.error(request, _("Please select the country for this franchise."))
+        return redirect("franchise-admin-add")
+    region = (request.POST.get("requested_region") or "").strip()[:120]
+    city = (request.POST.get("requested_city") or "").strip()[:120]
+    local_area = (request.POST.get("requested_local_area") or "").strip()[:120]
+    country, region, city, local_area = canonical_territory(
+        level, country, region, city, local_area,
+    )
+
+    if level in (FranchiseLevel.REGIONAL, FranchiseLevel.MICRO) and not region:
+        messages.error(request, _("Please enter the region / state for this franchise."))
+        return redirect("franchise-admin-add")
+    if level == FranchiseLevel.MICRO and not city:
+        messages.error(request, _("Please enter the city for a Micro-Franchise."))
+        return redirect("franchise-admin-add")
+    if region:
+        canon = canonical_region(country, region)
+        if canon is None:
+            messages.error(request, _("Please choose a valid state / region for the selected country."))
+            return redirect("franchise-admin-add")
+        region = canon
+
+    # Owner: an existing active account, as everywhere else a franchise is
+    # granted to someone by email.
+    email = (request.POST.get("owner_email") or "").strip().lower()
+    if not email:
+        messages.error(request, _("Please enter the email of the franchise owner."))
+        return redirect("franchise-admin-add")
+    owner = User.objects.filter(
+        email__iexact=email, is_active=True, is_deleted=False,
+    ).first()
+    if not owner:
+        messages.error(request, _("No active user found with that email. The franchise owner must already have an account."))
+        return redirect("franchise-admin-add")
+
+    # Which of the owner's companies holds it — same rule as the sub-franchise
+    # form, so a multi-company owner is pinned to one rather than guessed at.
+    owner_company, choice_error = _resolve_owner_company(request, owner)
+    if choice_error:
+        messages.error(request, choice_error)
+        return redirect("franchise-admin-add")
+
+    # A sub-franchise has to hang off something (spec §4.2). A Master has no
+    # parent by definition.
+    parent = resolve_parent_node(level, country, region, city, local_area)
+    if level != FranchiseLevel.MASTER and parent is None:
+        messages.error(
+            request,
+            _("No active franchise covers this territory yet, so a %(level)s has nothing "
+              "to sit under. Create the Master Franchise for this country first.")
+            % {"level": dict(FranchiseLevel.CHOICES).get(level, level)},
+        )
+        return redirect("franchise-admin-add")
+
+    overlap = Tenant(
+        parent=parent, owner_user=owner, franchise_level=level,
+        territory_country=country, territory_region=region,
+        territory_city=city, territory_local_area=local_area,
+    ).conflicting_franchise_owned()
+    if overlap is not None:
+        messages.error(
+            request,
+            _("%(email)s already holds %(name)s, whose territory overlaps this one. "
+              "A holder cannot also hold a franchise inside their own territory.")
+            % {"email": owner.email, "name": overlap.name},
+        )
+        return redirect("franchise-admin-add")
+
+    conflict = territory_conflict(level, country, region, city, local_area)
+    if conflict is not None:
+        messages.error(request, _territory_taken_reason(conflict))
+        return redirect("franchise-admin-add")
+
+    legal_name = (request.POST.get("legal_name") or "").strip()[:255]
+    contact_person = (request.POST.get("contact_person") or "").strip()[:255]
+    contact_phone = (request.POST.get("contact_phone") or "").strip()[:40]
+    if not legal_name:
+        messages.error(request, _("Please enter the legal / company name for the franchise."))
+        return redirect("franchise-admin-add")
+
+    note = (request.POST.get("application_note") or "").strip()
+    now = timezone.now()
+    try:
+        with transaction.atomic():
+            # An APPROVED application row is still written: it is what the
+            # franchise pages, the audit trail and `created_franchise` read to
+            # explain where a node came from. The Admin is recorded as its own
+            # approver, which is exactly what happened.
+            application = FranchiseApplication.objects.create(
+                applicant_user=owner,
+                applicant_company=owner_company,
+                requested_level=level,
+                requested_country=country,
+                requested_region=region,
+                requested_city=city,
+                requested_local_area=local_area,
+                parent_franchise=parent,
+                legal_name=legal_name,
+                contact_person=contact_person,
+                contact_phone=contact_phone,
+                application_note=note,
+                application_status=FranchiseApplicationStatus.SUBMITTED,
+            )
+            node = _create_node_from_application(
+                application, parent=parent, reviewer=request.user, now=now,
+                node_name=legal_name,
+            )
+            # ...and straight to ACTIVE through the same path the approval queue
+            # uses, so a directly-created franchise is indistinguishable from an
+            # approved one afterwards.
+            error = _activate_node_now(request, node, now)
+            if error:
+                raise ValidationError(error)
+    except ValidationError as exc:
+        messages.error(request, " ".join(exc.messages))
+        return redirect("franchise-admin-add")
+
+    _audit(request, node, "franchise.admin_created",
+           application_id=str(application.id), level=node.franchise_level,
+           parent_id=str(parent.id) if parent else "",
+           owner_id=str(owner.id))
+
+    request.session.pop("admin_add_franchise_form", None)
+    messages.success(
+        request,
+        _("Created %(name)s and activated it for %(email)s.")
+        % {"name": node.name, "email": owner.email},
+    )
+    return redirect("tenants")
 
 
 # ---------------------------------------------------------------------------
@@ -1933,12 +2144,28 @@ def franchise_consultants(request):
     # Only non-Micro levels can be assigned consultants (spec §9.6), so the
     # assign form must not offer a Micro node. The roster above still lists any
     # existing assignment under an owned Micro node so it stays removable.
-    active_nodes = [
-        n for n in owned
-        if n.franchise_status == FranchiseUnitStatus.ACTIVE
-        and n.franchise_level != FranchiseLevel.MICRO
-    ]
+    active_owned = [n for n in owned if n.franchise_status == FranchiseUnitStatus.ACTIVE]
+    active_nodes = [n for n in active_owned if n.franchise_level != FranchiseLevel.MICRO]
     suspended_nodes = [n for n in owned if n.franchise_status == FranchiseUnitStatus.SUSPENDED]
+
+    # Why the assign form is absent. Every reason used to collapse into one
+    # message — "You need an active franchise before you can assign consultants"
+    # — which is wrong for three of them and actively misleading for a holder who
+    # DOES have an active franchise (bug report, Sep 2026):
+    #
+    #   • micro_only    — an active franchise, but a Micro, which may not manage
+    #                     standard consultants (spec §9.6)
+    #   • suspended     — activated, then paused (Rule 9, §17 #12)
+    #   • wrong company — `owned` is scoped to the company the holder is acting
+    #                     as, so a franchise bought by another of their companies
+    #                     isn't here; naming that company is the difference
+    #                     between "switch company" and "you have no franchise".
+    #
+    # There is deliberately no "not activated yet" case: a holder whose only node
+    # is still PENDING_CONTRACT / PENDING_PAYMENT is not a franchise holder yet
+    # (`is_franchise_holder` counts ACTIVE and SUSPENDED only), so they are
+    # refused by `franchise_manager_required` above and never reach this page.
+    micro_only = bool(active_owned) and not active_nodes
 
     return render(
         request,
@@ -1950,6 +2177,9 @@ def franchise_consultants(request):
             "total_count": paginator.count,
             "active_nodes": active_nodes,
             "has_suspended": bool(suspended_nodes),
+            "micro_only": micro_only,
+            # The company the roster is scoped to, so the empty state can name it.
+            "scoped_company": scoping_company(request.user),
         },
     )
 
@@ -2149,6 +2379,125 @@ def pending_child_request_count(user):
 # (spec §6.3 'Add Sub-Franchise')
 # ---------------------------------------------------------------------------
 
+def _owner_company_options(owner):
+    """The companies `owner` could hold a sub-franchise for, as (company, reason)
+    pairs where a non-empty `reason` says why that company is not eligible.
+
+    Same one-franchise-per-company rule the outside-applicant flow applies (see
+    `franchise_request`), but the ineligible companies are kept in the list
+    rather than dropped: there the picker belongs to the owner, who knows what
+    their companies already hold, while here it belongs to the *parent* holder,
+    who would otherwise just see a company missing with no explanation.
+    """
+    options = []
+    for company in Company.objects.filter(owner_user=owner).order_by("name"):
+        held = company_franchise_node(company)
+        pending = company_open_application(company) if held is None else None
+        if held is not None:
+            reason = _("already holds the franchise %(name)s") % {"name": held.name}
+        elif pending is not None:
+            reason = _("already has a franchise request under review")
+        else:
+            reason = ""
+        options.append((company, reason))
+    return options
+
+
+def _resolve_owner_company(request, owner):
+    """Which of `owner`'s companies will hold a franchise being granted to them,
+    read from the form's `owner_company` field.
+
+    Returns `(company_or_None, error_message)`. The choice cannot be guessed for
+    an owner with several companies: it is stamped on the application and copied
+    to the node's `owner_company`, which is what scopes the franchise to one
+    company for its holder afterwards.
+
+      one eligible company  → use it, there is no choice to make
+      several               → the form must have picked one
+      none at all           → company-less, as for consultants and coordinators
+                              who own no company
+
+    Shared by the holder's Add Sub-Franchise form and the Admin's Add Franchise
+    form so both attribute a franchise the same way.
+    """
+    company_options = _owner_company_options(owner)
+    if not company_options:
+        return None, ""
+
+    eligible_companies = [c for c, reason in company_options if not reason]
+    if not eligible_companies:
+        # Every company of theirs already holds a franchise or has one under
+        # review, so there is no company to stamp. Deliberately NOT an error:
+        # these flows accepted such grants before they recorded a company at
+        # all, and refusing them now would withdraw something that works today.
+        return None, ""
+
+    chosen_id = (request.POST.get("owner_company") or "").strip()
+    if chosen_id:
+        match = next(
+            ((c, r) for c, r in company_options if str(c.id) == chosen_id), None,
+        )
+        if match is None:
+            return None, _(
+                "Please select which of %(email)s's companies will hold this franchise."
+            ) % {"email": owner.email}
+        if match[1]:
+            return None, _(
+                "%(company)s %(reason)s, so it cannot hold this franchise."
+            ) % {"company": match[0].name, "reason": match[1]}
+        return match[0], ""
+
+    if len(eligible_companies) == 1:
+        return eligible_companies[0], ""
+    return None, _(
+        "%(email)s owns several companies. Please select which one will hold "
+        "this franchise."
+    ) % {"email": owner.email}
+
+
+@login_required
+def franchise_subfranchise_owner_lookup(request):
+    """AJAX lookup behind the Add Sub-Franchise form's company picker: given the
+    prospective owner's email, the companies they own and which may receive this
+    sub-franchise.
+
+    The form needs this before submit because a user who owns several companies
+    cannot be resolved to one by guessing: the chosen company is stamped on the
+    application and copied to the node's ``owner_company`` at activation, and
+    that is what scopes the franchise to a company for its holder afterwards
+    (`scope_to_active_company`).
+
+    Gated to franchise holders and the Platform Admin (whose own Add Franchise
+    form has the same picker), and answers only for one email at a time with
+    company names — no more account existence than `franchise_subfranchise_submit`
+    already reveals to the same user on POST.
+    """
+    if not (request.user.is_superuser or is_franchise_holder(request.user)):
+        raise PermissionDenied()
+
+    email = (request.GET.get("email") or "").strip().lower()
+    owner = None
+    if email:
+        owner = User.objects.filter(
+            email__iexact=email, is_active=True, is_deleted=False,
+        ).first()
+    if owner is None:
+        return JsonResponse({"found": False, "companies": []})
+
+    return JsonResponse({
+        "found": True,
+        "companies": [
+            {
+                "id": str(company.id),
+                "name": company.name,
+                "eligible": not reason,
+                "reason": reason,
+            }
+            for company, reason in _owner_company_options(owner)
+        ],
+    })
+
+
 @login_required
 def franchise_add_subfranchise(request):
     """Form for an active franchise holder to propose a child franchise under one
@@ -2234,7 +2583,7 @@ def franchise_subfranchise_submit(request):
         k: (request.POST.get(k) or "") for k in (
             "parent_node_id", "requested_level", "requested_region",
             "requested_city", "requested_local_area", "legal_name",
-            "contact_person", "owner_email", "contact_phone",
+            "contact_person", "owner_email", "owner_company", "contact_phone",
             "application_note",
         )
     }
@@ -2289,6 +2638,28 @@ def franchise_subfranchise_submit(request):
         messages.error(request, _("The sub-franchise territory must be inside the parent franchise's territory."))
         return redirect("franchise-add-subfranchise")
 
+    # The node attaches to its DIRECT parent — the deepest ACTIVE node whose
+    # territory contains it (spec §4.2) — which is NOT necessarily the node the
+    # holder picked. The picker only offers a holder their OWN nodes, so a Master
+    # proposing a Regional inside one of its Nationals' territory used to attach
+    # it straight to the Master, as a SIBLING of that National. The tree was then
+    # flat: `get_descendant_ids` walks `parent`, so the National had no
+    # descendants and never saw the Regional's consultants, certified companies
+    # or sales, even though the territory sits inside its own (bug report,
+    # Sep 2026).
+    #
+    # This is the same resolution the outside-applicant flow and the Admin
+    # approval path already use, so one rule now builds the tree everywhere.
+    # The picked node stays the authorisation check (it must be the holder's own,
+    # active, and contain the territory); the resolved node is where it hangs.
+    direct_parent = resolve_parent_node(level, country, region, city, local_area) or parent
+    # Never attach outside the proposing holder's own subtree. The territory is
+    # already inside `parent`, and one franchise per territory+level means the
+    # deepest cover is normally `parent` or one of its descendants — but a stale
+    # or unexpected tree must not silently re-home the node onto another branch.
+    if direct_parent.id != parent.id and direct_parent.id not in parent.get_descendant_ids():
+        direct_parent = parent
+
     # Prospective owner — must already have an active account. They become the
     # holder when the Platform Admin activates the node, exactly like an outside
     # applicant. Consistent with how consultants are added (lookup by email).
@@ -2301,12 +2672,31 @@ def franchise_subfranchise_submit(request):
         messages.error(request, _("No active user found with that email. The sub-franchise owner must already have an account."))
         return redirect("franchise-add-subfranchise")
 
+    # Which of the owner's companies receives this sub-franchise. The choice
+    # cannot be guessed for an owner with several companies: it is stamped on the
+    # application and copied to the node's `owner_company`, which is what scopes
+    # the franchise to one company for its holder afterwards — so an owner with
+    # more than one eligible company must be pinned to one here (the form's
+    # picker, populated by `franchise_subfranchise_owner_lookup`).
+    #
+    #   one eligible company  → use it, no choice to make
+    #   several               → the proposing holder must have picked one
+    #   none at all           → the node stays company-less, as it does for
+    #                           consultants and coordinators who own no company
+    #
+    # Until now this flow set no company at all, so every node it created landed
+    # with `owner_company = None` even when the owner had exactly one company.
+    owner_company, choice_error = _resolve_owner_company(request, owner)
+    if choice_error:
+        messages.error(request, choice_error)
+        return redirect("franchise-add-subfranchise")
+
     # A user may hold several franchises, but never two whose territories
     # overlap — they'd be their own franchisee. The model's clean() is the
     # authoritative backstop (and rolls the row back); checking here gives the
     # proposing holder a clear message up front.
     overlap = Tenant(
-        parent=parent, owner_user=owner, franchise_level=level,
+        parent=direct_parent, owner_user=owner, franchise_level=level,
         territory_country=country, territory_region=region,
         territory_city=city, territory_local_area=local_area,
     ).conflicting_franchise_owned()
@@ -2352,12 +2742,13 @@ def franchise_subfranchise_submit(request):
         with transaction.atomic():
             application = FranchiseApplication.objects.create(
                 applicant_user=owner,
+                applicant_company=owner_company,
                 requested_level=level,
                 requested_country=country,
                 requested_region=region,
                 requested_city=city,
                 requested_local_area=local_area,
-                parent_franchise=parent,
+                parent_franchise=direct_parent,
                 legal_name=legal_name,
                 contact_person=contact_person,
                 contact_phone=contact_phone,
@@ -2365,7 +2756,7 @@ def franchise_subfranchise_submit(request):
                 application_status=FranchiseApplicationStatus.SUBMITTED,
             )
             node = _create_node_from_application(
-                application, parent=parent, reviewer=request.user, now=now,
+                application, parent=direct_parent, reviewer=request.user, now=now,
                 node_name=legal_name,
             )
     except ValidationError as exc:
@@ -2374,7 +2765,11 @@ def franchise_subfranchise_submit(request):
 
     _audit(request, node, "franchise.parent_proposed",
            application_id=str(application.id), level=node.franchise_level,
-           parent_id=str(parent.id), owner_id=str(owner.id))
+           # Both: the node the holder proposed FROM, and the node it actually
+           # hangs off (§4.2) — they differ when a deeper franchise covers the
+           # territory, and the audit trail should show that re-homing.
+           parent_id=str(parent.id), direct_parent_id=str(direct_parent.id),
+           owner_id=str(owner.id))
     try:
         from accounts.utils.notifications import notify_franchise_awaiting_activation
         notify_franchise_awaiting_activation(node)
@@ -2387,8 +2782,10 @@ def franchise_subfranchise_submit(request):
 
     messages.success(
         request,
+        # Names the node it actually attaches to, which is not always the one
+        # picked — saying "under <picked>" would misdescribe the tree.
         _("Proposed %(name)s under %(parent)s. The Platform Admin will activate it after contract & payment.")
-        % {"name": node.name, "parent": parent.name},
+        % {"name": node.name, "parent": direct_parent.name},
     )
     return redirect("franchise-add-subfranchise")
 

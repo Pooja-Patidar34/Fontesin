@@ -38,6 +38,78 @@ def _role_code(user):
     return (user.role.code or "").lower() if user.role else ""
 
 
+# Which queue reviews a registration application, by the role the person signed
+# up under. Sign-ups used to pile into one "Staff Applications" list while
+# Coordinator Requests and Franchise Requests sat next to it holding the OTHER
+# half of the same conversation — an admin had to know that a coordinator could
+# arrive through either door. Each role's requests now land in that role's own
+# tab, whichever way they came in (Sep 2026).
+QUEUE_BY_ROLE = {
+    "consultant": "consultant-requests",
+    "coordinator": "coordinator-requests",
+}
+# Everything else (currently the franchise role) stays on the general queue.
+DEFAULT_QUEUE = "applications"
+
+
+def staff_applications(role_codes):
+    """Registration applications for `role_codes`, split by decision state.
+
+    One definition for every queue that shows sign-ups, so the tabs cannot drift
+    apart in what they consider pending. `role_codes` is matched case-insensitively
+    because role codes are stored inconsistently cased.
+    """
+    role_q = Q()
+    for code in role_codes:
+        role_q |= Q(role__code__iexact=code)
+
+    base = User.objects.filter(role_q).select_related(
+        "role", "primary_company", "application_decided_by",
+    )
+    pending = list(base.filter(application_status="submitted").order_by("-updated_at"))
+    for user in pending:
+        # NOTE: don't use the name `due_diligence` — that's the reverse relation
+        # accessor for the DueDiligence FK and Django rejects assigning a plain
+        # dict to it.
+        user.dd_data = _serialize_due_diligence(user)
+    return {
+        "pending": pending,
+        "approved": list(
+            base.filter(application_status="approved")
+            .exclude(application_decided_at__isnull=True)
+            .order_by("-application_decided_at")[:50]
+        ),
+        "declined": list(
+            base.filter(application_status="declined")
+            .order_by("-application_decided_at")[:50]
+        ),
+    }
+
+
+@login_required
+def consultant_requests_list(request):
+    """Super-admin queue of consultant registration applications.
+
+    Consultants have no separate "upgrade" request the way coordinators do, so
+    this queue is exactly the sign-ups — but it is their own tab, so an admin
+    looking for consultant requests finds them where the name says they are.
+    """
+    if not request.user.is_superuser:
+        raise PermissionDenied()
+
+    rows = staff_applications(["consultant"])
+    return render(
+        request,
+        "dashboard/consultant_requests.html",
+        {
+            "active_menu": "consultant-requests",
+            "signup_pending": rows["pending"],
+            "signup_approved": rows["approved"],
+            "signup_declined": rows["declined"],
+        },
+    )
+
+
 @login_required
 def application_pending(request):
     """The applicant's 'under review' / 'declined' screen while a coordinator/
@@ -98,31 +170,20 @@ def applications_list(request):
     if not request.user.is_superuser:
         raise PermissionDenied()
 
-    base = User.objects.filter(GATED_ROLE_Q).select_related(
-        "role", "primary_company", "application_decided_by"
-    )
-
-    pending = base.filter(application_status="submitted").order_by("-updated_at")
-    approved = base.filter(application_status="approved").exclude(
-        application_decided_at__isnull=True
-    ).order_by("-application_decided_at")[:50]
-    declined = base.filter(application_status="declined").order_by("-application_decided_at")[:50]
-
-    # Attach due-diligence to the pending rows for inline review. NOTE: don't
-    # use the name `due_diligence` — that's the reverse relation accessor for
-    # the DueDiligence FK and Django rejects assigning a plain dict to it.
-    pending = list(pending)
-    for u in pending:
-        u.dd_data = _serialize_due_diligence(u)
+    # Only the roles without a queue of their own — consultant and coordinator
+    # sign-ups now go to their own tabs (see QUEUE_BY_ROLE), so a role's requests
+    # appear in exactly one place instead of two.
+    own_queue_roles = set(QUEUE_BY_ROLE)
+    rows = staff_applications([c for c in GATED_ROLE_CODES if c not in own_queue_roles])
 
     return render(
         request,
         "dashboard/applications.html",
         {
             "active_menu": "applications",
-            "pending": pending,
-            "approved": approved,
-            "declined": declined,
+            "pending": rows["pending"],
+            "approved": rows["approved"],
+            "declined": rows["declined"],
         },
     )
 
@@ -144,6 +205,9 @@ def application_action(request, user_id):
         User.objects.filter(GATED_ROLE_Q, application_status="submitted"),
         id=user_id,
     )
+    # Back to the queue this application is listed in, so the admin returns to
+    # the tab they acted from rather than being dropped on the general list.
+    back = QUEUE_BY_ROLE.get(_role_code(applicant), DEFAULT_QUEUE)
 
     applicant.application_decided_by = request.user
     applicant.application_decided_at = timezone.now()
@@ -177,4 +241,4 @@ def application_action(request, user_id):
         pass
 
     messages.success(request, success_msg)
-    return redirect("applications")
+    return redirect(back)

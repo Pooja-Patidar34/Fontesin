@@ -109,8 +109,29 @@
     <div class="empty-state">
       <div><i class="fas fa-user-friends"></i></div>
       <p class="mb-0">{% trans "No consultants assigned yet." context "franchise" %}</p>
+      {% comment %}
+        Say WHICH reason the assign form is missing for. The catch-all "you need
+        an active franchise" was shown even to holders who have one — a Micro
+        (which may not manage consultants) and a franchise held by another of
+        their companies both landed here.
+      {% endcomment %}
       {% if not active_nodes %}
+      {% if micro_only %}
+      <p class="small mb-0">{% blocktrans context "franchise" trimmed %}
+        Your franchise is active — a Micro-Franchise is simply the smallest unit and
+        holds local exclusivity, so its owner works the territory as the consultant.
+        There is no level beneath it to assign standard consultants to.
+      {% endblocktrans %}</p>
+      {% elif has_suspended %}
+      <p class="small mb-0">{% trans "Your franchise is suspended, so you can't assign consultants until it's reactivated." context "franchise" %}</p>
+      {% elif scoped_company %}
+      <p class="small mb-0">{% blocktrans context "franchise" with company=scoped_company.name trimmed %}
+        {{ company }} has no active franchise. If another of your companies holds the
+        franchise, switch to it to assign consultants.
+      {% endblocktrans %}</p>
+      {% else %}
       <p class="small mb-0">{% trans "You need an active franchise before you can assign consultants." context "franchise" %}</p>
+      {% endif %}
       {% endif %}
     </div>
     {% endif %}

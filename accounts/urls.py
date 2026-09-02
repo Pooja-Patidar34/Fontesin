@@ -35,6 +35,7 @@ from .view.application_review import (
     application_pending,
     applications_list,
     application_action,
+    consultant_requests_list,
 )
 from .view.coordinator_request import (
     coordinator_request_submit,
@@ -59,7 +60,10 @@ from .view.franchise import (
     franchise_consultants,
     assign_consultant,
     consultant_assignment_remove,
+    franchise_admin_add,
+    franchise_admin_add_submit,
     franchise_add_subfranchise,
+    franchise_subfranchise_owner_lookup,
     franchise_subfranchise_submit,
     franchise_certified_companies,
     franchise_sales,
@@ -140,6 +144,9 @@ urlpatterns = [
 
     # Coordinator role requests (BU submit / Super Admin review)
     path("coordinator-requests/", coordinator_requests_list, name="coordinator-requests"),
+    # Consultant registration applications get their own queue, mirroring the
+    # coordinator one (reviewed through `application-action`).
+    path("consultant-requests/", consultant_requests_list, name="consultant-requests"),
     path("coordinator-requests/submit/", coordinator_request_submit, name="coordinator-request-submit"),
     path("coordinator-requests/<uuid:request_id>/action/", coordinator_request_action, name="coordinator-request-action"),
 
@@ -171,9 +178,14 @@ urlpatterns = [
     path("franchise-consultants/", franchise_consultants, name="franchise-consultants"),
     path("franchise-consultants/assign/", assign_consultant, name="assign-consultant"),
     path("franchise-consultants/<uuid:assignment_id>/remove/", consultant_assignment_remove, name="consultant-assignment-remove"),
+    # Platform Admin creates a franchise outright — no approval step
+    path("franchises/add/", franchise_admin_add, name="franchise-admin-add"),
+    path("franchises/add/submit/", franchise_admin_add_submit, name="franchise-admin-add-submit"),
     # Holder proposes a child franchise under one of their nodes (spec §6.3)
     path("franchise-add-sub/", franchise_add_subfranchise, name="franchise-add-subfranchise"),
     path("franchise-add-sub/submit/", franchise_subfranchise_submit, name="franchise-subfranchise-submit"),
+    # AJAX: the prospective owner's companies, for the form's company picker
+    path("franchise-add-sub/owner-companies/", franchise_subfranchise_owner_lookup, name="franchise-subfranchise-owner-lookup"),
     # Subtree business data (spec §6.3): certified companies, plan sales, reports
     path("franchise-certified-companies/", franchise_certified_companies, name="franchise-certified-companies"),
     path("franchise-sales/", franchise_sales, name="franchise-sales"),

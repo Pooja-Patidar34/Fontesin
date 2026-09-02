@@ -1,0 +1,159 @@
+{% extends "base/base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Consultant Requests" context "workflows" %}{% endblock %}
+
+{% block content %}
+
+{% comment %}
+  Consultant registration applications. Shares the Coordinator Requests styling
+  and pane markup (_staff_signup_panes.html) so the two queues read as one
+  system — a consultant sign-up and a coordinator sign-up are reviewed with the
+  same controls, just in their own tab.
+{% endcomment %}
+<style>
+  .cr-tabs {
+    display: flex;
+    gap: .25rem;
+    border-bottom: 1px solid #e9ecef;
+    padding: 0 1.25rem;
+    background: #f8f9fa;
+  }
+  .cr-tab {
+    border: 0;
+    background: transparent;
+    padding: .75rem 1rem;
+    font-size: .85rem;
+    font-weight: 600;
+    color: #6c757d;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+  }
+  .cr-tab:hover { color: #1B2E3F; }
+  .cr-tab.active {
+    color: #1B2E3F;
+    border-bottom-color: #4da3ff;
+  }
+  .cr-tab .badge { margin-left: .35rem; font-size: .68rem; }
+  .cr-pane { display: none; }
+  .cr-pane.active { display: block; }
+  .empty-state {
+    text-align: center;
+    color: #94a3b8;
+    padding: 2.5rem 1rem;
+  }
+  .empty-state .fa-2x { margin-bottom: .5rem; }
+  .cr-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px 18px;
+    font-size: .8rem;
+    color: #475569;
+    margin-top: 6px;
+  }
+  .cr-info-grid div { min-width: 0; overflow-wrap: anywhere; word-break: break-word; }
+  .cr-info-grid div span { color: #94a3b8; margin-right: 4px; }
+  .pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 100px;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  .pill-approved { background: #dcfce7; color: #166534; }
+  .pill-declined { background: #fee2e2; color: #991b1b; }
+</style>
+
+<div class="card card-outline card-primary shadow-sm">
+
+  <div class="card-header">
+    <h3 class="card-title font-weight-bold mb-0">
+      <i class="fas fa-user-tie mr-1"></i> {% trans "Consultant Requests" context "workflows" %}
+    </h3>
+    <h5 class="small text-muted mb-0">
+      {% blocktrans trimmed context "workflows" %}
+      People who registered as a <strong>Consultant</strong> and are waiting to be let in. They cannot use the platform until approved. Approve to grant access, decline to reject.
+      {% endblocktrans %}
+    </h5>
+  </div>
+
+  <div class="cr-tabs">
+    <button type="button" class="cr-tab active" data-pane="signup-pending">
+      {% trans "Pending" context "workflows" %}
+      {% if signup_pending %}
+      <span class="badge badge-warning">{{ signup_pending|length }}</span>
+      {% endif %}
+    </button>
+    <button type="button" class="cr-tab" data-pane="signup-approved">
+      {% trans "Approved" context "workflows" %}
+      {% if signup_approved %}
+      <span class="badge badge-secondary">{{ signup_approved|length }}</span>
+      {% endif %}
+    </button>
+    <button type="button" class="cr-tab" data-pane="signup-declined">
+      {% trans "Declined" context "workflows" %}
+      {% if signup_declined %}
+      <span class="badge badge-secondary">{{ signup_declined|length }}</span>
+      {% endif %}
+    </button>
+  </div>
+
+  {% include "dashboard/_staff_signup_panes.html" with pane_prefix="signup-" %}
+
+</div>
+
+<script>
+  // The first pane is the default; `.active` is set on the button in markup but
+  // the panes come from the shared include, so open it here.
+  (function () {
+    var first = document.getElementById("pane-signup-pending");
+    if (first) first.classList.add("active");
+  })();
+
+  function crActivate(name) {
+    var btn = document.querySelector('.cr-tab[data-pane="' + name + '"]');
+    if (!btn) return;
+    document.querySelectorAll(".cr-tab").forEach(function (t) { t.classList.remove("active"); });
+    document.querySelectorAll(".cr-pane").forEach(function (p) { p.classList.remove("active"); });
+    btn.classList.add("active");
+    var pane = document.getElementById("pane-" + name);
+    if (pane) pane.classList.add("active");
+  }
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest(".cr-tab");
+    if (!btn) return;
+    crActivate(btn.dataset.pane);
+    if (window.history && history.replaceState) history.replaceState(null, "", "#" + btn.dataset.pane);
+    else location.hash = btn.dataset.pane;
+  });
+
+  // Keep the active tab across an action's POST→redirect: a URL fragment is
+  // never sent to the server, so stash the tab before the form navigates and
+  // restore it on load.
+  var CR_KEY = "consultantActiveTab";
+  function crCurrent() {
+    var active = document.querySelector(".cr-tab.active");
+    return active ? active.dataset.pane : "";
+  }
+  document.addEventListener("submit", function (e) {
+    var form = e.target;
+    if (!form || form.tagName !== "FORM") return;
+    if (form.matches("[data-confirm]") && form.dataset.confirmed !== "1") return;
+    try { sessionStorage.setItem(CR_KEY, crCurrent()); } catch (err) {}
+  });
+
+  var crInitial = (location.hash || "").replace("#", "");
+  if (!crInitial) {
+    try {
+      crInitial = sessionStorage.getItem(CR_KEY) || "";
+      if (crInitial) sessionStorage.removeItem(CR_KEY);
+    } catch (err) {}
+  }
+  if (crInitial) {
+    crActivate(crInitial);
+    if (window.history && history.replaceState) history.replaceState(null, "", "#" + crInitial);
+  }
+</script>
+
+{% endblock %}
