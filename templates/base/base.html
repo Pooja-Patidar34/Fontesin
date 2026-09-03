@@ -961,34 +961,52 @@
           {% with modules_open=active_menu|slice:":8" %}
           <li class="nav-header">{% trans "Professional Modules" context "sidebar" %}</li>
           <li class="nav-item has-treeview {% if active_menu == 'modules' or modules_open == 'listings' %}menu-open{% endif %}">
-            <a href="#" class="nav-link {% if active_menu == 'modules' or modules_open == 'listings' %}active{% endif %}">
+            {% comment %}
+              The parent row BOTH expands the tree and opens the modules
+              overview (spec: "Professional Modules — collapsible menu → this
+              function should open the same overview of all modules"). It has to
+              do the navigating itself: AdminLTE's treeview calls
+              preventDefault() on any nav-link that has a child .nav-treeview,
+              so the href alone is inert. `data-module-overview` is picked up by
+              a handler at the foot of this template.
+
+              This is what replaced the "All Modules" row, removed for every
+              role in Sep 2026: the spec lists exactly three rows under
+              Professional Modules — Products & Services / Investments /
+              Education — and a fourth overview row on top of them was the
+              duplicate users kept asking about. Since no other page links to
+              modules:dashboard, dropping the row without moving the link here
+              would strand the overview behind a hand-typed URL.
+            {% endcomment %}
+            <a href="{% url 'modules:dashboard' %}" data-module-overview
+               class="nav-link {% if active_menu == 'modules' or modules_open == 'listings' %}active{% endif %}">
               <i class="nav-icon fas fa-th-large"></i>
               <p>{% trans "Professional Modules" context "sidebar" %}<i class="right fas fa-angle-left"></i></p>
             </a>
             <ul class="nav nav-treeview">
-              {% comment %}
-                "All Modules" is hidden for the Platform Admin: it is not in the
-                Professional Modules spec, which lists only the per-module rows
-                (Products & Services / Investments / Education → All Listings).
-                Kept for every other role because this is the ONLY sidebar route
-                to the modules overview — removing it outright would strand that
-                page behind a direct URL. The Admin reaches each module's
-                moderation grid through its own All Listings row below.
-              {% endcomment %}
-              {% if not sb_admin %}
-              <li class="nav-item">
-                <a href="{% url 'modules:dashboard' %}" class="nav-link {% if active_menu == 'modules' %}active{% endif %}">
-                  <i class="far fa-circle nav-icon"></i><p>{% trans "All Modules" context "sidebar" %}</p>
-                </a>
-              </li>
-              {% endif %}
-
               {% for m in sidebar_modules %}
               {% if m.locked %}
               <li class="nav-item">
                 <a href="{% url 'membership' %}" class="nav-link">
                   <i class="nav-icon {{ m.icon }}"></i>
                   <p>{{ m.name }} <i class="fas fa-lock ml-1" style="font-size:.68rem;opacity:.7;"></i></p>
+                </a>
+              </li>
+              {% elif m.status != 'live' and not sb_admin %}
+              {% comment %}
+                A module that hasn't shipped (Investments, Education) is a FLAT
+                row: no expandable sub-tree, because none of the five listing
+                screens beneath it exists yet and every one of them is refused
+                by module_registry.user_can_access. Clicking raises the standard
+                "coming soon" toast via the shared data-coming-soon handler at
+                the foot of this template. The Admin keeps the full sub-tree so
+                the moderation grid stays reachable for listings that already
+                exist.
+              {% endcomment %}
+              <li class="nav-item">
+                <a href="#" data-coming-soon class="nav-link">
+                  <i class="nav-icon {{ m.icon }}"></i>
+                  <p>{{ m.name }} <i class="fas fa-clock ml-1" style="font-size:.68rem;opacity:.7;"></i></p>
                 </a>
               </li>
               {% else %}
@@ -1526,6 +1544,17 @@
       var comingSoonMsg = (typeof gettext === 'function') ? gettext('Feature coming soon') : 'Feature coming soon';
       showToast(comingSoonMsg, 'info');
     }
+  });
+
+  // The "Professional Modules" sidebar parent opens the modules overview as
+  // well as expanding its tree. AdminLTE's treeview preventDefault()s any
+  // nav-link that has a child .nav-treeview, so the href never fires on its
+  // own — navigate explicitly. Registered after the treeview's own listener,
+  // which has already run its expand/collapse by the time this fires.
+  document.addEventListener('click', function(e) {
+    var link = e.target.closest('a[data-module-overview]');
+    if (!link) return;
+    window.location.href = link.getAttribute('href');
   });
 })();
 </script>

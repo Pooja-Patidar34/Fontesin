@@ -103,7 +103,13 @@
           {% elif m.status == 'live' %}
             <a href="{% url 'modules:landing' m.slug %}" class="ps-mod2__btn">{% trans "Open Module" %} <i class="fas fa-arrow-right ml-1"></i></a>
           {% else %}
-            <a href="{% url 'modules:landing' m.slug %}" class="ps-mod2__ghost">{% trans "Preview" %}</a>
+            {% comment %}
+              A module that hasn't shipped raises the shared "coming soon" toast
+              rather than linking to a landing page — module_landing refuses it
+              and bounces straight back here, so the old Preview link was a
+              round trip to nowhere.
+            {% endcomment %}
+            <a href="#" data-coming-soon class="ps-mod2__ghost">{% trans "Coming soon" %}</a>
           {% endif %}
         </div>
       </div>

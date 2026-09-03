@@ -7914,12 +7914,23 @@ class BusinessUserMixin:
             role.code = "business_user"
             role.save(update_fields=["code"])
 
+        # Verified, approved and company-owning so the onboarding middleware
+        # lets a page load at all. Without these the account is bounced to
+        # /verify/ by RequireIdentityVerificationMiddleware and then to the
+        # company form by RequireCompanyMiddleware, both added after this
+        # fixture was written — every request came back 302 and the assertions
+        # below were measuring a redirect rather than the view under test.
         user = User.objects.create_user(
             email=email,
             password="biz123",
             tenant=self.tenant,
             role=role,
             is_active=True,
+            application_status="approved",
+            verification_status="approved",
+        )
+        Company.objects.create(
+            tenant=self.tenant, name=f"{email} Co", owner_user=user,
         )
         if plan is not None:
             self._create_subscription(user, plan, status=sub_status)
@@ -7944,9 +7955,54 @@ class SavedFilterViewTests(BusinessUserMixin, BaseBillingTestCase):
         self.assertEqual(resp.status_code, 302)
 
     def test_list_non_business_user_denied(self):
-        # self.user is an Admin (role.code None) -> plan gate denies.
+        # self.user has role "Admin" with a blank code and is NOT a superuser,
+        # so it is none of the audiences the sidebar shows Favorites to.
         self.client.login(email="user@test.com", password="test123")
         resp = self.client.get(reverse("saved-filters"))
+        self.assertEqual(resp.status_code, 403)
+
+    def test_list_superuser_ok(self):
+        """Regression: the Platform Admin clicked the Favorites row the sidebar
+        showed them and got a 403 (bug report, Sep 2026).
+
+        `_plan_code_for_business_user` returns None for a superuser, which then
+        failed the paid-Business-User check the view gated on — so every
+        audience the sidebar advertised the tab to except a paid BU was refused
+        by its own menu entry."""
+        admin = User.objects.create_superuser(
+            email="root@test.com", password="root123", tenant=self.tenant,
+        )
+        self.client.force_login(admin)
+        resp = self.client.get(reverse("saved-filters"), SERVER_NAME="localhost")
+        self.assertEqual(resp.status_code, 200)
+
+    def test_list_consultant_ok(self):
+        """The sidebar shows Favorites to consultants, so the view must too."""
+        role, _created = Role.objects.get_or_create(
+            code="consultant", defaults={"name": "Consultant", "tier_level": 1},
+        )
+        consultant = User.objects.create_user(
+            email="consultant@test.com", password="c123",
+            tenant=self.tenant, role=role, is_active=True,
+            application_status="approved", verification_status="approved",
+        )
+        self.client.force_login(consultant)
+        resp = self.client.get(reverse("saved-filters"), SERVER_NAME="localhost")
+        self.assertEqual(resp.status_code, 200)
+
+    def test_list_coordinator_denied(self):
+        """The Coordinator is the one role the sidebar hides Favorites from
+        (spec E), so widening the gate must not let them in."""
+        role, _created = Role.objects.get_or_create(
+            code="coordinator", defaults={"name": "Coordinator", "tier_level": 1},
+        )
+        coordinator = User.objects.create_user(
+            email="coordinator@test.com", password="c123",
+            tenant=self.tenant, role=role, is_active=True,
+            application_status="approved", verification_status="approved",
+        )
+        self.client.force_login(coordinator)
+        resp = self.client.get(reverse("saved-filters"), SERVER_NAME="localhost")
         self.assertEqual(resp.status_code, 403)
 
     def test_list_free_business_user_denied(self):

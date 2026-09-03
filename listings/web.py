@@ -377,8 +377,13 @@ def _no_module_access_message(user, module):
     """The right refusal for a module the user can't open.
 
     A Business User on the Free plan is not forbidden, just not subscribed —
-    tell them to upgrade instead of showing the generic role refusal.
+    tell them to upgrade instead of showing the generic role refusal. A module
+    that simply hasn't shipped yet is nobody's fault at all, so it gets the same
+    "coming soon" wording the cards and sidebar rows use rather than a refusal
+    that reads like a permissions problem.
     """
+    if module and not module_registry.module_is_live(module):
+        return _("This module is coming soon.")
     if module and module_registry.module_locked_for_user(user, module):
         return _("Professional modules are available on paid plans only. "
                  "Upgrade your plan to unlock this module.")

@@ -3,10 +3,18 @@ Module Registry (cookbook Section 19.3).
 
 The single source of truth for which professional modules exist, how they are
 presented (icon / name / slug), who may access them, and which sections they
-expose. All three modules are live and share the same offers/demands/reactions/
-admin/audit logic; each adds its own professional fields purely by
-configuration (MODULE_FIELD_CONFIGS), demonstrating the repeatable architecture
-without rewriting core code (Section 19.11/19.13/19.14).
+expose. The modules share the same offers/demands/reactions/admin/audit logic;
+each adds its own professional fields purely by configuration
+(MODULE_FIELD_CONFIGS), demonstrating the repeatable architecture without
+rewriting core code (Section 19.11/19.13/19.14).
+
+`status` says whether a module has shipped. Only Products & Services is "live";
+Investments and Education are "coming_soon" (Sep 2026) — they keep their cards
+and sidebar rows so users can see what is planned, but they expose no listing
+screens and clicking one raises a "coming soon" toast. `module_is_live` is the
+one place that answers this, and `user_can_access` enforces it, so a
+coming-soon module is closed at the VIEW as well as in the UI — otherwise its
+forms stayed reachable by typing the URL.
 
 `allowed_roles` uses the cookbook's role vocabulary; `visible_modules()`
 normalises it against this project's role codes (uppercase + superuser=admin).
@@ -39,7 +47,7 @@ MODULE_REGISTRY = [
         "icon": "fas fa-chart-line",
         "description": "Investment opportunities, capital raising and investor demand.",
         "enabled": True,
-        "status": "live",
+        "status": "coming_soon",
         "allowed_roles": ["master_admin", "consultant", "business_user"],
         "min_plan": "basic",
         "sections": ["companies", "offers", "demands", "ai_analytics"],
@@ -52,7 +60,7 @@ MODULE_REGISTRY = [
         "icon": "fas fa-graduation-cap",
         "description": "Study programs, training, scholarships and education demand.",
         "enabled": True,
-        "status": "live",
+        "status": "coming_soon",
         "allowed_roles": ["master_admin", "consultant", "business_user"],
         "min_plan": "basic",
         "sections": ["companies", "offers", "demands", "ai_analytics"],
@@ -127,6 +135,14 @@ def module_min_plan(module):
     return module.get("min_plan") or MODULE_MIN_PLAN_DEFAULT
 
 
+def module_is_live(module):
+    """True when the module has actually shipped its listing screens.
+
+    A "coming_soon" module is advertised but not built: it has no browse / add
+    / my-offers / my-demands screens, so every entry point must refuse it."""
+    return module.get("status") == "live"
+
+
 def user_role_allows(user, module):
     """Role half of the access check (cookbook Section 19.6)."""
     return bool(_user_role_tokens(user).intersection(module["allowed_roles"]))
@@ -186,8 +202,8 @@ def visible_modules(user):
 
 
 def accessible_modules(user):
-    """Enabled modules the user may actually open (role AND plan)."""
-    return [m for m in visible_modules(user) if user_meets_plan(user, m)]
+    """Enabled modules the user may actually open (shipped AND role AND plan)."""
+    return [m for m in visible_modules(user) if user_can_access(user, m)]
 
 
 def get_module(slug):
@@ -205,7 +221,15 @@ def get_module_by_id(module_id):
 
 
 def user_can_access(user, module):
-    """Full access check: the user's role is allowed AND their plan is paid."""
+    """Full access check: the module has SHIPPED, the user's role is allowed,
+    AND their plan is paid.
+
+    Superusers bypass the shipped check (as they bypass the plan check) so the
+    admin moderation grid can still reach listings that already exist for a
+    module that has been put back behind "coming soon".
+    """
+    if not module_is_live(module) and not getattr(user, "is_superuser", False):
+        return False
     return user_role_allows(user, module) and user_meets_plan(user, module)
 
 

@@ -6,6 +6,7 @@ in setUp, so the suite runs against a clean test database with no seed data.
 """
 
 import json
+from contextlib import contextmanager
 
 from django.test import TestCase
 from rest_framework.test import APIRequestFactory, force_authenticate
@@ -18,6 +19,28 @@ from listings.models import Listing
 def _json(resp):
     resp.render()
     return json.loads(resp.content or b"{}")
+
+
+@contextmanager
+def module_live(module_id):
+    """Temporarily mark a registry module as shipped.
+
+    Investments and Education are "coming_soon" (Sep 2026), so every listing
+    screen refuses them — but they are also the only modules that carry
+    MODULE_FIELD_CONFIGS entries, and the config-driven module-field machinery
+    they exercise is still very much live code. The tests below flip the status
+    for their duration so they keep testing that machinery rather than the
+    coming-soon gate, which has tests of its own.
+    """
+    from listings import module_registry
+
+    module = module_registry.get_module_by_id(module_id)
+    previous = module["status"]
+    module["status"] = "live"
+    try:
+        yield module
+    finally:
+        module["status"] = previous
 
 class ListingsAPITestCase(TestCase):
     def setUp(self):
@@ -392,8 +415,9 @@ class ListingsAPITestCase(TestCase):
             keywords="capital, equity", visibility_scope="public", action="publish",
             ms_investment_type="Equity", ms_ticket_size="500k", product_image=png,
         )
-        r = web.post(reverse("listings_web:add") + "?type=offer&module=investments",
-                     data, SERVER_NAME="localhost")
+        with module_live("investments"):
+            r = web.post(reverse("listings_web:add") + "?type=offer&module=investments",
+                         data, SERVER_NAME="localhost")
         self.assertEqual(r.status_code, 302)
         l = Listing.objects.get(title="Series A Round")
         self.assertEqual(l.module_id, "investments")
@@ -718,10 +742,56 @@ class ListingsAPITestCase(TestCase):
             keywords="capital", visibility_scope="public", action="publish",
             ms_investment_type="",
         )
-        r = web.post(reverse("listings_web:add") + "?type=offer&module=investments",
-                     data, SERVER_NAME="localhost")
+        with module_live("investments"):
+            r = web.post(reverse("listings_web:add") + "?type=offer&module=investments",
+                         data, SERVER_NAME="localhost")
         self.assertEqual(r.status_code, 200)
         self.assertIn(b"Investment Type is required", r.content)
+
+    def test_coming_soon_modules_expose_no_screens(self):
+        """Investments and Education are advertised but not built (Sep 2026).
+
+        The sidebar renders them as flat "coming soon" rows with no sub-tree and
+        the cards toast instead of linking, but a user can still type a URL — so
+        the refusal has to live in the registry, which every listing view runs
+        through. Products & Services, the one live module, is unaffected."""
+        from django.test import Client
+        from django.urls import reverse
+        from listings import module_registry
+
+        web = Client()
+        web.force_login(self.owner)
+
+        for slug, module_id in [("investments", "investments"), ("education", "education")]:
+            module = module_registry.get_module(slug)
+            self.assertFalse(module_registry.module_is_live(module))
+            self.assertFalse(module_registry.user_can_access(self.owner, module))
+            self.assertFalse(module_registry.user_can_access_id(self.owner, module_id))
+
+            # The landing page bounces back to the overview rather than 404ing.
+            r = web.get(reverse("modules:landing", args=[slug]), SERVER_NAME="localhost")
+            self.assertRedirects(
+                r, reverse("modules:dashboard"), fetch_redirect_response=False,
+            )
+            # And the add form refuses rather than rendering the module's fields.
+            r = web.get(
+                reverse("listings_web:add") + f"?type=offer&module={slug}",
+                SERVER_NAME="localhost",
+            )
+            self.assertEqual(r.status_code, 302)
+
+        live = module_registry.get_module("products-services")
+        self.assertTrue(module_registry.module_is_live(live))
+        self.assertTrue(module_registry.user_can_access(self.owner, live))
+        self.assertEqual(
+            [m["slug"] for m in module_registry.accessible_modules(self.owner)],
+            ["products-services"],
+        )
+        # Still listed on the overview, so users can see what is planned.
+        self.assertEqual(
+            [m["slug"] for m in module_registry.visible_modules(self.owner)],
+            ["products-services", "investments", "education"],
+        )
 
     def test_web_pages_render(self):
         from django.test import Client

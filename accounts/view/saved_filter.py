@@ -54,6 +54,47 @@ def _require_paid_business_user(user):
 _require_basic_or_pro_business_user = _require_paid_business_user
 
 
+def _can_use_saved_filters(user):
+    """Who may use Favorites (saved company filters).
+
+    Must match the sidebar gate in templates/base/base.html, which shows the
+    Favorites row to the Platform Admin, franchise holders, consultants and
+    paid Business Users. The view previously accepted ONLY a paid Business
+    User, so every other audience the sidebar advertised the tab to clicked it
+    and got a 403 (bug report, Sep 2026) — the Platform Admin included, since
+    `_plan_code_for_business_user` returns None for a superuser and for any
+    non-business role, which then fails the paid check.
+
+    Favorites are per-user rows (SavedFilter.user), so widening this exposes
+    nobody else's data: each of these accounts gets their own empty list to
+    fill. The Free plan stays out (spec B) and so does the Coordinator
+    (spec E) — the two audiences the sidebar also hides the row from.
+    """
+    if not user.is_authenticated:
+        return False
+    if user.is_superuser:
+        return True
+
+    role_code = ""
+    if user.role and user.role.code:
+        role_code = user.role.code.lower()
+    if role_code == "coordinator":
+        return False
+    if role_code == "consultant":
+        return True
+
+    from accounts.utils.franchise_access import is_franchise_holder
+    if is_franchise_holder(user):
+        return True
+
+    return _is_paid_business_user(user)
+
+
+def _require_saved_filter_access(user):
+    if not _can_use_saved_filters(user):
+        raise PermissionDenied()
+
+
 def _clean_filters(raw):
     cleaned = {}
     for key in FILTER_FIELDS:
@@ -65,7 +106,7 @@ def _clean_filters(raw):
 
 @login_required
 def saved_filter_list(request):
-    _require_basic_or_pro_business_user(request.user)
+    _require_saved_filter_access(request.user)
 
     return render(
         request,
@@ -81,7 +122,7 @@ def saved_filter_list(request):
 @require_POST
 @transaction.atomic
 def saved_filter_save(request):
-    _require_basic_or_pro_business_user(request.user)
+    _require_saved_filter_access(request.user)
 
     name = (request.POST.get("name") or "").strip()
     if not name:
@@ -116,7 +157,7 @@ def saved_filter_save(request):
 @require_POST
 @transaction.atomic
 def saved_filter_delete(request, filter_id):
-    _require_basic_or_pro_business_user(request.user)
+    _require_saved_filter_access(request.user)
 
     saved = get_object_or_404(SavedFilter, id=filter_id, user=request.user)
     saved.delete()
@@ -131,7 +172,7 @@ def saved_filter_delete(request, filter_id):
 @login_required
 def saved_filter_apply(request, filter_id):
     """One-click jump: resolve saved filter → redirect to Companies with filter params."""
-    _require_basic_or_pro_business_user(request.user)
+    _require_saved_filter_access(request.user)
 
     saved = get_object_or_404(SavedFilter, id=filter_id, user=request.user)
     params = {k: v for k, v in (saved.filters or {}).items() if k in FILTER_FIELDS and v}

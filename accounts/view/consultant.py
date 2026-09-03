@@ -46,15 +46,17 @@ def _scoped_tenant_qs(qs, user, target_role=None):
     they oversee consultants across the platform — so the tenant filter is
     dropped for them. Everyone else stays pinned to their own tenant.
 
-    Dropped for a franchise holder listing COORDINATORS too. A franchise is a
-    GEOGRAPHY, not a tenant: the holder's node says "the USA", and the right
-    scope for that is the territory filter below, which answers exactly the
-    question the tab asks. Pinning to the holder's own tenant on top of it
-    silently subtracts every coordinator who registered in a different tenant —
-    in practice all of them, since a holder and a coordinator have no reason to
-    share one — so the tab came up empty at every level, Master included
-    (bug report, Sep 2026). The territory filter fails closed on its own (a
-    holder with no territory sees nobody), so nothing is left unscoped here.
+    Dropped for a franchise holder listing STAFF (consultants or coordinators)
+    too. A franchise is a GEOGRAPHY and a TREE, not a tenant: the holder's node
+    says "the USA" and owns a subtree, and the right scopes for that are the
+    territory filter (coordinators) and the subtree filter (consultants) below,
+    which answer exactly the question each tab asks. Pinning to the holder's own
+    tenant on top of them silently subtracts every staff member who registered
+    in a different tenant — in practice all of them, since a holder and a
+    consultant or coordinator have no reason to share one — so the tab came up
+    empty at every level, Master included (bug report, Sep 2026). Both filters
+    fail closed on their own (a holder with no territory, or with nobody
+    assigned under them, sees nobody), so nothing is left unscoped here.
     """
     if user.is_superuser:
         return qs
@@ -62,7 +64,7 @@ def _scoped_tenant_qs(qs, user, target_role=None):
     if role_code == "COORDINATOR":
         return qs
 
-    if (target_role or "").upper() == "COORDINATOR":
+    if (target_role or "").upper() in {"COORDINATOR", "CONSULTANT"}:
         from accounts.utils.franchise_access import is_franchise_holder
         if is_franchise_holder(user):
             return qs
