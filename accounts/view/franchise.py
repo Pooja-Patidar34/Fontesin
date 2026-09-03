@@ -2133,14 +2133,32 @@ def franchise_consultants(request):
         raise PermissionDenied()
 
     owned = list(_owned_nodes_qs(request.user).order_by("name"))
-    owned_ids = [n.id for n in owned]
+    owned_ids = {n.id for n in owned}
+
+    # The roster spans the holder's whole SUBTREE, not just the nodes they own
+    # directly (spec §7.1 downward visibility). A National that had assigned one
+    # consultant itself saw only that one, while the consultants its Regional and
+    # Micro sub-franchises had assigned were invisible — even though those people
+    # work the National's territory and its reports already count their sales
+    # (bug report, Sep 2026). `visible_node_ids` is the same own+descendants set
+    # the Network → Consultant Users tab and the franchise reports use, so all
+    # three agree on who is "under me".
     assignments_qs = (
-        ConsultantAssignment.objects.filter(franchise_node_id__in=owned_ids)
+        ConsultantAssignment.objects.filter(
+            franchise_node_id__in=visible_node_ids(request.user),
+        )
         .exclude(status=ConsultantAssignmentStatus.TERMINATED)
         .select_related("consultant_user", "franchise_node", "assigned_by")
         .order_by("-created_at")
     )
     paginator, assignments = _paginate(request, assignments_qs, 10)
+
+    # Only assignments on the holder's OWN nodes are theirs to revoke —
+    # `consultant_assignment_remove` scopes to `_owned_nodes_qs` and would 404
+    # otherwise. A sub-franchise's roster is visible but read-only: removing its
+    # consultants is that sub-franchise's own call.
+    for assignment in assignments:
+        assignment.is_own_node = assignment.franchise_node_id in owned_ids
     # Only non-Micro levels can be assigned consultants (spec §9.6), so the
     # assign form must not offer a Micro node. The roster above still lists any
     # existing assignment under an owned Micro node so it stays removable.

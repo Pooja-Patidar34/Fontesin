@@ -7929,11 +7929,19 @@ class BusinessUserMixin:
             application_status="approved",
             verification_status="approved",
         )
-        Company.objects.create(
+        company = Company.objects.create(
             tenant=self.tenant, name=f"{email} Co", owner_user=user,
         )
         if plan is not None:
-            self._create_subscription(user, plan, status=sub_status)
+            # Plans are COMPANY-scoped: get_active_subscription resolves the
+            # active company's subscription and only falls back to a
+            # company-less user-level one when there is no active company. The
+            # company added above means that fallback no longer applies, so the
+            # sub has to name the company or the user resolves to no plan at
+            # all — which reads as Free and fails every paid-plan check.
+            subscription = self._create_subscription(user, plan, status=sub_status)
+            subscription.company = company
+            subscription.save(update_fields=["company"])
         return user
 
 

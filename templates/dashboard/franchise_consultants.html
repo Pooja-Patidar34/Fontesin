@@ -84,10 +84,26 @@
               <strong>{{ a.consultant_user.first_name }} {{ a.consultant_user.last_name }}</strong>
               <div class="small text-muted">{{ a.consultant_user.email }}</div>
             </td>
-            <td class="small">{{ a.franchise_node.name }}</td>
+            <td class="small">
+              {{ a.franchise_node.name }}
+              {% comment %}
+                The roster spans the whole subtree, so name the level a row sits
+                at — otherwise a National can't tell its own consultants apart
+                from the ones its Regional and Micro sub-franchises assigned.
+              {% endcomment %}
+              <div class="text-muted">{{ a.franchise_node.get_franchise_level_display }}</div>
+            </td>
             <td><span class="type-chip">{{ a.get_consultant_type_display }}</span></td>
             <td><span class="pill pill-{{ a.status|lower }}">{{ a.get_status_display }}</span></td>
             <td class="text-right pr-4">
+              {% comment %}
+                Only the holder's OWN assignments are theirs to revoke; a
+                sub-franchise's roster is read-only here, so the button is
+                replaced by a dash rather than shown and 404ing on submit.
+              {% endcomment %}
+              {% if not a.is_own_node %}
+              <span class="text-muted" title="{% trans "Assigned by a sub-franchise" context "franchise" %}">&mdash;</span>
+              {% else %}
               <form method="post" action="{% url 'consultant-assignment-remove' a.id %}" class="d-inline m-0"
                     data-confirm
                     data-confirm-tone="danger"
@@ -99,6 +115,7 @@
                 {% csrf_token %}
                 <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-user-minus"></i></button>
               </form>
+              {% endif %}
             </td>
           </tr>
           {% endfor %}
