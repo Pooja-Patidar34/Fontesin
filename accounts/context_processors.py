@@ -236,6 +236,34 @@ def admin_context(request):
                             f"{active_company.certified_by.last_name}"
                         ).strip() or active_company.certified_by.email
 
+                    # "Certified" is a one-off success announcement, not a
+                    # standing state like "pending". It is derived from
+                    # Company.certification_status, which never clears, so
+                    # before this the banner reappeared on every single page
+                    # load for the rest of the company's life. Show it once —
+                    # the first render after the consultant's decision — then
+                    # suppress it.
+                    #
+                    # The marker is keyed by certified_at, so a company that is
+                    # later re-certified announces itself again. "pending" and
+                    # "rejected" are untouched: both describe an ongoing
+                    # situation the user still has to act on.
+                    session = getattr(request, "session", None)
+                    if bu_certification_status == "certified" and session is not None:
+                        stamp = (
+                            active_company.certified_at.isoformat()
+                            if active_company.certified_at
+                            else "unstamped"
+                        )
+                        seen = session.get("bu_cert_banner_seen") or {}
+                        if seen.get(str(active_company.pk)) == stamp:
+                            bu_certification_status = ""
+                            bu_certification_company_name = ""
+                            bu_certification_consultant_name = ""
+                        else:
+                            seen[str(active_company.pk)] = stamp
+                            session["bu_cert_banner_seen"] = seen
+
         # Superusers get the global pending count so admins can step in.
         if request.user.is_superuser:
             pending_certification_count = Company.objects.filter(
