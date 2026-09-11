@@ -103,12 +103,12 @@ FRANCHISE_TYPES = (
 
 
 def admin_login(request):
-    if request.user.is_authenticated:
-        next_url = request.GET.get("next")
-        if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
-            return redirect(next_url)
-        return redirect("dashboard")
-
+    # The login page ALWAYS renders the credential form, even when a session
+    # cookie is still alive. It used to redirect an already-authenticated
+    # visitor straight to the dashboard, which made the "Log In" button in the
+    # public navbar (shown unconditionally there) silently re-open the last
+    # signed-in account instead of asking for credentials. `next` is still
+    # honoured, but only after a successful POST below.
     if request.method == "POST":
         email = request.POST.get("email", "").strip()
         password = request.POST.get("password", "")

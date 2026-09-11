@@ -1327,12 +1327,21 @@
               {% endif %}
             </a>
           </li>
+          {% comment %}
+            Audit Logs tab hidden on request (Sep 2026). The page, its route
+            (`audit-logs`) and the detail endpoint are all left intact and still
+            superuser-gated — only the sidebar entry is withdrawn, so nothing
+            that already worked is removed and the tab can be restored by
+            deleting this comment wrapper.
+          {% endcomment %}
+          {% comment %}
           <li class="nav-item">
             <a href="{% url 'audit-logs' %}" class="nav-link {% if active_menu == 'audit' %}active{% endif %}">
               <i class="nav-icon fas fa-clipboard-list"></i>
               <p>{% trans "Audit Logs" context "sidebar" %}</p>
             </a>
           </li>
+          {% endcomment %}
           <li class="nav-item">
             <a href="{% url 'regions-map' %}" class="nav-link {% if active_menu == 'regions' %}active{% endif %}">
               <i class="nav-icon fas fa-map-marked-alt"></i>

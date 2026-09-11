@@ -1384,10 +1384,17 @@ document.addEventListener("DOMContentLoaded", function () {
   // Deep-link: /users/?open_edit=<id> auto-opens the edit modal for that user.
   // Lets other pages (e.g. the Network > Coordinators/Consultants directory)
   // send an admin straight into the edit flow for a specific account.
+  //
+  // /users/?open_add=1 is the same idea for the CREATE modal, used by the
+  // "Add User" button on Network → Business Users so the admin reaches the
+  // one add-user form instead of a second copy of it.
   try {
-    const _openEditId = new URLSearchParams(window.location.search).get("open_edit");
+    const _params = new URLSearchParams(window.location.search);
+    const _openEditId = _params.get("open_edit");
     if (_openEditId && typeof editUser === "function") {
       editUser(_openEditId);
+    } else if (_params.get("open_add") === "1" && typeof window.openAddUserModal === "function") {
+      window.openAddUserModal();
     }
   } catch (e) { /* no-op */ }
 

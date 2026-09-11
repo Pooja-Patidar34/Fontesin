@@ -350,10 +350,19 @@ class AdminAuthViewTests(BaseIAMTestCase):
         response = self.client.get(reverse("login"))
         self.assertEqual(response.status_code, 200)
 
-    def test_authenticated_user_redirected_from_login(self):
+    def test_login_page_shows_form_even_when_already_authenticated(self):
+        # The Log In button must never resume the last session — it always
+        # has to ask for credentials.
         self.client.login(email="admin@test.com", password="admin123")
         response = self.client.get(reverse("login"))
-        self.assertRedirects(response, reverse("dashboard"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="password"')
+
+    def test_login_page_shows_form_when_authenticated_with_next(self):
+        self.client.login(email="admin@test.com", password="admin123")
+        response = self.client.get(reverse("login"), {"next": reverse("dashboard")})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="password"')
 
     def test_login_with_invalid_credentials(self):
         response = self.client.post(

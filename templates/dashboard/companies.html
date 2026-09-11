@@ -1843,8 +1843,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
     var origin = (params.get("from") || "").toLowerCase();
     var ORIGIN_PATHS = {
-      "my-companies":   "/my-companies/",
-      "certifications": "/certifications/",
+      "my-companies":        "/my-companies/",
+      "certifications":      "/certifications/",
+      // Admin "Edit" on Network → Consultants Companies, so closing the modal
+      // returns to that directory rather than the Company Database.
+      "consultant-companies": "/consultants/companies/",
     };
     var returnPath = ORIGIN_PATHS[origin] || "";
 

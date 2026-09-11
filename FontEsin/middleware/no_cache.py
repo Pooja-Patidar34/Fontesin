@@ -6,9 +6,9 @@ class NoCachePagesMiddleware:
     Without this, clicking Back after login surfaces a stale login form
     whose CSRF token no longer matches the current session — submitting it
     produces the 403 "CSRF verification failed" page. With this header set,
-    Back triggers a fresh request: an authenticated user is bounced to the
-    dashboard by `admin_login`, and a logged-out user is bounced to login
-    by `@login_required`.
+    Back triggers a fresh request: the login page re-renders with a token
+    valid for the current session, and a logged-out user is bounced to
+    login by `@login_required`.
 
     Static and media URLs are skipped so versioned assets keep caching
     normally. JSON / file responses are skipped too — they're consumed by

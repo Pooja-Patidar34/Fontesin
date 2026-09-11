@@ -285,11 +285,19 @@ def _franchise_links_for(users):
 def _render_companies_by_role(request, role_code, *, page_title, owner_label, active_submenu):
     """Every company a user of the given role is associated with.
 
-    Users can be tied to a company in two ways:
+    Users can be tied to a company in three ways:
       * picked an existing Company at /register/  → stored on
-        User.primary_company / UserCompany / Company.consultant
+        User.primary_company / UserCompany
+      * CREATED the company themselves            → stored on
+        Company.owner_user (read for the Platform Admin only — see the
+        grouping below)
       * typed a new company name at /apply/       → stored as free-text
         on User.applied_company_name (+ applied_country_of_incorporation etc.)
+
+    Company.consultant is intentionally NOT one of them: it marks the consultant
+    ASSIGNED to a company (set at certification approval too), not the owner, so
+    reading it here would list every business user's company the consultant has
+    certified.
 
     We walk every user of the role and emit one row per (user, company) pairing,
     then dedupe by company identity.
@@ -302,6 +310,39 @@ def _render_companies_by_role(request, role_code, *, page_title, owner_label, ac
     )
     owners = _scoped_tenant_qs(owners, request.user)
     owners = _scope_consultants_to_coordinator_region(owners, request.user, role_code)
+
+    # Companies the consultant OWNS — Company.owner_user, the FK set to the
+    # creator when a company is filed through the Company form
+    # (accounts/view/company.py). Without this a consultant who signed up and
+    # then created a company saw nothing here: the loop below only read
+    # primary_company (the company they REGISTERED with) and UserCompany, so a
+    # company they created themselves was invisible.
+    #
+    # Deliberately NOT Company.consultant. That FK is also set when a consultant
+    # certifies someone else's company (certification_action claims the record),
+    # so keying on it pulls in every business user's company the consultant ever
+    # approved — 33 such rows in the current data — which is not what this tab
+    # answers. Owner is the question here: whose company is it.
+    #
+    # Platform Admin only, for now. Every other audience (coordinator, franchise
+    # holder) keeps exactly the rows it had, because their lists are narrowed by
+    # territory / subtree rules that this bulk lookup does not consult — widening
+    # them here would leak companies across franchise branches.
+    #
+    # Fetched once and grouped, rather than one query per consultant.
+    owned_companies_by_owner = {}
+    if request.user.is_superuser:
+        from collections import defaultdict
+        from accounts.models import Company as _Company
+
+        owned_companies_by_owner = defaultdict(list)
+        owned = (
+            _Company.objects
+            .filter(owner_user_id__in=[o.id for o in owners], is_deleted=False)
+            .order_by("name")
+        )
+        for comp in owned:
+            owned_companies_by_owner[comp.owner_user_id].append(comp)
 
     rows = {}
 
@@ -320,6 +361,10 @@ def _render_companies_by_role(request, role_code, *, page_title, owner_label, ac
 
         def _company_row(comp):
             return {
+                # Real Company PK — the admin Edit / Delete actions need it to
+                # address the existing company endpoints. Applied rows below
+                # carry id=None because no Company record exists for them.
+                "id": str(comp.id),
                 "name": comp.name,
                 "country": comp.country or "",
                 "city": comp.city or "",
@@ -347,11 +392,23 @@ def _render_companies_by_role(request, role_code, *, page_title, owner_label, ac
             seen_company_ids.add(comp.id)
             _upsert(str(comp.id), _company_row(comp), label)
 
+        for comp in owned_companies_by_owner.get(c.id, ()):
+            if comp.id in seen_company_ids:
+                continue
+            seen_company_ids.add(comp.id)
+            _upsert(str(comp.id), _company_row(comp), label)
+
+        # The free-text application row is a FALLBACK: it stands in only when no
+        # real Company could be found for this consultant. Gated on the full
+        # `seen_company_ids` (owned companies included) — a consultant who typed
+        # "Chris Schmitt Photography" on /apply/ and now owns the registered
+        # company of that name must not be listed twice, once per source.
         applied_name = (c.applied_company_name or "").strip()
         if applied_name and not seen_company_ids:
             _upsert(
                 f"applied:{c.id}",
                 {
+                    "id": None,
                     "name": applied_name,
                     "country": c.applied_country_of_incorporation or "",
                     "city": "",
@@ -388,6 +445,11 @@ def _render_companies_by_role(request, role_code, *, page_title, owner_label, ac
         "active_submenu": active_submenu,
         "page_title": page_title,
         "owner_label": owner_label,
+        # Platform Admin only: surfaces Add / Edit / Delete on this directory.
+        # The actions themselves reuse the Company Database endpoints, which
+        # keep their own permission checks — this flag only decides whether the
+        # buttons are drawn, so a non-admin sees exactly the page they had.
+        "can_manage": request.user.is_superuser,
     }
     return render(request, "dashboard/consultant_companies.html", context)
 
@@ -634,5 +696,9 @@ def business_users(request):
         "entity_label": "business",
         "search_query": search_query,
         "total_count": paginator.count,
+        # Platform Admin only: surfaces Add / Edit / Delete on this directory.
+        # A consultant keeps the read-only listing described above. The actions
+        # reuse the Users-page endpoints, which enforce their own permissions.
+        "can_manage": request.user.is_superuser,
     }
     return render(request, "dashboard/business_users.html", context)

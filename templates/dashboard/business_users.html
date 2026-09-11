@@ -22,7 +22,19 @@
     <h3 class="card-title font-weight-bold mb-0">
       <i class="fas fa-user-friends mr-2"></i>{% if page_title %}{{ page_title }}{% else %}{% trans "Users" context "users" %}{% endif %}
     </h3>
-    <span class="text-muted small">{% trans "Active business users" context "users" %} · {% trans "Total:" context "users" %} {{ page_obj.paginator.count }}</span>
+    <div class="d-flex align-items-center">
+      <span class="text-muted small mr-3">{% trans "Active business users" context "users" %} · {% trans "Total:" context "users" %} {{ page_obj.paginator.count }}</span>
+      {% comment %}
+        Platform Admin only. Opens the ONE add-user form (Users tab) through
+        its ?open_add=1 deep link rather than carrying a second copy of that
+        form here, so validation and tenant/role handling stay in one place.
+      {% endcomment %}
+      {% if can_manage %}
+      <a href="{% url 'users' %}?open_add=1" class="btn btn-sm btn-primary">
+        <i class="fas fa-plus mr-1"></i> {% trans "Add User" context "users" %}
+      </a>
+      {% endif %}
+    </div>
   </div>
 
   {# Single search bar — matches across first name, last name, email, phone #}
@@ -97,6 +109,49 @@
                       data-row-index="{{ forloop.counter0 }}">
                 <i class="fas fa-eye mr-1"></i> {% trans "View" context "common" %}
               </button>
+              {% comment %}
+                Platform Admin management actions, mirroring the Consultants
+                directory (dashboard/consultant_users.html) so both staff
+                directories behave identically. Edit deep-links into the
+                Users-tab edit modal; Activate/Deactivate and Delete reuse the
+                existing user-toggle / user-delete endpoints and come back here
+                via ?next=. A consultant viewing this page stays read-only.
+              {% endcomment %}
+              {% if can_manage and u.id != request.user.id %}
+              <div class="btn-group ml-1">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown">
+                  {% trans "Action" context "common" %}
+                </button>
+                <div class="dropdown-menu dropdown-menu-right shadow-sm">
+                  <a class="dropdown-item" href="{% url 'users' %}?open_edit={{ u.id }}&from={{ request.get_full_path|urlencode }}">
+                    <i class="fas fa-edit mr-2 text-warning"></i> {% trans "Edit" context "common" %}
+                  </a>
+                  {% if u.is_active %}
+                  <a class="dropdown-item text-danger"
+                     href="{% url 'user-toggle' u.id %}?next={{ request.get_full_path|urlencode }}"
+                     onclick="event.preventDefault(); appConfirm({kind:'warning', title:'{% filter escapejs %}{% trans "Deactivate user?" context "users" %}{% endfilter %}', text:'{% filter escapejs %}{% blocktrans trimmed with email=u.email context "users" %}<strong>{{ email }}</strong> will no longer be able to sign in. You can reactivate them at any time.{% endblocktrans %}{% endfilter %}', okLabel:'{% filter escapejs %}{% trans "Deactivate" context "users" %}{% endfilter %}', okIcon:'fa-user-slash', onConfirm:function(){ window.location.href = '{% url 'user-toggle' u.id %}?next={{ request.get_full_path|urlencode }}'; }});">
+                    <i class="fas fa-user-slash mr-2"></i> {% trans "Deactivate" context "users" %}
+                  </a>
+                  {% else %}
+                  <a class="dropdown-item text-success"
+                     href="{% url 'user-toggle' u.id %}?next={{ request.get_full_path|urlencode }}"
+                     onclick="event.preventDefault(); appConfirm({kind:'success', title:'{% filter escapejs %}{% trans "Activate user?" context "users" %}{% endfilter %}', text:'{% filter escapejs %}{% blocktrans trimmed with email=u.email context "users" %}<strong>{{ email }}</strong> will be able to sign in again.{% endblocktrans %}{% endfilter %}', okLabel:'{% filter escapejs %}{% trans "Activate" context "users" %}{% endfilter %}', okIcon:'fa-user-check', onConfirm:function(){ window.location.href = '{% url 'user-toggle' u.id %}?next={{ request.get_full_path|urlencode }}'; }});">
+                    <i class="fas fa-user-check mr-2"></i> {% trans "Activate" context "users" %}
+                  </a>
+                  {% endif %}
+                  <div class="dropdown-divider"></div>
+                  <form method="post"
+                        action="{% url 'user-delete' u.id %}?next={{ request.get_full_path|urlencode }}"
+                        id="bu-delete-form-{{ u.id }}" class="m-0">
+                    {% csrf_token %}
+                    <button type="button" class="dropdown-item text-danger"
+                            onclick="appConfirm({kind:'danger', title:'{% filter escapejs %}{% trans "Delete User?" context "users" %}{% endfilter %}', text:'{% blocktrans trimmed with email=u.email context "users" %}Are you sure you want to permanently delete <strong>{{ email }}</strong>? This action cannot be undone.{% endblocktrans %}', okLabel:'{% filter escapejs %}{% trans "Delete" context "common" %}{% endfilter %}', okIcon:'fa-trash', onConfirm:function(){document.getElementById('bu-delete-form-{{ u.id }}').submit();}})">
+                      <i class="fas fa-trash mr-2"></i> {% trans "Delete" context "common" %}
+                    </button>
+                  </form>
+                </div>
+              </div>
+              {% endif %}
             </td>
           </tr>
           {% empty %}
